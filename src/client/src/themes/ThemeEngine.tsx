@@ -54,7 +54,7 @@ export const ThemeEngineProvider: React.FC<ThemeEngineProviderProps> = ({ childr
     // Apply theme to document for CSS custom properties
     document.documentElement.setAttribute('data-theme', effectiveTheme);
     document.documentElement.setAttribute('data-high-contrast',
-      effectiveTheme === 'high-contrast' ? 'true' : 'false'
+      effectiveTheme === 'high-contrast' ? 'true' : 'false',
     );
   }, [effectiveTheme]);
 

@@ -7,7 +7,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 20,
   info: 30,
   warn: 40,
-  error: 50
+  error: 50,
 };
 
 const KEY_VALUE_REGEX =
@@ -57,7 +57,7 @@ function sanitizeLooseString(value: string): string {
 function sanitizeError(error: Error, seen: WeakSet<object>): Record<string, unknown> {
   const base: Record<string, unknown> = {
     name: error.name,
-    message: sanitizeLooseString(error.message ?? '')
+    message: sanitizeLooseString(error.message ?? ''),
   };
 
   if (error.stack) {
@@ -99,7 +99,7 @@ function sanitizeSet(set: Set<unknown>, seen: WeakSet<object>): unknown[] {
 function sanitizeValue(
   key: string | undefined,
   value: unknown,
-  seen: WeakSet<object>
+  seen: WeakSet<object>,
 ): unknown {
   if (value === null || value === undefined) {
     return value;
@@ -163,18 +163,18 @@ function sanitizeArgs(args: unknown[]): unknown[] {
 
 function getConsoleMethod(level: LogLevel): (...args: unknown[]) => void {
   switch (level) {
-    case 'trace':
-      return console.trace.bind(console);
-    case 'debug':
-      return (console.debug || console.log).bind(console);
-    case 'info':
-      return (console.info || console.log).bind(console);
-    case 'warn':
-      return (console.warn || console.log).bind(console);
-    case 'error':
-      return (console.error || console.log).bind(console);
-    default:
-      return console.log.bind(console);
+  case 'trace':
+    return console.trace.bind(console);
+  case 'debug':
+    return (console.debug || console.log).bind(console);
+  case 'info':
+    return (console.info || console.log).bind(console);
+  case 'warn':
+    return (console.warn || console.log).bind(console);
+  case 'error':
+    return (console.error || console.log).bind(console);
+  default:
+    return console.log.bind(console);
   }
 }
 
@@ -221,9 +221,9 @@ export const Logger: LoggerApi = {
       debug: (...args: unknown[]) => logInternal('debug', prefix, ...args),
       info: (...args: unknown[]) => logInternal('info', prefix, ...args),
       warn: (...args: unknown[]) => logInternal('warn', prefix, ...args),
-      error: (...args: unknown[]) => logInternal('error', prefix, ...args)
+      error: (...args: unknown[]) => logInternal('error', prefix, ...args),
     };
-  }
+  },
 };
 
 export default Logger;

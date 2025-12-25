@@ -4,7 +4,7 @@ import {
   ArrowDownTrayIcon,
   FunnelIcon,
   ChartBarIcon,
-  PresentationChartLineIcon
+  PresentationChartLineIcon,
 } from '@heroicons/react/24/outline';
 import {
   LineChart,
@@ -19,7 +19,7 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
 import { Badge, Alert, Button, Pagination } from '../DaisyUI';
@@ -97,13 +97,13 @@ const ActivityMonitor: React.FC = () => {
     startDate: subHours(new Date(), 24),
     endDate: new Date(),
     limit: 100,
-    offset: 0
+    offset: 0,
   });
 
   const [pagination, setPagination] = useState({
     page: 1,
     totalPages: 1,
-    totalItems: 0
+    totalItems: 0,
   });
 
   // UI states
@@ -131,18 +131,18 @@ const ActivityMonitor: React.FC = () => {
       setError(null);
 
       const queryParams = new URLSearchParams();
-      if (filter.agentId) queryParams.append('agentId', filter.agentId);
-      if (filter.messageProvider) queryParams.append('messageProvider', filter.messageProvider);
-      if (filter.llmProvider) queryParams.append('llmProvider', filter.llmProvider);
-      if (filter.startDate) queryParams.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) queryParams.append('endDate', filter.endDate.toISOString());
-      if (filter.limit) queryParams.append('limit', filter.limit.toString());
-      if (filter.offset) queryParams.append('offset', filter.offset.toString());
+      if (filter.agentId) {queryParams.append('agentId', filter.agentId);}
+      if (filter.messageProvider) {queryParams.append('messageProvider', filter.messageProvider);}
+      if (filter.llmProvider) {queryParams.append('llmProvider', filter.llmProvider);}
+      if (filter.startDate) {queryParams.append('startDate', filter.startDate.toISOString());}
+      if (filter.endDate) {queryParams.append('endDate', filter.endDate.toISOString());}
+      if (filter.limit) {queryParams.append('limit', filter.limit.toString());}
+      if (filter.offset) {queryParams.append('offset', filter.offset.toString());}
 
       const endpoints = {
         0: '/api/admin/activity/messages',
         1: '/api/admin/activity/chart-data',
-        2: '/api/admin/activity/summary'
+        2: '/api/admin/activity/summary',
       };
 
       const endpoint = endpoints[currentTab as keyof typeof endpoints];
@@ -155,22 +155,22 @@ const ActivityMonitor: React.FC = () => {
       const data = await response.json();
 
       switch (currentTab) {
-        case 0: // Messages
-          setActivities(data.messages || []);
-          setPagination({
-            page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
-            totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
-            totalItems: data.total || 0
-          });
-          break;
-        case 1: // Charts
-          const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
-          const chartData = await chartResponse.json();
-          setChartData(chartData.messageActivity || []);
-          break;
-        case 2: // Summary
-          setSummary(data.summary);
-          break;
+      case 0: // Messages
+        setActivities(data.messages || []);
+        setPagination({
+          page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
+          totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
+          totalItems: data.total || 0,
+        });
+        break;
+      case 1: // Charts
+        const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
+        const chartData = await chartResponse.json();
+        setChartData(chartData.messageActivity || []);
+        break;
+      case 2: // Summary
+        setSummary(data.summary);
+        break;
       }
     } catch (err) {
       setError(`Failed to fetch activity data: ${err}`);
@@ -194,20 +194,20 @@ const ActivityMonitor: React.FC = () => {
     let startDate: Date;
 
     switch (range) {
-      case '1h':
-        startDate = subHours(now, 1);
-        break;
-      case '24h':
-        startDate = subHours(now, 24);
-        break;
-      case '7d':
-        startDate = subDays(now, 7);
-        break;
-      case '30d':
-        startDate = subDays(now, 30);
-        break;
-      default:
-        startDate = subHours(now, 24);
+    case '1h':
+      startDate = subHours(now, 1);
+      break;
+    case '24h':
+      startDate = subHours(now, 24);
+      break;
+    case '7d':
+      startDate = subDays(now, 7);
+      break;
+    case '30d':
+      startDate = subDays(now, 30);
+      break;
+    default:
+      startDate = subHours(now, 24);
     }
 
     handleFilterChange({ startDate, endDate: now });
@@ -235,8 +235,8 @@ const ActivityMonitor: React.FC = () => {
           msg.messageType,
           msg.status,
           msg.processingTime || '',
-          msg.contentLength
-        ].join(','))
+          msg.contentLength,
+        ].join(',')),
       ].join('\n');
 
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -538,7 +538,7 @@ const ActivityMonitor: React.FC = () => {
                   <Pie
                     data={Object.entries(summary.messagesByProvider).map(([provider, count]) => ({
                       name: provider,
-                      value: count
+                      value: count,
                     }))}
                     cx="50%"
                     cy="50%"
@@ -599,7 +599,7 @@ const ActivityMonitor: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={Object.entries(summary.messagesByAgent).map(([agent, count]) => ({
                   agent,
-                  count
+                  count,
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="agent" />
@@ -617,7 +617,7 @@ const ActivityMonitor: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={Object.entries(summary.llmUsageByProvider).map(([provider, usage]) => ({
                   provider,
-                  usage
+                  usage,
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="provider" />

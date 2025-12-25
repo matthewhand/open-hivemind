@@ -54,7 +54,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to refresh dashboard',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -70,7 +70,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to clear cache',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -98,7 +98,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to export configuration',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -109,17 +109,17 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   const getToastIcon = () => {
     switch (toast.type) {
-      case 'success': return <CheckCircleIcon className="w-6 h-6" />;
-      case 'error': return <ExclamationCircleIcon className="w-6 h-6" />;
-      default: return <InformationCircleIcon className="w-6 h-6" />;
+    case 'success': return <CheckCircleIcon className="w-6 h-6" />;
+    case 'error': return <ExclamationCircleIcon className="w-6 h-6" />;
+    default: return <InformationCircleIcon className="w-6 h-6" />;
     }
   };
 
   const getToastClass = () => {
     switch (toast.type) {
-      case 'success': return 'alert-success';
-      case 'error': return 'alert-error';
-      default: return 'alert-info';
+    case 'success': return 'alert-success';
+    case 'error': return 'alert-error';
+    default: return 'alert-info';
     }
   };
 

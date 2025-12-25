@@ -54,19 +54,19 @@ const ConfigurationAnalytics: React.FC = () => {
         { name: 'Configuration Changes', value: 45, change: 12, trend: 'up', category: 'Activity' },
         { name: 'Active Bots', value: 8, change: 2, trend: 'up', category: 'Performance' },
         { name: 'Error Rate', value: 2.3, change: -0.8, trend: 'down', category: 'Reliability' },
-        { name: 'Response Time', value: 245, change: -15, trend: 'down', category: 'Performance' }
+        { name: 'Response Time', value: 245, change: -15, trend: 'down', category: 'Performance' },
       ];
 
       const mockUsageStats: UsageStatistic[] = [
         { feature: 'Message Processing', usage: 89, efficiency: 94, recommendations: ['Consider increasing batch size', 'Optimize LLM calls'] },
         { feature: 'Configuration Management', usage: 67, efficiency: 87, recommendations: ['Use hot reload more frequently', 'Implement automated backups'] },
-        { feature: 'Monitoring & Alerting', usage: 45, efficiency: 92, recommendations: ['Configure more alert thresholds', 'Set up automated responses'] }
+        { feature: 'Monitoring & Alerting', usage: 45, efficiency: 92, recommendations: ['Configure more alert thresholds', 'Set up automated responses'] },
       ];
 
       const mockSuggestions: OptimizationSuggestion[] = [
         { id: '1', title: 'Enable Configuration Caching', description: 'Implement Redis caching for frequently accessed configurations to reduce database load', impact: 'high', effort: 'medium', category: 'Performance' },
         { id: '2', title: 'Implement Configuration Validation', description: 'Add schema validation for all configuration changes to prevent runtime errors', impact: 'high', effort: 'low', category: 'Reliability' },
-        { id: '3', title: 'Optimize Bot Restart Logic', description: 'Implement graceful bot restarts with zero-downtime deployment', impact: 'medium', effort: 'high', category: 'Availability' }
+        { id: '3', title: 'Optimize Bot Restart Logic', description: 'Implement graceful bot restarts with zero-downtime deployment', impact: 'medium', effort: 'high', category: 'Availability' },
       ];
 
       setMetrics(mockMetrics);
@@ -80,38 +80,38 @@ const ConfigurationAnalytics: React.FC = () => {
   };
 
   const getTrendIcon = (trend: string) => {
-    const className = "w-5 h-5";
+    const className = 'w-5 h-5';
     switch (trend) {
-      case 'up':
-        return <ArrowTrendingUpIcon className={`${className} text-success`} />;
-      case 'down':
-        return <ArrowTrendingDownIcon className={`${className} text-error`} />;
-      default:
-        return <ChartBarIcon className={`${className} text-base-content/50`} />;
+    case 'up':
+      return <ArrowTrendingUpIcon className={`${className} text-success`} />;
+    case 'down':
+      return <ArrowTrendingDownIcon className={`${className} text-error`} />;
+    default:
+      return <ChartBarIcon className={`${className} text-base-content/50`} />;
     }
   };
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case 'up': return 'text-success';
-      case 'down': return 'text-error';
-      default: return 'text-base-content/70';
+    case 'up': return 'text-success';
+    case 'down': return 'text-error';
+    default: return 'text-base-content/70';
     }
   };
 
   const getImpactVariant = (impact: string): 'error' | 'warning' | 'neutral' => {
     switch (impact) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      default: return 'neutral';
+    case 'high': return 'error';
+    case 'medium': return 'warning';
+    default: return 'neutral';
     }
   };
 
   const getEffortVariant = (effort: string): 'error' | 'warning' | 'success' => {
     switch (effort) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      default: return 'success';
+    case 'high': return 'error';
+    case 'medium': return 'warning';
+    default: return 'success';
     }
   };
 

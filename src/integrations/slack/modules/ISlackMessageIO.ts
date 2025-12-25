@@ -1,8 +1,8 @@
-import { KnownBlock } from '@slack/web-api';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { KnownBlock } from '@slack/web-api';
+import type { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from '../SlackMessage';
 import Debug from 'debug';
-import { SlackBotManager } from '../SlackBotManager';
+import type { SlackBotManager } from '../SlackBotManager';
 import WebSocketService from '@src/server/services/WebSocketService';
 
 const debug = Debug('app:SlackMessageIO');
@@ -133,7 +133,7 @@ export class SlackMessageIO implements ISlackMessageIO {
   private consumeTypingPlaceholder(botName: string, channelId: string, threadId?: string) {
     const key = this.getTypingKey(botName, channelId, threadId);
     const entry = this.typingPlaceholders.get(key);
-    if (!entry) return null;
+    if (!entry) {return null;}
     this.typingPlaceholders.delete(key);
     return entry;
   }
@@ -141,18 +141,18 @@ export class SlackMessageIO implements ISlackMessageIO {
   public async sendTypingPlaceholder(
     channelId: string,
     botName?: string,
-    threadId?: string
+    threadId?: string,
   ): Promise<void> {
     const targetBot = botName || this.getDefaultBotName();
-    if (!channelId || !targetBot) return;
+    if (!channelId || !targetBot) {return;}
 
     const key = this.getTypingKey(targetBot, channelId, threadId);
     const existing = this.typingPlaceholders.get(key);
     const now = Date.now();
     const botManager = this.getBotManager(targetBot);
-    if (!botManager) return;
+    if (!botManager) {return;}
     const botInfo = botManager.getAllBots()[0];
-    if (!botInfo) return;
+    if (!botInfo) {return;}
 
     if (existing) {
       if ((now - existing.createdAt) < this.TYPING_PLACEHOLDER_TTL_MS) {
@@ -175,7 +175,7 @@ export class SlackMessageIO implements ISlackMessageIO {
       unfurl_media: false,
       parse: 'none',
     };
-    if (threadId) options.thread_ts = threadId;
+    if (threadId) {options.thread_ts = threadId;}
 
     try {
       const result = await this.withQueue(targetBot, () => this.sendWithRetry(botInfo, options));
@@ -184,7 +184,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           ts: String(result.ts),
           channelId,
           threadId,
-          createdAt: now
+          createdAt: now,
         });
       }
     } catch (error) {
@@ -198,7 +198,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     botName?: string,
     threadId?: string,
     replyToMessageId?: string,
-    blocks?: KnownBlock[]
+    blocks?: KnownBlock[],
   ): Promise<string> {
     debug('sendMessageToChannel()', { channelId, textPreview: text?.substring(0, 50), botName, threadId });
 
@@ -230,11 +230,11 @@ export class SlackMessageIO implements ISlackMessageIO {
 
     try {
       const t0 = Date.now();
-    const resolvedThreadId = threadId || replyToMessageId;
+      const resolvedThreadId = threadId || replyToMessageId;
 
-    const options: any = {
-      channel: channelId,
-      text: text || 'No content provided',
+      const options: any = {
+        channel: channelId,
+        text: text || 'No content provided',
         username: botInfo.botUserName || 'SlackBot',
         icon_emoji: ':robot_face:',
         unfurl_links: true,
@@ -242,8 +242,8 @@ export class SlackMessageIO implements ISlackMessageIO {
         parse: 'none',
       };
 
-      if (resolvedThreadId) options.thread_ts = resolvedThreadId;
-      if (blocks?.length) options.blocks = blocks;
+      if (resolvedThreadId) {options.thread_ts = resolvedThreadId;}
+      if (blocks?.length) {options.blocks = blocks;}
 
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
 
@@ -253,9 +253,9 @@ export class SlackMessageIO implements ISlackMessageIO {
           const updateOptions: any = {
             channel: channelId,
             ts: placeholder.ts,
-            text: options.text
+            text: options.text,
           };
-          if (options.blocks) updateOptions.blocks = options.blocks;
+          if (options.blocks) {updateOptions.blocks = options.blocks;}
           const updated = await this.withQueue(targetBot, () => this.updateWithRetry(botInfo, updateOptions));
           debug(`Updated typing placeholder in #${channelId}, ts=${updated.ts}`);
           return updated.ts || placeholder.ts;
@@ -282,7 +282,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           messageType: 'outgoing',
           contentLength: (text || '').length,
           processingTime: Date.now() - t0,
-          status: 'success'
+          status: 'success',
         });
       } catch { }
       return result.ts || '';
@@ -296,7 +296,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           title: 'Slack sendMessage failed',
           message: String(error),
           botName: botName || this.getDefaultBotName(),
-          metadata: { channelId }
+          metadata: { channelId },
         });
       } catch { }
       throw new Error(`Message send failed: ${error}`);
@@ -306,7 +306,7 @@ export class SlackMessageIO implements ISlackMessageIO {
   public async fetchMessages(
     channelId: string,
     limit: number = 10,
-    botName?: string
+    botName?: string,
   ): Promise<IMessage[]> {
     debug('fetchMessages()', { channelId, limit, botName });
 
@@ -323,7 +323,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     try {
       const result = await botInfo.webClient.conversations.history({ channel: channelId, limit });
       const messages = (result.messages || []).map(msg =>
-        new SlackMessage(msg.text || '', channelId, msg as any)
+        new SlackMessage(msg.text || '', channelId, msg as any),
       );
       debug(`Fetched ${messages.length} messages from channel ${channelId}`);
       return messages;

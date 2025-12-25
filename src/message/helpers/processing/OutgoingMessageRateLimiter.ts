@@ -19,7 +19,7 @@ export class OutgoingMessageRateLimiter {
     const valid = timestamps.filter((t) => now - t < windowMs);
     this.byChannel.set(channelId, valid);
 
-    if (valid.length < maxPerWindow) return 0;
+    if (valid.length < maxPerWindow) {return 0;}
 
     const oldest = Math.min(...valid);
     const waitMs = windowMs - (now - oldest) + 250; // buffer

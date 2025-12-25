@@ -1,5 +1,5 @@
 import { Discord } from '@integrations/discord/DiscordService';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 import DiscordMessage from '../DiscordMessage';
 
 /**

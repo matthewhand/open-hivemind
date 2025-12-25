@@ -54,8 +54,8 @@ const DataTable = <T extends Record<string, any>>({
     if (searchTerm) {
       filtered = filtered.filter(row =>
         Object.values(row).some(value =>
-          String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
+          String(value).toLowerCase().includes(searchTerm.toLowerCase()),
+        ),
       );
     }
 
@@ -63,7 +63,7 @@ const DataTable = <T extends Record<string, any>>({
     Object.entries(columnFilters).forEach(([key, filterValue]) => {
       if (filterValue) {
         filtered = filtered.filter(row =>
-          String(row[key]).toLowerCase().includes(filterValue.toLowerCase())
+          String(row[key]).toLowerCase().includes(filterValue.toLowerCase()),
         );
       }
     });
@@ -74,8 +74,8 @@ const DataTable = <T extends Record<string, any>>({
         const aValue = a[sortField];
         const bValue = b[sortField];
         
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        if (aValue < bValue) {return sortDirection === 'asc' ? -1 : 1;}
+        if (aValue > bValue) {return sortDirection === 'asc' ? 1 : -1;}
         return 0;
       });
     }
@@ -134,7 +134,7 @@ const DataTable = <T extends Record<string, any>>({
       columns.map(col => {
         const value = row[col.key];
         return `"${String(value).replace(/"/g, '""')}"`;
-      }).join(',')
+      }).join(','),
     ).join('\n');
     
     const csv = `${headers}\n${rows}`;
@@ -236,7 +236,7 @@ const DataTable = <T extends Record<string, any>>({
               value={columnFilters[String(col.key)] || ''}
               onChange={(e) => setColumnFilters(prev => ({
                 ...prev,
-                [String(col.key)]: e.target.value
+                [String(col.key)]: e.target.value,
               }))}
             />
           </div>
@@ -366,7 +366,7 @@ const DataTable = <T extends Record<string, any>>({
             {/* Page number buttons */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const page = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-              if (page > totalPages) return null;
+              if (page > totalPages) {return null;}
 
               return (
                 <button

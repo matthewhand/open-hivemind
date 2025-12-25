@@ -24,7 +24,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
         'ValidationError' as any,
         'DISCORD_UNSUPPORTED_CHANNEL_TYPE',
         400,
-        { channelId, channelType: channel?.type }
+        { channelId, channelType: channel?.type },
       );
     }
     if (channel instanceof PartialGroupDMChannel) {
@@ -33,7 +33,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
         'ValidationError' as any,
         'DISCORD_CANNOT_SEND_TO_PARTIAL_GROUP_DM',
         400,
-        { channelId }
+        { channelId },
       );
     }
 
@@ -47,15 +47,15 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord send public announcement error:', hivemindError);
+      console.error('Discord send public announcement error:', hivemindError);
     }
 
     throw ErrorUtils.createError(
-        `Failed to send public announcement: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'DISCORD_SEND_PUBLIC_ANNOUNCEMENT_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error, channelId }
+      `Failed to send public announcement: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_SEND_PUBLIC_ANNOUNCEMENT_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error, channelId },
     );
   }
 }

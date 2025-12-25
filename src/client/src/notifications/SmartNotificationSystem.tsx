@@ -6,7 +6,7 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   XMarkIcon,
-  TrashIcon
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 export interface Notification {
@@ -45,7 +45,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
         type: 'info',
         timestamp: new Date(),
         read: false,
-        category: 'system'
+        category: 'system',
       },
       {
         id: '2',
@@ -54,8 +54,8 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
         type: 'success',
         timestamp: new Date(Date.now() - 3600000),
         read: true,
-        category: 'bot'
-      }
+        category: 'bot',
+      },
     ];
     setNotifications(initialNotifications);
   }, []);
@@ -67,7 +67,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
       ...notification,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
-      read: false
+      read: false,
     };
     setNotifications(prev => [newNotification, ...prev]);
   };
@@ -90,10 +90,10 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'success': return <CheckCircleIcon className="w-5 h-5 text-success" />;
-      case 'warning': return <ExclamationTriangleIcon className="w-5 h-5 text-warning" />;
-      case 'error': return <XMarkIcon className="w-5 h-5 text-error" />;
-      default: return <InformationCircleIcon className="w-5 h-5 text-info" />;
+    case 'success': return <CheckCircleIcon className="w-5 h-5 text-success" />;
+    case 'warning': return <ExclamationTriangleIcon className="w-5 h-5 text-warning" />;
+    case 'error': return <XMarkIcon className="w-5 h-5 text-error" />;
+    default: return <InformationCircleIcon className="w-5 h-5 text-info" />;
     }
   };
 
@@ -105,7 +105,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
       markAsRead,
       markAllAsRead,
       clearAll,
-      removeNotification
+      removeNotification,
     }}>
       {children}
 
@@ -154,7 +154,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
                     <div
                       key={notification.id}
                       className={`p-3 rounded-lg border transition-all hover:bg-base-200 relative group ${notification.read ? 'border-transparent opacity-70' : 'border-primary/20 bg-primary/5'
-                        }`}
+                      }`}
                       onClick={() => markAsRead(notification.id)}
                     >
                       <div className="flex gap-3">
@@ -196,7 +196,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
-  if (!context) throw new Error('useNotifications must be used within SmartNotificationSystem');
+  if (!context) {throw new Error('useNotifications must be used within SmartNotificationSystem');}
   return context;
 };
 

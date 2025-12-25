@@ -1,4 +1,4 @@
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
  * Interface for Large Language Model (LLM) providers.

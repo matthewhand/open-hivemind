@@ -71,7 +71,7 @@ export class SecureConfigManager {
         'Configuration ID is required',
         'ValidationError' as any,
         'SECURE_CONFIG_ID_REQUIRED',
-        400
+        400,
       );
     }
     if (!config.name || config.name.trim() === '') {
@@ -79,7 +79,7 @@ export class SecureConfigManager {
         'Configuration name is required',
         'ValidationError' as any,
         'SECURE_CONFIG_NAME_REQUIRED',
-        400
+        400,
       );
     }
     
@@ -88,7 +88,7 @@ export class SecureConfigManager {
       const secureConfig: SecureConfig = {
         ...config,
         updatedAt: new Date().toISOString(),
-        checksum: ''
+        checksum: '',
       };
 
       // Calculate checksum before encryption (exclude checksum field itself)
@@ -114,13 +114,13 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
         `Failed to store configuration: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_STORE_FAILED',
-        500
+        500,
       );
     }
   }
@@ -146,7 +146,7 @@ export class SecureConfigManager {
           'Configuration integrity check failed',
           'IntegrityError' as any,
           'SECURE_CONFIG_INTEGRITY_FAILED',
-          500
+          500,
         );
       }
 
@@ -158,7 +158,7 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return null;
     }
@@ -180,7 +180,7 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return [];
     }
@@ -202,7 +202,7 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return false;
     }
@@ -222,7 +222,7 @@ export class SecureConfigManager {
         timestamp: new Date().toISOString(),
         configs: configs,
         checksum: '',
-        version: '1.0'
+        version: '1.0',
       };
 
       // Collect all configuration data
@@ -257,13 +257,13 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
         `Backup creation failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_CREATE_FAILED',
-        500
+        500,
       );
     }
   }
@@ -280,7 +280,7 @@ export class SecureConfigManager {
           `Backup ${backupId} not found`,
           'NotFoundError' as any,
           'SECURE_CONFIG_BACKUP_NOT_FOUND',
-          404
+          404,
         );
       }
 
@@ -294,7 +294,7 @@ export class SecureConfigManager {
           'Backup integrity check failed',
           'IntegrityError' as any,
           'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
-          500
+          500,
         );
       }
 
@@ -313,13 +313,13 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
         `Backup restoration failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_RESTORE_FAILED',
-        500
+        500,
       );
     }
   }
@@ -351,7 +351,7 @@ export class SecureConfigManager {
               errorCode: hivemindError.code,
               errorType: errorInfo.type,
               severity: errorInfo.severity,
-              file
+              file,
             });
           }
         }
@@ -365,7 +365,7 @@ export class SecureConfigManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return [];
     }
@@ -387,7 +387,7 @@ export class SecureConfigManager {
     return JSON.stringify({
       iv: iv.toString('hex'),
       authTag: authTag.toString('hex'),
-      data: encrypted
+      data: encrypted,
     });
   }
 
@@ -452,7 +452,7 @@ export class SecureConfigManager {
    * Verify checksum for data integrity
    */
   private verifyChecksum(data: any): boolean {
-    if (!data.checksum) return false;
+    if (!data.checksum) {return false;}
     const { checksum, ...dataWithoutChecksum } = data;
     const calculatedChecksum = this.calculateChecksum(dataWithoutChecksum);
     return checksum === calculatedChecksum;

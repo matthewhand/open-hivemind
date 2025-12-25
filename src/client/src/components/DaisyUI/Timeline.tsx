@@ -24,33 +24,33 @@ export interface TimelineProps {
 
 const getEventIcon = (type: EventType): string => {
   switch (type) {
-    case 'success':
-      return '✓';
-    case 'error':
-      return '✗';
-    case 'warning':
-      return '⚠';
-    case 'info':
-      return 'ℹ';
-    case 'neutral':
-    default:
-      return '○';
+  case 'success':
+    return '✓';
+  case 'error':
+    return '✗';
+  case 'warning':
+    return '⚠';
+  case 'info':
+    return 'ℹ';
+  case 'neutral':
+  default:
+    return '○';
   }
 };
 
 const getEventColorClass = (type: EventType): string => {
   switch (type) {
-    case 'success':
-      return 'timeline-success';
-    case 'error':
-      return 'timeline-error';
-    case 'warning':
-      return 'timeline-warning';
-    case 'info':
-      return 'timeline-info';
-    case 'neutral':
-    default:
-      return 'timeline-neutral';
+  case 'success':
+    return 'timeline-success';
+  case 'error':
+    return 'timeline-error';
+  case 'warning':
+    return 'timeline-warning';
+  case 'info':
+    return 'timeline-info';
+  case 'neutral':
+  default:
+    return 'timeline-neutral';
   }
 };
 
@@ -62,10 +62,10 @@ const formatTimestamp = (date: Date): string => {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) {return 'Just now';}
+  if (diffMins < 60) {return `${diffMins}m ago`;}
+  if (diffHours < 24) {return `${diffHours}h ago`;}
+  if (diffDays < 7) {return `${diffDays}d ago`;}
 
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
@@ -77,7 +77,7 @@ const Timeline: React.FC<TimelineProps> = ({
   showTimestamps = true,
   autoScroll = true,
   className = '',
-  onEventClick
+  onEventClick,
 }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
@@ -133,7 +133,7 @@ const Timeline: React.FC<TimelineProps> = ({
             <div className="timeline-end">
               <div
                 className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'
-                  }`}
+                }`}
                 onClick={() => handleEventClick(event)}
               >
                 <div className="card-body p-0">
@@ -246,7 +246,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         title: 'System Health Check',
         description: 'All systems operating normally',
         type: 'success',
-        metadata: { status: 'healthy' }
+        metadata: { status: 'healthy' },
       };
 
       setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)]); // Keep max 50 events

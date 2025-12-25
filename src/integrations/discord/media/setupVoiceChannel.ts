@@ -1,4 +1,5 @@
-import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
+import type { Client, VoiceChannel, GuildChannel } from 'discord.js';
+import { ChannelType } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:setupVoiceChannel');

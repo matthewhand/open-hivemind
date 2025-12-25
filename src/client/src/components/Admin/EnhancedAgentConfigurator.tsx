@@ -8,7 +8,7 @@ import {
   ShieldCheckIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Modal, Pagination } from '../DaisyUI';
 import AgentForm from './AgentForm';
@@ -76,14 +76,14 @@ const EnhancedAgentConfigurator: React.FC = () => {
         fetch('/api/admin/agents'),
         fetch('/api/admin/providers'),
         fetch('/api/admin/agents/personas'),
-        fetch('/api/admin/mcp/servers')
+        fetch('/api/admin/mcp/servers'),
       ]);
 
       const [agentsData, providersData, personasData, mcpData] = await Promise.all([
         agentsRes.json(),
         providersRes.json(),
         personasRes.json(),
-        mcpRes.json()
+        mcpRes.json(),
       ]);
 
       setAgents(agentsData.agents || []);
@@ -115,16 +115,16 @@ const EnhancedAgentConfigurator: React.FC = () => {
         const response = await fetch(`/api/admin/agents/${editingAgent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agentData)
+          body: JSON.stringify(agentData),
         });
-        if (!response.ok) throw new Error('Failed to update agent');
+        if (!response.ok) {throw new Error('Failed to update agent');}
       } else {
         const response = await fetch('/api/admin/agents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agentData)
+          body: JSON.stringify(agentData),
         });
-        if (!response.ok) throw new Error('Failed to create agent');
+        if (!response.ok) {throw new Error('Failed to create agent');}
       }
 
       setOpenCreateDialog(false);
@@ -135,13 +135,13 @@ const EnhancedAgentConfigurator: React.FC = () => {
   };
 
   const handleDeleteAgent = async (agentId: string) => {
-    if (!confirm('Are you sure you want to delete this agent?')) return;
+    if (!confirm('Are you sure you want to delete this agent?')) {return;}
 
     try {
       const response = await fetch(`/api/admin/agents/${agentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to delete agent');
+      if (!response.ok) {throw new Error('Failed to delete agent');}
       fetchData();
     } catch (err) {
       setError(`Failed to delete agent: ${err}`);
@@ -153,9 +153,9 @@ const EnhancedAgentConfigurator: React.FC = () => {
       const response = await fetch(`/api/admin/agents/${agent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...agent, isActive: !agent.isActive })
+        body: JSON.stringify({ ...agent, isActive: !agent.isActive }),
       });
-      if (!response.ok) throw new Error('Failed to toggle agent');
+      if (!response.ok) {throw new Error('Failed to toggle agent');}
       fetchData();
     } catch (err) {
       setError(`Failed to toggle agent: ${err}`);
@@ -248,10 +248,10 @@ const EnhancedAgentConfigurator: React.FC = () => {
                         {agent.messageProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
-                        key.toLowerCase().includes(agent.messageProvider?.toLowerCase() || '')
+                        key.toLowerCase().includes(agent.messageProvider?.toLowerCase() || ''),
                       ) && (
-                          <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
-                        )}
+                        <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
+                      )}
                     </div>
                   </div>
 
@@ -263,10 +263,10 @@ const EnhancedAgentConfigurator: React.FC = () => {
                         {agent.llmProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
-                        key.toLowerCase().includes(agent.llmProvider?.toLowerCase() || '')
+                        key.toLowerCase().includes(agent.llmProvider?.toLowerCase() || ''),
                       ) && (
-                          <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
-                        )}
+                        <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
+                      )}
                     </div>
                   </div>
 

@@ -34,7 +34,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
   const fetchConfig = async () => {
     try {
       const res = await fetch('/api/config/global');
-      if (!res.ok) throw new Error('Failed to fetch configuration');
+      if (!res.ok) {throw new Error('Failed to fetch configuration');}
       const data = await res.json();
       setConfig(data);
       if (data && Object.keys(data).length > 0) {
@@ -71,7 +71,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
       const res = await fetch('/api/config/global', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: section, updates: valuesToSave })
+        body: JSON.stringify({ configName: section, updates: valuesToSave }),
       });
 
       if (!res.ok) {
@@ -93,7 +93,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
 
   const renderField = (key: string, value: any, schema: ConfigSchema, section: string) => {
     const handleChange = (newValue: any) => {
-      if (!config) return;
+      if (!config) {return;}
       const newConfig = JSON.parse(JSON.stringify(config));
       newConfig[section].values[key] = newValue;
       setConfig(newConfig);
@@ -105,9 +105,9 @@ const ComprehensiveConfigPanel: React.FC = () => {
     const envHint = schema.env ? `Env: ${schema.env}` : '';
 
     let type = 'text';
-    if (typeof value === 'boolean' || schema.format === 'Boolean') type = 'boolean';
-    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'port' || schema.format === 'Number') type = 'number';
-    else if (Array.isArray(value) || schema.format === 'Array') type = 'array';
+    if (typeof value === 'boolean' || schema.format === 'Boolean') {type = 'boolean';}
+    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'port' || schema.format === 'Number') {type = 'number';}
+    else if (Array.isArray(value) || schema.format === 'Array') {type = 'array';}
 
     const LabelComponent = () => (
       <label className="label py-1 flex-col items-start gap-0">
@@ -192,9 +192,9 @@ const ComprehensiveConfigPanel: React.FC = () => {
     );
   };
 
-  if (loading) return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;
-  if (error) return <Alert status="error" message={error} />;
-  if (!config) return <Alert status="warning" message="No configuration found" />;
+  if (loading) {return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;}
+  if (error) {return <Alert status="error" message={error} />;}
+  if (!config) {return <Alert status="warning" message="No configuration found" />;}
 
   const activeConfig = config[activeTab];
 

@@ -1,5 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import { MattermostPost } from './MattermostMessage';
+import type { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { MattermostPost } from './MattermostMessage';
 
 interface MattermostClientOptions {
   serverUrl: string;
@@ -47,9 +48,9 @@ export default class MattermostClient {
       baseURL: `${this.serverUrl}/api/v4`,
       headers: {
         'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      timeout: 10000
+      timeout: 10000,
     });
   }
 
@@ -79,7 +80,7 @@ export default class MattermostClient {
         channel_id: channelId,
         message: options.text,
         root_id: options.root_id,
-        file_ids: options.file_ids || []
+        file_ids: options.file_ids || [],
       });
       
       return response.data;
@@ -92,7 +93,7 @@ export default class MattermostClient {
   async getChannelPosts(channelId: string, page: number = 0, perPage: number = 60): Promise<MattermostPost[]> {
     try {
       const response = await this.api.get(`/channels/${channelId}/posts`, {
-        params: { page, per_page: perPage }
+        params: { page, per_page: perPage },
       });
       
       const posts = response.data.posts;
@@ -181,9 +182,9 @@ export default class MattermostClient {
    * Best-effort typing indicator (requires server support for /users/{id}/typing).
    */
   async sendTyping(channelId: string, parentId?: string): Promise<void> {
-    if (!this.connected) return;
+    if (!this.connected) {return;}
     const userId = this.getCurrentUserId();
-    if (!userId) return;
+    if (!userId) {return;}
     try {
       await this.api.post(`/users/${userId}/typing`, {
         channel_id: channelId,

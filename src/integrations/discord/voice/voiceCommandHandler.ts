@@ -1,4 +1,5 @@
-import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
+import type { VoiceConnection} from '@discordjs/voice';
+import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import { transcribeAudio } from './speechToText';
 import { convertOpusToWav } from '../media/convertOpusToWav';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
@@ -20,11 +21,11 @@ export class VoiceCommandHandler {
   }
 
   async processVoiceInput(opusBuffer: Buffer): Promise<void> {
-    if (!this.isListening) return;
+    if (!this.isListening) {return;}
 
     try {
       const tempDir = './temp';
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      if (!fs.existsSync(tempDir)) {fs.mkdirSync(tempDir, { recursive: true });}
 
       const wavPath = await convertOpusToWav(opusBuffer, tempDir);
       const transcription = await transcribeAudio(wavPath);
@@ -43,25 +44,25 @@ export class VoiceCommandHandler {
 
       // Log with appropriate level
       if (classification.logLevel === 'error') {
-          console.error('Discord voice processing error:', hivemindError);
+        console.error('Discord voice processing error:', hivemindError);
       }
     }
   }
 
   private async generateResponse(text: string): Promise<string> {
     const llmProviders = getLlmProvider();
-    if (llmProviders.length === 0) return "I'm having trouble processing that.";
+    if (llmProviders.length === 0) {return 'I\'m having trouble processing that.';}
 
     try {
       return await llmProviders[0].generateChatCompletion(text, [], {});
     } catch {
-      return "Sorry, I couldn't process that request.";
+      return 'Sorry, I couldn\'t process that request.';
     }
   }
 
   private async speakResponse(text: string): Promise<void> {
     const openai = new OpenAI({
-      apiKey: openaiConfig.get('OPENAI_API_KEY') as string
+      apiKey: openaiConfig.get('OPENAI_API_KEY') as string,
     });
 
     const tempPath = path.join('./temp', `response_${Date.now()}.mp3`);
@@ -121,7 +122,7 @@ export class VoiceCommandHandler {
 
       // Log with appropriate level
       if (classification.logLevel === 'error') {
-          console.error('Discord TTS error:', hivemindError);
+        console.error('Discord TTS error:', hivemindError);
       }
     }
   }

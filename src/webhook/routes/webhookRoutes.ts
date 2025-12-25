@@ -1,6 +1,7 @@
 import Debug from 'debug';
-import express, { Request, Response } from 'express';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { Request, Response } from 'express';
+import type express from 'express';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 
 // Import after jest.doMock of config to allow per-test overrides
@@ -54,7 +55,7 @@ function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
     /javascript:/i,
     /on\w+\s*=/i,
     /<iframe/i,
-    /<object/i
+    /<object/i,
   ];
 
   const checkString = JSON.stringify(body);
@@ -74,7 +75,7 @@ export function configureWebhookRoutes(app: express.Application, messageService:
       headers: { 'content-type': req.headers['content-type'], 'user-agent': req.headers['user-agent'] },
       bodyKeys: Object.keys(req.body || {}),
       predictionId: req.body?.id,
-      status: req.body?.status
+      status: req.body?.status,
     });
 
     // Validate request body
@@ -83,7 +84,7 @@ export function configureWebhookRoutes(app: express.Application, messageService:
       debug('Webhook validation failed:', validation.errors);
       return res.status(400).json({ 
         error: 'Invalid request body', 
-        details: validation.errors 
+        details: validation.errors, 
       });
     }
 

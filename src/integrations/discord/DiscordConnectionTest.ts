@@ -21,7 +21,7 @@ export const testDiscordConnection = async (token: string): Promise<DiscordConne
     return {
       ok: false,
       message: `Discord API error: ${response.status} ${response.statusText}`,
-      details: { body: text }
+      details: { body: text },
     };
   }
 

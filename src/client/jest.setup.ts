@@ -6,7 +6,7 @@ import { setupMockWebSocket } from './client/src/mocks/websocketMock';
 beforeAll(() => {
   // Start the MSW server
   server.listen({
-    onUnhandledRequest: 'warn'
+    onUnhandledRequest: 'warn',
   });
 
   // Setup mock WebSocket
@@ -207,8 +207,8 @@ expect.extend({
     return {
       message: () =>
         pass
-          ? `expected component not to be in error state`
-          : `expected component to be in error state`,
+          ? 'expected component not to be in error state'
+          : 'expected component to be in error state',
       pass,
     };
   },
@@ -230,8 +230,8 @@ expect.extend({
     return {
       message: () =>
         pass
-          ? `expected WebSocket not to be connected`
-          : `expected WebSocket to be connected`,
+          ? 'expected WebSocket not to be connected'
+          : 'expected WebSocket to be connected',
       pass,
     };
   },

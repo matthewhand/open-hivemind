@@ -31,7 +31,7 @@ const MonitoringDashboard: React.FC = () => {
     try {
       const [status, health] = await Promise.all([
         apiService.getStatus(),
-        apiService.getSystemHealth()
+        apiService.getSystemHealth(),
       ]);
       setSystemStatus(status);
       setSystemMetrics(health);
@@ -47,7 +47,7 @@ const MonitoringDashboard: React.FC = () => {
     cpu: { user: 25, system: 15, total: 40 },
     memory: { used: 6.2, total: 16, usage: 39 },
     disk: { used: 125, total: 500, usage: 25 },
-    network: { rx: 1024, tx: 2048 }
+    network: { rx: 1024, tx: 2048 },
   };
 
   const metrics = systemMetrics || mockSystemMetrics;
@@ -57,16 +57,16 @@ const MonitoringDashboard: React.FC = () => {
       title: 'System Health',
       subtitle: 'Overall system status',
       status: systemStatus?.bots?.some(b => b.status === 'error') ? 'error' :
-              systemStatus?.bots?.some(b => b.status === 'warning') ? 'warning' : 'healthy',
+        systemStatus?.bots?.some(b => b.status === 'warning') ? 'warning' : 'healthy',
       metrics: [
         { label: 'CPU Usage', value: metrics.cpu?.total || 0, unit: '%', trend: 'stable' },
         { label: 'Memory', value: metrics.memory?.usage || 0, unit: '%', trend: 'up', trendValue: 5 },
         { label: 'Disk', value: metrics.disk?.usage || 0, unit: '%', trend: 'stable' },
-        { label: 'Uptime', value: systemStatus?.uptime || 0, unit: 's', icon: '⏱️' }
+        { label: 'Uptime', value: systemStatus?.uptime || 0, unit: 's', icon: '⏱️' },
       ],
       refreshInterval: 5000,
       onRefresh: fetchSystemData,
-      isLoading
+      isLoading,
     },
     {
       title: 'Bot Status',
@@ -76,11 +76,11 @@ const MonitoringDashboard: React.FC = () => {
         { label: 'Total Bots', value: systemStatus?.bots?.length || 0, icon: '🤖' },
         { label: 'Active', value: systemStatus?.bots?.filter(b => b.status === 'online')?.length || 0, icon: '✅' },
         { label: 'Errors', value: systemStatus?.bots?.filter(b => b.status === 'error')?.length || 0, icon: '❌' },
-        { label: 'Messages', value: systemStatus?.bots?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0, icon: '💬' }
+        { label: 'Messages', value: systemStatus?.bots?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0, icon: '💬' },
       ],
       refreshInterval: 10000,
       onRefresh: fetchSystemData,
-      isLoading
+      isLoading,
     },
     {
       title: 'Performance',
@@ -90,11 +90,11 @@ const MonitoringDashboard: React.FC = () => {
         { label: 'Response Time', value: 125, unit: 'ms', trend: 'down', trendValue: -8 },
         { label: 'Throughput', value: 1024, unit: 'req/s', trend: 'up', trendValue: 12 },
         { label: 'Error Rate', value: 0.5, unit: '%', trend: 'stable' },
-        { label: 'Queue Size', value: 42, unit: 'items', trend: 'down', trendValue: -15 }
+        { label: 'Queue Size', value: 42, unit: 'items', trend: 'down', trendValue: -15 },
       ],
       refreshInterval: 5000,
       onRefresh: fetchSystemData,
-      isLoading
+      isLoading,
     },
     {
       title: 'Network',
@@ -104,12 +104,12 @@ const MonitoringDashboard: React.FC = () => {
         { label: 'Incoming', value: (metrics.network?.rx || 0) / 1024, unit: 'KB/s', trend: 'up', trendValue: 23 },
         { label: 'Outgoing', value: (metrics.network?.tx || 0) / 1024, unit: 'KB/s', trend: 'stable' },
         { label: 'Connections', value: 156, icon: '🔗' },
-        { label: 'Latency', value: 12, unit: 'ms', trend: 'down', trendValue: -5 }
+        { label: 'Latency', value: 12, unit: 'ms', trend: 'down', trendValue: -5 },
       ],
       refreshInterval: 3000,
       onRefresh: fetchSystemData,
-      isLoading
-    }
+      isLoading,
+    },
   ];
 
   // Generate sample chart data
@@ -117,7 +117,7 @@ const MonitoringDashboard: React.FC = () => {
     const now = new Date();
     return Array.from({ length: 20 }, (_, i) => ({
       timestamp: new Date(now.getTime() - (19 - i) * 60000).toISOString(),
-      value: baseValue + (Math.random() - 0.5) * variance
+      value: baseValue + (Math.random() - 0.5) * variance,
     }));
   };
 
@@ -228,7 +228,7 @@ const MonitoringDashboard: React.FC = () => {
             message: alert.message || '',
             timestamp: alert.timestamp || new Date().toISOString(),
             source: alert.source || 'System',
-            metadata: alert.metadata
+            metadata: alert.metadata,
           }))}
           onAcknowledge={(id) => console.log('Acknowledged alert:', id)}
           onResolve={(id) => console.log('Resolved alert:', id)}

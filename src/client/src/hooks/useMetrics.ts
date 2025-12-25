@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getMetrics, Metrics } from '../services/metricsService';
+import type { Metrics } from '../services/metricsService';
+import { getMetrics } from '../services/metricsService';
 
 export const useMetrics = () => {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -11,7 +12,7 @@ export const useMetrics = () => {
       try {
         const metricsData = await getMetrics();
         setMetrics(metricsData);
-            } catch {
+      } catch {
         setError('Failed to fetch metrics');
       }
       setLoading(false);

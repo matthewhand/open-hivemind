@@ -1,5 +1,6 @@
-import Debug from "debug";
-import { VoiceChannel, Client } from 'discord.js';
+import Debug from 'debug';
+import type { Client } from 'discord.js';
+import { VoiceChannel } from 'discord.js';
 import { getRandomDelay } from '@src/common/getRandomDelay';
 
 const debug = Debug('app:connectToVoiceChannel');
@@ -21,7 +22,7 @@ const debug = Debug('app:connectToVoiceChannel');
  */
 export async function connectToVoiceChannel(
   client: Client,
-  channelId: string
+  channelId: string,
 ): Promise<VoiceChannel> {
   try {
     const channel = await client.channels.fetch(channelId);

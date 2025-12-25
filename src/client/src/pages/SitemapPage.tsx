@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
-  ArrowPathIcon as RefreshIcon
+  ArrowPathIcon as RefreshIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -30,7 +30,7 @@ const SitemapPage: React.FC = () => {
   const [accessFilter, setAccessFilter] = useState<string>('all');
 
   const breadcrumbItems = [
-    { label: 'Sitemap', href: '/uber/sitemap', isActive: true }
+    { label: 'Sitemap', href: '/uber/sitemap', isActive: true },
   ];
 
   const fetchSitemap = async () => {
@@ -60,16 +60,16 @@ const SitemapPage: React.FC = () => {
 
   const getAccessColor = (access: string) => {
     switch (access) {
-      case 'public': return 'badge-success';
-      case 'authenticated': return 'badge-warning';
-      case 'owner': return 'badge-error';
-      default: return 'badge-ghost';
+    case 'public': return 'badge-success';
+    case 'authenticated': return 'badge-warning';
+    case 'owner': return 'badge-error';
+    default: return 'badge-ghost';
     }
   };
 
   const getPriorityColor = (priority: number) => {
-    if (priority >= 0.8) return 'badge-success';
-    if (priority >= 0.5) return 'badge-warning';
+    if (priority >= 0.8) {return 'badge-success';}
+    if (priority >= 0.5) {return 'badge-warning';}
     return 'badge-ghost';
   };
 
@@ -88,11 +88,11 @@ const SitemapPage: React.FC = () => {
     if (url.url === '/') {
       category = 'Root';
     } else if (url.url.startsWith('/uber')) {
-      if (url.url.includes('/bots')) category = 'Bot Management';
-      else if (url.url.includes('/mcp')) category = 'MCP Servers';
-      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) category = 'Monitoring';
-      else if (url.url.includes('/settings')) category = 'Settings';
-      else category = 'Main Dashboard';
+      if (url.url.includes('/bots')) {category = 'Bot Management';}
+      else if (url.url.includes('/mcp')) {category = 'MCP Servers';}
+      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) {category = 'Monitoring';}
+      else if (url.url.includes('/settings')) {category = 'Settings';}
+      else {category = 'Main Dashboard';}
     } else if (url.url.startsWith('/webui') || url.url.startsWith('/admin')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
@@ -101,7 +101,7 @@ const SitemapPage: React.FC = () => {
       category = 'Authentication';
     }
 
-    if (!acc[category]) acc[category] = [];
+    if (!acc[category]) {acc[category] = [];}
     acc[category].push(url);
     return acc;
   }, {} as Record<string, SitemapUrl[]>) || {};

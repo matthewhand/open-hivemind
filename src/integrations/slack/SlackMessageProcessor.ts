@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import axios from 'axios';
-import { SlackBotManager } from './SlackBotManager';
-import SlackMessage from './SlackMessage';
-import { IMessage } from '@message/interfaces/IMessage';
-import { KnownBlock } from '@slack/web-api';
+import type { SlackBotManager } from './SlackBotManager';
+import type SlackMessage from './SlackMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { KnownBlock } from '@slack/web-api';
 import { ConfigurationError, ValidationError, NetworkError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 
@@ -28,7 +28,7 @@ export class SlackMessageProcessor {
     if (!botManager) {
       throw new ConfigurationError(
         'SlackBotManager instance required',
-        'SLACK_BOT_MANAGER_REQUIRED'
+        'SLACK_BOT_MANAGER_REQUIRED',
       );
     }
     this.botManager = botManager;
@@ -39,7 +39,7 @@ export class SlackMessageProcessor {
       debug('Error: Invalid message or missing channelId');
       throw new ValidationError(
         'Message and channelId required',
-        'SLACK_MESSAGE_VALIDATION_FAILED'
+        'SLACK_MESSAGE_VALIDATION_FAILED',
       );
     }
 
@@ -48,7 +48,7 @@ export class SlackMessageProcessor {
       debug('Error: Bot information not found');
       throw new ConfigurationError(
         'Bot information not found',
-        'SLACK_BOT_INFO_NOT_FOUND'
+        'SLACK_BOT_INFO_NOT_FOUND',
       );
     }
     const channelId = message.getChannelId();
@@ -72,14 +72,14 @@ export class SlackMessageProcessor {
           `Channel info fetch failed: ${channelInfoResp.error}`,
           'api' as any,
           'SLACK_CHANNEL_INFO_FETCH_FAILED',
-          500
+          500,
         );
       }
       const channelInfo = {
         channelId,
         channelName: channelInfoResp.channel?.name || 'unknown',
         description: channelInfoResp.channel?.purpose?.value || '',
-        createdDate: channelInfoResp.channel?.created ? new Date(channelInfoResp.channel.created * 1000).toISOString() : undefined
+        createdDate: channelInfoResp.channel?.created ? new Date(channelInfoResp.channel.created * 1000).toISOString() : undefined,
       };
       debug(`Channel info: ${JSON.stringify(channelInfo)}`);
 
@@ -88,7 +88,7 @@ export class SlackMessageProcessor {
         threadTs,
         threadOwnerUserId: threadTs ? message.data.user : undefined,
         threadParticipants: threadTs ? await this.getThreadParticipants(channelId, threadTs) : [],
-        messageCount: threadTs ? await this.getThreadMessageCount(channelId, threadTs) : 0
+        messageCount: threadTs ? await this.getThreadMessageCount(channelId, threadTs) : 0,
       };
       debug(`Thread info: ${JSON.stringify(threadInfo)}`);
 
@@ -97,7 +97,7 @@ export class SlackMessageProcessor {
         userName: 'User',
         email: null as string | null,
         preferredName: null as string | null,
-        isStaff: false
+        isStaff: false,
       };
       try {
         if (userId && userId !== 'unknown' && userId.startsWith('U')) {
@@ -107,7 +107,7 @@ export class SlackMessageProcessor {
             userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User',
             email: userInfo.user?.profile?.email || null,
             preferredName: userInfo.user?.profile?.real_name || null,
-            isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
+            isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false,
           };
           debug(`Fetched user info: ${JSON.stringify(slackUser)}`);
         } else {
@@ -121,7 +121,7 @@ export class SlackMessageProcessor {
           errorCode: hivemindError.code,
           errorType: errorInfo.type,
           severity: errorInfo.severity,
-          userId
+          userId,
         });
       }
 
@@ -144,24 +144,24 @@ export class SlackMessageProcessor {
                   channelContent = {
                     ...targetContent,
                     content: contentInfoAny.content || 'No content returned by API',
-                    info: contentInfoAny.file
+                    info: contentInfoAny.file,
                   };
                   if (!contentInfoAny.content && contentInfoAny.file?.url_private) {
                     try {
                       const contentResponse = await axios.get(contentInfoAny.file.url_private, {
                         headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
-                        timeout: 15000
+                        timeout: 15000,
                       });
                       (channelContent as any).content = contentResponse.data || 'No content available';
                       debug(`Fetched content from url_private: ${(channelContent as any).content?.substring(0, 50)}...`);
                     } catch (fetchError: unknown) {
                       const hivemindError = ErrorUtils.toHivemindError(fetchError) as any;
                       const errorInfo = ErrorUtils.classifyError(hivemindError);
-                      debug(`Failed to fetch content from url_private:`, {
+                      debug('Failed to fetch content from url_private:', {
                         error: hivemindError.message,
                         errorCode: hivemindError.code,
                         errorType: errorInfo.type,
-                        severity: errorInfo.severity
+                        severity: errorInfo.severity,
                       });
                       (channelContent as any).content = 'No content available';
                     }
@@ -170,13 +170,13 @@ export class SlackMessageProcessor {
                   const fileResponse = await axios.get(contentInfoAny.file.url_private!, {
                     headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer',
-                    timeout: 15000
+                    timeout: 15000,
                   });
                   const base64Content = Buffer.from(fileResponse.data).toString('base64');
                   channelContent = {
                     ...targetContent,
                     content: `data:${contentInfoAny.file.mimetype};base64,${base64Content}`,
-                    info: contentInfoAny.file
+                    info: contentInfoAny.file,
                   };
                   debug(`Binary content base64-encoded: ${(channelContent as any).content?.substring(0, 50)}...`);
                 } else {
@@ -184,7 +184,7 @@ export class SlackMessageProcessor {
                     `Unsupported file type: ${contentInfoAny.file?.filetype || 'unknown'}`,
                     'validation' as any,
                     'SLACK_UNSUPPORTED_FILE_TYPE',
-                    400
+                    400,
                   );
                 }
               } else {
@@ -193,7 +193,7 @@ export class SlackMessageProcessor {
                   contentInfoAny.error || 'Unknown error fetching channel content',
                   'api' as any,
                   'SLACK_CHANNEL_CONTENT_FETCH_FAILED',
-                  500
+                  500,
                 );
               }
               debug(`Channel content retrieved: ${(channelContent as any).content?.substring(0, 50)}...`);
@@ -208,12 +208,12 @@ export class SlackMessageProcessor {
         } catch (error: unknown) {
           const hivemindError = ErrorUtils.toHivemindError(error) as any;
           const errorInfo = ErrorUtils.classifyError(hivemindError);
-          debug(`Failed to retrieve channel content:`, {
+          debug('Failed to retrieve channel content:', {
             error: hivemindError.message,
             errorCode: hivemindError.code,
             errorType: errorInfo.type,
             severity: errorInfo.severity,
-            channelId
+            channelId,
           });
           channelContent = { content: '', info: null };
         }
@@ -224,7 +224,7 @@ export class SlackMessageProcessor {
       const channelContentStr = ((channelContent as any)?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
       const metadata = {
         channelInfo: { channelId: channelInfo.channelId },
-        userInfo: { userName: slackUser.userName }
+        userInfo: { userName: slackUser.userName },
       };
       const messageDataAny = message.data as any;
       const messageAttachments = messageDataAny.files?.map((file: any, index: number) => ({
@@ -232,13 +232,13 @@ export class SlackMessageProcessor {
         fileName: file.name || 'unknown',
         fileType: file.filetype || 'unknown',
         url: file.url_private || '',
-        size: file.size || 0
+        size: file.size || 0,
       })) || [];
       const messageReactions = messageDataAny.reactions?.map((reaction: any) => ({
         reaction: reaction.name || 'unknown',
         reactedUserId: reaction.users?.[0] || 'unknown',
         messageId: message.getMessageId(),
-        messageChannelId: channelId
+        messageChannelId: channelId,
       })) || [];
 
       message.data = {
@@ -250,24 +250,24 @@ export class SlackMessageProcessor {
         threadInfo,
         slackUser,
         messageAttachments,
-        messageReactions
+        messageReactions,
       };
       debug(`Enriched message data: ${JSON.stringify(message.data, null, 2).substring(0, 200)}...`);
       return message;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to enrich message:`, {
+      debug('Failed to enrich message:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
         `Message enrichment failed: ${hivemindError.message}`,
         errorInfo.type as any,
         'SLACK_MESSAGE_ENRICHMENT_FAILED',
-        500
+        500,
       );
     }
   }
@@ -280,7 +280,7 @@ export class SlackMessageProcessor {
         'Message required',
         'validation' as any,
         'SLACK_MESSAGE_REQUIRED',
-        400
+        400,
       );
     }
 
@@ -288,43 +288,43 @@ export class SlackMessageProcessor {
     const messageDataAny = message.data as any;
     const metadata = messageDataAny.metadata || {
       channelInfo: { channelId: message.getChannelId() },
-      userInfo: { userName: messageDataAny.slackUser?.userName || 'User' }
+      userInfo: { userName: messageDataAny.slackUser?.userName || 'User' },
     };
     debug(`Metadata: ${JSON.stringify(metadata)}`);
 
     const payload = {
       metadata,
       messages: [
-        { role: "system", content: "You are a bot that assists slack users." },
+        { role: 'system', content: 'You are a bot that assists slack users.' },
         {
-          role: "assistant",
-          content: "",
+          role: 'assistant',
+          content: '',
           tool_calls: [
-            { id: currentTs, type: "function", function: { name: "get_user_info", arguments: JSON.stringify({ username: metadata.userInfo.userName }) } },
-            { id: `${parseFloat(currentTs) + 0.0001}`, type: "function", function: { name: "get_channel_info", arguments: JSON.stringify({ channelId: metadata.channelInfo.channelId }) } }
-          ]
+            { id: currentTs, type: 'function', function: { name: 'get_user_info', arguments: JSON.stringify({ username: metadata.userInfo.userName }) } },
+            { id: `${parseFloat(currentTs) + 0.0001}`, type: 'function', function: { name: 'get_channel_info', arguments: JSON.stringify({ channelId: metadata.channelInfo.channelId }) } },
+          ],
         },
         {
-          role: "tool",
+          role: 'tool',
           tool_call_id: currentTs,
-          tool_name: "get_user_info",
+          tool_name: 'get_user_info',
           content: JSON.stringify({
             slackUser: {
               slackUserId: messageDataAny.slackUser?.slackUserId || 'unknown',
               userName: metadata.userInfo.userName,
               email: messageDataAny.slackUser?.email || null,
-              preferredName: messageDataAny.slackUser?.preferredName || null
-            }
-          })
+              preferredName: messageDataAny.slackUser?.preferredName || null,
+            },
+          }),
         },
         {
-          role: "tool",
+          role: 'tool',
           tool_call_id: `${parseFloat(currentTs) + 0.0001}`,
-          tool_name: "get_channel_info",
-          content: JSON.stringify({ channelContent: { content: messageDataAny.channelContent?.content || '' } })
+          tool_name: 'get_channel_info',
+          content: JSON.stringify({ channelContent: { content: messageDataAny.channelContent?.content || '' } }),
         },
-        { role: "user", content: message.getText() }
-      ]
+        { role: 'user', content: message.getText() },
+      ],
     };
 
     if (history?.length > 0) {
@@ -357,7 +357,7 @@ export class SlackMessageProcessor {
         .replace(/"/gi, '"')
         .replace(/["'"]|["'"]|["'"]/gi, '"')
         .replace(/&(?:amp;)?quot;/gi, '"')
-        .replace(/'/gi, "'")
+        .replace(/'/gi, '\'')
         .replace(/&[^;\s]+;/g, match => {
           const decoded = match
             .replace(/&/gi, '&')
@@ -367,9 +367,9 @@ export class SlackMessageProcessor {
           return decoded;
         })
         // Fix contractions only, preserve double quotes for quotations
-        .replace(/(\w)"(\w)/g, "$1'$2") // roarin" → roarin'
-        .replace(/(\w)"(\s|$)/g, "$1'$2") // plunderin" → plunderin'
-        .replace(/['‘’]/g, "'"); // Normalize apostrophes
+        .replace(/(\w)"(\w)/g, '$1\'$2') // roarin" → roarin'
+        .replace(/(\w)"(\s|$)/g, '$1\'$2') // plunderin" → plunderin'
+        .replace(/['‘’]/g, '\''); // Normalize apostrophes
       debug(`Processed text: ${processedText.substring(0, 50) + (processedText.length > 50 ? '...' : '')}`);
 
       // Manual mrkdwn formatting (bold and italics)
@@ -383,7 +383,7 @@ export class SlackMessageProcessor {
         .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
         .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
         .replace(/"/gi, '"') // Ensure " stays "
-        .replace(/"/gi, "'"); // Substitute ' only
+        .replace(/"/gi, '\''); // Substitute ' only
 
       // Create a single mrkdwn block
       const blocks: KnownBlock[] = [{
@@ -391,8 +391,8 @@ export class SlackMessageProcessor {
         text: {
           type: 'mrkdwn',
           text: finalText,
-          verbatim: true // Prevent Slack re-escaping
-        }
+          verbatim: true, // Prevent Slack re-escaping
+        },
       }];
 
       debug(`Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`);
@@ -400,11 +400,11 @@ export class SlackMessageProcessor {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Error processing response:`, {
+      debug('Error processing response:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return { text: 'Error processing response' };
     }
@@ -421,13 +421,13 @@ export class SlackMessageProcessor {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to get thread participants:`, {
+      debug('Failed to get thread participants:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         channelId,
-        threadTs
+        threadTs,
       });
       return [];
     }
@@ -444,13 +444,13 @@ export class SlackMessageProcessor {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to get thread message count:`, {
+      debug('Failed to get thread message count:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         channelId,
-        threadTs
+        threadTs,
       });
       return 0;
     }

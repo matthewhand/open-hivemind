@@ -33,17 +33,17 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
   className = '',
   lines = 1,
-  animate = true
+  animate = true,
 }) => {
   const getShapeClass = () => {
     switch (shape) {
-      case 'circle':
-        return 'rounded-full';
-      case 'text':
-        return 'rounded';
-      case 'rectangle':
-      default:
-        return 'rounded';
+    case 'circle':
+      return 'rounded-full';
+    case 'text':
+      return 'rounded';
+    case 'rectangle':
+    default:
+      return 'rounded';
     }
   };
 
@@ -73,7 +73,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
             style={{
               ...getSizeStyles(),
               height: height || '1rem',
-              width: width || (index === lines - 1 && lines > 1 ? '66.67%' : '100%')
+              width: width || (index === lines - 1 && lines > 1 ? '66.67%' : '100%'),
             }}
             aria-hidden="true"
             role="presentation"
@@ -118,7 +118,7 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({
   className = '',
   animate = true,
   showImage = true,
-  showActions = true
+  showActions = true,
 }) => (
   <div className={`card bg-base-100 shadow-xl ${className}`}>
     {showImage && (
@@ -150,7 +150,7 @@ export const SkeletonList: React.FC<SkeletonListProps> = ({
   items = 5,
   className = '',
   animate = true,
-  showAvatar = false
+  showAvatar = false,
 }) => (
   <div className={`space-y-4 ${className}`}>
     {Array.from({ length: items }).map((_, index) => (

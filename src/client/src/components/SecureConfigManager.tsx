@@ -98,7 +98,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleDeleteConfig = async (configId: string) => {
     const config = configs.find(c => c.id === configId);
-    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) return;
+    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
     try {
       setConfigs(configs.filter(c => c.id !== configId));
       showToast(`Configuration "${config.name}" deleted successfully`, 'success');

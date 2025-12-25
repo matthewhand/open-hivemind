@@ -41,8 +41,8 @@ const SystemManagement: React.FC = () => {
       cpu: 80,
       memory: 85,
       disk: 90,
-      responseTime: 500
-    }
+      responseTime: 500,
+    },
   });
 
   const [backups, setBackups] = useState<BackupRecord[]>([]);
@@ -69,8 +69,8 @@ const SystemManagement: React.FC = () => {
           cpu: 80,
           memory: 85,
           disk: 90,
-          responseTime: 500
-        }
+          responseTime: 500,
+        },
       };
       setSystemConfig(mockConfig);
     } catch (error) {
@@ -88,7 +88,7 @@ const SystemManagement: React.FC = () => {
           size: '245 MB',
           type: 'automatic',
           status: 'success',
-          description: 'Scheduled daily backup'
+          description: 'Scheduled daily backup',
         },
         {
           id: '2',
@@ -96,7 +96,7 @@ const SystemManagement: React.FC = () => {
           size: '238 MB',
           type: 'automatic',
           status: 'success',
-          description: 'Scheduled daily backup'
+          description: 'Scheduled daily backup',
         },
         {
           id: '3',
@@ -104,7 +104,7 @@ const SystemManagement: React.FC = () => {
           size: '231 MB',
           type: 'manual',
           status: 'success',
-          description: 'Manual backup before update'
+          description: 'Manual backup before update',
         },
         {
           id: '4',
@@ -112,8 +112,8 @@ const SystemManagement: React.FC = () => {
           size: '226 MB',
           type: 'automatic',
           status: 'failed',
-          description: 'Scheduled daily backup - insufficient space'
-        }
+          description: 'Scheduled daily backup - insufficient space',
+        },
       ];
       setBackups(mockBackups);
     } catch (error) {
@@ -155,7 +155,7 @@ const SystemManagement: React.FC = () => {
         size: 'Calculating...',
         type: 'manual',
         status: 'in_progress',
-        description: 'Manual backup started'
+        description: 'Manual backup started',
       };
       setBackups(prev => [newBackup, ...prev]);
 
@@ -164,7 +164,7 @@ const SystemManagement: React.FC = () => {
         setBackups(prev => prev.map(backup =>
           backup.id === newBackup.id
             ? { ...backup, size: '250 MB', status: 'success' }
-            : backup
+            : backup,
         ));
         setIsCreatingBackup(false);
       }, 3000);
@@ -194,13 +194,13 @@ const SystemManagement: React.FC = () => {
       title: 'Alert Management',
       subtitle: 'Active system alerts and notifications',
       status: alerts.some(a => a.severity === 'error') ? 'error' :
-              alerts.some(a => a.severity === 'warning') ? 'warning' : 'healthy',
+        alerts.some(a => a.severity === 'warning') ? 'warning' : 'healthy',
       metrics: [
         { label: 'Critical', value: alerts.filter(a => a.severity === 'error').length, icon: '🚨' },
         { label: 'Warnings', value: alerts.filter(a => a.severity === 'warning').length, icon: '⚠️' },
         { label: 'Info', value: alerts.filter(a => a.severity === 'info').length, icon: 'ℹ️' },
-        { label: 'Acknowledged', value: alerts.filter(a => a.acknowledged).length, icon: '✅' }
-      ]
+        { label: 'Acknowledged', value: alerts.filter(a => a.acknowledged).length, icon: '✅' },
+      ],
     },
     {
       title: 'Backup Status',
@@ -210,8 +210,8 @@ const SystemManagement: React.FC = () => {
         { label: 'Total Backups', value: backups.length, icon: '💾' },
         { label: 'Successful', value: backups.filter(b => b.status === 'success').length, icon: '✅' },
         { label: 'Failed', value: backups.filter(b => b.status === 'failed').length, icon: '❌' },
-        { label: 'Last Backup', value: backups.length > 0 ? '1h ago' : 'Never', icon: '⏰' }
-      ]
+        { label: 'Last Backup', value: backups.length > 0 ? '1h ago' : 'Never', icon: '⏰' },
+      ],
     },
     {
       title: 'System Resources',
@@ -221,9 +221,9 @@ const SystemManagement: React.FC = () => {
         { label: 'CPU Usage', value: performanceMetrics[0]?.cpu || 0, unit: '%' },
         { label: 'Memory', value: performanceMetrics[0]?.memory || 0, unit: '%' },
         { label: 'Connections', value: 156, icon: '🔗' },
-        { label: 'Queue Size', value: 42, icon: '📋' }
-      ]
-    }
+        { label: 'Queue Size', value: 42, icon: '📋' },
+      ],
+    },
   ];
 
   return (
@@ -304,7 +304,7 @@ const SystemManagement: React.FC = () => {
                 timestamp: alert.timestamp || new Date().toISOString(),
                 source: alert.source || 'System',
                 acknowledged: alert.acknowledged,
-                metadata: alert.metadata
+                metadata: alert.metadata,
               }))}
               onAcknowledge={handleAlertAcknowledge}
               onResolve={handleAlertResolve}
@@ -390,7 +390,7 @@ const SystemManagement: React.FC = () => {
                       value={systemConfig.alertThresholds.cpu}
                       onChange={(e) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        cpu: Number(e.target.value)
+                        cpu: Number(e.target.value),
                       })}
                       min="50"
                       max="95"
@@ -407,7 +407,7 @@ const SystemManagement: React.FC = () => {
                       value={systemConfig.alertThresholds.memory}
                       onChange={(e) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        memory: Number(e.target.value)
+                        memory: Number(e.target.value),
                       })}
                       min="50"
                       max="95"
@@ -424,7 +424,7 @@ const SystemManagement: React.FC = () => {
                       value={systemConfig.alertThresholds.disk}
                       onChange={(e) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        disk: Number(e.target.value)
+                        disk: Number(e.target.value),
                       })}
                       min="50"
                       max="95"
@@ -441,7 +441,7 @@ const SystemManagement: React.FC = () => {
                       value={systemConfig.alertThresholds.responseTime}
                       onChange={(e) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        responseTime: Number(e.target.value)
+                        responseTime: Number(e.target.value),
                       })}
                       min="100"
                       max="5000"
@@ -491,7 +491,7 @@ const SystemManagement: React.FC = () => {
                         <td>
                           <span className={`badge ${
                             backup.status === 'success' ? 'badge-success' :
-                            backup.status === 'failed' ? 'badge-error' : 'badge-warning'
+                              backup.status === 'failed' ? 'badge-error' : 'badge-warning'
                           }`}>
                             {backup.status}
                           </span>

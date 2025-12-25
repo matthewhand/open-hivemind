@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ProviderModalState, MessageProvider, LLMProvider } from '../types/bot';
+import type { ProviderModalState, MessageProvider, LLMProvider } from '../types/bot';
 
 const useModal = () => {
   const [modalState, setModalState] = useState<ProviderModalState>({
@@ -7,7 +7,7 @@ const useModal = () => {
     providerType: 'message',
     isEdit: false,
     provider: null,
-    botId: null
+    botId: null,
   });
 
   // Open modal for adding provider
@@ -17,7 +17,7 @@ const useModal = () => {
       providerType,
       isEdit: false,
       provider: null,
-      botId
+      botId,
     });
   }, []);
 
@@ -25,14 +25,14 @@ const useModal = () => {
   const openEditModal = useCallback((
     botId: string,
     providerType: 'message' | 'llm',
-    provider: MessageProvider | LLMProvider
+    provider: MessageProvider | LLMProvider,
   ) => {
     setModalState({
       isOpen: true,
       providerType,
       isEdit: true,
       provider,
-      botId
+      botId,
     });
   }, []);
 
@@ -42,7 +42,7 @@ const useModal = () => {
       ...prev,
       isOpen: false,
       provider: null,
-      botId: null
+      botId: null,
     }));
   }, []);
 
@@ -53,7 +53,7 @@ const useModal = () => {
       providerType: 'message',
       isEdit: false,
       provider: null,
-      botId: null
+      botId: null,
     });
   }, []);
 
@@ -68,7 +68,7 @@ const useModal = () => {
     openEditModal,
     closeModal,
     resetModal,
-    updateModalState
+    updateModalState,
   };
 };
 

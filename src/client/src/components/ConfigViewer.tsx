@@ -31,7 +31,7 @@ const ConfigViewer: React.FC = () => {
   }, []);
 
   const filterConfig = (data: any, term: string): any => {
-    if (!term) return data;
+    if (!term) {return data;}
 
     const filterObject = (obj: any): any => {
       if (typeof obj === 'string') {
@@ -58,7 +58,7 @@ const ConfigViewer: React.FC = () => {
   };
 
   const renderConfigTree = (data: any, path = ''): React.ReactNode => {
-    if (data === null) return null;
+    if (data === null) {return null;}
 
     if (typeof data === 'object' && !Array.isArray(data)) {
       return (

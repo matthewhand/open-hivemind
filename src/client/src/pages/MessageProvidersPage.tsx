@@ -8,10 +8,11 @@ import {
   Settings as ConfigIcon,
   CheckCircle as CheckIcon,
   XCircle as XIcon,
-  AlertCircle as WarningIcon
+  AlertCircle as WarningIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
-import { MessageProviderType, MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
+import type { MessageProviderType} from '../types/bot';
+import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 
 const MessageProvidersPage: React.FC = () => {
@@ -21,19 +22,19 @@ const MessageProvidersPage: React.FC = () => {
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
     { label: 'Providers', href: '/uber/providers' },
-    { label: 'Message Providers', href: '/uber/providers/message', isActive: true }
+    { label: 'Message Providers', href: '/uber/providers/message', isActive: true },
   ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'connected':
-        return <CheckIcon className="w-4 h-4 text-success" />;
-      case 'error':
-        return <XIcon className="w-4 h-4 text-error" />;
-      case 'testing':
-        return <WarningIcon className="w-4 h-4 text-warning" />;
-      default:
-        return <XIcon className="w-4 h-4 text-base-content/40" />;
+    case 'connected':
+      return <CheckIcon className="w-4 h-4 text-success" />;
+    case 'error':
+      return <XIcon className="w-4 h-4 text-error" />;
+    case 'testing':
+      return <WarningIcon className="w-4 h-4 text-warning" />;
+    default:
+      return <XIcon className="w-4 h-4 text-base-content/40" />;
     }
   };
 
@@ -189,7 +190,7 @@ const MessageProvidersPage: React.FC = () => {
       <ProviderConfigModal
         modalState={{
           ...modalState,
-          providerType: 'message'
+          providerType: 'message',
         }}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}

@@ -33,7 +33,7 @@ export async function handleJoinVoice(interaction: any): Promise<void> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord join voice channel error:', hivemindError);
+      console.error('Discord join voice channel error:', hivemindError);
     }
 
     await interaction.reply(`Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`);
@@ -70,7 +70,7 @@ export async function handleStartListening(interaction: any): Promise<void> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord start listening error:', hivemindError);
+      console.error('Discord start listening error:', hivemindError);
     }
 
     await interaction.reply(`Failed to start listening: ${ErrorUtils.getMessage(hivemindError)}`);

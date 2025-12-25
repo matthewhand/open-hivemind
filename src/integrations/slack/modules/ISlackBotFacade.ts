@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { SlackBotManager } from '../SlackBotManager';
-import { SlackWelcomeHandler } from '../SlackWelcomeHandler';
+import type { SlackBotManager } from '../SlackBotManager';
+import type { SlackWelcomeHandler } from '../SlackWelcomeHandler';
 
 const debug = Debug('app:SlackBotFacade');
 
@@ -23,7 +23,7 @@ export class SlackBotFacade implements ISlackBotFacade {
   async joinConfiguredChannels(
     botName: string,
     botManager: SlackBotManager,
-    welcomeHandler?: SlackWelcomeHandler
+    welcomeHandler?: SlackWelcomeHandler,
   ): Promise<void> {
     debug('joinConfiguredChannels()', { botName });
     const bots = botManager.getAllBots();

@@ -1,5 +1,5 @@
-import { Database } from 'sqlite';
-import { ConnectionManager } from './ConnectionManager';
+import type { Database } from 'sqlite';
+import type { ConnectionManager } from './ConnectionManager';
 import { Logger } from '@common/logger';
 
 export class SchemaManager {

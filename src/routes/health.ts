@@ -1,4 +1,5 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import ApiMonitorService from '../services/ApiMonitorService';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorLogger } from '../utils/errorLogger';
@@ -12,7 +13,7 @@ const router = Router();
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -57,20 +58,20 @@ router.get('/health/detailed', (req, res) => {
       recent: recentErrors,
       rate: calculateErrorRate(recentErrors, 60), // errors per minute
       byType: errorStats,
-      health: healthStatus.errorHealth
+      health: healthStatus.errorHealth,
     },
     recovery: {
       circuitBreakers: Object.keys(recoveryStats).length,
       activeFallbacks: Object.values(recoveryStats).reduce((sum, stats) => sum + stats.fallbacks, 0),
-      stats: recoveryStats
+      stats: recoveryStats,
     },
     performance: {
       messagesProcessed: metrics.messagesProcessed,
       averageResponseTime: metrics.responseTime.length > 0
         ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
         : 0,
-      llmUsage: metrics.llmTokenUsage
-    }
+      llmUsage: metrics.llmTokenUsage,
+    },
   };
 
   res.json(healthData);
@@ -101,7 +102,7 @@ router.get('/health/metrics', (req, res) => {
     requests: {
       total: 0, // Would need to implement request counter
       rate: 0,  // Would need to implement rate calculation
-    }
+    },
   };
 
   res.json(metricsData);
@@ -122,7 +123,7 @@ router.get('/health/alerts', (req, res) => {
       message: 'High memory usage detected',
       details: `Memory usage is at ${Math.round(memoryPercentage)}%`,
       timestamp: new Date().toISOString(),
-      type: 'memory'
+      type: 'memory',
     });
   }
   
@@ -133,14 +134,14 @@ router.get('/health/alerts', (req, res) => {
       message: 'Service recently started',
       details: `Uptime is ${Math.round(uptime)} seconds`,
       timestamp: new Date().toISOString(),
-      type: 'uptime'
+      type: 'uptime',
     });
   }
 
   res.json({
     alerts: alerts,
     count: alerts.length,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -154,8 +155,8 @@ router.get('/health/ready', (req, res) => {
     checks: {
       database: true, // Would need actual database check
       external_apis: true, // Would need actual API checks
-      configuration: true
-    }
+      configuration: true,
+    },
   });
 });
 
@@ -164,7 +165,7 @@ router.get('/health/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
   res.json({
     alive: true,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -232,7 +233,7 @@ router.get('/health/api-endpoints/:id', (req, res) => {
   if (!status) {
     return res.status(404).json({
       error: 'Endpoint not found',
-      message: `No endpoint found with ID: ${req.params.id}`
+      message: `No endpoint found with ID: ${req.params.id}`,
     });
   }
 
@@ -260,7 +261,7 @@ router.post('/health/api-endpoints', (req, res) => {
     if (!config.id || !config.name || !config.url) {
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'id, name, and url are required'
+        message: 'id, name, and url are required',
       });
     }
 
@@ -399,13 +400,13 @@ router.get('/health/errors', (req, res) => {
       trends: {
         lastMinute: errorLogger.getRecentErrorCount(60000),
         last5Minutes: errorLogger.getRecentErrorCount(300000),
-        last15Minutes: errorLogger.getRecentErrorCount(900000)
-      }
+        last15Minutes: errorLogger.getRecentErrorCount(900000),
+      },
     },
     health: {
       status: getErrorHealthStatus(recentErrors),
-      recommendations: getErrorRecommendations(errorStats, recentErrors)
-    }
+      recommendations: getErrorRecommendations(errorStats, recentErrors),
+    },
   };
 
   res.json(errorHealthData);
@@ -423,16 +424,16 @@ router.get('/health/recovery', (req, res) => {
       state: stats.circuitBreaker.state,
       failureCount: stats.circuitBreaker.failureCount,
       successCount: stats.circuitBreaker.successCount,
-      fallbacks: stats.fallbacks
+      fallbacks: stats.fallbacks,
     })),
     health: {
       status: getRecoveryHealthStatus(recoveryStats),
-      recommendations: getRecoveryRecommendations(recoveryStats)
+      recommendations: getRecoveryRecommendations(recoveryStats),
     },
     errorLogger: {
       config: errorLogger.getConfig(),
-      stats: errorLogger.getErrorStats()
-    }
+      stats: errorLogger.getErrorStats(),
+    },
   };
 
   res.json(recoveryHealthData);
@@ -455,9 +456,9 @@ router.get('/health/errors/patterns', (req, res) => {
         }),
       spikes: detectErrorSpikes(errorStats),
       correlations: detectErrorCorrelations(errorStats),
-      anomalies: detectErrorAnomalies(recentErrors, errorStats)
+      anomalies: detectErrorAnomalies(recentErrors, errorStats),
     },
-    recommendations: generatePatternRecommendations(errorStats, recentErrors)
+    recommendations: generatePatternRecommendations(errorStats, recentErrors),
   };
 
   res.json(patternsData);
@@ -502,9 +503,9 @@ function calculateErrorRate(errorCount: number, timeWindowSeconds: number): numb
 }
 
 function getErrorHealthStatus(recentErrors: number): 'good' | 'fair' | 'poor' | 'critical' {
-  if (recentErrors === 0) return 'good';
-  if (recentErrors <= 2) return 'fair';
-  if (recentErrors <= 5) return 'poor';
+  if (recentErrors === 0) {return 'good';}
+  if (recentErrors <= 2) {return 'fair';}
+  if (recentErrors <= 5) {return 'poor';}
   return 'critical';
 }
 
@@ -537,8 +538,8 @@ function getRecoveryHealthStatus(recoveryStats: Record<string, any>): 'healthy' 
   const circuitBreakers = Object.values(recoveryStats);
   const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open').length;
   
-  if (openCircuitBreakers > 0) return 'unhealthy';
-  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) return 'degraded';
+  if (openCircuitBreakers > 0) {return 'unhealthy';}
+  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) {return 'degraded';}
   return 'healthy';
 }
 
@@ -576,7 +577,7 @@ function detectErrorSpikes(errorStats: Record<string, number>): Array<{type: str
     .map(([type, count]) => ({
       type,
       count,
-      severity: count > threshold * 2 ? 'high' : count > threshold ? 'medium' : 'low'
+      severity: count > threshold * 2 ? 'high' : count > threshold ? 'medium' : 'low',
     }));
 }
 
@@ -587,7 +588,7 @@ function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pat
   if ((errorStats['network'] || 0) > 0 && (errorStats['timeout'] || 0) > 0) {
     correlations.push({
       pattern: 'network_timeout',
-      description: 'Network and timeout errors occurring together'
+      description: 'Network and timeout errors occurring together',
     });
   }
   
@@ -595,7 +596,7 @@ function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pat
   if ((errorStats['authentication'] || 0) > 0 && (errorStats['authorization'] || 0) > 0) {
     correlations.push({
       pattern: 'auth_chain',
-      description: 'Authentication and authorization errors occurring together'
+      description: 'Authentication and authorization errors occurring together',
     });
   }
   
@@ -613,7 +614,7 @@ function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, n
       if (percentage > 50 && type !== 'unknown') {
         anomalies.push({
           type,
-          anomaly: `Dominant error type (${percentage.toFixed(1)}% of all errors)`
+          anomaly: `Dominant error type (${percentage.toFixed(1)}% of all errors)`,
         });
       }
     });
@@ -623,7 +624,7 @@ function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, n
   if (recentErrors > 10) {
     anomalies.push({
       type: 'burst',
-      anomaly: `High error frequency: ${recentErrors} errors in last minute`
+      anomaly: `High error frequency: ${recentErrors} errors in last minute`,
     });
   }
   

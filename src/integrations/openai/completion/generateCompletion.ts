@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:generateCompletion');
 

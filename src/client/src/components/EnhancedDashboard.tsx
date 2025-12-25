@@ -10,7 +10,7 @@ import {
   NavbarWithSearch,
   Tooltip,
   Card,
-  Hero
+  Hero,
 } from '../components/DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
@@ -40,22 +40,22 @@ const EnhancedDashboard: React.FC = () => {
       title: 'Bot Connected',
       description: 'Discord bot successfully connected',
       timestamp: new Date(Date.now() - 300000).toISOString(), // 5 min ago
-      type: 'success' as const
+      type: 'success' as const,
     },
     {
       id: '2',
       title: 'Message Processed',
       description: 'Processed user query about weather',
       timestamp: new Date(Date.now() - 600000).toISOString(), // 10 min ago
-      type: 'info' as const
+      type: 'info' as const,
     },
     {
       id: '3',
       title: 'API Rate Limit',
       description: 'Approaching OpenAI API rate limit',
       timestamp: new Date(Date.now() - 900000).toISOString(), // 15 min ago
-      type: 'warning' as const
-    }
+      type: 'warning' as const,
+    },
   ]);
 
   const fetchDashboardData = async () => {
@@ -78,7 +78,7 @@ const EnhancedDashboard: React.FC = () => {
         activeBots,
         totalMessages,
         totalErrors,
-        uptime: Math.round(uptime)
+        uptime: Math.round(uptime),
       });
 
       setLastUpdated(new Date());
@@ -117,7 +117,7 @@ const EnhancedDashboard: React.FC = () => {
   const filteredBots = bots.filter(bot =>
     bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bot.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    bot.llmProvider.toLowerCase().includes(searchQuery.toLowerCase())
+    bot.llmProvider.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Transform bot data for DataTable
@@ -129,7 +129,7 @@ const EnhancedDashboard: React.FC = () => {
     llmProvider: bot.llmProvider,
     messageCount: bot.messageCount || 0,
     errorCount: bot.errorCount || 0,
-    connected: bot.connected ? 'Yes' : 'No'
+    connected: bot.connected ? 'Yes' : 'No',
   }));
 
   const tableColumns = [
@@ -139,7 +139,7 @@ const EnhancedDashboard: React.FC = () => {
     { key: 'llmProvider', header: 'LLM Provider' },
     { key: 'messageCount', header: 'Messages' },
     { key: 'errorCount', header: 'Errors' },
-    { key: 'connected', header: 'Connected' }
+    { key: 'connected', header: 'Connected' },
   ];
 
   if (isLoading && !stats) {
@@ -163,7 +163,7 @@ const EnhancedDashboard: React.FC = () => {
             {stats && (
               <>
                 <Badge
-                  variant={stats.activeBots === stats.totalBots ? "success" : "warning"}
+                  variant={stats.activeBots === stats.totalBots ? 'success' : 'warning'}
                   text={`${stats.activeBots}/${stats.totalBots} Active`}
                 />
                 <Tooltip content="Refresh dashboard data" position="bottom">
@@ -225,26 +225,26 @@ const EnhancedDashboard: React.FC = () => {
                 title: 'Total Bots',
                 value: stats.totalBots.toString(),
                 icon: '🤖',
-                trend: stats.activeBots === stats.totalBots ? '100% Active' : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`
+                trend: stats.activeBots === stats.totalBots ? '100% Active' : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`,
               },
               {
                 title: 'Messages Today',
                 value: stats.totalMessages.toLocaleString(),
                 icon: '💬',
-                trend: stats.totalMessages > 1000 ? 'High Volume' : 'Normal'
+                trend: stats.totalMessages > 1000 ? 'High Volume' : 'Normal',
               },
               {
                 title: 'System Uptime',
                 value: `${Math.floor(stats.uptime / 3600)}h ${Math.floor((stats.uptime % 3600) / 60)}m`,
                 icon: '⚡',
-                trend: stats.uptime > 86400 ? '> 24h' : '< 24h'
+                trend: stats.uptime > 86400 ? '> 24h' : '< 24h',
               },
               {
                 title: 'Total Errors',
                 value: stats.totalErrors.toString(),
                 icon: stats.totalErrors > 0 ? '⚠️' : '✅',
-                trend: stats.totalErrors === 0 ? 'All Good' : 'Needs Attention'
-              }
+                trend: stats.totalErrors === 0 ? 'All Good' : 'Needs Attention',
+              },
             ]}
           />
         )}
@@ -256,7 +256,7 @@ const EnhancedDashboard: React.FC = () => {
               <ProgressBar
                 value={stats.activeBots}
                 max={stats.totalBots}
-                color={stats.activeBots === stats.totalBots ? "success" : "warning"}
+                color={stats.activeBots === stats.totalBots ? 'success' : 'warning'}
                 showPercentage={true}
                 label={`${stats.activeBots} of ${stats.totalBots} bots active`}
               />
@@ -266,9 +266,9 @@ const EnhancedDashboard: React.FC = () => {
               <ProgressBar
                 value={stats.totalErrors}
                 max={Math.max(stats.totalMessages / 10, 10)} // Error rate relative to messages
-                color={stats.totalErrors === 0 ? "success" : stats.totalErrors < 5 ? "warning" : "error"}
+                color={stats.totalErrors === 0 ? 'success' : stats.totalErrors < 5 ? 'warning' : 'error'}
                 showPercentage={false}
-                label={stats.totalErrors === 0 ? "No errors" : `${stats.totalErrors} errors`}
+                label={stats.totalErrors === 0 ? 'No errors' : `${stats.totalErrors} errors`}
               />
             </Card>
 

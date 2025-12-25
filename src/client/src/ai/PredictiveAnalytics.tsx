@@ -213,18 +213,18 @@ const generateForecast = (historicalData: TimeSeriesData[], model: PredictionMod
     let confidence = model.confidence;
 
     switch (model.type) {
-      case 'prophet':
-        predicted = lastValue + Math.sin(i / 24) * 15 + i * 0.05;
-        confidence = 0.92;
-        break;
-      case 'lstm':
-        predicted = lastValue * 1.001 + Math.sin(i / 12) * 8;
-        confidence = 0.89;
-        break;
-      case 'arima':
-        predicted = lastValue + (Math.random() - 0.5) * 5 + i * 0.02;
-        confidence = 0.85;
-        break;
+    case 'prophet':
+      predicted = lastValue + Math.sin(i / 24) * 15 + i * 0.05;
+      confidence = 0.92;
+      break;
+    case 'lstm':
+      predicted = lastValue * 1.001 + Math.sin(i / 12) * 8;
+      confidence = 0.89;
+      break;
+    case 'arima':
+      predicted = lastValue + (Math.random() - 0.5) * 5 + i * 0.02;
+      confidence = 0.85;
+      break;
     }
 
     const seasonalComponent = Math.sin(i / 24) * 10; // Daily seasonality
@@ -257,7 +257,7 @@ const detectAnomalies = (historicalData: TimeSeriesData[], forecast: ForecastRes
 
   historicalData.forEach(data => {
     const correspondingForecast = forecast.find(f =>
-      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000
+      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000,
     );
 
     if (correspondingForecast && correspondingForecast.anomaly) {
@@ -370,7 +370,7 @@ export const PredictiveAnalytics: React.FC = () => {
         models: prev.models.map(model =>
           model.id === modelId
             ? { ...model, lastTrained: new Date(), accuracy: Math.min(0.99, model.accuracy + 0.02) }
-            : model
+            : model,
         ),
         isTraining: false,
       }));
@@ -640,8 +640,8 @@ export const PredictiveAnalytics: React.FC = () => {
                       <td className="text-right">{(anomaly.deviation * 100).toFixed(1)}%</td>
                       <td className="text-center">
                         <div className={`badge badge-sm ${anomaly.severity === 'critical' ? 'badge-error' :
-                            anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
-                          }`}>
+                          anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
+                        }`}>
                           {anomaly.severity}
                         </div>
                       </td>

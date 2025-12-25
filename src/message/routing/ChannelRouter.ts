@@ -17,14 +17,14 @@ export interface ChannelRouterMetadata {
  * - empty/undefined/null => {}
  */
 function parseKeyNumberMap(raw: unknown, coerce: (v: string) => number | null): Record<string, number> {
-  if (!raw) return {};
+  if (!raw) {return {};}
   if (typeof raw === 'object' && !Array.isArray(raw)) {
     // assume already a map of numbers or strings
     const out: Record<string, number> = {};
     for (const [k, v] of Object.entries(raw as Record<string, any>)) {
       // Always apply validation
       const num = coerce(String(v));
-      if (num !== null) out[k] = num;
+      if (num !== null) {out[k] = num;}
     }
     return out;
   }
@@ -33,9 +33,9 @@ function parseKeyNumberMap(raw: unknown, coerce: (v: string) => number | null): 
     const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
     for (const p of parts) {
       const [k, vs] = p.split(':').map(s => s.trim());
-      if (!k || vs == null) continue;
+      if (!k || vs == null) {continue;}
       const num = coerce(vs);
-      if (num !== null) out[k] = num;
+      if (num !== null) {out[k] = num;}
     }
     return out;
   }
@@ -50,8 +50,8 @@ export function getChannelBonuses(): Record<string, number> {
   const raw = messageConfig.get('CHANNEL_BONUSES') as unknown;
   const bonuses = parseKeyNumberMap(raw, (v) => {
     const n = Number(v);
-    if (Number.isNaN(n)) return null;
-    if (n < 0.0 || n > 2.0) return null;
+    if (Number.isNaN(n)) {return null;}
+    if (n < 0.0 || n > 2.0) {return null;}
     return n;
   });
   return bonuses;
@@ -65,7 +65,7 @@ export function getChannelPriorities(): Record<string, number> {
   const raw = messageConfig.get('CHANNEL_PRIORITIES') as unknown;
   const priorities = parseKeyNumberMap(raw, (v) => {
     const n = Number(v);
-    if (!Number.isInteger(n)) return null;
+    if (!Number.isInteger(n)) {return null;}
     return n;
   });
   return priorities;
@@ -107,7 +107,7 @@ export function computeScore(channelId: ChannelId, _metadata?: ChannelRouterMeta
  * Tie-breakers: highest bonus, then lexicographic channelId.
  */
 export function pickBestChannel(candidates: ChannelId[], metadata?: ChannelRouterMetadata): ChannelId | null {
-  if (!candidates || candidates.length === 0) return null;
+  if (!candidates || candidates.length === 0) {return null;}
 
   let best: { id: ChannelId; score: number; bonus: number } | null = null;
 
@@ -126,7 +126,7 @@ export function pickBestChannel(candidates: ChannelId[], metadata?: ChannelRoute
         best = { id, score, bonus };
       } else if (bonus === best.bonus) {
         // then lexicographic channelId
-        if (id < best.id) best = { id, score, bonus };
+        if (id < best.id) {best = { id, score, bonus };}
       }
     }
   }

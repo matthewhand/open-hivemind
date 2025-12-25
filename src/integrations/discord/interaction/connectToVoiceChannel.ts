@@ -1,5 +1,6 @@
-import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
-import { VoiceChannel, Client } from 'discord.js';
+import type { VoiceConnection} from '@discordjs/voice';
+import { joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
+import type { VoiceChannel, Client } from 'discord.js';
 import Debug from 'debug';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
@@ -14,7 +15,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
         'ValidationError' as any,
         'DISCORD_INVALID_VOICE_CHANNEL',
         400,
-        { channelId }
+        { channelId },
       );
     }
 
@@ -41,7 +42,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
           'TimeoutError' as any,
           'DISCORD_VOICE_CONNECTION_TIMEOUT',
           408,
-          { channelId }
+          { channelId },
         );
         reject(timeoutError);
       }, 10000);
@@ -54,15 +55,15 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord voice connection error:', hivemindError);
+      console.error('Discord voice connection error:', hivemindError);
     }
 
     throw ErrorUtils.createError(
-        `Failed to connect to voice channel: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'DISCORD_VOICE_CONNECTION_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error, channelId }
+      `Failed to connect to voice channel: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_VOICE_CONNECTION_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error, channelId },
     );
   }
 }

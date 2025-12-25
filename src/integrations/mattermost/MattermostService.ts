@@ -1,8 +1,8 @@
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessage } from '@message/interfaces/IMessage';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import MattermostClient from './mattermostClient';
-import { Application } from 'express';
+import type { Application } from 'express';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
@@ -35,7 +35,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private initializeFromConfiguration(): void {
     const configManager = BotConfigurationManager.getInstance();
     const mattermostBotConfigs = configManager.getAllBots().filter(bot =>
-      bot.messageProvider === 'mattermost' && bot.mattermost?.token
+      bot.messageProvider === 'mattermost' && bot.mattermost?.token,
     );
 
     if (mattermostBotConfigs.length === 0) {
@@ -65,7 +65,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
     const client = new MattermostClient({
       serverUrl: botConfig.mattermost.serverUrl,
-      token: botConfig.mattermost.token
+      token: botConfig.mattermost.token,
     });
 
     this.clients.set(botName, client);
@@ -76,7 +76,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       token: botConfig.mattermost.token,
       channel: botConfig.mattermost.channel || 'town-square',
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
-      username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || ''
+      username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
     });
   }
 
@@ -99,7 +99,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         this.botConfigs.set(botName, {
           ...botConfig,
           userId: client.getCurrentUserId?.() || botConfig.userId,
-          username: client.getCurrentUsername?.() || botConfig.username
+          username: client.getCurrentUsername?.() || botConfig.username,
         });
       } catch (error) {
         console.error(`Failed to connect to Mattermost for bot ${botName}:`, error);
@@ -132,7 +132,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       const post = await client.postMessage({
         channel: channelId,
         text: text,
-        ...(rootId ? { root_id: rootId } : {})
+        ...(rootId ? { root_id: rootId } : {}),
       });
 
       console.log(`[${botName}] Sent message to channel ${channelId}`);
@@ -173,7 +173,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         const mattermostMsg = new MattermostMessage(post, username, {
           isBot,
           botUsername,
-          botUserId
+          botUserId,
         });
         messages.push(mattermostMsg);
       }
@@ -192,7 +192,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         await client.postMessage({
           channel: channelId,
-          text: text
+          text: text,
         });
         console.log(`[${botName}] Sent announcement to channel ${channelId}`);
       } catch (error) {
@@ -248,7 +248,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       return {
         llmProvider: llmProvider ? String(llmProvider) : undefined,
         llmModel: llmModel ? String(llmModel) : undefined,
-        llmEndpoint: llmEndpoint ? String(llmEndpoint) : undefined
+        llmEndpoint: llmEndpoint ? String(llmEndpoint) : undefined,
       };
     };
 
@@ -264,7 +264,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         llmProvider,
         llmModel,
         llmEndpoint,
-        systemPrompt: safePrompt(cfg)
+        systemPrompt: safePrompt(cfg),
       };
     });
   }
@@ -300,7 +300,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     try {
       const firstBot = Array.from(this.clients.keys())[0];
       const client = this.clients.get(firstBot);
-      if (!client) return null;
+      if (!client) {return null;}
 
       const channel = await client.getChannelInfo(channelId);
       return channel?.purpose || channel?.header || null;
@@ -316,7 +316,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     try {
       const botName = senderName || Array.from(this.clients.keys())[0];
       const client = this.clients.get(botName);
-      if (!client) return;
+      if (!client) {return;}
       await client.sendTyping(channelId, threadId);
     } catch { }
   }
@@ -343,7 +343,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   public scoreChannel(channelId: string): number {
     try {
       const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
-      if (!enabled) return 0;
+      if (!enabled) {return 0;}
       return channelComputeScore(channelId);
     } catch {
       // Be conservative: on any error, neutralize impact
@@ -405,13 +405,13 @@ export class MattermostService extends EventEmitter implements IMessengerService
         sendTyping: async (channelId: string, senderName?: string, threadId?: string) => this.sendTyping(channelId, senderName || name, threadId),
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
-        scoreChannel: this.scoreChannel ? (cid) => this.scoreChannel!(cid) : undefined
+        scoreChannel: this.scoreChannel ? (cid) => this.scoreChannel!(cid) : undefined,
       };
 
       return {
         serviceName,
         messengerService: serviceWrapper,
-        botConfig: cfg
+        botConfig: cfg,
       };
     });
   }

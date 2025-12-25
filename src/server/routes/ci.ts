@@ -26,36 +26,36 @@ router.get('/api/deployments', (req, res) => {
             name: 'Build',
             status: 'success',
             duration: 300,
-            logs: ['Build started', 'Dependencies installed', 'Tests passed', 'Build completed']
+            logs: ['Build started', 'Dependencies installed', 'Tests passed', 'Build completed'],
           },
           {
             id: 'test',
             name: 'Test',
             status: 'success',
             duration: 180,
-            logs: ['Unit tests started', 'Integration tests passed', 'E2E tests completed']
+            logs: ['Unit tests started', 'Integration tests passed', 'E2E tests completed'],
           },
           {
             id: 'deploy',
             name: 'Deploy',
             status: 'success',
             duration: 240,
-            logs: ['Deployment started', 'Configuration validated', 'Services restarted', 'Health checks passed']
-          }
-        ]
-      }
+            logs: ['Deployment started', 'Configuration validated', 'Services restarted', 'Health checks passed'],
+          },
+        ],
+      },
     ];
 
     res.json({
       success: true,
-      deployments
+      deployments,
     });
   } catch (error) {
     debug('Deployments API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get deployments',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -68,7 +68,7 @@ router.post('/api/deployments', (req, res) => {
     if (!name || !environment) {
       return res.status(400).json({
         success: false,
-        message: 'Name and environment are required'
+        message: 'Name and environment are required',
       });
     }
 
@@ -90,21 +90,21 @@ router.post('/api/deployments', (req, res) => {
           name: 'Build',
           status: 'running',
           logs: ['Build started...'],
-          startTime: new Date().toISOString()
-        }
-      ]
+          startTime: new Date().toISOString(),
+        },
+      ],
     };
 
     res.json({
       success: true,
-      deployment
+      deployment,
     });
   } catch (error) {
     debug('Create deployment API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create deployment',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -132,21 +132,21 @@ router.get('/api/deployments/:id', (req, res) => {
           name: 'Build',
           status: 'success',
           duration: 300,
-          logs: ['Build started', 'Dependencies installed', 'Tests passed', 'Build completed']
-        }
-      ]
+          logs: ['Build started', 'Dependencies installed', 'Tests passed', 'Build completed'],
+        },
+      ],
     };
 
     res.json({
       success: true,
-      deployment
+      deployment,
     });
   } catch (error) {
     debug('Get deployment API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get deployment',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -161,14 +161,14 @@ router.post('/api/deployments/:id/rollback', (req, res) => {
     res.json({
       success: true,
       message: `Deployment ${id} rolled back successfully`,
-      rollbackId: `rollback_${Date.now()}`
+      rollbackId: `rollback_${Date.now()}`,
     });
   } catch (error) {
     debug('Rollback deployment API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to rollback deployment',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -188,22 +188,22 @@ router.get('/api/drift', (req, res) => {
             type: 'modified',
             path: 'bots.main.llmProvider',
             currentValue: 'openai',
-            expectedValue: 'anthropic'
-          }
-        ]
-      }
+            expectedValue: 'anthropic',
+          },
+        ],
+      },
     ];
 
     res.json({
       success: true,
-      drifts
+      drifts,
     });
   } catch (error) {
     debug('Drift detection API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get drift detections',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -216,7 +216,7 @@ router.post('/api/deployments/validate', (req, res) => {
     if (!environment || !configuration) {
       return res.status(400).json({
         success: false,
-        message: 'Environment and configuration are required'
+        message: 'Environment and configuration are required',
       });
     }
 
@@ -228,20 +228,20 @@ router.post('/api/deployments/validate', (req, res) => {
       errors: [],
       suggestions: [
         'Consider enabling rate limiting for production',
-        'Add health check endpoints for monitoring'
-      ]
+        'Add health check endpoints for monitoring',
+      ],
     };
 
     res.json({
       success: true,
-      validation
+      validation,
     });
   } catch (error) {
     debug('Validation API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to validate configuration',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -257,19 +257,19 @@ router.get('/api/pipeline/status', (req, res) => {
       successRate: 95.5,
       averageDuration: 450,
       recentDeployments: 12,
-      failedDeployments: 1
+      failedDeployments: 1,
     };
 
     res.json({
       success: true,
-      status
+      status,
     });
   } catch (error) {
     debug('Pipeline status API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get pipeline status',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -290,20 +290,20 @@ router.post('/api/tests/run', (req, res) => {
       tests: [
         { name: 'Unit Tests', status: 'running' },
         { name: 'Integration Tests', status: 'pending' },
-        { name: 'E2E Tests', status: 'pending' }
-      ]
+        { name: 'E2E Tests', status: 'pending' },
+      ],
     };
 
     res.json({
       success: true,
-      testRun
+      testRun,
     });
   } catch (error) {
     debug('Test run API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to run tests',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -328,33 +328,33 @@ router.get('/api/tests/results/:id', (req, res) => {
           name: 'API Tests',
           passed: 20,
           failed: 1,
-          duration: 60
+          duration: 60,
         },
         {
           name: 'UI Tests',
           passed: 15,
           failed: 1,
-          duration: 90
+          duration: 90,
         },
         {
           name: 'Integration Tests',
           passed: 10,
           failed: 0,
-          duration: 30
-        }
-      ]
+          duration: 30,
+        },
+      ],
     };
 
     res.json({
       success: true,
-      results
+      results,
     });
   } catch (error) {
     debug('Test results API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get test results',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

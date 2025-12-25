@@ -10,7 +10,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   EyeIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import {
   Card,
@@ -23,7 +23,8 @@ import {
   Checkbox,
   Alert,
 } from '../DaisyUI';
-import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
+import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
+import { botDataProvider } from '../../services/botDataProvider';
 import ProviderConfig from '../ProviderConfig';
 import { useLlmStatus } from '../../hooks/useLlmStatus';
 
@@ -65,7 +66,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
     mcpGuard: {
       enabled: false,
       type: 'owner',
-      allowedUserIds: []
+      allowedUserIds: [],
     },
     isActive: true,
     discord: {},
@@ -96,7 +97,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       const result = await botDataProvider.getList({
         pagination: { page: page + 1, perPage: rowsPerPage },
         sort: { field: orderBy, order: order.toUpperCase() as 'ASC' | 'DESC' },
-        filter: filterText ? { name: filterText } : undefined
+        filter: filterText ? { name: filterText } : undefined,
       });
       setBots(result.data);
     } catch (err) {
@@ -111,7 +112,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       const [providersData, personasData, mcpData] = await Promise.all([
         botDataProvider.getProviders(),
         botDataProvider.getPersonas(),
-        botDataProvider.getMCPServers()
+        botDataProvider.getMCPServers(),
       ]);
       setProviders(providersData);
       setPersonas(personasData);
@@ -144,7 +145,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleEditBot = async () => {
-    if (!editingBot) return;
+    if (!editingBot) {return;}
 
     try {
       setLoading(true);
@@ -162,7 +163,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleDeleteBot = async () => {
-    if (!deletingBot) return;
+    if (!deletingBot) {return;}
 
     try {
       setLoading(true);
@@ -217,7 +218,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       mcpGuard: {
         enabled: false,
         type: 'owner',
-        allowedUserIds: []
+        allowedUserIds: [],
       },
       isActive: true,
       discord: {},
@@ -282,7 +283,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   const filteredBots = bots.filter(bot =>
     bot.name.toLowerCase().includes(filterText.toLowerCase()) ||
     bot.messageProvider.toLowerCase().includes(filterText.toLowerCase()) ||
-    (bot.llmProvider || '').toLowerCase().includes(filterText.toLowerCase())
+    (bot.llmProvider || '').toLowerCase().includes(filterText.toLowerCase()),
   );
 
   const handleToggleExpanded = (botId: string) => {
@@ -408,7 +409,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             checked={botForm.mcpGuard?.enabled || false}
             onChange={(e) => setBotForm({
               ...botForm,
-              mcpGuard: { ...botForm.mcpGuard!, enabled: e.target.checked }
+              mcpGuard: { ...botForm.mcpGuard!, enabled: e.target.checked },
             })}
           />
         </label>

@@ -21,14 +21,14 @@ export abstract class IMessage {
    * The text content of the message.
    * @type {string}
    */
-  public content: string = "";
+  public content: string = '';
 
   /**
    * The unique identifier of the channel where this message was sent.
    * Canonical channel identifier used for routing and prioritization.
    * @type {string}
    */
-  public channelId: string = "";
+  public channelId: string = '';
 
   /**
    * Raw platform-specific data associated with the message.
@@ -49,7 +49,7 @@ export abstract class IMessage {
    * Common values: "discord", "slack", "telegram", "mattermost"
    * @type {string}
    */
-  public platform: string = "";
+  public platform: string = '';
 
   /**
    * Optional metadata associated with the message.

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { daisyUITracker, DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
+import type { DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
+import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
 import { Button, Badge, Card, Tabs, Tab, Progress, Alert, Modal } from './DaisyUI';
 
 interface Props {
@@ -39,7 +40,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
     setStats(daisyUITracker.getStats());
   };
 
-  if (!stats) return null;
+  if (!stats) {return null;}
 
   const usagePercentage = Math.round((stats.usedComponents / stats.totalComponents) * 100);
   const suggestions = daisyUITracker.getSuggestions();

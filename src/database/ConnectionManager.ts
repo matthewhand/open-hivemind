@@ -1,4 +1,5 @@
-import { Database, open } from 'sqlite';
+import type { Database} from 'sqlite';
+import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { EventEmitter } from 'events';
 import { Logger } from '@common/logger';
@@ -28,7 +29,7 @@ export class ConnectionManager extends EventEmitter {
     try {
       this.db = await open({
         filename: this.options.databasePath,
-        driver: sqlite3.Database
+        driver: sqlite3.Database,
       });
 
       if (this.options.timeout) {

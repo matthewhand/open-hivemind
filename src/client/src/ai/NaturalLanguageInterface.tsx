@@ -392,8 +392,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     const matchedIntent = mockIntents.find(intent =>
       intent.examples.some(example =>
         text.toLowerCase().includes(example.toLowerCase()) ||
-        example.toLowerCase().includes(text.toLowerCase())
-      )
+        example.toLowerCase().includes(text.toLowerCase()),
+      ),
     );
 
     const confidence = matchedIntent ? 0.85 : 0.3;
@@ -473,26 +473,26 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
 
   const generateResponse = (text: string, intent: NLIntent | null, confidence: number): string => {
     if (confidence < config.confidenceThreshold) {
-      return "I didn't understand that. Could you please rephrase or ask for help?";
+      return 'I didn\'t understand that. Could you please rephrase or ask for help?';
     }
 
     if (!intent) {
-      return "I'm not sure what you'd like me to do. Try asking for help to see what I can do.";
+      return 'I\'m not sure what you\'d like me to do. Try asking for help to see what I can do.';
     }
 
     switch (intent.name) {
-      case 'show_performance_dashboard':
-        return 'Displaying performance dashboard with the requested metrics...';
-      case 'add_widget':
-        return 'Adding the requested widget to your dashboard...';
-      case 'filter_data':
-        return 'Applying filters to show the requested data...';
-      case 'change_theme':
-        return 'Changing theme as requested...';
-      case 'export_data':
-        return 'Preparing data export...';
-      default:
-        return 'Processing your request...';
+    case 'show_performance_dashboard':
+      return 'Displaying performance dashboard with the requested metrics...';
+    case 'add_widget':
+      return 'Adding the requested widget to your dashboard...';
+    case 'filter_data':
+      return 'Applying filters to show the requested data...';
+    case 'change_theme':
+      return 'Changing theme as requested...';
+    case 'export_data':
+      return 'Preparing data export...';
+    default:
+      return 'Processing your request...';
     }
   };
 
@@ -505,53 +505,53 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     const actions: NLAction[] = [];
 
     switch (intent.name) {
-      case 'show_performance_dashboard':
-        actions.push({
-          type: 'show-widget',
-          target: 'performance-dashboard',
-          parameters: { timeRange: '24h', refresh: true },
-          status: 'pending',
-        });
-        break;
-      case 'add_widget':
-        actions.push({
-          type: 'update-widget',
-          target: 'dashboard',
-          parameters: { type: 'chart', position: 'auto' },
-          status: 'pending',
-        });
-        break;
-      case 'filter_data':
-        actions.push({
-          type: 'filter-data',
-          target: 'dashboard-data',
-          parameters: { criteria: 'custom' },
-          status: 'pending',
-        });
-        break;
-      case 'change_theme':
-        actions.push({
-          type: 'change-theme',
-          target: 'app-theme',
-          parameters: { theme: 'dark' },
-          status: 'pending',
-        });
-        break;
-      case 'export_data':
-        actions.push({
-          type: 'export-data',
-          target: 'dashboard-data',
-          parameters: { format: 'CSV' },
-          status: 'pending',
-        });
-        break;
+    case 'show_performance_dashboard':
+      actions.push({
+        type: 'show-widget',
+        target: 'performance-dashboard',
+        parameters: { timeRange: '24h', refresh: true },
+        status: 'pending',
+      });
+      break;
+    case 'add_widget':
+      actions.push({
+        type: 'update-widget',
+        target: 'dashboard',
+        parameters: { type: 'chart', position: 'auto' },
+        status: 'pending',
+      });
+      break;
+    case 'filter_data':
+      actions.push({
+        type: 'filter-data',
+        target: 'dashboard-data',
+        parameters: { criteria: 'custom' },
+        status: 'pending',
+      });
+      break;
+    case 'change_theme':
+      actions.push({
+        type: 'change-theme',
+        target: 'app-theme',
+        parameters: { theme: 'dark' },
+        status: 'pending',
+      });
+      break;
+    case 'export_data':
+      actions.push({
+        type: 'export-data',
+        target: 'dashboard-data',
+        parameters: { format: 'CSV' },
+        status: 'pending',
+      });
+      break;
     }
 
     return actions;
   };
 
   const handleSubmit = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {return;}
 
     const command = await processNaturalLanguage(inputText);
     setCommands(prev => [command, ...prev].slice(0, config.maxHistory));
@@ -749,8 +749,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                             {command.feedback === 'positive' && <HandThumbUpIcon className="w-4 h-4 text-success" />}
                             {command.feedback === 'negative' && <HandThumbDownIcon className="w-4 h-4 text-error" />}
                             <div className={`badge badge-sm ${command.confidence > 0.8 ? 'badge-success' :
-                                command.confidence > 0.6 ? 'badge-warning' : 'badge-error'
-                              }`}>
+                              command.confidence > 0.6 ? 'badge-warning' : 'badge-error'
+                            }`}>
                               {(command.confidence * 100).toFixed(0)}%
                             </div>
                           </div>

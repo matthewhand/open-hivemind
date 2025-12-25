@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ChatInputCommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import { flowiseSetChatFlow } from '@integrations/flowise/rest/flowiseSetChatFlow';
 
 /**
@@ -11,7 +11,7 @@ export const setChatFlowCommand = new SlashCommandBuilder()
   .addStringOption((option: any) =>
     option.setName('chatflow')
       .setDescription('The chatFlow ID to set for this channel.')
-      .setRequired(true)
+      .setRequired(true),
   );
 
 /**

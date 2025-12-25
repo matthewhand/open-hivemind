@@ -34,17 +34,17 @@ export class MCPGuard {
     
     // Check based on guard type
     switch (guardConfig.type) {
-      case 'owner':
-        // Only the forum owner can use MCP tools
-        return userId === forumOwnerId;
+    case 'owner':
+      // Only the forum owner can use MCP tools
+      return userId === forumOwnerId;
         
-      case 'custom':
-        // Only users in the allowed list can use MCP tools
-        return !!guardConfig.allowedUserIds && guardConfig.allowedUserIds.includes(userId);
+    case 'custom':
+      // Only users in the allowed list can use MCP tools
+      return !!guardConfig.allowedUserIds && guardConfig.allowedUserIds.includes(userId);
         
-      default:
-        // Default to denying access if configuration is invalid
-        return false;
+    default:
+      // Default to denying access if configuration is invalid
+      return false;
     }
   }
   

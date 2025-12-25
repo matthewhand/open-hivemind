@@ -1,5 +1,5 @@
-import { IMessage } from '@src/message/interfaces/IMessage';
-import { OpenAI } from 'openai';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { OpenAI } from 'openai';
 
 /**
  * Converts an `IMessage` object to OpenAI's `ChatCompletionMessageParam` format.
@@ -15,19 +15,19 @@ import { OpenAI } from 'openai';
  * @returns The converted `ChatCompletionMessageParam` object.
  */
 export function convertIMessageToChatParam(
-    msg: IMessage
+  msg: IMessage,
 ): OpenAI.Chat.ChatCompletionMessageParam {
-    // Ensure the role is valid
-    if (!['system', 'user', 'assistant', 'function'].includes(msg.role)) {
-        throw new Error(`Invalid role: ${msg.role}`);
-    }
+  // Ensure the role is valid
+  if (!['system', 'user', 'assistant', 'function'].includes(msg.role)) {
+    throw new Error(`Invalid role: ${msg.role}`);
+  }
 
-    // Placeholder for handling 'function' role content
-    const content = msg.role === 'function' ? '[Function Call Content Placeholder]' : msg.getText();
+  // Placeholder for handling 'function' role content
+  const content = msg.role === 'function' ? '[Function Call Content Placeholder]' : msg.getText();
 
-    return {
-        role: msg.role as 'system' | 'user' | 'assistant' | 'function',
-        content,
-        name: msg.getAuthorName() || 'unknown',
-    };
+  return {
+    role: msg.role as 'system' | 'user' | 'assistant' | 'function',
+    content,
+    name: msg.getAuthorName() || 'unknown',
+  };
 }

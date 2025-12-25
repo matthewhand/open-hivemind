@@ -20,14 +20,18 @@ import ollamaConfig from '../../config/ollamaConfig';
 import mattermostConfig from '../../config/mattermostConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
 import webhookConfig from '../../config/webhookConfig';
-import { getGuardrailProfiles, saveGuardrailProfiles, GuardrailProfile } from '../../config/guardrailProfiles';
-import { getLlmProfiles, saveLlmProfiles, ProviderProfile } from '../../config/llmProfiles';
+import type { GuardrailProfile } from '../../config/guardrailProfiles';
+import { getGuardrailProfiles, saveGuardrailProfiles } from '../../config/guardrailProfiles';
+import type { ProviderProfile } from '../../config/llmProfiles';
+import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
+import type {
+  ResponseProfile,
+} from '../../config/responseProfileManager';
 import {
   getResponseProfiles,
   createResponseProfile,
   updateResponseProfile,
   deleteResponseProfile,
-  ResponseProfile
 } from '../../config/responseProfileManager';
 import {
   getMcpServerProfiles,
@@ -35,7 +39,7 @@ import {
   createMcpServerProfile,
   updateMcpServerProfile,
   deleteMcpServerProfile,
-  McpServerProfile
+  McpServerProfile,
 } from '../../config/mcpServerProfiles';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
@@ -58,7 +62,7 @@ const schemaSources: Record<string, any> = {
   ollama: ollamaConfig,
   mattermost: mattermostConfig,
   openwebui: openWebUIConfig,
-  webhook: webhookConfig
+  webhook: webhookConfig,
 };
 
 // Map of all active config instances
@@ -117,7 +121,7 @@ router.get('/ping', (req, res) => {
 
 // Sensitive key patterns for redaction
 const SENSITIVE_PATTERNS = [
-  /token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i
+  /token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i,
 ];
 
 function isSensitiveKey(key: string): boolean {
@@ -125,9 +129,9 @@ function isSensitiveKey(key: string): boolean {
 }
 
 function redactValue(value: unknown): string {
-  if (!value) return '';
+  if (!value) {return '';}
   const str = String(value);
-  if (str.length <= 8) return '••••••••';
+  if (str.length <= 8) {return '••••••••';}
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
@@ -141,7 +145,7 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
       result[key] = {
         isRedacted: true,
         redactedValue: redactValue(value),
-        hasValue: true
+        hasValue: true,
       };
     } else {
       result[key] = value;
@@ -165,20 +169,20 @@ router.get('/bots', (req, res) => {
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
         isActive: true, // TODO: Add actual status tracking
-        source: bot._source || 'env' // Indicate where config came from
+        source: bot._source || 'env', // Indicate where config came from
       };
     });
 
     res.json({
       bots: safeBots,
       count: safeBots.length,
-      warnings: manager.getWarnings()
+      warnings: manager.getWarnings(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'CONFIG_BOTS_ERROR'
+      code: 'CONFIG_BOTS_ERROR',
     });
   }
 });
@@ -214,7 +218,7 @@ router.put('/bots/:name', async (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'CONFIG_BOT_UPDATE_ERROR'
+      code: 'CONFIG_BOT_UPDATE_ERROR',
     });
   }
 });
@@ -238,7 +242,7 @@ router.get('/templates', (req, res) => {
           name: content.name || file.replace('.json', ''),
           description: content.description || 'No description provided',
           provider: content.provider || content.messageProvider || 'unknown',
-          content
+          content,
         };
       } catch (e) {
         console.warn(`Failed to parse template ${file}:`, e);
@@ -251,7 +255,7 @@ router.get('/templates', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'CONFIG_TEMPLATES_ERROR'
+      code: 'CONFIG_TEMPLATES_ERROR',
     });
   }
 });
@@ -279,7 +283,7 @@ router.post('/templates/:id/create', async (req, res) => {
     const newBotConfig = {
       ...template,
       name, // User provided name
-      ...overrides // Optional overrides provided by UI
+      ...overrides, // Optional overrides provided by UI
     };
 
     // Use BotConfigurationManager to Add new bot
@@ -292,7 +296,7 @@ router.post('/templates/:id/create', async (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'CONFIG_TEMPLATE_CREATE_ERROR'
+      code: 'CONFIG_TEMPLATE_CREATE_ERROR',
     });
   }
 });
@@ -347,7 +351,7 @@ router.get('/global', (req, res) => {
 
       response[key] = {
         values: redactedProps,
-        schema: schema
+        schema: schema,
       };
     });
 
@@ -356,7 +360,7 @@ router.get('/global', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR'
+      code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
     });
   }
 });
@@ -395,16 +399,16 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     // If it's one of the base sources, use its standard file, else use dynamic name
     if (schemaSources[configName] && !createdNew) {
       switch (configName) {
-        case 'message': targetFile = 'providers/message.json'; break;
-        case 'llm': targetFile = 'providers/llm.json'; break;
-        case 'discord': targetFile = 'providers/discord.json'; break;
-        case 'slack': targetFile = 'providers/slack.json'; break;
-        case 'openai': targetFile = 'providers/openai.json'; break;
-        case 'flowise': targetFile = 'providers/flowise.json'; break;
-        case 'mattermost': targetFile = 'providers/mattermost.json'; break;
-        case 'openwebui': targetFile = 'providers/openwebui.json'; break;
-        case 'webhook': targetFile = 'providers/webhook.json'; break;
-        default: targetFile = `providers/${configName}.json`;
+      case 'message': targetFile = 'providers/message.json'; break;
+      case 'llm': targetFile = 'providers/llm.json'; break;
+      case 'discord': targetFile = 'providers/discord.json'; break;
+      case 'slack': targetFile = 'providers/slack.json'; break;
+      case 'openai': targetFile = 'providers/openai.json'; break;
+      case 'flowise': targetFile = 'providers/flowise.json'; break;
+      case 'mattermost': targetFile = 'providers/mattermost.json'; break;
+      case 'openwebui': targetFile = 'providers/openwebui.json'; break;
+      case 'webhook': targetFile = 'providers/webhook.json'; break;
+      default: targetFile = `providers/${configName}.json`;
       }
     } else {
       // Dynamic named config
@@ -449,7 +453,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR'
+      code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
     });
   }
 });
@@ -468,38 +472,38 @@ router.get('/', (req, res) => {
       ...bot,
       discord: bot.discord ? {
         ...bot.discord,
-        token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || '')
+        token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || ''),
       } : undefined,
       slack: bot.slack ? {
         ...bot.slack,
         botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', bot.slack.botToken || ''),
         appToken: redactSensitiveInfo('SLACK_APP_TOKEN', bot.slack.appToken || ''),
-        signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || '')
+        signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || ''),
       } : undefined,
       openai: bot.openai ? {
         ...bot.openai,
-        apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || '')
+        apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || ''),
       } : undefined,
       flowise: bot.flowise ? {
         ...bot.flowise,
-        apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || '')
+        apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || ''),
       } : undefined,
       openwebui: bot.openwebui ? {
         ...bot.openwebui,
-        apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || '')
+        apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || ''),
       } : undefined,
       openswarm: bot.openswarm ? {
         ...bot.openswarm,
-        apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || '')
+        apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || ''),
       } : undefined,
-      metadata: buildFieldMetadata(bot, userConfigStore)
+      metadata: buildFieldMetadata(bot, userConfigStore),
     }));
 
     res.json({
       bots: sanitizedBots,
       warnings,
       legacyMode: manager.isLegacyMode(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -510,14 +514,14 @@ router.get('/', (req, res) => {
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity,
-      stack: process.env.NODE_ENV === 'test' ? hivemindError.stack : undefined
+      stack: process.env.NODE_ENV === 'test' ? hivemindError.stack : undefined,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_API_ERROR',
       timestamp: new Date().toISOString(),
-      ...(process.env.NODE_ENV === 'test' && { stack: hivemindError.stack })
+      ...(process.env.NODE_ENV === 'test' && { stack: hivemindError.stack }),
     });
   }
 });
@@ -535,7 +539,7 @@ router.get('/sources', (req, res) => {
         key.includes('OPENWEBUI_') ||
         key.includes('MATTERMOST_') ||
         key.includes('MESSAGE_') ||
-        key.includes('WEBHOOK_')
+        key.includes('WEBHOOK_'),
       )
       .reduce((acc, key) => {
         acc[key] = {
@@ -543,7 +547,7 @@ router.get('/sources', (req, res) => {
           value: redactSensitiveInfo(key, process.env[key] || ''),
           sensitive: key.toLowerCase().includes('token') ||
             key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret')
+            key.toLowerCase().includes('secret'),
         };
         return acc;
       }, {} as Record<string, any>);
@@ -565,7 +569,7 @@ router.get('/sources', (req, res) => {
             path: filePath,
             size: stats.size,
             modified: stats.mtime,
-            type: path.extname(file).slice(1)
+            type: path.extname(file).slice(1),
           });
         }
       });
@@ -579,7 +583,7 @@ router.get('/sources', (req, res) => {
     let bots: any[] = [];
     try {
       const res = (manager as any).getAllBots?.();
-      if (Array.isArray(res)) bots = res;
+      if (Array.isArray(res)) {bots = res;}
     } catch {
       bots = [];
     }
@@ -598,7 +602,7 @@ router.get('/sources', (req, res) => {
             key: envKey,
             value: redactSensitiveInfo(envKey, process.env[envKey] || ''),
             bot: bot.name,
-            type: 'environment_override'
+            type: 'environment_override',
           });
         }
       });
@@ -607,7 +611,7 @@ router.get('/sources', (req, res) => {
     res.json({
       environmentVariables: envVars,
       configFiles,
-      overrides
+      overrides,
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -617,13 +621,13 @@ router.get('/sources', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_SOURCES_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -650,7 +654,7 @@ router.post('/reload', (req, res) => {
     res.json({
       success: true,
       message: 'Configuration reloaded successfully',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -660,7 +664,7 @@ router.post('/reload', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     // Skip audit logging entirely in test mode
@@ -675,7 +679,7 @@ router.post('/reload', (req, res) => {
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_RELOAD_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -701,7 +705,7 @@ router.post('/api/cache/clear', (req, res) => {
     res.json({
       success: true,
       message: 'Cache cleared successfully',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -711,13 +715,13 @@ router.post('/api/cache/clear', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CACHE_CLEAR_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -740,7 +744,7 @@ router.get('/export', (req, res) => {
       version: process.env.npm_package_version || 'unknown',
       bots: bots,
       warnings: warnings,
-      legacyMode: manager.isLegacyMode()
+      legacyMode: manager.isLegacyMode(),
     };
 
     // Convert to JSON and create blob
@@ -759,13 +763,13 @@ router.get('/export', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_EXPORT_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -796,7 +800,7 @@ router.get('/validate', (req, res) => {
 
     res.json({
       valid: errors.length === 0,
-      errors
+      errors,
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -806,13 +810,13 @@ router.get('/validate', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_VALIDATION_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -832,7 +836,7 @@ router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
     res.json({
       backupId,
       timestamp: new Date().toISOString(),
-      message: 'Configuration backup created successfully'
+      message: 'Configuration backup created successfully',
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -842,13 +846,13 @@ router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_BACKUP_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -868,7 +872,7 @@ router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) =>
     res.json({
       success: true,
       restored: backupId,
-      message: 'Configuration restored successfully'
+      message: 'Configuration restored successfully',
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -878,13 +882,13 @@ router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) =>
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_RESTORE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -894,7 +898,7 @@ router.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'webui'
+    service: 'webui',
   });
 });
 
@@ -906,88 +910,88 @@ router.get('/api/openapi', (req, res) => {
       info: {
         title: 'Open-Hivemind WebUI API',
         version: '1.0.0',
-        description: 'API for managing Open-Hivemind configuration'
+        description: 'API for managing Open-Hivemind configuration',
       },
       paths: {
         '/api/config': {
           get: {
             summary: 'Get configuration',
             responses: {
-              200: { description: 'Configuration retrieved successfully' }
-            }
-          }
+              200: { description: 'Configuration retrieved successfully' },
+            },
+          },
         },
         '/api/config/validate': {
           get: {
             summary: 'Validate configuration',
             responses: {
-              200: { description: 'Configuration validation result' }
-            }
-          }
+              200: { description: 'Configuration validation result' },
+            },
+          },
         },
         '/api/config/reload': {
           post: {
             summary: 'Reload configuration',
             responses: {
-              200: { description: 'Configuration reloaded successfully' }
-            }
-          }
+              200: { description: 'Configuration reloaded successfully' },
+            },
+          },
         },
         '/api/config/backup': {
           post: {
             summary: 'Create configuration backup',
             responses: {
-              200: { description: 'Configuration backup created successfully' }
-            }
-          }
+              200: { description: 'Configuration backup created successfully' },
+            },
+          },
         },
         '/api/config/llm-profiles': {
           get: {
             summary: 'Get LLM profile templates',
             responses: {
-              200: { description: 'LLM profiles retrieved successfully' }
-            }
+              200: { description: 'LLM profiles retrieved successfully' },
+            },
           },
           put: {
             summary: 'Update LLM profile templates',
             responses: {
-              200: { description: 'LLM profiles updated successfully' }
-            }
-          }
+              200: { description: 'LLM profiles updated successfully' },
+            },
+          },
         },
         '/api/config/llm-status': {
           get: {
             summary: 'Get LLM default status and missing-provider summary',
             responses: {
-              200: { description: 'LLM status retrieved successfully' }
-            }
-          }
+              200: { description: 'LLM status retrieved successfully' },
+            },
+          },
         },
         '/api/config/message-provider/test': {
           post: {
             summary: 'Test message provider connectivity',
             responses: {
-              200: { description: 'Message provider connectivity result' }
-            }
-          }
+              200: { description: 'Message provider connectivity result' },
+            },
+          },
         },
         '/api/config/restore': {
           post: {
             summary: 'Restore configuration from backup',
             responses: {
-              200: { description: 'Configuration restored successfully' }
-            }
-          }
+              200: { description: 'Configuration restored successfully' },
+            },
+          },
         },
         '/api/health': {
           get: {
             summary: 'WebUI health check',
             responses: {
-              200: { description: 'WebUI is healthy' }
-            }
-          }
-        }
-      }
+              200: { description: 'WebUI is healthy' },
+            },
+          },
+        },
+      },
     };
     res.json(openapiSpec);
   } catch (error: unknown) {
@@ -998,13 +1002,13 @@ router.get('/api/openapi', (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'OPENAPI_GENERATION_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1059,13 +1063,13 @@ router.get('/messaging', (req, res) => {
       MESSAGE_UNSOLICITED_UNADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED'),
       MESSAGE_UNSOLICITED_BASE_CHANCE: messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE'),
       MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS'),
-      MESSAGE_RESPONSE_PROFILES: messageConfig.get('MESSAGE_RESPONSE_PROFILES')
+      MESSAGE_RESPONSE_PROFILES: messageConfig.get('MESSAGE_RESPONSE_PROFILES'),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MESSAGING_CONFIG_GET_ERROR'
+      code: 'MESSAGING_CONFIG_GET_ERROR',
     });
   }
 });
@@ -1074,13 +1078,13 @@ router.get('/messaging', (req, res) => {
 router.get('/guardrails', (req, res) => {
   try {
     res.json({
-      profiles: getGuardrailProfiles()
+      profiles: getGuardrailProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'GUARDRAIL_CONFIG_GET_ERROR'
+      code: 'GUARDRAIL_CONFIG_GET_ERROR',
     });
   }
 });
@@ -1116,7 +1120,7 @@ router.put('/guardrails', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'GUARDRAIL_CONFIG_PUT_ERROR'
+      code: 'GUARDRAIL_CONFIG_PUT_ERROR',
     });
   }
 });
@@ -1147,7 +1151,7 @@ router.post('/guardrails', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'GUARDRAIL_CONFIG_POST_ERROR'
+      code: 'GUARDRAIL_CONFIG_POST_ERROR',
     });
   }
 });
@@ -1170,7 +1174,7 @@ router.delete('/guardrails/:key', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'GUARDRAIL_CONFIG_DELETE_ERROR'
+      code: 'GUARDRAIL_CONFIG_DELETE_ERROR',
     });
   }
 });
@@ -1179,13 +1183,13 @@ router.delete('/guardrails/:key', (req, res) => {
 router.get('/response-profiles', (req, res) => {
   try {
     res.json({
-      profiles: getResponseProfiles()
+      profiles: getResponseProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'RESPONSE_PROFILE_GET_ERROR'
+      code: 'RESPONSE_PROFILE_GET_ERROR',
     });
   }
 });
@@ -1211,7 +1215,7 @@ router.post('/response-profiles', (req, res) => {
     const statusCode = hivemindError.message?.includes('already exists') ? 409 : (hivemindError.statusCode || 500);
     res.status(statusCode).json({
       error: hivemindError.message,
-      code: 'RESPONSE_PROFILE_POST_ERROR'
+      code: 'RESPONSE_PROFILE_POST_ERROR',
     });
   }
 });
@@ -1229,7 +1233,7 @@ router.put('/response-profiles/:key', (req, res) => {
     const statusCode = hivemindError.message?.includes('not found') ? 404 : (hivemindError.statusCode || 500);
     res.status(statusCode).json({
       error: hivemindError.message,
-      code: 'RESPONSE_PROFILE_PUT_ERROR'
+      code: 'RESPONSE_PROFILE_PUT_ERROR',
     });
   }
 });
@@ -1247,7 +1251,7 @@ router.delete('/response-profiles/:key', (req, res) => {
         : (hivemindError.statusCode || 500);
     res.status(statusCode).json({
       error: hivemindError.message,
-      code: 'RESPONSE_PROFILE_DELETE_ERROR'
+      code: 'RESPONSE_PROFILE_DELETE_ERROR',
     });
   }
 });
@@ -1270,7 +1274,7 @@ router.get('/llm-status', async (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'LLM_STATUS_GET_ERROR'
+      code: 'LLM_STATUS_GET_ERROR',
     });
   }
 });
@@ -1291,7 +1295,7 @@ router.post('/message-provider/test', async (req, res) => {
 
     if (provider === 'discord') {
       const rawToken = String(
-        (config as any).DISCORD_BOT_TOKEN || (config as any).token || ''
+        (config as any).DISCORD_BOT_TOKEN || (config as any).token || '',
       );
       const token = rawToken.split(',')[0]?.trim() || '';
       const result = await testDiscordConnection(token);
@@ -1300,7 +1304,7 @@ router.post('/message-provider/test', async (req, res) => {
 
     if (provider === 'slack') {
       const token = String(
-        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || ''
+        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || '',
       ).trim();
       const result = await testSlackConnection(token);
       return res.json(result);
@@ -1308,10 +1312,10 @@ router.post('/message-provider/test', async (req, res) => {
 
     if (provider === 'mattermost') {
       const serverUrl = String(
-        (config as any).MATTERMOST_SERVER_URL || (config as any).serverUrl || (config as any).url || ''
+        (config as any).MATTERMOST_SERVER_URL || (config as any).serverUrl || (config as any).url || '',
       ).trim();
       const token = String(
-        (config as any).MATTERMOST_TOKEN || (config as any).token || ''
+        (config as any).MATTERMOST_TOKEN || (config as any).token || '',
       ).trim();
       const result = await testMattermostConnection(serverUrl, token);
       return res.json(result);
@@ -1322,7 +1326,7 @@ router.post('/message-provider/test', async (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MESSAGE_PROVIDER_TEST_ERROR'
+      code: 'MESSAGE_PROVIDER_TEST_ERROR',
     });
   }
 });
@@ -1331,13 +1335,13 @@ router.post('/message-provider/test', async (req, res) => {
 router.get('/llm-profiles', (req, res) => {
   try {
     res.json({
-      profiles: getLlmProfiles()
+      profiles: getLlmProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'LLM_PROFILE_GET_ERROR'
+      code: 'LLM_PROFILE_GET_ERROR',
     });
   }
 });
@@ -1380,7 +1384,7 @@ router.put('/llm-profiles', (req, res) => {
 
     for (const profile of llmProfiles) {
       const error = validateProfile(profile);
-      if (error) return res.status(400).json({ error });
+      if (error) {return res.status(400).json({ error });}
     }
 
     saveLlmProfiles({ llm: llmProfiles });
@@ -1389,7 +1393,7 @@ router.put('/llm-profiles', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'LLM_PROFILE_PUT_ERROR'
+      code: 'LLM_PROFILE_PUT_ERROR',
     });
   }
 });
@@ -1415,7 +1419,7 @@ router.post('/llm-profiles', (req, res) => {
       name: profile.name || profile.key,
       description: profile.description,
       provider: profile.provider,
-      config: profile.config || {}
+      config: profile.config || {},
     };
 
     allProfiles.llm.push(newProfile);
@@ -1425,7 +1429,7 @@ router.post('/llm-profiles', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'LLM_PROFILE_POST_ERROR'
+      code: 'LLM_PROFILE_POST_ERROR',
     });
   }
 });
@@ -1448,7 +1452,7 @@ router.delete('/llm-profiles/:key', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'LLM_PROFILE_DELETE_ERROR'
+      code: 'LLM_PROFILE_DELETE_ERROR',
     });
   }
 });
@@ -1484,13 +1488,13 @@ router.put('/messaging', async (req, res) => {
       success: true,
       message: 'Messaging settings updated. Restart may be required for some settings.',
       savedTo: targetPath,
-      values: merged
+      values: merged,
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MESSAGING_CONFIG_PUT_ERROR'
+      code: 'MESSAGING_CONFIG_PUT_ERROR',
     });
   }
 });
@@ -1508,7 +1512,7 @@ router.get('/mcp-server-profiles', (_req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MCP_SERVER_PROFILES_GET_ERROR'
+      code: 'MCP_SERVER_PROFILES_GET_ERROR',
     });
   }
 });
@@ -1532,7 +1536,7 @@ router.post('/mcp-server-profiles', (req, res) => {
       key,
       name,
       description,
-      mcpServers
+      mcpServers,
     });
 
     res.status(201).json({ success: true, profile });
@@ -1540,7 +1544,7 @@ router.post('/mcp-server-profiles', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 400).json({
       error: hivemindError.message,
-      code: 'MCP_SERVER_PROFILE_CREATE_ERROR'
+      code: 'MCP_SERVER_PROFILE_CREATE_ERROR',
     });
   }
 });
@@ -1561,7 +1565,7 @@ router.put('/mcp-server-profiles/:key', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MCP_SERVER_PROFILE_UPDATE_ERROR'
+      code: 'MCP_SERVER_PROFILE_UPDATE_ERROR',
     });
   }
 });
@@ -1580,7 +1584,7 @@ router.delete('/mcp-server-profiles/:key', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
-      code: 'MCP_SERVER_PROFILE_DELETE_ERROR'
+      code: 'MCP_SERVER_PROFILE_DELETE_ERROR',
     });
   }
 });

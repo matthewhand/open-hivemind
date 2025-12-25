@@ -20,7 +20,7 @@ interface MobileDrawerProps {
 const MobileDrawer: React.FC<MobileDrawerProps> = ({
   navItems,
   children,
-  drawerId = 'mobile-drawer'
+  drawerId = 'mobile-drawer',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());

@@ -30,7 +30,7 @@ const SettingsGeneral: React.FC = () => {
     maxConcurrentBots: 10,
     defaultResponseTimeout: 30,
     enableHealthChecks: true,
-    healthCheckInterval: 60
+    healthCheckInterval: 60,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,7 +40,7 @@ const SettingsGeneral: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/global');
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      if (!response.ok) {throw new Error('Failed to fetch settings');}
       const data = await response.json();
       
       // Extract relevant settings from the config response
@@ -57,7 +57,7 @@ const SettingsGeneral: React.FC = () => {
         maxConcurrentBots: config.limits?.maxBots?.value || 10,
         defaultResponseTimeout: config.limits?.timeout?.value || 30,
         enableHealthChecks: config.health?.enabled?.value !== false,
-        healthCheckInterval: config.health?.interval?.value || 60
+        healthCheckInterval: config.health?.interval?.value || 60,
       });
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load settings' });
@@ -84,11 +84,11 @@ const SettingsGeneral: React.FC = () => {
           'app.name': settings.instanceName,
           'app.description': settings.description,
           'logging.level': settings.logLevel,
-          'logging.enabled': settings.enableLogging
-        })
+          'logging.enabled': settings.enableLogging,
+        }),
       });
       
-      if (!response.ok) throw new Error('Failed to save settings');
+      if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -179,7 +179,7 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'America/Los_Angeles', label: 'Pacific Time' },
                 { value: 'Europe/London', label: 'London' },
                 { value: 'Asia/Tokyo', label: 'Tokyo' },
-                { value: 'Australia/Sydney', label: 'Sydney' }
+                { value: 'Australia/Sydney', label: 'Sydney' },
               ]}
             />
           </div>
@@ -195,7 +195,7 @@ const SettingsGeneral: React.FC = () => {
               options={[
                 { value: 'auto', label: 'Auto (System)' },
                 { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' }
+                { value: 'dark', label: 'Dark' },
               ]}
             />
           </div>
@@ -232,7 +232,7 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'debug', label: 'Debug' },
                 { value: 'info', label: 'Info' },
                 { value: 'warn', label: 'Warning' },
-                { value: 'error', label: 'Error' }
+                { value: 'error', label: 'Error' },
               ]}
             />
           </div>
@@ -291,7 +291,7 @@ const SettingsGeneral: React.FC = () => {
               onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
               className="range range-xs"
             />
-             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>5s</span>
               <span>300s</span>
             </div>
@@ -299,7 +299,7 @@ const SettingsGeneral: React.FC = () => {
 
           {/* Health Check Interval: Range with Steps & Color (Accent) */}
           <div className="form-control">
-             <label className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Health Check Interval</span>
               <span className="badge badge-accent font-mono">{settings.healthCheckInterval}s</span>
             </label>

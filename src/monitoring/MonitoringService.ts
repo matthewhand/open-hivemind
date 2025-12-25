@@ -1,7 +1,8 @@
 import { HealthChecker } from './HealthChecker';
-import { AlertManager, AlertConfig, NotificationChannel } from './AlertManager';
+import type { AlertConfig, NotificationChannel } from './AlertManager';
+import { AlertManager } from './AlertManager';
 import { MetricsCollector } from './MetricsCollector';
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 export interface MonitoringConfig {
   healthCheck: {
@@ -39,7 +40,7 @@ export class MonitoringService {
         enabled: true,
         interval: 30000,
         maxHistory: 100,
-        ...config.healthCheck
+        ...config.healthCheck,
       },
       alerts: {
         enabled: true,
@@ -50,34 +51,34 @@ export class MonitoringService {
           errorRateThreshold: 5,
           consecutiveFailures: 3,
           cooldownPeriod: 300000,
-          ...config.alerts?.config
+          ...config.alerts?.config,
         },
-        channels: config.alerts?.channels || []
+        channels: config.alerts?.channels || [],
       },
       metrics: {
         enabled: true,
         interval: 5000,
         historySize: 1000,
-        ...config.metrics
+        ...config.metrics,
       },
       endpoints: {
         health: '/health',
         metrics: '/metrics',
         alerts: '/alerts',
-        ...config.endpoints
+        ...config.endpoints,
       },
-      ...config
+      ...config,
     };
 
     // Initialize components
     this.healthChecker = new HealthChecker(
       this.config.healthCheck.interval,
-      this.config.healthCheck.maxHistory
+      this.config.healthCheck.maxHistory,
     );
 
     this.alertManager = new AlertManager(
       this.healthChecker,
-      this.config.alerts.config
+      this.config.alerts.config,
     );
 
     this.metricsCollector = MetricsCollector.getInstance();
@@ -184,14 +185,14 @@ export class MonitoringService {
         const healthCheck = await this.healthChecker.performHealthCheck();
 
         res.status(healthCheck.status === 'healthy' ? 200 :
-                      healthCheck.status === 'degraded' ? 429 : 503)
-           .json(healthCheck);
+          healthCheck.status === 'degraded' ? 429 : 503)
+          .json(healthCheck);
       } catch (error) {
         console.error('Health check endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Health check failed',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -206,14 +207,14 @@ export class MonitoringService {
         res.json({
           timestamp: new Date().toISOString(),
           summary,
-          metrics
+          metrics,
         });
       } catch (error) {
         console.error('Metrics endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve metrics',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -228,14 +229,14 @@ export class MonitoringService {
         res.json({
           timestamp: new Date().toISOString(),
           summary,
-          alerts
+          alerts,
         });
       } catch (error) {
         console.error('Alerts endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve alerts',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -248,30 +249,30 @@ export class MonitoringService {
 
         let result: boolean;
         switch (action) {
-          case 'acknowledge':
-            result = this.alertManager.acknowledgeAlert(alertId);
-            break;
-          case 'resolve':
-            result = this.alertManager.resolveAlert(alertId);
-            break;
-          default:
-            res.status(400).json({
-              status: 'error',
-              message: 'Invalid action. Use "acknowledge" or "resolve"'
-            });
-            return;
+        case 'acknowledge':
+          result = this.alertManager.acknowledgeAlert(alertId);
+          break;
+        case 'resolve':
+          result = this.alertManager.resolveAlert(alertId);
+          break;
+        default:
+          res.status(400).json({
+            status: 'error',
+            message: 'Invalid action. Use "acknowledge" or "resolve"',
+          });
+          return;
         }
 
         if (result) {
           res.json({
             status: 'success',
             message: `Alert ${action}d successfully`,
-            alertId
+            alertId,
           });
         } else {
           res.status(404).json({
             status: 'error',
-            message: 'Alert not found or already processed'
+            message: 'Alert not found or already processed',
           });
         }
       } catch (error) {
@@ -279,7 +280,7 @@ export class MonitoringService {
         res.status(500).json({
           status: 'error',
           message: 'Failed to process alert action',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -301,7 +302,7 @@ export class MonitoringService {
 
       // Alert action endpoint
       `${this.config.endpoints.alerts}/:alertId/:action`,
-      this.getAlertActionMiddleware()
+      this.getAlertActionMiddleware(),
     ];
   }
 
@@ -349,7 +350,7 @@ export class MonitoringService {
       config: this.config,
       health: JSON.parse(healthData),
       metrics: JSON.parse(metricsData),
-      alerts: JSON.parse(alertData)
+      alerts: JSON.parse(alertData),
     }, null, 2);
   }
 
@@ -378,20 +379,20 @@ export class MonitoringService {
     health: any;
     alerts: any;
     metrics: any;
-  } {
+    } {
     return {
       isRunning: this.isRunning,
       config: this.config,
       health: {
-        historyLength: this.healthChecker.getHealthHistory().length
+        historyLength: this.healthChecker.getHealthHistory().length,
       },
       alerts: {
         activeCount: this.alertManager.getActiveAlerts().length,
-        totalCount: this.alertManager.getAllAlerts().length
+        totalCount: this.alertManager.getAllAlerts().length,
       },
       metrics: {
-        summary: this.metricsCollector.getMetricsSummary()
-      }
+        summary: this.metricsCollector.getMetricsSummary(),
+      },
     };
   }
 }

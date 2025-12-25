@@ -22,7 +22,7 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value,
     }));
-    if (error) setError(''); // Clear error on input change
+    if (error) {setError('');} // Clear error on input change
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

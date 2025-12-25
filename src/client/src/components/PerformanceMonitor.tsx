@@ -16,8 +16,8 @@ const defaultMetrics = {
 };
 
 const toErrorMessage = (error: unknown): string => {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
+  if (!error) {return 'Unknown error';}
+  if (typeof error === 'string') {return error;}
 
   const baseQueryError = error as FetchBaseQueryError;
   if (typeof baseQueryError?.status !== 'undefined') {

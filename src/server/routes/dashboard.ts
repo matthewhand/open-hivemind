@@ -46,7 +46,7 @@ router.get('/api/status', (req, res) => {
       status: 'active',
       connected: isProviderConnected(bot),
       messageCount: ws.getBotStats(bot.name).messageCount,
-      errorCount: ws.getBotStats(bot.name).errors.length
+      errorCount: ws.getBotStats(bot.name).errors.length,
     }));
 
     res.json({ bots: status, uptime: process.uptime() });
@@ -72,12 +72,12 @@ router.get('/api/activity', (req, res) => {
 
     const allEvents = ws.getMessageFlow(1000).map(event => annotateEvent(event, botMap));
     const filteredEvents = allEvents.filter(event => {
-      if (botFilter.length && !botFilter.includes(event.botName)) return false;
-      if (providerFilter.length && !providerFilter.includes(event.provider)) return false;
-      if (llmFilter.length && !llmFilter.includes(event.llmProvider)) return false;
+      if (botFilter.length && !botFilter.includes(event.botName)) {return false;}
+      if (providerFilter.length && !providerFilter.includes(event.provider)) {return false;}
+      if (llmFilter.length && !llmFilter.includes(event.llmProvider)) {return false;}
       const ts = new Date(event.timestamp).getTime();
-      if (from && ts < from.getTime()) return false;
-      if (to && ts > to.getTime()) return false;
+      if (from && ts < from.getTime()) {return false;}
+      if (to && ts > to.getTime()) {return false;}
       return true;
     });
 
@@ -103,7 +103,7 @@ router.get('/api/activity', (req, res) => {
 export default router;
 
 function parseMultiParam(value: unknown): string[] {
-  if (!value) return [];
+  if (!value) {return [];}
   if (Array.isArray(value)) {
     return value.flatMap(parseMultiParam).filter(Boolean);
   }
@@ -117,7 +117,7 @@ function parseMultiParam(value: unknown): string[] {
 }
 
 function parseDate(value: unknown): Date | null {
-  if (!value || typeof value !== 'string') return null;
+  if (!value || typeof value !== 'string') {return null;}
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -136,7 +136,7 @@ function buildTimeline(events: AnnotatedEvent[]) {
 
   events.forEach(event => {
     const timestamp = new Date(event.timestamp).getTime();
-    if (Number.isNaN(timestamp)) return;
+    if (Number.isNaN(timestamp)) {return;}
     const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
     const bucketKey = new Date(bucketStart).toISOString();
 

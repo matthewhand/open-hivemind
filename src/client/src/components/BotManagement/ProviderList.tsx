@@ -1,7 +1,7 @@
 import React from 'react';
-import {
+import type {
   MessageProvider,
-  LLMProvider
+  LLMProvider,
 } from '../../types/bot';
 import ProviderChip from './ProviderChip';
 import { Plus as PlusIcon } from 'lucide-react';
@@ -19,7 +19,7 @@ const ProviderList: React.FC<ProviderListProps> = ({
   type,
   onRemove,
   onEdit,
-  disabled = false
+  disabled = false,
 }) => {
   if (providers.length === 0) {
     return (

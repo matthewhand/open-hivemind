@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import messageConfig from '@config/messageConfig';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import SlackMessage from '../SlackMessage';
-import { KnownBlock } from '@slack/web-api';
+import type SlackMessage from '../SlackMessage';
+import type { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackService:MessageHandler');
 
@@ -34,7 +34,7 @@ export class SlackMessageHandler {
     historyMessages: IMessage[],
     enrichedMessage: SlackMessage,
     channelId: string,
-    threadTs: string
+    threadTs: string,
   ): Promise<string> {
     const { botName, botConfig, joinTs, lastSentEventTs } = this.context;
 
@@ -64,7 +64,7 @@ export class SlackMessageHandler {
       enrichedMessage,
       historyMessages,
       botConfig,
-      botName
+      botName,
     );
 
     if (response) {
@@ -73,7 +73,7 @@ export class SlackMessageHandler {
         channelId,
         response.text,
         threadTs,
-        response.blocks
+        response.blocks,
       );
 
       if (sentTs) {
@@ -94,7 +94,7 @@ export class SlackMessageHandler {
     enrichedMessage: SlackMessage,
     historyMessages: IMessage[],
     botConfig: any,
-    botName: string
+    botName: string,
   ): Promise<{ text: string; blocks?: KnownBlock[] } | null> {
     try {
       const userMessage = enrichedMessage.getText() || '';
@@ -107,13 +107,13 @@ export class SlackMessageHandler {
         llmResponse = await this.callOpenWebUI(
           userMessage,
           formattedHistory,
-          botConfig
+          botConfig,
         );
       } else {
         llmResponse = await this.callStandardLLM(
           userMessage,
           formattedHistory,
-          botConfig
+          botConfig,
         );
       }
 
@@ -147,7 +147,7 @@ export class SlackMessageHandler {
   private async callOpenWebUI(
     userMessage: string,
     historyMessages: IMessage[],
-    botConfig: any
+    botConfig: any,
   ): Promise<string> {
     const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');
 
@@ -159,7 +159,7 @@ export class SlackMessageHandler {
       },
       userMessage,
       historyMessages,
-      (botConfig.llm.systemPrompt || '')
+      (botConfig.llm.systemPrompt || ''),
     );
   }
 
@@ -169,7 +169,7 @@ export class SlackMessageHandler {
   private async callStandardLLM(
     userMessage: string,
     historyMessages: IMessage[],
-    botConfig: any
+    botConfig: any,
   ): Promise<string> {
     const llmProviders = getLlmProvider();
     if (!llmProviders.length) {
@@ -181,7 +181,7 @@ export class SlackMessageHandler {
       return await llmProviders[0].generateChatCompletion(
         userMessage,
         historyMessages,
-        botConfig
+        botConfig,
       );
     } catch (e) {
       debug(`LLM call failed, falling back: ${e}`);
@@ -190,7 +190,7 @@ export class SlackMessageHandler {
         return await llmProviders[1].generateChatCompletion(
           userMessage,
           historyMessages,
-          botConfig
+          botConfig,
         );
       }
       throw e;
@@ -213,14 +213,14 @@ export class SlackMessageHandler {
     channelId: string,
     text: string,
     threadId: string,
-    blocks?: KnownBlock[]
+    blocks?: KnownBlock[],
   ): Promise<string> {
     return this.context.messageIO.sendMessageToChannel(
       channelId,
       text,
       this.context.botName,
       threadId,
-      blocks
+      blocks,
     );
   }
 

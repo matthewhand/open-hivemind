@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { errorLogger } from '../utils/errorLogger';
 import { ErrorFactory } from '../types/errorClasses';
 
@@ -37,7 +38,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
     if (!errorReport.message || !errorReport.correlationId) {
       return res.status(400).json({
         error: 'Invalid error report: missing required fields',
-        required: ['message', 'correlationId']
+        required: ['message', 'correlationId'],
       });
     }
 
@@ -53,7 +54,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
       localStorage: errorReport.localStorage,
       sessionStorage: errorReport.sessionStorage,
       performance: errorReport.performance,
-      ...errorReport.details
+      ...errorReport.details,
     });
 
     // Log the frontend error
@@ -65,15 +66,15 @@ router.post('/frontend', async (req: Request, res: Response) => {
       body: {
         source: 'frontend',
         componentStack: errorReport.componentStack,
-        performance: errorReport.performance
-      }
+        performance: errorReport.performance,
+      },
     });
 
     // Return success response
     res.status(200).json({
       success: true,
       correlationId: errorReport.correlationId,
-      message: 'Error report received and logged'
+      message: 'Error report received and logged',
     });
 
   } catch (error) {
@@ -84,7 +85,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
       correlationId: req.headers['x-correlation-id'] as string || 'unknown',
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent']
+      userAgent: req.headers['user-agent'],
     });
 
     // Set correlation ID in response header
@@ -93,7 +94,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
 
     res.status(500).json({
       error: 'Failed to process error report',
-      correlationId: correlationId
+      correlationId: correlationId,
     });
   }
 });

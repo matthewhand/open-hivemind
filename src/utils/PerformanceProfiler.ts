@@ -113,7 +113,7 @@ export class PerformanceProfiler {
   public profileMethod<T>(
     methodName: string,
     fn: () => T,
-    className?: string
+    className?: string,
   ): T {
     if (!this.isProfiling) {
       return fn();
@@ -144,7 +144,7 @@ export class PerformanceProfiler {
   public async profileMethodAsync<T>(
     methodName: string,
     fn: () => Promise<T>,
-    className?: string
+    className?: string,
   ): Promise<T> {
     if (!this.isProfiling) {
       return fn();
@@ -191,7 +191,7 @@ export class PerformanceProfiler {
         peak_malloced_memory: 0,
         does_zap_garbage: false,
         number_of_native_contexts: 0,
-        number_of_detached_contexts: 0
+        number_of_detached_contexts: 0,
       } as any;
     }
 
@@ -199,7 +199,7 @@ export class PerformanceProfiler {
       timestamp,
       memoryUsage,
       heapStatistics,
-      cpuUsage: process.cpuUsage()
+      cpuUsage: process.cpuUsage(),
     };
 
     this.snapshots.push(snapshot);
@@ -219,7 +219,7 @@ export class PerformanceProfiler {
     memoryUsage: NodeJS.MemoryUsage;
     heapStatistics: v8.HeapInfo;
     methodProfiles: MethodProfile[];
-  } {
+    } {
     const memoryUsage = process.memoryUsage();
     let heapStatistics: v8.HeapInfo;
 
@@ -235,14 +235,14 @@ export class PerformanceProfiler {
         peak_malloced_memory: 0,
         does_zap_garbage: false,
         number_of_native_contexts: 0,
-        number_of_detached_contexts: 0
+        number_of_detached_contexts: 0,
       } as any;
     }
 
     return {
       memoryUsage,
       heapStatistics,
-      methodProfiles: Array.from(this.methodProfiles.values())
+      methodProfiles: Array.from(this.methodProfiles.values()),
     };
   }
 
@@ -255,7 +255,7 @@ export class PerformanceProfiler {
       startTime: this.startTime,
       snapshots: this.snapshots,
       methodProfiles: Array.from(this.methodProfiles.entries()),
-      currentMetrics: this.getCurrentMetrics()
+      currentMetrics: this.getCurrentMetrics(),
     };
 
     const fileName = filename || `performance-profile-${this.profileName}-${Date.now()}.json`;
@@ -278,7 +278,7 @@ export class PerformanceProfiler {
     methodName: string,
     className: string | undefined,
     executionTime: number,
-    hadError: boolean
+    hadError: boolean,
   ): void {
     const key = className ? `${className}.${methodName}` : methodName;
 
@@ -293,7 +293,7 @@ export class PerformanceProfiler {
         maxExecutionTime: 0,
         lastExecutionTime: 0,
         lastUsed: Date.now(),
-        errorCount: 0
+        errorCount: 0,
       });
     }
 
@@ -323,7 +323,7 @@ export class PerformanceProfiler {
       heapTotal: finalSnapshot.memoryUsage.heapTotal - initialSnapshot.memoryUsage.heapTotal,
       heapUsed: finalSnapshot.memoryUsage.heapUsed - initialSnapshot.memoryUsage.heapUsed,
       external: finalSnapshot.memoryUsage.external - initialSnapshot.memoryUsage.external,
-      arrayBuffers: finalSnapshot.memoryUsage.arrayBuffers - initialSnapshot.memoryUsage.arrayBuffers
+      arrayBuffers: finalSnapshot.memoryUsage.arrayBuffers - initialSnapshot.memoryUsage.arrayBuffers,
     };
 
     const alerts: string[] = [];
@@ -357,10 +357,10 @@ export class PerformanceProfiler {
       memory: {
         initial: initialSnapshot,
         final: finalSnapshot,
-        delta: memoryDelta
+        delta: memoryDelta,
       },
-methods: Array.from(this.methodProfiles.values()),
-      alerts
+      methods: Array.from(this.methodProfiles.values()),
+      alerts,
     };
   }
 

@@ -232,7 +232,7 @@ const defaultSecurityConfig: SecurityConfig = {
     inputSanitization: true,
     outputEncoding: true,
     cspEnabled: true,
-    cspPolicy: "default-src 'self'",
+    cspPolicy: 'default-src \'self\'',
     trustedTypes: true,
   },
   headers: {
@@ -363,7 +363,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   const blockIP = async (ip: string, reason: string) => { };
   const unblockIP = async (ip: string) => { };
   const runComplianceCheck = async (framework: string) => { return startScan({ name: framework, type: 'compliance' }); };
-  const getComplianceReport = async (framework: string) => "{}";
+  const getComplianceReport = async (framework: string) => '{}';
 
   const getSeverityColor = (s: string) => 'info';
   const getStatusColor = (s: string) => 'info';

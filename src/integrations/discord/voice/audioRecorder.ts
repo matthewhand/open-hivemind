@@ -1,4 +1,5 @@
-import { VoiceConnection, EndBehaviorType } from '@discordjs/voice';
+import type { VoiceConnection} from '@discordjs/voice';
+import { EndBehaviorType } from '@discordjs/voice';
 import { User } from 'discord.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -20,7 +21,7 @@ export class AudioRecorder {
   }
 
   startRecording(userId?: string): void {
-    if (this.isRecording) return;
+    if (this.isRecording) {return;}
     
     this.isRecording = true;
     debug('Started recording audio');
@@ -88,7 +89,7 @@ export class AudioRecorder {
           'ValidationError' as any,
           'DISCORD_AUDIO_RECORDER_NO_RECORDING',
           404,
-          { userId }
+          { userId },
         );
       }
 
@@ -107,22 +108,22 @@ export class AudioRecorder {
 
       // Log with appropriate level
       if (classification.logLevel === 'error') {
-          console.error('Discord audio recorder save error:', hivemindError);
+        console.error('Discord audio recorder save error:', hivemindError);
       }
 
       throw ErrorUtils.createError(
-          `Failed to save audio recording: ${ErrorUtils.getMessage(hivemindError)}`,
-          classification.type,
-          'DISCORD_AUDIO_RECORDER_SAVE_ERROR',
-          ErrorUtils.getStatusCode(hivemindError),
-          { originalError: error, userId }
+        `Failed to save audio recording: ${ErrorUtils.getMessage(hivemindError)}`,
+        classification.type,
+        'DISCORD_AUDIO_RECORDER_SAVE_ERROR',
+        ErrorUtils.getStatusCode(hivemindError),
+        { originalError: error, userId },
       );
     }
   }
 
   getRecordingDuration(userId: string): number {
     const chunks = this.recordings.get(userId);
-    if (!chunks) return 0;
+    if (!chunks) {return 0;}
     
     // Approximate duration based on chunk count (48kHz, 16-bit, mono)
     const totalSamples = chunks.length * 960; // 960 samples per chunk at 48kHz

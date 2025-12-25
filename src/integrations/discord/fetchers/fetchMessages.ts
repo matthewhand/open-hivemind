@@ -1,5 +1,5 @@
-import { TextChannel } from 'discord.js';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { TextChannel } from 'discord.js';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
@@ -21,7 +21,7 @@ export async function fetchMessages(channel: TextChannel): Promise<IMessage[]> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord fetch messages error:', hivemindError);
+      console.error('Discord fetch messages error:', hivemindError);
     }
 
     return [];

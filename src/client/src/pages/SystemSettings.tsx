@@ -10,13 +10,13 @@ const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   const breadcrumbItems = [
-    { label: 'Settings', href: '/uber/settings', isActive: true }
+    { label: 'Settings', href: '/uber/settings', isActive: true },
   ];
 
   const tabs = [
     { label: 'General', component: <SettingsGeneral /> },
     { label: 'Messaging', component: <SettingsMessaging /> },
-    { label: 'Security', component: <SettingsSecurity /> }
+    { label: 'Security', component: <SettingsSecurity /> },
   ];
 
   return (

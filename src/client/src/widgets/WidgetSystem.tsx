@@ -208,7 +208,7 @@ const ChartWidget: React.FC<{ widget: WidgetConfig; data: number[] }> = ({ widge
             {/* Data line */}
             <polyline
               points={data.map((value, index) =>
-                `${(index / (data.length - 1)) * 100},${100 - (value / 100) * 80}`
+                `${(index / (data.length - 1)) * 100},${100 - (value / 100) * 80}`,
               ).join(' ')}
               fill="none"
               stroke="currentColor"
@@ -249,20 +249,20 @@ const WidgetRenderer: React.FC<{ widget: WidgetConfig; editable?: boolean; onEdi
   // Simulate data fetching based on dataSource
   const getWidgetData = () => {
     switch (widget.dataSource) {
-      case 'performance.responseTime':
-        return performance.responseTime || 0;
-      case 'performance.memoryUsage':
-        return performance.memoryUsage || 0;
-      case 'performance.cpuUsage':
-        return performance.cpuUsage || 0;
-      case 'performance.errorRate':
-        return performance.errorRate || 0;
-      case 'dashboard.bots':
-        return dashboard.bots || [];
-      case 'dashboard.analytics':
-        return dashboard.analytics || {};
-      default:
-        return Math.random() * 100; // Fallback for demo
+    case 'performance.responseTime':
+      return performance.responseTime || 0;
+    case 'performance.memoryUsage':
+      return performance.memoryUsage || 0;
+    case 'performance.cpuUsage':
+      return performance.cpuUsage || 0;
+    case 'performance.errorRate':
+      return performance.errorRate || 0;
+    case 'dashboard.bots':
+      return dashboard.bots || [];
+    case 'dashboard.analytics':
+      return dashboard.analytics || {};
+    default:
+      return Math.random() * 100; // Fallback for demo
     }
   };
 

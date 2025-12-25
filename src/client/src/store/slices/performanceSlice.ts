@@ -70,7 +70,7 @@ const performanceSlice = createSlice({
     addMetric: (state, action: PayloadAction<PerformanceMetric>) => {
       // Remove old metric with same name if exists
       state.currentMetrics = state.currentMetrics.filter(
-        metric => metric.name !== action.payload.name
+        metric => metric.name !== action.payload.name,
       );
       
       // Add new metric
@@ -99,7 +99,7 @@ const performanceSlice = createSlice({
       action.payload.forEach(metric => {
         // Remove old metric with same name if exists
         state.currentMetrics = state.currentMetrics.filter(
-          m => m.name !== metric.name
+          m => m.name !== metric.name,
         );
         
         // Add new metric
@@ -133,7 +133,7 @@ const performanceSlice = createSlice({
     
     clearMetricsByCategory: (state, action: PayloadAction<PerformanceMetric['category']>) => {
       state.currentMetrics = state.currentMetrics.filter(
-        metric => metric.category !== action.payload
+        metric => metric.category !== action.payload,
       );
       state.history = state.history.map(entry => ({
         ...entry,

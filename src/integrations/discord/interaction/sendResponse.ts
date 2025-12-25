@@ -1,6 +1,6 @@
-import Debug from "debug";
-import { Message } from 'discord.js';
-import { TextChannel, DMChannel } from "discord.js";
+import Debug from 'debug';
+import type { Message } from 'discord.js';
+import { TextChannel, DMChannel } from 'discord.js';
 import { splitMessageContent } from '@src/message/helpers/processing/splitMessageContent';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
@@ -26,7 +26,7 @@ const debug = Debug('app:sendResponse');
  */
 export const sendResponse = async (
   message: Message,
-  responseText: string
+  responseText: string,
 ): Promise<void> => {
   try {
     if (!message || !responseText) {
@@ -35,13 +35,13 @@ export const sendResponse = async (
         'ValidationError' as any,
         'DISCORD_INVALID_RESPONSE_PARAMS',
         400,
-        { hasMessage: !!message, hasResponseText: !!responseText }
+        { hasMessage: !!message, hasResponseText: !!responseText },
       );
     }
 
     const responseParts = splitMessageContent(responseText);
     for (const part of responseParts) {
-      if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
+      if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error('Unsupported channel type for send method.'); }
       await message.channel.send(part);
     }
     debug('Response message sent successfully: ' + responseText);
@@ -61,7 +61,7 @@ export const sendResponse = async (
       classification.type,
       'DISCORD_SEND_RESPONSE_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error }
+      { originalError: error },
     );
   }
 };

@@ -40,7 +40,7 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ 
   children, 
   position = 'top-right',
-  maxToasts = 5 
+  maxToasts = 5, 
 }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -78,20 +78,20 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
   const getPositionClasses = () => {
     switch (position) {
-      case 'top-left':
-        return 'top-4 left-4';
-      case 'top-center':
-        return 'top-4 left-1/2 transform -translate-x-1/2';
-      case 'top-right':
-        return 'top-4 right-4';
-      case 'bottom-left':
-        return 'bottom-4 left-4';
-      case 'bottom-center':
-        return 'bottom-4 left-1/2 transform -translate-x-1/2';
-      case 'bottom-right':
-        return 'bottom-4 right-4';
-      default:
-        return 'top-4 right-4';
+    case 'top-left':
+      return 'top-4 left-4';
+    case 'top-center':
+      return 'top-4 left-1/2 transform -translate-x-1/2';
+    case 'top-right':
+      return 'top-4 right-4';
+    case 'bottom-left':
+      return 'bottom-4 left-4';
+    case 'bottom-center':
+      return 'bottom-4 left-1/2 transform -translate-x-1/2';
+    case 'bottom-right':
+      return 'bottom-4 right-4';
+    default:
+      return 'top-4 right-4';
     }
   };
 
@@ -139,31 +139,31 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
 
   const getAlertClass = () => {
     switch (toast.type) {
-      case 'success':
-        return 'alert-success';
-      case 'error':
-        return 'alert-error';
-      case 'warning':
-        return 'alert-warning';
-      case 'info':
-        return 'alert-info';
-      default:
-        return 'alert-info';
+    case 'success':
+      return 'alert-success';
+    case 'error':
+      return 'alert-error';
+    case 'warning':
+      return 'alert-warning';
+    case 'info':
+      return 'alert-info';
+    default:
+      return 'alert-info';
     }
   };
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success':
-        return '✅';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      default:
-        return 'ℹ️';
+    case 'success':
+      return '✅';
+    case 'error':
+      return '❌';
+    case 'warning':
+      return '⚠️';
+    case 'info':
+      return 'ℹ️';
+    default:
+      return 'ℹ️';
     }
   };
 
@@ -172,11 +172,11 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
       className={`
         alert ${getAlertClass()} shadow-lg max-w-md transform transition-all duration-300 ease-in-out
         ${isVisible && !isRemoving 
-          ? 'translate-x-0 opacity-100 scale-100' 
-          : position.includes('right') 
-            ? 'translate-x-full opacity-0 scale-95' 
-            : '-translate-x-full opacity-0 scale-95'
-        }
+      ? 'translate-x-0 opacity-100 scale-100' 
+      : position.includes('right') 
+        ? 'translate-x-full opacity-0 scale-95' 
+        : '-translate-x-full opacity-0 scale-95'
+    }
       `}
     >
       <div className="flex items-start space-x-3 flex-1">
@@ -195,8 +195,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
                   key={index}
                   className={`btn btn-xs ${
                     action.style === 'primary' ? 'btn-primary' :
-                    action.style === 'secondary' ? 'btn-secondary' :
-                    'btn-ghost'
+                      action.style === 'secondary' ? 'btn-secondary' :
+                        'btn-ghost'
                   }`}
                   onClick={() => {
                     action.action();
@@ -302,8 +302,8 @@ export const NotificationCenter: React.FC = () => {
                   <div 
                     key={toast.id}
                     className={`alert ${toast.type === 'success' ? 'alert-success' : 
-                                       toast.type === 'error' ? 'alert-error' :
-                                       toast.type === 'warning' ? 'alert-warning' : 'alert-info'} 
+                      toast.type === 'error' ? 'alert-error' :
+                        toast.type === 'warning' ? 'alert-warning' : 'alert-info'} 
                                 alert-sm`}
                   >
                     <div className="text-xs">

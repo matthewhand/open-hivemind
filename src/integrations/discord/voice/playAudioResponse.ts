@@ -1,6 +1,6 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
-import { Client, GuildMember, VoiceChannel } from 'discord.js';
-import { DiscordGatewayAdapterCreator } from '@discordjs/voice'; // Fix: Added missing import for DiscordGatewayAdapterCreator
+import type { Client, GuildMember, VoiceChannel } from 'discord.js';
+import type { DiscordGatewayAdapterCreator } from '@discordjs/voice'; // Fix: Added missing import for DiscordGatewayAdapterCreator
 import discordConfig from '@config/discordConfig';
 import path from 'path';
 import Debug from 'debug';
@@ -21,67 +21,67 @@ const debug = Debug('app:playAudioResponse');
  * - **Debugging and Error Handling**: Includes detailed logging for connection status and playback issues.
  */
 export async function playAudioResponse(client: Client, guildMember: GuildMember, fileName: string): Promise<void> {
- try {
- const voiceChannel = guildMember.voice.channel as VoiceChannel;
- if (!voiceChannel) {
- throw new Error('User is not in a voice channel.');
- }
+  try {
+    const voiceChannel = guildMember.voice.channel as VoiceChannel;
+    if (!voiceChannel) {
+      throw new Error('User is not in a voice channel.');
+    }
 
- const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
- const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
- debug(`Playing audio file: ${audioFilePath}`);
+    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
+    const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
+    debug(`Playing audio file: ${audioFilePath}`);
 
- const connection = joinVoiceChannel({
- channelId: voiceChannel.id,
- guildId: voiceChannel.guild.id,
- adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator, // Fix: Correct type casting
- });
+    const connection = joinVoiceChannel({
+      channelId: voiceChannel.id,
+      guildId: voiceChannel.guild.id,
+      adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator, // Fix: Correct type casting
+    });
 
- connection.on('stateChange', (oldState, newState) => {
- debug(`Connection transitioned from ${oldState.status} to ${newState.status}`);
- });
+    connection.on('stateChange', (oldState, newState) => {
+      debug(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+    });
 
- const player = createAudioPlayer();
- const resource = createAudioResource(audioFilePath);
- player.play(resource);
+    const player = createAudioPlayer();
+    const resource = createAudioResource(audioFilePath);
+    player.play(resource);
 
- connection.subscribe(player);
+    connection.subscribe(player);
 
- player.on(AudioPlayerStatus.Playing, () => {
- debug('Audio is now playing!');
- });
+    player.on(AudioPlayerStatus.Playing, () => {
+      debug('Audio is now playing!');
+    });
 
- player.on(AudioPlayerStatus.Idle, () => {
- debug('Audio playback is complete.');
- connection.destroy();
- });
+    player.on(AudioPlayerStatus.Idle, () => {
+      debug('Audio playback is complete.');
+      connection.destroy();
+    });
 
- player.on('error', (error) => {
- debug(`Error during audio playback: ${error.message}`);
- debug(error.stack); // Improvement: log stack trace for better debugging
- connection.destroy();
- throw error;
- });
- } catch (error: unknown) {
- const hivemindError = ErrorUtils.toHivemindError(error);
- const classification = ErrorUtils.classifyError(hivemindError);
+    player.on('error', (error) => {
+      debug(`Error during audio playback: ${error.message}`);
+      debug(error.stack); // Improvement: log stack trace for better debugging
+      connection.destroy();
+      throw error;
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
 
- debug('Failed to play audio response: ' + ErrorUtils.getMessage(hivemindError));
+    debug('Failed to play audio response: ' + ErrorUtils.getMessage(hivemindError));
 
- // Log with appropriate level including stack trace if available
- if (classification.logLevel === 'error') {
-     console.error('Discord play audio response error:', hivemindError);
-     if (error instanceof Error && error.stack) {
-         console.error('Stack trace:', error.stack);
-     }
- }
+    // Log with appropriate level including stack trace if available
+    if (classification.logLevel === 'error') {
+      console.error('Discord play audio response error:', hivemindError);
+      if (error instanceof Error && error.stack) {
+        console.error('Stack trace:', error.stack);
+      }
+    }
 
- throw ErrorUtils.createError(
-     `Failed to play audio response: ${ErrorUtils.getMessage(hivemindError)}`,
-     classification.type,
-     'DISCORD_AUDIO_PLAYBACK_ERROR',
-     ErrorUtils.getStatusCode(hivemindError),
-     { originalError: error }
- );
- }
+    throw ErrorUtils.createError(
+      `Failed to play audio response: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_AUDIO_PLAYBACK_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error },
+    );
+  }
 }

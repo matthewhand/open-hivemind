@@ -1,4 +1,4 @@
-import { HealthChecker, HealthCheckResult } from './HealthChecker';
+import type { HealthChecker, HealthCheckResult } from './HealthChecker';
 import { EventEmitter } from 'events';
 
 export interface AlertConfig {
@@ -52,7 +52,7 @@ export class AlertManager extends EventEmitter {
       errorRateThreshold: 5,
       consecutiveFailures: 3,
       cooldownPeriod: 300000, // 5 minutes
-      ...config
+      ...config,
     };
 
     // Set up default console notification channel
@@ -65,7 +65,7 @@ export class AlertManager extends EventEmitter {
         console.log(`   ${alert.message}`);
         console.log(`   Value: ${alert.value} (Threshold: ${alert.threshold})`);
         return true;
-      }
+      },
     });
 
     // Start monitoring
@@ -120,7 +120,7 @@ export class AlertManager extends EventEmitter {
     message: string,
     value: number,
     threshold: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<Alert> {
     const alert: Alert = {
       id: `alert_${++this.alertIdCounter}_${Date.now()}`,
@@ -133,7 +133,7 @@ export class AlertManager extends EventEmitter {
       threshold,
       acknowledged: false,
       resolved: false,
-      metadata
+      metadata,
     };
 
     this.alerts.set(alert.id, alert);
@@ -183,7 +183,7 @@ export class AlertManager extends EventEmitter {
           `Memory usage is at ${percentage}% (${used}MB / ${total}MB)`,
           percentage,
           this.config.memoryThreshold,
-          { used, total, process: process.pid }
+          { used, total, process: process.pid },
         );
       }
     } else {
@@ -205,7 +205,7 @@ export class AlertManager extends EventEmitter {
           `Disk usage is at ${diskUsage}%`,
           diskUsage,
           this.config.diskThreshold,
-          { diskUsage }
+          { diskUsage },
         );
       }
     } else {
@@ -228,7 +228,7 @@ export class AlertManager extends EventEmitter {
           `${serviceName} response time is ${service.responseTime}ms`,
           service.responseTime!,
           this.config.responseTimeThreshold,
-          { serviceName, responseTime: service.responseTime }
+          { serviceName, responseTime: service.responseTime },
         );
       }
     }
@@ -247,7 +247,7 @@ export class AlertManager extends EventEmitter {
             `${serviceName} service is not responding`,
             0,
             0,
-            { serviceName, error: service.message }
+            { serviceName, error: service.message },
           );
         }
       } else {
@@ -268,7 +268,7 @@ export class AlertManager extends EventEmitter {
           'Database connection is experiencing issues',
           0,
           0,
-          { status: healthCheck.database.status }
+          { status: healthCheck.database.status },
         );
       }
     } else {
@@ -290,7 +290,7 @@ export class AlertManager extends EventEmitter {
           `Error rate is ${errorRate.toFixed(1)}%`,
           errorRate,
           this.config.errorRateThreshold,
-          { errorRate }
+          { errorRate },
         );
       }
     } else {
@@ -400,7 +400,7 @@ export class AlertManager extends EventEmitter {
       acknowledged: alerts.filter(a => a.acknowledged).length,
       resolved: alerts.filter(a => a.resolved).length,
       bySeverity,
-      byType
+      byType,
     };
   }
 
@@ -414,8 +414,8 @@ export class AlertManager extends EventEmitter {
       summary: alertSummary,
       channels: Array.from(this.notificationChannels.values()).map(c => ({
         name: c.name,
-        type: c.type
-      }))
+        type: c.type,
+      })),
     };
 
     return JSON.stringify(alertData, null, 2);

@@ -7,7 +7,7 @@ import {
   Hero,
   Button,
   SkeletonCard,
-  SkeletonList
+  SkeletonList,
 } from './DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
@@ -46,32 +46,32 @@ const Dashboard: React.FC = () => {
 
   const getStatusColor = (botStatus: string) => {
     switch (botStatus.toLowerCase()) {
-      case 'active':
-        return 'success';
-      case 'connecting':
-        return 'warning';
-      case 'inactive':
-      case 'unavailable':
-        return 'error';
-      case 'error':
-        return 'error';
-      default:
-        return 'info';
+    case 'active':
+      return 'success';
+    case 'connecting':
+      return 'warning';
+    case 'inactive':
+    case 'unavailable':
+      return 'error';
+    case 'error':
+      return 'error';
+    default:
+      return 'info';
     }
   };
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
-      case 'discord':
-        return '💬';
-      case 'slack':
-        return '📢';
-      case 'telegram':
-        return '✈️';
-      case 'mattermost':
-        return '💼';
-      default:
-        return '🤖';
+    case 'discord':
+      return '💬';
+    case 'slack':
+      return '📢';
+    case 'telegram':
+      return '✈️';
+    case 'mattermost':
+      return '💼';
+    default:
+      return '🤖';
     }
   };
 
@@ -169,7 +169,7 @@ const Dashboard: React.FC = () => {
   }
 
   const activeBots = bots.filter(bot =>
-    status?.bots.find((_, i) => bots[i]?.name === bot.name)?.status === 'active'
+    status?.bots.find((_, i) => bots[i]?.name === bot.name)?.status === 'active',
   ).length;
 
   const totalMessages = status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0;

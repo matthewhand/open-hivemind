@@ -60,15 +60,15 @@ const ConfigSources: React.FC = () => {
 
   const isSensitiveKey = (key: string) => {
     const sensitivePatterns = [
-      'token', 'key', 'secret', 'password', 'auth', 'credential'
+      'token', 'key', 'secret', 'password', 'auth', 'credential',
     ];
     return sensitivePatterns.some(pattern =>
-      key.toLowerCase().includes(pattern)
+      key.toLowerCase().includes(pattern),
     );
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {return '0 B';}
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -134,7 +134,7 @@ const ConfigSources: React.FC = () => {
         </Badge>
       ),
       sensitive: (
-        <Badge variant={isSensitiveKey(key) ? "error" : "success"} size="sm">
+        <Badge variant={isSensitiveKey(key) ? 'error' : 'success'} size="sm">
           {isSensitiveKey(key) ? 'Yes' : 'No'}
         </Badge>
       ),

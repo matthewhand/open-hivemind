@@ -1,5 +1,5 @@
-import { IMessageProvider } from '@message/interfaces/IMessageProvider';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { SlackService } from '@integrations/slack/SlackService';
 
 export class SlackMessageProvider implements IMessageProvider {
@@ -57,7 +57,7 @@ export class SlackMessageProvider implements IMessageProvider {
     } catch (error) {
       console.error(`Failed to get forum owner for channel ${forumId}:`, error);
       // Return a default owner ID in case of error
-      return `default-owner`;
+      return 'default-owner';
     }
   }
 }

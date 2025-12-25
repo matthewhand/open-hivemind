@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import adminRouter from '@src/admin/adminRoutes';
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
@@ -46,18 +47,18 @@ uberRouter.use('/openapi', openapiRouter);
 
 // POST /guards endpoint
 uberRouter.post('/guards', validateRequest(GuardSchema), (req: Request, res: Response) => {
-    const { type, users, ips } = req.body;
-    console.log(`[GUARDS] Updated guards: type=${type}, users=${users}, ips=${ips}`);
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-    const guardsPath = path.join(configDir, 'personas', 'guards.json');
-    try {
-        const guardsData = { type, users: users || [], ips: ips || [] };
-        fs.writeFileSync(guardsPath, JSON.stringify(guardsData, null, 2));
-        res.json({ success: true, message: 'Guards updated successfully.' });
-    } catch (error) {
-        console.error('[GUARDS] Error updating guards:', error);
-        res.status(500).json({ error: 'Failed to update guards.' });
-    }
+  const { type, users, ips } = req.body;
+  console.log(`[GUARDS] Updated guards: type=${type}, users=${users}, ips=${ips}`);
+  const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+  const guardsPath = path.join(configDir, 'personas', 'guards.json');
+  try {
+    const guardsData = { type, users: users || [], ips: ips || [] };
+    fs.writeFileSync(guardsPath, JSON.stringify(guardsData, null, 2));
+    res.json({ success: true, message: 'Guards updated successfully.' });
+  } catch (error) {
+    console.error('[GUARDS] Error updating guards:', error);
+    res.status(500).json({ error: 'Failed to update guards.' });
+  }
 });
 
 export default uberRouter;

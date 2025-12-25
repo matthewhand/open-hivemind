@@ -6,5 +6,5 @@
  * @returns The extracted content as a string.
  */
 export function extractContent(choice: any): string {
-    return choice.message?.content?.trim() || '';
+  return choice.message?.content?.trim() || '';
 }

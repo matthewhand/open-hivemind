@@ -12,25 +12,25 @@ const debug = Debug('app:registerSlashCommands');
  * @param {object[]} commands - The commands to be registered.
  */
 export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
-    const clientId = process.env.CLIENT_ID;
-    if (!clientId) {
-        debug('Client ID is not defined. Cannot register slash commands.');
-        return;
-    }
-    const rest = new REST({ version: '9' }).setToken(token);
-    try {
-        debug('Registering ' + commands.length + ' slash commands.');
-        await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-        debug('Successfully registered slash commands.');
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error);
-        const classification = ErrorUtils.classifyError(hivemindError);
+  const clientId = process.env.CLIENT_ID;
+  if (!clientId) {
+    debug('Client ID is not defined. Cannot register slash commands.');
+    return;
+  }
+  const rest = new REST({ version: '9' }).setToken(token);
+  try {
+    debug('Registering ' + commands.length + ' slash commands.');
+    await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+    debug('Successfully registered slash commands.');
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
 
-        debug('Failed to register slash commands: ' + ErrorUtils.getMessage(hivemindError));
+    debug('Failed to register slash commands: ' + ErrorUtils.getMessage(hivemindError));
 
-        // Log with appropriate level
-        if (classification.logLevel === 'error') {
-            console.error('Discord register slash commands error:', hivemindError);
-        }
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+      console.error('Discord register slash commands error:', hivemindError);
     }
+  }
 }

@@ -29,7 +29,7 @@ export class MattermostMessage extends IMessage {
   constructor(
     post: MattermostPost,
     username: string = 'Unknown',
-    options?: { isBot?: boolean; botUsername?: string; botUserId?: string }
+    options?: { isBot?: boolean; botUsername?: string; botUserId?: string },
   ) {
     super(post, 'user', {
       edited: post.edit_at > 0,
@@ -38,7 +38,7 @@ export class MattermostMessage extends IMessage {
       type: post.type,
       replyCount: post.reply_count,
       hashtags: post.hashtags ? post.hashtags.split(' ') : [],
-      props: post.props
+      props: post.props,
     });
     this.post = post;
     this.username = username;
@@ -84,8 +84,8 @@ export class MattermostMessage extends IMessage {
   }
 
   public mentionsUsers(userId: string): boolean {
-    if (!userId) return false;
-    if (this.mentions.includes(userId)) return true;
+    if (!userId) {return false;}
+    if (this.mentions.includes(userId)) {return true;}
     if (this.botUserId && userId === this.botUserId && this.botUsername) {
       return this.mentions.includes(this.botUsername);
     }
@@ -101,12 +101,12 @@ export class MattermostMessage extends IMessage {
   }
 
   private extractMentions(text: string): string[] {
-    if (!text) return [];
+    if (!text) {return [];}
     const regex = /@([a-z0-9._-]+)/gi;
     const matches = new Set<string>();
     let m: RegExpExecArray | null;
     while ((m = regex.exec(text)) !== null) {
-      if (m[1]) matches.add(m[1]);
+      if (m[1]) {matches.add(m[1]);}
     }
     return Array.from(matches);
   }

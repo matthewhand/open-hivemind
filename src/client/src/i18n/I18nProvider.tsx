@@ -100,7 +100,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 <button
                   key={lang.code}
                   className={`w-full text-left px-3 py-2 rounded hover:bg-base-200 flex items-center justify-between text-sm ${language === lang.code ? 'bg-primary/10 text-primary font-bold' : ''
-                    }`}
+                  }`}
                   onClick={() => changeLanguage(lang.code)}
                 >
                   <span>{lang.flag} {lang.name}</span>
@@ -117,7 +117,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useI18n = () => {
   const context = useContext(I18nContext);
-  if (!context) throw new Error('useI18n must be used within I18nProvider');
+  if (!context) {throw new Error('useI18n must be used within I18nProvider');}
   return context;
 };
 

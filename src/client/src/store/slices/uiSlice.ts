@@ -486,8 +486,8 @@ export const selectIsFeatureEnabled = (feature: string) => (state: { ui: UIState
   state.ui.featureFlags[feature] === true;
 
 export const selectDeviceType = (state: { ui: UIState }) => {
-  if (state.ui.isMobile) return 'mobile';
-  if (state.ui.isTablet) return 'tablet';
+  if (state.ui.isMobile) {return 'mobile';}
+  if (state.ui.isTablet) {return 'tablet';}
   return 'desktop';
 };
 

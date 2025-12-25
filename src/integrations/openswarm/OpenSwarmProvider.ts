@@ -1,4 +1,4 @@
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import axios from 'axios';
 
@@ -24,7 +24,7 @@ export class OpenSwarmProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: any[],
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<string> {
     try {
       const teamName = metadata?.team || metadata?.model || 'default-team';
@@ -33,14 +33,14 @@ export class OpenSwarmProvider implements ILlmProvider {
         model: teamName,
         messages: [
           ...historyMessages,
-          { role: 'user', content: userMessage }
-        ]
+          { role: 'user', content: userMessage },
+        ],
       }, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        timeout: 15000
+        timeout: 15000,
       });
 
       return response.data.choices[0]?.message?.content || 'No response';

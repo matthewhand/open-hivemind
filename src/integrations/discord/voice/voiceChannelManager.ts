@@ -1,5 +1,7 @@
-import { VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
-import { VoiceChannel, Client } from 'discord.js';
+import type { VoiceConnection} from '@discordjs/voice';
+import { VoiceConnectionStatus } from '@discordjs/voice';
+import type { Client } from 'discord.js';
+import { VoiceChannel } from 'discord.js';
 import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from './voiceCommandHandler';
 import { VoiceActivityDetection } from './voiceActivityDetection';
@@ -51,15 +53,15 @@ export class VoiceChannelManager {
 
       // Log with appropriate level
       if (classification.logLevel === 'error') {
-          console.error('Discord voice channel manager join error:', hivemindError);
+        console.error('Discord voice channel manager join error:', hivemindError);
       }
 
       throw ErrorUtils.createError(
-          `Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`,
-          classification.type,
-          'DISCORD_VOICE_CHANNEL_MANAGER_JOIN_ERROR',
-          ErrorUtils.getStatusCode(hivemindError),
-          { originalError: error, channelId }
+        `Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`,
+        classification.type,
+        'DISCORD_VOICE_CHANNEL_MANAGER_JOIN_ERROR',
+        ErrorUtils.getStatusCode(hivemindError),
+        { originalError: error, channelId },
       );
     }
   }

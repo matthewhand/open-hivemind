@@ -62,10 +62,10 @@ const BotsPage: React.FC = () => {
       const [configResponse, globalResponse, personasResponse] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/config/global`),
-        fetch(`${API_BASE}/personas`)
+        fetch(`${API_BASE}/personas`),
       ]);
 
-      if (!configResponse.ok) throw new Error('Failed to fetch bot config');
+      if (!configResponse.ok) {throw new Error('Failed to fetch bot config');}
       const configData = await configResponse.json();
       setBots(configData.bots || []);
 
@@ -102,7 +102,7 @@ const BotsPage: React.FC = () => {
       setActivityLogs([
         { id: 1, timestamp: new Date().toISOString(), details: 'Bot started', metadata: { type: 'SYSTEM' } },
         { id: 2, timestamp: new Date(Date.now() - 1000 * 60).toISOString(), details: 'Message received from user', metadata: { type: 'MESSAGE_RECEIVED' } },
-        { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } }
+        { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } },
       ]);
     }
   }, [previewBot]);
@@ -126,16 +126,16 @@ const BotsPage: React.FC = () => {
       // API expects { provider: ..., llmProvider: ... }
 
       const payload: any = {};
-      if (field === 'messageProvider') payload.provider = value;
-      if (field === 'llmProvider') payload.llmProvider = value;
+      if (field === 'messageProvider') {payload.provider = value;}
+      if (field === 'llmProvider') {payload.llmProvider = value;}
 
       const res = await fetch(`${API_BASE}/bots/${bot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Failed to update bot configuration');
+      if (!res.ok) {throw new Error('Failed to update bot configuration');}
 
       await fetchData();
     } catch (err: any) {
@@ -147,7 +147,7 @@ const BotsPage: React.FC = () => {
 
 
   const handleCreateBot = async () => {
-    if (!canCreateBot) return;
+    if (!canCreateBot) {return;}
 
     try {
       setActionLoading('create');
@@ -159,8 +159,8 @@ const BotsPage: React.FC = () => {
           description: newBotDesc,
           messageProvider: newBotMessageProvider,
           ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
-          persona: newBotPersona
-        })
+          persona: newBotPersona,
+        }),
       });
 
       if (!response.ok) {
@@ -189,7 +189,7 @@ const BotsPage: React.FC = () => {
     try {
       setActionLoading(bot.id);
       const response = await fetch(`${API_BASE}/bots/${bot.id}/${action}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -206,12 +206,12 @@ const BotsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteModal.bot) return;
+    if (!deleteModal.bot) {return;}
 
     try {
       setActionLoading(deleteModal.bot.id);
       const response = await fetch(`${API_BASE}/bots/${deleteModal.bot.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (!response.ok) {
@@ -234,7 +234,7 @@ const BotsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/bots/${bot.id}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newName: `${bot.name} (Clone)` })
+        body: JSON.stringify({ newName: `${bot.name} (Clone)` }),
       });
 
       if (!response.ok) {
@@ -256,7 +256,7 @@ const BotsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/bots/${bot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona })
+        body: JSON.stringify({ persona }),
       });
 
       if (!response.ok) {
@@ -283,8 +283,8 @@ const BotsPage: React.FC = () => {
   };
 
   const redact = (str: string) => {
-    if (!str) return '';
-    if (str.length <= 4) return '****';
+    if (!str) {return '';}
+    if (str.length <= 4) {return '****';}
     return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
   };
 
@@ -502,7 +502,7 @@ const BotsPage: React.FC = () => {
                               <li>
                                 <a onClick={() => {
                                   const newP = prompt('Enter new persona name:');
-                                  if (newP) handleUpdatePersona(bot, newP);
+                                  if (newP) {handleUpdatePersona(bot, newP);}
                                 }}>
                                   <Plus className="w-3 h-3" /> New Persona
                                 </a>
@@ -561,7 +561,7 @@ const BotsPage: React.FC = () => {
                           >
                             <Copy className="w-4 h-4" /> Clone Configuration
                           </button>
-                          <div className={bot.envOverrides && Object.keys(bot.envOverrides).length > 0 ? "tooltip tooltip-left w-full" : "w-full"} data-tip="Cannot delete: Defined by environment variables">
+                          <div className={bot.envOverrides && Object.keys(bot.envOverrides).length > 0 ? 'tooltip tooltip-left w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
                             <button
                               className="btn btn-sm btn-ghost border border-red-200 text-error hover:bg-error/10 w-full justify-start gap-2"
                               onClick={() => setDeleteModal({ isOpen: true, bot })}
@@ -765,7 +765,7 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = `/admin/integrations/message`}
+                      onClick={() => window.location.href = '/admin/integrations/message'}
                       title="Configure Message Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
@@ -793,7 +793,7 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = `/admin/integrations/llm`}
+                      onClick={() => window.location.href = '/admin/integrations/llm'}
                       title="Configure LLM Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
@@ -851,7 +851,7 @@ const BotsPage: React.FC = () => {
 
             <div className="flex justify-end gap-2">
               <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => window.location.href = `/admin/integrations/llm`}>
+              <button className="btn btn-primary" onClick={() => window.location.href = '/admin/integrations/llm'}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configure Providers
               </button>

@@ -1,4 +1,4 @@
-import { VoiceConnection, VoiceReceiver } from '@discordjs/voice';
+import type { VoiceConnection, VoiceReceiver } from '@discordjs/voice';
 import { User } from 'discord.js';
 import Debug from 'debug';
 

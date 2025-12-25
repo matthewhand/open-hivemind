@@ -158,7 +158,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchResponseProfiles = async () => {
       try {
         const response = await fetch('/api/config/response-profiles');
-        if (!response.ok) return;
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -190,7 +190,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchGuardrailProfiles = async () => {
       try {
         const response = await fetch('/api/config/guardrails');
-        if (!response.ok) return;
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -205,7 +205,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
         const map: Record<string, GuardState> = {};
         for (const profile of profiles) {
-          if (!profile?.key || !profile?.mcpGuard) continue;
+          if (!profile?.key || !profile?.mcpGuard) {continue;}
           const guard = profile.mcpGuard;
           map[String(profile.key)] = {
             enabled: Boolean(guard.enabled),
@@ -236,10 +236,10 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchLlmProfiles = async () => {
       try {
         const response = await fetch('/api/config/llm-profiles');
-        if (!response.ok) return;
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = data?.profiles;
-        if (!profiles || typeof profiles !== 'object') return;
+        if (!profiles || typeof profiles !== 'object') {return;}
         const llmProfilesList = Array.isArray(profiles.llm) ? profiles.llm : [];
         if (isMounted) {
           setLlmProfiles(llmProfilesList);
@@ -260,7 +260,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchMcpServerProfiles = async () => {
       try {
         const response = await fetch('/api/config/mcp-server-profiles');
-        if (!response.ok) return;
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -335,12 +335,12 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const messageProviderInfoMap = useMemo(
     () => Object.fromEntries(messageProviderInfoList.map(info => [info.key, info])),
-    [messageProviderInfoList]
+    [messageProviderInfoList],
   );
 
   const llmProviderInfoMap = useMemo(
     () => Object.fromEntries(llmProviderInfoList.map(info => [info.key, info])),
-    [llmProviderInfoList]
+    [llmProviderInfoList],
   );
 
   const isLoading = configLoading || statusLoading;
@@ -393,14 +393,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleSystemInstructionBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
-    if (!current) return;
+    if (!current) {return;}
     commitChanges(bot.name, { systemInstruction: current.systemInstruction });
   };
 
   const handleGuardToggle = (bot: Bot, enabled: boolean) => {
     const current = selectionState[bot.name];
-    if (!current) return;
-    if (current.mcpGuardProfile) return;
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     const updatedGuard = { ...current.mcpGuard, enabled };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -408,8 +408,8 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleGuardTypeChange = (bot: Bot, type: GuardState['type']) => {
     const current = selectionState[bot.name];
-    if (!current) return;
-    if (current.mcpGuardProfile) return;
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     const updatedGuard = { ...current.mcpGuard, type };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -422,8 +422,8 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       .filter(Boolean);
 
     const current = selectionState[bot.name];
-    if (!current) return;
-    if (current.mcpGuardProfile) return;
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
     setGuardInputState(prev => ({ ...prev, [bot.name]: value }));
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
@@ -431,14 +431,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleGuardUsersBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
-    if (!current) return;
-    if (current.mcpGuardProfile) return;
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     commitChanges(bot.name, { mcpGuard: current.mcpGuard });
   };
 
   const handleGuardrailProfileChange = (bot: Bot, profileKey: string) => {
     const current = selectionState[bot.name];
-    if (!current) return;
+    if (!current) {return;}
 
     const nextProfile = profileKey.trim();
     const profileGuard = guardrailProfileMap[nextProfile];
@@ -668,7 +668,7 @@ const toOptionLabel = (info: ProviderInfo): { value: string; label: string } => 
 
 const formatProfileLabel = (name: string): string => {
   const trimmed = name.trim();
-  if (!trimmed) return '';
+  if (!trimmed) {return '';}
   return trimmed
     .split(/[_\-\s]+/)
     .filter(Boolean)
@@ -709,7 +709,7 @@ const buildPersonaOptions = (personas: Array<{ key?: string; id?: string; name: 
   return personas
     .map(persona => ({
       value: persona.key || persona.id || '',
-      label: persona.name
+      label: persona.name,
     }))
     .filter(option => option.value);
 };
@@ -742,11 +742,11 @@ const normalizeGuard = (guard: unknown): GuardState => {
 };
 
 function normalizeMcpServers(servers: unknown): string[] {
-  if (!servers) return [];
+  if (!servers) {return [];}
   if (Array.isArray(servers)) {
     return servers
       .map(server => {
-        if (typeof server === 'string') return server;
+        if (typeof server === 'string') {return server;}
         if (server && typeof (server as { name?: unknown }).name === 'string') {
           return String((server as { name: unknown }).name);
         }

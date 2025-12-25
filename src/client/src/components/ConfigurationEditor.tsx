@@ -9,7 +9,7 @@ import {
   Modal,
   Loading,
   Tooltip,
-  Badge
+  Badge,
 } from './DaisyUI';
 import {
   Save as SaveIcon,
@@ -18,7 +18,7 @@ import {
   Shield,
   Lock,
   CheckCircle,
-  Info
+  Info,
 } from 'lucide-react';
 import { type Bot } from '../services/api';
 import ProviderConfig from './ProviderConfig';
@@ -53,7 +53,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
   const messageProviders = [
     { value: 'discord', label: 'Discord' },
     { value: 'slack', label: 'Slack' },
-    { value: 'mattermost', label: 'Mattermost' }
+    { value: 'mattermost', label: 'Mattermost' },
   ];
 
   const llmProviders = [
@@ -63,7 +63,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
     { value: 'openswarm', label: 'OpenSwarm' },
     { value: 'perplexity', label: 'Perplexity' },
     { value: 'replicate', label: 'Replicate' },
-    { value: 'n8n', label: 'n8n' }
+    { value: 'n8n', label: 'n8n' },
   ];
 
   useEffect(() => {
@@ -86,7 +86,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
   }, [bot]);
 
   const handleSave = async () => {
-    if (!bot) return;
+    if (!bot) {return;}
 
     try {
       setLoading(true);

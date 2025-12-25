@@ -1,4 +1,4 @@
-import { IMessage } from './IMessage';
+import type { IMessage } from './IMessage';
 
 /**
  * High-level interface for messaging services across different platforms.

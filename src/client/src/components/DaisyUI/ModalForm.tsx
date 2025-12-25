@@ -60,11 +60,11 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'sm': return 'w-11/12 max-w-md';
-      case 'md': return 'w-11/12 max-w-2xl';
-      case 'lg': return 'w-11/12 max-w-4xl';
-      case 'xl': return 'w-11/12 max-w-6xl';
-      default: return 'w-11/12 max-w-2xl';
+    case 'sm': return 'w-11/12 max-w-md';
+    case 'md': return 'w-11/12 max-w-2xl';
+    case 'lg': return 'w-11/12 max-w-4xl';
+    case 'xl': return 'w-11/12 max-w-6xl';
+    default: return 'w-11/12 max-w-2xl';
     }
   };
 
@@ -81,7 +81,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
   };
 
   const validateStep = (stepIndex: number): boolean => {
-    if (!steps) return true;
+    if (!steps) {return true;}
     
     const stepFields = steps[stepIndex].fields;
     const stepErrors: Record<string, string> = {};
@@ -153,103 +153,103 @@ const ModalForm: React.FC<ModalFormProps> = ({
     const hasError = !!errors[field.name];
     
     switch (field.type) {
-      case 'textarea':
-        return (
-          <textarea
-            className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''}`}
-            placeholder={field.placeholder}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            disabled={field.disabled || loading}
-            rows={4}
-          />
-        );
+    case 'textarea':
+      return (
+        <textarea
+          className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''}`}
+          placeholder={field.placeholder}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          disabled={field.disabled || loading}
+          rows={4}
+        />
+      );
         
-      case 'select':
-        return (
-          <select
-            className={`select select-bordered w-full ${hasError ? 'select-error' : ''}`}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            disabled={field.disabled || loading}
-            multiple={field.multiple}
-          >
-            <option value="">{field.placeholder || 'Select an option'}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
+    case 'select':
+      return (
+        <select
+          className={`select select-bordered w-full ${hasError ? 'select-error' : ''}`}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          disabled={field.disabled || loading}
+          multiple={field.multiple}
+        >
+          <option value="">{field.placeholder || 'Select an option'}</option>
+          {field.options?.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
         
-      case 'checkbox':
-        return (
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-2">
+    case 'checkbox':
+      return (
+        <div className="form-control">
+          <label className="label cursor-pointer justify-start gap-2">
+            <input
+              type="checkbox"
+              className="checkbox"
+              checked={formData[field.name] || false}
+              onChange={(e) => handleInputChange(field.name, e.target.checked)}
+              disabled={field.disabled || loading}
+            />
+            <span className="label-text">{field.label}</span>
+          </label>
+        </div>
+      );
+        
+    case 'radio':
+      return (
+        <div className="form-control">
+          {field.options?.map(option => (
+            <label key={option.value} className="label cursor-pointer justify-start gap-2">
               <input
-                type="checkbox"
-                className="checkbox"
-                checked={formData[field.name] || false}
-                onChange={(e) => handleInputChange(field.name, e.target.checked)}
+                type="radio"
+                name={field.name}
+                className="radio"
+                value={option.value}
+                checked={formData[field.name] === option.value}
+                onChange={(e) => handleInputChange(field.name, e.target.value)}
                 disabled={field.disabled || loading}
               />
-              <span className="label-text">{field.label}</span>
+              <span className="label-text">{option.label}</span>
             </label>
-          </div>
-        );
+          ))}
+        </div>
+      );
         
-      case 'radio':
-        return (
-          <div className="form-control">
-            {field.options?.map(option => (
-              <label key={option.value} className="label cursor-pointer justify-start gap-2">
-                <input
-                  type="radio"
-                  name={field.name}
-                  className="radio"
-                  value={option.value}
-                  checked={formData[field.name] === option.value}
-                  onChange={(e) => handleInputChange(field.name, e.target.value)}
-                  disabled={field.disabled || loading}
-                />
-                <span className="label-text">{option.label}</span>
-              </label>
-            ))}
-          </div>
-        );
+    case 'file':
+      return (
+        <input
+          type="file"
+          className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''}`}
+          onChange={(e) => handleInputChange(field.name, e.target.files?.[0])}
+          disabled={field.disabled || loading}
+          multiple={field.multiple}
+        />
+      );
         
-      case 'file':
-        return (
-          <input
-            type="file"
-            className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''}`}
-            onChange={(e) => handleInputChange(field.name, e.target.files?.[0])}
-            disabled={field.disabled || loading}
-            multiple={field.multiple}
-          />
-        );
-        
-      default:
-        return (
-          <Input
-            type={field.type}
-            variant={hasError ? 'error' : undefined}
-            placeholder={field.placeholder}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            disabled={field.disabled || loading}
-          />
-        );
+    default:
+      return (
+        <Input
+          type={field.type}
+          variant={hasError ? 'error' : undefined}
+          placeholder={field.placeholder}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          disabled={field.disabled || loading}
+        />
+      );
     }
   };
 
   const getCurrentStepFields = () => {
-    if (!steps) return fields;
+    if (!steps) {return fields;}
     return fields.filter(field => steps[currentStep].fields.includes(field.name));
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div className="modal modal-open">

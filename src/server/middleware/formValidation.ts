@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { body, validationResult, matchedData } from 'express-validator';
 import Debug from 'debug';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
@@ -245,11 +245,11 @@ export const validateBotConfigCreation = [
       return res.status(400).json({
         error: 'Validation failed',
         message: 'Invalid request data',
-        details: errors.array()
+        details: errors.array(),
       });
     }
     next();
-  }
+  },
 ];
 
 /**
@@ -500,11 +500,11 @@ export const validateBotConfigUpdate = [
       return res.status(400).json({
         error: 'Validation failed',
         message: 'Invalid request data',
-        details: errors.array()
+        details: errors.array(),
       });
     }
     next();
-  }
+  },
 ];
 
 /**
@@ -516,14 +516,14 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
     const data = matchedData(req, { locations: ['body'] });
     
     // Trim string fields
-    if (typeof data.name === 'string') data.name = data.name.trim();
-    if (typeof data.messageProvider === 'string') data.messageProvider = data.messageProvider.trim();
-    if (typeof data.llmProvider === 'string') data.llmProvider = data.llmProvider.trim();
-    if (typeof data.llmProfile === 'string') data.llmProfile = data.llmProfile.trim();
-    if (typeof data.persona === 'string') data.persona = data.persona.trim();
-    if (typeof data.responseProfile === 'string') data.responseProfile = data.responseProfile.trim();
-    if (typeof data.mcpGuardProfile === 'string') data.mcpGuardProfile = data.mcpGuardProfile.trim();
-    if (typeof data.systemInstruction === 'string') data.systemInstruction = data.systemInstruction.trim();
+    if (typeof data.name === 'string') {data.name = data.name.trim();}
+    if (typeof data.messageProvider === 'string') {data.messageProvider = data.messageProvider.trim();}
+    if (typeof data.llmProvider === 'string') {data.llmProvider = data.llmProvider.trim();}
+    if (typeof data.llmProfile === 'string') {data.llmProfile = data.llmProfile.trim();}
+    if (typeof data.persona === 'string') {data.persona = data.persona.trim();}
+    if (typeof data.responseProfile === 'string') {data.responseProfile = data.responseProfile.trim();}
+    if (typeof data.mcpGuardProfile === 'string') {data.mcpGuardProfile = data.mcpGuardProfile.trim();}
+    if (typeof data.systemInstruction === 'string') {data.systemInstruction = data.systemInstruction.trim();}
     
     // Sanitize nested objects
     if (data.discord) {
@@ -591,7 +591,7 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
     debug('Error sanitizing bot configuration:', error);
     res.status(500).json({
       error: 'Sanitization failed',
-      message: 'Failed to sanitize request data'
+      message: 'Failed to sanitize request data',
     });
   }
 };

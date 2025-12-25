@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:needsCompletion');
 
@@ -10,14 +10,14 @@ const debug = Debug('app:needsCompletion');
  * @returns Boolean indicating if the response requires further completion.
  */
 export function needsCompletion(
-    maxTokensReached: boolean,
-    finishReason: string,
-    content: string
+  maxTokensReached: boolean,
+  finishReason: string,
+  content: string,
 ): boolean {
-    const endsInPunctuation = /[.!?]$/.test(content.trim());
+  const endsInPunctuation = /[.!?]$/.test(content.trim());
 
-    const needsMore = maxTokensReached && finishReason !== 'stop' && !endsInPunctuation;
-    debug('Needs Completion Check:', { maxTokensReached, finishReason, content, needsMore });
+  const needsMore = maxTokensReached && finishReason !== 'stop' && !endsInPunctuation;
+  debug('Needs Completion Check:', { maxTokensReached, finishReason, content, needsMore });
 
-    return needsMore;
+  return needsMore;
 }

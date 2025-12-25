@@ -339,7 +339,7 @@ const FieldSelect: React.FC<FieldSelectProps> = ({
   disabled,
   allowEmpty,
   onChange,
-  helperContent
+  helperContent,
 }) => (
   <div className="form-control">
     <label className="label">
@@ -394,7 +394,7 @@ const FieldHelper: React.FC<{ metadata?: FieldMetadata; fallback?: string }> = (
 const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({
   label,
   configured,
-  detail
+  detail,
 }) => (
   <div className="flex items-center gap-2 mt-1">
     <div className={`w-2 h-2 rounded-full ${configured ? 'bg-success' : 'bg-error'}`}></div>
@@ -406,31 +406,31 @@ const StatusLine: React.FC<{ label: string; configured: boolean; detail: string 
 
 const connectionStatusLabel = (
   connected?: boolean,
-  statusText?: string
+  statusText?: string,
 ): { icon: React.ReactNode; color: 'success' | 'default' | 'error'; label: string } => {
   if (connected === true) {
     return {
       icon: <div className="w-2 h-2 rounded-full bg-success"></div>,
       color: 'success',
-      label: statusText || 'Connected'
+      label: statusText || 'Connected',
     };
   }
   if (connected === false) {
     return {
       icon: <div className="w-2 h-2 rounded-full bg-error"></div>,
       color: 'error',
-      label: statusText || 'Disconnected'
+      label: statusText || 'Disconnected',
     };
   }
   return {
     icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>,
     color: 'default',
-    label: statusText || 'Unknown'
+    label: statusText || 'Unknown',
   };
 };
 
 const renderProviderHelper = (info?: ProviderInfo) => {
-  if (!info) return null;
+  if (!info) {return null;}
 
   if (!info.docsUrl && !info.helpText) {
     return null;

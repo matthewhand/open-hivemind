@@ -20,7 +20,7 @@ const BotTemplatesPage: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/uber/bots' },
-    { label: 'Templates', href: '/uber/bots/templates', isActive: true }
+    { label: 'Templates', href: '/uber/bots/templates', isActive: true },
   ];
 
   // Mock templates - in real app this would come from API
@@ -33,7 +33,7 @@ const BotTemplatesPage: React.FC = () => {
       persona: 'friendly-helper',
       llmProvider: 'openai',
       tags: ['community', 'moderation', 'discord'],
-      featured: true
+      featured: true,
     },
     {
       id: '2',
@@ -43,7 +43,7 @@ const BotTemplatesPage: React.FC = () => {
       persona: 'dev-assistant',
       llmProvider: 'anthropic',
       tags: ['development', 'technical', 'code-review'],
-      featured: true
+      featured: true,
     },
     {
       id: '3',
@@ -53,7 +53,7 @@ const BotTemplatesPage: React.FC = () => {
       persona: 'teacher',
       llmProvider: 'openai',
       tags: ['education', 'teaching', 'training'],
-      featured: false
+      featured: false,
     },
     {
       id: '4',
@@ -63,8 +63,8 @@ const BotTemplatesPage: React.FC = () => {
       persona: 'friendly-helper',
       llmProvider: 'openwebui',
       tags: ['support', 'customer-service', 'faq'],
-      featured: false
-    }
+      featured: false,
+    },
   ];
 
   useEffect(() => {
@@ -84,9 +84,9 @@ const BotTemplatesPage: React.FC = () => {
           persona: template.persona,
           llmProvider: template.llmProvider,
           name: `${template.name} Copy`,
-          description: template.description
-        }
-      }
+          description: template.description,
+        },
+      },
     });
   };
 
@@ -95,7 +95,7 @@ const BotTemplatesPage: React.FC = () => {
       discord: 'badge-primary',
       slack: 'badge-secondary',
       mattermost: 'badge-info',
-      telegram: 'badge-success'
+      telegram: 'badge-success',
     };
     return colors[platform] || 'badge-ghost';
   };
@@ -127,7 +127,7 @@ const BotTemplatesPage: React.FC = () => {
           <div
             key={template.id}
             className={`card bg-base-100 shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
-              }`}
+            }`}
           >
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">

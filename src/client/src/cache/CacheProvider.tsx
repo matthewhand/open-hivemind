@@ -4,7 +4,7 @@ import {
   CircleStackIcon,
   TrashIcon,
   ArrowPathIcon,
-  ClockIcon
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 interface CacheStats {
@@ -47,7 +47,7 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   function get<T>(key: string): T | null {
-    if (!isEnabled) return null;
+    if (!isEnabled) {return null;}
 
     const item = cache.get(key);
     if (!item) {
@@ -66,7 +66,7 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }
 
   function set<T>(key: string, value: T, ttl: number = 3600000) {
-    if (!isEnabled) return;
+    if (!isEnabled) {return;}
 
     if (cache.size >= stats.maxSize) {
       // Simple LRU approximation: delete first key
@@ -165,7 +165,7 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useCache = () => {
   const context = useContext(CacheContext);
-  if (!context) throw new Error('useCache must be used within CacheProvider');
+  if (!context) {throw new Error('useCache must be used within CacheProvider');}
   return context;
 };
 

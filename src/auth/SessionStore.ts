@@ -32,7 +32,7 @@ export class SessionStore {
       token,
       role,
       createdAt: now,
-      expiresAt
+      expiresAt,
     });
 
     // Track sessions by user
@@ -64,7 +64,7 @@ export class SessionStore {
     }
     debug('Session not found for token: %s', token);
     return false;
- }
+  }
 
   /**
    * Invalidate a specific token
@@ -107,7 +107,7 @@ export class SessionStore {
   /**
    * Clean expired sessions
    */
- public async cleanExpiredSessions(): Promise<void> {
+  public async cleanExpiredSessions(): Promise<void> {
     const now = new Date();
     const expiredSessionIds: string[] = [];
 
@@ -136,7 +136,7 @@ export class SessionStore {
    * Generate a unique session ID
    * @returns Session ID
    */
- private generateSessionId(): string {
+  private generateSessionId(): string {
     return `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }

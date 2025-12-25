@@ -1,5 +1,5 @@
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import flowiseConfig from '@config/flowiseConfig';
@@ -26,7 +26,7 @@ export class FlowiseProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<string> {
     const channelId = metadata?.channelId;
     if (!channelId) {

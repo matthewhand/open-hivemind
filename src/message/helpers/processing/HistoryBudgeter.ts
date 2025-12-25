@@ -31,7 +31,7 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
     systemPromptText?: string;
     perMessageOverheadTokens?: number;
     minKeepMessages?: number;
-  }
+  },
 ): HistoryBudgetResult<TMessage> {
   const budget = Math.max(0, Number(params.inputBudgetTokens) || 0);
   const perMsgOverhead = Math.max(0, Number(params.perMessageOverheadTokens ?? 6));
@@ -52,8 +52,8 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
         estimatedSystemPromptTokens: systemTokens,
         estimatedHistoryTokens: 0,
         estimatedTotalTokens: nonHistoryTokens,
-        trimmedCount: Math.max(0, historyOldestFirst.length - fallback.length)
-      }
+        trimmedCount: Math.max(0, historyOldestFirst.length - fallback.length),
+      },
     };
   }
 
@@ -75,7 +75,7 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
       continue;
     }
 
-    if (historyTokens + cost > remainingForHistory) break;
+    if (historyTokens + cost > remainingForHistory) {break;}
     kept.push(msg);
     historyTokens += cost;
   }
@@ -94,8 +94,8 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
       estimatedSystemPromptTokens: systemTokens,
       estimatedHistoryTokens: historyTokens,
       estimatedTotalTokens: total,
-      trimmedCount
-    }
+      trimmedCount,
+    },
   };
 }
 

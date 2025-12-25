@@ -22,7 +22,7 @@ export async function generateResponse(transcript: string): Promise<string> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord generate response error:', hivemindError);
+      console.error('Discord generate response error:', hivemindError);
     }
 
     return 'Sorry, an error occurred while generating a response.';

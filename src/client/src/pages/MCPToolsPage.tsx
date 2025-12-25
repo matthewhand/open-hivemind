@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
-  MagnifyingGlassIcon as SearchIcon
+  MagnifyingGlassIcon as SearchIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -31,7 +31,7 @@ const MCPToolsPage: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Tools', href: '/uber/mcp/tools', isActive: true }
+    { label: 'Tools', href: '/uber/mcp/tools', isActive: true },
   ];
 
   // Mock tools - in real app this would come from API
@@ -47,7 +47,7 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { issueNumber: 'number', url: 'string' },
       usageCount: 45,
       lastUsed: '2024-01-15T10:30:00Z',
-      enabled: true
+      enabled: true,
     },
     {
       id: '2',
@@ -60,7 +60,7 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { repositories: 'array' },
       usageCount: 23,
       lastUsed: '2024-01-14T16:45:00Z',
-      enabled: true
+      enabled: true,
     },
     {
       id: '3',
@@ -73,7 +73,7 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { rows: 'array', count: 'number' },
       usageCount: 78,
       lastUsed: '2024-01-15T09:15:00Z',
-      enabled: true
+      enabled: true,
     },
     {
       id: '4',
@@ -86,7 +86,7 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { backupPath: 'string', size: 'number' },
       usageCount: 12,
       lastUsed: '2024-01-13T14:20:00Z',
-      enabled: false
+      enabled: false,
     },
     {
       id: '5',
@@ -99,7 +99,7 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { content: 'string', size: 'number' },
       usageCount: 156,
       lastUsed: '2024-01-12T11:30:00Z',
-      enabled: true
+      enabled: true,
     },
     {
       id: '6',
@@ -112,8 +112,8 @@ const MCPToolsPage: React.FC = () => {
       outputSchema: { response: 'object', status: 'number' },
       usageCount: 34,
       lastUsed: '2024-01-10T08:15:00Z',
-      enabled: true
-    }
+      enabled: true,
+    },
   ];
 
   useEffect(() => {
@@ -132,7 +132,7 @@ const MCPToolsPage: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchTerm.toLowerCase())
+        tool.description.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -158,7 +158,7 @@ const MCPToolsPage: React.FC = () => {
       database: 'badge-secondary',
       filesystem: 'badge-info',
       network: 'badge-success',
-      ai: 'badge-warning'
+      ai: 'badge-warning',
     };
     return colors[category] || 'badge-ghost';
   };
@@ -172,7 +172,7 @@ const MCPToolsPage: React.FC = () => {
       setTools(prev => prev.map(t =>
         t.id === tool.id
           ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
-          : t
+          : t,
       ));
     } catch (error) {
       setAlert({ type: 'error', message: `Failed to execute tool "${tool.name}"` });
@@ -184,7 +184,7 @@ const MCPToolsPage: React.FC = () => {
       setTools(prev => prev.map(tool =>
         tool.id === toolId
           ? { ...tool, enabled: !tool.enabled }
-          : tool
+          : tool,
       ));
       setAlert({ type: 'success', message: 'Tool status updated' });
     } catch (error) {

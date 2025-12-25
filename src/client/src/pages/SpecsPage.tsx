@@ -13,12 +13,12 @@ const SpecsPage: React.FC = () => {
 
   const filteredSpecs = specs.filter(spec =>
     spec.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    spec.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    spec.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   const paginatedSpecs = filteredSpecs.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   const totalPages = Math.ceil(filteredSpecs.length / pageSize);

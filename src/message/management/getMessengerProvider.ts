@@ -84,7 +84,7 @@ export function getMessengerProvider() {
           (svc as any).provider = 'discord';
         }
         messengerServices.push(svc);
-        gmpDebug(`Initialized Discord provider`);
+        gmpDebug('Initialized Discord provider');
         gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
       }
     } catch (e: any) {
@@ -112,7 +112,7 @@ export function getMessengerProvider() {
           (svc as any).provider = 'slack';
         }
         messengerServices.push(svc);
-        gmpDebug(`Initialized Slack provider`);
+        gmpDebug('Initialized Slack provider');
         gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
       }
     } catch (e: any) {
@@ -132,9 +132,9 @@ export function getMessengerProvider() {
             : null;
       if (svc) {
         messengerServices.push(svc);
-        gmpDebug(`Initialized Mattermost provider`);
+        gmpDebug('Initialized Mattermost provider');
       } else {
-        gmpDebug(`Mattermost provider module present but no getInstance found; skipping`);
+        gmpDebug('Mattermost provider module present but no getInstance found; skipping');
       }
     } catch (e: any) {
       const errMsg = (e && typeof e === 'object' && 'message' in e) ? (e as Error).message : String(e);

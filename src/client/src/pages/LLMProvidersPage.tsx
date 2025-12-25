@@ -11,10 +11,11 @@ import {
   AlertCircle as WarningIcon,
   Zap as ZapIcon,
   Shield as ShieldIcon,
-  Cpu as CpuIcon
+  Cpu as CpuIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
-import { LLMProviderType, LLM_PROVIDER_CONFIGS } from '../types/bot';
+import type { LLMProviderType} from '../types/bot';
+import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 
 const LLMProvidersPage: React.FC = () => {
@@ -24,50 +25,50 @@ const LLMProvidersPage: React.FC = () => {
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
     { label: 'Providers', href: '/uber/providers' },
-    { label: 'LLM Providers', href: '/uber/providers/llm', isActive: true }
+    { label: 'LLM Providers', href: '/uber/providers/llm', isActive: true },
   ];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'available':
-        return <CheckIcon className="w-4 h-4 text-success" />;
-      case 'error':
-        return <XIcon className="w-4 h-4 text-error" />;
-      case 'testing':
-        return <WarningIcon className="w-4 h-4 text-warning" />;
-      default:
-        return <XIcon className="w-4 h-4 text-base-content/40" />;
+    case 'available':
+      return <CheckIcon className="w-4 h-4 text-success" />;
+    case 'error':
+      return <XIcon className="w-4 h-4 text-error" />;
+    case 'testing':
+      return <WarningIcon className="w-4 h-4 text-warning" />;
+    default:
+      return <XIcon className="w-4 h-4 text-base-content/40" />;
     }
   };
 
   const getProviderFeatures = (type: LLMProviderType) => {
     switch (type) {
-      case 'openai':
-        return [
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'GPT-4 & GPT-3.5' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Enterprise Security' },
-          { icon: <CpuIcon className="w-3 h-3" />, text: 'High Performance' }
-        ];
-      case 'anthropic':
-        return [
-          { icon: <BrainIcon className="w-3 h-3" />, text: 'Claude 3 Models' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Constitutional AI' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Long Context' }
-        ];
-      case 'ollama':
-        return [
-          { icon: <CpuIcon className="w-3 h-3" />, text: 'Local Deployment' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Privacy First' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Open Source' }
-        ];
-      case 'custom':
-        return [
-          { icon: <ConfigIcon className="w-3 h-3" />, text: 'Full Customization' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Any API' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Self-Hosted' }
-        ];
-      default:
-        return [];
+    case 'openai':
+      return [
+        { icon: <ZapIcon className="w-3 h-3" />, text: 'GPT-4 & GPT-3.5' },
+        { icon: <ShieldIcon className="w-3 h-3" />, text: 'Enterprise Security' },
+        { icon: <CpuIcon className="w-3 h-3" />, text: 'High Performance' },
+      ];
+    case 'anthropic':
+      return [
+        { icon: <BrainIcon className="w-3 h-3" />, text: 'Claude 3 Models' },
+        { icon: <ShieldIcon className="w-3 h-3" />, text: 'Constitutional AI' },
+        { icon: <ZapIcon className="w-3 h-3" />, text: 'Long Context' },
+      ];
+    case 'ollama':
+      return [
+        { icon: <CpuIcon className="w-3 h-3" />, text: 'Local Deployment' },
+        { icon: <ShieldIcon className="w-3 h-3" />, text: 'Privacy First' },
+        { icon: <ZapIcon className="w-3 h-3" />, text: 'Open Source' },
+      ];
+    case 'custom':
+      return [
+        { icon: <ConfigIcon className="w-3 h-3" />, text: 'Full Customization' },
+        { icon: <ZapIcon className="w-3 h-3" />, text: 'Any API' },
+        { icon: <ShieldIcon className="w-3 h-3" />, text: 'Self-Hosted' },
+      ];
+    default:
+      return [];
     }
   };
 
@@ -259,7 +260,7 @@ const LLMProvidersPage: React.FC = () => {
       <ProviderConfigModal
         modalState={{
           ...modalState,
-          providerType: 'llm'
+          providerType: 'llm',
         }}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}

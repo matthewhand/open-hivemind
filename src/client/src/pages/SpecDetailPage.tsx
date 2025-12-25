@@ -10,25 +10,25 @@ const SpecDetailPage: React.FC = () => {
   const { spec, loading, error } = useSpec(id);
 
   const handleExport = (format: 'md' | 'json' | 'yaml') => {
-    if (!spec) return;
+    if (!spec) {return;}
 
     let content = '';
     let mimeType = '';
     let filename = '';
 
     switch (format) {
-      case 'md':
-        content = spec.content;
-        mimeType = 'text/markdown';
-        filename = `${spec.topic}.md`;
-        break;
-      case 'json':
-        content = JSON.stringify(spec, null, 2);
-        mimeType = 'application/json';
-        filename = `${spec.topic}.json`;
-        break;
-      case 'yaml':
-        content = `
+    case 'md':
+      content = spec.content;
+      mimeType = 'text/markdown';
+      filename = `${spec.topic}.md`;
+      break;
+    case 'json':
+      content = JSON.stringify(spec, null, 2);
+      mimeType = 'application/json';
+      filename = `${spec.topic}.json`;
+      break;
+    case 'yaml':
+      content = `
 topic: ${spec.topic}
 author: ${spec.author}
 date: ${spec.date}
@@ -37,9 +37,9 @@ ${spec.tags.map(tag => `  - ${tag}`).join('\n')}
 content: |
 ${spec.content.replace(/^/gm, '  ')}
         `.trim();
-        mimeType = 'text/yaml';
-        filename = `${spec.topic}.yaml`;
-        break;
+      mimeType = 'text/yaml';
+      filename = `${spec.topic}.yaml`;
+      break;
     }
 
     const blob = new Blob([content], { type: mimeType });

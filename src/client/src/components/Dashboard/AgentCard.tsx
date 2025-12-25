@@ -5,10 +5,10 @@ import {
   Select,
   Button,
   Alert,
-  Tooltip
+  Tooltip,
 } from '../../DaisyUI';
 import { Input } from '../../DaisyUI';
-import { Agent } from '../../../services/agentService';
+import type { Agent } from '../../../services/agentService';
 import { useProviders, type ProviderInfo } from '../../../hooks/useProviders';
 import { usePersonas } from '../../../hooks/usePersonas';
 import { CheckCircle, X, Trash2, Plus, Info } from 'lucide-react';
@@ -160,7 +160,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               options={llmOptions.map((provider) => ({
                 value: provider.key,
                 label: provider.label,
-                disabled: false
+                disabled: false,
               }))}
             >
               {llmOptions.map((provider) => (
@@ -189,7 +189,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               options={messengerOptions.map((provider) => ({
                 value: provider.key,
                 label: provider.label,
-                disabled: false
+                disabled: false,
               }))}
             >
               {messengerOptions.map((provider) => (
@@ -218,7 +218,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               options={personas.map((p) => ({
                 value: p.key,
                 label: p.name,
-                disabled: false
+                disabled: false,
               }))}
             >
               {personas.map((p) => (
@@ -329,7 +329,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                     onChange={(e) => handleMcpGuardChange('type', e.target.value)}
                     options={[
                       { value: 'owner', label: 'Forum Owner Only', disabled: false },
-                      { value: 'custom', label: 'Custom User List', disabled: false }
+                      { value: 'custom', label: 'Custom User List', disabled: false },
                     ]}
                   >
                     <option value="owner">Forum Owner Only</option>

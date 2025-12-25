@@ -18,7 +18,7 @@ export const RESPONSE_PROFILE_OVERRIDE_KEYS = [
   'MESSAGE_SHORT_LENGTH_PENALTY',
   'MESSAGE_BOT_RESPONSE_MODIFIER',
   'MESSAGE_OTHERS_TYPING_WINDOW_MS',
-  'MESSAGE_OTHERS_TYPING_MAX_WAIT_MS'
+  'MESSAGE_OTHERS_TYPING_MAX_WAIT_MS',
 ] as const;
 
 export type ResponseProfileOverrideKey = typeof RESPONSE_PROFILE_OVERRIDE_KEYS[number];
@@ -43,7 +43,7 @@ export const RESPONSE_PROFILE_KEY_TYPES: Record<ResponseProfileOverrideKey, 'num
   MESSAGE_SHORT_LENGTH_PENALTY: 'number',
   MESSAGE_BOT_RESPONSE_MODIFIER: 'number',
   MESSAGE_OTHERS_TYPING_WINDOW_MS: 'number',
-  MESSAGE_OTHERS_TYPING_MAX_WAIT_MS: 'number'
+  MESSAGE_OTHERS_TYPING_MAX_WAIT_MS: 'number',
 };
 
 export const isResponseProfileOverrideKey = (key: string): key is ResponseProfileOverrideKey =>

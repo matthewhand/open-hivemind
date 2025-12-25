@@ -6,20 +6,24 @@
  */
 import Debug from 'debug';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import { OpenAI, ClientOptions } from 'openai';
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ClientOptions } from 'openai';
+import { OpenAI } from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import openaiConfig from '@config/openaiConfig';
 import llmConfig from '@config/llmConfig';
 import { listModels } from './operations/listModels';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import type {
+  OpenAIModelsListResponse,
+  OpenHivemindChatResponse} from '@src/types/openai';
 import {
   OpenAIChatCompletionResponse,
-  OpenAIModelsListResponse,
-  OpenHivemindChatResponse,
-  OpenAIError
+  OpenAIError,
 } from '@src/types/openai';
-import { ConfigurationError, BaseHivemindError } from '@src/types/errorClasses';
-import { ErrorUtils, HivemindError } from '@src/types/errors';
+import type { BaseHivemindError } from '@src/types/errorClasses';
+import { ConfigurationError } from '@src/types/errorClasses';
+import type { HivemindError } from '@src/types/errors';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:OpenAiService');
 
@@ -63,7 +67,7 @@ export class OpenAiService {
       apiKey: this.redactApiKeyForLogging(String(options.apiKey)),
       organization: options.organization,
       baseURL: options.baseURL,
-      timeout: options.timeout
+      timeout: options.timeout,
     });
 
     // Initialize OpenAI client
@@ -131,7 +135,7 @@ export class OpenAiService {
     historyMessages: IMessage[],
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
+    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7),
   ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatCompletion called');
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
@@ -139,116 +143,116 @@ export class OpenAiService {
 
     const fullMetadata = {
       workspaceInfo: {
-        workspaceId: "T123456",
-        workspaceName: "ENAB101"
+        workspaceId: 'T123456',
+        workspaceName: 'ENAB101',
       },
       channelInfo: {
-        channelId: "C123456",
-        channelName: "lecture-1",
-        description: "Writing academically tips",
-        createdDate: "2025-01-01T09:00:00Z"
+        channelId: 'C123456',
+        channelName: 'lecture-1',
+        description: 'Writing academically tips',
+        createdDate: '2025-01-01T09:00:00Z',
       },
       threadInfo: {
         isThread: true,
-        threadTs: "1692302345.2345",
-        threadOwnerUserId: "U999999",
-        threadParticipants: ["U999999", "U123456"],
-        messageCount: 4
+        threadTs: '1692302345.2345',
+        threadOwnerUserId: 'U999999',
+        threadParticipants: ['U999999', 'U123456'],
+        messageCount: 4,
       },
       slackUser: {
-        slackUserId: "U123456",
-        userName: "jane_student",
-        email: "jane@example.edu",
-        preferredName: "Jane",
+        slackUserId: 'U123456',
+        userName: 'jane_student',
+        email: 'jane@example.edu',
+        preferredName: 'Jane',
         isStaff: false,
-        dateOfBirth: "2000-05-10",
-        userCreatedDate: "2024-01-15T10:00:00Z"
+        dateOfBirth: '2000-05-10',
+        userCreatedDate: '2024-01-15T10:00:00Z',
       },
       studentCourseAttempt: {
-        courseCd: "ENAB101",
+        courseCd: 'ENAB101',
         courseVersionNumber: 1,
-        courseStatus: "ENROLLED",
-        commencedDate: "2024-02-01T00:00:00Z",
+        courseStatus: 'ENROLLED',
+        commencedDate: '2024-02-01T00:00:00Z',
         course: {
-          courseCd: "ENAB101",
+          courseCd: 'ENAB101',
           versionNumber: 1,
-          courseType: "Diploma",
-          title: "Enabling Learning Strategies",
-          courseStatus: "ACTIVE",
-          creditPoints: 12
-        }
+          courseType: 'Diploma',
+          title: 'Enabling Learning Strategies',
+          courseStatus: 'ACTIVE',
+          creditPoints: 12,
+        },
       },
       unitAttempts: {
         unitAttempt: [
           {
-            courseCd: "ENAB101",
-            unitAttemptStatus: "ENROLLED",
+            courseCd: 'ENAB101',
+            unitAttemptStatus: 'ENROLLED',
             outcomeDate: null,
             grade: null,
             mark: null,
             enrolledUnit: {
-              unitCd: "ENAB101-01",
+              unitCd: 'ENAB101-01',
               version: 1,
-              title: "Academic Writing Basics",
+              title: 'Academic Writing Basics',
               creditPoints: 3,
-              unitStatus: "active"
-            }
-          }
-        ]
+              unitStatus: 'active',
+            },
+          },
+        ],
       },
       learningCanvas: {
-        title: "How to write academically",
-        description: "Guidelines for academic style",
-        contentUrl: "https://une-n70.slack.com/canvas/C07GNG6MAV9"
+        title: 'How to write academically',
+        description: 'Guidelines for academic style',
+        contentUrl: 'https://une-n70.slack.com/canvas/C07GNG6MAV9',
       },
       messageAttachments: [
         {
           id: 9999,
-          fileName: "example.pdf",
-          fileType: "pdf",
-          url: "https://une-n70.slack.com/files/U07GNGXLMGB/F082J4FFNA1/usyd_ai_policy_change.pdf",
-          size: 2048
-        }
+          fileName: 'example.pdf',
+          fileType: 'pdf',
+          url: 'https://une-n70.slack.com/files/U07GNGXLMGB/F082J4FFNA1/usyd_ai_policy_change.pdf',
+          size: 2048,
+        },
       ],
       messageReactions: [
         {
-          reaction: "thumbsup",
-          reactedUserId: "U999999",
+          reaction: 'thumbsup',
+          reactedUserId: 'U999999',
           messageId: 999999,
-          messageChannelId: "C123456"
-        }
-      ]
+          messageChannelId: 'C123456',
+        },
+      ],
     };
 
-    const conversationId = "conversation-id-string-less-than-40-char";
-    const toolCallId = "matches-tool_call_id-in-tool-message";
+    const conversationId = 'conversation-id-string-less-than-40-char';
+    const toolCallId = 'matches-tool_call_id-in-tool-message';
 
     const chatParams: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemMessageContent },
       { role: 'user', content: message },
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
-        content: msg.getText() || ""
+        content: msg.getText() || '',
       })),
       {
         role: 'assistant',
-        content: "",
+        content: '',
         tool_calls: [
           {
             id: toolCallId,
-            type: "function",
+            type: 'function',
             function: {
-              name: "metadata_for_conversation",
-              arguments: conversationId
-            }
-          }
-        ]
+              name: 'metadata_for_conversation',
+              arguments: conversationId,
+            },
+          },
+        ],
       },
       {
         role: 'tool',
         tool_call_id: toolCallId,
-        content: JSON.stringify(fullMetadata)
-      }
+        content: JSON.stringify(fullMetadata),
+      },
     ];
 
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
@@ -260,7 +264,7 @@ export class OpenAiService {
           messages: chatParams,
           max_tokens: maxTokens,
           temperature,
-          stream: false
+          stream: false,
         });
       });
 
@@ -269,7 +273,7 @@ export class OpenAiService {
       const choice = response.choices && response.choices[0];
       debug('[DEBUG] Raw first choice:', JSON.stringify(choice));
 
-      let content = choice?.message?.content || "";
+      let content = choice?.message?.content || '';
       debug('[DEBUG] Extracted content from choices:', content);
 
       if (!content && (response as any).full_response && Array.isArray((response as any).full_response.messages)) {
@@ -300,7 +304,7 @@ export class OpenAiService {
 
       return {
         text: content,
-        context_variables: { active_agent_name: activeAgentName }
+        context_variables: { active_agent_name: activeAgentName },
       };
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
@@ -317,7 +321,7 @@ export class OpenAiService {
     historyMessages: IMessage[],
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
+    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7),
   ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatResponse called');
     return this.generateChatCompletion(message, historyMessages, systemMessageContent, maxTokens, temperature);
@@ -373,9 +377,9 @@ export class OpenAiService {
     const statusCode = ErrorUtils.getStatusCode(error);
     const errorCode = ErrorUtils.getCode(error);
 
-    if (statusCode === 429) return 'rate-limit';
-    if (statusCode && statusCode >= 500 && statusCode < 600) return 'transient';
-    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') return 'transient';
+    if (statusCode === 429) {return 'rate-limit';}
+    if (statusCode && statusCode >= 500 && statusCode < 600) {return 'transient';}
+    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') {return 'transient';}
     return 'fatal';
   }
 

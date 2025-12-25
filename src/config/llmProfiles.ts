@@ -17,7 +17,7 @@ export interface LlmProfiles {
 }
 
 const DEFAULT_LLM_PROFILES: LlmProfiles = {
-  llm: []
+  llm: [],
 };
 
 const getProfilesPath = (): string => {

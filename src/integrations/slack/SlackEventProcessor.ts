@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import Debug from 'debug';
 import slackConfig from '@src/config/slackConfig';
-import { SlackService } from './SlackService';
+import type { SlackService } from './SlackService';
 import SlackMessage from './SlackMessage';
-import { KnownBlock } from '@slack/web-api';
+import type { KnownBlock } from '@slack/web-api';
 import { ConfigurationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 
@@ -19,7 +19,7 @@ export class SlackEventProcessor {
       debug('Error: SlackService instance required');
       throw new ConfigurationError(
         'SlackService instance required',
-        'SLACK_SERVICE_REQUIRED'
+        'SLACK_SERVICE_REQUIRED',
       );
     }
     this.slackService = slackService;
@@ -30,7 +30,7 @@ export class SlackEventProcessor {
     debug('Entering handleActionRequest', { method: req.method, body: req.body ? JSON.stringify(req.body).substring(0, 100) + '...' : 'empty' });
     try {
       let body = req.body || {};
-      if (typeof body === 'string') body = JSON.parse(body);
+      if (typeof body === 'string') {body = JSON.parse(body);}
       debug(`Parsed body: type=${body.type}, event=${body.event ? JSON.stringify(body.event).substring(0, 50) + '...' : 'none'}`);
 
       if (body.type === 'url_verification' && body.challenge) {
@@ -58,7 +58,7 @@ export class SlackEventProcessor {
             await botManagers.handleMessage(
               new SlackMessage(payload.text || '', payload.channel?.id || '', payload),
               [],
-              botConfig
+              botConfig,
             );
           }
         }
@@ -101,7 +101,7 @@ export class SlackEventProcessor {
               await botManager.handleMessage(
                 new SlackMessage(event.text || '', event.channel, event),
                 [],
-                botInfo.config
+                botInfo.config,
               );
             }
           }
@@ -115,11 +115,11 @@ export class SlackEventProcessor {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Error handling action request:`, {
+      debug('Error handling action request:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       res.status(400).send('Bad Request');
     }
@@ -157,7 +157,7 @@ export class SlackEventProcessor {
         const helpBlocks: KnownBlock[] = [
           {
             type: 'section',
-            text: { type: 'mrkdwn', text: helpText }
+            text: { type: 'mrkdwn', text: helpText },
           },
           {
             type: 'actions',
@@ -165,9 +165,9 @@ export class SlackEventProcessor {
               { type: 'button', text: { type: 'plain_text', text: 'Learning Objectives' }, action_id: `learn_objectives_${userId}`, value: 'learn_objectives' },
               { type: 'button', text: { type: 'plain_text', text: 'How-To' }, action_id: `how_to_${userId}`, value: 'how_to' },
               { type: 'button', text: { type: 'plain_text', text: 'Contact Support' }, action_id: `contact_support_${userId}`, value: 'contact_support' },
-              { type: 'button', text: { type: 'plain_text', text: 'Report Issue' }, action_id: `report_issue_${userId}`, value: 'report_issue' }
-            ]
-          }
+              { type: 'button', text: { type: 'plain_text', text: 'Report Issue' }, action_id: `report_issue_${userId}`, value: 'report_issue' },
+            ],
+          },
         ];
 
         const botManager = this.slackService.getBotManager();
@@ -180,7 +180,7 @@ export class SlackEventProcessor {
               text: helpText,
               blocks: helpBlocks,
               username: 'Bot',
-              icon_emoji: ':robot_face:'
+              icon_emoji: ':robot_face:',
             });
             debug(`Sent DM help message with buttons to user ${userId}`);
           }
@@ -193,7 +193,7 @@ export class SlackEventProcessor {
           errorCode: hivemindError.code,
           errorType: errorInfo.type,
           severity: errorInfo.severity,
-          userId
+          userId,
         });
       }
     });
@@ -223,7 +223,7 @@ export class SlackEventProcessor {
           errorCode: hivemindError.code,
           errorType: errorInfo.type,
           severity: errorInfo.severity,
-          botId
+          botId,
         });
       }
       try {
@@ -241,7 +241,7 @@ export class SlackEventProcessor {
           errorCode: hivemindError.code,
           errorType: errorInfo.type,
           severity: errorInfo.severity,
-          botId
+          botId,
         });
       }
     }

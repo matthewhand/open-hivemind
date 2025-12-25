@@ -460,7 +460,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       algorithms: prev.algorithms.map(algorithm =>
         algorithm.id === algorithmId
           ? { ...algorithm, isActive: !algorithm.isActive }
-          : algorithm
+          : algorithm,
       ),
       activeAlgorithms: prev.activeAlgorithms.includes(algorithmId)
         ? prev.activeAlgorithms.filter(id => id !== algorithmId)

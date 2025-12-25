@@ -31,13 +31,13 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
   const updateConfigValue = (key: string, value: any) => {
     setModifiedConfig(prev => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
     setSuccess(null);
   };
 
   const handleSave = async () => {
-    if (Object.keys(modifiedConfig).length === 0) return;
+    if (Object.keys(modifiedConfig).length === 0) {return;}
 
     try {
       setSaving(true);
@@ -85,51 +85,51 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
         </label>
 
         <div className={isLocked ? 'tooltip tooltip-bottom' : ''} data-tip={isLocked ? `Managed by ${schema.env}` : ''}>
-            {isBoolean ? (
+          {isBoolean ? (
             <div className="flex items-center gap-3">
-                <input
-                    type="checkbox"
-                    className="toggle toggle-primary"
-                    checked={currentValue === true || currentValue === 'true'}
-                    onChange={(e) => updateConfigValue(key, e.target.checked)}
-                    disabled={isLocked}
-                />
-                <span className={`label-text-alt ${isLocked ? 'opacity-50' : 'opacity-70'}`}>
-                    {currentValue ? 'Enabled' : 'Disabled'}
-                </span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={currentValue === true || currentValue === 'true'}
+                onChange={(e) => updateConfigValue(key, e.target.checked)}
+                disabled={isLocked}
+              />
+              <span className={`label-text-alt ${isLocked ? 'opacity-50' : 'opacity-70'}`}>
+                {currentValue ? 'Enabled' : 'Disabled'}
+              </span>
             </div>
-            ) : isEnum ? (
+          ) : isEnum ? (
             <select
-                className={`select select-bordered w-full ${isLocked ? 'select-disabled bg-base-100/50' : ''}`}
-                value={currentValue ?? ''}
-                onChange={(e) => updateConfigValue(key, e.target.value)}
-                disabled={isLocked}
+              className={`select select-bordered w-full ${isLocked ? 'select-disabled bg-base-100/50' : ''}`}
+              value={currentValue ?? ''}
+              onChange={(e) => updateConfigValue(key, e.target.value)}
+              disabled={isLocked}
             >
-                <option value="">Select...</option>
-                {schema.enum.map((opt: string) => (
+              <option value="">Select...</option>
+              {schema.enum.map((opt: string) => (
                 <option key={opt} value={opt}>{opt}</option>
-                ))}
+              ))}
             </select>
-            ) : isNumber ? (
+          ) : isNumber ? (
             <input
-                type="number"
-                className={`input input-bordered w-full ${isLocked ? 'input-disabled bg-base-100/50' : ''}`}
-                value={currentValue ?? ''}
-                onChange={(e) => updateConfigValue(key, parseInt(e.target.value) || 0)}
-                disabled={isLocked}
-                readOnly={isLocked}
+              type="number"
+              className={`input input-bordered w-full ${isLocked ? 'input-disabled bg-base-100/50' : ''}`}
+              value={currentValue ?? ''}
+              onChange={(e) => updateConfigValue(key, parseInt(e.target.value) || 0)}
+              disabled={isLocked}
+              readOnly={isLocked}
             />
-            ) : (
+          ) : (
             <input
-                type={isSensitive ? 'password' : 'text'}
-                className={`input input-bordered w-full ${isLocked ? 'input-disabled bg-base-100/50' : ''}`}
-                value={currentValue ?? ''}
-                placeholder={isSensitive ? '••••••••' : ''}
-                onChange={(e) => updateConfigValue(key, e.target.value)}
-                disabled={isLocked}
-                readOnly={isLocked}
+              type={isSensitive ? 'password' : 'text'}
+              className={`input input-bordered w-full ${isLocked ? 'input-disabled bg-base-100/50' : ''}`}
+              value={currentValue ?? ''}
+              placeholder={isSensitive ? '••••••••' : ''}
+              onChange={(e) => updateConfigValue(key, e.target.value)}
+              disabled={isLocked}
+              readOnly={isLocked}
             />
-            )}
+          )}
         </div>
 
         {schema.doc && (
@@ -148,47 +148,47 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
 
   return (
     <div className="card bg-base-100 border border-base-300 shadow-sm">
-        <div className="card-body">
-            <div className="flex justify-between items-center mb-4 border-b border-base-200 pb-4">
-                <h3 className="card-title text-lg capitalize">{title || configName}</h3>
-                {hasChanges && (
-                    <button
-                        className="btn btn-primary btn-sm gap-2"
-                        onClick={handleSave}
-                        disabled={saving}
-                    >
-                        {saving ? <span className="loading loading-spinner loading-xs" /> : <Save className="w-4 h-4" />}
+      <div className="card-body">
+        <div className="flex justify-between items-center mb-4 border-b border-base-200 pb-4">
+          <h3 className="card-title text-lg capitalize">{title || configName}</h3>
+          {hasChanges && (
+            <button
+              className="btn btn-primary btn-sm gap-2"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? <span className="loading loading-spinner loading-xs" /> : <Save className="w-4 h-4" />}
                         Save Changes
-                    </button>
-                )}
-            </div>
-
-            {/* Notifications */}
-            {error && (
-                <div className="alert alert-error text-sm py-2 mb-4">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{error}</span>
-                </div>
-            )}
-            {success && (
-                <div className="alert alert-success text-sm py-2 mb-4">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>{success}</span>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                {Object.entries(configData.values || {}).map(([key, value]) =>
-                    renderConfigField(key, schemaProps[key] || {}, value)
-                )}
-            </div>
-            
-             {Object.keys(configData.values || {}).length === 0 && (
-                <div className="text-center py-8 opacity-50">
-                    No configuration fields found.
-                </div>
-            )}
+            </button>
+          )}
         </div>
+
+        {/* Notifications */}
+        {error && (
+          <div className="alert alert-error text-sm py-2 mb-4">
+            <AlertCircle className="w-4 h-4" />
+            <span>{error}</span>
+          </div>
+        )}
+        {success && (
+          <div className="alert alert-success text-sm py-2 mb-4">
+            <CheckCircle className="w-4 h-4" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          {Object.entries(configData.values || {}).map(([key, value]) =>
+            renderConfigField(key, schemaProps[key] || {}, value),
+          )}
+        </div>
+            
+        {Object.keys(configData.values || {}).length === 0 && (
+          <div className="text-center py-8 opacity-50">
+                    No configuration fields found.
+          </div>
+        )}
+      </div>
     </div>
   );
 };

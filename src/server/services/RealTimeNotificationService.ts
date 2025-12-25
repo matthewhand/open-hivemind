@@ -43,7 +43,7 @@ export class RealTimeNotificationService extends EventEmitter {
     const notification: NotificationEvent = {
       ...event,
       id: this.generateId(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Add to internal storage
@@ -67,7 +67,7 @@ export class RealTimeNotificationService extends EventEmitter {
 
   public getNotifications(
     limit: number = 50,
-    filter?: SubscriptionFilter
+    filter?: SubscriptionFilter,
   ): NotificationEvent[] {
     let filtered = [...this.notifications];
 
@@ -125,7 +125,7 @@ export class RealTimeNotificationService extends EventEmitter {
 
   public subscribe(
     callback: (notification: NotificationEvent) => void,
-    filter?: SubscriptionFilter
+    filter?: SubscriptionFilter,
   ): () => void {
     const listener = (notification: NotificationEvent) => {
       if (!filter) {
@@ -160,13 +160,13 @@ export class RealTimeNotificationService extends EventEmitter {
     agentName: string,
     event: 'started' | 'stopped' | 'error' | 'configured',
     details?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): string {
     const severityMap = {
       started: 'success' as const,
       stopped: 'info' as const,
       error: 'error' as const,
-      configured: 'info' as const
+      configured: 'info' as const,
     };
 
     return this.notify({
@@ -175,7 +175,7 @@ export class RealTimeNotificationService extends EventEmitter {
       title: `Agent ${event}`,
       message: `Agent "${agentName}" ${event}${details ? `: ${details}` : ''}`,
       source: agentName,
-      metadata: { agentName, event, ...metadata }
+      metadata: { agentName, event, ...metadata },
     });
   }
 
@@ -183,13 +183,13 @@ export class RealTimeNotificationService extends EventEmitter {
     serverName: string,
     event: 'connected' | 'disconnected' | 'error' | 'tool_executed',
     details?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): string {
     const severityMap = {
       connected: 'success' as const,
       disconnected: 'warning' as const,
       error: 'error' as const,
-      tool_executed: 'info' as const
+      tool_executed: 'info' as const,
     };
 
     return this.notify({
@@ -198,20 +198,20 @@ export class RealTimeNotificationService extends EventEmitter {
       title: `MCP Server ${event}`,
       message: `MCP server "${serverName}" ${event}${details ? `: ${details}` : ''}`,
       source: serverName,
-      metadata: { serverName, event, ...metadata }
+      metadata: { serverName, event, ...metadata },
     });
   }
 
   public notifySystemEvent(
     event: 'startup' | 'shutdown' | 'config_reload' | 'error',
     details: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): string {
     const severityMap = {
       startup: 'success' as const,
       shutdown: 'info' as const,
       config_reload: 'info' as const,
-      error: 'error' as const
+      error: 'error' as const,
     };
 
     return this.notify({
@@ -220,7 +220,7 @@ export class RealTimeNotificationService extends EventEmitter {
       title: `System ${event}`,
       message: details,
       source: 'system',
-      metadata: { event, ...metadata }
+      metadata: { event, ...metadata },
     });
   }
 
@@ -230,7 +230,7 @@ export class RealTimeNotificationService extends EventEmitter {
     bySeverity: Record<string, number>;
     recent: NotificationEvent[];
     unread: number;
-  } {
+    } {
     const byType: Record<string, number> = {};
     const bySeverity: Record<string, number> = {};
     let unread = 0;
@@ -249,7 +249,7 @@ export class RealTimeNotificationService extends EventEmitter {
       byType,
       bySeverity,
       recent: this.notifications.slice(0, 10),
-      unread
+      unread,
     };
   }
 

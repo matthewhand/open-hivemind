@@ -15,9 +15,9 @@ const getStorage = () => {
 const storage = getStorage();
 
 const readJSON = <T>(key: string): T | null => {
-  if (!storage) return null;
+  if (!storage) {return null;}
   const raw = storage.getItem(key);
-  if (!raw) return null;
+  if (!raw) {return null;}
   try {
     return JSON.parse(raw) as T;
   } catch (error) {
@@ -27,7 +27,7 @@ const readJSON = <T>(key: string): T | null => {
 };
 
 const persistItem = (key: string, value: string | null) => {
-  if (!storage) return;
+  if (!storage) {return;}
   if (value === null) {
     storage.removeItem(key);
     return;
@@ -36,7 +36,7 @@ const persistItem = (key: string, value: string | null) => {
 };
 
 const persistJSON = (key: string, value: unknown | null) => {
-  if (!storage) return;
+  if (!storage) {return;}
   if (value === null) {
     storage.removeItem(key);
     return;
@@ -219,7 +219,7 @@ export const selectHasPermission = (permission: string) => (state: { auth: AuthS
   return permissions.includes(permission) || permissions.includes('admin');
 };
 export const selectIsTokenExpired = (state: { auth: AuthState }) => {
-  if (!state.auth.expiresAt) return true;
+  if (!state.auth.expiresAt) {return true;}
   return Date.now() > state.auth.expiresAt;
 };
 export const selectCurrentTenant = (state: { auth: AuthState }) => state.auth.currentTenant;

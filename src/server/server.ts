@@ -10,7 +10,7 @@ import {
   correlationMiddleware,
   globalErrorHandler,
   setupGlobalErrorHandlers,
-  setupGracefulShutdown
+  setupGracefulShutdown,
 } from '../middleware/errorHandler';
 
 // Route imports
@@ -101,7 +101,7 @@ export class WebUIServer {
       optionsSuccessStatus: 200,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      maxAge: 86400
+      maxAge: 86400,
     };
 
     this.app.use(cors(corsOptions));
@@ -194,9 +194,9 @@ export class WebUIServer {
           webui: '/api/webui',
           dashboard: '/api/dashboard',
           config: '/api/config',
-          hotReload: '/api/hot-reload'
+          hotReload: '/api/hot-reload',
         },
-        documentation: '/api/docs'
+        documentation: '/api/docs',
       });
     });
 
@@ -205,7 +205,7 @@ export class WebUIServer {
       res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 
@@ -230,7 +230,7 @@ export class WebUIServer {
       try {
         this.server = this.app.listen(this.port, () => {
           debug(`WebUI server started on port ${this.port}`);
-          console.log(`🚀 Hivemind WebUI available at:`);
+          console.log('🚀 Hivemind WebUI available at:');
           console.log(`   Admin Dashboard: http://localhost:${this.port}/admin`);
           console.log(`   WebUI Interface: http://localhost:${this.port}/webui`);
           console.log(`   API Endpoints:   http://localhost:${this.port}/api`);

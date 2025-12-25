@@ -23,7 +23,7 @@ export const permissions = {
   /**
    * Check if a role is allowed (placeholder implementation)
    */
-  isRoleAllowed: () => true
+  isRoleAllowed: () => true,
 };
 
 /**
@@ -49,7 +49,7 @@ export const environment = {
    */
   isProduction: (): boolean => {
     return process.env.NODE_ENV === 'production';
-  }
+  },
 };
 
 /**
@@ -68,7 +68,7 @@ export const strings = {
    */
   truncate: (str: string, length: number): string => {
     return str.length > length ? str.substring(0, length) + '...' : str;
-  }
+  },
 };
 
 /**
@@ -87,7 +87,7 @@ export const arrays = {
    */
   unique: <T>(arr: T[]): T[] => {
     return [...new Set(arr)];
-  }
+  },
 };
 
 /**
@@ -106,5 +106,5 @@ export const validation = {
    */
   isDefined: <T>(value: T | null | undefined): value is T => {
     return value !== null && value !== undefined;
-  }
+  },
 };

@@ -13,7 +13,7 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  KeyIcon
+  KeyIcon,
 } from '@heroicons/react/24/outline';
 import ProviderConfig from './ProviderConfig';
 
@@ -119,7 +119,7 @@ const LLMProvidersConfig: React.FC = () => {
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('Are you sure you want to delete this LLM provider?')) return;
+    if (!confirm('Are you sure you want to delete this LLM provider?')) {return;}
 
     try {
       const response = await fetch(`/api/admin/llm-providers/${providerId}`, {

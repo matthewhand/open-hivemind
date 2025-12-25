@@ -6,32 +6,32 @@ const ollamaConfig = convict({
     doc: 'Base URL for Ollama API',
     format: String,
     default: 'http://localhost:11434',
-    env: 'OLLAMA_BASE_URL'
+    env: 'OLLAMA_BASE_URL',
   },
   OLLAMA_MODEL: {
     doc: 'Ollama model to use',
     format: String,
     default: 'llama2',
-    env: 'OLLAMA_MODEL'
+    env: 'OLLAMA_MODEL',
   },
   OLLAMA_TEMPERATURE: {
     doc: 'Sampling temperature for Ollama',
     format: Number,
     default: 0.7,
-    env: 'OLLAMA_TEMPERATURE'
+    env: 'OLLAMA_TEMPERATURE',
   },
   OLLAMA_SYSTEM_PROMPT: {
     doc: 'System prompt for Ollama',
     format: String,
     default: 'You are a helpful AI assistant.',
-    env: 'OLLAMA_SYSTEM_PROMPT'
+    env: 'OLLAMA_SYSTEM_PROMPT',
   },
   OLLAMA_CONTEXT_WINDOW: {
     doc: 'Context window size',
     format: 'int',
     default: 4096,
-    env: 'OLLAMA_CONTEXT_WINDOW'
-  }
+    env: 'OLLAMA_CONTEXT_WINDOW',
+  },
 });
 
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');

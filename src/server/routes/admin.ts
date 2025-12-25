@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import fs from 'fs';
 import path from 'path';
@@ -92,7 +93,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
     if (!name || !toolId || !guardType) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, toolId, and guardType are required'
+        message: 'Name, toolId, and guardType are required',
       });
     }
 
@@ -101,7 +102,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
     if (!validGuardTypes.includes(guardType)) {
       return res.status(400).json({
         error: 'Validation error',
-        message: `guardType must be one of: ${validGuardTypes.join(', ')}`
+        message: `guardType must be one of: ${validGuardTypes.join(', ')}`,
       });
     }
 
@@ -120,12 +121,12 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
     res.json({
       success: true,
       data: { guard: newGuard },
-      message: 'Tool usage guard created successfully'
+      message: 'Tool usage guard created successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to create tool usage guard',
-      message: error.message || 'An error occurred while creating tool usage guard'
+      message: error.message || 'An error occurred while creating tool usage guard',
     });
   }
 });
@@ -140,7 +141,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
     if (!name || !toolId || !guardType) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, toolId, and guardType are required'
+        message: 'Name, toolId, and guardType are required',
       });
     }
 
@@ -149,7 +150,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
     if (!validGuardTypes.includes(guardType)) {
       return res.status(400).json({
         error: 'Validation error',
-        message: `guardType must be one of: ${validGuardTypes.join(', ')}`
+        message: `guardType must be one of: ${validGuardTypes.join(', ')}`,
       });
     }
 
@@ -168,12 +169,12 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
     res.json({
       success: true,
       data: { guard: updatedGuard },
-      message: 'Tool usage guard updated successfully'
+      message: 'Tool usage guard updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update tool usage guard',
-      message: error.message || 'An error occurred while updating tool usage guard'
+      message: error.message || 'An error occurred while updating tool usage guard',
     });
   }
 });
@@ -188,12 +189,12 @@ router.delete('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request
 
     res.json({
       success: true,
-      message: 'Tool usage guard deleted successfully'
+      message: 'Tool usage guard deleted successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to delete tool usage guard',
-      message: error.message || 'An error occurred while deleting tool usage guard'
+      message: error.message || 'An error occurred while deleting tool usage guard',
     });
   }
 });
@@ -209,12 +210,12 @@ router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Re
 
     res.json({
       success: true,
-      message: 'Tool usage guard status updated successfully'
+      message: 'Tool usage guard status updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update guard status',
-      message: error.message || 'An error occurred while updating guard status'
+      message: error.message || 'An error occurred while updating guard status',
     });
   }
 });
@@ -227,7 +228,7 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
     if (!name || !type || !config) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, type, and config are required'
+        message: 'Name, type, and config are required',
       });
     }
 
@@ -254,12 +255,12 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
     res.json({
       success: true,
       data: { provider: newProvider },
-      message: 'LLM provider created successfully'
+      message: 'LLM provider created successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to create LLM provider',
-      message: error.message || 'An error occurred while creating LLM provider'
+      message: error.message || 'An error occurred while creating LLM provider',
     });
   }
 });
@@ -274,7 +275,7 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
     if (!name || !type || !config) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, type, and config are required'
+        message: 'Name, type, and config are required',
       });
     }
 
@@ -296,12 +297,12 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { provider: updatedProvider },
-      message: 'LLM provider updated successfully'
+      message: 'LLM provider updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update LLM provider',
-      message: error.message || 'An error occurred while updating LLM provider'
+      message: error.message || 'An error occurred while updating LLM provider',
     });
   }
 });
@@ -316,12 +317,12 @@ router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'LLM provider deleted successfully'
+      message: 'LLM provider deleted successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to delete LLM provider',
-      message: error.message || 'An error occurred while deleting LLM provider'
+      message: error.message || 'An error occurred while deleting LLM provider',
     });
   }
 });
@@ -341,18 +342,18 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
     } else {
       return res.status(404).json({
         error: 'Provider not found',
-        message: `LLM provider with ID ${id} not found`
+        message: `LLM provider with ID ${id} not found`,
       });
     }
 
     res.json({
       success: true,
-      message: 'LLM provider status updated successfully'
+      message: 'LLM provider status updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update provider status',
-      message: error.message || 'An error occurred while updating provider status'
+      message: error.message || 'An error occurred while updating provider status',
     });
   }
 });
@@ -366,7 +367,7 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
     if (!name || !type || !config) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, type, and config are required'
+        message: 'Name, type, and config are required',
       });
     }
 
@@ -396,12 +397,12 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { provider: newProvider },
-      message: 'Messenger provider created successfully'
+      message: 'Messenger provider created successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to create messenger provider',
-      message: error.message || 'An error occurred while creating messenger provider'
+      message: error.message || 'An error occurred while creating messenger provider',
     });
   }
 });
@@ -416,7 +417,7 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
     if (!name || !type || !config) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name, type, and config are required'
+        message: 'Name, type, and config are required',
       });
     }
 
@@ -450,12 +451,12 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
     res.json({
       success: true,
       data: { provider: updatedProvider },
-      message: 'Messenger provider updated successfully'
+      message: 'Messenger provider updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update messenger provider',
-      message: error.message || 'An error occurred while updating messenger provider'
+      message: error.message || 'An error occurred while updating messenger provider',
     });
   }
 });
@@ -470,12 +471,12 @@ router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response
 
     res.json({
       success: true,
-      message: 'Messenger provider deleted successfully'
+      message: 'Messenger provider deleted successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to delete messenger provider',
-      message: error.message || 'An error occurred while deleting messenger provider'
+      message: error.message || 'An error occurred while deleting messenger provider',
     });
   }
 });
@@ -495,18 +496,18 @@ router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Res
     } else {
       return res.status(404).json({
         error: 'Provider not found',
-        message: `Messenger provider with ID ${id} not found`
+        message: `Messenger provider with ID ${id} not found`,
       });
     }
 
     res.json({
       success: true,
-      message: 'Messenger provider status updated successfully'
+      message: 'Messenger provider status updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update provider status',
-      message: error.message || 'An error occurred while updating provider status'
+      message: error.message || 'An error occurred while updating provider status',
     });
   }
 });
@@ -521,12 +522,12 @@ router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { providers },
-      message: 'LLM providers retrieved successfully'
+      message: 'LLM providers retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve LLM providers',
-      message: error.message || 'An error occurred while retrieving LLM providers'
+      message: error.message || 'An error occurred while retrieving LLM providers',
     });
   }
 });
@@ -540,12 +541,12 @@ router.get('/api/admin/messenger-providers', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { providers },
-      message: 'Messenger providers retrieved successfully'
+      message: 'Messenger providers retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve messenger providers',
-      message: error.message || 'An error occurred while retrieving messenger providers'
+      message: error.message || 'An error occurred while retrieving messenger providers',
     });
   }
 });
@@ -561,18 +562,18 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
       {
         key: 'default',
         name: 'Default Assistant',
-        systemPrompt: 'You are a helpful AI assistant.'
+        systemPrompt: 'You are a helpful AI assistant.',
       },
       {
         key: 'developer',
         name: 'Developer Assistant',
-        systemPrompt: 'You are an expert software developer assistant.'
+        systemPrompt: 'You are an expert software developer assistant.',
       },
       {
         key: 'support',
         name: 'Support Agent',
-        systemPrompt: 'You are a customer support agent.'
-      }
+        systemPrompt: 'You are a customer support agent.',
+      },
     ];
 
     // Combine stored and default personas
@@ -581,12 +582,12 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { personas: allPersonas },
-      message: 'Personas retrieved successfully'
+      message: 'Personas retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve personas',
-      message: error.message || 'An error occurred while retrieving personas'
+      message: error.message || 'An error occurred while retrieving personas',
     });
   }
 });
@@ -600,14 +601,14 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
     if (!key || !name || !systemPrompt) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Key, name, and systemPrompt are required'
+        message: 'Key, name, and systemPrompt are required',
       });
     }
 
     if (!/^[a-zA-Z0-9_-]+$/.test(String(key))) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Key must contain only alphanumeric characters'
+        message: 'Key must contain only alphanumeric characters',
       });
     }
 
@@ -616,12 +617,12 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'Persona created successfully'
+      message: 'Persona created successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to create persona',
-      message: error.message || 'An error occurred while creating persona'
+      message: error.message || 'An error occurred while creating persona',
     });
   }
 });
@@ -636,7 +637,7 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
     if (!name || !systemPrompt) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Name and systemPrompt are required'
+        message: 'Name and systemPrompt are required',
       });
     }
 
@@ -645,12 +646,12 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'Persona updated successfully'
+      message: 'Persona updated successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to update persona',
-      message: error.message || 'An error occurred while updating persona'
+      message: error.message || 'An error occurred while updating persona',
     });
   }
 });
@@ -665,12 +666,12 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'Persona deleted successfully'
+      message: 'Persona deleted successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to delete persona',
-      message: error.message || 'An error occurred while deleting persona'
+      message: error.message || 'An error occurred while deleting persona',
     });
   }
 });
@@ -684,7 +685,7 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
     if (!serverUrl || !name) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Server URL and name are required'
+        message: 'Server URL and name are required',
       });
     }
 
@@ -694,7 +695,7 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
     } catch {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Server URL must be a valid URL'
+        message: 'Server URL must be a valid URL',
       });
     }
 
@@ -710,12 +711,12 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
     res.json({
       success: true,
       data: { tools },
-      message: `Successfully connected to MCP server: ${name}`
+      message: `Successfully connected to MCP server: ${name}`,
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to connect to MCP server',
-      message: error.message || 'An error occurred while connecting to MCP server'
+      message: error.message || 'An error occurred while connecting to MCP server',
     });
   }
 });
@@ -729,7 +730,7 @@ router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Respo
     if (!name) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Server name is required'
+        message: 'Server name is required',
       });
     }
 
@@ -741,12 +742,12 @@ router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Respo
 
     res.json({
       success: true,
-      message: `Successfully disconnected from MCP server: ${name}`
+      message: `Successfully disconnected from MCP server: ${name}`,
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to disconnect from MCP server',
-      message: error.message || 'An error occurred while disconnecting from MCP server'
+      message: error.message || 'An error occurred while disconnecting from MCP server',
     });
   }
 });
@@ -763,12 +764,12 @@ router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { servers, configurations: storedMcps },
-      message: 'Connected MCP servers retrieved successfully'
+      message: 'Connected MCP servers retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve MCP servers',
-      message: error.message || 'An error occurred while retrieving MCP servers'
+      message: error.message || 'An error occurred while retrieving MCP servers',
     });
   }
 });
@@ -784,19 +785,19 @@ router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Respo
     if (!tools) {
       return res.status(404).json({
         error: 'Server not found',
-        message: `MCP server ${name} not found or not connected`
+        message: `MCP server ${name} not found or not connected`,
       });
     }
 
     res.json({
       success: true,
       data: { tools },
-      message: `Tools retrieved successfully from MCP server: ${name}`
+      message: `Tools retrieved successfully from MCP server: ${name}`,
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve tools',
-      message: error.message || 'An error occurred while retrieving tools'
+      message: error.message || 'An error occurred while retrieving tools',
     });
   }
 });
@@ -809,12 +810,12 @@ router.get('/api/admin/env-overrides', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { envVars },
-      message: 'Environment variable overrides retrieved successfully'
+      message: 'Environment variable overrides retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve environment variable overrides',
-      message: error.message || 'An error occurred while retrieving environment variable overrides'
+      message: error.message || 'An error occurred while retrieving environment variable overrides',
     });
   }
 });
@@ -829,12 +830,12 @@ router.get('/api/admin/activity/messages', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { messages },
-      message: 'Activity messages retrieved successfully'
+      message: 'Activity messages retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve activity messages',
-      message: error.message || 'An error occurred while retrieving activity messages'
+      message: error.message || 'An error occurred while retrieving activity messages',
     });
   }
 });
@@ -849,12 +850,12 @@ router.get('/api/admin/activity/metrics', (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { metrics },
-      message: 'Performance metrics retrieved successfully'
+      message: 'Performance metrics retrieved successfully',
     });
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to retrieve performance metrics',
-      message: error.message || 'An error occurred while retrieving performance metrics'
+      message: error.message || 'An error occurred while retrieving performance metrics',
     });
   }
 });
@@ -875,7 +876,7 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
       /^OPENWEBUI_/,
       /^MCP_/,
       /^BOT_/,
-      /^AGENT_/
+      /^AGENT_/,
     ];
 
     Object.keys(process.env).forEach(key => {
@@ -912,29 +913,29 @@ router.get('/providers', async (req: Request, res: Response) => {
         name: 'Discord',
         description: 'Discord bot integration',
         configRequired: ['token'],
-        envVarPrefix: 'DISCORD_'
+        envVarPrefix: 'DISCORD_',
       },
       {
         id: 'slack',
         name: 'Slack',
         description: 'Slack bot integration',
         configRequired: ['botToken', 'appToken'],
-        envVarPrefix: 'SLACK_'
+        envVarPrefix: 'SLACK_',
       },
       {
         id: 'telegram',
         name: 'Telegram',
         description: 'Telegram bot integration',
         configRequired: ['token'],
-        envVarPrefix: 'TELEGRAM_'
+        envVarPrefix: 'TELEGRAM_',
       },
       {
         id: 'mattermost',
         name: 'Mattermost',
         description: 'Mattermost bot integration',
         configRequired: ['token', 'serverUrl'],
-        envVarPrefix: 'MATTERMOST_'
-      }
+        envVarPrefix: 'MATTERMOST_',
+      },
     ];
 
     const llmProviders = [
@@ -943,27 +944,27 @@ router.get('/providers', async (req: Request, res: Response) => {
         name: 'OpenAI',
         description: 'OpenAI GPT models',
         configRequired: ['apiKey'],
-        envVarPrefix: 'OPENAI_'
+        envVarPrefix: 'OPENAI_',
       },
       {
         id: 'flowise',
         name: 'Flowise',
         description: 'Flowise workflow engine',
         configRequired: ['baseUrl'],
-        envVarPrefix: 'FLOWISE_'
+        envVarPrefix: 'FLOWISE_',
       },
       {
         id: 'openwebui',
         name: 'Open WebUI',
         description: 'Open WebUI local models',
         configRequired: ['baseUrl'],
-        envVarPrefix: 'OPENWEBUI_'
-      }
+        envVarPrefix: 'OPENWEBUI_',
+      },
     ];
 
     res.json({
       messageProviders,
-      llmProviders
+      llmProviders,
     });
   } catch (error) {
     debug('Error fetching providers:', error);
@@ -985,9 +986,9 @@ router.get('/system-info', async (req: Request, res: Response) => {
       pid: process.pid,
       database: {
         connected: dbManager.isConnected(),
-        stats: dbManager.isConnected() ? await dbManager.getStats() : null
+        stats: dbManager.isConnected() ? await dbManager.getStats() : null,
       },
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     };
 
     res.json({ systemInfo });

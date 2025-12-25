@@ -4,7 +4,7 @@ import {
   SparklesIcon,
   PlayIcon,
   PauseIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
 export interface SimpleAnimation {
@@ -55,8 +55,8 @@ const AnimationComponents: React.FC = () => {
   const toggleAnimation = (id: string) => {
     setActiveAnimations(prev =>
       prev.map(anim =>
-        anim.id === id ? { ...anim, isActive: !anim.isActive } : anim
-      )
+        anim.id === id ? { ...anim, isActive: !anim.isActive } : anim,
+      ),
     );
   };
 
@@ -126,7 +126,7 @@ const AnimationComponents: React.FC = () => {
               <Button onClick={() => {
                 const shuffled = animations.map(a => ({
                   ...a,
-                  isActive: Math.random() > 0.5
+                  isActive: Math.random() > 0.5,
                 }));
                 setActiveAnimations(shuffled);
               }} className="btn-warning">

@@ -1,4 +1,5 @@
-import { DatabaseManager, BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
+import type { BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import Debug from 'debug';
 
@@ -92,7 +93,7 @@ export class ConfigurationVersionService {
         isActive: currentConfig.isActive,
         createdAt: new Date(),
         createdBy: request.createdBy || 'system',
-        changeLog: request.changeLog || `Created version ${request.version}`
+        changeLog: request.changeLog || `Created version ${request.version}`,
       };
 
       // Save version to database
@@ -125,7 +126,7 @@ export class ConfigurationVersionService {
       return {
         versions: versions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
         total: versions.length,
-        currentVersion: currentConfig?.name // This could be enhanced to track current version
+        currentVersion: currentConfig?.name, // This could be enhanced to track current version
       };
     } catch (error) {
       debug('Error getting version history:', error);
@@ -152,7 +153,7 @@ export class ConfigurationVersionService {
   async compareVersions(
     botConfigurationId: number,
     version1: string,
-    version2: string
+    version2: string,
   ): Promise<VersionComparisonResult> {
     try {
       const versions = await this.dbManager.getBotConfigurationVersions(botConfigurationId);
@@ -170,7 +171,7 @@ export class ConfigurationVersionService {
         version1: v1,
         version2: v2,
         differences,
-        summary
+        summary,
       };
     } catch (error) {
       debug('Error comparing configuration versions:', error);
@@ -184,7 +185,7 @@ export class ConfigurationVersionService {
   async restoreVersion(
     botConfigurationId: number, 
     version: string, 
-    restoredBy?: string
+    restoredBy?: string,
   ): Promise<BotConfiguration> {
     try {
       // Get the version to restore
@@ -211,7 +212,7 @@ export class ConfigurationVersionService {
         openwebui: versionData.openwebui,
         openswarm: versionData.openswarm,
         isActive: versionData.isActive,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Update the configuration
@@ -229,7 +230,7 @@ export class ConfigurationVersionService {
         action: 'UPDATE',
         oldValues: JSON.stringify({ restoredFrom: version }),
         newValues: JSON.stringify(restoredConfig),
-        performedAt: new Date()
+        performedAt: new Date(),
       });
 
       debug(`Restored bot configuration ID: ${botConfigurationId} to version: ${version}`);
@@ -306,7 +307,7 @@ export class ConfigurationVersionService {
             path: currentPath,
             oldValue: undefined,
             newValue: obj2[key],
-            changeType: 'added'
+            changeType: 'added',
           });
         } else if (!(key in obj2)) {
           differences.push({
@@ -314,7 +315,7 @@ export class ConfigurationVersionService {
             path: currentPath,
             oldValue: obj1[key],
             newValue: undefined,
-            changeType: 'removed'
+            changeType: 'removed',
           });
         } else if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
           compareObjects(obj1[key], obj2[key], currentPath);
@@ -324,7 +325,7 @@ export class ConfigurationVersionService {
             path: currentPath,
             oldValue: obj1[key],
             newValue: obj2[key],
-            changeType: 'modified'
+            changeType: 'modified',
           });
         }
       }

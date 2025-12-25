@@ -51,13 +51,13 @@ const Modal: React.FC<ModalProps> = ({
   position = 'center',
   closable = true,
   showCloseButton = true,
-  className = ''
+  className = '',
 }) => {
   const modalRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const modal = modalRef.current;
-    if (!modal) return;
+    if (!modal) {return;}
 
     if (isOpen) {
       modal.showModal();
@@ -74,32 +74,32 @@ const Modal: React.FC<ModalProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'sm': return 'modal-box w-11/12 max-w-sm';
-      case 'md': return 'modal-box w-11/12 max-w-md';
-      case 'lg': return 'modal-box w-11/12 max-w-2xl';
-      case 'xl': return 'modal-box w-11/12 max-w-5xl';
-      case 'full': return 'modal-box w-11/12 max-w-7xl h-full';
-      default: return 'modal-box w-11/12 max-w-md';
+    case 'sm': return 'modal-box w-11/12 max-w-sm';
+    case 'md': return 'modal-box w-11/12 max-w-md';
+    case 'lg': return 'modal-box w-11/12 max-w-2xl';
+    case 'xl': return 'modal-box w-11/12 max-w-5xl';
+    case 'full': return 'modal-box w-11/12 max-w-7xl h-full';
+    default: return 'modal-box w-11/12 max-w-md';
     }
   };
 
   const getPositionClass = () => {
     switch (position) {
-      case 'top': return 'modal-middle';
-      case 'bottom': return 'modal-bottom';
-      default: return 'modal-middle';
+    case 'top': return 'modal-middle';
+    case 'bottom': return 'modal-bottom';
+    default: return 'modal-middle';
     }
   };
 
   const getVariantClass = (variant?: ModalAction['variant']) => {
     switch (variant) {
-      case 'primary': return 'btn-primary';
-      case 'secondary': return 'btn-secondary';
-      case 'success': return 'btn-success';
-      case 'warning': return 'btn-warning';
-      case 'error': return 'btn-error';
-      case 'ghost': return 'btn-ghost';
-      default: return 'btn-primary';
+    case 'primary': return 'btn-primary';
+    case 'secondary': return 'btn-secondary';
+    case 'success': return 'btn-success';
+    case 'warning': return 'btn-warning';
+    case 'error': return 'btn-error';
+    case 'ghost': return 'btn-ghost';
+    default: return 'btn-primary';
     }
   };
 
@@ -156,10 +156,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = "Confirm Action",
+  title = 'Confirm Action',
   message,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
   confirmVariant = 'primary',
   loading = false,
   ...props
@@ -169,14 +169,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       label: cancelText,
       onClick: onClose,
       variant: 'ghost',
-      disabled: loading
+      disabled: loading,
     },
     {
       label: confirmText,
       onClick: onConfirm,
       variant: confirmVariant,
-      loading
-    }
+      loading,
+    },
   ];
 
   return (
@@ -202,8 +202,8 @@ export const FormModal: React.FC<FormModalProps> = ({
   onSubmit,
   title,
   children,
-  submitText = "Submit",
-  cancelText = "Cancel",
+  submitText = 'Submit',
+  cancelText = 'Cancel',
   loading = false,
   ...props
 }) => {
@@ -222,14 +222,14 @@ export const FormModal: React.FC<FormModalProps> = ({
       label: cancelText,
       onClick: onClose,
       variant: 'ghost',
-      disabled: loading
+      disabled: loading,
     },
     {
       label: submitText,
       onClick: () => formRef.current?.requestSubmit(),
       variant: 'primary',
-      loading
-    }
+      loading,
+    },
   ];
 
   return (
@@ -252,16 +252,16 @@ export const FormModal: React.FC<FormModalProps> = ({
 export const SuccessModal: React.FC<Omit<BaseModalProps, 'children'> & { message: string }> = ({
   isOpen,
   onClose,
-  title = "Success!",
+  title = 'Success!',
   message,
   ...props
 }) => {
   const actions: ModalAction[] = [
     {
-      label: "OK",
+      label: 'OK',
       onClick: onClose,
-      variant: 'success'
-    }
+      variant: 'success',
+    },
   ];
 
   return (
@@ -288,7 +288,7 @@ export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & {
 }> = ({
   isOpen,
   onClose,
-  title = "Error",
+  title = 'Error',
   message,
   error,
   onRetry,
@@ -296,15 +296,15 @@ export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & {
 }) => {
   const actions: ModalAction[] = [
     ...(onRetry ? [{
-      label: "Retry",
+      label: 'Retry',
       onClick: onRetry,
-      variant: 'primary' as const
+      variant: 'primary' as const,
     }] : []),
     {
-      label: "Close",
+      label: 'Close',
       onClick: onClose,
-      variant: 'ghost' as const
-    }
+      variant: 'ghost' as const,
+    },
   ];
 
   return (
@@ -337,8 +337,8 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
 }> = ({
   isOpen,
   onClose,
-  title = "Loading...",
-  message = "Please wait while we process your request.",
+  title = 'Loading...',
+  message = 'Please wait while we process your request.',
   ...props
 }) => {
   return (
@@ -366,18 +366,18 @@ export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
 }> = ({
   isOpen,
   onClose,
-  title = "Information",
+  title = 'Information',
   message,
   details,
-  icon = "ℹ️",
+  icon = 'ℹ️',
   ...props
 }) => {
   const actions: ModalAction[] = [
     {
-      label: "Got it",
+      label: 'Got it',
       onClick: onClose,
-      variant: 'primary'
-    }
+      variant: 'primary',
+    },
   ];
 
   return (

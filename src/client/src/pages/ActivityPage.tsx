@@ -11,7 +11,7 @@ import {
   Toggle,
   PageHeader,
   LoadingSpinner,
-  EmptyState
+  EmptyState,
 } from '../components/DaisyUI';
 
 interface ActivityEvent {
@@ -84,7 +84,7 @@ const ActivityPage: React.FC = () => {
     description: `Provider: ${event.provider} | LLM: ${event.llmProvider}`,
     type: event.status === 'error' || event.status === 'timeout' ? 'error' as const :
       event.status === 'success' ? 'success' as const : 'info' as const,
-    metadata: { ...event }
+    metadata: { ...event },
   }));
 
   const getStatusBadge = (status: string) => {
@@ -92,7 +92,7 @@ const ActivityPage: React.FC = () => {
       success: 'success',
       error: 'error',
       timeout: 'warning',
-      pending: 'primary'
+      pending: 'primary',
     };
     return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
   };
@@ -103,14 +103,14 @@ const ActivityPage: React.FC = () => {
       title: 'Time',
       sortable: true,
       width: '180px',
-      render: (value: string) => <span className="font-mono text-sm">{new Date(value).toLocaleString()}</span>
+      render: (value: string) => <span className="font-mono text-sm">{new Date(value).toLocaleString()}</span>,
     },
     {
       key: 'botName' as keyof ActivityEvent,
       title: 'Bot',
       sortable: true,
       filterable: true,
-      render: (value: string) => <span className="font-medium">{value}</span>
+      render: (value: string) => <span className="font-medium">{value}</span>,
     },
     {
       key: 'status' as keyof ActivityEvent,
@@ -118,29 +118,29 @@ const ActivityPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: '100px',
-      render: (value: string) => getStatusBadge(value)
+      render: (value: string) => getStatusBadge(value),
     },
     {
       key: 'provider' as keyof ActivityEvent,
       title: 'Provider',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>
+      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>,
     },
     {
       key: 'llmProvider' as keyof ActivityEvent,
       title: 'LLM',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>
+      render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
       key: 'duration' as keyof ActivityEvent,
       title: 'Duration',
       sortable: true,
       width: '100px',
-      render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-'
-    }
+      render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
+    },
   ];
 
   const stats = [
@@ -149,29 +149,29 @@ const ActivityPage: React.FC = () => {
       title: 'Total Events',
       value: events.length,
       icon: '📊',
-      color: 'primary' as const
+      color: 'primary' as const,
     },
     {
       id: 'success',
       title: 'Successful',
       value: events.filter(e => e.status === 'success').length,
       icon: '✅',
-      color: 'success' as const
+      color: 'success' as const,
     },
     {
       id: 'errors',
       title: 'Errors',
       value: events.filter(e => e.status === 'error' || e.status === 'timeout').length,
       icon: '❌',
-      color: 'error' as const
+      color: 'error' as const,
     },
     {
       id: 'bots',
       title: 'Active Bots',
       value: data?.filters?.agents?.length || 0,
       icon: '🤖',
-      color: 'secondary' as const
-    }
+      color: 'secondary' as const,
+    },
   ];
 
   return (

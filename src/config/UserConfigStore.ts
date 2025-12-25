@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { BotConfiguration } from '../database/DatabaseManager';
-import { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
+import type { BotConfiguration } from '../database/DatabaseManager';
+import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 
 interface ToolConfig {
   guards?: {
@@ -27,7 +27,7 @@ export class UserConfigStore {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},
-        bots: []
+        bots: [],
       };
     }
   }
@@ -48,7 +48,7 @@ export class UserConfigStore {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},
-        bots: []
+        bots: [],
       };
     }
   }

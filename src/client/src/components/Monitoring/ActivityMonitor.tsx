@@ -156,7 +156,7 @@ const ActivityMonitor: React.FC = () => {
               onChange={(value) => handleFilterChange('agent', value || undefined)}
               options={[
                 { value: '', label: 'All Agents' },
-                ...uniqueAgents.map(agent => ({ value: agent, label: agent }))
+                ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
               ]}
             />
 
@@ -166,7 +166,7 @@ const ActivityMonitor: React.FC = () => {
               onChange={(value) => handleFilterChange('provider', value || undefined)}
               options={[
                 { value: '', label: 'All Providers' },
-                ...uniqueProviders.map(provider => ({ value: provider, label: provider }))
+                ...uniqueProviders.map(provider => ({ value: provider, label: provider })),
               ]}
             />
 
@@ -177,7 +177,7 @@ const ActivityMonitor: React.FC = () => {
               options={[
                 { value: '', label: 'All Types' },
                 { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' }
+                { value: 'outgoing', label: 'Outgoing' },
               ]}
             />
 
@@ -189,7 +189,7 @@ const ActivityMonitor: React.FC = () => {
                 { value: '', label: 'All Statuses' },
                 { value: 'success', label: 'Success' },
                 { value: 'error', label: 'Error' },
-                { value: 'timeout', label: 'Timeout' }
+                { value: 'timeout', label: 'Timeout' },
               ]}
             />
 

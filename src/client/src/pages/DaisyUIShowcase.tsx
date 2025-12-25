@@ -13,7 +13,7 @@ const DaisyUIShowcase: React.FC = () => {
   const components = [
     'button', 'badge', 'alert', 'card', 'input', 'select', 'checkbox', 
     'toggle', 'radio', 'range', 'modal', 'dropdown', 'tabs', 'tooltip',
-    'avatar', 'progress', 'loading', 'table', 'menu', 'collapse'
+    'avatar', 'progress', 'loading', 'table', 'menu', 'collapse',
   ];
 
   return (
@@ -677,10 +677,10 @@ const DaisyUIShowcase: React.FC = () => {
 
           <Section title="Radial Progress">
             <div className="flex flex-wrap gap-4">
-              <div className="radial-progress" style={{"--value": 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-primary" style={{"--value": 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-secondary" style={{"--value": 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-accent" style={{"--value": 70} as React.CSSProperties}>70%</div>
+              <div className="radial-progress" style={{'--value': 70} as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-primary" style={{'--value': 70} as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-secondary" style={{'--value': 70} as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-accent" style={{'--value': 70} as React.CSSProperties}>70%</div>
             </div>
           </Section>
         </div>

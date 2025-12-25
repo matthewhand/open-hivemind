@@ -8,7 +8,7 @@ import {
   SignalSlashIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
 } from '@heroicons/react/24/outline';
 
 interface PWAContextType {
@@ -70,7 +70,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const installPWA = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {return;}
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -116,7 +116,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updatePWA,
         checkForUpdates,
         settings,
-        updateSettings
+        updateSettings,
       }}
     >
       {children}
@@ -160,7 +160,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const usePWA = () => {
   const context = useContext(PWAContext);
-  if (!context) throw new Error('usePWA must be used within PWAProvider');
+  if (!context) {throw new Error('usePWA must be used within PWAProvider');}
   return context;
 };
 

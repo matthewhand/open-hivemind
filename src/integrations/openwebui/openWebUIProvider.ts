@@ -1,5 +1,5 @@
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
 import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
@@ -28,7 +28,7 @@ export const openWebUIProvider: ILlmProvider = {
 
   async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = []
+    historyMessages: IMessage[] = [],
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 

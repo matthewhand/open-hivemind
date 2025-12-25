@@ -1,5 +1,6 @@
 import Debug from 'debug';
-import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
+import type { VoiceConnection } from '@discordjs/voice';
+import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
@@ -18,53 +19,53 @@ const debug = Debug('app:playAudioResponse');
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    if (!openaiConfig) {
-        debug('OpenAI configuration is not loaded.');
-        return;
+  if (!openaiConfig) {
+    debug('OpenAI configuration is not loaded.');
+    return;
+  }
+
+  const narrationEndpointUrl = openaiConfig.get('OPENAI_BASE_URL') as string;
+
+  if (!narrationEndpointUrl) {
+    debug('OPENAI_BASE_URL is not set in the configuration.');
+    return;
+  }
+
+  debug('OPENAI_BASE_URL: ' + narrationEndpointUrl);
+
+  try {
+    const response = await axios.post(narrationEndpointUrl, {
+      input: text,
+      voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
+      audioConfig: { audioEncoding: 'MP3' },
+    }, {
+      headers: {
+        'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY') as string,
+      },
+    });
+
+    const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
+    const writeFile = util.promisify(fs.writeFile);
+    await writeFile('output.mp3', audioBuffer);
+
+    const player = createAudioPlayer();
+    const resource = createAudioResource('output.mp3');
+    player.play(resource);
+    connection.subscribe(player);
+
+    player.on(AudioPlayerStatus.Idle, () => {
+      fs.unlinkSync('output.mp3');
+    });
+
+    player.on('error', (error) => {
+      debug('Error playing audio response: ' + error.message);
+      debug(error.stack); // Improvement: Added stack trace logging for better debugging
+    });
+  } catch (error: any) {
+    if (error.response?.status === 408) {
+      debug('Request timed out. Retrying...'); // Improvement: Added timeout handling
+      return playAudioResponse(connection, text);
     }
-
-    const narrationEndpointUrl = openaiConfig.get('OPENAI_BASE_URL') as string;
-
-    if (!narrationEndpointUrl) {
-        debug('OPENAI_BASE_URL is not set in the configuration.');
-        return;
-    }
-
-    debug('OPENAI_BASE_URL: ' + narrationEndpointUrl);
-
-    try {
-        const response = await axios.post(narrationEndpointUrl, {
-            input: text,
-            voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
-            audioConfig: { audioEncoding: 'MP3' }
-        }, {
-            headers: {
-                'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY') as string,
-            },
-        });
-
-        const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
-        const writeFile = util.promisify(fs.writeFile);
-        await writeFile('output.mp3', audioBuffer);
-
-        const player = createAudioPlayer();
-        const resource = createAudioResource('output.mp3');
-        player.play(resource);
-        connection.subscribe(player);
-
-        player.on(AudioPlayerStatus.Idle, () => {
-            fs.unlinkSync('output.mp3');
-        });
-
-        player.on('error', (error) => {
-            debug('Error playing audio response: ' + error.message);
-            debug(error.stack); // Improvement: Added stack trace logging for better debugging
-        });
-    } catch (error: any) {
-        if (error.response?.status === 408) {
-            debug('Request timed out. Retrying...'); // Improvement: Added timeout handling
-            return playAudioResponse(connection, text);
-        }
-        debug('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
-    }
+    debug('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }

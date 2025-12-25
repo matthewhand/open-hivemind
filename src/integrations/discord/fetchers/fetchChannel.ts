@@ -1,4 +1,5 @@
-import { Client, TextChannel } from 'discord.js';
+import type { Client} from 'discord.js';
+import { TextChannel } from 'discord.js';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 /**
@@ -23,7 +24,7 @@ export async function fetchChannel(client: Client, channelId: string): Promise<T
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord fetch channel error:', hivemindError);
+      console.error('Discord fetch channel error:', hivemindError);
     }
 
     return null;

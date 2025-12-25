@@ -63,7 +63,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
   const metrics = {
     responseTime: 120,
     memoryUsage: 45,
-    cpuUsage: 30
+    cpuUsage: 30,
   };
 
   const createBotNode = useCallback((bot: BotNode): THREE.Mesh => {
@@ -81,32 +81,32 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
 
     // Position based on view mode
     switch (viewMode) {
-      case 'sphere': {
-        const phi = Math.acos(-1 + (2 * Math.random()));
-        const theta = Math.random() * Math.PI * 2;
-        const radius = 5 + Math.random() * 3;
-        mesh.position.setFromSphericalCoords(radius, phi, theta);
-        break;
-      }
-      case 'grid': {
-        const index = parseInt(bot.id.split('_')[1]) || 0;
-        const gridSize = Math.ceil(Math.sqrt(bots.length));
-        mesh.position.set(
-          (index % gridSize - gridSize / 2) * 2,
-          Math.floor(index / gridSize - gridSize / 2) * 2,
-          0
-        );
-        break;
-      }
-      case 'tree': {
-        const level = Math.floor(Math.random() * 3);
-        mesh.position.set(
-          (Math.random() - 0.5) * level * 2,
-          -level * 2,
-          (Math.random() - 0.5) * level * 2
-        );
-        break;
-      }
+    case 'sphere': {
+      const phi = Math.acos(-1 + (2 * Math.random()));
+      const theta = Math.random() * Math.PI * 2;
+      const radius = 5 + Math.random() * 3;
+      mesh.position.setFromSphericalCoords(radius, phi, theta);
+      break;
+    }
+    case 'grid': {
+      const index = parseInt(bot.id.split('_')[1]) || 0;
+      const gridSize = Math.ceil(Math.sqrt(bots.length));
+      mesh.position.set(
+        (index % gridSize - gridSize / 2) * 2,
+        Math.floor(index / gridSize - gridSize / 2) * 2,
+        0,
+      );
+      break;
+    }
+    case 'tree': {
+      const level = Math.floor(Math.random() * 3);
+      mesh.position.set(
+        (Math.random() - 0.5) * level * 2,
+        -level * 2,
+        (Math.random() - 0.5) * level * 2,
+      );
+      break;
+    }
     }
 
     // Add pulsing animation for active bots
@@ -160,7 +160,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
   }, [connectionOpacity]);
 
   const createParticleSystem = useCallback(() => {
-    if (!particleEffects) return null;
+    if (!particleEffects) {return null;}
 
     const particleCount = 1000;
     const positions = new Float32Array(particleCount * 3);
@@ -197,7 +197,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
   }, [particleEffects]);
 
   const updateNetwork = useCallback(() => {
-    if (!sceneRef.current) return;
+    if (!sceneRef.current) {return;}
 
     // Clear existing nodes and connections
     nodesRef.current.forEach((mesh) => {
@@ -250,7 +250,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
   }, [bots, metrics, createBotNode, createConnection, createParticleSystem]);
 
   useEffect(() => {
-    if (!mountRef.current || !labelMountRef.current) return;
+    if (!mountRef.current || !labelMountRef.current) {return;}
 
     // Scene setup
     const scene = new THREE.Scene();

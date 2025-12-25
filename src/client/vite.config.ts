@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,22 +11,22 @@ export default defineConfig({
         presets: [
           [
             '@babel/preset-react',
-            { runtime: 'automatic', importSource: 'react', development: false }
-          ]
-        ]
-      }
+            { runtime: 'automatic', importSource: 'react', development: false },
+          ],
+        ],
+      },
     }),
-    tailwindcss()
+    tailwindcss(),
   ],
   server: {
-    port: 5173
+    port: 5173,
   },
   resolve: {
     alias: {
       '@src': './src',
       '@config': '../config',
-      '@webui': './webui/src'
-    }
+      '@webui': './webui/src',
+    },
   },
   build: {
     rollupOptions: {
@@ -37,13 +37,13 @@ export default defineConfig({
           redux: ['@reduxjs/toolkit', 'react-redux'],
           router: ['react-router-dom'],
           charts: ['recharts'],
-          daisyui: ['daisyui']
-        }
-      }
+          daisyui: ['daisyui'],
+        },
+      },
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts']
-  }
-})
+    include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
+  },
+});

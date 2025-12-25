@@ -28,7 +28,7 @@ export class SlackConfigurationLoader {
   public static loadFromBotConfigurationManager(): SlackBotInstance[] {
     const configManager = BotConfigurationManager.getInstance();
     const slackBotConfigs = configManager.getAllBots().filter(bot =>
-      bot.messageProvider === 'slack' && bot.slack?.botToken
+      bot.messageProvider === 'slack' && bot.slack?.botToken,
     );
 
     if (slackBotConfigs.length === 0) {
@@ -44,7 +44,7 @@ export class SlackConfigurationLoader {
       name: botConfig.name,
       appToken: botConfig.slack!.appToken,
       defaultChannelId: botConfig.slack!.defaultChannelId,
-      joinChannels: botConfig.slack!.joinChannels
+      joinChannels: botConfig.slack!.joinChannels,
     }));
   }
 
@@ -119,7 +119,7 @@ export class SlackConfigurationLoader {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 

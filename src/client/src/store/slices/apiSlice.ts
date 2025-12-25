@@ -199,7 +199,7 @@ export const apiSlice = createApi({
         const searchParams = new URLSearchParams();
         if (params) {
           Object.entries(params).forEach(([key, value]) => {
-            if (value) searchParams.append(key, value);
+            if (value) {searchParams.append(key, value);}
           });
         }
         const queryString = searchParams.toString();

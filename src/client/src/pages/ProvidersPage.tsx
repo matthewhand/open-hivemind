@@ -5,7 +5,7 @@ import {
   MessageCircle as MessageIcon,
   Brain as LLMIcon,
   Settings as ConfigIcon,
-  ArrowRight as ArrowIcon
+  ArrowRight as ArrowIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
 
@@ -13,7 +13,7 @@ const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers', isActive: true }
+    { label: 'Providers', href: '/uber/providers', isActive: true },
   ];
 
   const providerCategories = [
@@ -28,8 +28,8 @@ const ProvidersPage: React.FC = () => {
         'Real-time messaging integration',
         'Multi-platform support',
         'Webhook customization',
-        'Channel management'
-      ]
+        'Channel management',
+      ],
     },
     {
       title: 'LLM Providers',
@@ -42,9 +42,9 @@ const ProvidersPage: React.FC = () => {
         'Multiple AI model support',
         'Fallback configuration',
         'Custom model integration',
-        'API key management'
-      ]
-    }
+        'API key management',
+      ],
+    },
   ];
 
   return (

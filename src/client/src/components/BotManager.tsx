@@ -100,7 +100,7 @@ const BotManager: React.FC = () => {
   const toggleSelection = (name: string) => {
     setSelectedBots(prev => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
+      if (next.has(name)) {next.delete(name);} else {next.add(name);}
       return next;
     });
   };
@@ -114,7 +114,7 @@ const BotManager: React.FC = () => {
         searchQuery.trim() === '' ||
         bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bot.messageProvider?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bot.llmProvider?.toLowerCase().includes(searchQuery.toLowerCase())
+        bot.llmProvider?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
       .filter(bot => filterStatus === 'all' || bot.status === filterStatus)
       .filter(bot => filterMessageProvider === 'all' || bot.messageProvider === filterMessageProvider)
@@ -128,8 +128,8 @@ const BotManager: React.FC = () => {
     }
     try {
       const config: Record<string, unknown> = {};
-      if (messageProvider === 'discord' && discordToken.trim()) config.discord = { token: discordToken.trim() };
-      if (llmProvider === 'openai' && openaiApiKey.trim()) config.openai = { apiKey: openaiApiKey.trim() };
+      if (messageProvider === 'discord' && discordToken.trim()) {config.discord = { token: discordToken.trim() };}
+      if (llmProvider === 'openai' && openaiApiKey.trim()) {config.openai = { apiKey: openaiApiKey.trim() };}
       await createBot({ name: botName.trim(), messageProvider, ...(llmProvider ? { llmProvider } : {}), config }).unwrap();
       showToast(`Bot '${botName}' created`, 'success');
       setCreateDialogOpen(false);
@@ -157,7 +157,7 @@ const BotManager: React.FC = () => {
   };
 
   const handleDeleteBot = async () => {
-    if (!selectedBot) return;
+    if (!selectedBot) {return;}
     try {
       await deleteBot(selectedBot.name).unwrap();
       showToast(`Bot '${selectedBot.name}' deleted`, 'success');
@@ -170,7 +170,7 @@ const BotManager: React.FC = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedBots.size === 0) return;
+    if (selectedBots.size === 0) {return;}
     let successCount = 0;
     for (const name of selectedBots) {
       try {
@@ -187,11 +187,11 @@ const BotManager: React.FC = () => {
   };
 
   const handleBulkClone = async () => {
-    if (selectedBots.size === 0) return;
+    if (selectedBots.size === 0) {return;}
     let successCount = 0;
     for (const name of selectedBots) {
       const newNameComputed = `${bulkClonePrefix}${name}${bulkCloneSuffix}`.trim();
-      if (!newNameComputed || newNameComputed === name) continue;
+      if (!newNameComputed || newNameComputed === name) {continue;}
       try {
         await cloneBot({ name, newName: newNameComputed }).unwrap();
         successCount++;
@@ -224,7 +224,7 @@ const BotManager: React.FC = () => {
         e.preventDefault();
         selectAll();
       }
-      if (e.key === 'Escape') clearSelection();
+      if (e.key === 'Escape') {clearSelection();}
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -383,7 +383,7 @@ const BotManager: React.FC = () => {
                 ...(defaultLlmConfigured ? [{ value: '', label: 'Use default LLM' }] : []),
                 { value: 'openai', label: 'OpenAI' },
                 { value: 'flowise', label: 'Flowise' },
-                { value: 'openwebui', label: 'OpenWebUI' }
+                { value: 'openwebui', label: 'OpenWebUI' },
               ]}
             />
             {!defaultLlmConfigured && (

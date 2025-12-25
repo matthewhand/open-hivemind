@@ -1,10 +1,13 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
-import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
+import type { AuditedRequest} from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { BotConfig, MessageProvider, LlmProvider } from '../../types/config';
+import type { MessageProvider, LlmProvider } from '../../types/config';
+import { BotConfig } from '../../types/config';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -44,8 +47,8 @@ router.get('/', async (req: Request, res: Response) => {
         metadata: {
           source: overrides ? 'user_override' : 'default',
           lastModified: overrides?.updatedAt?.toISOString?.() || new Date().toISOString(),
-          isActive: true
-        }
+          isActive: true,
+        },
       };
     });
 
@@ -55,15 +58,15 @@ router.get('/', async (req: Request, res: Response) => {
         bots: botsWithOverrides,
         warnings,
         total: botsWithOverrides.length,
-        legacyMode: botConfigManager.isLegacyMode()
+        legacyMode: botConfigManager.isLegacyMode(),
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     debug('Error getting bot configurations:', error);
     res.status(500).json({
       error: 'Failed to get bot configurations',
-      message: error.message || 'An error occurred while retrieving bot configurations'
+      message: error.message || 'An error occurred while retrieving bot configurations',
     });
   }
 });
@@ -81,7 +84,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
     if (!bot) {
       return res.status(404).json({
         error: 'Bot configuration not found',
-        message: `Bot configuration with ID ${botId} not found`
+        message: `Bot configuration with ID ${botId} not found`,
       });
     }
 
@@ -96,16 +99,16 @@ router.get('/:botId', async (req: Request, res: Response) => {
           metadata: {
             source: overrides ? 'user_override' : 'default',
             lastModified: overrides?.updatedAt?.toISOString?.() || new Date().toISOString(),
-            isActive: true
-          }
-        }
-      }
+            isActive: true,
+          },
+        },
+      },
     });
   } catch (error: any) {
     debug('Error getting bot configuration:', error);
     res.status(500).json({
       error: 'Failed to get bot configuration',
-      message: error.message || 'An error occurred while retrieving bot configuration'
+      message: error.message || 'An error occurred while retrieving bot configuration',
     });
   }
 });
@@ -125,13 +128,13 @@ router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, asy
     const newBot = await botConfigService.createBotConfig(configData, createdBy);
 
     logConfigChange(req, 'CREATE', newBot.name, 'success', 'Bot configuration created successfully', {
-      newValue: newBot
+      newValue: newBot,
     });
 
     res.status(201).json({
       success: true,
       data: { bot: newBot },
-      message: 'Bot configuration created successfully'
+      message: 'Bot configuration created successfully',
     });
   } catch (error: any) {
     if (error instanceof ConfigurationError) {
@@ -139,14 +142,14 @@ router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, asy
       logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', error.message);
       return res.status(503).json({
         error: 'Database not configured',
-        message: error.message
+        message: error.message,
       });
     }
     debug('Error creating bot configuration:', error);
     logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', `Failed to create bot configuration: ${error.message}`);
     res.status(400).json({
       error: 'Failed to create bot configuration',
-      message: error.message || 'An error occurred while creating bot configuration'
+      message: error.message || 'An error occurred while creating bot configuration',
     });
   }
 });
@@ -167,7 +170,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       logConfigChange(req, 'UPDATE', botId, 'failure', 'Bot configuration not found');
       return res.status(404).json({
         error: 'Bot configuration not found',
-        message: `Bot configuration with ID ${botId} not found`
+        message: `Bot configuration with ID ${botId} not found`,
       });
     }
 
@@ -178,7 +181,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       return res.status(400).json({
         error: 'Schema validation error',
         message: 'Configuration schema validation failed',
-        details: schemaValidationResult.errors
+        details: schemaValidationResult.errors,
       });
     }
 
@@ -191,7 +194,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
         message: 'Configuration business validation failed',
         details: businessValidationResult.errors,
         warnings: businessValidationResult.warnings,
-        suggestions: businessValidationResult.suggestions
+        suggestions: businessValidationResult.suggestions,
       });
     }
 
@@ -228,14 +231,14 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       logConfigChange(req, 'UPDATE', req.params.botId, 'failure', error.message);
       return res.status(503).json({
         error: 'Database not configured',
-        message: error.message
+        message: error.message,
       });
     }
     debug('Error updating bot configuration:', error);
     logConfigChange(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot configuration: ${error.message}`);
     res.status(400).json({
       error: 'Failed to update bot configuration',
-      message: error.message || 'An error occurred while updating bot configuration'
+      message: error.message || 'An error occurred while updating bot configuration',
     });
   }
 });
@@ -263,12 +266,12 @@ router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, r
 
     // Update user overrides
     userConfigStore.setBotOverride(botId, {
-      messageProvider: "discord" as MessageProvider,
-      llmProvider: "flowise" as LlmProvider,
-      persona: "",
-      systemInstruction: "",
+      messageProvider: 'discord' as MessageProvider,
+      llmProvider: 'flowise' as LlmProvider,
+      persona: '',
+      systemInstruction: '',
       mcpServers: [],
-      mcpGuard: { enabled: false, type: "owner" }
+      mcpGuard: { enabled: false, type: 'owner' },
     });
 
     // Update secure config if sensitive data changed
@@ -282,9 +285,9 @@ router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, r
           slack: {},
           openai: {},
           flowise: {},
-          openwebui: {}
+          openwebui: {},
         },
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     }
 
@@ -297,26 +300,26 @@ router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, r
       logConfigChange(req, 'UPDATE', botId, 'failure', 'Bot configuration not found after update');
       return res.status(500).json({
         error: 'Failed to update bot configuration',
-        message: 'Bot configuration was not found after update'
+        message: 'Bot configuration was not found after update',
       });
     }
 
     logConfigChange(req, 'UPDATE', botId, 'success', 'Bot configuration updated successfully', {
       oldValue: {}, // diff.old,
-      newValue: updatedBot
+      newValue: updatedBot,
     });
 
     res.json({
       success: true,
       data: { bot: updatedBot },
-      message: 'Bot configuration updated successfully'
+      message: 'Bot configuration updated successfully',
     });
   } catch (error: any) {
     debug('Error applying bot configuration update:', error);
     logConfigChange(req, 'UPDATE', botId, 'failure', `Failed to apply bot configuration update: ${error.message}`);
     res.status(400).json({
       error: 'Failed to apply bot configuration update',
-      message: error.message || 'An error occurred while applying bot configuration update'
+      message: error.message || 'An error occurred while applying bot configuration update',
     });
   }
 });
@@ -339,13 +342,13 @@ router.get('/templates', async (req: Request, res: Response) => {
       config: {
         discord: {
           token: 'YOUR_DISCORD_BOT_TOKEN',
-          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID'
+          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID',
         },
         openai: {
           apiKey: 'YOUR_OPENAI_API_KEY',
-          model: 'gpt-3.5-turbo'
-        }
-      }
+          model: 'gpt-3.5-turbo',
+        },
+      },
     },
     slack_flowise: {
       name: 'Slack + Flowise Bot',
@@ -356,13 +359,13 @@ router.get('/templates', async (req: Request, res: Response) => {
         slack: {
           botToken: 'YOUR_SLACK_BOT_TOKEN',
           signingSecret: 'YOUR_SLACK_SIGNING_SECRET',
-          appToken: 'OPTIONAL_SLACK_APP_TOKEN'
+          appToken: 'OPTIONAL_SLACK_APP_TOKEN',
         },
         flowise: {
           apiKey: 'YOUR_FLOWISE_API_KEY',
-          endpoint: 'YOUR_FLOWISE_ENDPOINT'
-        }
-      }
+          endpoint: 'YOUR_FLOWISE_ENDPOINT',
+        },
+      },
     },
     mattermost_openwebui: {
       name: 'Mattermost + OpenWebUI Bot',
@@ -372,19 +375,19 @@ router.get('/templates', async (req: Request, res: Response) => {
       config: {
         mattermost: {
           serverUrl: 'YOUR_MATTERMOST_SERVER_URL',
-          token: 'YOUR_MATTERMOST_TOKEN'
+          token: 'YOUR_MATTERMOST_TOKEN',
         },
         openwebui: {
           apiKey: 'YOUR_OPENWEBUI_API_KEY',
-          endpoint: 'YOUR_OPENWEBUI_ENDPOINT'
-        }
-      }
-    }
+          endpoint: 'YOUR_OPENWEBUI_ENDPOINT',
+        },
+      },
+    },
   };
 
   res.json({
     success: true,
-    data: { templates }
+    data: { templates },
   });
 });
 

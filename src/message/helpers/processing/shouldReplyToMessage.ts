@@ -26,7 +26,7 @@ export async function shouldReplyToMessage(
   botNameOrNames?: string | string[],
   historyMessages?: any[],
   defaultChannelId?: string,
-  botConfig?: Record<string, any>
+  botConfig?: Record<string, any>,
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -66,7 +66,7 @@ export async function shouldReplyToMessage(
     namesRaw
       .flatMap((n) => {
         const name = String(n || '').trim();
-        if (!name) return [];
+        if (!name) {return [];}
         // Filter out generic names like "Bot" or "Assistant" if we have other more specific names.
         const genericNames = ['bot', 'assistant'];
         if (genericNames.includes(name.toLowerCase()) && namesRaw.length > 1) {
@@ -75,7 +75,7 @@ export async function shouldReplyToMessage(
         const base = name.replace(/\s*#\d+\s*$/i, '').trim();
         return base && base !== name ? [name, base] : [name];
       })
-      .filter(Boolean)
+      .filter(Boolean),
   ));
   const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
   const isDM = typeof message.isDirectMessage === 'function' && message.isDirectMessage();
@@ -121,7 +121,7 @@ export async function shouldReplyToMessage(
       return {
         shouldReply: false,
         reason: 'Not addressed (OnlyWhenSpokenTo)',
-        meta: { mods: 'none', last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never' }
+        meta: { mods: 'none', last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never' },
       };
     }
   }
@@ -180,8 +180,8 @@ export async function shouldReplyToMessage(
     } catch { }
   }
   if (authorId && authorId !== botId) {
-    if (isFromBot) uniqueBots.add(authorId);
-    else uniqueUsers.add(authorId);
+    if (isFromBot) {uniqueBots.add(authorId);}
+    else {uniqueUsers.add(authorId);}
   }
 
   const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * 0.10 * -1);
@@ -197,7 +197,7 @@ export async function shouldReplyToMessage(
         return {
           shouldReply: false,
           reason: 'Unsolicited handler rejected (inactive channel)',
-          meta: { mods: 'none', last: lastStr }
+          meta: { mods: 'none', last: lastStr },
         };
       }
     } catch (err) {
@@ -229,8 +229,8 @@ export async function shouldReplyToMessage(
 
   let chance = 0.0;
   const baseChanceRaw = getMessageSetting('MESSAGE_UNSOLICITED_BASE_CHANCE', botConfig);
-  if (typeof baseChanceRaw === 'number') chance = baseChanceRaw;
-  else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') chance = Number(baseChanceRaw);
+  if (typeof baseChanceRaw === 'number') {chance = baseChanceRaw;}
+  else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') {chance = Number(baseChanceRaw);}
 
   const baseChance = chance;
   mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
@@ -293,7 +293,7 @@ export async function shouldReplyToMessage(
   const isAddressedToSomeone = (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).length > 0) || /^@\w+/.test(text) || isReplyToOther;
   if (isAddressedToSomeone && !isDirectlyAddressed) {
     chance -= 0.5;
-    mods.push(`AddressedToOther(-0.50)`);
+    mods.push('AddressedToOther(-0.50)');
   }
 
   // Calculate Leading Address
@@ -301,12 +301,12 @@ export async function shouldReplyToMessage(
   if (isDirectlyAddressed) {
     const myPatterns: RegExp[] = [
       new RegExp(`<@!?${botId}>`, 'i'),
-      ...nameCandidates.map(n => new RegExp(`${escapeRegExp(n)}\\b`, 'i'))
+      ...nameCandidates.map(n => new RegExp(`${escapeRegExp(n)}\\b`, 'i')),
     ];
     let firstMatchIndex = Infinity;
     for (const pat of myPatterns) {
       const m = text.match(pat);
-      if (m && m.index !== undefined && m.index < firstMatchIndex) firstMatchIndex = m.index;
+      if (m && m.index !== undefined && m.index < firstMatchIndex) {firstMatchIndex = m.index;}
     }
     if (firstMatchIndex !== Infinity) {
       let preceding = text.substring(0, firstMatchIndex).replace(/<(@|!|#|&|a:)[^>]+>/g, '');
@@ -324,7 +324,7 @@ export async function shouldReplyToMessage(
     (isDirectMention || isWakeword || isNameAddressed || isDM),
     isLeadingAddress,
     isReplyToBot,
-    botConfig
+    botConfig,
   );
   chance = modResult.chance;
 
@@ -370,7 +370,7 @@ export async function shouldReplyToMessage(
     // UserActive bonus - encourage engagement when users are present
     if (userPostedRecently) {
       chance += 0.20;
-      mods.push(`+UserActive(+0.20)`);
+      mods.push('+UserActive(+0.20)');
     }
 
     // Quiet Channel Bonus (5 min window) - still global as it's about channel activity
@@ -453,8 +453,8 @@ export async function shouldReplyToMessage(
       rolled: Number(roll.toPrecision(3)),
       mods: modsObject,
       prose,
-      colorizedMods: generateColorizedModsSummary(modsObject)
-    }
+      colorizedMods: generateColorizedModsSummary(modsObject),
+    },
   };
 }
 
@@ -479,7 +479,7 @@ function generateColorizedModsSummary(mods: Record<string, number | string>): st
   const parts: string[] = [];
 
   for (const [name, value] of Object.entries(mods)) {
-    if (typeof value !== 'number') continue;
+    if (typeof value !== 'number') {continue;}
 
     const absVal = Math.abs(value);
     const isBonus = value > 0;
@@ -523,14 +523,14 @@ function generateProseExplanation(
   mods: Record<string, number | string>,
   decided: boolean,
   wasDirectlyAddressed: boolean,
-  hasPostedRecently: boolean
+  hasPostedRecently: boolean,
 ): string {
   // Helper to get adjective based on magnitude
   const getAdjective = (value: number): string => {
     const abs = Math.abs(value);
-    if (abs <= 0.1) return 'slightly';
-    if (abs <= 0.3) return '';  // No adjective for moderate
-    if (abs <= 0.5) return 'strongly';
+    if (abs <= 0.1) {return 'slightly';}
+    if (abs <= 0.3) {return '';}  // No adjective for moderate
+    if (abs <= 0.5) {return 'strongly';}
     return 'very strongly';
   };
 
@@ -621,14 +621,14 @@ function generateProseExplanation(
 }
 
 function formatList(items: string[]): string {
-  if (items.length === 0) return '';
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  if (items.length === 0) {return '';}
+  if (items.length === 1) {return items[0];}
+  if (items.length === 2) {return `${items[0]} and ${items[1]}`;}
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 }
 
 function extractModifierTokens(modifiers?: string): string[] {
-  if (!modifiers || modifiers === 'none') return [];
+  if (!modifiers || modifiers === 'none') {return [];}
   return modifiers.match(/[+\-×]?[\w!]+\([^)]+\)/g) || [];
 }
 
@@ -649,7 +649,7 @@ function applyModifiers(
   isDirectlyAddressed: boolean = false,
   isLeadingAddress: boolean = false,
   isReplyToBot: boolean = false,
-  botConfig?: Record<string, any>
+  botConfig?: Record<string, any>,
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];

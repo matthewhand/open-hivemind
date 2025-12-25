@@ -55,7 +55,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
   // Fetch available models from provider API
   const fetchModels = useCallback(async () => {
-    if (!apiKey || providerType === 'custom') return;
+    if (!apiKey || providerType === 'custom') {return;}
 
     setIsLoading(true);
     setFetchError(null);
@@ -68,27 +68,27 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
       // Configure endpoint and headers based on provider
       switch (providerType) {
-        case 'openai':
-          endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
-          headers['Authorization'] = `Bearer ${apiKey}`;
-          break;
-        case 'anthropic':
-          // Anthropic doesn't have a public models endpoint, use static list
-          setSuggestions([
-            { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most powerful model for complex tasks' },
-            { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced model for most use cases' },
-            { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast and compact model' },
-            { id: 'claude-2.1', name: 'Claude 2.1', description: 'Legacy model with large context' },
-            { id: 'claude-instant-1.2', name: 'Claude Instant', description: 'Fast and cost-effective' },
-          ]);
-          setIsLoading(false);
-          return;
-        case 'ollama':
-          endpoint = `${baseUrl || 'http://localhost:11434'}/api/tags`;
-          break;
-        default:
-          setIsLoading(false);
-          return;
+      case 'openai':
+        endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        break;
+      case 'anthropic':
+        // Anthropic doesn't have a public models endpoint, use static list
+        setSuggestions([
+          { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most powerful model for complex tasks' },
+          { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced model for most use cases' },
+          { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast and compact model' },
+          { id: 'claude-2.1', name: 'Claude 2.1', description: 'Legacy model with large context' },
+          { id: 'claude-instant-1.2', name: 'Claude Instant', description: 'Fast and cost-effective' },
+        ]);
+        setIsLoading(false);
+        return;
+      case 'ollama':
+        endpoint = `${baseUrl || 'http://localhost:11434'}/api/tags`;
+        break;
+      default:
+        setIsLoading(false);
+        return;
       }
 
       const response = await fetch(endpoint, { headers });
@@ -103,22 +103,22 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
       let models: ModelOption[] = [];
 
       switch (providerType) {
-        case 'openai':
-          models = data.data?.map((model: any) => ({
-            id: model.id,
-            name: model.id,
-            description: `Owned by ${model.owned_by}`,
-            provider: 'openai'
-          })) || [];
-          break;
-        case 'ollama':
-          models = data.models?.map((model: any) => ({
-            id: model.name,
-            name: model.name,
-            description: `${model.details?.parameter_size || 'Unknown'} • ${model.details?.family || 'Unknown'}`,
-            provider: 'ollama'
-          })) || [];
-          break;
+      case 'openai':
+        models = data.data?.map((model: any) => ({
+          id: model.id,
+          name: model.id,
+          description: `Owned by ${model.owned_by}`,
+          provider: 'openai',
+        })) || [];
+        break;
+      case 'ollama':
+        models = data.models?.map((model: any) => ({
+          id: model.name,
+          name: model.name,
+          description: `${model.details?.parameter_size || 'Unknown'} • ${model.details?.family || 'Unknown'}`,
+          provider: 'ollama',
+        })) || [];
+        break;
       }
 
       setSuggestions(models);
@@ -162,12 +162,12 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
     if (apiKey && providerType === 'openai' && !apiKey.startsWith('sk-')) {
       setValidationWarning(prev => prev ?
         `${prev} • OpenAI API keys typically start with "sk-"` :
-        'OpenAI API keys typically start with "sk-"'
+        'OpenAI API keys typically start with "sk-"',
       );
     } else if (apiKey && providerType === 'anthropic' && !apiKey.startsWith('sk-ant-')) {
       setValidationWarning(prev => prev ?
         `${prev} • Anthropic API keys typically start with "sk-ant-"` :
-        'Anthropic API keys typically start with "sk-ant-"'
+        'Anthropic API keys typically start with "sk-ant-"',
       );
     }
 
@@ -186,7 +186,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
   // Filter suggestions based on input
   const filteredSuggestions = suggestions.filter(suggestion =>
     suggestion.name.toLowerCase().includes(value.toLowerCase()) ||
-    suggestion.id.toLowerCase().includes(value.toLowerCase())
+    suggestion.id.toLowerCase().includes(value.toLowerCase()),
   );
 
   // Handle input changes
@@ -207,29 +207,29 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || filteredSuggestions.length === 0) return;
+    if (!isOpen || filteredSuggestions.length === 0) {return;}
 
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev =>
-          prev < filteredSuggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0) {
-          handleSuggestionSelect(filteredSuggestions[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        setIsOpen(false);
-        setSelectedIndex(-1);
-        break;
+    case 'ArrowDown':
+      e.preventDefault();
+      setSelectedIndex(prev =>
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
+      );
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+      }
+      break;
+    case 'Escape':
+      setIsOpen(false);
+      setSelectedIndex(-1);
+      break;
     }
   };
 

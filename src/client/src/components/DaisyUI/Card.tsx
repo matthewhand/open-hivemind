@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React from 'react';
 
 // Define the props for the Card component
 interface CardProps {
@@ -106,11 +107,11 @@ const Card: React.FC<CardProps> = ({
 }) => {
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
-  if (compact) cardClasses += ' card-compact';
-  if (side) cardClasses += ' card-side';
-  if (imageFull) cardClasses += ' image-full';
-  if (bgVariant) cardClasses += ` bg-${bgVariant}`;
-  if (borderVariant) cardClasses += ` border border-${borderVariant}`;
+  if (compact) {cardClasses += ' card-compact';}
+  if (side) {cardClasses += ' card-side';}
+  if (imageFull) {cardClasses += ' image-full';}
+  if (bgVariant) {cardClasses += ` bg-${bgVariant}`;}
+  if (borderVariant) {cardClasses += ` border border-${borderVariant}`;}
 
   // Enhanced hover effects
   if (hover) {
@@ -120,7 +121,7 @@ const Card: React.FC<CardProps> = ({
     }
   }
 
-  if (className) cardClasses += ` ${className}`;
+  if (className) {cardClasses += ` ${className}`;}
 
 
   // If loading, show skeleton loaders

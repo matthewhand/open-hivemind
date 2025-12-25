@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Persona, PersonaCategory, DEFAULT_PERSONA } from '../../types/bot';
+import type { Persona, PersonaCategory} from '../../types/bot';
+import { DEFAULT_PERSONA } from '../../types/bot';
 import { Card, Button, Input, Badge } from '../DaisyUI';
 import {
   Search as SearchIcon,
   User as UserIcon,
   Plus as AddIcon,
   Filter as FilterIcon,
-  XCircle as ClearIcon
+  XCircle as ClearIcon,
 } from 'lucide-react';
 import PersonaChip from './PersonaChip';
 
@@ -29,7 +30,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   allowCreate = true,
   showUsage = false,
   placeholder = 'Select a persona...',
-  size = 'full'
+  size = 'full',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PersonaCategory | 'all'>('all');
@@ -43,7 +44,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
     { value: 'technical', label: 'Technical', color: 'accent' },
     { value: 'educational', label: 'Educational', color: 'info' },
     { value: 'entertainment', label: 'Entertainment', color: 'warning' },
-    { value: 'professional', label: 'Professional', color: 'success' }
+    { value: 'professional', label: 'Professional', color: 'success' },
   ];
 
   const filteredPersonas = useMemo(() => {
@@ -62,8 +63,8 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
         persona.description.toLowerCase().includes(query) ||
         persona.traits.some(trait =>
           trait.name.toLowerCase().includes(query) ||
-          trait.value.toLowerCase().includes(query)
-        )
+          trait.value.toLowerCase().includes(query),
+        ),
       );
     }
 
@@ -139,9 +140,9 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                     className={`
                       px-2 py-1 text-xs rounded-full border transition-colors
                       ${selectedCategory === category.value
-                        ? `bg-${category.color} text-${category.color}-content border-${category.color}`
-                        : 'border-base-300 hover:bg-base-200'
-                      }
+                    ? `bg-${category.color} text-${category.color}-content border-${category.color}`
+                    : 'border-base-300 hover:bg-base-200'
+                  }
                     `}
                   >
                     {category.label}
@@ -162,9 +163,9 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       className={`
                         p-2 rounded-lg border cursor-pointer transition-colors
                         ${selectedPersonaId === persona.id
-                          ? 'border-primary bg-primary/10'
-                          : 'border-base-300 hover:bg-base-100'
-                        }
+                      ? 'border-primary bg-primary/10'
+                      : 'border-base-300 hover:bg-base-100'
+                    }
                       `}
                       onClick={() => handlePersonaClick(persona.id)}
                     >
@@ -280,9 +281,9 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
               className={`
                 px-3 py-1 text-sm rounded-full border transition-colors
                 ${selectedCategory === category.value
-                  ? `bg-${category.color} text-${category.color}-content border-${category.color}`
-                  : 'border-base-300 hover:bg-base-200'
-                }
+              ? `bg-${category.color} text-${category.color}-content border-${category.color}`
+              : 'border-base-300 hover:bg-base-200'
+            }
               `}
             >
               {category.label}
@@ -305,9 +306,9 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                 className={`
                   p-4 rounded-lg border cursor-pointer transition-all
                   ${selectedPersonaId === persona.id
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-base-300 hover:bg-base-100 hover:shadow-sm'
-                  }
+                ? 'border-primary bg-primary/5 shadow-sm'
+                : 'border-base-300 hover:bg-base-100 hover:shadow-sm'
+              }
                 `}
                 onClick={() => handlePersonaClick(persona.id)}
               >

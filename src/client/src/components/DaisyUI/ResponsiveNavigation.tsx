@@ -24,7 +24,7 @@ interface ResponsiveNavigationProps {
 const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   navItems,
   children,
-  className = ''
+  className = '',
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = !useMediaQuery({ minWidth: 1024 });
@@ -72,7 +72,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       {/* MAIN CONTENT - Offset for sidebar */}
       <main
         className={`flex-1 min-h-screen p-6 transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'
-          }`}
+        }`}
       >
         {/* White content card */}
         <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">

@@ -44,10 +44,10 @@ export const Rating: React.FC<RatingProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'rating-xs';
-      case 'sm': return 'rating-sm';
-      case 'lg': return 'rating-lg';
-      default: return '';
+    case 'xs': return 'rating-xs';
+    case 'sm': return 'rating-sm';
+    case 'lg': return 'rating-lg';
+    default: return '';
     }
   };
 
@@ -57,23 +57,23 @@ export const Rating: React.FC<RatingProps> = ({
 
   const getMaskClass = () => {
     switch (shape) {
-      case 'heart': return 'mask-heart';
-      default: return 'mask-star-2';
+    case 'heart': return 'mask-heart';
+    default: return 'mask-star-2';
     }
   };
 
   const handleInputChange = (newValue: number) => {
-    if (readOnly) return;
+    if (readOnly) {return;}
     onChange?.(newValue);
   };
 
   const handleMouseEnter = (index: number) => {
-    if (readOnly) return;
+    if (readOnly) {return;}
     setHoverValue(index);
   };
 
   const handleMouseLeave = () => {
-    if (readOnly) return;
+    if (readOnly) {return;}
     setHoverValue(null);
   };
 
@@ -109,7 +109,7 @@ export const Rating: React.FC<RatingProps> = ({
         onChange={() => handleInputChange(0)}
         disabled={readOnly}
         aria-label="No rating"
-      />
+      />,
     );
 
     for (let i = 1; i <= max; i++) {
@@ -127,7 +127,7 @@ export const Rating: React.FC<RatingProps> = ({
             onMouseEnter={() => handleMouseEnter(i - 0.5)}
             disabled={readOnly}
             aria-label={`Rate ${i - 0.5} out of ${max}`}
-          />
+          />,
         );
       }
 
@@ -143,7 +143,7 @@ export const Rating: React.FC<RatingProps> = ({
           onMouseEnter={() => handleMouseEnter(i)}
           disabled={readOnly}
           aria-label={`Rate ${i} out of ${max}`}
-        />
+        />,
       );
     }
 

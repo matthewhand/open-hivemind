@@ -26,7 +26,7 @@ export class SlackChannelManager {
    * Check if a channel should be joined based on configuration
    */
   public static shouldJoinChannel(channelId: string, joinChannels?: string): boolean {
-    if (!joinChannels) return false;
+    if (!joinChannels) {return false;}
 
     const channels = joinChannels.split(',').map(c => c.trim());
     return channels.includes(channelId) || channels.includes('*');
@@ -36,7 +36,7 @@ export class SlackChannelManager {
    * Parse join channels configuration
    */
   public static parseJoinChannels(joinChannels?: string): string[] {
-    if (!joinChannels) return [];
+    if (!joinChannels) {return [];}
 
     return joinChannels.split(',')
       .map(c => c.trim())

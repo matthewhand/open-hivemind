@@ -28,7 +28,7 @@ const Accordion: React.FC<AccordionProps> = ({
   variant = 'default',
   size = 'md',
   iconPosition = 'left',
-  onItemToggle
+  onItemToggle,
 }) => {
   const [openItems, setOpenItems] = useState<Set<string>>(new Set(defaultOpenItems));
 
@@ -64,13 +64,13 @@ const Accordion: React.FC<AccordionProps> = ({
     const variantClasses = {
       default: '',
       bordered: 'collapse-bordered',
-      ghost: 'collapse-ghost'
+      ghost: 'collapse-ghost',
     };
 
     const sizeClasses = {
       sm: 'collapse-sm',
       md: '',
-      lg: 'collapse-lg'
+      lg: 'collapse-lg',
     };
 
     return `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${item.className || ''}`.trim();
@@ -82,7 +82,7 @@ const Accordion: React.FC<AccordionProps> = ({
     const sizeClasses = {
       sm: 'text-sm',
       md: 'text-base',
-      lg: 'text-lg'
+      lg: 'text-lg',
     };
 
     return `${baseClasses} ${sizeClasses[size]}`;
@@ -94,7 +94,7 @@ const Accordion: React.FC<AccordionProps> = ({
     const sizeClasses = {
       sm: 'text-sm',
       md: 'text-base',
-      lg: 'text-lg'
+      lg: 'text-lg',
     };
 
     return `${baseClasses} ${sizeClasses[size]}`;

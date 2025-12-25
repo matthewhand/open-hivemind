@@ -55,15 +55,15 @@ const BotConfigurationPage: React.FC = () => {
       ...prev,
       [configName]: {
         ...(prev[configName] || {}),
-        [key]: value
-      }
+        [key]: value,
+      },
     }));
     setSuccess(null);
   };
 
   const saveConfig = async (configName: string) => {
     const updates = modifiedConfigs[configName];
-    if (!updates || Object.keys(updates).length === 0) return;
+    if (!updates || Object.keys(updates).length === 0) {return;}
 
     try {
       setSaving(true);
@@ -74,8 +74,8 @@ const BotConfigurationPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           configName,
-          updates
-        })
+          updates,
+        }),
       });
 
       if (!response.ok) {
@@ -191,7 +191,7 @@ const BotConfigurationPage: React.FC = () => {
       content: (
         <div className="py-2">
           {Object.entries(values).map(([key, value]) =>
-            renderConfigField(name, key, schema[key] || {}, value)
+            renderConfigField(name, key, schema[key] || {}, value),
           )}
           {changed && (
             <div className="mt-4 pt-4 border-t border-base-200">
@@ -206,7 +206,7 @@ const BotConfigurationPage: React.FC = () => {
             </div>
           )}
         </div>
-      )
+      ),
     };
   });
 

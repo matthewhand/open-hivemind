@@ -32,7 +32,7 @@ export function checkEnvOverride(envVarName: string): {
   return {
     isOverridden: true,
     redactedValue: redactSensitiveValue(rawValue),
-    rawValue
+    rawValue,
   };
 }
 
@@ -54,7 +54,7 @@ export function getRelevantEnvVars(): Record<string, string> {
     'OPENWEBUI_',
     'OPENSWARM_',
     'MESSAGE_',
-    'LLM_'
+    'LLM_',
   ];
   
   Object.keys(process.env).forEach(envVar => {
@@ -98,7 +98,7 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
     `BOTS_${upperName}_PERSONA`,
     `BOTS_${upperName}_SYSTEM_INSTRUCTION`,
     `BOTS_${upperName}_RESPONSE_PROFILE`,
-    `BOTS_${upperName}_MCP_GUARD_PROFILE`
+    `BOTS_${upperName}_MCP_GUARD_PROFILE`,
   ];
   
   configKeys.forEach(key => {
@@ -106,7 +106,7 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
     if (result.isOverridden) {
       overrides[key] = {
         isOverridden: true,
-        redactedValue: result.redactedValue
+        redactedValue: result.redactedValue,
       };
     }
   });

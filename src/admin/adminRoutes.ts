@@ -1,10 +1,12 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
 import SlackService from '@integrations/slack/SlackService';
 import { Discord } from '@integrations/discord/DiscordService';
-import { auditMiddleware, AuditedRequest, logAdminAction } from '../server/middleware/audit';
+import type { AuditedRequest} from '../server/middleware/audit';
+import { auditMiddleware, logAdminAction } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
 import { authenticate, requireAdmin } from '../auth/middleware';
 
@@ -29,13 +31,13 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
     { key: 'teacher', name: 'Teacher', systemPrompt: 'Explain concepts clearly with analogies and steps.' },
   ];
   try {
-    if (!fs.existsSync(personasDir)) return fallback;
+    if (!fs.existsSync(personasDir)) {return fallback;}
     const out: any[] = [];
     for (const file of fs.readdirSync(personasDir)) {
-      if (!file.endsWith('.json')) continue;
+      if (!file.endsWith('.json')) {continue;}
       try {
         const data = JSON.parse(fs.readFileSync(path.join(personasDir, file), 'utf8'));
-        if (data && data.key && data.name && typeof data.systemPrompt === 'string') out.push(data);
+        if (data && data.key && data.name && typeof data.systemPrompt === 'string') {out.push(data);}
       } catch (e) {
         debug('Invalid persona file:', file, e);
       }
@@ -172,9 +174,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
           appToken: appToken || '',
           defaultChannelId: defaultChannelId || '',
           joinChannels: joinChannels || '',
-          mode: mode || 'socket'
+          mode: mode || 'socket',
         },
-        llm
+        llm,
       };
       await (slack as any).addBot?.(instanceCfg);
     } catch (e) {
@@ -265,7 +267,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
               botToken: inst.token,
               signingSecret: inst.signingSecret || '',
               mode: cfg.slack?.mode || 'socket',
-            }
+            },
           });
           addedSlack++;
         }

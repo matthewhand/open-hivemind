@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Spec } from '../types/spec';
+import type { Spec } from '../types/spec';
 
 const useSpecs = () => {
   const [specs, setSpecs] = useState<Spec[]>([]);

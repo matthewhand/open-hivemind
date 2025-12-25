@@ -7,20 +7,20 @@ const debug = Debug('app:LineByLineSender');
  * Check if a line is a bullet point (-, *, •, 1., 2., etc.)
  */
 function isBulletPoint(line: string): boolean {
-    const trimmed = line.trim();
-    // Matches: -, *, •, or numbered lists like 1. 2. etc.
-    return /^[-*•](?:\s|$)/.test(trimmed) || /^\d+\.\s/.test(trimmed);
+  const trimmed = line.trim();
+  // Matches: -, *, •, or numbered lists like 1. 2. etc.
+  return /^[-*•](?:\s|$)/.test(trimmed) || /^\d+\.\s/.test(trimmed);
 }
 
 function normalizeForDedupe(text: string): string {
-    return String(text || '')
-        .trim()
-        .replace(/\r\n/g, '\n')
-        .replace(/[“”]/g, '"')
-        .replace(/[‘’]/g, "'")
-        .replace(/[ \t]+/g, ' ')
-        .replace(/\s+([.,!?;:])/g, '$1')
-        .toLowerCase();
+  return String(text || '')
+    .trim()
+    .replace(/\r\n/g, '\n')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, '\'')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .toLowerCase();
 }
 
 /**
@@ -37,68 +37,68 @@ function normalizeForDedupe(text: string): string {
  * @returns Array of non-empty lines to send sequentially
  */
 export function splitOnNewlines(response: string, preserveEmpty = false): string[] {
-    if (!response) return [];
+  if (!response) {return [];}
 
-    // Split on actual newlines OR literal '\n' characters (escaped newlines)
-    const rawLines = response.split(/(?:\r\n|\r|\n|\\n)/);
+  // Split on actual newlines OR literal '\n' characters (escaped newlines)
+  const rawLines = response.split(/(?:\r\n|\r|\n|\\n)/);
 
-    const lines = preserveEmpty
-        ? rawLines
-        : rawLines
-            .map(line => line.trim())
-            .map(line => InputSanitizer.stripSurroundingQuotes(line))
-            .filter(line => line.length > 0);
+  const lines = preserveEmpty
+    ? rawLines
+    : rawLines
+      .map(line => line.trim())
+      .map(line => InputSanitizer.stripSurroundingQuotes(line))
+      .filter(line => line.length > 0);
 
-    // Group consecutive bullet points together
-    const result: string[] = [];
-    let bulletGroup: string[] = [];
-    let inBulletList = false;
+  // Group consecutive bullet points together
+  const result: string[] = [];
+  let bulletGroup: string[] = [];
+  let inBulletList = false;
 
-    for (const line of lines) {
-        const isBullet = isBulletPoint(line);
+  for (const line of lines) {
+    const isBullet = isBulletPoint(line);
 
-        if (isBullet) {
-            if (!inBulletList && bulletGroup.length === 0) {
-                // Starting a bullet list - check if previous result item should be included as header
-                // Actually, just start collecting bullets
-            }
-            inBulletList = true;
-            bulletGroup.push(line);
-        } else {
-            // Not a bullet point
-            if (inBulletList && bulletGroup.length > 0) {
-                // End of bullet list - combine and push
-                result.push(bulletGroup.join('\n'));
-                bulletGroup = [];
-                inBulletList = false;
-            }
-            result.push(line);
-        }
-    }
-
-    // Don't forget trailing bullet list
-    if (bulletGroup.length > 0) {
+    if (isBullet) {
+      if (!inBulletList && bulletGroup.length === 0) {
+        // Starting a bullet list - check if previous result item should be included as header
+        // Actually, just start collecting bullets
+      }
+      inBulletList = true;
+      bulletGroup.push(line);
+    } else {
+      // Not a bullet point
+      if (inBulletList && bulletGroup.length > 0) {
+        // End of bullet list - combine and push
         result.push(bulletGroup.join('\n'));
+        bulletGroup = [];
+        inBulletList = false;
+      }
+      result.push(line);
     }
+  }
 
-    if (preserveEmpty) return result;
+  // Don't forget trailing bullet list
+  if (bulletGroup.length > 0) {
+    result.push(bulletGroup.join('\n'));
+  }
 
-    // Filter out duplicate lines to prevent LLM stutter loops (normalized + non-consecutive).
-    const seen = new Set<string>();
-    const deduped: string[] = [];
-    let lastKey = '';
+  if (preserveEmpty) {return result;}
 
-    for (const line of result) {
-        const key = normalizeForDedupe(line);
-        if (!key) continue;
-        if (key === lastKey) continue;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        lastKey = key;
-        deduped.push(line);
-    }
+  // Filter out duplicate lines to prevent LLM stutter loops (normalized + non-consecutive).
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  let lastKey = '';
 
-    return deduped;
+  for (const line of result) {
+    const key = normalizeForDedupe(line);
+    if (!key) {continue;}
+    if (key === lastKey) {continue;}
+    if (seen.has(key)) {continue;}
+    seen.add(key);
+    lastKey = key;
+    deduped.push(line);
+  }
+
+  return deduped;
 }
 
 /**
@@ -111,23 +111,23 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
  * @returns Delay in milliseconds
  */
 export function calculateLineDelay(lineLength: number, baseDelay = 0): number {
-    // Post-typing delay should be minimal - send immediately
-    return calculateLineDelayWithOptions(lineLength, baseDelay);
+  // Post-typing delay should be minimal - send immediately
+  return calculateLineDelayWithOptions(lineLength, baseDelay);
 }
 
 export function calculateLineDelayWithOptions(
-    lineLength: number,
-    baseDelay = 0,
-    opts?: { perCharMs?: number; maxReadingMs?: number }
+  lineLength: number,
+  baseDelay = 0,
+  opts?: { perCharMs?: number; maxReadingMs?: number },
 ): number {
-    const safeLen = Math.max(0, Number(lineLength) || 0);
-    const safeBase = Math.max(0, Number(baseDelay) || 0);
-    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 0)); // No delay - send immediately
-    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 0)); // No cap needed
+  const safeLen = Math.max(0, Number(lineLength) || 0);
+  const safeBase = Math.max(0, Number(baseDelay) || 0);
+  const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 0)); // No delay - send immediately
+  const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 0)); // No cap needed
 
 
-    const readingDelay = Math.min(safeLen * perCharMs, maxReadingMs);
-    return safeBase + readingDelay;
+  const readingDelay = Math.min(safeLen * perCharMs, maxReadingMs);
+  return safeBase + readingDelay;
 }
 
 
@@ -144,11 +144,11 @@ export interface LineByLineConfig {
  * Get default config for line-by-line mode
  */
 export function getDefaultLineByLineConfig(): LineByLineConfig {
-    return {
-        enabled: true, // Default to enabled per user request
-        baseDelay: 0, // Immediate sending - delays happen pre-typing, not post-typing
-        maxLinesPerResponse: 5 // Max 5 lines per response to prevent spam
-    };
+  return {
+    enabled: true, // Default to enabled per user request
+    baseDelay: 0, // Immediate sending - delays happen pre-typing, not post-typing
+    maxLinesPerResponse: 5, // Max 5 lines per response to prevent spam
+  };
 
 
 }

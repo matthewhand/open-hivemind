@@ -5,13 +5,13 @@ import {
   createPersona,
   updatePersona,
   deletePersona,
-  type Persona
+  type Persona,
 } from '../../services/agentService';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ArchiveBoxXMarkIcon
+  ArchiveBoxXMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const PersonaManager: React.FC = () => {

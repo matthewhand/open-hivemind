@@ -11,7 +11,7 @@ interface QuickAddButtonProps {
 const QuickAddButton: React.FC<QuickAddButtonProps> = ({
   type,
   onClick,
-  disabled = false
+  disabled = false,
 }) => {
   const getTitle = () => {
     return type === 'message'

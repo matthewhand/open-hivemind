@@ -147,7 +147,7 @@ function toYaml(value: unknown, indent = 0): string {
 
   if (typeof value === 'string') {
     if (value.includes(':') || value.includes('\n') || value.includes('#')) {
-      return `'${value.replace(/'/g, "''")}'`;
+      return `'${value.replace(/'/g, '\'\'')}'`;
     }
     return value;
   }

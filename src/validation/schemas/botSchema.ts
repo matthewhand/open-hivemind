@@ -3,8 +3,8 @@ import { z } from 'zod';
 // Schema for bot ID parameter
 export const BotIdParamSchema = z.object({
   params: z.object({
-    botId: z.string().min(1, { message: 'Bot ID is required' })
-  })
+    botId: z.string().min(1, { message: 'Bot ID is required' }),
+  }),
 });
 
 // Schema for creating a new bot
@@ -17,7 +17,7 @@ export const CreateBotSchema = z.object({
     description: z.string().optional(),
     enabled: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
-  })
+  }),
 });
 
 // Schema for updating a bot
@@ -30,7 +30,7 @@ export const UpdateBotSchema = z.object({
     description: z.string().optional(),
     enabled: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
-  })
+  }),
 });
 
 // Schema for cloning a bot
@@ -39,14 +39,14 @@ export const CloneBotSchema = z.object({
     newName: z.string().min(3, { message: 'New name must be at least 3 characters' }),
     cloneConfig: z.boolean().optional().default(true),
     cloneHistory: z.boolean().optional().default(false),
-  })
+  }),
 });
 
 // Schema for starting/stopping a bot
 export const BotActionSchema = z.object({
   params: z.object({
-    botId: z.string().min(1, { message: 'Bot ID is required' })
-  })
+    botId: z.string().min(1, { message: 'Bot ID is required' }),
+  }),
 });
 
 // Schema for getting bot templates

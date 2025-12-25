@@ -60,7 +60,7 @@ class DaisyUIComponentTracker {
     themes: ['theme'],
 
     // Advanced Components
-    advanced: ['swap', 'mask', 'drawer', 'join', 'stack', 'artboard']
+    advanced: ['swap', 'mask', 'drawer', 'join', 'stack', 'artboard'],
   };
 
   // Track component usage
@@ -73,7 +73,7 @@ class DaisyUIComponentTracker {
       this.componentUsage.set(component, {
         ...existing,
         usageCount: existing.usageCount + 1,
-        lastUsed: now
+        lastUsed: now,
       });
     } else {
       // New usage
@@ -83,7 +83,7 @@ class DaisyUIComponentTracker {
         purpose,
         usageCount: 1,
         firstUsed: now,
-        lastUsed: now
+        lastUsed: now,
       });
     }
   }
@@ -102,7 +102,7 @@ class DaisyUIComponentTracker {
       categories[category] = {
         total: components.length,
         used: usedInCategory.length,
-        components: usedInCategory
+        components: usedInCategory,
       };
     });
 
@@ -111,9 +111,9 @@ class DaisyUIComponentTracker {
       usedComponents: usedComponents.length,
       unusedComponents,
       componentUsage: Array.from(this.componentUsage.values()).sort((a, b) =>
-        b.usageCount - a.usageCount
+        b.usageCount - a.usageCount,
       ),
-      categories
+      categories,
     };
   }
 
@@ -177,7 +177,7 @@ class DaisyUIComponentTracker {
       'radial-progress': 'For circular progress indicators',
       'swap': 'For toggle states or on/off switches',
       'timeline': 'For process visualization or event history',
-      'window': 'For desktop app demonstrations'
+      'window': 'For desktop app demonstrations',
     };
 
     Object.entries(unusedByCategory).forEach(([category, components]) => {
@@ -185,7 +185,7 @@ class DaisyUIComponentTracker {
         suggestions.push({
           component,
           category,
-          suggestedUse: suggestedUses[component] || `Consider using ${component} for enhanced UI functionality`
+          suggestedUse: suggestedUses[component] || `Consider using ${component} for enhanced UI functionality`,
         });
       });
     });

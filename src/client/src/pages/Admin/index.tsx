@@ -10,7 +10,7 @@ import {
   CommandLineIcon,
   CpuChipIcon,
   ChartBarIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
 const AdminPage: React.FC = () => {

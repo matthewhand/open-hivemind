@@ -8,13 +8,13 @@ import {
   Alert,
   Chip,
   Badge,
-  Checkbox
+  Checkbox,
 } from './DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
 interface ToolUsageGuard {
@@ -146,7 +146,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
   };
 
   const handleDeleteGuard = async (guardId: string) => {
-    if (!confirm('Are you sure you want to delete this tool usage guard?')) return;
+    if (!confirm('Are you sure you want to delete this tool usage guard?')) {return;}
 
     try {
       const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
@@ -300,7 +300,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
             value={formData.guardType || 'owner'}
             onChange={(e) => setFormData({
               ...formData,
-              guardType: e.target.value as 'owner' | 'userList' | 'role'
+              guardType: e.target.value as 'owner' | 'userList' | 'role',
             })}
             options={guardTypes}
             fullWidth
@@ -316,7 +316,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                   checked={formData.config?.ownerOnly || false}
                   onChange={(e) => setFormData({
                     ...formData,
-                    config: { ...formData.config, ownerOnly: e.target.checked }
+                    config: { ...formData.config, ownerOnly: e.target.checked },
                   })}
                 />
               </label>
@@ -331,8 +331,8 @@ const ToolUsageGuardsConfig: React.FC = () => {
                 ...formData,
                 config: {
                   ...formData.config,
-                  allowedUsers: e.target.value.split(',').map(u => u.trim()).filter(u => u)
-                }
+                  allowedUsers: e.target.value.split(',').map(u => u.trim()).filter(u => u),
+                },
               })}
               fullWidth
               helperText="Comma-separated list of user IDs"
@@ -347,8 +347,8 @@ const ToolUsageGuardsConfig: React.FC = () => {
                 ...formData,
                 config: {
                   ...formData.config,
-                  allowedRoles: e.target.value.split(',').map(r => r.trim()).filter(r => r)
-                }
+                  allowedRoles: e.target.value.split(',').map(r => r.trim()).filter(r => r),
+                },
               })}
               fullWidth
               helperText="Comma-separated list of user roles"

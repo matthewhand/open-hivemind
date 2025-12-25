@@ -13,7 +13,7 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import ProviderConfig from './ProviderConfig';
 
@@ -118,7 +118,7 @@ const MessengerProvidersConfig: React.FC = () => {
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('Are you sure you want to delete this messenger provider?')) return;
+    if (!confirm('Are you sure you want to delete this messenger provider?')) {return;}
 
     try {
       const response = await fetch(`/api/admin/messenger-providers/${providerId}`, {

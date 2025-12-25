@@ -6,7 +6,7 @@ import {
   Accordion,
   Divider,
   Button,
-  Tooltip
+  Tooltip,
 } from './DaisyUI';
 import {
   CheckCircleIcon,
@@ -19,7 +19,8 @@ import {
   SignalIcon,
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
-import io, { Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 
 interface EndpointStatus {
   id: string;
@@ -58,7 +59,7 @@ interface ApiStatusMonitorProps {
 }
 
 const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
-  refreshInterval = 30000
+  refreshInterval = 30000,
 }) => {
   const [apiStatus, setApiStatus] = useState<ApiStatusData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,36 +139,36 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   }, [fetchApiStatus, setupWebSocket, refreshInterval]);
 
   const getStatusIcon = (status: string) => {
-    const className = "w-5 h-5";
+    const className = 'w-5 h-5';
     switch (status) {
-      case 'online':
-        return <CheckCircleIcon className={`${className} text-success`} />;
-      case 'slow':
-        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
-      case 'offline':
-      case 'error':
-        return <ExclamationCircleIcon className={`${className} text-error`} />;
-      default:
-        return <InformationCircleIcon className={`${className} text-info`} />;
+    case 'online':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'slow':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    case 'offline':
+    case 'error':
+      return <ExclamationCircleIcon className={`${className} text-error`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online':
-        return 'success';
-      case 'slow':
-        return 'warning';
-      case 'offline':
-      case 'error':
-        return 'error';
-      default:
-        return 'ghost';
+    case 'online':
+      return 'success';
+    case 'slow':
+      return 'warning';
+    case 'offline':
+    case 'error':
+      return 'error';
+    default:
+      return 'ghost';
     }
   };
 
   const formatResponseTime = (ms: number) => {
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
+    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
@@ -179,8 +180,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
 
-    if (hours > 0) return `${hours}h ${minutes % 60}m ago`;
-    if (minutes > 0) return `${minutes}m ago`;
+    if (hours > 0) {return `${hours}h ${minutes % 60}m ago`;}
+    if (minutes > 0) {return `${minutes}m ago`;}
     return `${seconds}s ago`;
   };
 
@@ -245,7 +246,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
             </h4>
             <p className="text-sm">
               • Average Response Time: {formatResponseTime(
-                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0
+                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
               )}
             </p>
             <p className="text-sm">
@@ -275,8 +276,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
             </p>
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (

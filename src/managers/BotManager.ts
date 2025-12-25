@@ -6,8 +6,8 @@ import { EventEmitter } from 'events';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { MCPConfig } from '../mcp/MCPService';
-import { MCPGuardConfig } from '../mcp/MCPGuard';
+import type { MCPConfig } from '../mcp/MCPService';
+import type { MCPGuardConfig } from '../mcp/MCPGuard';
 import { webUIStorage } from '../storage/webUIStorage';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 import { HivemindError, ErrorUtils, AppError } from '../types/errors';
@@ -167,7 +167,7 @@ export class BotManager extends EventEmitter {
           systemInstruction: bot.systemInstruction,
           mcpServers: bot.mcpServers || [],
           mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name)
+          envOverrides: checkBotEnvOverrides(bot.name),
         };
         botInstances.push(botInstance);
       }
@@ -239,7 +239,7 @@ export class BotManager extends EventEmitter {
         persona: request.persona,
         systemInstruction: request.systemInstruction,
         mcpServers: request.mcpServers,
-        mcpGuard: request.mcpGuard
+        mcpGuard: request.mcpGuard,
       };
 
       // Store sensitive configuration securely
@@ -258,7 +258,7 @@ export class BotManager extends EventEmitter {
       debug('Error creating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -305,7 +305,7 @@ export class BotManager extends EventEmitter {
         persona: sourceBot.persona,
         systemInstruction: sourceBot.systemInstruction,
         mcpServers: sourceBot.mcpServers,
-        mcpGuard: sourceBot.mcpGuard
+        mcpGuard: sourceBot.mcpGuard,
       };
 
       const clonedBot = await this.createBot(cloneRequest);
@@ -320,7 +320,7 @@ export class BotManager extends EventEmitter {
       debug('Error cloning bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to clone bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -349,7 +349,7 @@ export class BotManager extends EventEmitter {
         persona: updates.persona !== undefined ? updates.persona : existingBot.persona,
         systemInstruction: updates.systemInstruction !== undefined ? updates.systemInstruction : existingBot.systemInstruction,
         mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : existingBot.mcpServers,
-        mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard
+        mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard,
       };
 
       // Store updated secure config if provided
@@ -370,7 +370,7 @@ export class BotManager extends EventEmitter {
       debug('Error updating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to update bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -401,7 +401,7 @@ export class BotManager extends EventEmitter {
       debug('Error deleting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to delete bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -433,7 +433,7 @@ export class BotManager extends EventEmitter {
       debug('Error starting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -494,7 +494,7 @@ export class BotManager extends EventEmitter {
       debug('Error stopping bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -585,7 +585,7 @@ export class BotManager extends EventEmitter {
     const secureConfigId = `bot_${botId}`;
     const secureData = {
       ...config,
-      storedAt: new Date().toISOString()
+      storedAt: new Date().toISOString(),
     };
 
     await this.secureConfigManager.storeConfig({
@@ -593,7 +593,7 @@ export class BotManager extends EventEmitter {
       name: `Bot ${botId} Configuration`,
       type: 'bot',
       data: secureData,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     } as Parameters<typeof this.secureConfigManager.storeConfig>[0]);
   }
 
@@ -823,20 +823,20 @@ export class BotManager extends EventEmitter {
       const secureConfig = await this.secureConfigManager.getConfig(`bot_${bot.id}`);
       
       switch (bot.messageProvider.toLowerCase()) {
-        case 'discord':
-          await this.initializeDiscordBot(bot, secureConfig?.data || {});
-          break;
-        case 'slack':
-          await this.initializeSlackBot(bot, secureConfig?.data || {});
-          break;
-        case 'mattermost':
-          await this.initializeMattermostBot(bot, secureConfig?.data || {});
-          break;
-        case 'telegram':
-          await this.initializeTelegramBot(bot, secureConfig?.data || {});
-          break;
-        default:
-          throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
+      case 'discord':
+        await this.initializeDiscordBot(bot, secureConfig?.data || {});
+        break;
+      case 'slack':
+        await this.initializeSlackBot(bot, secureConfig?.data || {});
+        break;
+      case 'mattermost':
+        await this.initializeMattermostBot(bot, secureConfig?.data || {});
+        break;
+      case 'telegram':
+        await this.initializeTelegramBot(bot, secureConfig?.data || {});
+        break;
+      default:
+        throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
       }
     } catch (error: HivemindError) {
       debug(`Error initializing bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
@@ -850,20 +850,20 @@ export class BotManager extends EventEmitter {
   private async shutdownBotProvider(bot: BotInstance): Promise<void> {
     try {
       switch (bot.messageProvider.toLowerCase()) {
-        case 'discord':
-          await this.shutdownDiscordBot(bot);
-          break;
-        case 'slack':
-          await this.shutdownSlackBot(bot);
-          break;
-        case 'mattermost':
-          await this.shutdownMattermostBot(bot);
-          break;
-        case 'telegram':
-          await this.shutdownTelegramBot(bot);
-          break;
-        default:
-          debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
+      case 'discord':
+        await this.shutdownDiscordBot(bot);
+        break;
+      case 'slack':
+        await this.shutdownSlackBot(bot);
+        break;
+      case 'mattermost':
+        await this.shutdownMattermostBot(bot);
+        break;
+      case 'telegram':
+        await this.shutdownTelegramBot(bot);
+        break;
+      default:
+        debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
       }
     } catch (error: HivemindError) {
       debug(`Error shutting down bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
@@ -999,7 +999,7 @@ export class BotManager extends EventEmitter {
       name: bot.name,
       provider: bot.messageProvider,
       isRunning: this.isBotRunning(bot.id),
-      isActive: bot.isActive
+      isActive: bot.isActive,
     }));
   }
 
@@ -1021,7 +1021,7 @@ export class BotManager extends EventEmitter {
       runningBots: this.getRunningBotsCount(),
       activeBots: activeBots.length,
       systemUptime: process.uptime() * 1000, // milliseconds
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     };
   }
 
@@ -1060,7 +1060,7 @@ export class BotManager extends EventEmitter {
         name: bot.name,
         status,
         lastCheck: new Date(),
-        issues: issues.length > 0 ? issues : undefined
+        issues: issues.length > 0 ? issues : undefined,
       };
     });
 
@@ -1082,16 +1082,16 @@ export class BotManager extends EventEmitter {
 
       // Add provider-specific health checks here
       switch (bot.messageProvider.toLowerCase()) {
-        case 'discord':
-          return this.checkDiscordBotHealth(bot, secureConfig.data);
-        case 'slack':
-          return this.checkSlackBotHealth(bot, secureConfig.data);
-        case 'mattermost':
-          return this.checkMattermostBotHealth(bot, secureConfig.data);
-        case 'telegram':
-          return this.checkTelegramBotHealth(bot, secureConfig.data);
-        default:
-          return true; // Unknown provider, assume healthy
+      case 'discord':
+        return this.checkDiscordBotHealth(bot, secureConfig.data);
+      case 'slack':
+        return this.checkSlackBotHealth(bot, secureConfig.data);
+      case 'mattermost':
+        return this.checkMattermostBotHealth(bot, secureConfig.data);
+      case 'telegram':
+        return this.checkTelegramBotHealth(bot, secureConfig.data);
+      default:
+        return true; // Unknown provider, assume healthy
       }
     } catch (error: HivemindError) {
       debug(`Health check failed for bot ${bot.name}:`, ErrorUtils.getMessage(error));

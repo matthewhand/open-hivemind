@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import slackConfig from '@src/config/slackConfig';
 import { markdownToBlocks } from '@tryfabric/mack';
-import { KnownBlock } from '@slack/web-api';
-import { SlackBotManager } from './SlackBotManager';
+import type { KnownBlock } from '@slack/web-api';
+import type { SlackBotManager } from './SlackBotManager';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import messageConfig from '@src/config/messageConfig';
 import { ValidationError } from '@src/types/errorClasses';
@@ -75,15 +75,15 @@ export class SlackWelcomeHandler {
         .replace(/&#8221;/g, '"');
     } catch (error) {
       debug(`Failed to generate LLM quote: ${error}`);
-      llmText = "Welcome to the channel! (No quote available)";
+      llmText = 'Welcome to the channel! (No quote available)';
     }
 
-    const attributions = ["ChatGPT", "Claude", "Gemini"];
+    const attributions = ['ChatGPT', 'Claude', 'Gemini'];
     const chosenAttribution = attributions[Math.floor(Math.random() * attributions.length)];
     const welcomeText = `*Welcome to #${channelName}*\n\n${llmText.trim() || '"Writing is fun and easy"'}\n\n— ${chosenAttribution}`;
     const textBlock: KnownBlock = {
       type: 'section',
-      text: { type: 'mrkdwn', text: welcomeText, verbatim: true }
+      text: { type: 'mrkdwn', text: welcomeText, verbatim: true },
     };
 
     try {
@@ -160,7 +160,7 @@ export class SlackWelcomeHandler {
     if (content) {
       try {
         const contentBlocks = await markdownToBlocks(content, {
-          lists: { checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ' }
+          lists: { checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ' },
         });
         blocks = blocks.concat(contentBlocks.filter(b => b.type !== 'actions' && b.type !== 'section' && !('elements' in b)));
         debug(`Processed ${contentBlocks.length} content blocks`);
@@ -180,7 +180,7 @@ export class SlackWelcomeHandler {
           actionsBlock.elements.push({
             type: 'button',
             text: { type: 'plain_text', text: buttonText },
-            action_id: actionId
+            action_id: actionId,
           });
         }
       }
@@ -212,7 +212,7 @@ export class SlackWelcomeHandler {
     }
 
     const reportIssueUrl = process.env.REPORT_ISSUE_URL || 'https://university.example.com/report-issue';
-    const learnMoreDefault = `Here's more info about this channel!`;
+    const learnMoreDefault = 'Here\'s more info about this channel!';
     const learnMoreMessage = slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault;
     const buttonMappingsRaw = process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
 
@@ -226,10 +226,10 @@ export class SlackWelcomeHandler {
     }
 
     const buttonResponses: { [key: string]: string } = {
-      [`learn_objectives_${channel}`]: `I'm here to help with learning objectives! Ask me anything in this channel, and I'll respond in a thread to keep things organized. For private assessments, I'll DM you directly.`,
-      [`how_to_${channel}`]: `Here's how I work:\n- Ask questions in the channel, and I'll reply in threads for learning discussions.\n- For assessments or private help, I'll message you via DMs.\nTry asking "What are the learning objectives?" or "Assess my progress"!`,
-      [`contact_support_${channel}`]: `Need support? Post your question here, and I'll thread it for group discussion. For private issues, I'll reach out via DM. You can also email support@university.example.com.`,
-      [`report_issue_${channel}`]: `Something not working? Let me know here, and I'll thread it for help. Or report it directly at: ${reportIssueUrl}`
+      [`learn_objectives_${channel}`]: 'I\'m here to help with learning objectives! Ask me anything in this channel, and I\'ll respond in a thread to keep things organized. For private assessments, I\'ll DM you directly.',
+      [`how_to_${channel}`]: 'Here\'s how I work:\n- Ask questions in the channel, and I\'ll reply in threads for learning discussions.\n- For assessments or private help, I\'ll message you via DMs.\nTry asking "What are the learning objectives?" or "Assess my progress"!',
+      [`contact_support_${channel}`]: 'Need support? Post your question here, and I\'ll thread it for group discussion. For private issues, I\'ll reach out via DM. You can also email support@university.example.com.',
+      [`report_issue_${channel}`]: `Something not working? Let me know here, and I'll thread it for help. Or report it directly at: ${reportIssueUrl}`,
     };
 
     let responseText: string;
@@ -241,7 +241,7 @@ export class SlackWelcomeHandler {
 
     if (responseText === 'Unknown action') {
       debug(`Unknown action ID ${actionId}`);
-      await this.sendMessageToChannel(channel, `Sorry, I don't recognize that action. Try one of the welcome buttons!`, undefined);
+      await this.sendMessageToChannel(channel, 'Sorry, I don\'t recognize that action. Try one of the welcome buttons!', undefined);
     } else {
       await this.sendMessageToChannel(channel, responseText, undefined);
       debug(`Sent button response in #${channel} for action ${actionId}: ${responseText.substring(0, 50)}...`);
@@ -292,20 +292,20 @@ export class SlackWelcomeHandler {
     text: string,
     senderName?: string,
     threadId?: string,
-    blocks?: KnownBlock[]
+    blocks?: KnownBlock[],
   ): Promise<string> {
     debug('Entering sendMessageToChannel (internal)', {
       channelId,
       text: text.substring(0, 50) + '...',
       senderName,
-      threadId
+      threadId,
     });
 
     // Clean up any HTML entities in the text
     const decodedText = text
       .replace(/"/g, '"')
       .replace(/&#34;/g, '"')
-      .replace(/'/g, "'")
+      .replace(/'/g, '\'')
       .replace(/&/g, '&')
       .replace(/</g, '<')
       .replace(/>/g, '>');
@@ -326,7 +326,7 @@ export class SlackWelcomeHandler {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-        parse: 'none'
+        parse: 'none',
       };
 
       if (threadId) {

@@ -16,7 +16,7 @@ const SettingsSecurity: React.FC = () => {
     enableCors: true,
     corsOrigins: ['http://localhost:3000'],
     enableSecurityHeaders: true,
-    enableApiKeyAuth: true
+    enableApiKeyAuth: true,
   });
   const [newOrigin, setNewOrigin] = useState('');
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ const SettingsSecurity: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/global');
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      if (!response.ok) {throw new Error('Failed to fetch settings');}
       const data = await response.json();
       
       const config = data.config || {};
@@ -37,7 +37,7 @@ const SettingsSecurity: React.FC = () => {
         enableRateLimit: config.rateLimit?.enabled?.value !== false,
         rateLimitMax: config.rateLimit?.maxRequests?.value || 100,
         rateLimitWindow: config.rateLimit?.windowMs?.value ? config.rateLimit.windowMs.value / 1000 : 60,
-        corsOrigins: config.cors?.origins?.value || ['http://localhost:3000']
+        corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
       console.error('Failed to load security settings:', error);
@@ -58,7 +58,7 @@ const SettingsSecurity: React.FC = () => {
     if (newOrigin && !settings.corsOrigins.includes(newOrigin)) {
       setSettings(prev => ({
         ...prev,
-        corsOrigins: [...prev.corsOrigins, newOrigin]
+        corsOrigins: [...prev.corsOrigins, newOrigin],
       }));
       setNewOrigin('');
     }
@@ -67,7 +67,7 @@ const SettingsSecurity: React.FC = () => {
   const handleRemoveOrigin = (origin: string) => {
     setSettings(prev => ({
       ...prev,
-      corsOrigins: prev.corsOrigins.filter(o => o !== origin)
+      corsOrigins: prev.corsOrigins.filter(o => o !== origin),
     }));
   };
 
@@ -81,11 +81,11 @@ const SettingsSecurity: React.FC = () => {
           'auth.enabled': settings.enableAuthentication,
           'rateLimit.enabled': settings.enableRateLimit,
           'rateLimit.maxRequests': settings.rateLimitMax,
-          'rateLimit.windowMs': settings.rateLimitWindow * 1000
-        })
+          'rateLimit.windowMs': settings.rateLimitWindow * 1000,
+        }),
       });
       
-      if (!response.ok) throw new Error('Failed to save settings');
+      if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {

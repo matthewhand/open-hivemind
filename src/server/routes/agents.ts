@@ -88,7 +88,7 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
     /^OPENWEBUI_/,
     /^MCP_/,
     /^BOT_/,
-    /^AGENT_/
+    /^AGENT_/,
   ];
 
   Object.keys(process.env).forEach(key => {
@@ -99,7 +99,7 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
           isOverridden: true,
           redactedValue: key.toLowerCase().includes('token') || key.toLowerCase().includes('key') || key.toLowerCase().includes('secret')
             ? `***${value.slice(-4)}`
-            : value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-4)}` : value
+            : value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-4)}` : value,
         };
       }
     }
@@ -127,7 +127,7 @@ router.get('/', async (req, res) => {
           acc[key] = envOverrides[key];
         }
         return acc;
-      }, {} as Record<string, { isOverridden: boolean; redactedValue?: string }>)
+      }, {} as Record<string, { isOverridden: boolean; redactedValue?: string }>),
     }));
 
     res.json({ agents: agentsWithEnvInfo });
@@ -139,13 +139,13 @@ router.get('/', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENTS_FETCH_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -174,13 +174,13 @@ router.post('/', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_CREATE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -211,13 +211,13 @@ router.put('/:id', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_UPDATE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -246,13 +246,13 @@ router.delete('/:id', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_DELETE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -264,18 +264,18 @@ router.get('/personas', async (req, res) => {
       {
         key: 'default',
         name: 'Default Assistant',
-        systemPrompt: 'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.'
+        systemPrompt: 'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
       },
       {
         key: 'friendly',
         name: 'Friendly Helper',
-        systemPrompt: 'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.'
+        systemPrompt: 'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.',
       },
       {
         key: 'technical',
         name: 'Technical Expert',
-        systemPrompt: 'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.'
-      }
+        systemPrompt: 'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.',
+      },
     ]);
     
     res.json({ personas });
@@ -287,13 +287,13 @@ router.get('/personas', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONAS_FETCH_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -330,13 +330,13 @@ router.post('/personas', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_CREATE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -367,13 +367,13 @@ router.put('/personas/:key', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_UPDATE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -406,13 +406,13 @@ router.delete('/personas/:key', async (req, res) => {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
-      severity: errorInfo.severity
+      severity: errorInfo.severity,
     });
 
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_DELETE_ERROR',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });

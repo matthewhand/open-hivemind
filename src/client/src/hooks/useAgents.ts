@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getAgents, Agent } from '../services/agentService';
+import type { Agent } from '../services/agentService';
+import { getAgents } from '../services/agentService';
 
 export const useAgents = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -11,7 +12,7 @@ export const useAgents = () => {
       try {
         const agentData = await getAgents();
         setAgents(agentData);
-            } catch {
+      } catch {
         setError('Failed to fetch agents');
       }
       setLoading(false);

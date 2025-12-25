@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Form, FormField, FormFieldSet } from '../DaisyUI/Form';
+import type { FormField, FormFieldSet } from '../DaisyUI/Form';
+import { Form } from '../DaisyUI/Form';
 
 interface Agent {
   id: string;
@@ -62,7 +63,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
   loading = false,
 }) => {
   const [guardUserInput, setGuardUserInput] = useState(
-    agent?.mcpGuard?.allowedUserIds?.join(', ') || ''
+    agent?.mcpGuard?.allowedUserIds?.join(', ') || '',
   );
 
   const formFields: FormField[] = [
@@ -158,7 +159,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
       placeholder: 'user1, user2, user3',
       helperText: 'Comma-separated list of user IDs allowed to use MCP tools (only used with Custom guard type)',
       validation: (value: string) => {
-        if (!value) return null;
+        if (!value) {return null;}
         const ids = value.split(',').map((id: string) => id.trim()).filter((id: string) => id);
         if (ids.length === 0) {
           return null; // Empty is valid
@@ -238,7 +239,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     allowedUserIds: agent.mcpGuard?.allowedUserIds?.join(', ') || '',
     envOverrides: Object.entries(agent)
       .filter(([key]) => !knownKeys.has(key))
-      .reduce((acc, [key, val]) => ({ ...acc, [key]: String(val) }), {})
+      .reduce((acc, [key, val]) => ({ ...acc, [key]: String(val) }), {}),
   } : {
     name: '',
     messageProvider: '',

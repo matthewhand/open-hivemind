@@ -8,7 +8,7 @@ const debug = Debug('app:discord:stt');
 
 export async function transcribeAudio(audioPath: string): Promise<string> {
   const openai = new OpenAI({
-    apiKey: openaiConfig.get('OPENAI_API_KEY') as string
+    apiKey: openaiConfig.get('OPENAI_API_KEY') as string,
   });
 
   try {
@@ -27,15 +27,15 @@ export async function transcribeAudio(audioPath: string): Promise<string> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord STT error:', hivemindError);
+      console.error('Discord STT error:', hivemindError);
     }
 
     throw ErrorUtils.createError(
-        `Speech-to-text failed: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'DISCORD_STT_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error }
+      `Speech-to-text failed: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_STT_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error },
     );
   }
 }

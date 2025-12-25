@@ -37,7 +37,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
   const payload: Record<string, any> = { question }; // Send only the latest question
 
-  if (chatId) payload.chatId = chatId;
+  if (chatId) {payload.chatId = chatId;}
 
   try {
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });

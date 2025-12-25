@@ -1,5 +1,6 @@
 import Debug from 'debug';
-import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
+import type { VoiceConnection} from '@discordjs/voice';
+import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
@@ -16,14 +17,14 @@ const audioDir = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string || defau
 const outputPath = path.join(audioDir, defaultFileName);
 
 if (!fs.existsSync(audioDir)) {
-    fs.mkdirSync(audioDir, { recursive: true });
+  fs.mkdirSync(audioDir, { recursive: true });
 }
 
-const allowedVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] as const;
+const allowedVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'] as const;
 type AllowedVoice = typeof allowedVoices[number];
 
 function isAllowedVoice(voice: string): voice is AllowedVoice {
-    return allowedVoices.includes(voice as AllowedVoice);
+  return allowedVoices.includes(voice as AllowedVoice);
 }
 
 /**
@@ -43,63 +44,63 @@ function isAllowedVoice(voice: string): voice is AllowedVoice {
  * @returns {Promise<void>} - A promise that resolves when the welcome message has been played.
  */
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
-    if (!discordConfig || !openaiConfig) {
-        debug('Configuration is not properly loaded.');
-        return;
-    }
+  if (!discordConfig || !openaiConfig) {
+    debug('Configuration is not properly loaded.');
+    return;
+  }
 
-    const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') as string || 'Welcome to the server!';
-    const model = 'tts-1';
-    let voice: AllowedVoice = 'fable';
+  const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') as string || 'Welcome to the server!';
+  const model = 'tts-1';
+  let voice: AllowedVoice = 'fable';
 
-    // Use OPENAI_VOICE if it exists and is valid
-    if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE') as string)) {
-        voice = openaiConfig.get('OPENAI_VOICE') as AllowedVoice;
-    }
+  // Use OPENAI_VOICE if it exists and is valid
+  if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE') as string)) {
+    voice = openaiConfig.get('OPENAI_VOICE') as AllowedVoice;
+  }
 
-    debug('Playing welcome message: ' + welcomeMessage);
+  debug('Playing welcome message: ' + welcomeMessage);
 
-    const openai = new OpenAI({
-        apiKey: openaiConfig.get('OPENAI_API_KEY') as string || ''
-    });
+  const openai = new OpenAI({
+    apiKey: openaiConfig.get('OPENAI_API_KEY') as string || '',
+  });
 
-    if (fs.existsSync(outputPath)) {
-        debug(`File ${outputPath} already exists. Playing existing file.`);
-    } else {
-        try {
-            const response = await openai.audio.speech.create({
-                model: model,
-                voice: voice,
-                input: welcomeMessage,
-            });
-            const buffer = Buffer.from(await response.arrayBuffer());
-            const writeFile = util.promisify(fs.writeFile);
-            await writeFile(outputPath, buffer);
-        } catch (error: any) {
-            debug('Error generating welcome message: ' + error.message);
-            if (error.response) {
-                debug('Response status: ' + error.response.status);
-                debug('Response data: ' + JSON.stringify(error.response.data));
-            }
-            debug(error.stack);
-            return;
-        }
-    }
-
+  if (fs.existsSync(outputPath)) {
+    debug(`File ${outputPath} already exists. Playing existing file.`);
+  } else {
     try {
-        const player = createAudioPlayer();
-        const resource = createAudioResource(outputPath);
-        player.play(resource);
-        connection.subscribe(player);
-        player.on(AudioPlayerStatus.Idle, () => {
-            fs.unlinkSync(outputPath);
-        });
-        player.on('error', (error) => {
-            debug('Error playing welcome message: ' + error.message);
-            debug(error.stack);
-        });
+      const response = await openai.audio.speech.create({
+        model: model,
+        voice: voice,
+        input: welcomeMessage,
+      });
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const writeFile = util.promisify(fs.writeFile);
+      await writeFile(outputPath, buffer);
     } catch (error: any) {
-        debug('Error playing audio file: ' + error.message);
-        debug(error.stack);
+      debug('Error generating welcome message: ' + error.message);
+      if (error.response) {
+        debug('Response status: ' + error.response.status);
+        debug('Response data: ' + JSON.stringify(error.response.data));
+      }
+      debug(error.stack);
+      return;
     }
+  }
+
+  try {
+    const player = createAudioPlayer();
+    const resource = createAudioResource(outputPath);
+    player.play(resource);
+    connection.subscribe(player);
+    player.on(AudioPlayerStatus.Idle, () => {
+      fs.unlinkSync(outputPath);
+    });
+    player.on('error', (error) => {
+      debug('Error playing welcome message: ' + error.message);
+      debug(error.stack);
+    });
+  } catch (error: any) {
+    debug('Error playing audio file: ' + error.message);
+    debug(error.stack);
+  }
 }

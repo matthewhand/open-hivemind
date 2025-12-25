@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction } from 'discord.js';
+import type { CommandInteraction } from 'discord.js';
 import { flowiseListChatFlows } from '@integrations/flowise/rest/flowiseListChatFlows';
 
 /**

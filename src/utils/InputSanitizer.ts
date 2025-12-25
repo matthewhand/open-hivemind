@@ -112,18 +112,18 @@ export class InputSanitizer {
    * @returns The text with all layers of surrounding quotes removed.
    */
   static stripSurroundingQuotes(text: string): string {
-    if (!text) return '';
+    if (!text) {return '';}
 
     let current = text.trim();
     let stripped = true;
 
     const pairs = [
       ['"', '"'],
-      ["'", "'"],
+      ['\'', '\''],
       ['“', '”'],
       ['‘', '’'],
       ['«', '»'],
-      ['`', '`']
+      ['`', '`'],
     ];
 
     // Phase 1: Recursive Matching Pairs
@@ -143,7 +143,7 @@ export class InputSanitizer {
 
     // Phase 2: Greedy Unmatched Stripping
     // Handles cases like '"Text' or 'Text"' or multi-line splits
-    const allQuotes = ['"', "'", '“', '”', '‘', '’', '«', '»', '`'];
+    const allQuotes = ['"', '\'', '“', '”', '‘', '’', '«', '»', '`'];
 
     let greedyStripped = true;
     while (greedyStripped && current.length > 0) {
@@ -172,25 +172,25 @@ export class InputSanitizer {
    */
   static sanitizeConfigValue(value: any, type: 'string' | 'number' | 'boolean'): any {
     switch (type) {
-      case 'string':
-        if (typeof value === 'string') {
-          return value.trim().substring(0, 1000);
-        }
-        return null;
+    case 'string':
+      if (typeof value === 'string') {
+        return value.trim().substring(0, 1000);
+      }
+      return null;
 
-      case 'number':
-        const num = Number(value);
-        return isNaN(num) ? null : num;
+    case 'number':
+      const num = Number(value);
+      return isNaN(num) ? null : num;
 
-      case 'boolean':
-        if (typeof value === 'boolean') return value;
-        if (typeof value === 'string') {
-          return value.toLowerCase() === 'true';
-        }
-        return null;
+    case 'boolean':
+      if (typeof value === 'boolean') {return value;}
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true';
+      }
+      return null;
 
-      default:
-        return null;
+    default:
+      return null;
     }
   }
 }
@@ -212,7 +212,7 @@ export class RateLimiter {
   static checkLimit(
     identifier: string,
     maxAttempts: number = 10,
-    windowMs: number = 60000
+    windowMs: number = 60000,
   ): boolean {
     const now = Date.now();
     const attempts = this.attempts.get(identifier) || [];

@@ -65,7 +65,7 @@ const configSlice = createSlice({
     },
     addConfigSource: (state, action: PayloadAction<ConfigSource>) => {
       const existingIndex = state.sources.findIndex(
-        source => source.key === action.payload.key && source.type === action.payload.type
+        source => source.key === action.payload.key && source.type === action.payload.type,
       );
       if (existingIndex !== -1) {
         state.sources[existingIndex] = action.payload;
@@ -76,7 +76,7 @@ const configSlice = createSlice({
     },
     removeConfigSource: (state, action: PayloadAction<{ key: string; type: ConfigSource['type'] }>) => {
       state.sources = state.sources.filter(
-        source => !(source.key === action.payload.key && source.type === action.payload.type)
+        source => !(source.key === action.payload.key && source.type === action.payload.type),
       );
       state.lastUpdated = new Date().toISOString();
     },

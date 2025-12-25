@@ -31,8 +31,8 @@ const DiscordConfiguration: React.FC = () => {
       voiceSupport: true,
       messageLogging: false,
       autoModeration: false,
-      analytics: true
-    }
+      analytics: true,
+    },
   });
 
   const [loading, setLoading] = useState(false);
@@ -102,7 +102,7 @@ const DiscordConfiguration: React.FC = () => {
       const result = await response.json();
       setTestResult({
         success: result.success,
-        message: result.message
+        message: result.message,
       });
 
       if (result.success) {
@@ -114,7 +114,7 @@ const DiscordConfiguration: React.FC = () => {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setTestResult({
         success: false,
-        message
+        message,
       });
       errorToast('Discord connection test failed', message);
     } finally {

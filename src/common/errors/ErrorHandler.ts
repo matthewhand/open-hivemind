@@ -21,18 +21,18 @@ export class ErrorHandler {
     const logMessage = `[${context}] ${errorMessage}`;
 
     switch (severity) {
-      case 'warn':
-        logger(logMessage);
-        console.warn(logMessage);
-        break;
-      case 'info':
-        logger(logMessage);
-        console.info(logMessage);
-        break;
-      default:
-        logger(logMessage);
-        console.error(logMessage);
-        break;
+    case 'warn':
+      logger(logMessage);
+      console.warn(logMessage);
+      break;
+    case 'info':
+      logger(logMessage);
+      console.info(logMessage);
+      break;
+    default:
+      logger(logMessage);
+      console.error(logMessage);
+      break;
     }
 
     // Here you could add:
@@ -53,7 +53,7 @@ export class ErrorHandler {
   static async withErrorHandling<T>(
     operation: () => Promise<T>,
     context: string,
-    fallback: T | null = null
+    fallback: T | null = null,
   ): Promise<T | null> {
     try {
       return await operation();
@@ -72,7 +72,7 @@ export class ErrorHandler {
    */
   static createSafeWrapper<T extends any[], R>(
     fn: (...args: T) => R | Promise<R>,
-    context: string
+    context: string,
   ): (...args: T) => Promise<R | null> {
     return async (...args: T): Promise<R | null> => {
       try {
@@ -143,7 +143,7 @@ export class PerformanceMonitor {
   static async measureAsync<T>(
     operation: () => Promise<T>,
     label: string,
-    threshold?: number
+    threshold?: number,
   ): Promise<T> {
     this.startTiming(label);
     try {

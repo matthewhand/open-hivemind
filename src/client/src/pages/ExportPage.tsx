@@ -30,7 +30,7 @@ const ExportPage: React.FC = () => {
     } catch (error) {
       setToast({
         message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
-        type: 'error'
+        type: 'error',
       });
     }
   };

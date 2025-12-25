@@ -28,7 +28,7 @@ const GuardsPage: React.FC = () => {
   const [accessConfig, setAccessConfig] = useState<GuardsConfig>({
     type: 'users',
     users: [],
-    ips: []
+    ips: [],
   });
   const [newUser, setNewUser] = useState('');
   const [newIp, setNewIp] = useState('');
@@ -46,7 +46,7 @@ const GuardsPage: React.FC = () => {
           description: 'User and IP-based access restrictions',
           type: 'access',
           enabled: true,
-          config: {}
+          config: {},
         },
         {
           id: 'rate-limiter',
@@ -54,7 +54,7 @@ const GuardsPage: React.FC = () => {
           description: 'Prevents spam and excessive requests',
           type: 'rate',
           enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 }
+          config: { maxRequests: 100, windowMs: 60000 },
         },
         {
           id: 'content-filter',
@@ -62,8 +62,8 @@ const GuardsPage: React.FC = () => {
           description: 'Filters inappropriate content',
           type: 'content',
           enabled: false,
-          config: {}
-        }
+          config: {},
+        },
       ];
 
       setGuards(guards);
@@ -87,7 +87,7 @@ const GuardsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/guards`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(accessConfig)
+        body: JSON.stringify(accessConfig),
       });
 
       if (!response.ok) {
@@ -108,10 +108,10 @@ const GuardsPage: React.FC = () => {
   };
 
   const addUser = () => {
-    if (!newUser.trim()) return;
+    if (!newUser.trim()) {return;}
     setAccessConfig({
       ...accessConfig,
-      users: [...accessConfig.users, newUser.trim()]
+      users: [...accessConfig.users, newUser.trim()],
     });
     setNewUser('');
   };
@@ -119,15 +119,15 @@ const GuardsPage: React.FC = () => {
   const removeUser = (user: string) => {
     setAccessConfig({
       ...accessConfig,
-      users: accessConfig.users.filter(u => u !== user)
+      users: accessConfig.users.filter(u => u !== user),
     });
   };
 
   const addIp = () => {
-    if (!newIp.trim()) return;
+    if (!newIp.trim()) {return;}
     setAccessConfig({
       ...accessConfig,
-      ips: [...accessConfig.ips, newIp.trim()]
+      ips: [...accessConfig.ips, newIp.trim()],
     });
     setNewIp('');
   };
@@ -135,17 +135,17 @@ const GuardsPage: React.FC = () => {
   const removeIp = (ip: string) => {
     setAccessConfig({
       ...accessConfig,
-      ips: accessConfig.ips.filter(i => i !== ip)
+      ips: accessConfig.ips.filter(i => i !== ip),
     });
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'access': return 'badge-primary';
-      case 'rate': return 'badge-warning';
-      case 'content': return 'badge-info';
-      case 'safety': return 'badge-error';
-      default: return 'badge-ghost';
+    case 'access': return 'badge-primary';
+    case 'rate': return 'badge-warning';
+    case 'content': return 'badge-info';
+    case 'safety': return 'badge-error';
+    default: return 'badge-ghost';
     }
   };
 

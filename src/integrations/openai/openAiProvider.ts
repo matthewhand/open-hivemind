@@ -1,5 +1,5 @@
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
@@ -8,7 +8,7 @@ import {
   ConfigurationError,
   NetworkError,
   ApiError,
-  TimeoutError
+  TimeoutError,
 } from '@src/types/errorClasses';
 
 const debug = Debug('app:openAiProvider');
@@ -38,7 +38,7 @@ export class OpenAiProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<string> {
     debug('Starting chat completion generation');
 
@@ -64,7 +64,7 @@ export class OpenAiProvider implements ILlmProvider {
       model,
       apiKeyPresent: !!apiKey,
       organization,
-      systemPrompt
+      systemPrompt,
     });
 
     if (!apiKey) {
@@ -84,9 +84,9 @@ export class OpenAiProvider implements ILlmProvider {
       { role: 'system' as const, content: systemPrompt },
       ...historyMessages.map(msg => ({
         role: msg.role as 'user' | 'assistant' | 'system',
-        content: msg.getText() || ''
+        content: msg.getText() || '',
       })),
-      { role: 'user' as const, content: userMessage }
+      { role: 'user' as const, content: userMessage },
     ];
 
     // Retry loop
@@ -143,7 +143,7 @@ export class OpenAiProvider implements ILlmProvider {
       const response = await openai.completions.create({
         model,
         prompt,
-        max_tokens: 150
+        max_tokens: 150,
       });
       return response.choices[0]?.text || '';
     } catch (e) {

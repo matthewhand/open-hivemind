@@ -122,14 +122,14 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .attr('transform', `translate(0,${innerHeight})`)
       .call(d3.axisBottom(xScale)
         .tickSize(-innerHeight)
-        .tickFormat(() => '')
+        .tickFormat(() => ''),
       );
 
     g.append('g')
       .attr('class', 'grid')
       .call(d3.axisLeft(yScale)
         .tickSize(-innerWidth)
-        .tickFormat(() => '')
+        .tickFormat(() => ''),
       );
 
     // Add line
@@ -179,7 +179,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
     // Group data by category
     const groupedData = d3.rollup(data,
       v => d3.mean(v, d => d.value) || 0,
-      d => d.category
+      d => d.category,
     );
 
     const barData = Array.from(groupedData, ([category, value]) => ({ category, value }));
@@ -291,7 +291,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
 
   // Tooltip functions
   const showTooltip = (event: MouseEvent, data: DataPoint) => {
-    if (!tooltipRef.current) return;
+    if (!tooltipRef.current) {return;}
 
     const tooltip = d3.select(tooltipRef.current);
     tooltip.style('opacity', 1)
@@ -314,7 +314,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
 
   // Chart rendering
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current) {return;}
 
     const svg = d3.select(svgRef.current);
     svg.attr('width', width).attr('height', height);
@@ -322,20 +322,20 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
     let data: DataPoint[] | null = null;
 
     switch (chartType) {
-      case 'line':
-        data = generateSampleData();
-        if (data) createLineChart(data, svg);
-        break;
-      case 'bar':
-        data = generateSampleData();
-        if (data) createBarChart(data, svg);
-        break;
-      case 'heatmap':
-        createHeatmap(svg);
-        break;
-      default:
-        data = generateSampleData();
-        if (data) createLineChart(data, svg);
+    case 'line':
+      data = generateSampleData();
+      if (data) {createLineChart(data, svg);}
+      break;
+    case 'bar':
+      data = generateSampleData();
+      if (data) {createBarChart(data, svg);}
+      break;
+    case 'heatmap':
+      createHeatmap(svg);
+      break;
+    default:
+      data = generateSampleData();
+      if (data) {createLineChart(data, svg);}
     }
 
     setIsLoading(false);

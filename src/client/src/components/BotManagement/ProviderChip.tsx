@@ -1,9 +1,10 @@
 import React from 'react';
-import {
+import type {
   MessageProvider,
-  LLMProvider,
+  LLMProvider} from '../../types/bot';
+import {
   MessageProviderType,
-  LLMProviderType
+  LLMProviderType,
 } from '../../types/bot';
 import { Badge } from '../DaisyUI';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
@@ -25,37 +26,37 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
   onEdit,
   disabled = false,
   showPrimary = false,
-  isPrimary = false
+  isPrimary = false,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected':
-      case 'available':
-        return 'badge-success';
-      case 'disconnected':
-      case 'unavailable':
-        return 'badge-warning';
-      case 'error':
-        return 'badge-error';
-      default:
-        return 'badge-ghost';
+    case 'connected':
+    case 'available':
+      return 'badge-success';
+    case 'disconnected':
+    case 'unavailable':
+      return 'badge-warning';
+    case 'error':
+      return 'badge-error';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'connected':
-        return 'Connected';
-      case 'disconnected':
-        return 'Disconnected';
-      case 'available':
-        return 'Available';
-      case 'unavailable':
-        return 'Unavailable';
-      case 'error':
-        return 'Error';
-      default:
-        return status;
+    case 'connected':
+      return 'Connected';
+    case 'disconnected':
+      return 'Disconnected';
+    case 'available':
+      return 'Available';
+    case 'unavailable':
+      return 'Unavailable';
+    case 'error':
+      return 'Error';
+    default:
+      return status;
     }
   };
 
@@ -71,7 +72,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
       anthropic: '🧠',
       ollama: '🦙',
       huggingface: '🤗',
-      custom: '⚙️'
+      custom: '⚙️',
     };
     return icons[providerType] || '❓';
   };
@@ -88,7 +89,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
       anthropic: 'Anthropic',
       ollama: 'Ollama',
       huggingface: 'Hugging Face',
-      custom: 'Custom'
+      custom: 'Custom',
     };
     return labels[providerType] || providerType;
   };

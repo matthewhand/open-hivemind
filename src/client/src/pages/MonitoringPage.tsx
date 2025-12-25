@@ -76,27 +76,27 @@ const MonitoringPage: React.FC = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    if (days > 0) return `${days}d ${hours}h ${mins}m`;
-    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-    if (mins > 0) return `${mins}m ${secs}s`;
+    if (days > 0) {return `${days}d ${hours}h ${mins}m`;}
+    if (hours > 0) {return `${hours}h ${mins}m ${secs}s`;}
+    if (mins > 0) {return `${mins}m ${secs}s`;}
     return `${secs}s`;
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'text-green-500';
-      case 'degraded': return 'text-yellow-500';
-      case 'unhealthy': return 'text-red-500';
-      default: return 'text-gray-500';
+    case 'healthy': return 'text-green-500';
+    case 'degraded': return 'text-yellow-500';
+    case 'unhealthy': return 'text-red-500';
+    default: return 'text-gray-500';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'degraded': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
-      case 'unhealthy': return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default: return <Activity className="w-5 h-5 text-gray-500" />;
+    case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
+    case 'degraded': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+    case 'unhealthy': return <AlertCircle className="w-5 h-5 text-red-500" />;
+    default: return <Activity className="w-5 h-5 text-gray-500" />;
     }
   };
 

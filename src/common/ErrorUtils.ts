@@ -28,20 +28,20 @@ export class ErrorUtils {
         message: error.message,
         code: (error as any).code,
         originalError: error,
-        context
+        context,
       };
     }
 
     if (typeof error === 'string') {
       return {
         message: error,
-        context
+        context,
       };
     }
 
     return {
       message: 'An unknown error occurred',
-      context: { ...context, originalError: error }
+      context: { ...context, originalError: error },
     };
   }
 

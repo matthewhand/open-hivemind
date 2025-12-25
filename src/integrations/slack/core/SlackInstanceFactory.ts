@@ -23,7 +23,7 @@ export class SlackInstanceFactory {
       name: botConfig.name,
       appToken: botConfig.slack.appToken,
       defaultChannelId: botConfig.slack.defaultChannelId,
-      joinChannels: botConfig.slack.joinChannels
+      joinChannels: botConfig.slack.joinChannels,
     }];
 
     // Determine mode (socket vs rtm)
@@ -70,7 +70,7 @@ export class SlackInstanceFactory {
       try {
         const verifier = this.createSignatureVerifier(
           botConfig.slack.signingSecret,
-          botConfig.name
+          botConfig.name,
         );
         verifiers.set(botConfig.name, verifier);
         debug(`Successfully created signature verifier: ${botConfig.name}`);
@@ -109,7 +109,7 @@ export class SlackInstanceFactory {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

@@ -61,7 +61,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, bot: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueAgents.map(agent => ({ value: agent, label: agent }))
+              ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
             ]}
           />
           <Select
@@ -70,7 +70,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, messageProvider: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueMessageProviders.map(provider => ({ value: provider, label: provider }))
+              ...uniqueMessageProviders.map(provider => ({ value: provider, label: provider })),
             ]}
           />
           <Select
@@ -79,7 +79,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, llmProvider: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueLlmProviders.map(provider => ({ value: provider, label: provider }))
+              ...uniqueLlmProviders.map(provider => ({ value: provider, label: provider })),
             ]}
           />
           <div>
@@ -264,13 +264,13 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
 
 function formatTimestamp(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {return value;}
   return date.toLocaleString();
 }
 
 function formatShortTime(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {return value;}
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 

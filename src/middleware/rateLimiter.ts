@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import logger from '../common/logger';
 
@@ -18,8 +18,8 @@ if (isProduction) {
     redisClient = redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: {
-        reconnectStrategy: (retries: number) => Math.min(retries * 100, 5000)
-      }
+        reconnectStrategy: (retries: number) => Math.min(retries * 100, 5000),
+      },
     });
 
     redisClient.on('error', (err: Error) => {
@@ -39,7 +39,7 @@ const createStore = (prefix: string) => {
   if (isProduction && redisClient && RedisStore) {
     return new RedisStore({
       sendCommand: (...args: string[]) => redisClient.sendCommand(args),
-      prefix: `rate_limit:${prefix}:`
+      prefix: `rate_limit:${prefix}:`,
     });
   }
   return undefined; // Uses default MemoryStore
@@ -57,9 +57,9 @@ export const defaultRateLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many requests',
       message: 'You have exceeded the request limit. Please try again later.',
-      retryAfter: (req as any).rateLimit?.resetTime
+      retryAfter: (req as any).rateLimit?.resetTime,
     });
-  }
+  },
 });
 
 // Configuration endpoint rate limiter - 10 requests per 5 minutes
@@ -74,9 +74,9 @@ export const configRateLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many configuration requests',
       message: 'Configuration endpoint request limit exceeded. Please try again later.',
-      retryAfter: (req as any).rateLimit?.resetTime
+      retryAfter: (req as any).rateLimit?.resetTime,
     });
-  }
+  },
 });
 
 // Authentication rate limiter - 5 attempts per hour
@@ -91,9 +91,9 @@ export const authRateLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many login attempts',
       message: 'Too many failed login attempts. Please try again later.',
-      retryAfter: (req as any).rateLimit?.resetTime
+      retryAfter: (req as any).rateLimit?.resetTime,
     });
-  }
+  },
 });
 
 // Admin operations rate limiter - 20 requests per 15 minutes
@@ -108,9 +108,9 @@ export const adminRateLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many admin requests',
       message: 'Admin operations request limit exceeded. Please try again later.',
-      retryAfter: (req as any).rateLimit?.resetTime
+      retryAfter: (req as any).rateLimit?.resetTime,
     });
-  }
+  },
 });
 
 // Middleware to apply rate limiting based on route type
@@ -151,5 +151,5 @@ export {
   defaultRateLimiter as defaultLimiter,
   configRateLimiter as configLimiter,
   authRateLimiter as authLimiter,
-  adminRateLimiter as adminLimiter
+  adminRateLimiter as adminLimiter,
 };

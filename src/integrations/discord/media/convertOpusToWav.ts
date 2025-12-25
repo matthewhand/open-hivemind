@@ -12,20 +12,20 @@ const execPromise = util.promisify(exec);
 let ffmpegAvailable: boolean | null = null;
 
 async function checkFfmpegAvailable(): Promise<boolean> {
-    if (ffmpegAvailable !== null) {
-        return ffmpegAvailable;
-    }
+  if (ffmpegAvailable !== null) {
+    return ffmpegAvailable;
+  }
 
-    try {
-        await execPromise('ffmpeg -version');
-        ffmpegAvailable = true;
-        debug('FFmpeg is available');
-        return true;
-    } catch (error) {
-        ffmpegAvailable = false;
-        debug('FFmpeg is not available:', error instanceof Error ? error.message : 'Unknown error');
-        return false;
-    }
+  try {
+    await execPromise('ffmpeg -version');
+    ffmpegAvailable = true;
+    debug('FFmpeg is available');
+    return true;
+  } catch (error) {
+    ffmpegAvailable = false;
+    debug('FFmpeg is not available:', error instanceof Error ? error.message : 'Unknown error');
+    return false;
+  }
 }
 
 /**
@@ -36,60 +36,60 @@ async function checkFfmpegAvailable(): Promise<boolean> {
  * @returns {Promise<string>} - The path to the converted WAV file.
  */
 export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): Promise<string> {
-    try {
-        // Check if ffmpeg is available
-        const isFfmpegAvailable = await checkFfmpegAvailable();
-        if (!isFfmpegAvailable) {
-            throw ErrorUtils.createError(
-                'FFmpeg is not available. Voice features require FFmpeg to be installed. ' +
+  try {
+    // Check if ffmpeg is available
+    const isFfmpegAvailable = await checkFfmpegAvailable();
+    if (!isFfmpegAvailable) {
+      throw ErrorUtils.createError(
+        'FFmpeg is not available. Voice features require FFmpeg to be installed. ' +
                 'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
                 'configuration' as any,
                 'DISCORD_FFMPEG_UNAVAILABLE',
                 503,
                 {
-                    feature: 'voice_processing',
-                    suggestion: 'Enable FFmpeg in Docker build or install FFmpeg manually'
-                }
-            );
-        }
+                  feature: 'voice_processing',
+                  suggestion: 'Enable FFmpeg in Docker build or install FFmpeg manually',
+                },
+      );
+    }
 
-        const inputPath = path.join(outputDir, 'input.opus');
-        const outputPath = path.join(outputDir, 'output.wav');
+    const inputPath = path.join(outputDir, 'input.opus');
+    const outputPath = path.join(outputDir, 'output.wav');
 
-        // Write the Opus buffer to a temporary file
-        await fs.promises.writeFile(inputPath, opusBuffer);
-        debug('Opus file written to:', inputPath);
+    // Write the Opus buffer to a temporary file
+    await fs.promises.writeFile(inputPath, opusBuffer);
+    debug('Opus file written to:', inputPath);
 
-        // Convert Opus to WAV using ffmpeg
-        const ffmpegCmd = `ffmpeg -y -i ${inputPath} ${outputPath}`;
-        debug('Executing ffmpeg command:', ffmpegCmd);
-        await execPromise(ffmpegCmd);
-        debug('Conversion completed:', outputPath);
+    // Convert Opus to WAV using ffmpeg
+    const ffmpegCmd = `ffmpeg -y -i ${inputPath} ${outputPath}`;
+    debug('Executing ffmpeg command:', ffmpegCmd);
+    await execPromise(ffmpegCmd);
+    debug('Conversion completed:', outputPath);
 
-        // Clean up the input Opus file
-        await fs.promises.unlink(inputPath);
+    // Clean up the input Opus file
+    await fs.promises.unlink(inputPath);
 
-        return outputPath;
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        debug('Error converting Opus to WAV:', errorMessage);
+    return outputPath;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    debug('Error converting Opus to WAV:', errorMessage);
 
-        // If it's already a HivemindError, rethrow it
-        if (error instanceof (ErrorUtils.toHivemindError(new Error('dummy')) as any).constructor) {
-            throw error;
-        }
+    // If it's already a HivemindError, rethrow it
+    if (error instanceof (ErrorUtils.toHivemindError(new Error('dummy')) as any).constructor) {
+      throw error;
+    }
 
-        // Otherwise wrap it in a HivemindError
-        throw ErrorUtils.createError(
-            `Failed to convert Opus to WAV: ${errorMessage}`,
+    // Otherwise wrap it in a HivemindError
+    throw ErrorUtils.createError(
+      `Failed to convert Opus to WAV: ${errorMessage}`,
             'processing' as any,
             'DISCORD_OPUS_CONVERSION_FAILED',
             500,
             {
-                originalError: error,
-                inputBufferLength: opusBuffer.length,
-                outputDir
-            }
-        );
-    }
+              originalError: error,
+              inputBufferLength: opusBuffer.length,
+              outputDir,
+            },
+    );
+  }
 }

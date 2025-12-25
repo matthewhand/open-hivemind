@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { Message } from 'discord.js';
-import { TextChannel, DMChannel } from "discord.js";
+import type { Message } from 'discord.js';
+import { TextChannel, DMChannel } from 'discord.js';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendFollowUp');
@@ -25,7 +25,7 @@ const debug = Debug('app:sendFollowUp');
  */
 export const sendFollowUp = async (
   message: Message,
-  followUpText: string
+  followUpText: string,
 ): Promise<void> => {
   try {
     if (!message || !followUpText) {
@@ -34,11 +34,11 @@ export const sendFollowUp = async (
         'ValidationError' as any,
         'DISCORD_INVALID_FOLLOWUP_PARAMS',
         400,
-        { hasMessage: !!message, hasFollowUpText: !!followUpText }
+        { hasMessage: !!message, hasFollowUpText: !!followUpText },
       );
     }
     debug('Sending follow-up message to channel: ' + message.channel.id);
-if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
+    if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error('Unsupported channel type for send method.'); }
     await message.channel.send(followUpText);
     debug('Follow-up message sent successfully');
   } catch (error: unknown) {
@@ -49,15 +49,15 @@ if (!(message.channel instanceof TextChannel || message.channel instanceof DMCha
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord send follow-up error:', hivemindError);
+      console.error('Discord send follow-up error:', hivemindError);
     }
 
     throw ErrorUtils.createError(
-        `Failed to send follow-up: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'DISCORD_SEND_FOLLOWUP_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error }
+      `Failed to send follow-up: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_SEND_FOLLOWUP_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error },
     );
   }
 };

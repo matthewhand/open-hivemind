@@ -67,10 +67,10 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'range-xs';
-      case 'sm': return 'range-sm';
-      case 'lg': return 'range-lg';
-      default: return '';
+    case 'xs': return 'range-xs';
+    case 'sm': return 'range-sm';
+    case 'lg': return 'range-lg';
+    default: return '';
     }
   };
 

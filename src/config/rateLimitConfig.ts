@@ -41,27 +41,27 @@ interface RateLimitConfig {
 const rateLimitConfig: RateLimitConfig = {
   default: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100
+    max: 100,
   },
   config: {
     windowMs: 5 * 60 * 100, // 5 minutes
-    max: 10
+    max: 10,
   },
   auth: {
     windowMs: 60 * 1000, // 1 hour
-    max: 5
+    max: 5,
   },
   admin: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20
+    max: 20,
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     prefix: 'rate_limit:',
     retryDelayOnFailover: 200,
     maxRetriesPerRequest: 3,
-    enableOfflineQueue: false
-  }
+    enableOfflineQueue: false,
+  },
 };
 
 export default rateLimitConfig;

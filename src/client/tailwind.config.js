@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -39,30 +39,30 @@ export default {
   ],
   daisyui: {
     themes: [
-      "night",      // Premium dark theme - set first for default
-      "dracula",    // Alternative dark
-      "luxury",     // Elegant dark
-      "dark",
-      "light",
-      "cupcake",
-      "emerald",
-      "corporate",
-      "synthwave",
-      "cyberpunk",
-      "forest",
-      "aqua",
-      "business",
-      "coffee",
-      "dim",
-      "nord",
-      "sunset",
+      'night',      // Premium dark theme - set first for default
+      'dracula',    // Alternative dark
+      'luxury',     // Elegant dark
+      'dark',
+      'light',
+      'cupcake',
+      'emerald',
+      'corporate',
+      'synthwave',
+      'cyberpunk',
+      'forest',
+      'aqua',
+      'business',
+      'coffee',
+      'dim',
+      'nord',
+      'sunset',
     ],
-    darkTheme: "night",
+    darkTheme: 'night',
     base: true,
     styled: true,
     utils: true,
     rtl: false,
-    prefix: "",
+    prefix: '',
     logs: false,  // Reduce console noise
   },
-}
+};

@@ -41,7 +41,7 @@ export function getRecentChannelActivity(channelId: string, since: number): Arra
 export function clearBotActivity(channelId?: string): void {
   if (channelId) {
     for (const key of Array.from(lastBotActivityByChannelAndBot.keys())) {
-      if (key.startsWith(`${channelId}:`)) lastBotActivityByChannelAndBot.delete(key);
+      if (key.startsWith(`${channelId}:`)) {lastBotActivityByChannelAndBot.delete(key);}
     }
     recentChannelActivity.delete(channelId);
     return;

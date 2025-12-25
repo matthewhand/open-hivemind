@@ -45,11 +45,11 @@ export class SlackBot {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Authentication failed:`, {
+      debug('Authentication failed:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw hivemindError;
     }
@@ -67,7 +67,7 @@ export class SlackBot {
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        channel
+        channel,
       });
     }
   }
@@ -79,12 +79,12 @@ export class SlackBot {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to send message:`, {
+      debug('Failed to send message:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        channel
+        channel,
       });
     }
   }

@@ -12,14 +12,14 @@ const BotCreatePage: React.FC = () => {
     description: '',
     platform: 'discord',
     persona: 'friendly-helper',
-    llmProvider: ''
+    llmProvider: '',
   });
   const [isCreating, setIsCreating] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/uber/bots' },
-    { label: 'Create Bot', href: '/uber/bots/create', isActive: true }
+    { label: 'Create Bot', href: '/uber/bots/create', isActive: true },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ const BotCreatePage: React.FC = () => {
         },
         body: JSON.stringify({
           ...formData,
-          ...(formData.llmProvider ? {} : { llmProvider: undefined })
+          ...(formData.llmProvider ? {} : { llmProvider: undefined }),
         }),
       });
 

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Persona,
+import type {
   PersonaCategory,
   PersonaTrait,
   CreatePersonaRequest,
   UpdatePersonaRequest,
-  PersonaModalState
+  PersonaModalState,
+} from '../../types/bot';
+import {
+  Persona,
 } from '../../types/bot';
 import { Modal, Button, Input, Textarea, Select, Badge, Card } from '../DaisyUI';
 import {
@@ -13,7 +15,7 @@ import {
   Plus as AddIcon,
   X as RemoveIcon,
   Save as SaveIcon,
-  Sparkles as SparklesIcon
+  Sparkles as SparklesIcon,
 } from 'lucide-react';
 
 interface PersonaConfigModalProps {
@@ -27,7 +29,7 @@ const TRAIT_TYPES = [
   { value: 'style', label: 'Style' },
   { value: 'behavior', label: 'Behavior' },
   { value: 'knowledge', label: 'Knowledge' },
-  { value: 'personality', label: 'Personality' }
+  { value: 'personality', label: 'Personality' },
 ] as const;
 
 const CATEGORIES: Array<{ value: PersonaCategory; label: string; description: string }> = [
@@ -37,20 +39,20 @@ const CATEGORIES: Array<{ value: PersonaCategory; label: string; description: st
   { value: 'technical', label: 'Technical', description: 'Technical and scientific personas' },
   { value: 'educational', label: 'Educational', description: 'Teaching and learning personas' },
   { value: 'entertainment', label: 'Entertainment', description: 'Entertainment and gaming personas' },
-  { value: 'professional', label: 'Professional', description: 'Business and professional personas' }
+  { value: 'professional', label: 'Professional', description: 'Business and professional personas' },
 ];
 
 const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
   modalState,
   onClose,
-  onSubmit
+  onSubmit,
 }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     systemPrompt: '',
     category: 'general' as PersonaCategory,
-    traits: [] as PersonaTrait[]
+    traits: [] as PersonaTrait[],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -62,7 +64,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
         description: modalState.persona.description,
         systemPrompt: modalState.persona.systemPrompt,
         category: modalState.persona.category,
-        traits: [...modalState.persona.traits]
+        traits: [...modalState.persona.traits],
       });
     } else {
       // Reset form for new persona
@@ -73,8 +75,8 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
         category: 'general',
         traits: [
           { name: 'Tone', value: 'Friendly', type: 'tone' },
-          { name: 'Style', value: 'Professional', type: 'style' }
-        ]
+          { name: 'Style', value: 'Professional', type: 'style' },
+        ],
       });
     }
     setErrors({});
@@ -110,19 +112,19 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
 
     const submitData = modalState.isEdit
       ? {
-          name: formData.name,
-          description: formData.description,
-          systemPrompt: formData.systemPrompt,
-          category: formData.category,
-          traits: formData.traits
-        } as UpdatePersonaRequest
+        name: formData.name,
+        description: formData.description,
+        systemPrompt: formData.systemPrompt,
+        category: formData.category,
+        traits: formData.traits,
+      } as UpdatePersonaRequest
       : {
-          name: formData.name,
-          description: formData.description,
-          systemPrompt: formData.systemPrompt,
-          category: formData.category,
-          traits: formData.traits
-        } as CreatePersonaRequest;
+        name: formData.name,
+        description: formData.description,
+        systemPrompt: formData.systemPrompt,
+        category: formData.category,
+        traits: formData.traits,
+      } as CreatePersonaRequest;
 
     onSubmit(submitData);
   };
@@ -130,7 +132,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
   const addTrait = () => {
     setFormData(prev => ({
       ...prev,
-      traits: [...prev.traits, { name: '', value: '', type: 'tone' }]
+      traits: [...prev.traits, { name: '', value: '', type: 'tone' }],
     }));
   };
 
@@ -138,15 +140,15 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
     setFormData(prev => ({
       ...prev,
       traits: prev.traits.map((trait, i) =>
-        i === index ? { ...trait, [field]: value } : trait
-      )
+        i === index ? { ...trait, [field]: value } : trait,
+      ),
     }));
   };
 
   const removeTrait = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      traits: prev.traits.filter((_, i) => i !== index)
+      traits: prev.traits.filter((_, i) => i !== index),
     }));
   };
 
@@ -167,7 +169,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
 
     setFormData(prev => ({
       ...prev,
-      systemPrompt: fullPrompt
+      systemPrompt: fullPrompt,
     }));
   };
 
@@ -233,7 +235,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
-                    category: e.target.value as PersonaCategory
+                    category: e.target.value as PersonaCategory,
                   }))}
                   disabled={modalState.isEdit && modalState.persona?.isBuiltIn}
                   className="w-full"

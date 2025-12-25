@@ -38,8 +38,8 @@ const AnalyticsDashboard: React.FC = () => {
             { timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), value: 190 },
             { timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), value: 250 },
             { timestamp: new Date(Date.now() - 1 * 3600000).toISOString(), value: 310 },
-            { timestamp: new Date().toISOString(), value: 280 }
-          ]
+            { timestamp: new Date().toISOString(), value: 280 },
+          ],
         },
         userEngagement: {
           dailyActiveUsers: 234,
@@ -47,7 +47,7 @@ const AnalyticsDashboard: React.FC = () => {
           monthlyActiveUsers: 2156,
           avgSessionDuration: 1250, // seconds
           retentionRate: 78.5,
-          userGrowth: 12.3
+          userGrowth: 12.3,
         },
         featureAdoption: {
           chatInterface: 95.2,
@@ -55,7 +55,7 @@ const AnalyticsDashboard: React.FC = () => {
           analytics: 62.1,
           configuration: 45.8,
           apiAccess: 23.4,
-          advancedFeatures: 15.2
+          advancedFeatures: 15.2,
         },
         performance: {
           avgLatency: 145,
@@ -63,8 +63,8 @@ const AnalyticsDashboard: React.FC = () => {
           p99Latency: 450,
           errorRate: 0.8,
           throughput: 1240,
-          availability: 99.8
-        }
+          availability: 99.8,
+        },
       };
 
       setAnalyticsData(mockAnalytics);
@@ -80,7 +80,7 @@ const AnalyticsDashboard: React.FC = () => {
       totalMessages: 15420,
       activeUsers: 234,
       totalBots: 8,
-      avgResponseTime: 145
+      avgResponseTime: 145,
     },
     userEngagement: {
       dailyActiveUsers: 234,
@@ -88,7 +88,7 @@ const AnalyticsDashboard: React.FC = () => {
       monthlyActiveUsers: 2156,
       avgSessionDuration: 1250,
       retentionRate: 78.5,
-      userGrowth: 12.3
+      userGrowth: 12.3,
     },
     featureAdoption: {
       chatInterface: 95.2,
@@ -96,7 +96,7 @@ const AnalyticsDashboard: React.FC = () => {
       analytics: 62.1,
       configuration: 45.8,
       apiAccess: 23.4,
-      advancedFeatures: 15.2
+      advancedFeatures: 15.2,
     },
     performance: {
       avgLatency: 145,
@@ -104,8 +104,8 @@ const AnalyticsDashboard: React.FC = () => {
       p99Latency: 450,
       errorRate: 0.8,
       throughput: 1240,
-      availability: 99.8
-    }
+      availability: 99.8,
+    },
   };
 
   const usageMetricsCards = [
@@ -117,8 +117,8 @@ const AnalyticsDashboard: React.FC = () => {
         { label: 'Messages', value: data.usageMetrics.totalMessages.toLocaleString(), icon: '💬' },
         { label: 'Today', value: '2,847', trend: 'up', trendValue: 18 },
         { label: 'This Week', value: '18,234', trend: 'up', trendValue: 12 },
-        { label: 'Growth', value: 23, unit: '%', trend: 'up', trendValue: 5 }
-      ]
+        { label: 'Growth', value: 23, unit: '%', trend: 'up', trendValue: 5 },
+      ],
     },
     {
       title: 'Active Users',
@@ -128,8 +128,8 @@ const AnalyticsDashboard: React.FC = () => {
         { label: 'Daily Active', value: data.userEngagement.dailyActiveUsers, trend: 'up', trendValue: 8 },
         { label: 'Weekly Active', value: data.userEngagement.weeklyActiveUsers, trend: 'up', trendValue: 12 },
         { label: 'Monthly Active', value: data.userEngagement.monthlyActiveUsers, trend: 'up', trendValue: 15 },
-        { label: 'Retention', value: data.userEngagement.retentionRate, unit: '%', trend: 'stable' }
-      ]
+        { label: 'Retention', value: data.userEngagement.retentionRate, unit: '%', trend: 'stable' },
+      ],
     },
     {
       title: 'Bot Performance',
@@ -139,8 +139,8 @@ const AnalyticsDashboard: React.FC = () => {
         { label: 'Total Bots', value: data.usageMetrics.totalBots, icon: '🤖' },
         { label: 'Active Bots', value: 7, icon: '✅' },
         { label: 'Avg Response', value: data.usageMetrics.avgResponseTime, unit: 'ms', trend: 'down', trendValue: -8 },
-        { label: 'Error Rate', value: data.performance.errorRate, unit: '%', trend: 'down', trendValue: -15 }
-      ]
+        { label: 'Error Rate', value: data.performance.errorRate, unit: '%', trend: 'down', trendValue: -15 },
+      ],
     },
     {
       title: 'System Health',
@@ -150,9 +150,9 @@ const AnalyticsDashboard: React.FC = () => {
         { label: 'Availability', value: data.performance.availability, unit: '%' },
         { label: 'Avg Latency', value: data.performance.avgLatency, unit: 'ms', trend: 'stable' },
         { label: 'P95 Latency', value: data.performance.p95Latency, unit: 'ms' },
-        { label: 'Throughput', value: data.performance.throughput, unit: 'req/s', trend: 'up', trendValue: 6 }
-      ]
-    }
+        { label: 'Throughput', value: data.performance.throughput, unit: 'req/s', trend: 'up', trendValue: 6 },
+      ],
+    },
   ];
 
   const generateFeatureData = () => {
@@ -160,7 +160,7 @@ const AnalyticsDashboard: React.FC = () => {
       timestamp: new Date().toISOString(),
       value: adoption as number,
       label: feature.replace(/([A-Z])/g, ' $1').trim(),
-      category: 'feature'
+      category: 'feature',
     }));
   };
 
@@ -170,7 +170,7 @@ const AnalyticsDashboard: React.FC = () => {
       timestamp: new Date(now.getTime() - (23 - i) * 3600000).toISOString(),
       value: data.performance.avgLatency + (Math.random() - 0.5) * 50,
       label: 'Latency',
-      category: 'performance'
+      category: 'performance',
     }));
   };
 
@@ -180,7 +180,7 @@ const AnalyticsDashboard: React.FC = () => {
       timestamp: new Date(now.getTime() - (29 - i) * 86400000).toISOString(),
       value: Math.max(50, data.userEngagement.dailyActiveUsers + (Math.random() - 0.5) * 100),
       label: 'Daily Active Users',
-      category: 'users'
+      category: 'users',
     }));
   };
 

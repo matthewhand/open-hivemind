@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export interface FormField {
   name: string;
@@ -139,9 +140,9 @@ export const Form: React.FC<FormProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'sm': return 'form-control-sm';
-      case 'lg': return 'form-control-lg';
-      default: return '';
+    case 'sm': return 'form-control-sm';
+    case 'lg': return 'form-control-lg';
+    default: return '';
     }
   };
 
@@ -158,30 +159,30 @@ export const Form: React.FC<FormProps> = ({
 
     // Type-specific validations
     switch (field.type) {
-      case 'email':
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          return 'Please enter a valid email address';
-        }
-        break;
-      case 'url':
-        try {
-          new URL(value);
-        } catch {
-          return 'Please enter a valid URL';
-        }
-        break;
-      case 'number':
-        if (isNaN(Number(value))) {
-          return 'Please enter a valid number';
-        }
-        if (field.min !== undefined && Number(value) < Number(field.min)) {
-          return `Value must be at least ${field.min}`;
-        }
-        if (field.max !== undefined && Number(value) > Number(field.max)) {
-          return `Value must be at most ${field.max}`;
-        }
-        break;
+    case 'email':
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        return 'Please enter a valid email address';
+      }
+      break;
+    case 'url':
+      try {
+        new URL(value);
+      } catch {
+        return 'Please enter a valid URL';
+      }
+      break;
+    case 'number':
+      if (isNaN(Number(value))) {
+        return 'Please enter a valid number';
+      }
+      if (field.min !== undefined && Number(value) < Number(field.min)) {
+        return `Value must be at least ${field.min}`;
+      }
+      if (field.max !== undefined && Number(value) > Number(field.max)) {
+        return `Value must be at most ${field.max}`;
+      }
+      break;
     }
 
     // Length validations
@@ -294,177 +295,177 @@ export const Form: React.FC<FormProps> = ({
     };
 
     switch (field.type) {
-      case 'textarea':
-        return (
-          <textarea
-            {...commonProps}
-            className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''} ${getSizeClass()}`}
-            placeholder={field.placeholder}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            maxLength={field.maxLength}
-            minLength={field.minLength}
-            autoComplete={field.autoComplete}
-            rows={4}
-          />
-        );
+    case 'textarea':
+      return (
+        <textarea
+          {...commonProps}
+          className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''} ${getSizeClass()}`}
+          placeholder={field.placeholder}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          maxLength={field.maxLength}
+          minLength={field.minLength}
+          autoComplete={field.autoComplete}
+          rows={4}
+        />
+      );
 
-      case 'select':
-        return (
-          <select
-            {...commonProps}
-            className={`select select-bordered w-full ${hasError ? 'select-error' : ''} ${getSizeClass()}`}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, field.multiple ? Array.from(e.target.selectedOptions, option => option.value) : e.target.value)}
-            multiple={field.multiple}
-          >
-            {!field.multiple && (
-              <option value="">{field.placeholder || 'Select an option'}</option>
-            )}
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
+    case 'select':
+      return (
+        <select
+          {...commonProps}
+          className={`select select-bordered w-full ${hasError ? 'select-error' : ''} ${getSizeClass()}`}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, field.multiple ? Array.from(e.target.selectedOptions, option => option.value) : e.target.value)}
+          multiple={field.multiple}
+        >
+          {!field.multiple && (
+            <option value="">{field.placeholder || 'Select an option'}</option>
+          )}
+          {field.options?.map(option => (
+            <option key={option.value} value={option.value} disabled={option.disabled}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
 
-      case 'checkbox':
-        return (
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-2">
+    case 'checkbox':
+      return (
+        <div className="form-control">
+          <label className="label cursor-pointer justify-start gap-2">
+            <input
+              {...commonProps}
+              type="checkbox"
+              className={`checkbox ${hasError ? 'checkbox-error' : ''}`}
+              checked={formData[field.name] || false}
+              onChange={(e) => handleInputChange(field.name, e.target.checked)}
+            />
+            <span className="label-text">
+              {field.label}
+              {field.required && <span className="text-error ml-1">*</span>}
+            </span>
+          </label>
+        </div>
+      );
+
+    case 'radio':
+      return (
+        <div className="form-control">
+          <div className="label">
+            <span className="label-text">
+              {field.label}
+              {field.required && <span className="text-error ml-1">*</span>}
+            </span>
+          </div>
+          {field.options?.map(option => (
+            <label key={option.value} className="label cursor-pointer justify-start gap-2">
               <input
                 {...commonProps}
-                type="checkbox"
-                className={`checkbox ${hasError ? 'checkbox-error' : ''}`}
-                checked={formData[field.name] || false}
-                onChange={(e) => handleInputChange(field.name, e.target.checked)}
+                type="radio"
+                className={`radio ${hasError ? 'radio-error' : ''}`}
+                value={option.value}
+                checked={formData[field.name] === option.value}
+                onChange={(e) => handleInputChange(field.name, e.target.value)}
+                disabled={option.disabled || field.disabled || loading}
               />
-              <span className="label-text">
-                {field.label}
-                {field.required && <span className="text-error ml-1">*</span>}
-              </span>
+              <span className="label-text">{option.label}</span>
             </label>
-          </div>
-        );
+          ))}
+        </div>
+      );
 
-      case 'radio':
-        return (
-          <div className="form-control">
-            <div className="label">
-              <span className="label-text">
-                {field.label}
-                {field.required && <span className="text-error ml-1">*</span>}
-              </span>
-            </div>
-            {field.options?.map(option => (
-              <label key={option.value} className="label cursor-pointer justify-start gap-2">
-                <input
-                  {...commonProps}
-                  type="radio"
-                  className={`radio ${hasError ? 'radio-error' : ''}`}
-                  value={option.value}
-                  checked={formData[field.name] === option.value}
-                  onChange={(e) => handleInputChange(field.name, e.target.value)}
-                  disabled={option.disabled || field.disabled || loading}
-                />
-                <span className="label-text">{option.label}</span>
-              </label>
-            ))}
-          </div>
-        );
+    case 'file':
+      return (
+        <input
+          {...commonProps}
+          type="file"
+          className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''} ${getSizeClass()}`}
+          onChange={(e) => handleInputChange(field.name, field.multiple ? e.target.files : e.target.files?.[0])}
+          multiple={field.multiple}
+          accept={field.accept}
+        />
+      );
 
-      case 'file':
-        return (
-          <input
-            {...commonProps}
-            type="file"
-            className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''} ${getSizeClass()}`}
-            onChange={(e) => handleInputChange(field.name, field.multiple ? e.target.files : e.target.files?.[0])}
-            multiple={field.multiple}
-            accept={field.accept}
-          />
-        );
+    default:
+      return (
+        <input
+          {...commonProps}
+          type={field.type}
+          className={`input input-bordered w-full ${hasError ? 'input-error' : ''} ${getSizeClass()}`}
+          placeholder={field.placeholder}
+          value={formData[field.name] || ''}
+          onChange={(e) => handleInputChange(field.name, e.target.value)}
+          min={field.min}
+          max={field.max}
+          step={field.step}
+          maxLength={field.maxLength}
+          minLength={field.minLength}
+          pattern={field.pattern}
+          autoComplete={field.autoComplete}
+        />
+      );
 
-      default:
-        return (
-          <input
-            {...commonProps}
-            type={field.type}
-            className={`input input-bordered w-full ${hasError ? 'input-error' : ''} ${getSizeClass()}`}
-            placeholder={field.placeholder}
-            value={formData[field.name] || ''}
-            onChange={(e) => handleInputChange(field.name, e.target.value)}
-            min={field.min}
-            max={field.max}
-            step={field.step}
-            maxLength={field.maxLength}
-            minLength={field.minLength}
-            pattern={field.pattern}
-            autoComplete={field.autoComplete}
-          />
-        );
+    case 'key-value':
+      const pairs = (formData[field.name] as Record<string, string>) || {};
+      const entries = Object.entries(pairs);
 
-      case 'key-value':
-        const pairs = (formData[field.name] as Record<string, string>) || {};
-        const entries = Object.entries(pairs);
-
-        return (
-          <div className="space-y-2">
-            {entries.map(([key, value], index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Key"
-                  className="input input-bordered input-sm flex-1"
-                  value={key}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    const val = newPairs[key];
-                    delete newPairs[key];
-                    newPairs[e.target.value] = val;
-                    handleInputChange(field.name, newPairs);
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Value"
-                  className="input input-bordered input-sm flex-1"
-                  value={value}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    newPairs[key] = e.target.value;
-                    handleInputChange(field.name, newPairs);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm text-error"
-                  onClick={() => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    handleInputChange(field.name, newPairs);
-                  }}
-                >
+      return (
+        <div className="space-y-2">
+          {entries.map(([key, value], index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Key"
+                className="input input-bordered input-sm flex-1"
+                value={key}
+                onChange={(e) => {
+                  const newPairs = { ...pairs };
+                  const val = newPairs[key];
+                  delete newPairs[key];
+                  newPairs[e.target.value] = val;
+                  handleInputChange(field.name, newPairs);
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Value"
+                className="input input-bordered input-sm flex-1"
+                value={value}
+                onChange={(e) => {
+                  const newPairs = { ...pairs };
+                  newPairs[key] = e.target.value;
+                  handleInputChange(field.name, newPairs);
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm text-error"
+                onClick={() => {
+                  const newPairs = { ...pairs };
+                  delete newPairs[key];
+                  handleInputChange(field.name, newPairs);
+                }}
+              >
                   ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
-              onClick={() => {
-                const newPairs = { ...pairs };
-                let i = 0;
-                while (newPairs[`NEW_KEY_${i}`]) i++;
-                newPairs[`NEW_KEY_${i}`] = '';
-                handleInputChange(field.name, newPairs);
-              }}
-            >
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
+            onClick={() => {
+              const newPairs = { ...pairs };
+              let i = 0;
+              while (newPairs[`NEW_KEY_${i}`]) {i++;}
+              newPairs[`NEW_KEY_${i}`] = '';
+              handleInputChange(field.name, newPairs);
+            }}
+          >
               + Add Override
-            </button>
-          </div>
-        );
+          </button>
+        </div>
+      );
     }
   };
 

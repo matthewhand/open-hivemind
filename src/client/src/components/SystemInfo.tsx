@@ -15,7 +15,7 @@ import {
   Button,
   Loading,
   Tooltip,
-  ConfirmModal
+  ConfirmModal,
 } from './DaisyUI';
 import {
   ArrowDownTrayIcon,

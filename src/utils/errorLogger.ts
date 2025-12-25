@@ -7,7 +7,8 @@
 
 import Debug from 'debug';
 import { BaseHivemindError } from '../types/errorClasses';
-import { HivemindError, ErrorUtils } from '../types/errors';
+import type { HivemindError} from '../types/errors';
+import { ErrorUtils } from '../types/errors';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 
 /**
@@ -116,7 +117,7 @@ export class ErrorLogger {
       maxFiles: 5,
       enableMetrics: true,
       enableTracing: process.env.NODE_ENV === 'development',
-      ...config
+      ...config,
     };
 
     this.debug = Debug('app:error:logger');
@@ -155,7 +156,7 @@ export class ErrorLogger {
 
     this.debug(`Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`, {
       correlationId: context.correlationId,
-      level: logLevel
+      level: logLevel,
     });
   }
 
@@ -176,7 +177,7 @@ export class ErrorLogger {
         type: this.getErrorType(error),
         stack: error instanceof Error ? error.stack : undefined,
         details: error && typeof error === 'object' ? (error as any).details : undefined,
-        context: error instanceof BaseHivemindError ? error.context : undefined
+        context: error instanceof BaseHivemindError ? error.context : undefined,
       },
       request: {
         path: context.path,
@@ -188,7 +189,7 @@ export class ErrorLogger {
         duration: context.duration,
         body: context.body,
         params: context.params,
-        query: context.query
+        query: context.query,
       },
       system: {
         hostname: require('os').hostname(),
@@ -199,15 +200,15 @@ export class ErrorLogger {
         memory: {
           used: memoryUsage.heapUsed,
           total: memoryUsage.heapTotal,
-          external: memoryUsage.external
-        }
+          external: memoryUsage.external,
+        },
       },
       recovery: error instanceof BaseHivemindError ? {
         canRecover: error.getRecoveryStrategy().canRecover,
         retryDelay: error.getRecoveryStrategy().retryDelay,
         maxRetries: error.getRecoveryStrategy().maxRetries,
-        steps: error.getRecoveryStrategy().recoverySteps
-      } : undefined
+        steps: error.getRecoveryStrategy().recoverySteps,
+      } : undefined,
     };
   }
 
@@ -282,7 +283,7 @@ export class ErrorLogger {
    * Log to console
    */
   private logToConsole(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableConsole) return;
+    if (!this.config.enableConsole) {return;}
 
     const message = `[${logEntry.level.toUpperCase()}] ${logEntry.error.message}`;
     const meta = {
@@ -291,26 +292,26 @@ export class ErrorLogger {
       type: logEntry.error.type,
       path: logEntry.request?.path,
       method: logEntry.request?.method,
-      userId: logEntry.request?.userId
+      userId: logEntry.request?.userId,
     };
 
     switch (level) {
-      case 'debug':
-        console.debug(message, meta);
-        break;
-      case 'info':
-        console.info(message, meta);
-        break;
-      case 'warn':
-        console.warn(message, meta);
-        break;
-      case 'error':
-      case 'fatal':
-        console.error(message, meta);
-        if (logEntry.error.stack) {
-          console.error(logEntry.error.stack);
-        }
-        break;
+    case 'debug':
+      console.debug(message, meta);
+      break;
+    case 'info':
+      console.info(message, meta);
+      break;
+    case 'warn':
+      console.warn(message, meta);
+      break;
+    case 'error':
+    case 'fatal':
+      console.error(message, meta);
+      if (logEntry.error.stack) {
+        console.error(logEntry.error.stack);
+      }
+      break;
     }
   }
 
@@ -318,7 +319,7 @@ export class ErrorLogger {
    * Log to file (simplified implementation)
    */
   private logToFile(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableFile) return;
+    if (!this.config.enableFile) {return;}
 
     // In a real implementation, this would write to a file
     // For now, we'll use console.log with a file-like format
@@ -330,14 +331,14 @@ export class ErrorLogger {
    * Log to structured output (for monitoring systems)
    */
   private logToStructured(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableStructured) return;
+    if (!this.config.enableStructured) {return;}
 
     // Emit structured log for monitoring systems
     if ((process as any).emit) {
       (process as any).emit('hivemind:log', {
         type: 'error',
         level,
-        entry: logEntry
+        entry: logEntry,
       });
     }
   }
@@ -392,7 +393,7 @@ export class ErrorLogger {
           type: 'error_spike',
           errorType,
           count,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
@@ -410,7 +411,7 @@ export class ErrorLogger {
           type: 'high_error_rate',
           count: recentErrors,
           timeframe: '1 minute',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
@@ -431,7 +432,7 @@ export class ErrorLogger {
     const bySeverity = {
       high: Math.floor(totalErrors * 0.3),
       medium: Math.floor(totalErrors * 0.5),
-      low: Math.floor(totalErrors * 0.2)
+      low: Math.floor(totalErrors * 0.2),
     };
 
     const byDate: { [key: string]: number } = {};
@@ -447,7 +448,7 @@ export class ErrorLogger {
       totalErrors,
       errorTypes,
       bySeverity,
-      byDate
+      byDate,
     };
   }
 
@@ -473,14 +474,14 @@ export class ErrorLogger {
           name: 'RecentError',
           message: 'Recent error',
           code: 'RECENT_ERROR',
-          type: 'recent'
+          type: 'recent',
         } as HivemindError,
         context: {
           correlationId,
           path: '',
-          method: ''
+          method: '',
         } as ErrorContext,
-        timestamp
+        timestamp,
       }));
   }
 
@@ -544,7 +545,7 @@ export function createErrorContext(req: any): ErrorContext {
     duration: req.startTime ? Date.now() - req.startTime : undefined,
     body: req.body,
     params: req.params,
-    query: req.query
+    query: req.query,
   };
 }
 
@@ -562,5 +563,5 @@ export default {
   errorLogger,
   logError,
   createErrorContext,
-  errorLoggingMiddleware
+  errorLoggingMiddleware,
 };

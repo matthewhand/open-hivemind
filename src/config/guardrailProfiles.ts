@@ -22,8 +22,8 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
     description: 'Allow MCP tools without restrictions',
     mcpGuard: {
       enabled: false,
-      type: 'owner'
-    }
+      type: 'owner',
+    },
   },
   {
     key: 'owner-only',
@@ -31,8 +31,8 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
     description: 'Only the channel owner can use MCP tools',
     mcpGuard: {
       enabled: true,
-      type: 'owner'
-    }
+      type: 'owner',
+    },
   },
   {
     key: 'custom-list',
@@ -41,9 +41,9 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
     mcpGuard: {
       enabled: true,
       type: 'custom',
-      allowedUserIds: []
-    }
-  }
+      allowedUserIds: [],
+    },
+  },
 ];
 
 const getProfilesPath = (): string => {

@@ -5,7 +5,7 @@ const llmConfig = convict({
     doc: 'LLM provider (e.g., openai, flowise, openwebui)',
     format: String,
     default: 'openai',
-    env: 'LLM_PROVIDER'
+    env: 'LLM_PROVIDER',
   },
   LLM_PARALLEL_EXECUTION: {
     doc: 'Whether to allow parallel execution of requests',
@@ -13,15 +13,15 @@ const llmConfig = convict({
     default: false,
     env: 'LLM_PARALLEL_EXECUTION',
     coerce: (val: any) => {
-      if (typeof val === 'boolean') return val;
+      if (typeof val === 'boolean') {return val;}
       if (typeof val === 'string') {
         const lower = val.toLowerCase();
-        if (lower === 'true' || lower === '1') return true;
-        if (lower === 'false' || lower === '0') return false;
+        if (lower === 'true' || lower === '1') {return true;}
+        if (lower === 'false' || lower === '0') {return false;}
       }
       return false;
-    }
-  }
+    },
+  },
 });
 
 llmConfig.validate({ allowed: 'strict' });

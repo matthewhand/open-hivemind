@@ -4,7 +4,7 @@ import {
   BoltIcon,
   ServerIcon,
   UserGroupIcon,
-  ChartBarIcon
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 export interface ActivityEvent {
@@ -23,7 +23,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'bot',
     message: 'Bot configuration updated successfully',
     severity: 'low',
-    duration: 120
+    duration: 120,
   },
   {
     id: '2',
@@ -31,7 +31,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'user',
     message: 'User login from new device',
     severity: 'medium',
-    duration: 300
+    duration: 300,
   },
   {
     id: '3',
@@ -39,7 +39,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'system',
     message: 'Database backup completed',
     severity: 'low',
-    duration: 5000
+    duration: 5000,
   },
 ];
 
@@ -49,7 +49,7 @@ const ActivityMonitor: React.FC = () => {
   const [isMonitoring, setIsMonitoring] = useState(true);
 
   useEffect(() => {
-    if (!isMonitoring) return;
+    if (!isMonitoring) {return;}
 
     const interval = setInterval(() => {
       const newEvent: ActivityEvent = {
@@ -58,7 +58,7 @@ const ActivityMonitor: React.FC = () => {
         type: ['bot', 'user', 'system', 'error'][Math.floor(Math.random() * 4)] as any,
         message: `System activity detected at ${new Date().toLocaleTimeString()}`,
         severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
-        duration: Math.floor(Math.random() * 1000) + 50
+        duration: Math.floor(Math.random() * 1000) + 50,
       };
       setEvents(prev => [newEvent, ...prev].slice(0, 50));
     }, 5000);
@@ -67,31 +67,31 @@ const ActivityMonitor: React.FC = () => {
   }, [isMonitoring]);
 
   const filteredEvents = events.filter(event =>
-    filter === 'all' || event.type === filter
+    filter === 'all' || event.type === filter,
   );
 
   const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
     switch (severity) {
-      case 'critical': return 'error';
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'info';
+    case 'critical': return 'error';
+    case 'high': return 'error';
+    case 'medium': return 'warning';
+    case 'low': return 'info';
+    default: return 'info';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'bot': return '🤖';
-      case 'user': return '👤';
-      case 'system': return '⚙️';
-      case 'error': return '❌';
-      default: return '📝';
+    case 'bot': return '🤖';
+    case 'user': return '👤';
+    case 'system': return '⚙️';
+    case 'error': return '❌';
+    default: return '📝';
     }
   };
 
   const recentEvents = events.filter(e =>
-    e.timestamp > new Date(Date.now() - 300000)
+    e.timestamp > new Date(Date.now() - 300000),
   );
 
   return (

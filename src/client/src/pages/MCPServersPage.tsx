@@ -4,7 +4,7 @@ import {
   PencilIcon,
   TrashIcon,
   PlayIcon,
-  StopIcon
+  StopIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -28,7 +28,7 @@ const MCPServersPage: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Servers', href: '/uber/mcp/servers', isActive: true }
+    { label: 'Servers', href: '/uber/mcp/servers', isActive: true },
   ];
 
   // Mock servers - in real app this would come from API
@@ -40,7 +40,7 @@ const MCPServersPage: React.FC = () => {
       status: 'running',
       description: 'GitHub repository management and issue tracking',
       toolCount: 12,
-      lastConnected: '2024-01-15T10:30:00Z'
+      lastConnected: '2024-01-15T10:30:00Z',
     },
     {
       id: '2',
@@ -49,7 +49,7 @@ const MCPServersPage: React.FC = () => {
       status: 'running',
       description: 'Database query and management tools',
       toolCount: 8,
-      lastConnected: '2024-01-15T09:15:00Z'
+      lastConnected: '2024-01-15T09:15:00Z',
     },
     {
       id: '3',
@@ -58,7 +58,7 @@ const MCPServersPage: React.FC = () => {
       status: 'stopped',
       description: 'File system operations and management',
       toolCount: 15,
-      lastConnected: '2024-01-14T16:45:00Z'
+      lastConnected: '2024-01-14T16:45:00Z',
     },
     {
       id: '4',
@@ -67,8 +67,8 @@ const MCPServersPage: React.FC = () => {
       status: 'error',
       description: 'External API integrations and webhooks',
       toolCount: 6,
-      lastConnected: '2024-01-13T14:20:00Z'
-    }
+      lastConnected: '2024-01-13T14:20:00Z',
+    },
   ];
 
   useEffect(() => {
@@ -81,10 +81,10 @@ const MCPServersPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'badge-success';
-      case 'stopped': return 'badge-ghost';
-      case 'error': return 'badge-error';
-      default: return 'badge-ghost';
+    case 'running': return 'badge-success';
+    case 'stopped': return 'badge-ghost';
+    case 'error': return 'badge-error';
+    default: return 'badge-ghost';
     }
   };
 
@@ -97,7 +97,7 @@ const MCPServersPage: React.FC = () => {
       setServers(prev => prev.map(server =>
         server.id === serverId
           ? { ...server, status: action === 'start' ? 'running' : 'stopped' }
-          : server
+          : server,
       ));
     } catch (error) {
       setAlert({ type: 'error', message: `Failed to ${action} server` });
@@ -111,7 +111,7 @@ const MCPServersPage: React.FC = () => {
       url: '',
       status: 'stopped',
       description: '',
-      toolCount: 0
+      toolCount: 0,
     });
     setIsEditing(false);
     setDialogOpen(true);
@@ -124,13 +124,13 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleSaveServer = async () => {
-    if (!selectedServer) return;
+    if (!selectedServer) {return;}
 
     try {
       if (isEditing) {
         // Update existing server
         setServers(prev => prev.map(server =>
-          server.id === selectedServer.id ? selectedServer : server
+          server.id === selectedServer.id ? selectedServer : server,
         ));
         setAlert({ type: 'success', message: 'Server updated successfully' });
       } else {

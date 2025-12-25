@@ -1,4 +1,4 @@
 module.exports = {
   isUserAllowed: () => true,
-  isRoleAllowed: () => true
+  isRoleAllowed: () => true,
 };

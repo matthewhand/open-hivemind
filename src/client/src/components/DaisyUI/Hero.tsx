@@ -55,18 +55,18 @@ export const Hero: React.FC<HeroProps> = ({
     
     // Add minimum height
     switch (minHeight) {
-      case 'screen':
-        baseClasses.push('min-h-screen');
-        break;
-      case 'lg':
-        baseClasses.push('min-h-96');
-        break;
-      case 'md':
-        baseClasses.push('min-h-64');
-        break;
-      case 'sm':
-        baseClasses.push('min-h-32');
-        break;
+    case 'screen':
+      baseClasses.push('min-h-screen');
+      break;
+    case 'lg':
+      baseClasses.push('min-h-96');
+      break;
+    case 'md':
+      baseClasses.push('min-h-64');
+      break;
+    case 'sm':
+      baseClasses.push('min-h-32');
+      break;
     }
 
     // Add background color if no image
@@ -97,11 +97,11 @@ export const Hero: React.FC<HeroProps> = ({
 
   const heroStyle: React.CSSProperties = bgImage
     ? {
-        backgroundImage: `url(${bgImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }
+      backgroundImage: `url(${bgImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
     : {};
 
   const renderOverlay = () => {

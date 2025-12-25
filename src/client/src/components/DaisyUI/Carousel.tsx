@@ -22,7 +22,7 @@ const Carousel: React.FC<CarouselProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (!autoplay) return;
+    if (!autoplay) {return;}
 
     const tick = () => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);

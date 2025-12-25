@@ -1,6 +1,6 @@
 // src/message/common/chatHistory.ts
 
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
  * ChatHistory - Tracks messages sent by the bot for timing and activity purposes.
@@ -46,7 +46,7 @@ export class ChatHistory {
     }
     const currentTime = Date.now();
     const recentMessages = this.history.filter(
-      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
+      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe,
     );
     console.debug('[ChatHistory] Recent messages retrieved:', recentMessages.map(m => m.getMessageId()));
     return recentMessages;

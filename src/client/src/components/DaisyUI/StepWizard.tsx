@@ -32,7 +32,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
   allowSkip = false,
   showProgress = true,
   variant = 'horizontal',
-  className = ''
+  className = '',
 }) => {
   const [activeStep, setActiveStep] = useState(currentStep);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -45,7 +45,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const validateCurrentStep = async (): Promise<boolean> => {
     const currentStepData = steps[activeStep];
-    if (!currentStepData.validation) return true;
+    if (!currentStepData.validation) {return true;}
 
     setIsValidating(true);
     try {
@@ -61,7 +61,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const handleNext = async () => {
     const isValid = await validateCurrentStep();
-    if (!isValid) return;
+    if (!isValid) {return;}
 
     setCompletedSteps(prev => new Set([...prev, activeStep]));
     
@@ -86,7 +86,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const canGoToStep = (stepIndex: number): boolean => {
     // Can always go back to completed steps or current step
-    if (stepIndex <= activeStep) return true;
+    if (stepIndex <= activeStep) {return true;}
     // Can only go forward if all previous steps are completed
     for (let i = 0; i < stepIndex; i++) {
       if (!completedSteps.has(i) && !steps[i].optional) {
@@ -97,16 +97,16 @@ const StepWizard: React.FC<StepWizardProps> = ({
   };
 
   const getStepStatus = (stepIndex: number): 'completed' | 'active' | 'pending' | 'error' => {
-    if (completedSteps.has(stepIndex)) return 'completed';
-    if (stepIndex === activeStep) return 'active';
-    if (stepIndex < activeStep) return 'error'; // Skipped required step
+    if (completedSteps.has(stepIndex)) {return 'completed';}
+    if (stepIndex === activeStep) {return 'active';}
+    if (stepIndex < activeStep) {return 'error';} // Skipped required step
     return 'pending';
   };
 
   const getStepIcon = (step: Step, status: string, index: number) => {
-    if (status === 'completed') return '✓';
-    if (status === 'error') return '✗';
-    if (step.icon) return step.icon;
+    if (status === 'completed') {return '✓';}
+    if (status === 'error') {return '✗';}
+    if (step.icon) {return step.icon;}
     return index + 1;
   };
 
@@ -140,8 +140,8 @@ const StepWizard: React.FC<StepWizardProps> = ({
               key={step.id}
               className={`step ${
                 status === 'completed' ? 'step-primary' : 
-                status === 'active' ? 'step-primary' : 
-                status === 'error' ? 'step-error' : ''
+                  status === 'active' ? 'step-primary' : 
+                    status === 'error' ? 'step-error' : ''
               } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               data-content={getStepIcon(step, status, index)}
               onClick={() => canNavigate && handleStepChange(index)}
@@ -278,7 +278,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
     platform: '',
     token: '',
     personality: '',
-    features: [] as string[]
+    features: [] as string[],
   });
 
   const updateFormData = (field: string, value: string | string[]) => {
@@ -324,7 +324,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
           </div>
         </div>
       ),
-      validation: () => formData.botName.trim() !== '' && formData.platform !== ''
+      validation: () => formData.botName.trim() !== '' && formData.platform !== '',
     },
     {
       id: 'authentication',
@@ -354,7 +354,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
           </div>
         </div>
       ),
-      validation: () => formData.token.trim() !== ''
+      validation: () => formData.token.trim() !== '',
     },
     {
       id: 'personality',
@@ -385,7 +385,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'features',
@@ -406,7 +406,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
                 'User management',
                 'Custom commands',
                 'File uploads',
-                'Scheduled messages'
+                'Scheduled messages',
               ].map(feature => (
                 <label key={feature} className="cursor-pointer">
                   <input
@@ -427,7 +427,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'review',
@@ -449,8 +449,8 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
             </div>
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (

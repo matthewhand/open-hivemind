@@ -1,4 +1,4 @@
-import { SlackService } from './SlackService';
+import type { SlackService } from './SlackService';
 import Debug from 'debug';
 
 const debug = Debug('app:SlackInteractiveActions');
@@ -82,7 +82,7 @@ export class SlackInteractiveActions {
       await this.slackService.sendMessageToChannel(
         channel, 
         'Course Info: Here are the details...', 
-        botInfo.botUserName || 'Jeeves'
+        botInfo.botUserName || 'Jeeves',
       );
       debug(`Course info sent to channel: ${channel}`);
     } catch (error) {
@@ -124,7 +124,7 @@ export class SlackInteractiveActions {
       await this.slackService.sendMessageToChannel(
         channel, 
         'Office Hours Booking: To book office hours, use the /office-hours command followed by your preferred time slot. Available slots are Monday-Friday 2-4 PM.', 
-        botInfo.botUserName || 'Jeeves'
+        botInfo.botUserName || 'Jeeves',
       );
       debug(`Booking instructions sent to channel: ${channel}`);
     } catch (error) {
@@ -167,7 +167,7 @@ export class SlackInteractiveActions {
       await this.slackService.sendMessageToChannel(
         channel, 
         'Study Resources: Here are some recommended resources to help with your learning journey...', 
-        botInfo.botUserName || 'Jeeves'
+        botInfo.botUserName || 'Jeeves',
       );
       debug(`Study resources sent to channel: ${channel}`);
     } catch (error) {
@@ -267,7 +267,7 @@ export class SlackInteractiveActions {
         '• Use `/office-hours` to book office hours\n' +
         '• Use `/resources` to get study materials\n' +
         '• Mention me in any message to get AI assistance',
-        botInfo.botUserName || 'Jeeves'
+        botInfo.botUserName || 'Jeeves',
       );
       debug(`Interactive help sent to channel: ${channel} for user: ${userId}`);
     } catch (error) {

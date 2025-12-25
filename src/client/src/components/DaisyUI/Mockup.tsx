@@ -36,38 +36,38 @@ const Mockup: React.FC<MockupProps> = ({
 
   const renderContent = () => {
     switch (type) {
-      case 'code':
-        return (
-          <div className={`${baseClasses}code ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
-            <pre><code>{content}</code></pre>
+    case 'code':
+      return (
+        <div className={`${baseClasses}code ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <pre><code>{content}</code></pre>
+        </div>
+      );
+    case 'browser':
+      return (
+        <div className={`${baseClasses}browser border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className="mockup-browser-toolbar">
+            <div className="input">{content}</div>
           </div>
-        );
-      case 'browser':
-        return (
-          <div className={`${baseClasses}browser border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
-            <div className="mockup-browser-toolbar">
-              <div className="input">{content}</div>
-            </div>
-            <div className={`flex justify-center px-4 py-16 ${themeClass}`}>Hello!</div>
+          <div className={`flex justify-center px-4 py-16 ${themeClass}`}>Hello!</div>
+        </div>
+      );
+    case 'phone':
+      return (
+        <div className={`${baseClasses}phone ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className="camera"></div>
+          <div className="display">
+            <div className={`artboard artboard-demo phone-1 ${themeClass}`}>{content}</div>
           </div>
-        );
-      case 'phone':
-        return (
-          <div className={`${baseClasses}phone ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
-            <div className="camera"></div>
-            <div className="display">
-              <div className={`artboard artboard-demo phone-1 ${themeClass}`}>{content}</div>
-            </div>
-          </div>
-        );
-      case 'window':
-        return (
-          <div className={`${baseClasses}window border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
-            <div className={`flex justify-center px-4 py-16 ${themeClass}`}>{content}</div>
-          </div>
-        );
-      default:
-        return null;
+        </div>
+      );
+    case 'window':
+      return (
+        <div className={`${baseClasses}window border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className={`flex justify-center px-4 py-16 ${themeClass}`}>{content}</div>
+        </div>
+      );
+    default:
+      return null;
     }
   };
 

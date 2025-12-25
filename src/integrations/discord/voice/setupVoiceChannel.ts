@@ -1,4 +1,5 @@
-import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
+import type { Client, VoiceChannel, GuildChannel } from 'discord.js';
+import { ChannelType } from 'discord.js';
 import Debug from 'debug';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
@@ -41,7 +42,7 @@ export async function setupVoiceChannel(client: Client, channelId: string): Prom
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord setup voice channel error:', hivemindError);
+      console.error('Discord setup voice channel error:', hivemindError);
     }
 
     return null;

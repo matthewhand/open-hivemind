@@ -1,12 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
-import {
+import type {
   Persona,
   PersonaCategory,
+  CreatePersonaRequest,
+  UpdatePersonaRequest,
+} from '../types/bot';
+import {
   PersonaTrait,
   BUILTIN_PERSONAS,
   DEFAULT_PERSONA,
-  CreatePersonaRequest,
-  UpdatePersonaRequest
 } from '../types/bot';
 
 interface UsePersonasReturn {
@@ -72,7 +74,7 @@ export const usePersonas = (): UsePersonasReturn => {
         ...request,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       setPersonas(prev => [...prev, newPersona]);
@@ -101,7 +103,7 @@ export const usePersonas = (): UsePersonasReturn => {
           return {
             ...persona,
             ...request,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           };
         }
         return persona;
@@ -163,7 +165,7 @@ export const usePersonas = (): UsePersonasReturn => {
         name: newName,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       setPersonas(prev => [...prev, duplicatedPersona]);
@@ -186,7 +188,7 @@ export const usePersonas = (): UsePersonasReturn => {
       setPersonas(prev => prev.map(p =>
         p.id === personaId
           ? { ...p, usageCount: p.usageCount + 1 }
-          : p
+          : p,
       ));
 
       // In a real implementation, this would make an API call to update the bot
@@ -209,8 +211,8 @@ export const usePersonas = (): UsePersonasReturn => {
       persona.category.toLowerCase().includes(lowercaseQuery) ||
       persona.traits.some(trait =>
         trait.name.toLowerCase().includes(lowercaseQuery) ||
-        trait.value.toLowerCase().includes(lowercaseQuery)
-      )
+        trait.value.toLowerCase().includes(lowercaseQuery),
+      ),
     );
   }, [personas]);
 
@@ -226,6 +228,6 @@ export const usePersonas = (): UsePersonasReturn => {
     duplicatePersona,
     assignPersonaToBot,
     clearError,
-    searchPersonas
+    searchPersonas,
   };
 };

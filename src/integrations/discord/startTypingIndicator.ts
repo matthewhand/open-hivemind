@@ -29,24 +29,24 @@ const debug = Debug('app:sendTyping');
  * @returns A NodeJS.Timeout object that can be used to clear the interval, or null if the channel is invalid.
  */
 export function sendTyping(channel: any, stopCondition: () => boolean): NodeJS.Timeout {
-    if (!channel || typeof channel.sendTyping !== 'function') {
-        debug('Invalid channel object provided.');
-        return null as any;
+  if (!channel || typeof channel.sendTyping !== 'function') {
+    debug('Invalid channel object provided.');
+    return null as any;
+  }
+  console.debug('Typing loop started for channel: ' + channel.id);
+  const typingInterval = setInterval(() => {
+    if (stopCondition()) {
+      clearInterval(typingInterval);
+      debug('Typing indicator stopped.');
+      return;
     }
-console.debug('Typing loop started for channel: ' + channel.id);
-    const typingInterval = setInterval(() => {
-        if (stopCondition()) {
-            clearInterval(typingInterval);
-            debug('Typing indicator stopped.');
-            return;
-        }
-console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
-        channel.sendTyping();
-        debug('Typing indicator sent.');
-    }, 15000);
-
-console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+    console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
     channel.sendTyping();
-    debug('sendTyping: Interval started');
-    return typingInterval;
+    debug('Typing indicator sent.');
+  }, 15000);
+
+  console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+  channel.sendTyping();
+  debug('sendTyping: Interval started');
+  return typingInterval;
 }

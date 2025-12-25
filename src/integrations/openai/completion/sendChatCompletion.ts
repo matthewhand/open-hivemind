@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
 import openaiConfig from '@config/openaiConfig';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendChatCompletion');
@@ -40,15 +40,15 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
     
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('OpenAI chat completion error:', hivemindError);
+      console.error('OpenAI chat completion error:', hivemindError);
     }
     
     throw ErrorUtils.createError(
-        `Failed to generate chat completion: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'OPENAI_CHAT_COMPLETION_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error }
+      `Failed to generate chat completion: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'OPENAI_CHAT_COMPLETION_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error },
     );
   }
 }

@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
-import { isResponseProfileOverrideKey, RESPONSE_PROFILE_OVERRIDE_KEYS } from '@config/responseProfiles';
+import type { RESPONSE_PROFILE_OVERRIDE_KEYS } from '@config/responseProfiles';
+import { isResponseProfileOverrideKey } from '@config/responseProfiles';
 
 const debug = Debug('app:responseProfile');
 
@@ -26,7 +27,7 @@ export function getResponseProfileName(botConfig?: Record<string, any>): string 
 
 export function getResponseProfileOverrides(botConfig?: Record<string, any>): ResponseProfileOverrides | undefined {
   const profileName = getResponseProfileName(botConfig);
-  if (!profileName) return undefined;
+  if (!profileName) {return undefined;}
 
   const profilesRaw = messageConfig.get('MESSAGE_RESPONSE_PROFILES');
   if (!profilesRaw || typeof profilesRaw !== 'object') {
@@ -46,7 +47,7 @@ export function getResponseProfileOverrides(botConfig?: Record<string, any>): Re
 
     const filtered: ResponseProfileOverrides = {};
     for (const [key, value] of Object.entries(overrides as Record<string, unknown>)) {
-      if (!isResponseProfileOverrideKey(key)) continue;
+      if (!isResponseProfileOverrideKey(key)) {continue;}
       if (typeof value === 'number' || typeof value === 'boolean') {
         filtered[key] = value;
       }

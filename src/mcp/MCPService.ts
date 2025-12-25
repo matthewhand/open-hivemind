@@ -46,13 +46,13 @@ export class MCPService {
       // Create a new client for this server
       const client = new Client({
         name: 'Open-Hivemind',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       // Connect to the server
       await client.connect({
         url: config.serverUrl,
-        apiKey: config.apiKey
+        apiKey: config.apiKey,
       });
       
       // Store the client
@@ -64,7 +64,7 @@ export class MCPService {
       // Add server name to each tool for identification
       const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
         ...tool,
-        serverName: config.name
+        serverName: config.name,
       }));
       
       // Store tools
@@ -135,7 +135,7 @@ export class MCPService {
       forumId?: string;
       forumOwnerId?: string;
       userId?: string;
-    }
+    },
   ): Promise<any> {
     try {
       if (context?.botName) {
@@ -150,9 +150,9 @@ export class MCPService {
       debug(`Executing tool ${toolName} on server ${serverName}`);
       const result = await client.callTool({
         name: toolName,
-        arguments: arguments_
+        arguments: arguments_,
       });
-      debug(`Tool execution result:`, result);
+      debug('Tool execution result:', result);
       
       return result;
     } catch (error) {

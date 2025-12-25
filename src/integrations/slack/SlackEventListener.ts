@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { SlackService } from './SlackService';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { extractSlackMetadata } from './slackMetadata';
@@ -30,7 +30,7 @@ export class SlackEventListener {
             'No LLM providers available',
             'configuration' as any,
             'SLACK_NO_LLM_PROVIDERS',
-            500
+            500,
           );
         }
         const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);
@@ -66,12 +66,12 @@ export class SlackEventListener {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Error handling event:`, {
+      debug('Error handling event:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        eventType: event?.type
+        eventType: event?.type,
       });
       throw hivemindError;
     }

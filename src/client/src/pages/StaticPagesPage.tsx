@@ -11,22 +11,22 @@ const StaticPagesPage: React.FC = () => {
       description: 'Beautiful landing page with enhanced UI and animations',
       icon: <HomeIcon className="w-10 h-10" />,
       url: '/enhanced-homepage.html',
-      color: 'primary'
+      color: 'primary',
     },
     {
       title: 'Loading Page',
       description: 'Elegant loading screen with progress indicators',
       icon: <ClockIcon className="w-10 h-10" />,
       url: '/loading.html',
-      color: 'secondary'
+      color: 'secondary',
     },
     {
       title: 'Screensaver',
       description: 'Interactive screensaver display for idle states',
       icon: <ComputerDesktopIcon className="w-10 h-10" />,
       url: '/screensaver.html',
-      color: 'info'
-    }
+      color: 'info',
+    },
   ];
 
   const handleOpenPage = (url: string) => {

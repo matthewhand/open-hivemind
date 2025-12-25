@@ -345,13 +345,13 @@ export function isOpenAIError(response: OpenAIResponse): response is OpenAIError
 }
 
 export function isChatCompletionResponse(response: OpenAIResponse): response is OpenAIChatCompletionResponse {
- return 'object' in response && response.object === 'chat.completion';
+  return 'object' in response && response.object === 'chat.completion';
 }
 
 export function isModelsListResponse(response: OpenAIResponse): response is OpenAIModelsListResponse {
- return 'object' in response && response.object === 'list' && 'data' in response && Array.isArray(response.data) && response.data.length > 0 && 'id' in response.data[0];
+  return 'object' in response && response.object === 'list' && 'data' in response && Array.isArray(response.data) && response.data.length > 0 && 'id' in response.data[0];
 }
 
 export function isCompletionResponse(response: OpenAIResponse): response is OpenAICompletionResponse {
- return 'object' in response && response.object === 'text_completion';
+  return 'object' in response && response.object === 'text_completion';
 }

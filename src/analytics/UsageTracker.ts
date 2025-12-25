@@ -1,4 +1,4 @@
-import { AnalyticsCollector, AnalyticsEvent } from './AnalyticsCollector';
+import type { AnalyticsCollector, AnalyticsEvent } from './AnalyticsCollector';
 
 export interface UsageMetrics {
   dailyActiveUsers: number;
@@ -87,7 +87,7 @@ export class UsageTracker {
         averageSessionDuration: 0,
         preferredPages: [],
         featuresUsed: [],
-        isReturning: false
+        isReturning: false,
       };
 
       this.userActivities.set(userId, userActivity);
@@ -158,7 +158,7 @@ export class UsageTracker {
       metrics.featureUsage[featureName] = {
         users: 0,
         sessions: 0,
-        frequency: 0
+        frequency: 0,
       };
     }
 
@@ -186,14 +186,14 @@ export class UsageTracker {
       userRetention: {
         day1: 0,
         day7: 0,
-        day30: 0
+        day30: 0,
       },
       featureUsage: {},
       performanceMetrics: {
         averageLoadTime: 0,
         errorRate: 0,
-        apiResponseTime: 0
-      }
+        apiResponseTime: 0,
+      },
     };
   }
 
@@ -213,7 +213,7 @@ export class UsageTracker {
       now.getFullYear(),
       now.getMonth(),
       now.getDate() + 1, // Tomorrow
-      0, 0, 0, 0
+      0, 0, 0, 0,
     );
     const msToMidnight = night.getTime() - now.getTime();
 
@@ -231,7 +231,7 @@ export class UsageTracker {
       // Calculate daily active users
       const todayEvents = this.analytics.getEvents({
         since: `${today}T00:00:00.000Z`,
-        until: `${today}T23:59:59.999Z`
+        until: `${today}T23:59:59.999Z`,
       });
 
       const uniqueUsers = new Set(todayEvents.map(e => e.userId).filter(Boolean));
@@ -252,7 +252,7 @@ export class UsageTracker {
       // Calculate page views and session metrics
       const todaySessions = this.analytics.getSessions({
         since: `${today}T00:00:00.000Z`,
-        until: `${today}T23:59:59.999Z`
+        until: `${today}T23:59:59.999Z`,
       });
 
       metrics.totalPageViews = todaySessions.reduce((sum, s) => sum + s.pageViews, 0);
@@ -282,7 +282,7 @@ export class UsageTracker {
         .map(([path, views]) => ({
           path,
           views,
-          percentage: totalPageViews > 0 ? (views / totalPageViews) * 100 : 0
+          percentage: totalPageViews > 0 ? (views / totalPageViews) * 100 : 0,
         }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
@@ -334,7 +334,7 @@ export class UsageTracker {
     const oldUsers = new Set(
       this.analytics.getEvents({ since: day30Ago, until: new Date(day30Ago).toISOString() })
         .map(e => e.userId)
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     if (oldUsers.size === 0) {
@@ -345,25 +345,25 @@ export class UsageTracker {
     const day1Return = new Set(
       this.analytics.getEvents({ since: day1Ago })
         .map(e => e.userId)
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     const day7Return = new Set(
       this.analytics.getEvents({ since: day7Ago })
         .map(e => e.userId)
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     const day30Return = new Set(
       this.analytics.getEvents({ since: day30Ago })
         .map(e => e.userId)
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     return {
       day1: oldUsers.size > 0 ? (day1Return.size / oldUsers.size) * 100 : 0,
       day7: oldUsers.size > 0 ? (day7Return.size / oldUsers.size) * 100 : 0,
-      day30: oldUsers.size > 0 ? (day30Return.size / oldUsers.size) * 100 : 0
+      day30: oldUsers.size > 0 ? (day30Return.size / oldUsers.size) * 100 : 0,
     };
   }
 
@@ -426,7 +426,7 @@ export class UsageTracker {
         .map(([path, views]) => ({
           path,
           views,
-          percentage: totalPageViews > 0 ? (views / totalPageViews) * 100 : 0
+          percentage: totalPageViews > 0 ? (views / totalPageViews) * 100 : 0,
         }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
@@ -509,7 +509,7 @@ export class UsageTracker {
           features.set(featureName, {
             users: new Set(),
             sessions: new Set(),
-            frequency: 0
+            frequency: 0,
           });
         }
 
@@ -527,7 +527,7 @@ export class UsageTracker {
       users: data.users.size,
       sessions: data.sessions.size,
       frequency: data.frequency,
-      adoption: 0 // Will be calculated below
+      adoption: 0, // Will be calculated below
     }));
 
     // Calculate adoption rates
@@ -544,7 +544,7 @@ export class UsageTracker {
     return {
       features: featureArray,
       mostPopular: featureArray[0]?.name || 'N/A',
-      leastPopular: featureArray[featureArray.length - 1]?.name || 'N/A'
+      leastPopular: featureArray[featureArray.length - 1]?.name || 'N/A',
     };
   }
 
@@ -554,7 +554,7 @@ export class UsageTracker {
       userActivities: Array.from(this.userActivities.values()),
       dailyMetrics: Array.from(this.dailyMetrics.entries()).map(([date, metrics]) => ({ date, metrics })),
       currentMetrics: await this.getUsageMetrics(),
-      featureReport: await this.getFeatureUsageReport()
+      featureReport: await this.getFeatureUsageReport(),
     };
 
     return JSON.stringify(usageData, null, 2);

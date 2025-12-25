@@ -99,8 +99,8 @@ export class AnomalyDetectionService extends EventEmitter {
             anomalyId: anomaly.id,
             zScore: anomaly.zScore,
             value: anomaly.value,
-            expected: anomaly.expectedMean
-          }
+            expected: anomaly.expectedMean,
+          },
         };
         wsService.recordAlert(alert);
 
@@ -125,15 +125,15 @@ export class AnomalyDetectionService extends EventEmitter {
     value: number,
     mean: number,
     stdDev: number,
-    zScore: number
+    zScore: number,
   ): Anomaly {
     const threshold = this.config.zThreshold;
     let severity: 'low' | 'medium' | 'high' | 'critical';
 
-    if (zScore > 5) severity = 'critical';
-    else if (zScore > 4) severity = 'high';
-    else if (zScore > 3) severity = 'medium';
-    else severity = 'low';
+    if (zScore > 5) {severity = 'critical';}
+    else if (zScore > 4) {severity = 'high';}
+    else if (zScore > 3) {severity = 'medium';}
+    else {severity = 'low';}
 
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 

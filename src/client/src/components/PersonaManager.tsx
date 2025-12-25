@@ -12,7 +12,7 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  UserIcon
+  UserIcon,
 } from '@heroicons/react/24/outline';
 
 interface Persona {
@@ -82,13 +82,13 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to create persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleEditPersona = async () => {
-    if (!selectedPersona) return;
+    if (!selectedPersona) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${selectedPersona.key}`, {
@@ -115,13 +115,13 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to update persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleDeletePersona = async (personaKey: string) => {
-    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) return;
+    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${personaKey}`, {
@@ -138,7 +138,7 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to delete persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -166,7 +166,7 @@ const PersonaManager: React.FC = () => {
     setFormData({
       ...formData,
       name,
-      key: formData.key || generateKey(name)
+      key: formData.key || generateKey(name),
     });
   };
 

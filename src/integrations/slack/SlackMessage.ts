@@ -118,7 +118,7 @@ export default class SlackMessage extends IMessage {
   }
 
   mentionsUsers(userId: string): boolean {
-    if (!userId) return false;
+    if (!userId) {return false;}
     return this.mentions.includes(userId);
   }
 
@@ -147,14 +147,14 @@ export default class SlackMessage extends IMessage {
 
   private resolveIsBot(data: SlackMessageData): boolean {
     // subtype bot_message, presence of bot_id, or explicit flag
-    if (data?.subtype === 'bot_message') return true;
-    if (data?.bot_id) return true;
-    if (data?.message?.subtype === 'bot_message') return true;
+    if (data?.subtype === 'bot_message') {return true;}
+    if (data?.bot_id) {return true;}
+    if (data?.message?.subtype === 'bot_message') {return true;}
     return false;
   }
 
   private extractMentions(text: string): string[] {
-    if (!text) return [];
+    if (!text) {return [];}
     // Matches <@U123ABC456> or <@W123...> (Workspace apps may use W-prefixed IDs)
     const regex = /<@([UW][A-Z0-9]+)>/g;
     const ids = new Set<string>();
@@ -167,12 +167,12 @@ export default class SlackMessage extends IMessage {
 
   private resolveTimestamp(data: SlackMessageData): Date | undefined {
     const ts = data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
-    if (!ts || typeof ts !== 'string') return;
+    if (!ts || typeof ts !== 'string') {return;}
     // Slack ts "seconds.millis"
     const [secStr, fracStr] = ts.split('.');
     const sec = Number(secStr);
     const ms = Number((fracStr || '0').padEnd(3, '0').slice(0, 3));
-    if (!Number.isFinite(sec) || !Number.isFinite(ms)) return;
+    if (!Number.isFinite(sec) || !Number.isFinite(ms)) {return;}
     return new Date(sec * 1000 + ms);
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
 import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaTest, FaDownload, FaUpload, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory } from 'react-icons/fa';
-import { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../../types/mcp';
+import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
 
@@ -55,8 +55,8 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         status: providerStatuses[provider.id] || {
           id: provider.id,
           status: 'stopped',
-          lastCheck: new Date()
-        }
+          lastCheck: new Date(),
+        },
       }));
 
       setProviders(providersWithStatus);
@@ -89,7 +89,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const handleProviderTestCompleted = (event: any) => {
     setTestResults(prev => ({
       ...prev,
-      [event.providerId]: event.data
+      [event.providerId]: event.data,
     }));
     loadProviders();
   };
@@ -121,7 +121,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const handleStartProvider = async (providerId: string) => {
     try {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isStarting: true } : p
+        p.id === providerId ? { ...p, isStarting: true } : p,
       ));
 
       await manager.startProvider(providerId);
@@ -131,7 +131,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       alert('Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isStarting: false } : p
+        p.id === providerId ? { ...p, isStarting: false } : p,
       ));
     }
   };
@@ -139,7 +139,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const handleStopProvider = async (providerId: string) => {
     try {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isStopping: true } : p
+        p.id === providerId ? { ...p, isStopping: true } : p,
       ));
 
       await manager.stopProvider(providerId);
@@ -149,7 +149,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       alert('Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isStopping: false } : p
+        p.id === providerId ? { ...p, isStopping: false } : p,
       ));
     }
   };
@@ -157,20 +157,20 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const handleTestProvider = async (providerId: string) => {
     try {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isTesting: true } : p
+        p.id === providerId ? { ...p, isTesting: true } : p,
       ));
 
       const result = await manager.testProvider(providerId);
       setTestResults(prev => ({
         ...prev,
-        [providerId]: result
+        [providerId]: result,
       }));
     } catch (error) {
       console.error('Failed to test provider:', error);
       alert('Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
-        p.id === providerId ? { ...p, isTesting: false } : p
+        p.id === providerId ? { ...p, isTesting: false } : p,
       ));
     }
   };
@@ -195,7 +195,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
   const handleImportProviders = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {return;}
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -214,23 +214,23 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'success';
-      case 'stopped': return 'neutral';
-      case 'error': return 'error';
-      case 'starting': return 'warning';
-      case 'stopping': return 'warning';
-      default: return 'neutral';
+    case 'running': return 'success';
+    case 'stopped': return 'neutral';
+    case 'error': return 'error';
+    case 'starting': return 'warning';
+    case 'stopping': return 'warning';
+    default: return 'neutral';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'running': return <FaPlay className="w-3 h-3" />;
-      case 'stopped': return <FaStop className="w-3 h-3" />;
-      case 'error': return <FaExclamationTriangle className="w-3 h-3" />;
-      case 'starting':
-      case 'stopping': return <FaCog className="w-3 h-3 animate-spin" />;
-      default: return <FaCog className="w-3 h-3" />;
+    case 'running': return <FaPlay className="w-3 h-3" />;
+    case 'stopped': return <FaStop className="w-3 h-3" />;
+    case 'error': return <FaExclamationTriangle className="w-3 h-3" />;
+    case 'starting':
+    case 'stopping': return <FaCog className="w-3 h-3 animate-spin" />;
+    default: return <FaCog className="w-3 h-3" />;
     }
   };
 

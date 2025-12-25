@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
 import openWebUIConfig from './openWebUIConfig';
@@ -18,7 +18,7 @@ const debug = Debug('app:runInference');
 export async function generateChatCompletion(
   userMessage: string,
   historyMessages: IMessage[],
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
 ): Promise<{ text: string }> {
   const { apiUrl } = openWebUIConfig.getProperties();
 

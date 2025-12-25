@@ -312,7 +312,7 @@ class ApiService {
     };
     return this.request('/api/bots', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
   }
 
@@ -326,14 +326,14 @@ class ApiService {
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/api/bots/${botId}`, {
       method: 'PUT',
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     });
   }
 
   async cloneBot(name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/api/bots/${name}/clone`, {
       method: 'POST',
-      body: JSON.stringify({ newName })
+      body: JSON.stringify({ newName }),
     });
   }
 
@@ -353,20 +353,20 @@ class ApiService {
   async createPersona(data: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>): Promise<Persona> {
     return this.request<Persona>('/api/personas', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 
   async updatePersona(id: string, data: Partial<Persona>): Promise<Persona> {
     return this.request<Persona>(`/api/personas/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 
   async deletePersona(id: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/api/personas/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -382,7 +382,7 @@ class ApiService {
   async saveSecureConfig(name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
     return this.request('/api/secure-configs', {
       method: 'POST',
-      body: JSON.stringify({ name, data, encryptSensitive })
+      body: JSON.stringify({ name, data, encryptSensitive }),
     });
   }
 
@@ -397,7 +397,7 @@ class ApiService {
   async restoreSecureConfigs(backupFile: string): Promise<{ success: boolean; message: string }> {
     return this.request('/api/secure-configs/restore', {
       method: 'POST',
-      body: JSON.stringify({ backupFile })
+      body: JSON.stringify({ backupFile }),
     });
   }
 
@@ -419,7 +419,7 @@ class ApiService {
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) query.append(key, value);
+      if (value) {query.append(key, value);}
     });
     const search = query.toString();
     const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
@@ -533,7 +533,7 @@ class ApiService {
   }> {
     return this.request('/health/api-endpoints', {
       method: 'POST',
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
     });
   }
 
@@ -570,7 +570,7 @@ class ApiService {
   }> {
     return this.request(`/health/api-endpoints/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
     });
   }
 
