@@ -79,7 +79,7 @@ docker pull matthewhand/open-hivemind:latest
 # run with your environment file
 docker run --rm \
   --env-file .env \
-  -p 3000:3000 \
+  -p 3028:3028 \
   matthewhand/open-hivemind:latest
 ```
 Compose users can keep using `docker-compose.yml`; set the service image to

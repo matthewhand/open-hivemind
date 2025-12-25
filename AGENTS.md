@@ -1,102 +1,43 @@
 # Open-Hivemind Agent Architecture
 
 ## Overview
-Open-Hivemind implements a revolutionary multi-agent architecture where each bot instance operates as a neuron in a unified digital consciousness. See [PACKAGE.md](PACKAGE.md) for technical specifications.
+Open-Hivemind is a multi-agent bot framework; see [PACKAGE.md](PACKAGE.md) for specs.
 
 ## Multi-Agent Modes
-
-### Solo Mode
-- Single bot token: `DISCORD_BOT_TOKEN=token1`
-- Simple deployment for small servers
-
-### Swarm Mode  
-- Multiple tokens: `DISCORD_BOT_TOKEN=token1,token2,token3`
-- Auto-numbered instances: "BotName #1", "BotName #2", etc.
-- Coordinated responses across instances
+- **Solo:** `DISCORD_BOT_TOKEN=token1`
+- **Swarm:** `DISCORD_BOT_TOKEN=token1,token2,token3` (auto-numbered instances like `Bot1`, `Bot2`, or `Discord Bot N` for auto-created providers)
 
 ## Agent Configuration
+- **Personas & system prompts:** Managed via WebUI or `config/personas/`
+- **MCP servers:** Tool discovery + execution across multiple servers
+- **MCP tool guards:** Owner-only or allowlist-based access
 
-### Personas and System Instructions
-Agents can be configured with different personas that define their behavior and personality:
-- **Personas**: Predefined personality templates (e.g., Developer Assistant, Support Agent)
-- **System Instructions**: Custom system prompts that override default behavior
-- Managed through the WebUI admin panel or configuration files
+## Coordination & Identity
+- **Sender identity:** Display name (no hardcoded `*AgentName*:` prefix in message text)
+- **History:** Shared per-channel history (default 30; Discord hard-caps at 10 by default)
+- **Coordination:** In-process only (no cross-process sync by default)
+- **LLM access:** Unified provider access across agents
 
-### MCP Server Integration
-Agents can connect to Model Context Protocol (MCP) servers to discover and use external tools:
-- **Tool Discovery**: Automatically discover tools available on connected MCP servers
-- **Tool Execution**: Execute tools from MCP servers with proper authentication
-- **Multi-server Support**: Connect to multiple MCP servers simultaneously
-- Managed through the WebUI admin panel
-
-### MCP Tool Usage Guards
-Control who can use MCP tools through configurable guards:
-- **Owner-based**: Only the forum/channel owner can use MCP tools
-- **Custom User List**: Specific user IDs can use MCP tools
-- **Flexible Configuration**: Enable/disable guards per agent
-
-## Agent Coordination
-
-### Unified Voice
-All agents respond with consistent naming: `*AgentName*: message`
-
-### Context Sharing
-- Shared message history (10 messages per channel)
-- Cross-instance state synchronization
-- Unified LLM provider access
-
-### Instance Management
+## Instance Management
 - Automatic token validation on startup
 - Per-instance connection handling
 - Graceful error recovery
 
-## Configuration
-Agents inherit personality from:
-- `MESSAGE_USERNAME_OVERRIDE` - Base agent name
-- `config/personas/` - Personality templates
-- Environment-specific behavior tuning
+## Configuration Sources
+- Personas + system prompts (WebUI / `config/personas/`)
+- `MESSAGE_USERNAME_OVERRIDE` affects display name only
+- Environment-specific tuning
 
 ## Platform Support
-- **Discord**: Full multi-instance support
-- **Slack**: Bot management with Socket Mode
-- **Mattermost**: Experimental REST integration
+- **Discord:** Multi-instance support
+- **Slack:** Socket Mode supported
+- **Mattermost:** Experimental REST integration
 
-## WebUI Features and Unified Server Architecture
-
-The WebUI provides comprehensive management capabilities:
-- **Agent Configuration**: Configure LLM providers, messenger providers, personas
-- **Persona Management**: Create, edit, and delete personas
-- **MCP Server Management**: Connect to and manage MCP servers
-- **Tool Usage Guards**: Configure access controls for MCP tools
-- **Real-time Status**: Monitor agent status and connections
-- **Env Override Awareness**: Locked fields clearly indicate environment-variable ownership with redacted previews
-- **OpenAPI Export**: Download JSON/YAML specs for all WebUI endpoints via `/webui/api/openapi`
-
-## Unified Server Architecture
-
-The application uses a unified server architecture where both the frontend and backend are served from a single port:
-- The backend Express server serves the compiled frontend static files
-- This eliminates CORS issues and simplifies deployment
-- The `dev` script builds the frontend and starts the unified backend server
-- The `build:frontend` command compiles the React/Vite application
-- The backend's `resolveFrontendDistPath` function determines the correct path for serving static assets
-- This design ensures a consistent development and production experience
-
-## WebUI Features
-The WebUI provides comprehensive management capabilities:
-- **Agent Configuration**: Configure LLM providers, messenger providers, personas
-- **Persona Management**: Create, edit, and delete personas
-- **MCP Server Management**: Connect to and manage MCP servers
-- **Tool Usage Guards**: Configure access controls for MCP tools
-- **Real-time Status**: Monitor agent status and connections
-- **Env Override Awareness**: Locked fields clearly indicate environment-variable ownership with redacted previews
-- **OpenAPI Export**: Download JSON/YAML specs for all WebUI endpoints via `/webui/api/openapi`
-
-For implementation details, see the technical documentation in [PACKAGE.md](PACKAGE.md).
+## WebUI + Unified Server
+- **WebUI:** Configure providers, personas, MCP servers, tool guards, and view status; OpenAPI export at `/webui/api/openapi`
+- **Unified server:** Backend serves the compiled frontend on one port
+- **Dev/build:** `dev` starts the backend; `build:frontend` compiles the React/Vite app
+- **Static serving:** `resolveFrontendDistPath` selects the frontend dist directory
 
 ## Development Roadmap
-See [TODO.md](TODO.md) for upcoming features including:
-- Enhanced WebUI configuration system
-- Real-time agent monitoring
-- Dynamic configuration management
-- Enterprise multi-environment support
+See [TODO.md](TODO.md) for upcoming features.

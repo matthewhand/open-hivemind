@@ -22,6 +22,7 @@ config/test/providers/instances.json
 
 # Configuration files with sensitive data
 config/user/
+config/providers/
 .env.real
 *.config.json
 *credentials*
