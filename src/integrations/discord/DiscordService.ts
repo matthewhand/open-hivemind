@@ -6,6 +6,7 @@ import DiscordMessage from './DiscordMessage';
 import type { IMessage } from '../../message/interfaces/IMessage';
 import type { IMessengerService } from '../../message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import { UserConfigStore } from '../../config/UserConfigStore';
 import {
   ValidationError,
   ConfigurationError,
@@ -125,6 +126,7 @@ export const Discord = {
     private loadBotsFromConfig(): void {
       const configManager = BotConfigurationManager.getInstance();
       const providerManager = ProviderConfigManager.getInstance();
+      const userConfigStore = UserConfigStore.getInstance();
 
       const botConfigs = configManager.getDiscordBotConfigs();
       const providers = providerManager.getAllProviders('message').filter(p => p.type === 'discord' && p.enabled);
@@ -150,6 +152,12 @@ export const Discord = {
       if (botConfigs.length > 0) {
         // Mode A: Logical Bots Defined (Match to Providers)
         botConfigs.forEach(botConfig => {
+          // Check if bot is disabled in user config
+          if (userConfigStore.isBotDisabled(botConfig.name)) {
+            log(`Bot ${botConfig.name} is disabled in user config, skipping initialization.`);
+            return;
+          }
+
           // Find matching provider by ID, or fallback to first/default
           let provider = providers.find(p => p.id === botConfig.messageProviderId);
           if (!provider) {
@@ -176,6 +184,13 @@ export const Discord = {
         providers.forEach((provider, index) => {
           if (provider.config.token) {
             const name = provider.name || `Discord Bot ${index + 1}`;
+
+            // Check if bot is disabled in user config
+            if (userConfigStore.isBotDisabled(name)) {
+              log(`Bot ${name} is disabled in user config, skipping initialization.`);
+              return;
+            }
+
             // Create a dummy bot config
             const dummyConfig = {
               name,
