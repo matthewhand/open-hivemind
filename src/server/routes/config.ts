@@ -468,8 +468,13 @@ router.get('/', (req, res) => {
     const userConfigStore = UserConfigStore.getInstance();
 
     // Redact sensitive information
+    // Bots default to active/connected unless explicitly disabled via config
     const sanitizedBots = bots.map(bot => ({
       ...bot,
+      // Default status to 'active' if not explicitly set to something else
+      status: bot.status || 'active',
+      // Default connected to true - bots are assumed running unless disabled
+      connected: bot.connected !== false,
       discord: bot.discord ? {
         ...bot.discord,
         token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || ''),

@@ -65,7 +65,7 @@ const BotsPage: React.FC = () => {
         fetch(`${API_BASE}/personas`),
       ]);
 
-      if (!configResponse.ok) {throw new Error('Failed to fetch bot config');}
+      if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
       const configData = await configResponse.json();
       setBots(configData.bots || []);
 
@@ -126,8 +126,8 @@ const BotsPage: React.FC = () => {
       // API expects { provider: ..., llmProvider: ... }
 
       const payload: any = {};
-      if (field === 'messageProvider') {payload.provider = value;}
-      if (field === 'llmProvider') {payload.llmProvider = value;}
+      if (field === 'messageProvider') { payload.provider = value; }
+      if (field === 'llmProvider') { payload.llmProvider = value; }
 
       const res = await fetch(`${API_BASE}/bots/${bot.id}`, {
         method: 'PUT',
@@ -135,7 +135,7 @@ const BotsPage: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {throw new Error('Failed to update bot configuration');}
+      if (!res.ok) { throw new Error('Failed to update bot configuration'); }
 
       await fetchData();
     } catch (err: any) {
@@ -147,7 +147,7 @@ const BotsPage: React.FC = () => {
 
 
   const handleCreateBot = async () => {
-    if (!canCreateBot) {return;}
+    if (!canCreateBot) { return; }
 
     try {
       setActionLoading('create');
@@ -206,7 +206,7 @@ const BotsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteModal.bot) {return;}
+    if (!deleteModal.bot) { return; }
 
     try {
       setActionLoading(deleteModal.bot.id);
@@ -283,8 +283,8 @@ const BotsPage: React.FC = () => {
   };
 
   const redact = (str: string) => {
-    if (!str) {return '';}
-    if (str.length <= 4) {return '****';}
+    if (!str) { return ''; }
+    if (str.length <= 4) { return '****'; }
     return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
   };
 
@@ -364,7 +364,7 @@ const BotsPage: React.FC = () => {
                   <div className="collapse-title flex items-center justify-between pr-12 py-4">
                     <div className="flex items-center gap-4">
                       <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content w-10 rounded-full">
+                        <div className="bg-primary text-primary-content w-10 rounded-full flex items-center justify-center">
                           <Bot className="w-6 h-6" />
                         </div>
                       </div>
@@ -502,7 +502,7 @@ const BotsPage: React.FC = () => {
                               <li>
                                 <a onClick={() => {
                                   const newP = prompt('Enter new persona name:');
-                                  if (newP) {handleUpdatePersona(bot, newP);}
+                                  if (newP) { handleUpdatePersona(bot, newP); }
                                 }}>
                                   <Plus className="w-3 h-3" /> New Persona
                                 </a>
@@ -745,7 +745,7 @@ const BotsPage: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content w-16 rounded-full">
+                <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
                   <Bot className="w-8 h-8" />
                 </div>
               </div>

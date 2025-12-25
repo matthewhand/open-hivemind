@@ -32,6 +32,7 @@ import secureConfigRouter from '@src/server/routes/secureConfig';
 import authRouter from '@src/server/routes/auth';
 import adminApiRouter from '@src/server/routes/admin';
 import integrationsRouter from '@src/server/routes/integrations';
+import personasRouter from '@src/server/routes/personas';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { ipWhitelist } from '@src/server/middleware/security';
@@ -247,6 +248,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/openapi', openapiRouter);
+app.use('/api/personas', personasRouter);
 
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
