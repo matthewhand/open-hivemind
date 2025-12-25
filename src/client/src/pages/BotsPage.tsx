@@ -416,7 +416,7 @@ const BotsPage: React.FC = () => {
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
                               {bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
+                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('message').map(opt => (
                                 <li key={opt}>
                                   <a onClick={() => handleUpdateConfig(bot, 'messageProvider', opt)} className={bot.provider === opt ? 'active' : ''}>
@@ -448,7 +448,7 @@ const BotsPage: React.FC = () => {
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
                               {bot.llmProvider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
+                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('llm').map(opt => (
                                 <li key={opt}>
                                   <a onClick={() => handleUpdateConfig(bot, 'llmProvider', opt)} className={bot.llmProvider === opt ? 'active' : ''}>
@@ -490,7 +490,7 @@ const BotsPage: React.FC = () => {
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
                               {bot.persona || 'default'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
+                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {Array.from(new Set(['default', ...bots.map(b => b.persona).filter(Boolean) as string[]])).map(p => (
                                 <li key={p}>
                                   <a onClick={() => handleUpdatePersona(bot, p)} className={bot.persona === p ? 'active' : ''}>

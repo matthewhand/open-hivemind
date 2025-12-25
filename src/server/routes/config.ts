@@ -368,10 +368,22 @@ router.get('/global', (req, res) => {
 // PUT /api/config/global - Update global configuration
 router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
-    const { configName, updates } = req.body;
+    const { configName, updates, ...directUpdates } = req.body;
 
+    // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
-      return res.status(400).json({ error: 'configName is required' });
+      const userConfigStore = UserConfigStore.getInstance();
+      // Determine what to save - either 'updates' object or direct fields
+      const settingsToSave = updates || directUpdates;
+
+      // Save general settings to user config
+      await userConfigStore.setGeneralSettings(settingsToSave);
+
+      if (process.env.NODE_ENV !== 'test') {
+        logConfigChange(req as any, 'UPDATE', 'config/general', 'success', 'Updated general settings');
+      }
+
+      return res.json({ success: true, message: 'General settings updated and persisted' });
     }
 
     let config = globalConfigs[configName];

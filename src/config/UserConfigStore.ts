@@ -15,12 +15,17 @@ interface BotDisabledState {
   disabledAt?: string;
 }
 
+interface GeneralSettings {
+  [key: string]: any;  // Flexible key-value store for general settings
+}
+
 export class UserConfigStore {
   private static instance: UserConfigStore;
   private config: {
     toolSettings?: Record<string, ToolConfig>;
     bots?: BotConfiguration[];
     botDisabledStates?: Record<string, BotDisabledState>;
+    generalSettings?: GeneralSettings;
   } = {};
   private configPath: string;
 
@@ -186,6 +191,32 @@ export class UserConfigStore {
     } else {
       this.config.bots.push(botConfig);
     }
+  }
+
+  /**
+   * Get general settings.
+   * @returns The general settings object.
+   */
+  public getGeneralSettings(): GeneralSettings {
+    return this.config.generalSettings || {};
+  }
+
+  /**
+   * Set general settings and persist to config file.
+   * @param settings The settings to merge/save.
+   */
+  public async setGeneralSettings(settings: GeneralSettings): Promise<void> {
+    if (!this.config.generalSettings) {
+      this.config.generalSettings = {};
+    }
+
+    // Merge new settings with existing
+    this.config.generalSettings = {
+      ...this.config.generalSettings,
+      ...settings,
+    };
+
+    await this.saveConfig();
   }
 }
 
