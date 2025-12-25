@@ -538,6 +538,8 @@ export interface ConfigurationValidationResult {
  * Configuration override interface
  */
 export interface BotOverride {
+  /** Whether bot is disabled */
+  disabled?: boolean;
   /** Message provider override */
   messageProvider?: MessageProvider;
   /** LLM provider override */

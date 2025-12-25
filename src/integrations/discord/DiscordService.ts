@@ -154,7 +154,7 @@ export const Discord = {
           let provider = providers.find(p => p.id === botConfig.messageProviderId);
           if (!provider) {
             // Heuristic: If only 1 provider exists, use it.
-            if (providers.length === 1) {provider = providers[0];}
+            if (providers.length === 1) { provider = providers[0]; }
             // Heuristic: If multiple, maybe match by name? Or default?
             // For now, if no ID match and >1 providers, we might skip or default.
             // Defaulting to first is unsafe if they are different identities.
@@ -280,7 +280,7 @@ export const Discord = {
             // Persist resolved Discord client id back into the bot config so downstream
             // reply eligibility (mentions/replies) uses the correct per-instance ID.
             try {
-              if (!bot.config) {bot.config = {};}
+              if (!bot.config) { bot.config = {}; }
               bot.config.BOT_ID = bot.botUserId;
               bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
             } catch { }
@@ -339,7 +339,7 @@ export const Discord = {
     }
 
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
-      if (this.handlerSet) {return;}
+      if (this.handlerSet) { return; }
       this.handlerSet = true;
       this.currentHandler = handler;
 
@@ -350,8 +350,8 @@ export const Discord = {
             const user = (typing as any)?.user;
             const channel = (typing as any)?.channel;
             const channelId = (typing as any)?.channelId ?? channel?.id;
-            if (!channelId || !user) {return;}
-            if (user.bot) {return;}
+            if (!channelId || !user) { return; }
+            if (user.bot) { return; }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
           } catch { }
         });
@@ -359,8 +359,8 @@ export const Discord = {
         bot.client.on('messageCreate', async (message) => {
           try {
             // Defensive guards for malformed events
-            if (!message || !message.author) {return;}
-            if (!message.channelId) {return;}
+            if (!message || !message.author) { return; }
+            if (!message.channelId) { return; }
 
             // Config-based bot message handling
             // Logic moved to centralized handler (shouldReplyToMessage)
@@ -403,9 +403,9 @@ export const Discord = {
     public setInteractionHandler(): void {
       this.bots.forEach((bot) => {
         bot.client.on('interactionCreate', async (interaction) => {
-          if (!interaction.isCommand()) {return;}
+          if (!interaction.isCommand()) { return; }
 
-          if (!interaction.isChatInputCommand()) {return;}
+          if (!interaction.isChatInputCommand()) { return; }
           const commandName = interaction.commandName;
           const subcommand = interaction.options.getSubcommand();
 
@@ -449,16 +449,16 @@ export const Discord = {
             const user = (typing as any)?.user;
             const channel = (typing as any)?.channel;
             const channelId = (typing as any)?.channelId ?? channel?.id;
-            if (!channelId || !user) {return;}
-            if (user.bot) {return;}
+            if (!channelId || !user) { return; }
+            if (user.bot) { return; }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
           } catch { }
         });
 
         client.on('messageCreate', async (message) => {
           try {
-            if (!message || !message.author) {return;}
-            if (!message.channelId) {return;}
+            if (!message || !message.author) { return; }
+            if (!message.channelId) { return; }
 
             // Config-based bot message handling (same as main handler)
             // Logic moved to centralized handler (shouldReplyToMessage)
@@ -754,7 +754,7 @@ export const Discord = {
     public async getChannelTopic(channelId: string): Promise<string | null> {
       try {
         const botInfo = this.bots[0];
-        if (!botInfo) {return null;}
+        if (!botInfo) { return null; }
         const channel = await botInfo.client.channels.fetch(channelId);
         if (channel && 'topic' in channel && typeof (channel as any).topic === 'string') {
           return (channel as any).topic || null;
@@ -943,6 +943,51 @@ export const Discord = {
       Discord.DiscordService.instance = undefined as any;
     }
 
+    /**
+     * Disconnect a specific bot by name
+     * @param botName The name of the bot to disconnect
+     * @returns true if bot was found and disconnected, false otherwise
+     */
+    public async disconnectBot(botName: string): Promise<boolean> {
+      const botIndex = this.bots.findIndex(
+        (b) => b.botUserName === botName || b.config?.name === botName
+      );
+
+      if (botIndex === -1) {
+        log(`disconnectBot: Bot "${botName}" not found`);
+        return false;
+      }
+
+      const bot = this.bots[botIndex];
+      try {
+        await bot.client.destroy();
+        log(`Disconnected bot: ${bot.botUserName}`);
+
+        // Remove from active bots array
+        this.bots.splice(botIndex, 1);
+
+        return true;
+      } catch (error: any) {
+        log(`Error disconnecting bot ${botName}: ${error?.message || error}`);
+        return false;
+      }
+    }
+
+    /**
+     * Check if a bot is currently connected
+     * @param botName The name of the bot to check
+     * @returns true if bot is connected, false otherwise
+     */
+    public isBotConnected(botName: string): boolean {
+      const bot = this.bots.find(
+        (b) => b.botUserName === botName || b.config?.name === botName
+      );
+      if (!bot) return false;
+
+      // Check WebSocket status - 0 = READY
+      return bot.client.ws.status === 0;
+    }
+
 
     /**
      * Get health status for all Discord bot instances
@@ -970,7 +1015,7 @@ export const Discord = {
     public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
       try {
         const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
-        if (!enabled) {return 0;}
+        if (!enabled) { return 0; }
         return channelComputeScore(channelId, metadata);
       } catch (e) {
         log(`scoreChannel error; returning 0: ${e instanceof Error ? e.message : String(e)}`);
@@ -1053,7 +1098,7 @@ export const Discord = {
     }
 
     public async leaveVoiceChannel(channelId: string): Promise<void> {
-      if (!this.voiceManager) {throw new ConfigurationError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT');}
+      if (!this.voiceManager) { throw new ConfigurationError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT'); }
       this.voiceManager.leaveChannel(channelId);
       log(`Left voice channel ${channelId}`);
     }

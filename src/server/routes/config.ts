@@ -129,9 +129,9 @@ function isSensitiveKey(key: string): boolean {
 }
 
 function redactValue(value: unknown): string {
-  if (!value) {return '';}
+  if (!value) { return ''; }
   const str = String(value);
-  if (str.length <= 8) {return '••••••••';}
+  if (str.length <= 8) { return '••••••••'; }
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
@@ -399,16 +399,16 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     // If it's one of the base sources, use its standard file, else use dynamic name
     if (schemaSources[configName] && !createdNew) {
       switch (configName) {
-      case 'message': targetFile = 'providers/message.json'; break;
-      case 'llm': targetFile = 'providers/llm.json'; break;
-      case 'discord': targetFile = 'providers/discord.json'; break;
-      case 'slack': targetFile = 'providers/slack.json'; break;
-      case 'openai': targetFile = 'providers/openai.json'; break;
-      case 'flowise': targetFile = 'providers/flowise.json'; break;
-      case 'mattermost': targetFile = 'providers/mattermost.json'; break;
-      case 'openwebui': targetFile = 'providers/openwebui.json'; break;
-      case 'webhook': targetFile = 'providers/webhook.json'; break;
-      default: targetFile = `providers/${configName}.json`;
+        case 'message': targetFile = 'providers/message.json'; break;
+        case 'llm': targetFile = 'providers/llm.json'; break;
+        case 'discord': targetFile = 'providers/discord.json'; break;
+        case 'slack': targetFile = 'providers/slack.json'; break;
+        case 'openai': targetFile = 'providers/openai.json'; break;
+        case 'flowise': targetFile = 'providers/flowise.json'; break;
+        case 'mattermost': targetFile = 'providers/mattermost.json'; break;
+        case 'openwebui': targetFile = 'providers/openwebui.json'; break;
+        case 'webhook': targetFile = 'providers/webhook.json'; break;
+        default: targetFile = `providers/${configName}.json`;
       }
     } else {
       // Dynamic named config
@@ -468,41 +468,46 @@ router.get('/', (req, res) => {
     const userConfigStore = UserConfigStore.getInstance();
 
     // Redact sensitive information
-    // Bots default to active/connected unless explicitly disabled via config
-    const sanitizedBots = bots.map(bot => ({
-      ...bot,
-      // Default status to 'active' if not explicitly set to something else
-      status: bot.status || 'active',
-      // Default connected to true - bots are assumed running unless disabled
-      connected: bot.connected !== false,
-      discord: bot.discord ? {
-        ...bot.discord,
-        token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || ''),
-      } : undefined,
-      slack: bot.slack ? {
-        ...bot.slack,
-        botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', bot.slack.botToken || ''),
-        appToken: redactSensitiveInfo('SLACK_APP_TOKEN', bot.slack.appToken || ''),
-        signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || ''),
-      } : undefined,
-      openai: bot.openai ? {
-        ...bot.openai,
-        apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || ''),
-      } : undefined,
-      flowise: bot.flowise ? {
-        ...bot.flowise,
-        apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || ''),
-      } : undefined,
-      openwebui: bot.openwebui ? {
-        ...bot.openwebui,
-        apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || ''),
-      } : undefined,
-      openswarm: bot.openswarm ? {
-        ...bot.openswarm,
-        apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || ''),
-      } : undefined,
-      metadata: buildFieldMetadata(bot, userConfigStore),
-    }));
+    // Bots default to active/connected unless explicitly disabled via user config
+    const sanitizedBots = bots.map(bot => {
+      const isDisabled = userConfigStore.isBotDisabled(bot.name);
+      return {
+        ...bot,
+        // Use name as the ID since that's what the bots API expects
+        id: bot.id || bot.name,
+        // If disabled in user config, set status to 'disabled', otherwise 'active'
+        status: isDisabled ? 'disabled' : (bot.status || 'active'),
+        // If disabled, set connected to false
+        connected: isDisabled ? false : (bot.connected !== false),
+        discord: bot.discord ? {
+          ...bot.discord,
+          token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || ''),
+        } : undefined,
+        slack: bot.slack ? {
+          ...bot.slack,
+          botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', bot.slack.botToken || ''),
+          appToken: redactSensitiveInfo('SLACK_APP_TOKEN', bot.slack.appToken || ''),
+          signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || ''),
+        } : undefined,
+        openai: bot.openai ? {
+          ...bot.openai,
+          apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || ''),
+        } : undefined,
+        flowise: bot.flowise ? {
+          ...bot.flowise,
+          apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || ''),
+        } : undefined,
+        openwebui: bot.openwebui ? {
+          ...bot.openwebui,
+          apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || ''),
+        } : undefined,
+        openswarm: bot.openswarm ? {
+          ...bot.openswarm,
+          apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || ''),
+        } : undefined,
+        metadata: buildFieldMetadata(bot, userConfigStore),
+      };
+    });
 
     res.json({
       bots: sanitizedBots,
@@ -588,7 +593,7 @@ router.get('/sources', (req, res) => {
     let bots: any[] = [];
     try {
       const res = (manager as any).getAllBots?.();
-      if (Array.isArray(res)) {bots = res;}
+      if (Array.isArray(res)) { bots = res; }
     } catch {
       bots = [];
     }
@@ -1018,11 +1023,6 @@ router.get('/api/openapi', (req, res) => {
   }
 });
 
-// Catch-all route for debugging
-router.use('*', (req, res) => {
-  console.log('Config router catch-all:', req.method, req.originalUrl);
-  res.status(404).json({ error: 'Route not found in config router' });
-});
 
 function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.getInstance>): Record<string, any> {
   const botName: string = bot?.name || 'unknown';
@@ -1389,7 +1389,7 @@ router.put('/llm-profiles', (req, res) => {
 
     for (const profile of llmProfiles) {
       const error = validateProfile(profile);
-      if (error) {return res.status(400).json({ error });}
+      if (error) { return res.status(400).json({ error }); }
     }
 
     saveLlmProfiles({ llm: llmProfiles });
@@ -1592,6 +1592,12 @@ router.delete('/mcp-server-profiles/:key', (req, res) => {
       code: 'MCP_SERVER_PROFILE_DELETE_ERROR',
     });
   }
+});
+
+// Catch-all route for debugging - MUST BE LAST
+router.use('*', (req, res) => {
+  console.log('Config router catch-all:', req.method, req.originalUrl);
+  res.status(404).json({ error: 'Route not found in config router' });
 });
 
 export default router;

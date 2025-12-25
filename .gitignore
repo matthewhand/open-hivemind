@@ -188,3 +188,6 @@ test-results/
 !docs/webui/**
 !docs/operations/**
 !docs/getting-started/**
+
+# User bot state config
+config/user-config.json

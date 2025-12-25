@@ -1,6 +1,7 @@
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { BotConfig } from '@src/types/config';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 import crypto from 'crypto';
@@ -155,7 +156,8 @@ export class BotManager extends EventEmitter {
       // Add configured bots
       for (const bot of configuredBots) {
         const botInstance: BotInstance = {
-          id: crypto.randomUUID(),
+          // Use bot name as stable ID - random UUIDs break getBot() lookups
+          id: bot.name,
           name: bot.name,
           messageProvider: bot.messageProvider,
           llmProvider: bot.llmProvider,
@@ -408,6 +410,8 @@ export class BotManager extends EventEmitter {
 
   /**
    * Start a bot instance
+  /**
+   * Start a bot instance
    */
   public async startBot(botId: string): Promise<boolean> {
     try {
@@ -416,7 +420,12 @@ export class BotManager extends EventEmitter {
         throw new Error('Bot not found');
       }
 
-      // Update bot status
+      // Persist enabled state to user config file
+      const userConfigStore = UserConfigStore.getInstance();
+      await userConfigStore.setBotDisabled(bot.name, false);
+      debug(`Persisted enabled state for bot: ${bot.name}`);
+
+      // Update bot status in memory
       const updatedBot = { ...bot, isActive: true, lastModified: new Date().toISOString() };
       this.customBots.set(botId, updatedBot);
       this.saveCustomBots();
@@ -448,12 +457,35 @@ export class BotManager extends EventEmitter {
         throw new Error('Bot not found');
       }
 
-      // Update bot status
+      // Persist disabled state to user config file
+      const userConfigStore = UserConfigStore.getInstance();
+      await userConfigStore.setBotDisabled(bot.name, true);
+      debug(`Persisted disabled state for bot: ${bot.name}`);
+
+      // Update bot status in memory
       const updatedBot = { ...bot, isActive: false, lastModified: new Date().toISOString() };
       this.customBots.set(botId, updatedBot);
       this.saveCustomBots();
 
-      // Implement actual bot shutdown logic
+      // Actually disconnect the Discord bot if it's a Discord bot
+      if (bot.messageProvider === 'discord') {
+        try {
+          // Dynamically import to avoid circular dependency issues
+          const { DiscordService } = require('../integrations/discord/DiscordService');
+          const discordService = DiscordService.getInstance();
+          if (discordService && typeof discordService.disconnectBot === 'function') {
+            const disconnected = await discordService.disconnectBot(bot.name);
+            if (disconnected) {
+              debug(`Disconnected Discord bot: ${bot.name}`);
+            } else {
+              debug(`Discord bot ${bot.name} was not found in active connections`);
+            }
+          }
+        } catch (discordError: any) {
+          debug(`Failed to disconnect Discord bot ${bot.name}: ${discordError?.message || discordError}`);
+        }
+      }
+
       // Stop any active connections or services associated with this bot
       const botWithServices = bot as BotInstance & { services?: Array<{ stop?: () => Promise<void> }> };
       if (botWithServices.services && Array.isArray(botWithServices.services)) {
@@ -667,7 +699,7 @@ export class BotManager extends EventEmitter {
   public async startAllConfiguredBots(): Promise<void> {
     try {
       debug('Starting all configured bots...');
-      
+
       const allBots = await Promise.resolve(this.getAllBots());
       const startPromises = allBots.map(async (bot: BotInstance) => {
         try {
@@ -684,12 +716,12 @@ export class BotManager extends EventEmitter {
       });
 
       await Promise.allSettled(startPromises);
-      
+
       const runningBots = this.getRunningBotsCount();
       debug(`Bot startup completed: ${runningBots}/${allBots.length} bots running`);
-      
+
       this.emit('allBotsStarted', { total: allBots.length, running: runningBots });
-      
+
     } catch (error: HivemindError) {
       debug('Error starting all bots:', ErrorUtils.getMessage(error));
       throw error;
@@ -702,7 +734,7 @@ export class BotManager extends EventEmitter {
   public async stopAllConfiguredBots(): Promise<void> {
     try {
       debug('Stopping all bots...');
-      
+
       const allBots = await this.getAllBots();
       const stopPromises = allBots.map(async (bot: BotInstance) => {
         try {
@@ -715,10 +747,10 @@ export class BotManager extends EventEmitter {
       });
 
       await Promise.allSettled(stopPromises);
-      
+
       debug('All bots stopped');
       this.emit('allBotsStopped');
-      
+
     } catch (error: HivemindError) {
       debug('Error stopping all bots:', ErrorUtils.getMessage(error));
       throw error;
@@ -731,7 +763,7 @@ export class BotManager extends EventEmitter {
   public async startBotById(botId: string): Promise<void> {
     try {
       debug(`Starting bot: ${botId}`);
-      
+
       const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
@@ -744,13 +776,13 @@ export class BotManager extends EventEmitter {
 
       // Initialize the bot based on its provider
       await this.initializeBotProvider(bot);
-      
+
       // Mark bot as running (this would be tracked in a runtime state map)
       this.setBotRunningState(botId, true);
-      
+
       debug(`Bot ${bot.name} started successfully`);
       this.emit('botStarted', { botId, name: bot.name });
-      
+
     } catch (error: HivemindError) {
       debug(`Failed to start bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
@@ -764,7 +796,7 @@ export class BotManager extends EventEmitter {
   public async stopBotById(botId: string): Promise<void> {
     try {
       debug(`Stopping bot: ${botId}`);
-      
+
       const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
@@ -777,13 +809,13 @@ export class BotManager extends EventEmitter {
 
       // Shutdown the bot provider
       await this.shutdownBotProvider(bot);
-      
+
       // Mark bot as stopped
       this.setBotRunningState(botId, false);
-      
+
       debug(`Bot ${bot.name} stopped successfully`);
       this.emit('botStopped', { botId, name: bot.name });
-      
+
     } catch (error: HivemindError) {
       debug(`Failed to stop bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
@@ -797,17 +829,17 @@ export class BotManager extends EventEmitter {
   public async restartBot(botId: string): Promise<void> {
     try {
       debug(`Restarting bot: ${botId}`);
-      
+
       await this.stopBotById(botId);
-      
+
       // Small delay to ensure clean shutdown
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       await this.startBotById(botId);
-      
+
       debug(`Bot ${botId} restarted successfully`);
       this.emit('botRestarted', { botId });
-      
+
     } catch (error: HivemindError) {
       debug(`Failed to restart bot ${botId}:`, ErrorUtils.getMessage(error));
       throw error;
@@ -821,22 +853,22 @@ export class BotManager extends EventEmitter {
     try {
       // Get secure configuration
       const secureConfig = await this.secureConfigManager.getConfig(`bot_${bot.id}`);
-      
+
       switch (bot.messageProvider.toLowerCase()) {
-      case 'discord':
-        await this.initializeDiscordBot(bot, secureConfig?.data || {});
-        break;
-      case 'slack':
-        await this.initializeSlackBot(bot, secureConfig?.data || {});
-        break;
-      case 'mattermost':
-        await this.initializeMattermostBot(bot, secureConfig?.data || {});
-        break;
-      case 'telegram':
-        await this.initializeTelegramBot(bot, secureConfig?.data || {});
-        break;
-      default:
-        throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
+        case 'discord':
+          await this.initializeDiscordBot(bot, secureConfig?.data || {});
+          break;
+        case 'slack':
+          await this.initializeSlackBot(bot, secureConfig?.data || {});
+          break;
+        case 'mattermost':
+          await this.initializeMattermostBot(bot, secureConfig?.data || {});
+          break;
+        case 'telegram':
+          await this.initializeTelegramBot(bot, secureConfig?.data || {});
+          break;
+        default:
+          throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
       }
     } catch (error: HivemindError) {
       debug(`Error initializing bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
@@ -850,20 +882,20 @@ export class BotManager extends EventEmitter {
   private async shutdownBotProvider(bot: BotInstance): Promise<void> {
     try {
       switch (bot.messageProvider.toLowerCase()) {
-      case 'discord':
-        await this.shutdownDiscordBot(bot);
-        break;
-      case 'slack':
-        await this.shutdownSlackBot(bot);
-        break;
-      case 'mattermost':
-        await this.shutdownMattermostBot(bot);
-        break;
-      case 'telegram':
-        await this.shutdownTelegramBot(bot);
-        break;
-      default:
-        debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
+        case 'discord':
+          await this.shutdownDiscordBot(bot);
+          break;
+        case 'slack':
+          await this.shutdownSlackBot(bot);
+          break;
+        case 'mattermost':
+          await this.shutdownMattermostBot(bot);
+          break;
+        case 'telegram':
+          await this.shutdownTelegramBot(bot);
+          break;
+        default:
+          debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
       }
     } catch (error: HivemindError) {
       debug(`Error shutting down bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
@@ -1015,7 +1047,7 @@ export class BotManager extends EventEmitter {
   }> {
     const allBots = await this.getAllBots();
     const activeBots = allBots.filter((bot: BotInstance) => bot.isActive);
-    
+
     return {
       totalBots: allBots.length,
       runningBots: this.getRunningBotsCount(),
@@ -1045,7 +1077,7 @@ export class BotManager extends EventEmitter {
           // Perform health checks specific to the bot type
           const isHealthy = await this.checkBotHealth(bot);
           status = isHealthy ? 'healthy' : 'unhealthy';
-          
+
           if (!isHealthy) {
             issues.push('Bot health check failed');
           }
@@ -1074,7 +1106,7 @@ export class BotManager extends EventEmitter {
     try {
       // Basic health check - can be extended per provider
       const secureConfig = await this.secureConfigManager.getConfig(`bot_${bot.id}`);
-      
+
       if (!secureConfig) {
         debug(`No secure config found for bot ${bot.name}`);
         return false;
@@ -1082,16 +1114,16 @@ export class BotManager extends EventEmitter {
 
       // Add provider-specific health checks here
       switch (bot.messageProvider.toLowerCase()) {
-      case 'discord':
-        return this.checkDiscordBotHealth(bot, secureConfig.data);
-      case 'slack':
-        return this.checkSlackBotHealth(bot, secureConfig.data);
-      case 'mattermost':
-        return this.checkMattermostBotHealth(bot, secureConfig.data);
-      case 'telegram':
-        return this.checkTelegramBotHealth(bot, secureConfig.data);
-      default:
-        return true; // Unknown provider, assume healthy
+        case 'discord':
+          return this.checkDiscordBotHealth(bot, secureConfig.data);
+        case 'slack':
+          return this.checkSlackBotHealth(bot, secureConfig.data);
+        case 'mattermost':
+          return this.checkMattermostBotHealth(bot, secureConfig.data);
+        case 'telegram':
+          return this.checkTelegramBotHealth(bot, secureConfig.data);
+        default:
+          return true; // Unknown provider, assume healthy
       }
     } catch (error: HivemindError) {
       debug(`Health check failed for bot ${bot.name}:`, ErrorUtils.getMessage(error));
