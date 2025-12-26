@@ -425,13 +425,13 @@ textarea {
 .textarea,
 .select {
   transition: all 0.2s ease;
-  border: 1px solid hsl(var(--bc) / 0.15);
+  border: 1px solid hsl(var(--bc) / 0.3);
 }
 
 .input:hover,
 .textarea:hover,
 .select:hover {
-  border-color: hsl(var(--bc) / 0.3);
+  border-color: hsl(var(--bc) / 0.5);
 }
 
 .input:focus,
