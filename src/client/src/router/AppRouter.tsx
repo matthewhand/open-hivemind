@@ -197,6 +197,7 @@ const AppRouter: React.FC = () => {
           <Route path="ai/analytics" element={<PredictiveAnalytics />} />
           <Route path="ai/anomalies" element={<AnomalyDetection />} />
           <Route path="ai/chat" element={<NaturalLanguageInterface />} />
+          <Route path="ai/natural-language" element={<NaturalLanguageInterface />} />
           <Route path="ai/training" element={<BotTrainingDashboard />} />
         </Route>
 
