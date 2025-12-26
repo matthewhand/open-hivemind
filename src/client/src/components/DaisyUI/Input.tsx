@@ -61,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className={containerClasses}>
         {prefix && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <span className="text-gray-500 sm:text-sm">{prefix}</span>
+            <span className="text-base-content/60 sm:text-sm">{prefix}</span>
           </div>
         )}
         <input
@@ -72,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         />
         {suffix && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="text-gray-500 sm:text-sm">{suffix}</span>
+            <span className="text-base-content/60 sm:text-sm">{suffix}</span>
           </div>
         )}
         {loading && (

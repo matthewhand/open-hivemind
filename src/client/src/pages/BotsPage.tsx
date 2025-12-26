@@ -349,9 +349,9 @@ const BotsPage: React.FC = () => {
             </div>
           ) : bots.length === 0 ? (
             <div className="text-center py-12">
-              <Bot className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-500">No bots configured</h3>
-              <p className="text-gray-400 mb-4">Create a bot configuration to get started</p>
+              <Bot className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-lg font-medium text-base-content/60">No bots configured</h3>
+              <p className="text-base-content/50 mb-4">Create a bot configuration to get started</p>
               <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Bot
               </button>
@@ -720,7 +720,7 @@ const BotsPage: React.FC = () => {
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
-          <p className="text-sm text-gray-500">This action cannot be undone.</p>
+          <p className="text-sm text-base-content/60">This action cannot be undone.</p>
           <div className="flex justify-end gap-2 mt-6">
             <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
             <button
@@ -751,7 +751,7 @@ const BotsPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold">{previewBot.name}</h3>
-                <p className="text-gray-500">ID: {previewBot.id}</p>
+                <p className="text-base-content/60">ID: {previewBot.id}</p>
                 <div className="mt-2">{getStatusBadge(previewBot.status, previewBot.connected)}</div>
               </div>
             </div>

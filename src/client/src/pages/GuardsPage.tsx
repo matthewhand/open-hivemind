@@ -108,7 +108,7 @@ const GuardsPage: React.FC = () => {
   };
 
   const addUser = () => {
-    if (!newUser.trim()) {return;}
+    if (!newUser.trim()) { return; }
     setAccessConfig({
       ...accessConfig,
       users: [...accessConfig.users, newUser.trim()],
@@ -124,7 +124,7 @@ const GuardsPage: React.FC = () => {
   };
 
   const addIp = () => {
-    if (!newIp.trim()) {return;}
+    if (!newIp.trim()) { return; }
     setAccessConfig({
       ...accessConfig,
       ips: [...accessConfig.ips, newIp.trim()],
@@ -141,11 +141,11 @@ const GuardsPage: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-    case 'access': return 'badge-primary';
-    case 'rate': return 'badge-warning';
-    case 'content': return 'badge-info';
-    case 'safety': return 'badge-error';
-    default: return 'badge-ghost';
+      case 'access': return 'badge-primary';
+      case 'rate': return 'badge-warning';
+      case 'content': return 'badge-info';
+      case 'safety': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
@@ -177,7 +177,7 @@ const GuardsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Guards</h1>
-            <p className="text-gray-500">Security and access control settings</p>
+            <p className="text-base-content/60">Security and access control settings</p>
           </div>
         </div>
         <button onClick={fetchGuards} className="btn btn-ghost gap-2" disabled={loading}>
@@ -229,7 +229,7 @@ const GuardsPage: React.FC = () => {
                           <h3 className="font-semibold">{guard.name}</h3>
                           <span className={`badge badge-sm ${getTypeColor(guard.type)}`}>{guard.type}</span>
                         </div>
-                        <p className="text-sm text-gray-500">{guard.description}</p>
+                        <p className="text-sm text-base-content/60">{guard.description}</p>
                       </div>
                     </div>
                   </div>
@@ -280,7 +280,7 @@ const GuardsPage: React.FC = () => {
                     </span>
                   ))}
                   {accessConfig.users.length === 0 && (
-                    <span className="text-sm text-gray-400">No users added</span>
+                    <span className="text-sm text-base-content/60 italic">No users added (this will allow anyone)</span>
                   )}
                 </div>
               </div>
@@ -309,7 +309,7 @@ const GuardsPage: React.FC = () => {
                     </span>
                   ))}
                   {accessConfig.ips.length === 0 && (
-                    <span className="text-sm text-gray-400">No IPs added</span>
+                    <span className="text-sm text-base-content/50">No IPs added</span>
                   )}
                 </div>
               </div>

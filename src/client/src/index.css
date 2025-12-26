@@ -216,7 +216,7 @@ textarea {
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.15),
     0 8px 10px -6px rgba(0, 0, 0, 0.1),
-    0 0 30px rgba(var(--p) / 0.1);
+    0 0 30px hsl(var(--p) / 0.1);
   border-color: hsl(var(--p) / 0.3);
 }
 
@@ -268,12 +268,15 @@ textarea {
 }
 
 /* ============================================
-   Gradient Button Styles
+   Gradient Button Styles - DISABLED
+   NOTE: These custom styles were overriding DaisyUI defaults
+   and causing visibility issues. Let DaisyUI handle button colors.
    ============================================ */
+/* 
 .btn-primary {
   background: linear-gradient(135deg, hsl(var(--p)) 0%, hsl(var(--pf)) 100%);
   border: none;
-  box-shadow: 0 4px 15px rgba(var(--p) / 0.3);
+  box-shadow: 0 4px 15px hsl(var(--p) / 0.3);
   transition: all 0.2s ease;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -281,26 +284,27 @@ textarea {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 8px 25px rgba(var(--p) / 0.4),
-    0 0 20px rgba(var(--p) / 0.3);
+    0 8px 25px hsl(var(--p) / 0.4),
+    0 0 20px hsl(var(--p) / 0.3);
   filter: brightness(1.1);
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(var(--p) / 0.3);
+  box-shadow: 0 2px 10px hsl(var(--p) / 0.3);
 }
 
 .btn-secondary {
   background: linear-gradient(135deg, hsl(var(--s)) 0%, hsl(var(--sf)) 100%);
-  box-shadow: 0 4px 15px rgba(var(--s) / 0.25);
+  box-shadow: 0 4px 15px hsl(var(--s) / 0.25);
   transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(var(--s) / 0.35);
+  box-shadow: 0 8px 25px hsl(var(--s) / 0.35);
 }
+*/
 
 /* ============================================
    Button Enhancements
@@ -369,7 +373,7 @@ textarea {
 /* Sidebar active state with gradient */
 .menu li>a.active,
 .menu li>.active {
-  background: linear-gradient(90deg, rgba(var(--p) / 0.2) 0%, transparent 100%);
+  background: linear-gradient(90deg, hsl(var(--p) / 0.2) 0%, transparent 100%);
   border-left: 3px solid hsl(var(--p));
 }
 
@@ -436,7 +440,7 @@ textarea {
   transform: translateY(-1px);
   border-color: hsl(var(--p));
   box-shadow:
-    0 0 0 4px rgba(var(--p) / 0.15),
+    0 0 0 4px hsl(var(--p) / 0.15),
     0 4px 12px rgba(0, 0, 0, 0.1);
   outline: none;
 }
@@ -445,19 +449,19 @@ textarea {
    Badge with subtle glow
    ============================================ */
 .badge-primary {
-  box-shadow: 0 0 8px rgba(var(--p) / 0.3);
+  box-shadow: 0 0 8px hsl(var(--p) / 0.3);
 }
 
 .badge-success {
-  box-shadow: 0 0 8px rgba(var(--su) / 0.3);
+  box-shadow: 0 0 8px hsl(var(--su) / 0.3);
 }
 
 .badge-warning {
-  box-shadow: 0 0 8px rgba(var(--wa) / 0.3);
+  box-shadow: 0 0 8px hsl(var(--wa) / 0.3);
 }
 
 .badge-error {
-  box-shadow: 0 0 8px rgba(var(--er) / 0.3);
+  box-shadow: 0 0 8px hsl(var(--er) / 0.3);
 }
 
 /* ============================================

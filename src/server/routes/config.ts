@@ -47,9 +47,7 @@ import { testDiscordConnection } from '../../integrations/discord/DiscordConnect
 import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
 
-console.log('Config router module loaded');
 const router = Router();
-console.log('Config router created');
 
 // Map of base config types to their convict objects (used as schema sources)
 const schemaSources: Record<string, any> = {
@@ -355,6 +353,17 @@ router.get('/global', (req, res) => {
       };
     });
 
+    // Include user's saved general settings from user-config.json
+    const userConfigStore = UserConfigStore.getInstance();
+    const generalSettings = userConfigStore.getGeneralSettings();
+    if (Object.keys(generalSettings).length > 0) {
+      response._userSettings = {
+        values: generalSettings,
+        schema: null, // No schema for user settings
+        source: 'user-config.json',
+      };
+    }
+
     res.json(response);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -472,7 +481,6 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
 // Get all configuration with sensitive data redacted
 router.get('/', (req, res) => {
-  console.log('GET /api/config called');
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -657,11 +665,9 @@ router.get('/sources', (req, res) => {
 // Reload configuration
 router.post('/reload', (req, res) => {
   try {
-    console.log('POST /api/config/reload called');
     const manager = BotConfigurationManager.getInstance();
     console.log('Manager instance obtained:', !!manager);
     manager.reload();
-    console.log('Manager reload completed');
 
     // Skip audit logging entirely in test mode
     if (process.env.NODE_ENV !== 'test') {
@@ -672,7 +678,6 @@ router.post('/reload', (req, res) => {
       }
     }
 
-    console.log('About to send response');
     res.json({
       success: true,
       message: 'Configuration reloaded successfully',
@@ -709,7 +714,6 @@ router.post('/reload', (req, res) => {
 // Clear cache
 router.post('/api/cache/clear', (req, res) => {
   try {
-    console.log('POST /api/cache/clear called');
     // Clear any in-memory caches
     if ((global as any).configCache) {
       (global as any).configCache = {};
@@ -719,11 +723,9 @@ router.post('/api/cache/clear', (req, res) => {
     const manager = BotConfigurationManager.getInstance();
     console.log('Manager instance obtained:', !!manager);
     manager.reload();
-    console.log('Manager reload completed');
 
     // No audit logging needed in test mode
 
-    console.log('About to send response');
     res.json({
       success: true,
       message: 'Cache cleared successfully',
@@ -751,7 +753,6 @@ router.post('/api/cache/clear', (req, res) => {
 // Export configuration
 router.get('/export', (req, res) => {
   try {
-    console.log('GET /api/config/export called');
     const manager = BotConfigurationManager.getInstance();
     console.log('Manager instance obtained:', !!manager);
     const bots = manager.getAllBots();
@@ -771,7 +772,6 @@ router.get('/export', (req, res) => {
 
     // Convert to JSON and create blob
     const jsonContent = JSON.stringify(exportData, null, 2);
-    console.log('JSON content created');
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);

@@ -5,16 +5,16 @@ import {
 import React from 'react';
 
 export interface NavItem {
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-    path?: string;
-    badge?: string | number;
-    children?: NavItem[];
-    disabled?: boolean;
-    divider?: boolean;
-    visible?: boolean;
-    requiredRole?: string;
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  path?: string;
+  badge?: string | number;
+  children?: NavItem[];
+  disabled?: boolean;
+  divider?: boolean;
+  visible?: boolean;
+  requiredRole?: string;
 }
 
 // Icon wrapper for consistent sizing
@@ -42,10 +42,17 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
-    id: 'integrations-config',
-    label: 'Integrations',
-    icon: <NavIcon><Plug className="w-4 h-4" /></NavIcon>,
-    path: '/admin/config',
+    id: 'integrations-llm',
+    label: 'LLM Providers',
+    icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
+    path: '/admin/integrations/llm',
+    visible: true,
+  },
+  {
+    id: 'integrations-message',
+    label: 'Message Platforms',
+    icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
+    path: '/admin/integrations/message',
     visible: true,
   },
   {
@@ -83,20 +90,7 @@ export const hivemindNavItems: NavItem[] = [
     path: '/admin/settings',
     visible: true,
   },
-  {
-    id: 'integrations-llm',
-    label: 'LLM',
-    icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/llm',
-    visible: true,
-  },
-  {
-    id: 'integrations-message',
-    label: 'Message',
-    icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/message',
-    visible: true,
-  },
+
   {
     id: 'integrations-webhook',
     label: 'Webhook',
@@ -148,7 +142,7 @@ export const hivemindNavItems: NavItem[] = [
 export function filterNavItemsByRole(items: NavItem[], userRole?: string): NavItem[] {
   return items
     .filter(item => {
-      if (!item.visible) {return false;}
+      if (!item.visible) { return false; }
       if (item.requiredRole && userRole !== item.requiredRole && userRole !== 'owner') {
         return false;
       }

@@ -78,7 +78,6 @@ const LLMProvidersPage: React.FC = () => {
 
   const handleProviderSubmit = (providerData: any) => {
     // For global provider management, we would store these globally
-    console.log('Adding global provider:', providerData);
     closeModal();
   };
 

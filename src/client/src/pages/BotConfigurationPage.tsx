@@ -159,12 +159,12 @@ const BotConfigurationPage: React.FC = () => {
 
         {schema.doc && (
           <label className="label">
-            <span className="label-text-alt text-gray-400">{schema.doc}</span>
+            <span className="label-text-alt text-base-content/50">{schema.doc}</span>
           </label>
         )}
         {schema.env && (
           <label className="label py-0">
-            <span className="label-text-alt text-gray-500 font-mono text-xs">ENV: {schema.env}</span>
+            <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {schema.env}</span>
           </label>
         )}
       </div>
@@ -271,9 +271,9 @@ const BotConfigurationPage: React.FC = () => {
       ) : configNames.length === 0 ? (
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body text-center py-12">
-            <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-500">No configurations found</h3>
-            <p className="text-gray-400">Check that the config endpoint is working</p>
+            <Settings className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+            <h3 className="text-lg font-medium text-base-content/60">No configurations found</h3>
+            <p className="text-base-content/50">Check that the config endpoint is working</p>
           </div>
         </div>
       ) : (

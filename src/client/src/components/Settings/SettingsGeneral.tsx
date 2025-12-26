@@ -40,24 +40,25 @@ const SettingsGeneral: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/global');
-      if (!response.ok) {throw new Error('Failed to fetch settings');}
+      if (!response.ok) { throw new Error('Failed to fetch settings'); }
       const data = await response.json();
-      
-      // Extract relevant settings from the config response
+
+      // Extract relevant settings from user-saved config first, then fall back to defaults
+      const userSettings = data._userSettings?.values || {};
       const config = data.config || {};
       setSettings({
-        instanceName: config.app?.name?.value || 'Open-Hivemind Instance',
-        description: config.app?.description?.value || 'Multi-agent AI coordination platform',
-        timezone: config.app?.timezone?.value || 'UTC',
-        language: config.app?.language?.value || 'en',
-        theme: config.webui?.theme?.value || 'auto',
-        enableNotifications: config.webui?.notifications?.value !== false,
-        enableLogging: config.logging?.enabled?.value !== false,
-        logLevel: config.logging?.level?.value || 'info',
-        maxConcurrentBots: config.limits?.maxBots?.value || 10,
-        defaultResponseTimeout: config.limits?.timeout?.value || 30,
-        enableHealthChecks: config.health?.enabled?.value !== false,
-        healthCheckInterval: config.health?.interval?.value || 60,
+        instanceName: userSettings['app.name'] || config.app?.name?.value || 'Open-Hivemind Instance',
+        description: userSettings['app.description'] || config.app?.description?.value || 'Multi-agent AI coordination platform',
+        timezone: userSettings['app.timezone'] || config.app?.timezone?.value || 'UTC',
+        language: userSettings['app.language'] || config.app?.language?.value || 'en',
+        theme: userSettings['webui.theme'] || config.webui?.theme?.value || 'auto',
+        enableNotifications: userSettings['webui.notifications'] ?? (config.webui?.notifications?.value !== false),
+        enableLogging: userSettings['logging.enabled'] ?? (config.logging?.enabled?.value !== false),
+        logLevel: userSettings['logging.level'] || config.logging?.level?.value || 'info',
+        maxConcurrentBots: userSettings['limits.maxBots'] || config.limits?.maxBots?.value || 10,
+        defaultResponseTimeout: userSettings['limits.timeout'] || config.limits?.timeout?.value || 30,
+        enableHealthChecks: userSettings['health.enabled'] ?? (config.health?.enabled?.value !== false),
+        healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
       });
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load settings' });
@@ -87,8 +88,8 @@ const SettingsGeneral: React.FC = () => {
           'logging.enabled': settings.enableLogging,
         }),
       });
-      
-      if (!response.ok) {throw new Error('Failed to save settings');}
+
+      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -117,8 +118,8 @@ const SettingsGeneral: React.FC = () => {
       </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
           message={alert.message}
           onClose={() => setAlert(null)}
         />
@@ -131,7 +132,7 @@ const SettingsGeneral: React.FC = () => {
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
           </h6>
-          
+
           <div className="form-control mb-4">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Instance Name</span>

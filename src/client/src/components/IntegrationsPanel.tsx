@@ -21,16 +21,16 @@ import {
 import { PROVIDER_CATEGORIES } from '../config/providers';
 
 interface ConfigSchema {
-    doc?: string;
-    format?: string | string[];
-    default?: any;
-    env?: string;
-    locked?: boolean;
+  doc?: string;
+  format?: string | string[];
+  default?: any;
+  env?: string;
+  locked?: boolean;
 }
 
 interface ConfigItem {
-    values: Record<string, any>;
-    schema: Record<string, any>;
+  values: Record<string, any>;
+  schema: Record<string, any>;
 }
 
 type GlobalConfig = Record<string, ConfigItem>;
@@ -82,7 +82,7 @@ const IntegrationsPanel: React.FC = () => {
         fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
       ]);
 
-      if (!configRes.ok) {throw new Error('Failed to fetch configuration');}
+      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
       const configData = await configRes.json();
       setConfig(configData);
 
@@ -102,21 +102,21 @@ const IntegrationsPanel: React.FC = () => {
     const requiredKeys = Object.keys(item.schema).filter(k =>
       !k.includes('model') && (k.toLowerCase().includes('key') || k.toLowerCase().includes('token')),
     );
-    if (requiredKeys.length === 0) {return true;}
+    if (requiredKeys.length === 0) { return true; }
     return requiredKeys.some(k => values[k] && values[k] !== '***' && values[k] !== '');
   };
 
   const getConnectedBots = (integrationName: string, category: string) => {
     return bots.filter(bot => {
-      if (category === 'llm') {return bot.llmProvider === integrationName;}
-      if (category === 'message') {return bot.messageProvider === integrationName;} // Note: currently messageProvider is just type (e.g. 'discord'), not instance name yet. Assuming strict matching for dynamic, or fallback. 
+      if (category === 'llm') { return bot.llmProvider === integrationName; }
+      if (category === 'message') { return bot.messageProvider === integrationName; } // Note: currently messageProvider is just type (e.g. 'discord'), not instance name yet. Assuming strict matching for dynamic, or fallback. 
       // FUTURE: Update bots to store 'messageInstance' or similar. For now, match by type if it matches the integration name (e.g. 'discord')
       return bot.messageProvider === integrationName;
     });
   };
 
   const handleSave = async () => {
-    if (!selectedConfigName) {return;}
+    if (!selectedConfigName) { return; }
     setSaving(true);
 
     try {
@@ -142,7 +142,7 @@ const IntegrationsPanel: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    if (!newIntegrationType || !newIntegrationName) {return;}
+    if (!newIntegrationType || !newIntegrationName) { return; }
 
     let finalName = newIntegrationName.toLowerCase().replace(/\s+/g, '-');
     if (!finalName.startsWith(newIntegrationType + '-')) {
@@ -175,7 +175,7 @@ const IntegrationsPanel: React.FC = () => {
   };
 
   const openEditModal = (configName: string) => {
-    if (!config || !config[configName]) {return;}
+    if (!config || !config[configName]) { return; }
     setSelectedConfigName(configName);
     setConfigValues(JSON.parse(JSON.stringify(config[configName].values)));
     setIsModalOpen(true);
@@ -188,8 +188,8 @@ const IntegrationsPanel: React.FC = () => {
     const isLocked = schema.locked === true;
 
     let type = 'text';
-    if (typeof value === 'boolean' || schema.format === 'Boolean') {type = 'boolean';}
-    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') {type = 'number';}
+    if (typeof value === 'boolean' || schema.format === 'Boolean') { type = 'boolean'; }
+    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') { type = 'number'; }
 
     type = 'text';
     if (typeof value === 'boolean' || schema.format === 'Boolean') {
@@ -258,7 +258,7 @@ const IntegrationsPanel: React.FC = () => {
   };
 
   const renderSection = (title: string, category: string) => {
-    if (!config) {return null;}
+    if (!config) { return null; }
 
     const baseProviders = PROVIDER_CATEGORIES[category] || [];
     const sectionItems = Object.keys(config).filter(key => {
@@ -276,7 +276,7 @@ const IntegrationsPanel: React.FC = () => {
             </div>
           </h2>
           <Button
-            variant="neutral"
+            variant="ghost"
             size="sm"
             className="gap-2"
             onClick={() => {
@@ -312,8 +312,8 @@ const IntegrationsPanel: React.FC = () => {
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
                         <div className="flex items-center gap-1 mt-0.5">
-                          {isLocked && <Badge variant="warning" size="xs" className="gap-1 p-1"><LockClosedIcon className="w-2.5 h-2.5" /> Env</Badge>}
-                          {isActive && !isLocked && <Badge variant="success" size="xs" className="gap-1 p-1">Active</Badge>}
+                          {isLocked && <Badge variant="warning" size="small" className="gap-1 p-1"><LockClosedIcon className="w-2.5 h-2.5" /> Env</Badge>}
+                          {isActive && !isLocked && <Badge variant="success" size="small" className="gap-1 p-1">Active</Badge>}
                         </div>
                       </div>
                     </div>
@@ -346,13 +346,15 @@ const IntegrationsPanel: React.FC = () => {
     );
   };
 
-  if (loading && !config) {return (
-    <div className="flex flex-col items-center justify-center p-12 gap-4">
-      <span className="loading loading-spinner loading-lg text-primary" />
-      <span className="text-base-content/50">Loading integrations...</span>
-    </div>
-  );}
-  if (error) {return <Alert status="error" message={error} />;}
+  if (loading && !config) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 gap-4">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <span className="text-base-content/50">Loading integrations...</span>
+      </div>
+    );
+  }
+  if (error) { return <Alert status="error" message={error} />; }
 
   return (
     <div className="animate-in fade-in duration-500 pb-20">
@@ -461,7 +463,7 @@ const IntegrationsPanel: React.FC = () => {
             disabled={!newIntegrationType || !newIntegrationName || saving}
             loading={saving}
           >
-                        Create & Save
+            Create & Save
           </Button>
         </div>
       </Modal>

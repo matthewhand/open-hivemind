@@ -159,7 +159,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const error = errors[field.name];
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const errorClasses = error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500';
+    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
@@ -241,9 +241,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               type="checkbox"
               checked={Boolean(value)}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
             />
-            <span className="text-sm text-gray-700">Enable</span>
+            <span className="text-sm text-base-content/80">Enable</span>
           </label>
         );
 
@@ -334,8 +334,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="flex items-center space-x-3 pb-4 border-b">
         <span className="text-2xl">{schema.icon}</span>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{schema.displayName}</h3>
-          <p className="text-sm text-gray-600">{schema.description}</p>
+          <h3 className="text-lg font-semibold text-base-content">{schema.displayName}</h3>
+          <p className="text-sm text-base-content/70">{schema.description}</p>
         </div>
       </div>
 
@@ -417,8 +417,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       )}
 
       {avatarUrl && (
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-sm text-gray-700 mb-2">Avatar loaded successfully:</p>
+        <div className="p-3 bg-base-200 border border-base-300 rounded-lg">
+          <p className="text-sm text-base-content/80 mb-2">Avatar loaded successfully:</p>
           <img src={avatarUrl} alt="Provider avatar" className="w-12 h-12 rounded-full" />
         </div>
       )}

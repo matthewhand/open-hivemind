@@ -127,7 +127,6 @@ const SystemManagement: React.FC = () => {
       const updatedConfig = { ...systemConfig, [key]: value };
       setSystemConfig(updatedConfig);
       // Here you would make an API call to save the configuration
-      console.log('Configuration updated:', updatedConfig);
     } catch (error) {
       console.error('Failed to update configuration:', error);
     } finally {
@@ -136,12 +135,10 @@ const SystemManagement: React.FC = () => {
   };
 
   const handleAlertAcknowledge = (alertId: string) => {
-    console.log('Acknowledging alert:', alertId);
     // API call to acknowledge alert
   };
 
   const handleAlertResolve = (alertId: string) => {
-    console.log('Resolving alert:', alertId);
     // API call to resolve alert
   };
 
@@ -176,7 +173,6 @@ const SystemManagement: React.FC = () => {
 
   const handleRestoreBackup = async (backupId: string) => {
     if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
-      console.log('Restoring backup:', backupId);
       // API call to restore backup
     }
   };
@@ -184,7 +180,6 @@ const SystemManagement: React.FC = () => {
   const handleDeleteBackup = async (backupId: string) => {
     if (confirm('Are you sure you want to delete this backup?')) {
       setBackups(prev => prev.filter(backup => backup.id !== backupId));
-      console.log('Deleted backup:', backupId);
       // API call to delete backup
     }
   };

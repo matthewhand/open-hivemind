@@ -30,6 +30,8 @@ export const UpdateBotSchema = z.object({
     description: z.string().optional(),
     enabled: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
+    persona: z.string().optional(),  // Persona ID or name
+    systemInstruction: z.string().optional(),  // System prompt override
   }),
 });
 

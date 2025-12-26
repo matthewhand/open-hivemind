@@ -606,16 +606,16 @@ const DaisyUIShowcase: React.FC = () => {
           <Section title="Avatar Sizes">
             <div className="flex items-center gap-4">
               <div className="avatar">
-                <div className="w-8 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-8 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-12 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-12 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-16 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-16 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-24 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-24 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
             </div>
           </Section>
@@ -623,16 +623,16 @@ const DaisyUIShowcase: React.FC = () => {
           <Section title="Avatar Shapes">
             <div className="flex items-center gap-4">
               <div className="avatar">
-                <div className="w-16 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-16 rounded"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-16 rounded-full"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-16 rounded-full"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-16 mask mask-squircle"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-16 mask mask-squircle"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
               <div className="avatar">
-                <div className="w-16 mask mask-hexagon"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" /></div>
+                <div className="w-16 mask mask-hexagon"><img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="Avatar example" /></div>
               </div>
             </div>
           </Section>

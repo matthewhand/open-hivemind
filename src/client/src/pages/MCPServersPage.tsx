@@ -81,10 +81,10 @@ const MCPServersPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'running': return 'badge-success';
-    case 'stopped': return 'badge-ghost';
-    case 'error': return 'badge-error';
-    default: return 'badge-ghost';
+      case 'running': return 'badge-success';
+      case 'stopped': return 'badge-ghost';
+      case 'error': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
@@ -124,7 +124,17 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleSaveServer = async () => {
-    if (!selectedServer) {return;}
+    if (!selectedServer) { return; }
+
+    // Validate required fields
+    if (!selectedServer.name?.trim()) {
+      setAlert({ type: 'error', message: 'Server name is required' });
+      return;
+    }
+    if (!selectedServer.url?.trim()) {
+      setAlert({ type: 'error', message: 'Server URL is required' });
+      return;
+    }
 
     try {
       if (isEditing) {

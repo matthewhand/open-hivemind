@@ -9,16 +9,16 @@ import process from 'process';
 
 const router = Router();
 
-// Basic health check route
-router.get('/health', (req, res) => {
+// Basic health check
+router.get('/', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
   });
 });
 
-// Detailed health check with system metrics and error analysis
-router.get('/health/detailed', (req, res) => {
+// Detailed health check
+router.get('/detailed', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -77,8 +77,8 @@ router.get('/health/detailed', (req, res) => {
   res.json(healthData);
 });
 
-// Performance metrics endpoint
-router.get('/health/metrics', (req, res) => {
+// System metrics endpoint
+router.get('/metrics', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -108,14 +108,14 @@ router.get('/health/metrics', (req, res) => {
   res.json(metricsData);
 });
 
-// System alerts endpoint
-router.get('/health/alerts', (req, res) => {
+// Alerts endpoint
+router.get('/alerts', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
   const uptime = process.uptime();
-  
+
   const alerts = [];
-  
+
   // Check for high memory usage
   if (memoryPercentage > 80) {
     alerts.push({
@@ -126,7 +126,7 @@ router.get('/health/alerts', (req, res) => {
       type: 'memory',
     });
   }
-  
+
   // Check for low uptime (less than 30 seconds might indicate recent restart)
   if (uptime < 30) {
     alerts.push({
@@ -145,8 +145,8 @@ router.get('/health/alerts', (req, res) => {
   });
 });
 
-// Readiness probe endpoint
-router.get('/health/ready', (req, res) => {
+// Readiness probe
+router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
   // For now, we'll assume the service is ready if it's responding
   res.json({
@@ -160,8 +160,8 @@ router.get('/health/ready', (req, res) => {
   });
 });
 
-// Liveness probe endpoint
-router.get('/health/live', (req, res) => {
+// Liveness probe
+router.get('/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
   res.json({
     alive: true,
@@ -170,11 +170,11 @@ router.get('/health/live', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/health/metrics/prometheus', (req, res) => {
+router.get('/metrics/prometheus', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
-  
+
   const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
 process_uptime_seconds ${uptime}
@@ -213,7 +213,7 @@ nodejs_version_info{version="${process.version}"} 1
 });
 
 // API endpoints monitoring
-router.get('/health/api-endpoints', (req, res) => {
+router.get('/api-endpoints', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
@@ -226,7 +226,7 @@ router.get('/health/api-endpoints', (req, res) => {
 });
 
 // Get specific endpoint status
-router.get('/health/api-endpoints/:id', (req, res) => {
+router.get('/api-endpoints/:id', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
@@ -243,8 +243,54 @@ router.get('/health/api-endpoints/:id', (req, res) => {
   });
 });
 
+// Cleanup endpoint (admin only)
+router.post('/cleanup', (req, res) => {
+  const apiMonitor = ApiMonitorService.getInstance();
+
+  try {
+    const config = req.body;
+
+    if (!config || Object.keys(config).length === 0) {
+      return res.json({
+        message: 'No endpoint data provided',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Validate required fields
+    if (!config.id || !config.name || !config.url) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'id, name, and url are required',
+      });
+    }
+
+    // Set defaults
+    config.method = config.method || 'GET';
+    config.enabled = config.enabled !== false;
+    config.interval = config.interval || 60000; // 1 minute
+    config.timeout = config.timeout || 10000; // 10 seconds
+    config.retries = config.retries || 3;
+    config.retryDelay = config.retryDelay || 1000; // 1 second
+
+    apiMonitor.addEndpoint(config);
+
+    res.status(201).json({
+      message: 'Endpoint added successfully',
+      endpoint: apiMonitor.getEndpoint(config.id),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: 'Failed to add endpoint',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // Add new endpoint to monitor
-router.post('/health/api-endpoints', (req, res) => {
+router.post('/api-endpoints', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -290,7 +336,7 @@ router.post('/health/api-endpoints', (req, res) => {
 });
 
 // Update endpoint configuration
-router.put('/health/api-endpoints/:id', (req, res) => {
+router.put('/api-endpoints/:id', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -311,7 +357,7 @@ router.put('/health/api-endpoints/:id', (req, res) => {
 });
 
 // Remove endpoint from monitoring
-router.delete('/health/api-endpoints/:id', (req, res) => {
+router.delete('/api-endpoints/:id', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -340,7 +386,7 @@ router.delete('/health/api-endpoints/:id', (req, res) => {
 });
 
 // Start monitoring all endpoints
-router.post('/health/api-endpoints/start', (req, res) => {
+router.post('/api-endpoints/start', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
@@ -351,7 +397,7 @@ router.post('/health/api-endpoints/start', (req, res) => {
 });
 
 // Stop monitoring all endpoints
-router.post('/health/api-endpoints/stop', (req, res) => {
+router.post('/api-endpoints/stop', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 
@@ -363,7 +409,7 @@ router.post('/health/api-endpoints/stop', (req, res) => {
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
-  if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
+  if (isParseError && req.path?.startsWith('/api-endpoints')) {
     const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
     if (method === 'PUT') {
       return res.status(404).json({
@@ -384,7 +430,7 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Error-specific health endpoints
-router.get('/health/errors', (req, res) => {
+router.get('/errors', (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
@@ -413,7 +459,7 @@ router.get('/health/errors', (req, res) => {
 });
 
 // Recovery system health endpoint
-router.get('/health/recovery', (req, res) => {
+router.get('/recovery', (req, res) => {
   const recoveryStats = globalRecoveryManager.getAllStats();
   const errorLogger = ErrorLogger.getInstance();
 
@@ -440,7 +486,7 @@ router.get('/health/recovery', (req, res) => {
 });
 
 // Error patterns and anomalies endpoint
-router.get('/health/errors/patterns', (req, res) => {
+router.get('/errors/patterns', (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);
@@ -449,7 +495,7 @@ router.get('/health/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([,a]: [string, any], [,b]: [string, any]) => (b as number) - (a as number))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           const totalCount = Object.values(errorStats).reduce((sum: number, val: any) => sum + (val as number), 0);
           return { type, count: count as number, percentage: ((count as number) / (totalCount as number)) * 100 };
@@ -468,17 +514,17 @@ router.get('/health/errors/patterns', (req, res) => {
 function calculateHealthStatus(memoryUsage: NodeJS.MemoryUsage, recentErrors: number, metrics: any) {
   const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
   const errorRate = calculateErrorRate(recentErrors, 60);
-  
+
   let status = 'healthy';
   let errorHealth = 'good';
-  
+
   // Check memory usage
   if (memoryUsagePercent > 90) {
     status = 'unhealthy';
   } else if (memoryUsagePercent > 80) {
     status = 'degraded';
   }
-  
+
   // Check error rate
   if (errorRate > 10) {
     status = 'unhealthy';
@@ -489,12 +535,12 @@ function calculateHealthStatus(memoryUsage: NodeJS.MemoryUsage, recentErrors: nu
   } else if (errorRate > 1) {
     errorHealth = 'fair';
   }
-  
+
   // Check uptime
   if (metrics.uptime < 60000) { // Less than 1 minute
     status = status === 'healthy' ? 'degraded' : status;
   }
-  
+
   return { status, errorHealth };
 }
 
@@ -503,75 +549,75 @@ function calculateErrorRate(errorCount: number, timeWindowSeconds: number): numb
 }
 
 function getErrorHealthStatus(recentErrors: number): 'good' | 'fair' | 'poor' | 'critical' {
-  if (recentErrors === 0) {return 'good';}
-  if (recentErrors <= 2) {return 'fair';}
-  if (recentErrors <= 5) {return 'poor';}
+  if (recentErrors === 0) { return 'good'; }
+  if (recentErrors <= 2) { return 'fair'; }
+  if (recentErrors <= 5) { return 'poor'; }
   return 'critical';
 }
 
 function getErrorRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
   const recommendations: string[] = [];
-  
+
   if (recentErrors > 5) {
     recommendations.push('High error rate detected. Check system logs and consider scaling resources.');
   }
-  
+
   const networkErrors = errorStats['network'] || 0;
   if (networkErrors > 0) {
     recommendations.push('Network errors detected. Check external service connectivity.');
   }
-  
+
   const dbErrors = errorStats['database'] || 0;
   if (dbErrors > 0) {
     recommendations.push('Database errors detected. Verify database connection and performance.');
   }
-  
+
   const authErrors = (errorStats['authentication'] || 0) + (errorStats['authorization'] || 0);
   if (authErrors > 2) {
     recommendations.push('Authentication/authorization errors detected. Check user credentials and permissions.');
   }
-  
+
   return recommendations;
 }
 
 function getRecoveryHealthStatus(recoveryStats: Record<string, any>): 'healthy' | 'degraded' | 'unhealthy' {
   const circuitBreakers = Object.values(recoveryStats);
   const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open').length;
-  
-  if (openCircuitBreakers > 0) {return 'unhealthy';}
-  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) {return 'degraded';}
+
+  if (openCircuitBreakers > 0) { return 'unhealthy'; }
+  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) { return 'degraded'; }
   return 'healthy';
 }
 
 function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[] {
   const recommendations: string[] = [];
   const circuitBreakers = Object.values(recoveryStats);
-  
+
   const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open');
   if (openCircuitBreakers.length > 0) {
     recommendations.push(`${openCircuitBreakers.length} circuit breaker(s) are open. Check underlying services.`);
   }
-  
+
   const highFailureCircuits = circuitBreakers.filter(cb => cb.circuitBreaker.failureCount > 3);
   if (highFailureCircuits.length > 0) {
     recommendations.push(`${highFailureCircuits.length} circuit breaker(s) have high failure rates.`);
   }
-  
+
   const operationsWithoutFallbacks = Object.entries(recoveryStats)
     .filter(([, stats]) => stats.fallbacks === 0)
     .length;
-  
+
   if (operationsWithoutFallbacks > 0) {
     recommendations.push(`${operationsWithoutFallbacks} operation(s) lack fallback mechanisms.`);
   }
-  
+
   return recommendations;
 }
 
-function detectErrorSpikes(errorStats: Record<string, number>): Array<{type: string, count: number, severity: 'low' | 'medium' | 'high'}> {
+function detectErrorSpikes(errorStats: Record<string, number>): Array<{ type: string, count: number, severity: 'low' | 'medium' | 'high' }> {
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
   const threshold = totalErrors * 0.3; // 30% threshold for spikes
-  
+
   return Object.entries(errorStats)
     .filter(([, count]) => count > threshold)
     .map(([type, count]) => ({
@@ -581,9 +627,9 @@ function detectErrorSpikes(errorStats: Record<string, number>): Array<{type: str
     }));
 }
 
-function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pattern: string, description: string}> {
-  const correlations: Array<{pattern: string, description: string}> = [];
-  
+function detectErrorCorrelations(errorStats: Record<string, number>): Array<{ pattern: string, description: string }> {
+  const correlations: Array<{ pattern: string, description: string }> = [];
+
   // Check for network + timeout correlation
   if ((errorStats['network'] || 0) > 0 && (errorStats['timeout'] || 0) > 0) {
     correlations.push({
@@ -591,7 +637,7 @@ function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pat
       description: 'Network and timeout errors occurring together',
     });
   }
-  
+
   // Check for auth + authorization correlation
   if ((errorStats['authentication'] || 0) > 0 && (errorStats['authorization'] || 0) > 0) {
     correlations.push({
@@ -599,13 +645,13 @@ function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pat
       description: 'Authentication and authorization errors occurring together',
     });
   }
-  
+
   return correlations;
 }
 
-function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, number>): Array<{type: string, anomaly: string}> {
-  const anomalies: Array<{type: string, anomaly: string}> = [];
-  
+function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, number>): Array<{ type: string, anomaly: string }> {
+  const anomalies: Array<{ type: string, anomaly: string }> = [];
+
   // Check for unusual error types
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
   if (totalErrors > 0) {
@@ -619,7 +665,7 @@ function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, n
       }
     });
   }
-  
+
   // Check for sudden error bursts
   if (recentErrors > 10) {
     anomalies.push({
@@ -627,27 +673,27 @@ function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, n
       anomaly: `High error frequency: ${recentErrors} errors in last minute`,
     });
   }
-  
+
   return anomalies;
 }
 
 function generatePatternRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
   const recommendations: string[] = [];
-  
+
   if (recentErrors > 10) {
     recommendations.push('Implement rate limiting and circuit breakers to prevent cascading failures.');
   }
-  
+
   const validationErrors = errorStats['validation'] || 0;
   if (validationErrors > 3) {
     recommendations.push('Review input validation logic and provide better error messages to users.');
   }
-  
+
   const configErrors = errorStats['configuration'] || 0;
   if (configErrors > 0) {
     recommendations.push('Review configuration management and implement configuration validation.');
   }
-  
+
   return recommendations;
 }
 

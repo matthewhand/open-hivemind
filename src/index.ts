@@ -37,6 +37,7 @@ import { authenticateToken } from '@src/server/middleware/auth';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { ipWhitelist } from '@src/server/middleware/security';
 import openapiRouter from '@src/server/routes/openapi';
+import sitemapRouter from '@src/server/routes/sitemap';
 import WebSocketService from '@src/server/services/WebSocketService';
 import path from 'path';
 import fs from 'fs';
@@ -249,6 +250,9 @@ app.use('/api/admin', adminApiRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/openapi', openapiRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/health', healthRoute);  // Health API endpoints
+app.use('/health', healthRoute);       // Root health endpoint (for frontend polling)
+app.use(sitemapRouter);                // Sitemap routes at root level
 
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));

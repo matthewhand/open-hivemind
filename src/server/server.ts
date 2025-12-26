@@ -150,8 +150,8 @@ export class WebUIServer {
   }
 
   private setupRoutes(): void {
-    // Health check (no auth required)
-    this.app.use('/', healthRouter);
+    // Health check (no auth required) - mount at /health for backward compatibility
+    this.app.use('/health', healthRouter);
 
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
