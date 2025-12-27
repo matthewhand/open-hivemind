@@ -1,8 +1,15 @@
 import { test, expect, Page } from '@playwright/test';
+import {
+    setupTestWithErrorDetection,
+    assertNoErrors,
+    navigateAndWaitReady,
+    SELECTORS
+} from './test-utils';
 
 /**
  * Bot Creation Validation E2E Tests
  * Tests all permutations of the Create Bot form validation.
+ * Tests FAIL on any console errors.
  */
 
 // Helper to get modal context
@@ -19,39 +26,12 @@ async function openCreateBotModal(page: Page) {
 }
 
 test.describe('Bot Creation Form Validation', () => {
-    test.beforeEach(async ({ page }) => {
-        test.setTimeout(90000);
-
-        const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
-        const fakeUser = JSON.stringify({
-            id: 'admin',
-            username: 'admin',
-            email: 'admin@open-hivemind.com',
-            role: 'owner',
-            permissions: ['*']
-        });
-
-        await page.addInitScript(({ token, user }) => {
-            localStorage.setItem('auth_tokens', JSON.stringify({
-                accessToken: token,
-                refreshToken: token,
-                expiresIn: 3600
-            }));
-            localStorage.setItem('auth_user', user);
-        }, { token: fakeToken, user: fakeUser });
-
-        page.on('console', msg => {
-            if (msg.type() === 'error') {
-                console.log(`PAGE ERROR: ${msg.text()}`);
-            }
-        });
-
-        await page.goto('/admin/bots');
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
-    });
+    test.setTimeout(90000);
 
     test('Create Bot modal opens with all form fields', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
         await expect(modal).toBeVisible();
 
@@ -60,9 +40,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(modal.locator('select').first()).toBeVisible();
 
         await page.screenshot({ path: 'test-results/create-bot-01-modal-open.png', fullPage: true });
+        await assertNoErrors(errors, 'Create Bot modal open');
     });
 
     test('Submit button disabled when form is empty', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Find the submit button WITHIN the modal
@@ -72,9 +56,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(submitButton).toBeDisabled();
 
         await page.screenshot({ path: 'test-results/create-bot-02-disabled-empty.png', fullPage: true });
+        await assertNoErrors(errors, 'Submit button disabled');
     });
 
     test('Submit button disabled with only name filled', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Fill only name
@@ -86,9 +74,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(submitButton).toBeDisabled();
 
         await page.screenshot({ path: 'test-results/create-bot-03-only-name.png', fullPage: true });
+        await assertNoErrors(errors, 'Submit with only name');
     });
 
     test('Submit button disabled without message provider', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Fill name
@@ -103,9 +95,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(submitButton).toBeDisabled();
 
         await page.screenshot({ path: 'test-results/create-bot-04-no-message.png', fullPage: true });
+        await assertNoErrors(errors, 'Submit without message provider');
     });
 
     test('Submit button disabled without LLM provider', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Fill name
@@ -123,9 +119,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(submitButton).toBeDisabled();
 
         await page.screenshot({ path: 'test-results/create-bot-05-no-llm.png', fullPage: true });
+        await assertNoErrors(errors, 'Submit without LLM provider');
     });
 
     test('Submit button enabled with all required fields', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Fill name
@@ -149,9 +149,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(submitButton).toBeEnabled();
 
         await page.screenshot({ path: 'test-results/create-bot-06-all-fields.png', fullPage: true });
+        await assertNoErrors(errors, 'Submit enabled with all fields');
     });
 
     test('Error styling on empty required selects', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Check for error styling on selects
@@ -162,9 +166,13 @@ test.describe('Bot Creation Form Validation', () => {
         expect(errorCount).toBeGreaterThanOrEqual(2);
 
         await page.screenshot({ path: 'test-results/create-bot-07-error-styling.png', fullPage: true });
+        await assertNoErrors(errors, 'Error styling on selects');
     });
 
     test('Persona has default value selected', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // First select is persona, should have default value
@@ -175,9 +183,13 @@ test.describe('Bot Creation Form Validation', () => {
         expect(value).toBe('default');
 
         await page.screenshot({ path: 'test-results/create-bot-08-persona.png', fullPage: true });
+        await assertNoErrors(errors, 'Persona default value');
     });
 
     test('Cancel button closes modal', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
         await expect(modal).toBeVisible();
 
@@ -190,9 +202,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(modal).not.toBeVisible();
 
         await page.screenshot({ path: 'test-results/create-bot-09-cancelled.png', fullPage: true });
+        await assertNoErrors(errors, 'Cancel button closes modal');
     });
 
     test('Required fields marked with asterisk', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Check for asterisks
@@ -203,9 +219,13 @@ test.describe('Bot Creation Form Validation', () => {
         expect(count).toBeGreaterThanOrEqual(2);
 
         await page.screenshot({ path: 'test-results/create-bot-10-asterisks.png', fullPage: true });
+        await assertNoErrors(errors, 'Required field asterisks');
     });
 
     test('Message provider has + button', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Find Message Provider label section
@@ -217,9 +237,13 @@ test.describe('Bot Creation Form Validation', () => {
         await expect(plusButton).toBeVisible();
 
         await page.screenshot({ path: 'test-results/create-bot-11-msg-plus.png', fullPage: true });
+        await assertNoErrors(errors, 'Message provider + button');
     });
 
     test('LLM provider has no + button', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
+
         const modal = await openCreateBotModal(page);
 
         // Find LLM Provider label section
@@ -233,5 +257,6 @@ test.describe('Bot Creation Form Validation', () => {
         expect(count).toBe(0);
 
         await page.screenshot({ path: 'test-results/create-bot-12-no-llm-plus.png', fullPage: true });
+        await assertNoErrors(errors, 'LLM provider no + button');
     });
 });
