@@ -46,7 +46,11 @@ const BotsPage: React.FC = () => {
   const canCreateBot = newBotName.trim().length > 0 && newBotMessageProvider;
 
   // Get LLM status to check if system default is configured
-  const { defaultLlmConfigured } = useLlmStatus();
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
 
   // ...
 
