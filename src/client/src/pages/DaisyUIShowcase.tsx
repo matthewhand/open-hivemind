@@ -11,9 +11,11 @@ const DaisyUIShowcase: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const components = [
-    'button', 'badge', 'alert', 'card', 'input', 'select', 'checkbox', 
+    'button', 'badge', 'alert', 'card', 'input', 'select', 'checkbox',
     'toggle', 'radio', 'range', 'modal', 'dropdown', 'tabs', 'tooltip',
     'avatar', 'progress', 'loading', 'table', 'menu', 'collapse',
+    // NEW: High-priority additions
+    'skeleton', 'breadcrumbs', 'textarea', 'file-input', 'steps', 'stat',
   ];
 
   return (
@@ -22,7 +24,7 @@ const DaisyUIShowcase: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
         <p className="text-base-content/60 mt-1">
-          Official DaisyUI components using raw CSS classes - 
+          Official DaisyUI components using raw CSS classes -
           <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
             View Official Docs
           </a>
@@ -677,10 +679,10 @@ const DaisyUIShowcase: React.FC = () => {
 
           <Section title="Radial Progress">
             <div className="flex flex-wrap gap-4">
-              <div className="radial-progress" style={{'--value': 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-primary" style={{'--value': 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-secondary" style={{'--value': 70} as React.CSSProperties}>70%</div>
-              <div className="radial-progress text-accent" style={{'--value': 70} as React.CSSProperties}>70%</div>
+              <div className="radial-progress" style={{ '--value': 70 } as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-primary" style={{ '--value': 70 } as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-secondary" style={{ '--value': 70 } as React.CSSProperties}>70%</div>
+              <div className="radial-progress text-accent" style={{ '--value': 70 } as React.CSSProperties}>70%</div>
             </div>
           </Section>
         </div>
@@ -866,6 +868,220 @@ const DaisyUIShowcase: React.FC = () => {
               <input type="checkbox" />
               <div className="collapse-title text-xl font-medium">Click me to show/hide content</div>
               <div className="collapse-content"><p>Hidden content revealed!</p></div>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== SKELETON ===== */}
+      {activeTab === 'skeleton' && (
+        <div className="space-y-8">
+          <Section title="Skeleton Loading States">
+            <div className="flex flex-col gap-4 w-full">
+              <div className="skeleton h-4 w-full"></div>
+              <div className="skeleton h-4 w-3/4"></div>
+              <div className="skeleton h-4 w-1/2"></div>
+            </div>
+          </Section>
+
+          <Section title="Card Skeleton">
+            <div className="flex flex-col gap-4 w-52">
+              <div className="skeleton h-32 w-full"></div>
+              <div className="skeleton h-4 w-28"></div>
+              <div className="skeleton h-4 w-full"></div>
+              <div className="skeleton h-4 w-full"></div>
+            </div>
+          </Section>
+
+          <Section title="Avatar Skeleton">
+            <div className="flex gap-4 items-center">
+              <div className="skeleton h-16 w-16 shrink-0 rounded-full"></div>
+              <div className="flex flex-col gap-2">
+                <div className="skeleton h-4 w-20"></div>
+                <div className="skeleton h-4 w-28"></div>
+              </div>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== BREADCRUMBS ===== */}
+      {activeTab === 'breadcrumbs' && (
+        <div className="space-y-8">
+          <Section title="Basic Breadcrumbs">
+            <div className="breadcrumbs text-sm">
+              <ul>
+                <li><a>Home</a></li>
+                <li><a>Documents</a></li>
+                <li>Add Document</li>
+              </ul>
+            </div>
+          </Section>
+
+          <Section title="With Icons">
+            <div className="breadcrumbs text-sm">
+              <ul>
+                <li>
+                  <a>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 mr-2 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-4 h-4 mr-2 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Documents
+                  </a>
+                </li>
+                <li>Add Document</li>
+              </ul>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== TEXTAREA ===== */}
+      {activeTab === 'textarea' && (
+        <div className="space-y-8">
+          <Section title="Basic Textarea">
+            <textarea className="textarea textarea-bordered w-full max-w-md" placeholder="Type something..."></textarea>
+          </Section>
+
+          <Section title="Textarea Variants">
+            <div className="flex flex-col gap-4 max-w-md">
+              <textarea className="textarea textarea-primary" placeholder="Primary"></textarea>
+              <textarea className="textarea textarea-secondary" placeholder="Secondary"></textarea>
+              <textarea className="textarea textarea-accent" placeholder="Accent"></textarea>
+              <textarea className="textarea textarea-info" placeholder="Info"></textarea>
+              <textarea className="textarea textarea-success" placeholder="Success"></textarea>
+              <textarea className="textarea textarea-warning" placeholder="Warning"></textarea>
+              <textarea className="textarea textarea-error" placeholder="Error"></textarea>
+            </div>
+          </Section>
+
+          <Section title="Textarea Sizes">
+            <div className="flex flex-col gap-4 max-w-md">
+              <textarea className="textarea textarea-bordered textarea-xs" placeholder="Extra small"></textarea>
+              <textarea className="textarea textarea-bordered textarea-sm" placeholder="Small"></textarea>
+              <textarea className="textarea textarea-bordered textarea-md" placeholder="Medium"></textarea>
+              <textarea className="textarea textarea-bordered textarea-lg" placeholder="Large"></textarea>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== FILE INPUT ===== */}
+      {activeTab === 'file-input' && (
+        <div className="space-y-8">
+          <Section title="Basic File Input">
+            <input type="file" className="file-input file-input-bordered w-full max-w-xs" />
+          </Section>
+
+          <Section title="File Input Variants">
+            <div className="flex flex-col gap-4 max-w-xs">
+              <input type="file" className="file-input file-input-bordered file-input-primary" />
+              <input type="file" className="file-input file-input-bordered file-input-secondary" />
+              <input type="file" className="file-input file-input-bordered file-input-accent" />
+              <input type="file" className="file-input file-input-bordered file-input-info" />
+              <input type="file" className="file-input file-input-bordered file-input-success" />
+              <input type="file" className="file-input file-input-bordered file-input-warning" />
+              <input type="file" className="file-input file-input-bordered file-input-error" />
+            </div>
+          </Section>
+
+          <Section title="File Input Sizes">
+            <div className="flex flex-col gap-4 max-w-xs">
+              <input type="file" className="file-input file-input-bordered file-input-xs" />
+              <input type="file" className="file-input file-input-bordered file-input-sm" />
+              <input type="file" className="file-input file-input-bordered file-input-md" />
+              <input type="file" className="file-input file-input-bordered file-input-lg" />
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== STEPS ===== */}
+      {activeTab === 'steps' && (
+        <div className="space-y-8">
+          <Section title="Basic Steps">
+            <ul className="steps">
+              <li className="step step-primary">Register</li>
+              <li className="step step-primary">Choose plan</li>
+              <li className="step">Purchase</li>
+              <li className="step">Receive Product</li>
+            </ul>
+          </Section>
+
+          <Section title="Vertical Steps">
+            <ul className="steps steps-vertical">
+              <li className="step step-primary">Register</li>
+              <li className="step step-primary">Choose plan</li>
+              <li className="step">Purchase</li>
+              <li className="step">Receive Product</li>
+            </ul>
+          </Section>
+
+          <Section title="Steps with Custom Content">
+            <ul className="steps">
+              <li className="step step-info" data-content="?">Step 1</li>
+              <li className="step step-info" data-content="!">Step 2</li>
+              <li className="step step-info" data-content="✓">Step 3</li>
+              <li className="step step-info" data-content="✕">Step 4</li>
+              <li className="step step-info" data-content="★">Step 5</li>
+            </ul>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== STAT ===== */}
+      {activeTab === 'stat' && (
+        <div className="space-y-8">
+          <Section title="Basic Stats">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-title">Total Page Views</div>
+                <div className="stat-value">89,400</div>
+                <div className="stat-desc">21% more than last month</div>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Stats with Icons">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-figure text-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+                <div className="stat-title">Total Likes</div>
+                <div className="stat-value text-primary">25.6K</div>
+                <div className="stat-desc">21% more than last month</div>
+              </div>
+
+              <div className="stat">
+                <div className="stat-figure text-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div className="stat-title">Page Views</div>
+                <div className="stat-value text-secondary">2.6M</div>
+                <div className="stat-desc">21% more than last month</div>
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Stats with Avatar">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-figure text-secondary">
+                  <div className="avatar online">
+                    <div className="w-16 rounded-full">
+                      <div className="bg-primary text-primary-content rounded-full w-full h-full flex items-center justify-center text-xl font-bold">AI</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="stat-value">86%</div>
+                <div className="stat-title">Tasks done</div>
+                <div className="stat-desc text-secondary">31 tasks remaining</div>
+              </div>
             </div>
           </Section>
         </div>
