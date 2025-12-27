@@ -78,7 +78,7 @@ export const hivemindNavItems: NavItem[] = [
   },
   {
     id: 'settings',
-    label: 'General',
+    label: 'System',
     icon: null as unknown as React.ReactNode,
     divider: true,
     visible: true,
@@ -98,14 +98,7 @@ export const hivemindNavItems: NavItem[] = [
     path: '/admin/integrations/webhook',
     visible: true,
   },
-  // === TROUBLESHOOTING SECTION ===
-  {
-    id: 'divider-troubleshooting',
-    label: 'Troubleshooting',
-    icon: null as unknown as React.ReactNode,
-    divider: true,
-    visible: true,
-  },
+  // Settings, Webhook, Monitoring, Global Defaults all under SYSTEM
   {
     id: 'monitoring',
     label: 'Monitoring',
