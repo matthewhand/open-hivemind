@@ -8,23 +8,23 @@ import { HivemindError, ErrorUtils } from '../types/errors';
 const debug = Debug('app:PersonaManager');
 
 export interface Persona {
-    id: string;
-    name: string;
-    description: string;
-    category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
-    traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
-    systemPrompt: string;
-    isBuiltIn?: boolean;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  name: string;
+  description: string;
+  category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
+  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
+  systemPrompt: string;
+  isBuiltIn?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreatePersonaRequest {
-    name: string;
-    description: string;
-    category: Persona['category'];
-    traits: Persona['traits'];
-    systemPrompt: string;
+  name: string;
+  description: string;
+  category: Persona['category'];
+  traits: Persona['traits'];
+  systemPrompt: string;
 }
 
 export interface UpdatePersonaRequest extends Partial<CreatePersonaRequest> { }
@@ -96,6 +96,9 @@ export class PersonaManager extends EventEmitter {
 
   private loadPersonas(): void {
     try {
+      // Clear existing personas (for reload functionality)
+      this.personas.clear();
+
       // Load built-ins first
       BUILTIN_PERSONAS.forEach(p => this.personas.set(p.id, { ...p }));
 
@@ -114,6 +117,15 @@ export class PersonaManager extends EventEmitter {
     } catch (error: any) {
       debug('Error loading personas:', ErrorUtils.getMessage(error));
     }
+  }
+
+  /**
+   * Reload personas from disk (useful for runtime refresh without restart)
+   */
+  public reloadPersonas(): void {
+    debug('Reloading personas from disk');
+    this.loadPersonas();
+    this.emit('personasReloaded');
   }
 
   private savePersonas(): void {
@@ -186,7 +198,7 @@ export class PersonaManager extends EventEmitter {
 
   public deletePersona(id: string): boolean {
     const existing = this.personas.get(id);
-    if (!existing) {return false;}
+    if (!existing) { return false; }
 
     if (existing.isBuiltIn) {
       throw new Error('Cannot delete built-in personas');
