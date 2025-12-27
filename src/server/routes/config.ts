@@ -153,10 +153,15 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
 }
 
 // GET /api/config/bots - List all configured bots with redacted secrets
-router.get('/bots', (req, res) => {
+router.get('/bots', async (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
+
+    // Get runtime status from BotManager
+    const botManager = BotManager.getInstance();
+    const runtimeBots = await botManager.getAllBots();
+    const runtimeStatusMap = new Map(runtimeBots.map(b => [b.name, b.isActive]));
 
     // Redact sensitive values before sending to frontend
     const safeBots = bots.map((bot: any) => {
@@ -166,7 +171,7 @@ router.get('/bots', (req, res) => {
         name: bot.name,
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
-        isActive: true, // TODO: Add actual status tracking
+        isActive: runtimeStatusMap.get(bot.name) ?? true, // Use runtime status
         source: bot._source || 'env', // Indicate where config came from
       };
     });
