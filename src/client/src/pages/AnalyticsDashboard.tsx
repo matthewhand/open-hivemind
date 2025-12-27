@@ -228,9 +228,9 @@ const AnalyticsDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {usageMetricsCards.map((card, index) => (
+        {usageMetricsCards.map((card) => (
           <StatusCard
-            key={index}
+            key={card.title}
             title={card.title}
             subtitle={card.subtitle}
             status={card.status}
@@ -360,8 +360,8 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="card-body">
             <h2 className="card-title mb-4">Recent Activity Stream</h2>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {messageFlow.slice(0, 10).map((event, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 rounded bg-base-200">
+              {messageFlow.slice(0, 10).map((event, idx) => (
+                <div key={`${event.timestamp || idx}-${event.source || idx}`} className="flex items-center gap-3 p-2 rounded bg-base-200">
                   <span className="text-2xl">💬</span>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{event.source || 'Unknown'}</p>

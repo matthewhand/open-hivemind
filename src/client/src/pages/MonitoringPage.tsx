@@ -285,8 +285,8 @@ const MonitoringPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {health.errors.topTypes.map((err, i) => (
-                        <tr key={i}>
+                      {health.errors.topTypes.map((err) => (
+                        <tr key={err.type}>
                           <td className="font-mono text-sm">{err.type}</td>
                           <td><span className="badge badge-error">{err.count}</span></td>
                         </tr>
