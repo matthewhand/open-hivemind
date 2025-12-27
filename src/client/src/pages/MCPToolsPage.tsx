@@ -34,95 +34,47 @@ const MCPToolsPage: React.FC = () => {
     { label: 'Tools', href: '/uber/mcp/tools', isActive: true },
   ];
 
-  // Mock tools - in real app this would come from API
-  const mockTools: MCPTool[] = [
-    {
-      id: '1',
-      name: 'github_create_issue',
-      serverId: '1',
-      serverName: 'GitHub Integration',
-      description: 'Create a new issue in a GitHub repository',
-      category: 'git',
-      inputSchema: { repository: 'string', title: 'string', body: 'string' },
-      outputSchema: { issueNumber: 'number', url: 'string' },
-      usageCount: 45,
-      lastUsed: '2024-01-15T10:30:00Z',
-      enabled: true,
-    },
-    {
-      id: '2',
-      name: 'github_list_repos',
-      serverId: '1',
-      serverName: 'GitHub Integration',
-      description: 'List all repositories for a user or organization',
-      category: 'git',
-      inputSchema: { owner: 'string', type: 'string' },
-      outputSchema: { repositories: 'array' },
-      usageCount: 23,
-      lastUsed: '2024-01-14T16:45:00Z',
-      enabled: true,
-    },
-    {
-      id: '3',
-      name: 'db_query',
-      serverId: '2',
-      serverName: 'Database Tools',
-      description: 'Execute a SQL query against the database',
-      category: 'database',
-      inputSchema: { query: 'string', parameters: 'array' },
-      outputSchema: { rows: 'array', count: 'number' },
-      usageCount: 78,
-      lastUsed: '2024-01-15T09:15:00Z',
-      enabled: true,
-    },
-    {
-      id: '4',
-      name: 'db_backup',
-      serverId: '2',
-      serverName: 'Database Tools',
-      description: 'Create a backup of the database',
-      category: 'database',
-      inputSchema: { tables: 'array', compression: 'boolean' },
-      outputSchema: { backupPath: 'string', size: 'number' },
-      usageCount: 12,
-      lastUsed: '2024-01-13T14:20:00Z',
-      enabled: false,
-    },
-    {
-      id: '5',
-      name: 'fs_read_file',
-      serverId: '3',
-      serverName: 'File System',
-      description: 'Read contents of a file',
-      category: 'filesystem',
-      inputSchema: { path: 'string', encoding: 'string' },
-      outputSchema: { content: 'string', size: 'number' },
-      usageCount: 156,
-      lastUsed: '2024-01-12T11:30:00Z',
-      enabled: true,
-    },
-    {
-      id: '6',
-      name: 'api_call',
-      serverId: '4',
-      serverName: 'API Gateway',
-      description: 'Make HTTP requests to external APIs',
-      category: 'network',
-      inputSchema: { url: 'string', method: 'string', headers: 'object' },
-      outputSchema: { response: 'object', status: 'number' },
-      usageCount: 34,
-      lastUsed: '2024-01-10T08:15:00Z',
-      enabled: true,
-    },
-  ];
-
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setTools(mockTools);
-      setFilteredTools(mockTools);
-      setLoading(false);
-    }, 1000);
+    const fetchTools = async () => {
+      try {
+        const res = await fetch('/api/mcp/servers');
+        if (res.ok) {
+          const json = await res.json();
+          const servers = json.servers || [];
+
+          // Flatten structure: Server[] -> Tool[]
+          const allTools: MCPTool[] = [];
+          servers.forEach((server: any) => {
+            if (server.tools && Array.isArray(server.tools)) {
+              server.tools.forEach((t: any) => {
+                allTools.push({
+                  id: `${server.name}-${t.name}`,
+                  name: t.name,
+                  serverId: server.name, // Using name as ID for consistency with API
+                  serverName: server.name,
+                  description: t.description || 'No description available',
+                  category: 'utility', // Default category as API doesn't provide it yet
+                  inputSchema: t.inputSchema,
+                  outputSchema: {},
+                  usageCount: 0,
+                  enabled: server.connected,
+                });
+              });
+            }
+          });
+
+          setTools(allTools);
+          setFilteredTools(allTools);
+        }
+      } catch (err) {
+        console.error('Failed to fetch MCP tools:', err);
+        setAlert({ type: 'error', message: 'Failed to load tools from server' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTools();
   }, []);
 
   useEffect(() => {
@@ -159,14 +111,38 @@ const MCPToolsPage: React.FC = () => {
       filesystem: 'badge-info',
       network: 'badge-success',
       ai: 'badge-warning',
+      utility: 'badge-ghost',
     };
     return colors[category] || 'badge-ghost';
   };
 
   const handleRunTool = async (tool: MCPTool) => {
+    // Basic prompt for arguments (in real app, use a modal form based on inputSchema)
+    const argsString = prompt(`Enter arguments for ${tool.name} (JSON format):`, '{}');
+    if (!argsString) return;
+
     try {
-      // Simulate tool execution
-      setAlert({ type: 'success', message: `Tool "${tool.name}" executed successfully` });
+      const args = JSON.parse(argsString);
+
+      const res = await fetch(`/api/mcp/servers/${tool.serverName}/call-tool`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          toolName: tool.name,
+          arguments: args,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to execute tool');
+      }
+
+      const json = await res.json();
+      console.log('Tool execution result:', json);
+      setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
 
       // Update usage count
       setTools(prev => prev.map(t =>
@@ -174,8 +150,9 @@ const MCPToolsPage: React.FC = () => {
           ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
           : t,
       ));
-    } catch (error) {
-      setAlert({ type: 'error', message: `Failed to execute tool "${tool.name}"` });
+    } catch (error: any) {
+      console.error('Tool execution error:', error);
+      setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
     }
   };
 

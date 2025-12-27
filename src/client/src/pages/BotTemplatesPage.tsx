@@ -23,56 +23,28 @@ const BotTemplatesPage: React.FC = () => {
     { label: 'Templates', href: '/uber/bots/templates', isActive: true },
   ];
 
-  // Mock templates - in real app this would come from API
-  const mockTemplates: BotTemplate[] = [
-    {
-      id: '1',
-      name: 'Discord Community Bot',
-      description: 'A friendly bot for managing Discord communities with moderation and engagement features.',
-      platform: 'discord',
-      persona: 'friendly-helper',
-      llmProvider: 'openai',
-      tags: ['community', 'moderation', 'discord'],
-      featured: true,
-    },
-    {
-      id: '2',
-      name: 'Development Assistant',
-      description: 'Technical support bot for development teams with code review and documentation help.',
-      platform: 'slack',
-      persona: 'dev-assistant',
-      llmProvider: 'anthropic',
-      tags: ['development', 'technical', 'code-review'],
-      featured: true,
-    },
-    {
-      id: '3',
-      name: 'Educational Tutor',
-      description: 'Patient teaching assistant for educational environments and training programs.',
-      platform: 'mattermost',
-      persona: 'teacher',
-      llmProvider: 'openai',
-      tags: ['education', 'teaching', 'training'],
-      featured: false,
-    },
-    {
-      id: '4',
-      name: 'Customer Support Bot',
-      description: 'Professional customer service bot with FAQ and escalation capabilities.',
-      platform: 'telegram',
-      persona: 'friendly-helper',
-      llmProvider: 'openwebui',
-      tags: ['support', 'customer-service', 'faq'],
-      featured: false,
-    },
-  ];
+  const fetchTemplates = async () => {
+    try {
+      const res = await fetch('/api/bots/templates');
+      if (res.ok) {
+        const json = await res.json();
+        const apiTemplates = json.data?.templates || [];
+        // Map backend fields to frontend interface if necessary
+        const mapped = apiTemplates.map((t: any) => ({
+          ...t,
+          platform: t.messageProvider, // Map messageProvider to platform
+        }));
+        setTemplates(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setTemplates(mockTemplates);
-      setLoading(false);
-    }, 1000);
+    fetchTemplates();
   }, []);
 
   const handleUseTemplate = (template: BotTemplate) => {
@@ -127,7 +99,7 @@ const BotTemplatesPage: React.FC = () => {
           <div
             key={template.id}
             className={`card bg-base-100 shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
-            }`}
+              }`}
           >
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">

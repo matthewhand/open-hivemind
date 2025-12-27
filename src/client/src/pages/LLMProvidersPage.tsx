@@ -33,8 +33,8 @@ const LLMProvidersPage: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
-    { label: 'Configuration', href: '/uber' }, // Adjusted path
-    { label: 'LLM Profiles', href: '/admin/integrations/llm', isActive: true },
+    { label: 'Configuration', href: '/uber' },
+    { label: 'LLM Providers', href: '/admin/integrations/llm', isActive: true },
   ];
 
   const fetchProfiles = useCallback(async () => {

@@ -657,6 +657,50 @@ class ApiService {
   }> {
     return this.request('/health/detailed');
   }
+  async getGlobalConfig(): Promise<Record<string, any>> {
+    return this.request('/api/config/global');
+  }
+
+  async updateGlobalConfig(updates: Record<string, any>): Promise<{ success: boolean; message: string }> {
+    return this.request('/api/config/global', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  // Import/Export Backup Methods
+  async listSystemBackups(): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>('/api/import-export/backups');
+    return res.data || [];
+  }
+
+  async createSystemBackup(options: {
+    name: string;
+    description?: string;
+    encrypt?: boolean;
+    encryptionKey?: string;
+  }): Promise<{ success: boolean; message: string; data: any }> {
+    return this.request('/api/import-export/backup', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async restoreSystemBackup(backupId: string, options: {
+    overwrite?: boolean;
+    decryptionKey?: string;
+  } = {}): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/import-export/backups/${backupId}/restore`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async deleteSystemBackup(backupId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/import-export/backups/${backupId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();

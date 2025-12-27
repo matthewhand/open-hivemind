@@ -10,6 +10,7 @@ import { auditMiddleware, logBotAction } from '../middleware/audit';
 import { AuditLogger } from '@src/common/auditLogger';
 import { validateRequest } from '@src/validation/validateRequest';
 import { CreateBotSchema, UpdateBotSchema, CloneBotSchema, BotIdParamSchema } from '@src/validation/schemas/botSchema';
+import WebSocketService from '@src/server/services/WebSocketService';
 
 const debug = Debug('app:BotsRoutes');
 const router = Router();
@@ -275,11 +276,38 @@ router.get('/:botId/activity', validateRequest(BotIdParamSchema), async (req: Re
     const limit = parseInt(req.query.limit as string) || 50;
 
     const auditLogger = AuditLogger.getInstance();
-    const activity = auditLogger.getBotActivity(botId, limit);
+    const auditActivity = auditLogger.getBotActivity(botId, limit);
+
+    // Fetch bot to get name for runtime filtering
+    const bot = await botManager.getBot(botId);
+
+    // Get runtime activity from WebSocketService
+    const wsService = WebSocketService.getInstance();
+    const runtimeActivity = wsService.getMessageFlow(1000) // Get last 1000 events to filter
+      .filter(event => {
+        // loose matching on name or ID
+        if (!bot) { return (event as any).botId === botId; }
+        return event.botName === bot.name || (event as any).botId === botId;
+      })
+      .map(event => ({
+        id: event.id || `runtime_${Date.now()}_${Math.random()}`,
+        timestamp: event.timestamp,
+        action: event.messageType === 'incoming' ? 'MESSAGE_RECEIVED' : 'RESPONSE_SENT',
+        result: event.status === 'error' || event.status === 'timeout' ? 'failure' : 'success',
+        details: event.errorMessage || (event.messageType === 'incoming' ? 'Message received' : 'Response sent'),
+        user: 'System',
+        resource: `bots/${botId}`,
+        metadata: { type: 'RUNTIME', ...event }
+      }));
+
+    // Combine and sort
+    const combinedActivity = [...auditActivity, ...runtimeActivity]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
 
     res.json({
       success: true,
-      data: { activity },
+      data: { activity: combinedActivity },
     });
   } catch (error: any) {
     debug('Error getting bot activity:', error);
@@ -322,54 +350,67 @@ router.get('/:botId/history', validateRequest(BotIdParamSchema), async (req: Req
  */
 router.get('/templates', (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
-  const templates = {
-    discord: {
-      name: 'Discord Bot',
+  const templates = [
+    {
+      id: 'template_discord_community',
+      name: 'Discord Community Bot',
+      description: 'A friendly bot for managing Discord communities with moderation and engagement features.',
       messageProvider: 'discord',
+      persona: 'friendly-helper',
       llmProvider: 'openai',
+      tags: ['community', 'moderation', 'discord'],
+      featured: true,
       config: {
         discord: {
-          token: 'YOUR_DISCORD_BOT_TOKEN',
-          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID',
+          token: '',
+          voiceChannelId: '',
         },
         openai: {
-          apiKey: 'YOUR_OPENAI_API_KEY',
-          model: 'gpt-3.5-turbo',
+          apiKey: '',
+          model: 'gpt-4o',
         },
       },
     },
-    slack: {
-      name: 'Slack Bot',
+    {
+      id: 'template_slack_assistant',
+      name: 'Development Assistant',
+      description: 'Technical support bot for development teams with code review and documentation help.',
       messageProvider: 'slack',
-      llmProvider: 'flowise',
+      persona: 'dev-assistant',
+      llmProvider: 'anthropic', // Note: Make sure 'anthropic' is a valid provider in your system or map to 'openwebui'
+      tags: ['development', 'technical', 'code-review'],
+      featured: true,
       config: {
         slack: {
-          botToken: 'YOUR_SLACK_BOT_TOKEN',
-          signingSecret: 'YOUR_SLACK_SIGNING_SECRET',
-          appToken: 'OPTIONAL_SLACK_APP_TOKEN',
-        },
-        flowise: {
-          apiKey: 'YOUR_FLOWISE_API_KEY',
-          endpoint: 'YOUR_FLOWISE_ENDPOINT',
-        },
-      },
-    },
-    mattermost: {
-      name: 'Mattermost Bot',
-      messageProvider: 'mattermost',
-      llmProvider: 'openwebui',
-      config: {
-        mattermost: {
-          serverUrl: 'YOUR_MATTERMOST_SERVER_URL',
-          token: 'YOUR_MATTERMOST_TOKEN',
+          botToken: '',
+          signingSecret: '',
         },
         openwebui: {
-          apiKey: 'YOUR_OPENWEBUI_API_KEY',
-          endpoint: 'YOUR_OPENWEBUI_ENDPOINT',
+          apiKey: '',
+          endpoint: 'https://api.anthropic.com',
         },
       },
     },
-  };
+    {
+      id: 'template_mattermost_tutor',
+      name: 'Educational Tutor',
+      description: 'Patient teaching assistant for educational environments and training programs.',
+      messageProvider: 'mattermost',
+      persona: 'teacher',
+      llmProvider: 'openai',
+      tags: ['education', 'teaching', 'training'],
+      featured: false,
+      config: {
+        mattermost: {
+          serverUrl: '',
+          token: '',
+        },
+        openai: {
+          apiKey: '',
+        },
+      },
+    },
+  ];
 
   res.json({
     success: true,

@@ -8,6 +8,7 @@ interface BotData {
   id: string;
   name: string;
   provider: string; // Message Provider Name
+  messageProvider?: string; // Alternative field from API
   llmProvider: string; // LLM Provider Name
   persona?: string; // Bot Persona
   status: string;
@@ -54,8 +55,6 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
-
-  // ...
 
   const fetchData = useCallback(async () => {
     try {
@@ -107,12 +106,23 @@ const BotsPage: React.FC = () => {
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
     if (previewBot) {
-      // Mock logs for now or fetch if endpoint exists
-      setActivityLogs([
-        { id: 1, timestamp: new Date().toISOString(), details: 'Bot started', metadata: { type: 'SYSTEM' } },
-        { id: 2, timestamp: new Date(Date.now() - 1000 * 60).toISOString(), details: 'Message received from user', metadata: { type: 'MESSAGE_RECEIVED' } },
-        { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } },
-      ]);
+      // Fetch activity logs
+      const fetchActivity = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/activity?limit=20`);
+          if (res.ok) {
+            const json = await res.json();
+            setActivityLogs(json.data?.activity || []);
+          } else {
+            setActivityLogs([]);
+          }
+        } catch (err) {
+          console.error('Failed to fetch activity logs:', err);
+          setActivityLogs([]);
+        }
+      };
+
+      fetchActivity();
 
       // Fetch chat history
       const fetchChatHistory = async () => {
@@ -120,8 +130,8 @@ const BotsPage: React.FC = () => {
         try {
           const res = await fetch(`${API_BASE}/bots/${previewBot.id}/history?limit=20`);
           if (res.ok) {
-            const data = await res.json();
-            setChatHistory(data.messages || []);
+            const json = await res.json();
+            setChatHistory(json.data?.history || []);
           } else {
             setChatHistory([]);
           }
@@ -134,6 +144,7 @@ const BotsPage: React.FC = () => {
       };
       fetchChatHistory();
     } else {
+      setActivityLogs([]);
       setChatHistory([]);
     }
   }, [previewBot]);
@@ -810,7 +821,7 @@ const BotsPage: React.FC = () => {
                       <Settings className="w-3 h-3" /> Config
                     </button>
                   </div>
-                  <p className="text-lg font-bold mb-1">{previewBot.provider || 'None'}</p>
+                  <p className="text-lg font-bold mb-1">{previewBot.messageProvider || previewBot.provider || 'None'}</p>
                   {/* Display redacted config details if available */}
                   {previewBot.config && previewBot.config[previewBot.provider] && (
                     <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
@@ -874,7 +885,12 @@ const BotsPage: React.FC = () => {
                   activityLogs.map((log) => (
                     <div key={log.id} className="mb-1 border-b border-base-content/5 pb-1 last:border-0">
                       <span className="opacity-50 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                      <span className={log.metadata?.type === 'MESSAGE_RECEIVED' ? 'text-success' : log.metadata?.type === 'RESPONSE_SENT' ? 'text-info' : 'text-base-content'}>
+                      <span className={
+                        log.metadata?.type === 'RUNTIME' ? 'text-info' :
+                          log.action?.includes('ERROR') || log.result === 'failure' ? 'text-error' :
+                            'text-base-content'
+                      }>
+                        <span className="font-bold mr-1">[{log.action}]</span>
                         {log.details}
                       </span>
                     </div>
