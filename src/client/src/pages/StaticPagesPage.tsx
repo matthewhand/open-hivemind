@@ -43,8 +43,8 @@ const StaticPagesPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {staticPages.map((page, index) => (
-          <Card key={index} className="flex flex-col h-full">
+        {staticPages.map((page) => (
+          <Card key={page.url} className="flex flex-col h-full">
             <div className="flex-grow text-center p-6">
               <div className={`text-${page.color} mb-4 flex justify-center`}>
                 {page.icon}

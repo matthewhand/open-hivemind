@@ -60,16 +60,16 @@ const SitemapPage: React.FC = () => {
 
   const getAccessColor = (access: string) => {
     switch (access) {
-    case 'public': return 'badge-success';
-    case 'authenticated': return 'badge-warning';
-    case 'owner': return 'badge-error';
-    default: return 'badge-ghost';
+      case 'public': return 'badge-success';
+      case 'authenticated': return 'badge-warning';
+      case 'owner': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
   const getPriorityColor = (priority: number) => {
-    if (priority >= 0.8) {return 'badge-success';}
-    if (priority >= 0.5) {return 'badge-warning';}
+    if (priority >= 0.8) { return 'badge-success'; }
+    if (priority >= 0.5) { return 'badge-warning'; }
     return 'badge-ghost';
   };
 
@@ -88,11 +88,11 @@ const SitemapPage: React.FC = () => {
     if (url.url === '/') {
       category = 'Root';
     } else if (url.url.startsWith('/uber')) {
-      if (url.url.includes('/bots')) {category = 'Bot Management';}
-      else if (url.url.includes('/mcp')) {category = 'MCP Servers';}
-      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) {category = 'Monitoring';}
-      else if (url.url.includes('/settings')) {category = 'Settings';}
-      else {category = 'Main Dashboard';}
+      if (url.url.includes('/bots')) { category = 'Bot Management'; }
+      else if (url.url.includes('/mcp')) { category = 'MCP Servers'; }
+      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) { category = 'Monitoring'; }
+      else if (url.url.includes('/settings')) { category = 'Settings'; }
+      else { category = 'Main Dashboard'; }
     } else if (url.url.startsWith('/webui') || url.url.startsWith('/admin')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
@@ -101,7 +101,7 @@ const SitemapPage: React.FC = () => {
       category = 'Authentication';
     }
 
-    if (!acc[category]) {acc[category] = [];}
+    if (!acc[category]) { acc[category] = []; }
     acc[category].push(url);
     return acc;
   }, {} as Record<string, SitemapUrl[]>) || {};
@@ -207,8 +207,8 @@ const SitemapPage: React.FC = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {urls.map((url, index) => (
-              <div key={index} className="card bg-base-100 shadow-xl h-full border border-base-200">
+            {urls.map((url) => (
+              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
                 <div className="card-body p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-mono text-sm break-all font-bold">
