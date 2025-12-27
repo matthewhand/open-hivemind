@@ -419,7 +419,7 @@ const BotsPage: React.FC = () => {
                             <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('message').map(opt => (
                                 <li key={opt}>
-                                  <a onClick={() => handleUpdateConfig(bot, 'messageProvider', opt)} className={bot.provider === opt ? 'active' : ''}>
+                                  <a onClick={() => { handleUpdateConfig(bot, 'messageProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.provider === opt ? 'active' : ''}>
                                     {opt}
                                   </a>
                                 </li>
@@ -451,7 +451,7 @@ const BotsPage: React.FC = () => {
                             <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('llm').map(opt => (
                                 <li key={opt}>
-                                  <a onClick={() => handleUpdateConfig(bot, 'llmProvider', opt)} className={bot.llmProvider === opt ? 'active' : ''}>
+                                  <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === opt ? 'active' : ''}>
                                     {opt}
                                   </a>
                                 </li>
@@ -493,7 +493,7 @@ const BotsPage: React.FC = () => {
                             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {Array.from(new Set(['default', ...bots.map(b => b.persona).filter(Boolean) as string[]])).map(p => (
                                 <li key={p}>
-                                  <a onClick={() => handleUpdatePersona(bot, p)} className={bot.persona === p ? 'active' : ''}>
+                                  <a onClick={() => { handleUpdatePersona(bot, p); (document.activeElement as HTMLElement)?.blur(); }} className={bot.persona === p ? 'active' : ''}>
                                     {p}
                                   </a>
                                 </li>
