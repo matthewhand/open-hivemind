@@ -410,21 +410,58 @@ export class StartupDiagnostics {
 
     const resources: SystemResources = {
       memoryUsage: process.memoryUsage(),
-      freeDiskSpace: 0, // TODO: Implement disk space check
+      freeDiskSpace: this.getFreeDiskSpace(),
       nodeVersion: process.version,
       platform: process.platform,
     };
 
     const memoryMB = Math.round(resources.memoryUsage.heapUsed / 1024 / 1024);
     const memoryLimitMB = Math.round(resources.memoryUsage.heapTotal / 1024 / 1024);
+    const diskSpaceGB = resources.freeDiskSpace > 0
+      ? `${(resources.freeDiskSpace / (1024 * 1024 * 1024)).toFixed(2)}GB`
+      : 'Unknown';
 
     startupLog.info('📊 Resource Summary', {
       nodeVersion: resources.nodeVersion,
       platform: resources.platform,
       memoryUsage: `${memoryMB}MB`,
       memoryLimit: `${memoryLimitMB}MB`,
+      freeDiskSpace: diskSpaceGB,
       pid: process.pid,
     });
+  }
+
+  /**
+   * Get free disk space in bytes for the current working directory
+   */
+  private getFreeDiskSpace(): number {
+    try {
+      const { execSync } = require('child_process');
+      const cwd = process.cwd();
+
+      if (process.platform === 'win32') {
+        // Windows: use wmic to get free space
+        const drive = cwd.charAt(0).toUpperCase();
+        const result = execSync(`wmic logicaldisk get size,freespace,caption`, { encoding: 'utf8' });
+        const lines = result.split('\n').filter((line: string) => line.trim());
+        for (const line of lines) {
+          if (line.startsWith(drive)) {
+            const parts = line.split(/\s+/).filter(Boolean);
+            return parseInt(parts[1], 10) || 0;
+          }
+        }
+      } else {
+        // Unix-like: use df command
+        const result = execSync(`df -k "${cwd}" | tail -1`, { encoding: 'utf8' });
+        const parts = result.split(/\s+/).filter(Boolean);
+        // df -k outputs: Filesystem, 1K-blocks, Used, Available, Use%, Mounted on
+        const availableKB = parseInt(parts[3], 10);
+        return (availableKB || 0) * 1024; // Convert KB to bytes
+      }
+    } catch (error) {
+      startupLog.debug('Failed to get disk space:', error);
+    }
+    return 0;
   }
 
   /**
