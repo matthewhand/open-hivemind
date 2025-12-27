@@ -45,6 +45,9 @@ const BotsPage: React.FC = () => {
 
   const canCreateBot = newBotName.trim().length > 0 && newBotMessageProvider;
 
+  // Get LLM status to check if system default is configured
+  const { defaultLlmConfigured } = useLlmStatus();
+
   // ...
 
   const fetchData = useCallback(async () => {
