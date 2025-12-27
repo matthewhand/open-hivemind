@@ -76,27 +76,27 @@ const MonitoringPage: React.FC = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    if (days > 0) {return `${days}d ${hours}h ${mins}m`;}
-    if (hours > 0) {return `${hours}h ${mins}m ${secs}s`;}
-    if (mins > 0) {return `${mins}m ${secs}s`;}
+    if (days > 0) { return `${days}d ${hours}h ${mins}m`; }
+    if (hours > 0) { return `${hours}h ${mins}m ${secs}s`; }
+    if (mins > 0) { return `${mins}m ${secs}s`; }
     return `${secs}s`;
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'healthy': return 'text-green-500';
-    case 'degraded': return 'text-yellow-500';
-    case 'unhealthy': return 'text-red-500';
-    default: return 'text-base-content/60';
+      case 'healthy': return 'text-green-500';
+      case 'degraded': return 'text-yellow-500';
+      case 'unhealthy': return 'text-red-500';
+      default: return 'text-base-content/60';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-    case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
-    case 'degraded': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
-    case 'unhealthy': return <AlertCircle className="w-5 h-5 text-red-500" />;
-    default: return <Activity className="w-5 h-5 text-base-content/60" />;
+      case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'degraded': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      case 'unhealthy': return <AlertCircle className="w-5 h-5 text-red-500" />;
+      default: return <Activity className="w-5 h-5 text-base-content/60" />;
     }
   };
 
@@ -156,7 +156,12 @@ const MonitoringPage: React.FC = () => {
             {getStatusIcon(health.status)}
             <div>
               <h3 className="font-bold">System Status: {health.status.toUpperCase()}</h3>
-              <div className="text-xs">Last updated: {new Date(health.timestamp).toLocaleString()}</div>
+              <div className="text-xs">
+                {health.status === 'unhealthy' && memoryPercentage > 90 && (
+                  <span className="mr-2">⚠️ High memory (consider restarting)</span>
+                )}
+                Last updated: {new Date(health.timestamp).toLocaleString()}
+              </div>
             </div>
           </div>
 
@@ -226,6 +231,7 @@ const MonitoringPage: React.FC = () => {
                   <div className="flex items-center gap-2 text-base-content/60">
                     <Wifi className="w-5 h-5" />
                     <span className="text-sm">Messages</span>
+                    <span className="badge badge-xs badge-warning">MOCK</span>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-primary">
@@ -241,19 +247,19 @@ const MonitoringPage: React.FC = () => {
           {/* Status Overview */}
           <div className="stats stats-horizontal bg-base-200 w-full">
             <div className="stat">
-              <div className="stat-title">Recent Errors</div>
+              <div className="stat-title">Recent Errors <span className="badge badge-xs badge-warning ml-1">MOCK</span></div>
               <div className={`stat-value ${health.errors.recent > 0 ? 'text-red-500' : 'text-green-500'}`}>
                 {health.errors.recent}
               </div>
               <div className="stat-desc">Last minute</div>
             </div>
             <div className="stat">
-              <div className="stat-title">Total Errors</div>
+              <div className="stat-title">Total Errors <span className="badge badge-xs badge-warning ml-1">MOCK</span></div>
               <div className="stat-value">{health.errors.total}</div>
               <div className="stat-desc">Since start</div>
             </div>
             <div className="stat">
-              <div className="stat-title">Circuit Breakers</div>
+              <div className="stat-title">Circuit Breakers <span className="badge badge-xs badge-warning ml-1">MOCK</span></div>
               <div className="stat-value">{health.recovery.circuitBreakers}</div>
               <div className="stat-desc">Active</div>
             </div>
@@ -262,6 +268,7 @@ const MonitoringPage: React.FC = () => {
               <div className={`stat-value text-sm ${getStatusColor(health.errors.health)}`}>
                 {health.errors.health.toUpperCase()}
               </div>
+              <div className="stat-desc text-xs">Based on error rate (mock)</div>
             </div>
           </div>
 

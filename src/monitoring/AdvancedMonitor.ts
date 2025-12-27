@@ -438,12 +438,14 @@ export class AdvancedMonitor extends EventEmitter {
 
   public getHealthStatus(): HealthStatus {
     const latestSystemMetrics = this.systemMetrics[this.systemMetrics.length - 1];
+    // Adjusted thresholds: >95% memory = unhealthy, 85-95% = degraded
+    // High memory usage alone (without errors) should be a warning, not critical failure
     const overall: 'healthy' | 'degraded' | 'unhealthy' =
       latestSystemMetrics &&
-      (latestSystemMetrics.memory.usagePercent > 90 || latestSystemMetrics.cpu.usage > 90)
+        (latestSystemMetrics.memory.usagePercent > 95 || latestSystemMetrics.cpu.usage > 95)
         ? 'unhealthy'
         : latestSystemMetrics &&
-          (latestSystemMetrics.memory.usagePercent > 80 || latestSystemMetrics.cpu.usage > 80)
+          (latestSystemMetrics.memory.usagePercent > 85 || latestSystemMetrics.cpu.usage > 85)
           ? 'degraded'
           : 'healthy';
 
@@ -484,7 +486,7 @@ export class AdvancedMonitor extends EventEmitter {
     system: Partial<SystemMetrics>;
     application: Partial<ApplicationMetrics>;
     health: HealthStatus;
-    } {
+  } {
     const latestSystem = this.systemMetrics[this.systemMetrics.length - 1];
     const latestApplication = this.applicationMetrics[this.applicationMetrics.length - 1];
 
