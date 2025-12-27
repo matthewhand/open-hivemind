@@ -414,7 +414,7 @@ const BotsPage: React.FC = () => {
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
+                              {(bot as any).messageProvider || bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
                             <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('message').map(opt => (
