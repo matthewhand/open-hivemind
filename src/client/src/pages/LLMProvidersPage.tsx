@@ -161,7 +161,7 @@ const LLMProvidersPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
             <BrainIcon className="w-8 h-8 text-primary" />
-            LLM Profiles
+            LLM Providers
           </h1>
           <p className="text-base-content/70">
             Configure reusable AI personalities and connection templates.
