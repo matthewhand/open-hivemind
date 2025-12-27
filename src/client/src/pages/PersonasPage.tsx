@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -30,6 +30,8 @@ const PersonasPage: React.FC = () => {
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
   // Form State
@@ -97,7 +99,7 @@ const PersonasPage: React.FC = () => {
   }, [fetchData]);
 
   const handleSavePersona = async () => {
-    if (!personaName.trim()) {return;}
+    if (!personaName.trim()) { return; }
 
     setLoading(true);
     try {
@@ -184,27 +186,37 @@ const PersonasPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDeletePersona = async (personaId: string) => {
+  const handleDeletePersona = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);
-    if (!persona) {return;}
+    if (!persona) { return; }
+    if (persona.isBuiltIn) {
+      setError('Cannot delete built-in personas');
+      return;
+    }
+    setDeletingPersona(persona);
+    setShowDeleteModal(true);
+  };
 
-    if (window.confirm(`Delete persona "${persona.name}"? This will revert ${persona.assignedBotNames.length} bots to default.`)) {
-      setLoading(true);
-      try {
-        // 1. Revert bots
-        const updates = persona.assignedBotIds.map(botId =>
-          apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
-        );
-        await Promise.all(updates);
+  const confirmDelete = async () => {
+    if (!deletingPersona) { return; }
+    setLoading(true);
+    try {
+      // 1. Revert bots
+      const updates = deletingPersona.assignedBotIds.map(botId =>
+        apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
+      );
+      await Promise.all(updates);
 
-        // 2. Delete persona
-        await apiService.deletePersona(personaId);
+      // 2. Delete persona
+      await apiService.deletePersona(deletingPersona.id);
 
-        await fetchData();
-      } catch (err) {
-        setError('Failed to delete persona');
-        setLoading(false);
-      }
+      await fetchData();
+      setShowDeleteModal(false);
+      setDeletingPersona(null);
+    } catch (err) {
+      setError('Failed to delete persona');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -448,8 +460,8 @@ const PersonasPage: React.FC = () => {
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={selectedBotIds.includes(bot.id)}
                       onChange={(e) => {
-                        if (e.target.checked) {setSelectedBotIds([...selectedBotIds, bot.id]);}
-                        else {setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id));}
+                        if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
+                        else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
                       }}
                     />
                     <div className="flex flex-col">
@@ -469,6 +481,51 @@ const PersonasPage: React.FC = () => {
             <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
             <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
               {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : 'Create Persona')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+        title="Delete Persona"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-error/10 rounded-lg">
+            <AlertTriangle className="w-8 h-8 text-error" />
+            <div>
+              <h3 className="font-bold">Are you sure?</h3>
+              <p className="text-sm text-base-content/70">
+                Delete <strong>"{deletingPersona?.name}"</strong>?
+              </p>
+            </div>
+          </div>
+          {deletingPersona && deletingPersona.assignedBotNames.length > 0 && (
+            <div className="alert alert-warning">
+              <Info className="w-4 h-4" />
+              <span>
+                {deletingPersona.assignedBotNames.length} bot(s) will be reverted to default:
+                <strong className="ml-1">{deletingPersona.assignedBotNames.join(', ')}</strong>
+              </span>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="btn-error"
+              onClick={confirmDelete}
+              disabled={loading}
+            >
+              {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
             </Button>
           </div>
         </div>
