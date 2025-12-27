@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
-import type { AuditedRequest} from '../middleware/audit';
+import type { AuditedRequest } from '../middleware/audit';
 import { auditMiddleware, logConfigChange } from '../middleware/audit';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import type { MessageProvider, LlmProvider } from '../../types/config';
@@ -262,7 +262,9 @@ router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, r
     // }
 
     // const diff = JSON.parse(approvalRequest.diff);
-    const updates = {}; // TODO: Extract updates from approval request
+    // NOTE: Approval workflow is not yet fully implemented. 
+    // When enabled, updates should be extracted from approvalRequest.diff
+    const updates = req.body || {};
 
     // Update user overrides
     userConfigStore.setBotOverride(botId, {
