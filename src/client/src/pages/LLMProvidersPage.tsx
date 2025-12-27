@@ -74,7 +74,8 @@ const LLMProvidersPage: React.FC = () => {
       name: profile.name,
       type: profile.provider,
       config: profile.config,
-    });
+      enabled: true,
+    } as any);
   };
 
   const handleDeleteProfile = async (key: string) => {
@@ -185,8 +186,8 @@ const LLMProvidersPage: React.FC = () => {
             <div className="collapse-title text-xl font-medium flex items-center gap-3">
               <ConfigIcon className="w-5 h-5" />
               System Default Configuration
-              {defaultStatus?.configured && <Badge variant="success" size="sm">Active</Badge>}
-              {!defaultStatus?.configured && <Badge variant="warning" size="sm">Not Configured</Badge>}
+              {defaultStatus?.configured && <Badge variant="success" size="small">Active</Badge>}
+              {!defaultStatus?.configured && <Badge variant="warning" size="small">Not Configured</Badge>}
             </div>
             <div className="collapse-content">
               <p className="text-sm opacity-70 mb-4">
