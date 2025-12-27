@@ -14,6 +14,7 @@ import {
   PencilIcon,
   TrashIcon,
   KeyIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import ProviderConfig from './ProviderConfig';
 
@@ -119,7 +120,7 @@ const LLMProvidersConfig: React.FC = () => {
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('Are you sure you want to delete this LLM provider?')) {return;}
+    if (!confirm('Are you sure you want to delete this LLM provider?')) { return; }
 
     try {
       const response = await fetch(`/api/admin/llm-providers/${providerId}`, {
@@ -177,70 +178,96 @@ const LLMProvidersConfig: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">LLM Providers</h2>
-        <Button
-          variant="primary"
-          startIcon={<PlusIcon className="w-5 h-5" />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add LLM Provider
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={fetchProviders}
+            startIcon={<ArrowPathIcon className="w-5 h-5" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            startIcon={<PlusIcon className="w-5 h-5" />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add LLM Provider
+          </Button>
+        </div>
       </div>
 
       {error && (
         <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {providers.map((provider) => (
-          <Card key={provider.id} className="bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="card-title">{provider.name}</h3>
-                  <div className="mt-2">
-                    <Badge variant="primary">{provider.type}</Badge>
+      {providers.length === 0 ? (
+        <div className="text-center py-12">
+          <KeyIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+          <h3 className="text-lg font-semibold text-base-content/70">No LLM Providers</h3>
+          <p className="text-base-content/50 mb-4">
+            Configure LLM providers to connect your bots to AI services like OpenAI, Flowise, or OpenWebUI.
+          </p>
+          <Button
+            variant="primary"
+            startIcon={<PlusIcon className="w-5 h-5" />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Your First Provider
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {providers.map((provider) => (
+            <Card key={provider.id} className="bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="card-title">{provider.name}</h3>
+                    <div className="mt-2">
+                      <Badge variant="primary">{provider.type}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={provider.isActive ? 'success' : 'neutral'}>
+                      {provider.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      shape="circle"
+                      color="ghost"
+                      onClick={() => handleOpenDialog(provider)}
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      shape="circle"
+                      color="error"
+                      variant="secondary" className="btn-outline"
+                      onClick={() => handleDeleteProvider(provider.id)}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Badge variant={provider.isActive ? 'success' : 'neutral'}>
-                    {provider.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+
+                <div className="flex items-center gap-4 mt-4">
+                  <span className="text-sm text-base-content/70">
+                    Status: {provider.isActive ? 'Active' : 'Inactive'}
+                  </span>
                   <Button
                     size="sm"
-                    shape="circle"
-                    color="ghost"
-                    onClick={() => handleOpenDialog(provider)}
-                  >
-                    <PencilIcon className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    shape="circle"
-                    color="error"
                     variant="secondary" className="btn-outline"
-                    onClick={() => handleDeleteProvider(provider.id)}
+                    onClick={() => handleToggleActive(provider.id, !provider.isActive)}
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    {provider.isActive ? 'Deactivate' : 'Activate'}
                   </Button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 mt-4">
-                <span className="text-sm text-base-content/70">
-                  Status: {provider.isActive ? 'Active' : 'Inactive'}
-                </span>
-                <Button
-                  size="sm"
-                  variant="secondary" className="btn-outline"
-                  onClick={() => handleToggleActive(provider.id, !provider.isActive)}
-                >
-                  {provider.isActive ? 'Deactivate' : 'Activate'}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <ModalForm
         open={openDialog}
