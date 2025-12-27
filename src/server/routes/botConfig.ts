@@ -25,7 +25,10 @@ const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();
 
 // Apply authentication and audit middleware
-// TODO: Re-enable auth in production
+// Authentication can be bypassed in development by setting SKIP_AUTH=true
+if (process.env.SKIP_AUTH !== 'true') {
+  router.use(authenticate);
+}
 router.use(auditMiddleware);
 
 /**

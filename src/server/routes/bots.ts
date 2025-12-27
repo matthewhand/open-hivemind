@@ -16,8 +16,12 @@ const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
 
-// Apply audit middleware (auth disabled for dev)
-// TODO: Re-enable authentication in production
+// Apply authentication and audit middleware
+// Authentication can be bypassed in development by setting SKIP_AUTH=true
+if (process.env.SKIP_AUTH !== 'true') {
+  const { authenticate } = require('../../auth/middleware');
+  router.use(authenticate);
+}
 router.use(auditMiddleware);
 
 /**
