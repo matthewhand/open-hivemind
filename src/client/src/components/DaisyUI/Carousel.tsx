@@ -4,6 +4,7 @@ type CarouselItem = {
   image: string;
   title: string;
   description: string;
+  bgGradient?: string; // CSS gradient to use when image is empty
 };
 
 type CarouselProps = {
@@ -22,7 +23,7 @@ const Carousel: React.FC<CarouselProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (!autoplay) {return;}
+    if (!autoplay) { return; }
 
     const tick = () => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);
@@ -45,9 +46,8 @@ const Carousel: React.FC<CarouselProps> = ({
     setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);
   };
 
-  const carouselClasses = `carousel w-full ${
-    variant === 'card-style' ? 'space-x-4 rounded-box bg-neutral p-4' : ''
-  }`;
+  const carouselClasses = `carousel w-full ${variant === 'card-style' ? 'space-x-4 rounded-box bg-neutral p-4' : ''
+    }`;
 
   return (
     <div className="relative">
@@ -56,12 +56,20 @@ const Carousel: React.FC<CarouselProps> = ({
           <div
             key={index}
             id={`slide${index}`}
-            className={`carousel-item relative w-full ${
-              variant === 'card-style' ? 'carousel-item-card' : ''
-            }`}
+            className={`carousel-item relative w-full ${variant === 'card-style' ? 'carousel-item-card' : ''
+              }`}
             style={{ display: index === activeIndex ? 'block' : 'none' }}
           >
-            <img src={item.image} className="w-full" alt={item.title} />
+            {item.image ? (
+              <img src={item.image} className="w-full" alt={item.title} />
+            ) : (
+              <div
+                className="w-full h-64 flex items-center justify-center"
+                style={{ background: item.bgGradient || 'linear-gradient(135deg, #667eea, #764ba2)' }}
+              >
+                <span className="text-4xl font-bold text-white/30">{item.title}</span>
+              </div>
+            )}
             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4 text-white">
               <h3 className="text-lg font-bold">{item.title}</h3>
               <p>{item.description}</p>
