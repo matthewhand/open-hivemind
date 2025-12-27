@@ -422,9 +422,16 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                 color="primary"
                 className="w-full"
                 onClick={() => {
-                  const provider = manager.createFromTemplate(template.id, {});
-                  // TODO: Open edit modal with template
-                  alert(`Created provider from template: ${template.name}`);
+                  // Pre-fill form with template data
+                  setFormData({
+                    name: `${template.name}-${Date.now().toString(36)}`,
+                    command: template.command || '',
+                    args: (template.args || []).join(' '),
+                    env: Object.entries(template.env || {}).map(([k, v]) => `${k}=${v}`).join('\n'),
+                    autoStart: template.autoStart ?? true,
+                    description: template.description || `Created from ${template.name} template`,
+                  });
+                  setIsCreateModalOpen(true);
                 }}
               >
                 <FaPlus className="w-3 h-3 mr-1" />
