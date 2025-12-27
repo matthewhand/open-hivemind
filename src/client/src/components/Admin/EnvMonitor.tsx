@@ -32,7 +32,16 @@ const EnvMonitor: React.FC = () => {
 
   return (
     <div className="card bg-base-100 shadow-xl p-6 mt-6">
-      <h2 className="text-xl font-bold mb-4">Environment Variable Overrides</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Environment Variable Overrides</h2>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={fetchEnvOverrides}
+          title="Refresh"
+        >
+          🔄 Refresh
+        </button>
+      </div>
 
       {Object.keys(envVars).length === 0 ? (
         <Alert status="info" message="No environment variable overrides detected" />
