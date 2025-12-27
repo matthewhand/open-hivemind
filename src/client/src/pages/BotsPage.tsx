@@ -21,6 +21,7 @@ interface BotData {
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { BotAvatar } from '../components/BotAvatar';
+import BotChatBubbles from '../components/BotChatBubbles';
 
 const API_BASE = '/api';
 
@@ -34,6 +35,8 @@ const BotsPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [previewBot, setPreviewBot] = useState<BotData | null>(null);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -101,7 +104,7 @@ const BotsPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Fetch logs when previewing a bot
+  // Fetch logs and chat history when previewing a bot
   useEffect(() => {
     if (previewBot) {
       // Mock logs for now or fetch if endpoint exists
@@ -110,6 +113,28 @@ const BotsPage: React.FC = () => {
         { id: 2, timestamp: new Date(Date.now() - 1000 * 60).toISOString(), details: 'Message received from user', metadata: { type: 'MESSAGE_RECEIVED' } },
         { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } },
       ]);
+
+      // Fetch chat history
+      const fetchChatHistory = async () => {
+        setChatLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/history?limit=20`);
+          if (res.ok) {
+            const data = await res.json();
+            setChatHistory(data.messages || []);
+          } else {
+            setChatHistory([]);
+          }
+        } catch (err) {
+          console.error('Failed to fetch chat history:', err);
+          setChatHistory([]);
+        } finally {
+          setChatLoading(false);
+        }
+      };
+      fetchChatHistory();
+    } else {
+      setChatHistory([]);
     }
   }, [previewBot]);
 
@@ -860,6 +885,19 @@ const BotsPage: React.FC = () => {
                     <span>No recent activity found</span>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" /> Chat History
+              </h4>
+              <div className="bg-base-300 rounded-lg">
+                <BotChatBubbles
+                  messages={chatHistory}
+                  botName={previewBot.name}
+                  loading={chatLoading}
+                />
               </div>
             </div>
 
