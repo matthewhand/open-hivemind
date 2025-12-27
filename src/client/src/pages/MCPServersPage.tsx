@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   PlayIcon,
   StopIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -21,63 +22,66 @@ interface MCPServer {
 const MCPServersPage: React.FC = () => {
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
-    { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Servers', href: '/uber/mcp/servers', isActive: true },
+    { label: 'MCP', href: '/admin/mcp' },
+    { label: 'Servers', href: '/admin/mcp/servers', isActive: true },
   ];
 
-  // Mock servers - in real app this would come from API
-  const mockServers: MCPServer[] = [
-    {
-      id: '1',
-      name: 'GitHub Integration',
-      url: 'mcp://github-server:8080',
-      status: 'running',
-      description: 'GitHub repository management and issue tracking',
-      toolCount: 12,
-      lastConnected: '2024-01-15T10:30:00Z',
-    },
-    {
-      id: '2',
-      name: 'Database Tools',
-      url: 'mcp://db-server:3306',
-      status: 'running',
-      description: 'Database query and management tools',
-      toolCount: 8,
-      lastConnected: '2024-01-15T09:15:00Z',
-    },
-    {
-      id: '3',
-      name: 'File System',
-      url: 'mcp://fs-server:9000',
-      status: 'stopped',
-      description: 'File system operations and management',
-      toolCount: 15,
-      lastConnected: '2024-01-14T16:45:00Z',
-    },
-    {
-      id: '4',
-      name: 'API Gateway',
-      url: 'mcp://api-gateway:8443',
-      status: 'error',
-      description: 'External API integrations and webhooks',
-      toolCount: 6,
-      lastConnected: '2024-01-13T14:20:00Z',
-    },
-  ];
+  // Fetch real MCP servers from API
+  const fetchServers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/admin/mcp-servers');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch MCP servers: ${response.statusText}`);
+      }
+      const data = await response.json();
+
+      // Map API response to MCPServer format
+      const connectedServers: MCPServer[] = (data.data?.servers || []).map((server: any, index: number) => ({
+        id: server.name || `server-${index}`,
+        name: server.name || 'Unknown',
+        url: server.serverUrl || server.url || '',
+        status: server.connected ? 'running' : 'stopped',
+        description: server.description || '',
+        toolCount: server.tools?.length || 0,
+        lastConnected: server.lastConnected,
+      }));
+
+      // Also include stored configurations that might not be connected
+      const storedConfigs: MCPServer[] = (data.data?.configurations || []).map((config: any, index: number) => {
+        // Check if this config is already in connectedServers
+        const existing = connectedServers.find(s => s.name === config.name);
+        if (existing) return null;
+        return {
+          id: config.name || `config-${index}`,
+          name: config.name || 'Unknown',
+          url: config.serverUrl || '',
+          status: 'stopped' as const,
+          description: '',
+          toolCount: 0,
+        };
+      }).filter(Boolean);
+
+      setServers([...connectedServers, ...storedConfigs]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch servers');
+      setServers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setServers(mockServers);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    fetchServers();
+  }, [fetchServers]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -138,30 +142,55 @@ const MCPServersPage: React.FC = () => {
 
     try {
       if (isEditing) {
-        // Update existing server
-        setServers(prev => prev.map(server =>
-          server.id === selectedServer.id ? selectedServer : server,
-        ));
-        setAlert({ type: 'success', message: 'Server updated successfully' });
-      } else {
-        // Add new server
-        const newServer = { ...selectedServer, id: Date.now().toString() };
-        setServers(prev => [...prev, newServer]);
-        setAlert({ type: 'success', message: 'Server added successfully' });
+        // For editing, we disconnect and reconnect
+        await fetch('/api/admin/mcp-servers/disconnect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: selectedServer.id }),
+        });
       }
+
+      // Connect to server
+      const response = await fetch('/api/admin/mcp-servers/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: selectedServer.name,
+          serverUrl: selectedServer.url,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to connect to server');
+      }
+
+      setAlert({ type: 'success', message: isEditing ? 'Server updated successfully' : 'Server added successfully' });
       setDialogOpen(false);
-    } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save server' });
+      await fetchServers();
+    } catch (err) {
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save server' });
     }
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    if (window.confirm('Are you sure you want to delete this server?')) {
+    if (window.confirm('Are you sure you want to disconnect this server?')) {
       try {
-        setServers(prev => prev.filter(server => server.id !== serverId));
-        setAlert({ type: 'success', message: 'Server deleted successfully' });
-      } catch (error) {
-        setAlert({ type: 'error', message: 'Failed to delete server' });
+        const response = await fetch('/api/admin/mcp-servers/disconnect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: serverId }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Failed to disconnect server');
+        }
+
+        setAlert({ type: 'success', message: 'Server disconnected successfully' });
+        await fetchServers();
+      } catch (err) {
+        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to disconnect server' });
       }
     }
   };
