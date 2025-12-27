@@ -433,6 +433,26 @@ export class BotManager extends EventEmitter {
 
       await this.startBotById(botId);
 
+      // Send Welcome Message when bot is enabled (if configured)
+      const enableWelcome = process.env.ENABLE_WELCOME_MESSAGE === 'true';
+      if (enableWelcome) {
+        try {
+          const service = await this.getMessengerService(bot.messageProvider);
+          if (service) {
+            const defaultChannel = (bot.config as any)?.slack?.defaultChannelId ||
+              (bot.config as any)?.discord?.defaultChannelId ||
+              service.getDefaultChannel?.();
+            if (defaultChannel) {
+              const welcomeText = process.env.WELCOME_MESSAGE_TEXT || '🤖 I am now online and ready to assist.';
+              await service.sendMessageToChannel(defaultChannel, welcomeText);
+              debug(`Sent welcome message for bot ${bot.name} to channel ${defaultChannel}`);
+            }
+          }
+        } catch (welcomeErr: any) {
+          debug(`Failed to send welcome message for ${bot.name}:`, welcomeErr?.message);
+        }
+      }
+
       debug(`Started bot: ${bot.name} (${botId})`);
 
       // Emit event for real-time updates
