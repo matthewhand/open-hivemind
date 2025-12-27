@@ -9,14 +9,14 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface GuardrailProfile {
-    key: string;
-    name: string;
-    description?: string;
-    mcpGuard: {
-        enabled: boolean;
-        type: 'owner' | 'custom';
-        allowedUserIds?: string[];
-    };
+  key: string;
+  name: string;
+  description?: string;
+  mcpGuard: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
 }
 
 const GuardrailProfileManager: React.FC = () => {
@@ -42,7 +42,7 @@ const GuardrailProfileManager: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await fetch('/api/config/guardrails');
-      if (!response.ok) {throw new Error('Failed to fetch guardrail profiles');}
+      if (!response.ok) { throw new Error('Failed to fetch guardrail profiles'); }
       const data = await response.json();
       setProfiles(data.profiles || []);
     } catch (err) {
@@ -97,7 +97,7 @@ const GuardrailProfileManager: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ profiles: updated }),
         });
-        if (!response.ok) {throw new Error('Failed to update profile');}
+        if (!response.ok) { throw new Error('Failed to update profile'); }
       } else {
         const response = await fetch('/api/config/guardrails', {
           method: 'POST',
@@ -121,10 +121,10 @@ const GuardrailProfileManager: React.FC = () => {
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete profile "${key}"?`)) {return;}
+    if (!confirm(`Delete profile "${key}"?`)) { return; }
     try {
       const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
-      if (!response.ok) {throw new Error('Failed to delete profile');}
+      if (!response.ok) { throw new Error('Failed to delete profile'); }
       setToastMessage('Profile deleted');
       setToastType('success');
       fetchProfiles();
@@ -147,10 +147,10 @@ const GuardrailProfileManager: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={fetchProfiles} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
-                        Refresh
+            Refresh
           </Button>
           <Button variant="primary" onClick={openCreateDialog} startIcon={<PlusIcon className="w-5 h-5" />}>
-                        Add Profile
+            Add Profile
           </Button>
         </div>
       </div>
@@ -181,6 +181,13 @@ const GuardrailProfileManager: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {profiles.length === 0 && !error && (
+        <div className="text-center py-12 text-base-content/70">
+          <ShieldCheckIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No guardrail profiles yet. Create one to get started.</p>
+        </div>
+      )}
 
       <Modal
         isOpen={editDialogOpen}
