@@ -190,9 +190,17 @@ const AnalyticsDashboard: React.FC = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
+            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+              Analytics Dashboard
+              <div className="badge badge-warning gap-1 font-bold">
+                MOCK DATA
+              </div>
+            </h1>
             <p className="text-lg text-neutral-content/70">
-              Usage metrics, user engagement, and performance analytics
+              Usage metrics, user engagement, and performance analytics.
+              <span className="text-warning text-sm ml-2 font-mono bg-warning/10 px-2 py-1 rounded">
+                (Demonstration Mode: Using simulated data)
+              </span>
             </p>
           </div>
           <div className="flex gap-4">

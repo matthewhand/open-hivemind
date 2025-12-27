@@ -20,49 +20,43 @@ interface BotData {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
+import { BotAvatar } from '../components/BotAvatar';
 
 const API_BASE = '/api';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotData[]>([]);
   const [personas, setPersonas] = useState<any[]>([]); // added personas state
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]); // added profiles state
   const [globalConfig, setGlobalConfig] = useState<any>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  // Modals
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, bot: BotData | null }>({ isOpen: false, bot: null });
   const [previewBot, setPreviewBot] = useState<BotData | null>(null);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
-  // Create Form
+  // Create Bot State
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBotName, setNewBotName] = useState('');
   const [newBotDesc, setNewBotDesc] = useState('');
-  const [newBotPersona, setNewBotPersona] = useState('default');
-  const [newBotMessageProvider, setNewBotMessageProvider] = useState('');
+  const [newBotMessageProvider, setNewBotMessageProvider] = useState('discord');
   const [newBotLlmProvider, setNewBotLlmProvider] = useState('');
-  const { status: llmStatus } = useLlmStatus();
-  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
+  const [newBotPersona, setNewBotPersona] = useState('');
 
-  // Validation for Create Bot form
-  const canCreateBot = newBotName.trim()
-    && newBotPersona
-    && newBotMessageProvider
-    && (defaultLlmConfigured || newBotLlmProvider);
+  const canCreateBot = newBotName.trim().length > 0 && newBotMessageProvider;
 
-  // Preview Data
-  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  // ...
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [configResponse, globalResponse, personasResponse] = await Promise.all([
+      const [configResponse, globalResponse, personasResponse, profilesResponse] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/config/global`),
         fetch(`${API_BASE}/personas`),
+        fetch(`${API_BASE}/config/llm-profiles`),
       ]);
 
       if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
@@ -72,6 +66,11 @@ const BotsPage: React.FC = () => {
       if (personasResponse.ok) {
         const personasData = await personasResponse.json();
         setPersonas(personasData);
+      }
+
+      if (profilesResponse.ok) {
+        const profilesData = await profilesResponse.json();
+        setLlmProfiles(profilesData.profiles?.llm || []);
       }
 
       if (globalResponse.ok) {
@@ -363,11 +362,7 @@ const BotsPage: React.FC = () => {
                   <input type="radio" name="bots-accordion" className="peer" />
                   <div className="collapse-title flex items-center justify-between pr-12 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content w-10 rounded-full flex items-center justify-center">
-                          <Bot className="w-6 h-6" />
-                        </div>
-                      </div>
+                      <BotAvatar bot={bot} />
                       <div className="flex flex-col">
                         <span className="font-bold text-lg">{bot.name}</span>
                         <div className="flex items-center gap-2 text-sm text-base-content/60">
@@ -434,32 +429,46 @@ const BotsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* LLM Provider */}
+                        {/* LLM Provider / Profile */}
                         <div className="form-control w-full" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-medium flex items-center gap-1 opacity-70">
-                              <Cpu className="w-3 h-3" /> LLM
-                              <div className="tooltip tooltip-top" data-tip="The AI model provider used to generate responses (e.g., OpenAI, Ollama).">
+                              <Cpu className="w-3 h-3" /> LLM Profile
+                              <div className="tooltip tooltip-top" data-tip="Select an LLM Profile for this bot.">
                                 <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
                               </div>
                             </span>
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.llmProvider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
+                              {bot.llmProvider || <span className="opacity-50 italic">System Default</span>} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
                             <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
-                              {getIntegrationOptions('llm').map(opt => (
-                                <li key={opt}>
-                                  <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === opt ? 'active' : ''}>
-                                    {opt}
+                              {/* System Default Option */}
+                              <li>
+                                <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', ''); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.llmProvider ? 'active' : ''}>
+                                  <span className="italic opacity-75">System Default</span>
+                                </a>
+                              </li>
+
+                              <div className="divider my-1"></div>
+
+                              {/* Custom Profiles */}
+                              {llmProfiles.map(profile => (
+                                <li key={profile.key}>
+                                  <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
+                                    <div className="flex flex-col gap-0.5">
+                                      <span>{profile.name}</span>
+                                      <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
+                                    </div>
                                   </a>
                                 </li>
                               ))}
+
                               <div className="divider my-1"></div>
                               <li>
                                 <a href="/admin/integrations/llm" target="_blank" className="flex gap-2 items-center text-primary">
-                                  <Plus className="w-3 h-3" /> New LLM
+                                  <Plus className="w-3 h-3" /> New Profile
                                 </a>
                               </li>
                             </ul>
@@ -670,14 +679,12 @@ const BotsPage: React.FC = () => {
                 value={newBotLlmProvider}
                 onChange={(e) => setNewBotLlmProvider(e.target.value)}
               >
-                {defaultLlmConfigured ? (
-                  <option value="">Use default LLM</option>
-                ) : (
-                  <option value="">Select Provider</option>
-                )}
-                <option value="openai">OpenAI</option>
-                <option value="flowise">Flowise</option>
-                <option value="ollama">Ollama</option>
+                <option value="">
+                  {defaultLlmConfigured ? 'Use System Default' : 'Select Profile'}
+                </option>
+                {llmProfiles.map(p => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
               </select>
               <label className="label">
                 <span className="label-text-alt text-warning">Only one LLM provider allowed per bot.</span>

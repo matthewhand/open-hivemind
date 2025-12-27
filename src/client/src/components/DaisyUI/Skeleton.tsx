@@ -37,13 +37,13 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   const getShapeClass = () => {
     switch (shape) {
-    case 'circle':
-      return 'rounded-full';
-    case 'text':
-      return 'rounded';
-    case 'rectangle':
-    default:
-      return 'rounded';
+      case 'circle':
+        return 'rounded-full';
+      case 'text':
+        return 'rounded';
+      case 'rectangle':
+      default:
+        return 'rounded';
     }
   };
 
@@ -93,7 +93,13 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   );
 };
 
-// Predefined skeleton variants for common use cases
+// ... existing imports
+
+// Alias for Avatar usage
+export const SkeletonAvatar: React.FC<Omit<SkeletonProps, 'shape'>> = (props) => (
+  <Skeleton {...props} shape="circle" />
+);
+
 export const SkeletonText: React.FC<Omit<SkeletonProps, 'shape'> & { lines?: number }> = (props) => (
   <Skeleton {...props} shape="text" />
 );
@@ -122,13 +128,13 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({
 }) => (
   <div className={`card bg-base-100 shadow-xl ${className}`}>
     {showImage && (
-      <figure>
-        <SkeletonRectangle width="100%" height="8rem" animate={animate} />
+      <figure className="px-4 pt-4">
+        <SkeletonRectangle width="100%" height="8rem" animate={animate} className="rounded-xl" />
       </figure>
     )}
     <div className="card-body">
-      <SkeletonText lines={1} width="75%" animate={animate} className="mb-2" />
-      <SkeletonText lines={3} animate={animate} className="mb-4" />
+      <SkeletonText lines={1} width="75%" animate={animate} className="mb-2 h-4" />
+      <SkeletonText lines={3} animate={animate} className="mb-4 h-3" />
       {showActions && (
         <div className="card-actions justify-end">
           <SkeletonRectangle width="5rem" height="2.5rem" animate={animate} />
@@ -156,11 +162,11 @@ export const SkeletonList: React.FC<SkeletonListProps> = ({
     {Array.from({ length: items }).map((_, index) => (
       <div key={index} className="flex items-center space-x-4">
         {showAvatar && (
-          <SkeletonCircle width="3rem" height="3rem" animate={animate} />
+          <SkeletonCircle width="3rem" height="3rem" animate={animate} className="shrink-0" />
         )}
         <div className="flex-1 space-y-2">
-          <SkeletonText lines={1} width="60%" animate={animate} />
-          <SkeletonText lines={1} width="80%" animate={animate} />
+          <SkeletonText lines={1} width="60%" animate={animate} className="h-4" />
+          <SkeletonText lines={1} width="80%" animate={animate} className="h-4" />
         </div>
       </div>
     ))}

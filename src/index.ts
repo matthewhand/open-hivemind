@@ -155,7 +155,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   next();
 });
-app.use(healthRoute);
+// app.use(healthRoute); // Removed global mount causing root conflict
 
 // Serve unified dashboard at root
 if (process.env.NODE_ENV !== 'development') {
@@ -351,6 +351,26 @@ async function startBot(messengerService: any) {
       hasDefaultChannel: !!messengerService.getDefaultChannel?.(),
       channelCount: messengerService.getChannels?.()?.length || 0,
     });
+
+    // Send Welcome Message if enabled
+    const enableWelcome = process.env.ENABLE_WELCOME_MESSAGE === 'true';
+    if (enableWelcome) {
+      const defaultChannel = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
+      if (defaultChannel) {
+        const welcomeText = process.env.WELCOME_MESSAGE_TEXT || '🤖 System Online: I am now connected and ready to assist.';
+        appLogger.info('Sending welcome message', { channel: defaultChannel, text: welcomeText });
+
+        try {
+          if (messengerService.sendMessageToChannel) {
+            await messengerService.sendMessageToChannel(defaultChannel, welcomeText);
+          } else if (messengerService.sendMessage) {
+            await messengerService.sendMessage(defaultChannel, welcomeText);
+          }
+        } catch (err) {
+          appLogger.warn('Failed to send welcome message', { error: err });
+        }
+      }
+    }
   } catch (error) {
     indexLog('[ERROR] Error starting bot service:', error);
 

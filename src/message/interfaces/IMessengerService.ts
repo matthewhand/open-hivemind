@@ -103,15 +103,16 @@ export interface IMessengerService {
    * Retrieves messages from a specific channel.
    *
    * @param {string} channelId - The channel identifier to fetch messages from
+   * @param {number} [limit] - Optional limit on number of messages to retrieve
    * @returns {Promise<IMessage[]>} A promise that resolves to an array of messages
    *
    * @example
    * ```typescript
-   * const messages = await service.getMessagesFromChannel("general");
+   * const messages = await service.getMessagesFromChannel("general", 20);
    * messages.forEach(msg => console.log(msg.getText()));
    * ```
    */
-  getMessagesFromChannel(channelId: string): Promise<IMessage[]>;
+  getMessagesFromChannel(channelId: string, limit?: number): Promise<IMessage[]>;
 
   /**
    * Sends a public announcement to a channel.

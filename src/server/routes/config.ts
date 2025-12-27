@@ -1284,6 +1284,7 @@ router.get('/llm-status', async (req, res) => {
     res.json({
       defaultConfigured: llmDefaults.configured,
       defaultProviders: llmDefaults.providers,
+      libraryStatus: llmDefaults.libraryStatus,
       botsMissingLlmProvider: missing.map(bot => bot.name),
       hasMissing: missing.length > 0,
     });

@@ -6,7 +6,7 @@ import { useHealthBadges } from '../hooks/useHealthBadges';
 
 const UberLayout: React.FC = () => {
   const location = useLocation();
-  const { monitoringBadge } = useHealthBadges();
+  const { monitoringBadge, configWarning } = useHealthBadges();
 
   // Inject dynamic badges into nav items
   const navItemsWithBadges: NavItem[] = useMemo(() => {
@@ -15,9 +15,13 @@ const UberLayout: React.FC = () => {
       if (item.id === 'monitoring' && monitoringBadge) {
         return { ...item, badge: monitoringBadge };
       }
+      // Add warning badge to LLM Integrations if unconfigured
+      if (item.id === 'integrations-llm' && configWarning) {
+        return { ...item, badge: '!' };
+      }
       return item;
     });
-  }, [monitoringBadge]);
+  }, [monitoringBadge, configWarning]);
 
   return (
     <ResponsiveNavigation navItems={navItemsWithBadges}>

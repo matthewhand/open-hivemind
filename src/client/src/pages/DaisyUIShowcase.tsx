@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { BotChatTimeline } from '../components/BotChatTimeline';
+import BotChatBubbles from '../components/BotChatBubbles';
 
 /**
  * DaisyUI Component Showcase
@@ -1268,6 +1270,14 @@ const DaisyUIShowcase: React.FC = () => {
             <button>close</button>
           </form>
         </dialog>
+      )}
+      {/* ===== TIMELINE ===== */}
+      {activeTab === 'timeline' && (
+        <div className="space-y-8">
+          <Section title="Bot Chat Timeline (Vertical Steps)">
+            <BotChatTimeline />
+          </Section>
+        </div>
       )}
     </div>
   );

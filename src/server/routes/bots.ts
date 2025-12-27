@@ -5,7 +5,7 @@ import { BotManager } from '../../managers/BotManager';
 import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
-import type { AuditedRequest} from '../middleware/audit';
+import type { AuditedRequest } from '../middleware/audit';
 import { auditMiddleware, logBotAction } from '../middleware/audit';
 import { AuditLogger } from '@src/common/auditLogger';
 import { validateRequest } from '@src/validation/validateRequest';
@@ -286,6 +286,32 @@ router.get('/:botId/activity', validateRequest(BotIdParamSchema), async (req: Re
     res.status(500).json({
       error: 'Failed to get bot activity',
       message: error.message || 'An error occurred while getting bot activity',
+    });
+  }
+});
+
+/**
+ * GET /webui/api/bots/:botId/history
+ * Get bot chat history
+ */
+router.get('/:botId/history', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { botId } = req.params;
+    const channelId = req.query.channelId as string; // Optional: specific channel
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const history = await botManager.getBotHistory(botId, channelId, limit);
+
+    res.json({
+      success: true,
+      data: { history },
+    });
+  } catch (error: any) {
+    debug('Error getting bot history:', error);
+    res.status(500).json({
+      error: 'Failed to get bot history',
+      message: error.message || 'An error occurred while getting bot history',
     });
   }
 });

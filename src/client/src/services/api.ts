@@ -260,6 +260,30 @@ export interface ActivityResponse {
 }
 
 class ApiService {
+  public async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  }
+
+  public async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = buildUrl(endpoint);
 
@@ -419,7 +443,7 @@ class ApiService {
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) {query.append(key, value);}
+      if (value) { query.append(key, value); }
     });
     const search = query.toString();
     const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
