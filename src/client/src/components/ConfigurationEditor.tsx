@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Button, 
-  Alert, 
-  Input, 
-  Select, 
-  Textarea, 
+import {
+  Card,
+  Button,
+  Alert,
+  Input,
+  Select,
+  Textarea,
   Modal,
   Loading,
   Tooltip,
@@ -86,13 +86,37 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
   }, [bot]);
 
   const handleSave = async () => {
-    if (!bot) {return;}
+    if (!bot) { return; }
 
     try {
       setLoading(true);
       setError(null);
 
-      // TODO: Implement configuration update API call
+      // Call the update bot API with all configuration changes
+      const messageProviderConfig = config[config.messageProvider as keyof typeof config];
+      const llmProviderConfig = config[config.llmProvider as keyof typeof config];
+
+      const response = await fetch(`/api/bots/${bot.name}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: config.name,
+          messageProvider: config.messageProvider,
+          llmProvider: config.llmProvider,
+          persona: config.persona,
+          systemInstruction: config.systemInstruction,
+          config: {
+            ...(typeof messageProviderConfig === 'object' ? messageProviderConfig : {}),
+            ...(typeof llmProviderConfig === 'object' ? llmProviderConfig : {}),
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save configuration');
+      }
+
       setSuccess('Configuration saved successfully');
       setShowSaveModal(false);
       onSave?.(bot);
@@ -192,7 +216,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
             <SettingsIcon className="w-5 h-5" />
             Basic Configuration
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control w-full">
               <label className="label">
@@ -381,7 +405,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
       )}
 
       {/* Save Confirmation Modal */}
-      <Modal 
+      <Modal
         open={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         title="Confirm Save Configuration"
