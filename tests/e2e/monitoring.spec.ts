@@ -1,60 +1,62 @@
 import { test, expect } from '@playwright/test';
+import {
+  setupTestWithErrorDetection,
+  assertNoErrors,
+  navigateAndWaitReady
+} from './test-utils';
 
+/**
+ * Monitoring Page E2E Tests with Strict Error Detection
+ * Tests FAIL on console errors
+ */
 test.describe('Monitoring page', () => {
-  test.beforeEach(async ({ page }) => {
-    test.setTimeout(90000);
+  test.setTimeout(90000);
 
-    // Inject fake auth to bypass login
-    const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
-    const fakeUser = JSON.stringify({ id: 'admin', username: 'admin', email: 'admin@open-hivemind.com', role: 'owner', permissions: ['*'] });
+  test('navigates to monitoring page without errors', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/monitoring');
 
-    await page.addInitScript(({ token, user }) => {
-      localStorage.setItem('auth_tokens', JSON.stringify({
-        accessToken: token,
-        refreshToken: token,
-        expiresIn: 3600
-      }));
-      localStorage.setItem('auth_user', user);
-    }, { token: fakeToken, user: fakeUser });
-
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`PAGE ERROR: ${msg.text()}`);
-      }
-    });
-
-    // Navigate to monitoring page - use domcontentloaded due to app React issues
-    await page.goto('/admin/monitoring');
-    await page.waitForLoadState('domcontentloaded');
-
-    // Give React time to render
-    await page.waitForTimeout(3000);
-  });
-
-  test('navigates to monitoring page', async ({ page }) => {
     await page.screenshot({ path: 'test-results/monitoring-01-page.png', fullPage: true });
-
-    // Verify we're on admin page
     expect(page.url()).toContain('/admin');
+
+    await assertNoErrors(errors, 'Monitoring navigation');
   });
 
-  test('monitoring page has content', async ({ page }) => {
-    // Look for System Monitoring heading or any content
+  test('monitoring page has content without errors', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/monitoring');
+
     const heading = page.locator('h1, h2');
-
     await page.screenshot({ path: 'test-results/monitoring-02-content.png', fullPage: true });
-
-    // Just verify page loaded
     expect(page.url()).toContain('/admin');
+
+    await assertNoErrors(errors, 'Monitoring content');
   });
 
-  test('monitoring page has navigation', async ({ page }) => {
-    const nav = page.locator('nav, [role="navigation"]');
+  test('monitoring page has navigation without errors', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/monitoring');
 
+    const nav = page.locator('nav, [role="navigation"]');
     if (await nav.count() > 0) {
       await expect(nav.first()).toBeVisible();
     }
-
     await page.screenshot({ path: 'test-results/monitoring-03-nav.png', fullPage: true });
+
+    await assertNoErrors(errors, 'Monitoring navigation element');
+  });
+
+  test('monitoring page displays metrics without errors', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/monitoring');
+
+    // Wait for metrics to load
+    await page.waitForTimeout(2000);
+
+    // Check for metric cards or charts
+    const metrics = page.locator('[class*="stat"], [class*="metric"], [class*="chart"]');
+    await page.screenshot({ path: 'test-results/monitoring-04-metrics.png', fullPage: true });
+
+    await assertNoErrors(errors, 'Monitoring metrics');
   });
 });
