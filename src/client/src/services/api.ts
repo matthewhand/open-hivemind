@@ -297,10 +297,21 @@ class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text().catch(() => response.statusText);
+        throw new Error(`API request failed (${response.status}): ${errorText.slice(0, 200)}`);
       }
 
-      return response.json();
+      // Try to parse JSON, with graceful handling for non-JSON responses
+      const text = await response.text();
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        // If response starts with HTML (common when API returns index.html fallback)
+        if (text.trim().startsWith('<!') || text.trim().startsWith('<html')) {
+          throw new Error('Service temporarily unavailable. The server may still be starting up.');
+        }
+        throw new Error(`Invalid JSON response from server: ${text.slice(0, 100)}...`);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`API request failed for ${endpoint}:`, errorMessage);

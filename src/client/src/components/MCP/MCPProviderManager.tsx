@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
-import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaTest, FaDownload, FaUpload, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory } from 'react-icons/fa';
-import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../../types/mcp';
+import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory, FaVial, FaDownload, FaUpload } from 'react-icons/fa';
+import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
 
@@ -61,7 +61,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       const allProviders = manager.getAllProviders();
       const providerStatuses = manager.getAllProviderStatuses();
 
-      const providersWithStatus: ProviderWithStatus[] = allProviders.map(provider => ({
+      const providersWithStatus: ProviderWithStatus[] = allProviders.map((provider: MCPProviderConfig) => ({
         ...provider,
         status: providerStatuses[provider.id] || {
           id: provider.id,
@@ -366,7 +366,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                 {provider.isTesting ? (
                   <FaCog className="w-3 h-3 animate-spin" />
                 ) : (
-                  <FaTest className="w-3 h-3" />
+                  <FaVial className="w-3 h-3" />
                 )}
               </Button>
 
@@ -400,14 +400,14 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
               <div className="text-xs text-base-content/60 mb-3">
                 <div className="mb-1">Category: {template.category}</div>
-                <div>Command: {template.command} {template.args.join(' ')}</div>
+                <div>Command: {template.command} {(template.args ?? []).join(' ')}</div>
               </div>
 
-              {template.envVars.length > 0 && (
+              {(template.envVars ?? []).length > 0 && (
                 <div className="mb-3">
                   <div className="text-xs font-medium mb-1">Environment Variables:</div>
                   <div className="text-xs text-base-content/60">
-                    {template.envVars.map(envVar => (
+                    {(template.envVars ?? []).map(envVar => (
                       <div key={envVar.name} className="flex items-center gap-1">
                         <span>{envVar.name}</span>
                         {envVar.required && <span className="text-error">*</span>}
