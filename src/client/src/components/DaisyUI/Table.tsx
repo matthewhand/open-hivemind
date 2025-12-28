@@ -2,7 +2,7 @@
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
-interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> { }
+type TableProps = React.TableHTMLAttributes<HTMLTableElement>;
 
 const Table: React.FC<TableProps> = ({ className, children, ...props }) => {
   return (

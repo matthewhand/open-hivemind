@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/no-require-imports */
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
@@ -27,7 +27,7 @@ if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
 
 // Mock ResizeObserver
 (global as any).ResizeObserver = class ResizeObserver {
-  constructor() {}
+  constructor() { }
   observe() {
     return null;
   }
