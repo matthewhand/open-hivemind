@@ -46,4 +46,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
   },
+  // @ts-expect-error - Vitest config
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/__tests__/**'],
+    },
+  },
 });
