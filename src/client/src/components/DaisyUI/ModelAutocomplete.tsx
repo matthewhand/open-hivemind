@@ -62,7 +62,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
     try {
       let endpoint = '';
-      let headers: Record<string, string> = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
 
