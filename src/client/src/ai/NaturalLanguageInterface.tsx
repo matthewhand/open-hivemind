@@ -17,6 +17,52 @@ import {
 } from '@heroicons/react/24/outline';
 import { MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
 
+// Web Speech API type declarations
+interface SpeechRecognitionResult {
+  readonly length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  readonly isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string;
+  readonly message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+  SpeechRecognition?: new () => SpeechRecognition;
+}
+
 export interface NLCommand {
   id: string;
   text: string;
@@ -48,9 +94,9 @@ export interface NLEntity {
 export interface NLAction {
   type: 'show-widget' | 'hide-widget' | 'update-widget' | 'filter-data' | 'change-theme' | 'export-data';
   target: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   status: 'pending' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
 }
 
 export interface NLParameter {
@@ -105,7 +151,7 @@ export interface NLContext {
   currentPage: string;
   selectedWidgets: string[];
   timeRange: { start: Date; end: Date };
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   userRole: string;
   permissions: string[];
 }
@@ -330,7 +376,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   });
   const [showHelp, setShowHelp] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -341,21 +387,22 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   }, []);
 
   const initializeSpeechRecognition = () => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
+    const windowWithSpeech = window as WindowWithSpeechRecognition;
+    const SpeechRecognitionConstructor = windowWithSpeech.webkitSpeechRecognition || windowWithSpeech.SpeechRecognition;
+    if (SpeechRecognitionConstructor) {
+      recognitionRef.current = new SpeechRecognitionConstructor();
       recognitionRef.current.continuous = config.voiceRecognition.continuous;
       recognitionRef.current.interimResults = config.voiceRecognition.interimResults;
       recognitionRef.current.lang = config.voiceRecognition.language;
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result: SpeechRecognitionResult) => result[0].transcript)
           .join('');
         setInputText(transcript);
       };
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
