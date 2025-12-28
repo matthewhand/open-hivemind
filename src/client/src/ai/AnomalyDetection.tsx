@@ -4,19 +4,11 @@ import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   ExclamationTriangleIcon,
-  ArrowTrendingUpIcon,
-  BoltIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  FunnelIcon,
-  BellIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  InformationCircleIcon,
   ArrowPathIcon,
-  EyeIcon,
-  NoSymbolIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 export interface AnomalyConfig {

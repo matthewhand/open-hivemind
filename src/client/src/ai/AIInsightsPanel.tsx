@@ -5,14 +5,11 @@ import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   SparklesIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   BoltIcon,
   ChartBarIcon,
-  CpuChipIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 
@@ -243,27 +240,27 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-    case 'critical': return 'error';
-    case 'high': return 'warning';
-    case 'medium': return 'info';
-    case 'low': return 'success';
-    default: return 'neutral';
+      case 'critical': return 'error';
+      case 'high': return 'warning';
+      case 'medium': return 'info';
+      case 'low': return 'success';
+      default: return 'neutral';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-    case 'performance': return <BoltIcon className="w-5 h-5" />;
-    case 'error': return <ExclamationCircleIcon className="w-5 h-5" />;
-    case 'optimization': return <ChartBarIcon className="w-5 h-5" />;
-    case 'prediction': return <SparklesIcon className="w-5 h-5" />;
-    default: return <InformationCircleIcon className="w-5 h-5" />;
+      case 'performance': return <BoltIcon className="w-5 h-5" />;
+      case 'error': return <ExclamationCircleIcon className="w-5 h-5" />;
+      case 'optimization': return <ChartBarIcon className="w-5 h-5" />;
+      case 'prediction': return <SparklesIcon className="w-5 h-5" />;
+      default: return <InformationCircleIcon className="w-5 h-5" />;
     }
   };
 
   const filteredInsights = insights.filter(insight => {
-    if (filterType !== 'all' && insight.type !== filterType) {return false;}
-    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) {return false;}
+    if (filterType !== 'all' && insight.type !== filterType) { return false; }
+    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) { return false; }
     return true;
   });
 

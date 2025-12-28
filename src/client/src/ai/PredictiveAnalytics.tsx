@@ -9,9 +9,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowDownTrayIcon,
   ArrowPathIcon,
-  AdjustmentsHorizontalIcon,
   SparklesIcon,
-  LightBulbIcon,
 } from '@heroicons/react/24/outline';
 
 export interface TimeSeriesData {
@@ -213,18 +211,18 @@ const generateForecast = (historicalData: TimeSeriesData[], model: PredictionMod
     let confidence = model.confidence;
 
     switch (model.type) {
-    case 'prophet':
-      predicted = lastValue + Math.sin(i / 24) * 15 + i * 0.05;
-      confidence = 0.92;
-      break;
-    case 'lstm':
-      predicted = lastValue * 1.001 + Math.sin(i / 12) * 8;
-      confidence = 0.89;
-      break;
-    case 'arima':
-      predicted = lastValue + (Math.random() - 0.5) * 5 + i * 0.02;
-      confidence = 0.85;
-      break;
+      case 'prophet':
+        predicted = lastValue + Math.sin(i / 24) * 15 + i * 0.05;
+        confidence = 0.92;
+        break;
+      case 'lstm':
+        predicted = lastValue * 1.001 + Math.sin(i / 12) * 8;
+        confidence = 0.89;
+        break;
+      case 'arima':
+        predicted = lastValue + (Math.random() - 0.5) * 5 + i * 0.02;
+        confidence = 0.85;
+        break;
     }
 
     const seasonalComponent = Math.sin(i / 24) * 10; // Daily seasonality
@@ -641,7 +639,7 @@ export const PredictiveAnalytics: React.FC = () => {
                       <td className="text-center">
                         <div className={`badge badge-sm ${anomaly.severity === 'critical' ? 'badge-error' :
                           anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
-                        }`}>
+                          }`}>
                           {anomaly.severity}
                         </div>
                       </td>

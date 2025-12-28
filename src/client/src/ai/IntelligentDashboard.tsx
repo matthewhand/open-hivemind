@@ -8,14 +8,6 @@ import {
   HandThumbUpIcon,
   HandThumbDownIcon,
   ArrowPathIcon,
-  ClockIcon,
-  TagIcon,
-  LightBulbIcon,
-  ChartPieIcon,
-  AdjustmentsHorizontalIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 interface UserBehavior {
@@ -242,7 +234,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   // Simulate AI learning and recommendation generation
   useEffect(() => {
-    if (!config.enabled) {return;}
+    if (!config.enabled) { return; }
 
     const interval = setInterval(() => {
       simulateLearning();
@@ -340,7 +332,7 @@ export const IntelligentDashboard: React.FC = () => {
   };
 
   const generatePersonalizedWidgets = (): string[] => {
-    if (!state.currentSegment) {return [];}
+    if (!state.currentSegment) { return []; }
 
     return state.currentSegment.characteristics.preferredWidgets.filter(widget => {
       const pattern = state.behaviorPatterns.find(p =>
@@ -567,7 +559,7 @@ export const IntelligentDashboard: React.FC = () => {
                       <h4 className="font-bold text-sm">{recommendation.title}</h4>
                       <div className={`badge badge-sm ${recommendation.impact === 'high' ? 'badge-error' :
                         recommendation.impact === 'medium' ? 'badge-warning' : 'badge-info'
-                      }`}>
+                        }`}>
                         {recommendation.impact.toUpperCase()}
                       </div>
                     </div>

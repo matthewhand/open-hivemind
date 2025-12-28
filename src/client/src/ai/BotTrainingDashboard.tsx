@@ -11,33 +11,31 @@ import {
   CpuChipIcon,
   ServerIcon,
   BeakerIcon,
-  CheckCircleIcon,
   XCircleIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 interface TrainingSession {
-    id: string;
-    botId: string;
-    botName: string;
-    status: 'queued' | 'training' | 'completed' | 'failed' | 'cancelled';
-    progress: number;
-    startTime: Date;
-    endTime?: Date;
-    accuracy: number;
-    loss: number;
-    epochs: number;
-    currentEpoch: number;
-    datasetSize: number;
-    modelType: string;
+  id: string;
+  botId: string;
+  botName: string;
+  status: 'queued' | 'training' | 'completed' | 'failed' | 'cancelled';
+  progress: number;
+  startTime: Date;
+  endTime?: Date;
+  accuracy: number;
+  loss: number;
+  epochs: number;
+  currentEpoch: number;
+  datasetSize: number;
+  modelType: string;
 }
 
 interface TrainingMetrics {
-    cpuUsage: number;
-    memoryUsage: number;
-    gpuUsage: number;
-    temperature: number;
-    estimatedTimeRemaining: number; // seconds
+  cpuUsage: number;
+  memoryUsage: number;
+  gpuUsage: number;
+  temperature: number;
+  estimatedTimeRemaining: number; // seconds
 }
 
 export const BotTrainingDashboard: React.FC = () => {
@@ -133,11 +131,11 @@ export const BotTrainingDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'training': return 'primary';
-    case 'completed': return 'success';
-    case 'failed': return 'error';
-    case 'queued': return 'warning';
-    default: return 'neutral';
+      case 'training': return 'primary';
+      case 'completed': return 'success';
+      case 'failed': return 'error';
+      case 'queued': return 'warning';
+      default: return 'neutral';
     }
   };
 
@@ -158,10 +156,10 @@ export const BotTrainingDashboard: React.FC = () => {
           <div className="card-body">
             <AcademicCapIcon className="w-16 h-16 text-primary mx-auto mb-4" />
             <h2 className="card-title justify-center mb-2">
-                            Bot Training Dashboard
+              Bot Training Dashboard
             </h2>
             <p className="text-base-content/70">
-                            Please log in to manage bot training sessions.
+              Please log in to manage bot training sessions.
             </p>
           </div>
         </div>
@@ -182,16 +180,16 @@ export const BotTrainingDashboard: React.FC = () => {
               <AcademicCapIcon className="w-10 h-10 text-primary" />
               <div>
                 <h2 className="card-title text-2xl">
-                                    Bot Training Dashboard
+                  Bot Training Dashboard
                 </h2>
                 <p className="text-base-content/70">
-                                    Manage and monitor AI model training sessions
+                  Manage and monitor AI model training sessions
                 </p>
               </div>
             </div>
             <button className="btn btn-primary gap-2">
               <PlayIcon className="w-5 h-5" />
-                            New Training Session
+              New Training Session
             </button>
           </div>
         </div>
@@ -289,7 +287,7 @@ export const BotTrainingDashboard: React.FC = () => {
                         </div>
                       </div>
                       <p className="text-sm text-base-content/70">
-                                                ID: {session.id} • Epoch {session.currentEpoch}/{session.epochs}
+                        ID: {session.id} • Epoch {session.currentEpoch}/{session.epochs}
                       </p>
                     </div>
 
@@ -307,7 +305,7 @@ export const BotTrainingDashboard: React.FC = () => {
                       {session.status === 'completed' && (
                         <button className="btn btn-sm btn-ghost gap-2">
                           <ArrowPathIcon className="w-4 h-4" />
-                                                    Retrain
+                          Retrain
                         </button>
                       )}
                     </div>
