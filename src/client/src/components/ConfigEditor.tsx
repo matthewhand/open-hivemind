@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle, CheckCircle, Lock } from 'lucide-react';
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
 import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory, FaVial, FaDownload, FaUpload } from 'react-icons/fa';

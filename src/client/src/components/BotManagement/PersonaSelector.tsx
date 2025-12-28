@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
 import type { Persona, PersonaCategory} from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';

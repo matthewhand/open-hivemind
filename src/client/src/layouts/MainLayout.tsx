@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';

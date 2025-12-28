@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
 import {

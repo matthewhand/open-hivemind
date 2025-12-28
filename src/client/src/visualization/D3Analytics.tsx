@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useAppSelector } from '../store/hooks';

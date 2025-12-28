@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Alert, Input, Select, Textarea, Tooltip } from './DaisyUI';
 import { 

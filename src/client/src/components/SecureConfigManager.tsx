@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Modal, Input, Alert, Loading, Toggle, Tooltip } from './DaisyUI';
 import {

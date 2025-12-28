@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';

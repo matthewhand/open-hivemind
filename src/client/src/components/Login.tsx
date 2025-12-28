@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';

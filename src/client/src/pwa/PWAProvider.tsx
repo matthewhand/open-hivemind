@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';

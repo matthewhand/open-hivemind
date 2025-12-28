@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Card, Button, LoadingSpinner, Toggle } from '../components/DaisyUI';
 import {

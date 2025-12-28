@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';

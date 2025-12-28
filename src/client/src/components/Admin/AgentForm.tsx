@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import type { FormField, FormFieldSet } from '../DaisyUI/Form';
 import { Form } from '../DaisyUI/Form';

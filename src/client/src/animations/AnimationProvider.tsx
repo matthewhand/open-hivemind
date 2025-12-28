@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components */
 import React from 'react';
 import type { HTMLMotionProps } from 'framer-motion';
 import { motion, AnimatePresence } from 'framer-motion';

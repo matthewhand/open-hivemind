@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ComponentType} from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';

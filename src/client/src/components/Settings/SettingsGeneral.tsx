@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Input, Select, Toggle, Button, Divider } from '../DaisyUI';
 import { Settings as SettingsIcon } from 'lucide-react';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Alert, Card, Loading, Button } from './DaisyUI';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';

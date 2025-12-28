@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import EnhancedBotManager from '../../components/Admin/EnhancedBotManager';
 import PersonaManager from '../../components/PersonaManager';

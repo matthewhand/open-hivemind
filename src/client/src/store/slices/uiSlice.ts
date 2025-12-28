@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface UIState {

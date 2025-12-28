@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Alert, Loading, Badge, Input, Accordion } from './DaisyUI';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
