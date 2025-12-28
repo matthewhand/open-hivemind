@@ -2,13 +2,16 @@ import React from 'react';
 import type { HTMLMotionProps } from 'framer-motion';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnimationVariantValue = Record<string, any>;
+
 export interface AnimationVariants {
-  initial?: any;
-  animate?: any;
-  exit?: any;
-  hover?: any;
-  tap?: any;
-  drag?: any;
+  initial?: AnimationVariantValue;
+  animate?: AnimationVariantValue;
+  exit?: AnimationVariantValue;
+  hover?: AnimationVariantValue;
+  tap?: AnimationVariantValue;
+  drag?: AnimationVariantValue;
 }
 
 export interface AnimationConfig {
@@ -358,11 +361,11 @@ export const ParallaxScroll: React.FC<ParallaxScrollProps> = ({
 }) => {
   const getTransform = () => {
     switch (direction) {
-    case 'up': return { y: [offset, -offset] };
-    case 'down': return { y: [-offset, offset] };
-    case 'left': return { x: [offset, -offset] };
-    case 'right': return { x: [-offset, offset] };
-    default: return { y: [offset, -offset] };
+      case 'up': return { y: [offset, -offset] };
+      case 'down': return { y: [-offset, offset] };
+      case 'left': return { x: [offset, -offset] };
+      case 'right': return { x: [-offset, offset] };
+      default: return { y: [offset, -offset] };
     }
   };
 

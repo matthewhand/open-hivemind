@@ -62,13 +62,13 @@ const ActivityTimeline: React.FC = () => {
 
   const getTimelineColor = (type: string) => {
     switch (type) {
-    case 'success': return 'success';
-    case 'error': return 'error';
-    case 'warning': return 'warning';
-    case 'user': return 'primary';
-    case 'system': return 'info';
-    case 'bot': return 'neutral';
-    default: return 'neutral';
+      case 'success': return 'success';
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      case 'user': return 'primary';
+      case 'system': return 'info';
+      case 'bot': return 'neutral';
+      default: return 'neutral';
     }
   };
 
@@ -199,7 +199,7 @@ const ActivityTimeline: React.FC = () => {
         <div className="card-body">
           <h3 className="card-title text-lg mb-6">Recent Activity</h3>
           <Timeline>
-            {filteredEvents.slice(0, 10).map((event, index) => (
+            {filteredEvents.slice(0, 10).map((event) => (
               <Timeline.Item key={event.id}>
                 <Timeline.Point color={getTimelineColor(event.type)}>
                   {event.icon}

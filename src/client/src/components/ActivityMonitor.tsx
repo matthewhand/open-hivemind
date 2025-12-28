@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Progress, Table } from './DaisyUI';
+import { Card, Badge, Button, Alert, Table } from './DaisyUI';
 import {
   BoltIcon,
   ServerIcon,
@@ -49,15 +49,15 @@ const ActivityMonitor: React.FC = () => {
   const [isMonitoring, setIsMonitoring] = useState(true);
 
   useEffect(() => {
-    if (!isMonitoring) {return;}
+    if (!isMonitoring) { return; }
 
     const interval = setInterval(() => {
       const newEvent: ActivityEvent = {
         id: Date.now().toString(),
         timestamp: new Date(),
-        type: ['bot', 'user', 'system', 'error'][Math.floor(Math.random() * 4)] as any,
+        type: (['bot', 'user', 'system', 'error'] as const)[Math.floor(Math.random() * 4)],
         message: `System activity detected at ${new Date().toLocaleTimeString()}`,
-        severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
+        severity: (['low', 'medium', 'high', 'critical'] as const)[Math.floor(Math.random() * 4)],
         duration: Math.floor(Math.random() * 1000) + 50,
       };
       setEvents(prev => [newEvent, ...prev].slice(0, 50));
@@ -72,21 +72,21 @@ const ActivityMonitor: React.FC = () => {
 
   const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
     switch (severity) {
-    case 'critical': return 'error';
-    case 'high': return 'error';
-    case 'medium': return 'warning';
-    case 'low': return 'info';
-    default: return 'info';
+      case 'critical': return 'error';
+      case 'high': return 'error';
+      case 'medium': return 'warning';
+      case 'low': return 'info';
+      default: return 'info';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-    case 'bot': return '🤖';
-    case 'user': return '👤';
-    case 'system': return '⚙️';
-    case 'error': return '❌';
-    default: return '📝';
+      case 'bot': return '🤖';
+      case 'user': return '👤';
+      case 'system': return '⚙️';
+      case 'error': return '❌';
+      default: return '📝';
     }
   };
 
