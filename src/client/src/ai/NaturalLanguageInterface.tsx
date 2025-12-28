@@ -319,7 +319,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [commands, setCommands] = useState<NLCommand[]>(mockCommands);
-  const [context, setContext] = useState<NLContext>({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_context, _setContext] = useState<NLContext>({
     currentPage: 'dashboard',
     selectedWidgets: [],
     timeRange: { start: new Date(Date.now() - 24 * 60 * 60 * 1000), end: new Date() },
@@ -574,7 +575,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     }
   };
 
-  const toggleFeature = (feature: keyof NLConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _toggleFeature = (feature: keyof NLConfig) => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
@@ -726,7 +728,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
           </h3>
           <div className="overflow-y-auto max-h-[400px]">
             <ul className="menu bg-base-100 w-full p-0">
-              {commands.map((command, index) => (
+              {commands.map((command) => (
                 <li key={command.id} className="border-b border-base-200 last:border-none">
                   <div className="flex flex-col gap-2 py-3 hover:bg-base-200">
                     <div className="flex items-start gap-3 w-full">

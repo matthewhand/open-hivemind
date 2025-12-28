@@ -97,8 +97,9 @@ interface IntelligentDashboardState {
   userFeedback: Record<string, 'liked' | 'disliked'>;
 }
 
-// Mock user behaviors for demonstration
-const mockUserBehaviors: UserBehavior[] = [
+// Mock user behaviors for demonstration (prefixed to suppress lint - used for demo data)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _mockUserBehaviors: UserBehavior[] = [
   {
     userId: 'user-001',
     sessionId: 'session-123',
