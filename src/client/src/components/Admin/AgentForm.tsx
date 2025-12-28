@@ -62,7 +62,8 @@ const AgentForm: React.FC<AgentFormProps> = ({
   onCancel,
   loading = false,
 }) => {
-  const [guardUserInput, setGuardUserInput] = useState(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_guardUserInput, _setGuardUserInput] = useState(
     agent?.mcpGuard?.allowedUserIds?.join(', ') || '',
   );
 
@@ -159,7 +160,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
       placeholder: 'user1, user2, user3',
       helperText: 'Comma-separated list of user IDs allowed to use MCP tools (only used with Custom guard type)',
       validation: (value: string) => {
-        if (!value) {return null;}
+        if (!value) { return null; }
         const ids = value.split(',').map((id: string) => id.trim()).filter((id: string) => id);
         if (ids.length === 0) {
           return null; // Empty is valid

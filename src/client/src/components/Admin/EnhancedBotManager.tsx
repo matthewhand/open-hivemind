@@ -13,19 +13,13 @@ import {
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import {
-  Card,
   Button,
-  Input,
-  Select,
-  Textarea,
   Badge,
   Modal,
-  Checkbox,
   Alert,
 } from '../DaisyUI';
 import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 import { botDataProvider } from '../../services/botDataProvider';
-import ProviderConfig from '../ProviderConfig';
 import { useLlmStatus } from '../../hooks/useLlmStatus';
 
 interface EnhancedBotManagerProps {
@@ -145,7 +139,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleEditBot = async () => {
-    if (!editingBot) {return;}
+    if (!editingBot) { return; }
 
     try {
       setLoading(true);
@@ -163,7 +157,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleDeleteBot = async () => {
-    if (!deletingBot) {return;}
+    if (!deletingBot) { return; }
 
     try {
       setLoading(true);

@@ -131,13 +131,13 @@ const ActivityMonitor: React.FC = () => {
       setError(null);
 
       const queryParams = new URLSearchParams();
-      if (filter.agentId) {queryParams.append('agentId', filter.agentId);}
-      if (filter.messageProvider) {queryParams.append('messageProvider', filter.messageProvider);}
-      if (filter.llmProvider) {queryParams.append('llmProvider', filter.llmProvider);}
-      if (filter.startDate) {queryParams.append('startDate', filter.startDate.toISOString());}
-      if (filter.endDate) {queryParams.append('endDate', filter.endDate.toISOString());}
-      if (filter.limit) {queryParams.append('limit', filter.limit.toString());}
-      if (filter.offset) {queryParams.append('offset', filter.offset.toString());}
+      if (filter.agentId) { queryParams.append('agentId', filter.agentId); }
+      if (filter.messageProvider) { queryParams.append('messageProvider', filter.messageProvider); }
+      if (filter.llmProvider) { queryParams.append('llmProvider', filter.llmProvider); }
+      if (filter.startDate) { queryParams.append('startDate', filter.startDate.toISOString()); }
+      if (filter.endDate) { queryParams.append('endDate', filter.endDate.toISOString()); }
+      if (filter.limit) { queryParams.append('limit', filter.limit.toString()); }
+      if (filter.offset) { queryParams.append('offset', filter.offset.toString()); }
 
       const endpoints = {
         0: '/api/admin/activity/messages',
@@ -155,22 +155,23 @@ const ActivityMonitor: React.FC = () => {
       const data = await response.json();
 
       switch (currentTab) {
-      case 0: // Messages
-        setActivities(data.messages || []);
-        setPagination({
-          page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
-          totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
-          totalItems: data.total || 0,
-        });
-        break;
-      case 1: // Charts
-        const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
-        const chartData = await chartResponse.json();
-        setChartData(chartData.messageActivity || []);
-        break;
-      case 2: // Summary
-        setSummary(data.summary);
-        break;
+        case 0: // Messages
+          setActivities(data.messages || []);
+          setPagination({
+            page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
+            totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
+            totalItems: data.total || 0,
+          });
+          break;
+        case 1: { // Charts
+          const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
+          const chartDataResult = await chartResponse.json();
+          setChartData(chartDataResult.messageActivity || []);
+          break;
+        }
+        case 2: // Summary
+          setSummary(data.summary);
+          break;
       }
     } catch (err) {
       setError(`Failed to fetch activity data: ${err}`);
@@ -194,20 +195,20 @@ const ActivityMonitor: React.FC = () => {
     let startDate: Date;
 
     switch (range) {
-    case '1h':
-      startDate = subHours(now, 1);
-      break;
-    case '24h':
-      startDate = subHours(now, 24);
-      break;
-    case '7d':
-      startDate = subDays(now, 7);
-      break;
-    case '30d':
-      startDate = subDays(now, 30);
-      break;
-    default:
-      startDate = subHours(now, 24);
+      case '1h':
+        startDate = subHours(now, 1);
+        break;
+      case '24h':
+        startDate = subHours(now, 24);
+        break;
+      case '7d':
+        startDate = subDays(now, 7);
+        break;
+      case '30d':
+        startDate = subDays(now, 30);
+        break;
+      default:
+        startDate = subHours(now, 24);
     }
 
     handleFilterChange({ startDate, endDate: now });
