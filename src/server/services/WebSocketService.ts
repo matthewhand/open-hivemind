@@ -352,6 +352,8 @@ export class WebSocketService {
       socket.on('disconnect', () => {
         this.connectedClients--;
         debug(`Client disconnected. Total clients: ${this.connectedClients}`);
+        // Clean up event listeners to prevent memory leaks
+        socket.removeAllListeners();
       });
     });
   }
@@ -749,6 +751,10 @@ export class WebSocketService {
       }
       this.io = null;
     }
+
+    // Clean up per-bot statistics to prevent memory leaks
+    this.botMessageCounts.clear();
+    this.botErrors.clear();
 
     debug('WebSocket service shut down');
   }

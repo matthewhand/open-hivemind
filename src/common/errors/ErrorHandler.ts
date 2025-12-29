@@ -152,6 +152,8 @@ export class PerformanceMonitor {
       return result;
     } catch (error) {
       this.endTiming(label, threshold);
+      // Log the error before re-throwing
+      this.handle(error, `Performance measurement failed: ${label}`);
       throw error;
     }
   }

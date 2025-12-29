@@ -341,7 +341,7 @@ export class DatabaseManager {
 
         // Ensure directory exists
         if (dbPath !== ':memory:') {
-          const dbDir = join(dbPath, '..');
+          const dbDir = dirname(dbPath);
           await fs.mkdir(dbDir, { recursive: true });
         }
 

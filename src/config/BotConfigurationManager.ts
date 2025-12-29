@@ -404,6 +404,12 @@ export class BotConfigurationManager {
    * Create individual bot configuration
    */
   private createBotConfig(botName: string): BotConfig | null {
+    // Validate botName parameter
+    if (!botName || typeof botName !== 'string' || botName.trim() === '') {
+      debug(`Invalid bot name provided: ${botName}`);
+      return null;
+    }
+
     const upperName = botName.toUpperCase();
     const upperEnvName = upperName.replace(/[^A-Z0-9]/g, '_');
 
