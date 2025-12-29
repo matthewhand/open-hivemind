@@ -5,7 +5,7 @@
 import type { Database } from 'sqlite';
 import { open } from 'sqlite';
 import Debug from 'debug';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { promises as fs } from 'fs';
 import { DatabaseError, ConfigurationError } from '@src/types/errorClasses';
 
@@ -381,7 +381,7 @@ export class DatabaseManager {
   }
 
   private async createTables(): Promise<void> {
-    if (!this.db) {throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');}
+    if (!this.db) { throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED'); }
 
     // Messages table
     await this.db!.exec(`
@@ -610,7 +610,7 @@ export class DatabaseManager {
   }
 
   private async createIndexes(): Promise<void> {
-    if (!this.db) {throw new Error('Database not initialized');}
+    if (!this.db) { throw new Error('Database not initialized'); }
 
     await this.db!.exec('CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)');
     await this.db!.exec('CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)');
@@ -636,7 +636,7 @@ export class DatabaseManager {
   }
 
   private async migrate(): Promise<void> {
-    if (!this.db) {throw new Error('Database not initialized');}
+    if (!this.db) { throw new Error('Database not initialized'); }
 
     try {
       // Add tenantId columns to existing tables
@@ -968,7 +968,7 @@ export class DatabaseManager {
     try {
       const row = await this.db!.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
 
-      if (!row) {return null;}
+      if (!row) { return null; }
 
       return {
         id: row.id,
@@ -1004,7 +1004,7 @@ export class DatabaseManager {
     try {
       const row = await this.db!.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
 
-      if (!row) {return null;}
+      if (!row) { return null; }
 
       return {
         id: row.id,
