@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { Router } from 'express';
 import type { CreateBotRequest } from '../../managers/BotManager';
 import { BotManager } from '../../managers/BotManager';
-import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import type { AuditedRequest } from '../middleware/audit';
@@ -16,12 +15,8 @@ const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
 
-// Apply authentication and audit middleware
-// Authentication can be bypassed in development by setting SKIP_AUTH=true
-if (process.env.SKIP_AUTH !== 'true') {
-  const { authenticate } = require('../../auth/middleware');
-  router.use(authenticate);
-}
+// Apply audit middleware only - authentication is handled at a higher level if enabled
+// This matches the pattern used in other routes like personas
 router.use(auditMiddleware);
 
 /**
