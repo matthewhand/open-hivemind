@@ -6,30 +6,29 @@
 
 SHELL := /bin/bash
 
-.PHONY: help audit start-dev start-prod build test-app clean deprecated status
+.PHONY: help audit start-dev start-prod build test-app clean deprecated status lint quality ci
 
 # Default target - show startup options
 help:
-	@echo "🧠 Open-Hivemind Startup Options Audit"
-	@echo "======================================"
+	@echo "🧠 Open-Hivemind Makefile"
+	@echo "========================="
 	@echo ""
-	@echo "📊 RECOMMENDED (Active) Commands:"
-	@echo "  make start-dev     - Start development environment (RECOMMENDED)"
-	@echo "  make start-prod    - Start production build"
+	@echo "📊 QUALITY GATES (CI Commands):"
+	@echo "  make lint          - Run ESLint (warnings ok, errors fail)"
 	@echo "  make build         - Build for production"
-	@echo "  make test-app      - Run application tests"
+	@echo "  make test          - Run tests with coverage"
+	@echo "  make quality       - Run lint + build (quick check)"
+	@echo "  make ci            - Run full CI: lint + build + test"
+	@echo ""
+	@echo "🚀 DEVELOPMENT Commands:"
+	@echo "  make start-dev     - Start development environment"
+	@echo "  make start-prod    - Start production build"
 	@echo "  make clean         - Clean all processes and builds"
 	@echo "  make status        - Show current processes and ports"
 	@echo ""
-	@echo "🗑️  ANALYSIS Commands:"
+	@echo "🔍 ANALYSIS Commands:"
 	@echo "  make deprecated    - Show all deprecated startup methods"
 	@echo "  make audit         - Full startup redundancy analysis"
-	@echo "  make sloc          - Source lines of code analysis"
-	@echo ""
-	@echo "📋 LEGACY Test Commands (preserved):"
-	@echo "  make test          - Original test runner"
-	@echo "  make test-watch    - Watch mode tests"
-	@echo "  make test-ci       - CI tests"
 
 # ============================================================================
 # RECOMMENDED COMMANDS (Clean, modern approach)
@@ -82,6 +81,23 @@ build:
 	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && node node_modules/.bin/tsc
 	@echo "Copying frontend to dist..."
 	@mkdir -p dist/client && cp -r src/client/dist dist/client/
+
+# ============================================================================
+# QUALITY GATES (CI Commands)
+# ============================================================================
+
+lint:
+	@echo "🔍 Running ESLint"
+	@echo "================="
+	@npm run lint
+
+quality: lint build
+	@echo ""
+	@echo "✅ Quality checks passed (lint + build)"
+
+ci: lint build test
+	@echo ""
+	@echo "✅ Full CI passed (lint + build + test)"
 
 test-app:
 	@echo "🧪 Running Application Tests"
