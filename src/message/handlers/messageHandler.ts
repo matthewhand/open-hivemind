@@ -523,11 +523,22 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       if (processingLocks.isLocked(channelId, botId)) {
         logger(`Channel ${channelId} is currently processing another message for bot ${botId}, waiting...`);
         const startWait = Date.now();
+        let waitTime = 100; // Start with 100ms
+        const maxWaitTime = 2000; // Max 2 seconds between checks
+        
         while (processingLocks.isLocked(channelId, botId) && (Date.now() - startWait) < 60000) {
-          await new Promise(resolve => setTimeout(resolve, 250));
+          // Exponential backoff with jitter to avoid thundering herd
+          const jitter = Math.random() * 50;
+          const currentWait = Math.min(waitTime + jitter, maxWaitTime);
+          
+          await new Promise(resolve => setTimeout(resolve, currentWait));
+          
+          // Double the wait time for next iteration (exponential backoff)
+          waitTime = Math.min(waitTime * 2, maxWaitTime);
         }
+        
         if (processingLocks.isLocked(channelId, botId)) {
-          logger(`Timed out waiting for processing lock on ${channelId}:${botId}`);
+          logger(`Timed out waiting for processing lock on ${channelId}:${botId} after 60 seconds`);
           return null;
         }
       }
