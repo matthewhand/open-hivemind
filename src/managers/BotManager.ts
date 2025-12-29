@@ -37,7 +37,7 @@ export interface CreateBotRequest {
   name: string;
   messageProvider: 'discord' | 'slack' | 'mattermost';
   llmProvider?: 'openai' | 'flowise' | 'openwebui' | 'openswarm';
-  config: {
+  config?: {
     discord?: {
       token: string;
       voiceChannelId?: string;
@@ -238,7 +238,7 @@ export class BotManager extends EventEmitter {
         isActive: false, // New bots start inactive
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
-        config: this.sanitizeConfig(request.config),
+        config: this.sanitizeConfig(request.config || {}),
         persona: request.persona,
         systemInstruction: request.systemInstruction,
         mcpServers: request.mcpServers,
@@ -246,7 +246,7 @@ export class BotManager extends EventEmitter {
       };
 
       // Store sensitive configuration securely
-      await this.storeSecureConfig(botId, request.config);
+      await this.storeSecureConfig(botId, request.config || {});
 
       // Add to web UI storage
       webUIStorage.saveAgent(botInstance);
@@ -561,13 +561,15 @@ export class BotManager extends EventEmitter {
       throw new Error('Valid LLM provider is required (openai, flowise, openwebui, or openswarm)');
     }
 
-    this.validateBotConfig(request.config);
+    this.validateBotConfig(request.config || {});
   }
 
   /**
    * Validate bot configuration
    */
   private validateBotConfig(config: Record<string, unknown>): void {
+    if (!config) return;
+
     // Validate message provider specific config
     if (config.discord && typeof config.discord === 'object') {
       const discordConfig = config.discord as Record<string, unknown>;
