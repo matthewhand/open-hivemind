@@ -21,18 +21,18 @@ export class ErrorHandler {
     const logMessage = `[${context}] ${errorMessage}`;
 
     switch (severity) {
-    case 'warn':
-      logger(logMessage);
-      console.warn(logMessage);
-      break;
-    case 'info':
-      logger(logMessage);
-      console.info(logMessage);
-      break;
-    default:
-      logger(logMessage);
-      console.error(logMessage);
-      break;
+      case 'warn':
+        logger(logMessage);
+        console.warn(logMessage);
+        break;
+      case 'info':
+        logger(logMessage);
+        console.info(logMessage);
+        break;
+      default:
+        logger(logMessage);
+        console.error(logMessage);
+        break;
     }
 
     // Here you could add:
@@ -153,7 +153,7 @@ export class PerformanceMonitor {
     } catch (error) {
       this.endTiming(label, threshold);
       // Log the error before re-throwing
-      this.handle(error, `Performance measurement failed: ${label}`);
+      ErrorHandler.handle(error, `Performance measurement failed: ${label}`);
       throw error;
     }
   }
