@@ -99,9 +99,9 @@
       async function loadStatus() {
         const r = await fetch('/api/admin/status');
         const j = await r.json();
-        document.getElementById('status').innerHTML = j.ok
-          ? '<span class="ok">OK</span>'
-          : '<span class="err">Error</span>';
+        const statusElement = document.getElementById('status');
+        statusElement.textContent = j.ok ? 'OK' : 'Error';
+        statusElement.className = j.ok ? 'ok' : 'err';
         const slackList = document.getElementById('slackList');
         const discordList = document.getElementById('discordList');
         slackList.innerHTML = '';
@@ -153,8 +153,9 @@
         });
         const j = await r.json();
         const m = document.getElementById('slackMsg');
-        if (j.ok) { m.innerHTML = '<span class="ok">Added. If not visible, refresh status.</span>'; loadStatus(); }
-        else { m.innerHTML = '<span class="err">' + (j.error||'Failed') + '</span>'; }
+        m.textContent = j.ok ? 'Added. If not visible, refresh status.' : (j.error || 'Failed');
+        m.className = j.ok ? 'ok' : 'err';
+        if (j.ok) { loadStatus(); }
       
 
       document.getElementById('discordForm').addEventListener('submit', async (e) => {
@@ -172,8 +173,9 @@
         });
         const j = await r.json();
         const m = document.getElementById('discordMsg');
-        if (j.ok) { m.innerHTML = '<span class="ok">Saved. Restart app to initialize Discord bot.</span>'; loadStatus(); }
-        else { m.innerHTML = '<span class="err">' + (j.error||'Failed') + '</span>'; }
+        m.textContent = j.ok ? 'Saved. Restart app to initialize Discord bot.' : (j.error || 'Failed');
+        m.className = j.ok ? 'ok' : 'err';
+        if (j.ok) { loadStatus(); }
       });
     </script>
   </body>

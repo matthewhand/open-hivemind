@@ -24,22 +24,27 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Content Security Policy (CSP)
   const cspDirectives = [
     'default-src \'self\'',
-    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'', // Allow inline scripts for WebSocket connections
+    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https:', // Allow inline scripts for WebSocket connections
     'style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com',
     'img-src \'self\' data: https:',
     'font-src \'self\' https://fonts.gstatic.com',
-    'connect-src \'self\' ws: wss:', // Allow WebSocket connections
+    'connect-src \'self\' ws: wss: https:', // Allow WebSocket connections
     'media-src \'self\'',
     'object-src \'none\'',
     'frame-ancestors \'none\'',
     'base-uri \'self\'',
     'form-action \'self\'',
+    'frame-src \'none\'', // Prevent iframes
+    'worker-src \'none\'', // Prevent web workers
+    'manifest-src \'self\'',
+    'prefetch-src \'self\'',
   ];
 
   if (process.env.NODE_ENV === 'development') {
     // Relax CSP for development
-    cspDirectives.push('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://localhost:*');
-    cspDirectives.push('connect-src \'self\' ws: wss: http://localhost:*');
+    cspDirectives.push('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://localhost:* https://localhost:*');
+    cspDirectives.push('connect-src \'self\' ws: wss: http://localhost:* https://localhost:*');
+    cspDirectives.push('style-src \'self\' \'unsafe-inline\' http://localhost:* https://fonts.googleapis.com');
   }
 
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
