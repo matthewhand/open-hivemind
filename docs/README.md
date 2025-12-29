@@ -27,6 +27,7 @@ platforms and LLM providers.
 - **Getting Started**
   - [`getting-started/setup-guide.md`](getting-started/setup-guide.md) – prepare
     environment variables and run your first instance.
+  - [`installation.md`](installation.md) – Pinokio, Docker, and specific deployment modes.
   - [`getting-started/quickstart.md`](getting-started/quickstart.md) – CLI-focused
     walk-through for new operators.
 - **Architecture & Agents**
