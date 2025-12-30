@@ -1,34 +1,29 @@
 import { ConnectionManager } from '../../src/database/ConnectionManager';
-import { Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
+// Import the mock functions from the sqlite mock module  
+// Jest config maps 'sqlite' to 'tests/mocks/sqlite.ts'
+import sqliteMock from '../mocks/sqlite';
+// Import sqlite3 mock (Jest config maps 'sqlite3' to 'tests/mocks/sqlite3.ts')
+import sqlite3 from '../mocks/sqlite3';
 
-// Mock sqlite and sqlite3
-const mockRun = jest.fn();
-const mockAll = jest.fn();
-const mockClose = jest.fn();
-const mockConfigure = jest.fn();
-
-const mockDb = {
-    run: mockRun,
-    all: mockAll,
-    close: mockClose,
-    configure: mockConfigure
-};
-
-jest.mock('sqlite', () => ({
-    open: jest.fn()
-}));
-
-jest.mock('sqlite3', () => ({
-    Database: jest.fn()
-}));
+const { mockRun, mockAll, mockClose, mockDb, open: mockOpen, mockExec: mockConfigure } = sqliteMock;
 
 describe('ConnectionManager', () => {
     let connectionManager: ConnectionManager;
     const dbPath = ':memory:';
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        // Clear all mock call history
+        mockRun.mockClear();
+        mockAll.mockClear();
+        mockClose.mockClear();
+        mockOpen.mockClear();
+
+        // Reset mock implementations
+        mockRun.mockResolvedValue({ lastID: 1, changes: 1 });
+        mockAll.mockResolvedValue([]);
+        mockClose.mockResolvedValue(undefined);
+        mockOpen.mockResolvedValue(mockDb);
+
         connectionManager = new ConnectionManager({ databasePath: dbPath });
     });
 
@@ -38,21 +33,20 @@ describe('ConnectionManager', () => {
 
             await connectionManager.connect();
 
-            expect(require('sqlite').open).toHaveBeenCalledWith({
-                filename: dbPath,
-                driver: sqlite3.Database
-            });
+            expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({
+                filename: dbPath
+            }));
             expect(connectionManager.isConnectedToDatabase()).toBe(true);
             expect(emitSpy).toHaveBeenCalledWith('connected');
         });
 
         it('should not reconnect if already connected', async () => {
             await connectionManager.connect();
-            require('sqlite').open.mockClear();
+            mockOpen.mockClear();
 
             await connectionManager.connect();
 
-            expect(require('sqlite').open).not.toHaveBeenCalled();
+            expect(mockOpen).not.toHaveBeenCalled();
         });
 
         it('should configure timeout if provided', async () => {
@@ -68,7 +62,7 @@ describe('ConnectionManager', () => {
 
         it('should handle connection errors', async () => {
             const error = new Error('Connection failed');
-            require('sqlite').open.mockRejectedValueOnce(error);
+            mockOpen.mockRejectedValueOnce(error);
             const emitSpy = jest.spyOn(connectionManager, 'emit');
 
             await expect(connectionManager.connect()).rejects.toThrow('Connection failed');

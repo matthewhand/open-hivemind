@@ -1,30 +1,10 @@
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { DatabaseError } from '../../src/types/errorClasses';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+// Import the mock functions from the sqlite mock module
+// Jest config maps 'sqlite' to 'tests/mocks/sqlite.ts'
+import sqliteMock from '../mocks/sqlite';
 
-// Mock sqlite3 and open
-const mockRun = jest.fn();
-const mockGet = jest.fn();
-const mockAll = jest.fn();
-const mockExec = jest.fn();
-const mockClose = jest.fn();
-
-const mockDb = {
-    run: mockRun,
-    get: mockGet,
-    all: mockAll,
-    exec: mockExec,
-    close: mockClose
-};
-
-jest.mock('sqlite', () => ({
-    open: jest.fn().mockResolvedValue(mockDb)
-}));
-
-jest.mock('sqlite3', () => ({
-    Database: jest.fn()
-}));
+const { mockRun, mockGet, mockAll, mockExec, mockClose, mockDb } = sqliteMock;
 
 describe('DatabaseManager', () => {
     let dbManager: DatabaseManager;
@@ -34,7 +14,20 @@ describe('DatabaseManager', () => {
     };
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        // Clear all mock call history
+        mockRun.mockClear();
+        mockGet.mockClear();
+        mockAll.mockClear();
+        mockExec.mockClear();
+        mockClose.mockClear();
+
+        // Reset mock implementations to defaults
+        mockRun.mockResolvedValue({ lastID: 1, changes: 1 });
+        mockGet.mockResolvedValue(undefined);
+        mockAll.mockResolvedValue([]);
+        mockExec.mockResolvedValue(undefined);
+        mockClose.mockResolvedValue(undefined);
+
         // Reset singleton instance for each test
         // @ts-ignore - Accessing private property for testing
         DatabaseManager.instance = null;
