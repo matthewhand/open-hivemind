@@ -496,7 +496,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 });
 
 // Get all configuration with sensitive data redacted
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const botManager = BotManager.getInstance();
     const bots = await botManager.getAllBots();
