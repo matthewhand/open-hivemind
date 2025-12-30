@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+// Jest provides describe, it, expect, beforeEach as globals
 import { renderHook, act } from '@testing-library/react';
 import { useLocalStorage } from '../useLocalStorage';
 
@@ -6,10 +6,10 @@ import { useLocalStorage } from '../useLocalStorage';
 const localStorageMock = (() => {
     let store: Record<string, string> = {};
     return {
-        getItem: vi.fn((key: string) => store[key] || null),
-        setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
-        removeItem: vi.fn((key: string) => { delete store[key]; }),
-        clear: vi.fn(() => { store = {}; }),
+        getItem: jest.fn((key: string) => store[key] || null),
+        setItem: jest.fn((key: string, value: string) => { store[key] = value; }),
+        removeItem: jest.fn((key: string) => { delete store[key]; }),
+        clear: jest.fn(() => { store = {}; }),
     };
 })();
 
@@ -18,7 +18,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 describe('useLocalStorage', () => {
     beforeEach(() => {
         localStorageMock.clear();
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     it('should return initial value when localStorage is empty', () => {
@@ -76,7 +76,7 @@ describe('useLocalStorage', () => {
 
     it('should return initial value on parse error', () => {
         localStorageMock.getItem.mockReturnValueOnce('invalid-json');
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
         const { result } = renderHook(() => useLocalStorage('testKey', 'fallback'));
 

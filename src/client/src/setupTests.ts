@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import '@testing-library/jest-dom/vitest';
+import '@testing-library/jest-dom'; // Generic import works for both
 import { configure } from '@testing-library/react';
-import { vi } from 'vitest';
+// vi is specific to Vitest, use jest global which works in both (Vitest aliases jest to vi)
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' });
 
 // Mock IntersectionObserver
-(global as any).IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  disconnect: vi.fn(),
-  unobserve: vi.fn(),
+(global as any).IntersectionObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  disconnect: jest.fn(),
+  unobserve: jest.fn(),
 }));
 
 // Mock ResizeObserver
@@ -23,52 +23,52 @@ configure({ testIdAttribute: 'data-testid' });
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
+  value: jest.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
   })),
 });
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
   length: 0,
-  key: vi.fn(),
+  key: jest.fn(),
 };
 (global as any).localStorage = localStorageMock;
 
 // Mock sessionStorage
 const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
   length: 0,
-  key: vi.fn(),
+  key: jest.fn(),
 };
 (global as any).sessionStorage = sessionStorageMock;
 
 // Mock fetch if not already available
 if (!(global as any).fetch) {
-  (global as any).fetch = vi.fn();
+  (global as any).fetch = jest.fn();
 }
 
 // Mock WebSocket
-(global as any).WebSocket = vi.fn().mockImplementation(() => ({
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn(),
-  send: vi.fn(),
-  close: vi.fn(),
+(global as any).WebSocket = jest.fn().mockImplementation(() => ({
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  dispatchEvent: jest.fn(),
+  send: jest.fn(),
+  close: jest.fn(),
   readyState: 1,
   CONNECTING: 0,
   OPEN: 1,

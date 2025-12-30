@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Jest provides describe, it, expect as globals
 import uiReducer, {
     setTheme,
     toggleDarkMode,

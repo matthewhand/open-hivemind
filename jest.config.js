@@ -99,7 +99,7 @@ const projects = [
       'bcrypt$': '<rootDir>/tests/mocks/bcrypt.ts',
       'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/tests/__mocks__/discord.js.ts',
     },
-    setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
+    setupFilesAfterEnv: ['<rootDir>/src/client/src/setupTests.ts'],
     testPathIgnorePatterns: [
       '/node_modules/',
       '/dist/',
@@ -118,6 +118,6 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['html', 'text', 'lcov'],
-  
+
   projects,
 };

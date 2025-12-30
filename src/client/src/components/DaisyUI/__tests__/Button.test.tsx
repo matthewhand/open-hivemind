@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+// Jest provides describe, it, expect as globals
 import { render, screen, fireEvent } from '@testing-library/react';
 import Button from '../Button';
 
@@ -97,7 +97,7 @@ describe('Button', () => {
 
     describe('click handling', () => {
         it('should call onClick when clicked', () => {
-            const handleClick = vi.fn();
+            const handleClick = jest.fn();
             render(<Button onClick={handleClick}>Click</Button>);
 
             fireEvent.click(screen.getByRole('button'));
@@ -105,7 +105,7 @@ describe('Button', () => {
         });
 
         it('should not call onClick when disabled', () => {
-            const handleClick = vi.fn();
+            const handleClick = jest.fn();
             render(<Button onClick={handleClick} disabled>Click</Button>);
 
             fireEvent.click(screen.getByRole('button'));
@@ -113,7 +113,7 @@ describe('Button', () => {
         });
 
         it('should not call onClick when loading', () => {
-            const handleClick = vi.fn();
+            const handleClick = jest.fn();
             render(<Button onClick={handleClick} loading>Click</Button>);
 
             fireEvent.click(screen.getByRole('button'));

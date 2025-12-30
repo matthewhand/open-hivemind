@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Jest provides describe, it, expect as globals
 import { renderHook, act } from '@testing-library/react';
 import { useModal } from '../useModal';
 
