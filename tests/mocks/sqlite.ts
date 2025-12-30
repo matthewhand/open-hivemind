@@ -6,6 +6,7 @@ export const mockGet = jest.fn().mockResolvedValue(undefined);
 export const mockAll = jest.fn().mockResolvedValue([]);
 export const mockExec = jest.fn().mockResolvedValue(undefined);
 export const mockClose = jest.fn().mockResolvedValue(undefined);
+export const mockConfigure = jest.fn();
 
 export class Database {
   private _connected = false;
@@ -15,10 +16,7 @@ export class Database {
   all = mockAll;
   exec = mockExec;
   close = mockClose;
-
-  configure(_options: any): void {
-    // Mock configure method
-  }
+  configure = mockConfigure;
 
   get connected(): boolean {
     return this._connected;
@@ -43,5 +41,6 @@ export default {
   mockAll,
   mockExec,
   mockClose,
+  mockConfigure,
   mockDb: mockDbInstance,
 };

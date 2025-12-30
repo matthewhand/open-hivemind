@@ -5,7 +5,7 @@ import sqliteMock from '../mocks/sqlite';
 // Import sqlite3 mock (Jest config maps 'sqlite3' to 'tests/mocks/sqlite3.ts')
 import sqlite3 from '../mocks/sqlite3';
 
-const { mockRun, mockAll, mockClose, mockDb, open: mockOpen, mockExec: mockConfigure } = sqliteMock;
+const { mockRun, mockAll, mockClose, mockConfigure, mockDb, open: mockOpen } = sqliteMock;
 
 describe('ConnectionManager', () => {
     let connectionManager: ConnectionManager;
@@ -17,6 +17,7 @@ describe('ConnectionManager', () => {
         mockAll.mockClear();
         mockClose.mockClear();
         mockOpen.mockClear();
+        mockConfigure.mockClear();
 
         // Reset mock implementations
         mockRun.mockResolvedValue({ lastID: 1, changes: 1 });
