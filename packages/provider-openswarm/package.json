@@ -1,0 +1,26 @@
+{
+    "name": "@hivemind/provider-openswarm",
+    "version": "1.0.0",
+    "description": "OpenSwarm LLM provider for Open Hivemind",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "debug": "^4.3.7"
+    },
+    "peerDependencies": {
+        "@hivemind/shared-types": "*"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.2",
+        "@types/debug": "^4.1.12"
+    },
+    "files": [
+        "dist",
+        "src"
+    ]
+}

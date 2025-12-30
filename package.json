@@ -7,7 +7,8 @@
     "hivemind": "dist/src/cli/HivemindCLI.js"
   },
   "workspaces": [
-    "src/client"
+    "src/client",
+    "packages/*"
   ],
   "scripts": {
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",

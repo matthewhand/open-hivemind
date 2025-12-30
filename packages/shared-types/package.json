@@ -1,0 +1,19 @@
+{
+    "name": "@hivemind/shared-types",
+    "version": "1.0.0",
+    "description": "Shared TypeScript interfaces for Open Hivemind adapters",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.2"
+    },
+    "files": [
+        "dist",
+        "src"
+    ]
+}

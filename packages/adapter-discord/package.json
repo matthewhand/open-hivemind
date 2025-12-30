@@ -1,0 +1,31 @@
+{
+    "name": "@hivemind/adapter-discord",
+    "version": "1.0.0",
+    "description": "Discord adapter for Open Hivemind",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "discord.js": "^14.14.1",
+        "@discordjs/rest": "^2.0.0",
+        "@discordjs/voice": "^0.17.0",
+        "debug": "^4.3.7",
+        "libsodium-wrappers": "^0.7.9",
+        "ffmpeg-static": "^5.2.0"
+    },
+    "peerDependencies": {
+        "@hivemind/shared-types": "*"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.2",
+        "@types/debug": "^4.1.12"
+    },
+    "files": [
+        "dist",
+        "src"
+    ]
+}
