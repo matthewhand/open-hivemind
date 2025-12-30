@@ -730,9 +730,6 @@ const BotsPage: React.FC = () => {
                   <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                 ))}
               </select>
-              <label className="label">
-                <span className="label-text-alt text-warning">Only one LLM provider allowed per bot.</span>
-              </label>
               {!defaultLlmConfigured && (
                 <div className="alert alert-warning mt-2">
                   <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>

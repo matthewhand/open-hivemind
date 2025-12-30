@@ -22,6 +22,7 @@ const OverviewPage = lazy(() => import('../pages/OverviewPage'));
 const BotsPage = lazy(() => import('../pages/BotsPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
+const ChatPage = lazy(() => import('../pages/ChatPage'));
 const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
@@ -113,10 +114,12 @@ const AppRouter: React.FC = () => {
           <Route index element={<Navigate to="/admin/overview" replace />} />
           <Route path="overview" element={<OverviewPage />} />
 
+
           {/* Bot Management Routes */}
           <Route path="bots" element={<BotsPage />} />
           <Route path="bots/create" element={<BotCreatePage />} />
           <Route path="bots/templates" element={<BotTemplatesPage />} />
+          <Route path="chat" element={<ChatPage />} />
 
           {/* Integrations Routes */}
           <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />

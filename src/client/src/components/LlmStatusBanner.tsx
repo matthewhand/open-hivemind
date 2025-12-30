@@ -12,9 +12,12 @@ const LlmStatusBanner: React.FC = () => {
   const missingCount = status.botsMissingLlmProvider.length;
   const hasDefault = status.defaultConfigured;
 
-  const summary = hasDefault
-    ? `${missingCount} bot${missingCount === 1 ? '' : 's'} ha${missingCount === 1 ? 's' : 've'} no LLM override and will use the default LLM provider.`
-    : `${missingCount} bot${missingCount === 1 ? '' : 's'} ha${missingCount === 1 ? 's' : 've'} no LLM provider configured and no default LLM is set.`;
+  // Only show warning if there's no default LLM configured
+  if (hasDefault) {
+    return null;
+  }
+
+  const summary = `${missingCount} bot${missingCount === 1 ? '' : 's'} ha${missingCount === 1 ? 's' : 've'} no LLM provider configured and no default LLM is set.`;
 
   return (
     <div className="alert alert-warning flex items-start gap-3">

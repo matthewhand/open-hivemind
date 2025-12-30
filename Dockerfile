@@ -37,6 +37,7 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 WORKDIR /app
 
 COPY package*.json ./
+COPY src/client/package.json src/client/
 RUN npm ci && npm cache clean --force
 
 COPY . .

@@ -155,24 +155,35 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
 // GET /api/config/bots - List all configured bots with redacted secrets
 router.get('/bots', async (req, res) => {
   try {
-    const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
-
-    // Get runtime status from BotManager
     const botManager = BotManager.getInstance();
-    const runtimeBots = await botManager.getAllBots();
-    const runtimeStatusMap = new Map(runtimeBots.map(b => [b.name, b.isActive]));
+    const bots = await botManager.getAllBots();
+    const manager = BotConfigurationManager.getInstance();
 
     // Redact sensitive values before sending to frontend
+    // Map BotInstance (runtime) back to the flat structure expected by the frontend
     const safeBots = bots.map((bot: any) => {
-      const redacted = redactObject(bot as Record<string, unknown>);
+      // Create a merged object that includes top-level props and the config object
+      // This mimics the structure the frontend expects (where providers are top-level or in config)
+      const mergedBot = {
+        ...bot,
+        ...(bot.config || {}),
+      };
+
+      const redacted = redactObject(mergedBot as Record<string, unknown>);
+
       return {
         ...redacted,
+        id: bot.id,
         name: bot.name,
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
-        isActive: runtimeStatusMap.get(bot.name) ?? true, // Use runtime status
-        source: bot._source || 'env', // Indicate where config came from
+        isActive: bot.isActive,
+        source: bot.source || (bot.config && Object.keys(bot.config).length > 0 ? 'db' : 'env'),
+        // Ensure config is also present as a property for newer UI components
+        config: redactObject(bot.config || {}),
+        errorCount: 0, // Placeholder as BotInstance currently doesn't track error counts in this view
+        messageCount: 0, // Placeholder
+        connected: bot.isActive // Simplified connected status
       };
     });
 
@@ -487,50 +498,57 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 // Get all configuration with sensitive data redacted
 router.get('/', (req, res) => {
   try {
+    const botManager = BotManager.getInstance();
+    const bots = await botManager.getAllBots();
     const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
     const warnings = manager.getWarnings();
     const userConfigStore = UserConfigStore.getInstance();
 
     // Redact sensitive information
     // Bots default to active/connected unless explicitly disabled via user config
     const sanitizedBots = bots.map(bot => {
-      const isDisabled = userConfigStore.isBotDisabled(bot.name);
-      return {
+      // Merge config into top-level for frontend compatibility
+      const mergedBot = {
         ...bot,
+        ...(bot.config || {}),
+      };
+
+      const isDisabled = userConfigStore.isBotDisabled(mergedBot.name);
+      return {
+        ...mergedBot,
         // Use name as the ID since that's what the bots API expects
-        id: bot.id || bot.name,
+        id: mergedBot.id || mergedBot.name,
         // If disabled in user config, set status to 'disabled', otherwise 'active'
-        status: isDisabled ? 'disabled' : (bot.status || 'active'),
+        status: isDisabled ? 'disabled' : (mergedBot.status || 'active'),
         // If disabled, set connected to false
-        connected: isDisabled ? false : (bot.connected !== false),
-        discord: bot.discord ? {
-          ...bot.discord,
-          token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || ''),
+        connected: isDisabled ? false : (mergedBot.connected !== false),
+        discord: mergedBot.discord ? {
+          ...mergedBot.discord,
+          token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
         } : undefined,
-        slack: bot.slack ? {
-          ...bot.slack,
-          botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', bot.slack.botToken || ''),
-          appToken: redactSensitiveInfo('SLACK_APP_TOKEN', bot.slack.appToken || ''),
-          signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || ''),
+        slack: mergedBot.slack ? {
+          ...mergedBot.slack,
+          botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+          appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+          signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', mergedBot.slack.signingSecret || ''),
         } : undefined,
-        openai: bot.openai ? {
-          ...bot.openai,
-          apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || ''),
+        openai: mergedBot.openai ? {
+          ...mergedBot.openai,
+          apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
         } : undefined,
-        flowise: bot.flowise ? {
-          ...bot.flowise,
-          apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || ''),
+        flowise: mergedBot.flowise ? {
+          ...mergedBot.flowise,
+          apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
         } : undefined,
-        openwebui: bot.openwebui ? {
-          ...bot.openwebui,
-          apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || ''),
+        openwebui: mergedBot.openwebui ? {
+          ...mergedBot.openwebui,
+          apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
         } : undefined,
-        openswarm: bot.openswarm ? {
-          ...bot.openswarm,
-          apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || ''),
+        openswarm: mergedBot.openswarm ? {
+          ...mergedBot.openswarm,
+          apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
         } : undefined,
-        metadata: buildFieldMetadata(bot, userConfigStore),
+        metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
     });
 
