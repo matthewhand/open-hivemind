@@ -79,7 +79,13 @@ jest.isolateModules(() => {
     });
 
     it('should fetch messages from DiscordService', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
       const messages = await provider.getMessages('test-channel');
+      if (messages.length === 0) {
+        // Re-log captured errors so they appear in CI output
+        errorSpy.mock.calls.forEach(args => process.stderr.write(`[DEBUG ERROR]: ${args.map(a => JSON.stringify(a)).join(' ')}\n`));
+      }
+      errorSpy.mockRestore();
       expect(messages).toHaveLength(1);
       expect(messages[0].getText()).toBe('test message');
     });
