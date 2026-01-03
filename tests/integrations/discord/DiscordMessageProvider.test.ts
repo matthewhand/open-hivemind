@@ -50,6 +50,23 @@ jest.isolateModules(() => {
       jest.clearAllMocks();
       jest.resetModules();
 
+      jest.mock('@config/UserConfigStore', () => ({
+        UserConfigStore: {
+          getInstance: jest.fn().mockReturnValue({
+            isBotDisabled: jest.fn().mockReturnValue(false),
+          }),
+        },
+      }));
+
+      jest.mock('@config/ProviderConfigManager', () => ({
+        __esModule: true,
+        default: {
+          getInstance: jest.fn().mockReturnValue({
+            getAllProviders: jest.fn().mockReturnValue([]),
+          }),
+        },
+      }));
+
       jest.mock('@config/BotConfigurationManager', () => ({
         BotConfigurationManager: {
           getInstance: jest.fn().mockReturnValue({
