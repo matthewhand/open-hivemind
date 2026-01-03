@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const DiscordMgr = require('../../integrations/discord/DiscordService');
+const DiscordMgr = require('@hivemind/adapter-discord');
 const SlackMgr = require('../../integrations/slack/SlackService');
 const MattermostMgr = (() => {
   try {

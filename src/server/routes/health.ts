@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import AdvancedMonitor from '../../monitoring/AdvancedMonitor';
-import { DiscordService } from '@integrations/discord/DiscordService';
+import { DiscordService } from '@hivemind/adapter-discord';
 import { SlackService } from '@integrations/slack/SlackService';
 import { createErrorResponse } from '../../utils/errorResponse';
 import Debug from 'debug';
@@ -20,14 +20,14 @@ router.get('/health', (req, res) => {
     // Get Discord and Slack service health
     let discordHealth = null;
     let slackHealth = null;
-    
+
     try {
       const discordService = DiscordService.getInstance();
       discordHealth = discordService.getHealthStatus();
     } catch (e) {
       debug('Could not get Discord health status:', e);
     }
-    
+
     try {
       const slackService = SlackService.getInstance();
       slackHealth = slackService.getMetrics();

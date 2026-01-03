@@ -1,6 +1,6 @@
 import { getMessengerProvider } from '@src/message/management/getMessengerProvider';
 
-jest.mock('@src/integrations/discord/DiscordService', () => ({
+jest.mock('@hivemind/adapter-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => ({
       sendMessageToChannel: jest.fn(),

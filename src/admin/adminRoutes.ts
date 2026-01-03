@@ -4,8 +4,8 @@ import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
 import SlackService from '@integrations/slack/SlackService';
-import { Discord } from '@integrations/discord/DiscordService';
-import type { AuditedRequest} from '../server/middleware/audit';
+import { Discord } from '@hivemind/adapter-discord';
+import type { AuditedRequest } from '../server/middleware/audit';
 import { auditMiddleware, logAdminAction } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
 import { authenticate, requireAdmin } from '../auth/middleware';
@@ -31,13 +31,13 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
     { key: 'teacher', name: 'Teacher', systemPrompt: 'Explain concepts clearly with analogies and steps.' },
   ];
   try {
-    if (!fs.existsSync(personasDir)) {return fallback;}
+    if (!fs.existsSync(personasDir)) { return fallback; }
     const out: any[] = [];
     for (const file of fs.readdirSync(personasDir)) {
-      if (!file.endsWith('.json')) {continue;}
+      if (!file.endsWith('.json')) { continue; }
       try {
         const data = JSON.parse(fs.readFileSync(path.join(personasDir, file), 'utf8'));
-        if (data && data.key && data.name && typeof data.systemPrompt === 'string') {out.push(data);}
+        if (data && data.key && data.name && typeof data.systemPrompt === 'string') { out.push(data); }
       } catch (e) {
         debug('Invalid persona file:', file, e);
       }
@@ -69,7 +69,7 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
       const bots = ((ds.getAllBots?.() || []) as any[]);
       discordBots = bots.map((b: any) => b?.botUserName || b?.config?.name || 'discord');
       discordInfo = bots.map((b: any) => ({ provider: 'discord', name: b?.botUserName || b?.config?.name || 'discord' }));
-    } catch {}
+    } catch { }
     res.json({ ok: true, slackBots, discordBots, discordCount: discordBots.length, slackInfo, discordInfo });
   } catch {
     res.json({ ok: true, bots: [] });
