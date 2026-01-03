@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { OpenAiProvider } from '@integrations/openai/openAiProvider';
+import { OpenAiProvider } from '@hivemind/provider-openai';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import llmConfig from '@config/llmConfig';
@@ -66,20 +66,20 @@ export function getLlmProvider(): ILlmProvider[] {
       try {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
-        case 'openai':
-          instance = new OpenAiProvider(config.config);
-          debug(`Initialized OpenAI provider instance: ${config.name}`);
-          break;
-        case 'flowise':
-          instance = new FlowiseProvider(config.config);
-          debug(`Initialized Flowise provider instance: ${config.name}`);
-          break;
-        case 'openwebui':
-          instance = openWebUI; // Singleton/Stateless
-          debug(`Initialized OpenWebUI provider instance: ${config.name}`);
-          break;
-        default:
-          debug(`Unknown LLM provider type: ${config.type}`);
+          case 'openai':
+            instance = new OpenAiProvider(config.config);
+            debug(`Initialized OpenAI provider instance: ${config.name}`);
+            break;
+          case 'flowise':
+            instance = new FlowiseProvider(config.config);
+            debug(`Initialized Flowise provider instance: ${config.name}`);
+            break;
+          case 'openwebui':
+            instance = openWebUI; // Singleton/Stateless
+            debug(`Initialized OpenWebUI provider instance: ${config.name}`);
+            break;
+          default:
+            debug(`Unknown LLM provider type: ${config.type}`);
         }
 
         if (instance) {
@@ -91,8 +91,8 @@ export function getLlmProvider(): ILlmProvider[] {
         debug(`Failed to initialize provider ${config.name}: ${error}`);
       }
     });
-  } 
-  
+  }
+
   if (llmProviders.length === 0) {
     // Fallback: Check Legacy Env Var (LLM_PROVIDER)
     // This is necessary if no migration happened or it failed, or for quick development.
@@ -106,11 +106,11 @@ export function getLlmProvider(): ILlmProvider[] {
       legacyTypes.forEach(type => {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
-        case 'openai': instance = new OpenAiProvider(); break;
-        case 'flowise': instance = new FlowiseProvider(); break;
-        case 'openwebui': instance = openWebUI; break;
+          case 'openai': instance = new OpenAiProvider(); break;
+          case 'flowise': instance = new FlowiseProvider(); break;
+          case 'openwebui': instance = openWebUI; break;
         }
-        if (instance) {llmProviders.push(withTokenCounting(instance, 'legacy'));}
+        if (instance) { llmProviders.push(withTokenCounting(instance, 'legacy')); }
       });
     }
   }

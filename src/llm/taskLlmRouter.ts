@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { OpenAiProvider } from '@integrations/openai/openAiProvider';
+import { OpenAiProvider } from '@hivemind/provider-openai';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ProviderInstance } from '@src/config/ProviderConfigManager';
@@ -50,12 +50,12 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     supportsCompletion: provider.supportsCompletion,
     generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
       const response = await provider.generateChatCompletion(userMessage, historyMessages, metadata);
-      if (response) {metrics.recordLlmTokenUsage(response.length);}
+      if (response) { metrics.recordLlmTokenUsage(response.length); }
       return response;
     },
     generateCompletion: async (userMessage: string) => {
       const response = await provider.generateCompletion(userMessage);
-      if (response) {metrics.recordLlmTokenUsage(response.length);}
+      if (response) { metrics.recordLlmTokenUsage(response.length); }
       return response;
     },
   };
@@ -87,17 +87,17 @@ function createProviderFromInstance(instance: ProviderInstance, modelOverride?: 
 
     let provider: ILlmProvider | undefined;
     switch (type) {
-    case 'openai':
-      provider = new OpenAiProvider(cfg);
-      break;
-    case 'flowise':
-      provider = new FlowiseProvider(cfg);
-      break;
-    case 'openwebui':
-      provider = openWebUI;
-      break;
-    default:
-      return null;
+      case 'openai':
+        provider = new OpenAiProvider(cfg);
+        break;
+      case 'flowise':
+        provider = new FlowiseProvider(cfg);
+        break;
+      case 'openwebui':
+        provider = openWebUI;
+        break;
+      default:
+        return null;
     }
 
     return withTokenCounting(provider, instance.id);
@@ -109,19 +109,19 @@ function createProviderFromInstance(instance: ProviderInstance, modelOverride?: 
 
 function pickProviderInstance(ref: string, candidates: ProviderInstance[]): ProviderInstance | null {
   const wanted = normalizeRef(ref);
-  if (!wanted) {return null;}
+  if (!wanted) { return null; }
 
   // Prefer exact id match.
   const byId = candidates.find(p => normalizeRef(p.id) === wanted);
-  if (byId) {return byId;}
+  if (byId) { return byId; }
 
   // Then by name (case-insensitive).
   const byName = candidates.find(p => normalizeRef(p.name) === wanted);
-  if (byName) {return byName;}
+  if (byName) { return byName; }
 
   // Then by type (first enabled provider of that type).
   const byType = candidates.find(p => normalizeRef(p.type) === wanted);
-  if (byType) {return byType;}
+  if (byType) { return byType; }
 
   return null;
 }

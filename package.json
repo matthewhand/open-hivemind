@@ -63,7 +63,8 @@
     "@integrations": "dist/src/integrations",
     "@types": "dist/src/types",
     "@client": "dist/src/client",
-    "@server": "dist/src/server"
+    "@server": "dist/src/server",
+    "@hivemind/provider-openai": "dist/packages/provider-openai/src"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",

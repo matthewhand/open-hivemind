@@ -1,4 +1,4 @@
-import { OpenAiProvider, openAiProvider } from '@integrations/openai/openAiProvider';
+import { OpenAiProvider, openAiProvider } from '@hivemind/provider-openai';
 import openaiConfig from '@config/openaiConfig';
 import { OpenAI } from 'openai';
 import { IMessage } from '@message/interfaces/IMessage';

@@ -14,7 +14,10 @@
     "outDir": "./dist",
     "rootDir": "./",
     "baseUrl": "./",
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     "incremental": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
@@ -23,21 +26,47 @@
     "forceConsistentCasingInFileNames": false,
     "isolatedModules": false,
     "paths": {
-      "@command/*": ["src/command/*"],
-      "@common/*": ["src/common/*"],
-      "@config/*": ["src/config/*"],
-      "@llm/*": ["src/llm/*"],
-      "@message/*": ["src/message/*"],
-      "@webhook/*": ["src/webhook/*"],
-      "@integrations/*": ["src/integrations/*"],
-      "@types/*": ["src/types/*"],
-      "@src/*": ["src/*"],
-      "@tests/*": ["tests/*"],
-      "testUtils": ["./tests/testUtils"]
+      "@command/*": [
+        "src/command/*"
+      ],
+      "@common/*": [
+        "src/common/*"
+      ],
+      "@config/*": [
+        "src/config/*"
+      ],
+      "@llm/*": [
+        "src/llm/*"
+      ],
+      "@message/*": [
+        "src/message/*"
+      ],
+      "@webhook/*": [
+        "src/webhook/*"
+      ],
+      "@integrations/*": [
+        "src/integrations/*"
+      ],
+      "@types/*": [
+        "src/types/*"
+      ],
+      "@src/*": [
+        "src/*"
+      ],
+      "@tests/*": [
+        "tests/*"
+      ],
+      "testUtils": [
+        "./tests/testUtils"
+      ],
+      "@hivemind/provider-openai": [
+        "packages/provider-openai/src/index.ts"
+      ]
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "packages/provider-openai/src/**/*"
   ],
   "exclude": [
     "tests/**/*",
