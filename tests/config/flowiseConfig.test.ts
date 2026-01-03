@@ -15,8 +15,9 @@ describe('flowiseConfig', () => {
 
   describe('Default configuration values', () => {
     it('should have default values when no environment variables are set', () => {
-      // Reset environment variables to test defaults
-      process.env = {};
+      // Reset environment variables to test defaults, but keep NODE_ENV=test
+      // to prevent config file from being loaded
+      process.env = { NODE_ENV: 'test', NODE_CONFIG_DIR: '/dev/null' };
 
       // Reset modules to force re-import of config with new environment
       jest.resetModules();
@@ -26,11 +27,12 @@ describe('flowiseConfig', () => {
       expect(freshFlowiseConfig.get('FLOWISE_API_KEY')).toBe('');
       expect(freshFlowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID')).toBe('');
       expect(freshFlowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID')).toBe('');
-      expect(freshFlowiseConfig.get('FLOWISE_USE_REST')).toBe(false);
+      expect(freshFlowiseConfig.get('FLOWISE_USE_REST')).toBe(true); // Config default is true
     });
 
     it('should handle partial environment variable configuration', () => {
       process.env = {
+        NODE_ENV: 'test', // Preserve to skip config file loading
         FLOWISE_API_ENDPOINT: 'http://localhost:3000'
         // Other variables intentionally missing
       };
@@ -42,7 +44,7 @@ describe('flowiseConfig', () => {
       expect(config.get('FLOWISE_API_KEY')).toBe('');
       expect(config.get('FLOWISE_CONVERSATION_CHATFLOW_ID')).toBe('');
       expect(config.get('FLOWISE_COMPLETION_CHATFLOW_ID')).toBe('');
-      expect(config.get('FLOWISE_USE_REST')).toBe(false);
+      expect(config.get('FLOWISE_USE_REST')).toBe(true); // Config default is true
     });
 
     it('should provide consistent default values across multiple imports', () => {

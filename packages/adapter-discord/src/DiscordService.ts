@@ -1,18 +1,18 @@
 import type { Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
 import { Client, GatewayIntentBits } from 'discord.js';
 import Debug from 'debug';
-import discordConfig from '../../config/discordConfig';
+import discordConfig from '@config/discordConfig';
 import DiscordMessage from './DiscordMessage';
-import type { IMessage } from '../../message/interfaces/IMessage';
-import type { IMessengerService } from '../../message/interfaces/IMessengerService';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { UserConfigStore } from '../../config/UserConfigStore';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import {
   ValidationError,
   ConfigurationError,
   NetworkError,
   RateLimitError,
-} from '../../types/errorClasses';
+} from '@types/errorClasses';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
@@ -20,12 +20,12 @@ import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
-import ProviderConfigManager from '../../config/ProviderConfigManager';
+import ProviderConfigManager from '@config/ProviderConfigManager';
 // Optional channel routing feature flag and router
-import messageConfig from '../../config/messageConfig';
+import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
-import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
-import WebSocketService from '../../server/services/WebSocketService';
+import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import WebSocketService from '@server/services/WebSocketService';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
 import { SpecifyCommand } from './commands/speckit/specify';
 import { EventEmitter } from 'events';
@@ -145,8 +145,10 @@ export const Discord = {
           return;
         }
 
-        log('No Discord providers configured.');
-        return; // No tokens, no bots.
+        if (botConfigs.length === 0) {
+          log('No Discord providers configured.');
+          return; // No tokens, no bots.
+        }
       }
 
       if (botConfigs.length > 0) {
@@ -175,7 +177,7 @@ export const Discord = {
             // Legacy/Manual Mode: Bot config has token directly (e.g. from loadLegacyConfiguration)
             this.addBotToPool(botConfig.discord.token, botConfig.name, botConfig);
           } else {
-            console.log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
+            log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
           }
         });
       } else {

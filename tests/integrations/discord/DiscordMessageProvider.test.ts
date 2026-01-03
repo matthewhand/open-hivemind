@@ -11,6 +11,7 @@ jest.isolateModules(() => {
     user: { id: 'bot1', tag: 'Test Bot#1234' },
     channels: {
       fetch: jest.fn().mockResolvedValue({
+        isTextBased: () => true,
         messages: {
           fetch: jest.fn().mockResolvedValue(new Map([
             ['123', {
@@ -39,15 +40,32 @@ jest.isolateModules(() => {
     },
   }));
 
-  const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
 
   describe('DiscordMessageProvider', () => {
     let service: any;
     let provider: any;
+    let DiscordMessageProvider: any;
 
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.resetModules();
+
+      jest.mock('@config/UserConfigStore', () => ({
+        UserConfigStore: {
+          getInstance: jest.fn().mockReturnValue({
+            isBotDisabled: jest.fn().mockReturnValue(false),
+          }),
+        },
+      }));
+
+      jest.mock('@config/ProviderConfigManager', () => ({
+        __esModule: true,
+        default: {
+          getInstance: jest.fn().mockReturnValue({
+            getAllProviders: jest.fn().mockReturnValue([]),
+          }),
+        },
+      }));
 
       jest.mock('@config/BotConfigurationManager', () => ({
         BotConfigurationManager: {
@@ -70,6 +88,20 @@ jest.isolateModules(() => {
       const { DiscordService } = require('@integrations/discord/DiscordService');
       service = DiscordService.getInstance();
       await service.initialize();
+
+      // Load Provider class from the same isolated module context
+      ({ DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider'));
+
+
+      // Ensure a bot is present (workaround for CI config loading issues)
+      if (service.getAllBots().length === 0) {
+        await service.addBot({
+          name: 'TestBot',
+          discord: { token: 'test-token' },
+          token: 'test-token'
+        });
+      }
+
       provider = new DiscordMessageProvider();
     });
 

@@ -63,7 +63,7 @@ describe('uiSlice', () => {
         it('should open modal', () => {
             const state = uiReducer(getInitialState(), openModal({
                 id: 'test-modal',
-                title: 'Test Modal',
+                type: 'default',
             }));
             expect(state.modals.some(m => m.id === 'test-modal')).toBe(true);
         });
@@ -71,7 +71,7 @@ describe('uiSlice', () => {
         it('should close modal', () => {
             let state = uiReducer(getInitialState(), openModal({
                 id: 'test-modal',
-                title: 'Test Modal',
+                type: 'default',
             }));
             state = uiReducer(state, closeModal('test-modal'));
             expect(state.modals.some(m => m.id === 'test-modal')).toBe(false);
@@ -80,11 +80,11 @@ describe('uiSlice', () => {
         it('should close all modals', () => {
             let state = uiReducer(getInitialState(), openModal({
                 id: 'modal-1',
-                title: 'Modal 1',
+                type: 'default',
             }));
             state = uiReducer(state, openModal({
                 id: 'modal-2',
-                title: 'Modal 2',
+                type: 'default',
             }));
             state = uiReducer(state, closeAllModals());
             expect(state.modals.length).toBe(0);
@@ -96,6 +96,8 @@ describe('uiSlice', () => {
             const state = uiReducer(getInitialState(), showToast({
                 message: 'Test toast',
                 type: 'success',
+                duration: 5000,
+                position: 'top-right',
             }));
             expect(state.toasts.some(t => t.message === 'Test toast')).toBe(true);
         });
@@ -104,6 +106,8 @@ describe('uiSlice', () => {
             let state = uiReducer(getInitialState(), showToast({
                 message: 'Test toast',
                 type: 'success',
+                duration: 5000,
+                position: 'top-right',
             }));
             const toastId = state.toasts[0].id;
             state = uiReducer(state, dismissToast(toastId));
@@ -114,10 +118,14 @@ describe('uiSlice', () => {
             let state = uiReducer(getInitialState(), showToast({
                 message: 'Toast 1',
                 type: 'success',
+                duration: 5000,
+                position: 'top-right',
             }));
             state = uiReducer(state, showToast({
                 message: 'Toast 2',
                 type: 'error',
+                duration: 5000,
+                position: 'top-right',
             }));
             state = uiReducer(state, clearAllToasts());
             expect(state.toasts.length).toBe(0);
@@ -128,7 +136,7 @@ describe('uiSlice', () => {
         it('should show alert', () => {
             const state = uiReducer(getInitialState(), showAlert({
                 message: 'Test alert',
-                type: 'warning',
+                status: 'warning',
             }));
             expect(state.alerts.some(a => a.message === 'Test alert')).toBe(true);
         });
@@ -136,7 +144,7 @@ describe('uiSlice', () => {
         it('should dismiss alert', () => {
             let state = uiReducer(getInitialState(), showAlert({
                 message: 'Test alert',
-                type: 'warning',
+                status: 'warning',
             }));
             const alertId = state.alerts[0].id;
             state = uiReducer(state, dismissAlert(alertId));

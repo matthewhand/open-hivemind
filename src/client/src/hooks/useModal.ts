@@ -5,9 +5,10 @@ const useModal = () => {
   const [modalState, setModalState] = useState<ProviderModalState>({
     isOpen: false,
     providerType: 'message',
+    mode: 'create',
     isEdit: false,
-    provider: null,
-    botId: null,
+    provider: undefined,
+    botId: undefined,
   });
 
   // Open modal for adding provider
@@ -15,8 +16,9 @@ const useModal = () => {
     setModalState({
       isOpen: true,
       providerType,
+      mode: 'create',
       isEdit: false,
-      provider: null,
+      provider: undefined,
       botId,
     });
   }, []);
@@ -30,6 +32,7 @@ const useModal = () => {
     setModalState({
       isOpen: true,
       providerType,
+      mode: 'edit',
       isEdit: true,
       provider,
       botId,
@@ -41,8 +44,8 @@ const useModal = () => {
     setModalState(prev => ({
       ...prev,
       isOpen: false,
-      provider: null,
-      botId: null,
+      provider: undefined,
+      botId: undefined,
     }));
   }, []);
 
@@ -51,9 +54,10 @@ const useModal = () => {
     setModalState({
       isOpen: false,
       providerType: 'message',
+      mode: 'create',
       isEdit: false,
-      provider: null,
-      botId: null,
+      provider: undefined,
+      botId: undefined,
     });
   }, []);
 

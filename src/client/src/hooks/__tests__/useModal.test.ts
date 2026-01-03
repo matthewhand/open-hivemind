@@ -8,8 +8,8 @@ describe('useModal', () => {
 
         expect(result.current.modalState.isOpen).toBe(false);
         expect(result.current.modalState.isEdit).toBe(false);
-        expect(result.current.modalState.provider).toBe(null);
-        expect(result.current.modalState.botId).toBe(null);
+        expect(result.current.modalState.provider).toBeUndefined();
+        expect(result.current.modalState.botId).toBeUndefined();
     });
 
     it('should open modal for adding message provider', () => {
@@ -62,8 +62,8 @@ describe('useModal', () => {
         });
 
         expect(result.current.modalState.isOpen).toBe(false);
-        expect(result.current.modalState.provider).toBe(null);
-        expect(result.current.modalState.botId).toBe(null);
+        expect(result.current.modalState.provider).toBeUndefined();
+        expect(result.current.modalState.botId).toBeUndefined();
     });
 
     it('should reset modal to initial state', () => {
@@ -80,9 +80,10 @@ describe('useModal', () => {
         expect(result.current.modalState).toEqual({
             isOpen: false,
             providerType: 'message',
+            mode: 'create',
             isEdit: false,
-            provider: null,
-            botId: null,
+            provider: undefined,
+            botId: undefined,
         });
     });
 
