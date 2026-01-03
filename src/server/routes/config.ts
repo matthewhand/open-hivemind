@@ -508,7 +508,7 @@ router.get('/', async (req, res) => {
     // Bots default to active/connected unless explicitly disabled via user config
     const sanitizedBots = bots.map(bot => {
       // Merge config into top-level for frontend compatibility
-      const mergedBot = {
+      const mergedBot: any = {
         ...bot,
         ...(bot.config || {}),
       };
