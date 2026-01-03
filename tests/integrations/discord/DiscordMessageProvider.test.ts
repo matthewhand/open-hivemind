@@ -40,11 +40,11 @@ jest.isolateModules(() => {
     },
   }));
 
-  const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
 
   describe('DiscordMessageProvider', () => {
     let service: any;
     let provider: any;
+    let DiscordMessageProvider: any;
 
     beforeEach(async () => {
       jest.clearAllMocks();
@@ -88,6 +88,10 @@ jest.isolateModules(() => {
       const { DiscordService } = require('@integrations/discord/DiscordService');
       service = DiscordService.getInstance();
       await service.initialize();
+
+      // Load Provider class from the same isolated module context
+      ({ DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider'));
+
 
       // Ensure a bot is present (workaround for CI config loading issues)
       if (service.getAllBots().length === 0) {
