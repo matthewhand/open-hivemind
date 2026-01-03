@@ -9,7 +9,7 @@ jest.mock('fs', () => ({
   }))
 }));
 
-jest.mock('@integrations/discord/DiscordService', () => ({
+jest.mock('@hivemind/adapter-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => ({
       provider: 'discord',
@@ -46,7 +46,7 @@ describe('getMessengerProvider filtering', () => {
     process.env.MESSAGE_PROVIDER = 'discord';
     const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
-    
+
     expect(Array.isArray(providers)).toBe(true);
     expect(providers.length).toBeGreaterThanOrEqual(0);
   });
@@ -55,7 +55,7 @@ describe('getMessengerProvider filtering', () => {
     process.env.MESSAGE_PROVIDER = 'slack';
     const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
-    
+
     expect(Array.isArray(providers)).toBe(true);
     expect(providers.length).toBeGreaterThanOrEqual(0);
   });
@@ -64,7 +64,7 @@ describe('getMessengerProvider filtering', () => {
     process.env.MESSAGE_PROVIDER = 'discord,slack';
     const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
-    
+
     expect(Array.isArray(providers)).toBe(true);
     expect(providers.length).toBeGreaterThanOrEqual(0);
   });
@@ -73,7 +73,7 @@ describe('getMessengerProvider filtering', () => {
     process.env.MESSAGE_PROVIDER = 'webhook';
     const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
-    
+
     expect(Array.isArray(providers)).toBe(true);
     expect(providers.length).toBeGreaterThanOrEqual(0);
   });
@@ -82,7 +82,7 @@ describe('getMessengerProvider filtering', () => {
     delete process.env.MESSAGE_PROVIDER;
     const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
-    
+
     expect(Array.isArray(providers)).toBe(true);
     expect(providers.length).toBeGreaterThanOrEqual(0);
   });

@@ -122,7 +122,7 @@ describe('DiscordService', () => {
     // Setup messageConfig mock
     MockMessageConfig.get.mockReturnValue(undefined);
 
-    DiscordService = require('@integrations/discord/DiscordService').DiscordService;
+    DiscordService = require('@hivemind/adapter-discord').DiscordService;
     service = DiscordService.getInstance();
   });
 
@@ -131,7 +131,7 @@ describe('DiscordService', () => {
       await service.shutdown();
     }
     // Manually reset singletons after each test
-    const dsModule = require('@integrations/discord/DiscordService');
+    const dsModule = require('@hivemind/adapter-discord');
     if (dsModule.Discord && dsModule.Discord.DiscordService) {
       dsModule.Discord.DiscordService.instance = undefined;
     }
@@ -189,7 +189,7 @@ describe('DiscordService', () => {
     });
     MockMessageConfig.get.mockReturnValue(undefined);
 
-    const { DiscordService: LocalDiscordService } = require('@integrations/discord/DiscordService');
+    const { DiscordService: LocalDiscordService } = require('@hivemind/adapter-discord');
     const localService = LocalDiscordService.getInstance();
 
     await localService.initialize();
@@ -272,7 +272,7 @@ describe('DiscordService', () => {
     });
     MockMessageConfig3.get.mockReturnValue(undefined);
 
-    DiscordService = require('@integrations/discord/DiscordService').DiscordService;
+    DiscordService = require('@hivemind/adapter-discord').DiscordService;
     service = DiscordService.getInstance();
 
     await service.initialize();
@@ -386,7 +386,7 @@ describe('DiscordService', () => {
     });
     MockMessageConfig.get.mockReturnValue(undefined);
 
-    DiscordService = require('@integrations/discord/DiscordService').DiscordService;
+    DiscordService = require('@hivemind/adapter-discord').DiscordService;
     service = DiscordService.getInstance();
     let bots = service.getAllBots();
     expect(bots).toHaveLength(2);
@@ -427,7 +427,7 @@ describe('DiscordService', () => {
     });
     MockMessageConfig2.get.mockReturnValue(undefined);
 
-    DiscordService = require('@integrations/discord/DiscordService').DiscordService;
+    DiscordService = require('@hivemind/adapter-discord').DiscordService;
     service = DiscordService.getInstance();
     await service.initialize();
 

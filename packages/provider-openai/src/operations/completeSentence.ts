@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { OpenAiService } from '@src/integrations/openai/OpenAiService';
+// import type { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:completeSentence');
@@ -12,7 +12,7 @@ const debug = Debug('app:completeSentence');
  * @returns The completed sentence.
  */
 export async function completeSentence(
-  client: OpenAiService,
+  client: any,
   content: string,
 ): Promise<string> {
   try {
@@ -30,14 +30,14 @@ export async function completeSentence(
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const classification = ErrorUtils.classifyError(hivemindError);
-        
+
     debug('Error completing sentence:', ErrorUtils.getMessage(hivemindError));
-        
+
     // Log with appropriate level
     if (classification.logLevel === 'error') {
       console.error('OpenAI sentence completion error:', hivemindError);
     }
-        
+
     return ''; // Return an empty string in case of failure
   }
 }

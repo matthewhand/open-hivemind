@@ -12,7 +12,7 @@ import {
   ConfigurationError,
   NetworkError,
   RateLimitError,
-} from '@types/errorClasses';
+} from '../../../src/types/errorClasses';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
@@ -25,7 +25,7 @@ import ProviderConfigManager from '@config/ProviderConfigManager';
 import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
 import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import WebSocketService from '@server/services/WebSocketService';
+import WebSocketService from '../../../src/server/services/WebSocketService';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
 import { SpecifyCommand } from './commands/speckit/specify';
 import { EventEmitter } from 'events';
@@ -135,12 +135,15 @@ export const Discord = {
         // Fallback: Check for legacy DISCORD_BOT_TOKEN environment variable
         const legacyToken = process.env.DISCORD_BOT_TOKEN;
         if (legacyToken) {
-          log('Found DISCORD_BOT_TOKEN env var, using as single provider');
-          // Create an ad-hoc provider config
-          this.addBotToPool(legacyToken, 'Discord Bot', {
-            name: 'Discord Bot',
-            messageProvider: 'discord',
-            discord: { token: legacyToken },
+          log('Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)');
+          const tokens = legacyToken.split(',').map(t => t.trim()).filter(Boolean);
+          tokens.forEach((token, index) => {
+            const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
+            this.addBotToPool(token, name, {
+              name,
+              messageProvider: 'discord',
+              discord: { token },
+            });
           });
           return;
         }
@@ -351,7 +354,7 @@ export const Discord = {
 
       console.log('!!! EMITTING service-ready FOR DiscordService !!!');
       console.log('!!! DiscordService EMITTER INSTANCE:', this);
-      const startupGreetingService = require('../../services/StartupGreetingService').default;
+      const startupGreetingService = require('@services/StartupGreetingService').default;
       startupGreetingService.emit('service-ready', this);
     }
 
@@ -380,7 +383,12 @@ export const Discord = {
             if (!message.channelId) { return; }
 
             // Config-based bot message handling
-            // Logic moved to centralized handler (shouldReplyToMessage)
+            // Logic moved to centralized handler (shouldReplyToMessage) works for complex logic,
+            // but we must respect basic platform flags like MESSAGE_IGNORE_BOTS here at the gate.
+            const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+            if (ignoreBots && message.author.bot) {
+              return;
+            }
 
             // Emit incoming message flow event
             try {

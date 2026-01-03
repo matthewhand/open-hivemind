@@ -3,8 +3,7 @@ import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { Message, User, GuildMember } from 'discord.js';
 import { Collection, TextChannel } from 'discord.js';
-import type { HivemindError} from '@types/errors';
-import { ErrorUtils } from '@types/errors';
+import { ErrorUtils, HivemindError } from '../../../src/types/errors';
 
 const debug = Debug('app:DiscordMessage');
 
@@ -235,7 +234,7 @@ export class DiscordMessage implements IMessage {
     try {
       const users = this.message.mentions?.users;
 
-      if (!users) {return [];}
+      if (!users) { return []; }
 
       if (users instanceof Collection) {
         return Array.from(users.values())
@@ -276,7 +275,7 @@ export class DiscordMessage implements IMessage {
     debug('Fetching users from channel: ' + this.channelId);
     try {
       const channel = this.message.channel;
-      if (!channel) {return [];}
+      if (!channel) { return []; }
 
       // Try to get members from guild channel
       const guildChannel = channel as TextChannel & {
@@ -284,7 +283,7 @@ export class DiscordMessage implements IMessage {
       };
 
       const members = guildChannel.members;
-      if (!members) {return [];}
+      if (!members) { return []; }
 
       if (members instanceof Collection) {
         return Array.from(members.values())

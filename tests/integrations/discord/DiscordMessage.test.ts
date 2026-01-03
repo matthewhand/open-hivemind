@@ -1,4 +1,4 @@
-import DiscordMessage from '@integrations/discord/DiscordMessage';
+import { DiscordMessage } from '@hivemind/adapter-discord';
 import { Message, TextChannel, User } from 'discord.js';
 
 describe('DiscordMessage', () => {

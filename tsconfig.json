@@ -61,12 +61,22 @@
       ],
       "@hivemind/provider-openai": [
         "packages/provider-openai/src/index.ts"
+      ],
+      "@hivemind/provider-openai/*": [
+        "packages/provider-openai/src/*"
+      ],
+      "@hivemind/adapter-discord": [
+        "packages/adapter-discord/src/index.ts"
+      ],
+      "@hivemind/adapter-discord/*": [
+        "packages/adapter-discord/src/*"
       ]
     }
   },
   "include": [
     "src/**/*",
-    "packages/provider-openai/src/**/*"
+    "packages/provider-openai/src/**/*",
+    "packages/adapter-discord/src/**/*"
   ],
   "exclude": [
     "tests/**/*",

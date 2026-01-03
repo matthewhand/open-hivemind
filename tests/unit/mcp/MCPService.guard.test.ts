@@ -8,7 +8,7 @@ jest.mock('@integrations/slack/providers/SlackMessageProvider', () => ({
   })),
 }));
 
-jest.mock('@integrations/discord/providers/DiscordMessageProvider', () => ({
+jest.mock('@hivemind/adapter-discord/providers/DiscordMessageProvider', () => ({
   DiscordMessageProvider: jest.fn().mockImplementation(() => ({
     getForumOwner: jest.fn(),
   })),
