@@ -88,6 +88,16 @@ jest.isolateModules(() => {
       const { DiscordService } = require('@integrations/discord/DiscordService');
       service = DiscordService.getInstance();
       await service.initialize();
+
+      // Ensure a bot is present (workaround for CI config loading issues)
+      if (service.getAllBots().length === 0) {
+        await service.addBot({
+          name: 'TestBot',
+          discord: { token: 'test-token' },
+          token: 'test-token'
+        });
+      }
+
       provider = new DiscordMessageProvider();
     });
 
@@ -96,16 +106,7 @@ jest.isolateModules(() => {
     });
 
     it('should fetch messages from DiscordService', async () => {
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
       const messages = await provider.getMessages('test-channel');
-      if (messages.length === 0) {
-        // Re-log captured errors so they appear in CI output
-        errorSpy.mock.calls.forEach(args => process.stderr.write(`[DEBUG ERROR]: ${args.map(a => JSON.stringify(a)).join(' ')}\n`));
-        console.log('[DEBUG STATE] Service bots length:', service.bots?.length);
-        console.log('[DEBUG STATE] Config cache:', service.configCache);
-        console.log('[DEBUG STATE] Mock fetch calls:', JSON.stringify((mockClient.channels.fetch as jest.Mock).mock.calls));
-      }
-      errorSpy.mockRestore();
       expect(messages).toHaveLength(1);
       expect(messages[0].getText()).toBe('test message');
     });
