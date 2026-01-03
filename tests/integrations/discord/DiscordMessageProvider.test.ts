@@ -84,6 +84,9 @@ jest.isolateModules(() => {
       if (messages.length === 0) {
         // Re-log captured errors so they appear in CI output
         errorSpy.mock.calls.forEach(args => process.stderr.write(`[DEBUG ERROR]: ${args.map(a => JSON.stringify(a)).join(' ')}\n`));
+        console.log('[DEBUG STATE] Service bots length:', service.bots?.length);
+        console.log('[DEBUG STATE] Config cache:', service.configCache);
+        console.log('[DEBUG STATE] Mock fetch calls:', JSON.stringify((mockClient.channels.fetch as jest.Mock).mock.calls));
       }
       errorSpy.mockRestore();
       expect(messages).toHaveLength(1);
