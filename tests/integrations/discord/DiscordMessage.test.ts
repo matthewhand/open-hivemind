@@ -61,7 +61,7 @@ describe('DiscordMessage', () => {
 
   it('should identify if message is from a bot', () => {
     expect(discordMessage.isFromBot()).toBe(false);
-    
+
     mockUser.bot = true;
     const botMessage = new DiscordMessage(mockMessage as any);
     expect(botMessage.isFromBot()).toBe(true);
@@ -69,8 +69,8 @@ describe('DiscordMessage', () => {
 
   it('should handle mentions correctly', () => {
     const mentionedUser = { id: '222222', username: 'MentionedUser' };
-    mockMessage.mentions.users = new Map([['222222', mentionedUser]]);
-    
+    mockMessage.mentions.users = { '222222': mentionedUser };
+
     const messageWithMentions = new DiscordMessage(mockMessage as any);
     expect(messageWithMentions.getUserMentions()).toContain('222222');
   });
@@ -78,7 +78,7 @@ describe('DiscordMessage', () => {
   it('should handle attachments', () => {
     const attachment = { id: '333333', url: 'https://example.com/image.png' };
     mockMessage.attachments.set('333333', attachment);
-    
+
     const messageWithAttachments = new DiscordMessage(mockMessage as any);
     expect(messageWithAttachments.hasAttachments()).toBe(true);
   });

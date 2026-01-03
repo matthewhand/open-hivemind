@@ -1,12 +1,12 @@
 import type { Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
 import { Client, GatewayIntentBits } from 'discord.js';
 import Debug from 'debug';
-import discordConfig from '../../config/discordConfig';
+import discordConfig from '@config/discordConfig';
 import DiscordMessage from './DiscordMessage';
-import type { IMessage } from '../../message/interfaces/IMessage';
-import type { IMessengerService } from '../../message/interfaces/IMessengerService';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { UserConfigStore } from '../../config/UserConfigStore';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import {
   ValidationError,
   ConfigurationError,
@@ -135,18 +135,23 @@ export const Discord = {
         // Fallback: Check for legacy DISCORD_BOT_TOKEN environment variable
         const legacyToken = process.env.DISCORD_BOT_TOKEN;
         if (legacyToken) {
-          log('Found DISCORD_BOT_TOKEN env var, using as single provider');
-          // Create an ad-hoc provider config
-          this.addBotToPool(legacyToken, 'Discord Bot', {
-            name: 'Discord Bot',
-            messageProvider: 'discord',
-            discord: { token: legacyToken },
+          log('Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)');
+          const tokens = legacyToken.split(',').map(t => t.trim()).filter(Boolean);
+          tokens.forEach((token, index) => {
+            const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
+            this.addBotToPool(token, name, {
+              name,
+              messageProvider: 'discord',
+              discord: { token },
+            });
           });
           return;
         }
 
-        log('No Discord providers configured.');
-        return; // No tokens, no bots.
+        if (botConfigs.length === 0) {
+          log('No Discord providers configured.');
+          return; // No tokens, no bots.
+        }
       }
 
       if (botConfigs.length > 0) {
@@ -175,7 +180,7 @@ export const Discord = {
             // Legacy/Manual Mode: Bot config has token directly (e.g. from loadLegacyConfiguration)
             this.addBotToPool(botConfig.discord.token, botConfig.name, botConfig);
           } else {
-            console.log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
+            log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
           }
         });
       } else {
@@ -378,7 +383,12 @@ export const Discord = {
             if (!message.channelId) { return; }
 
             // Config-based bot message handling
-            // Logic moved to centralized handler (shouldReplyToMessage)
+            // Logic moved to centralized handler (shouldReplyToMessage) works for complex logic,
+            // but we must respect basic platform flags like MESSAGE_IGNORE_BOTS here at the gate.
+            const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+            if (ignoreBots && message.author.bot) {
+              return;
+            }
 
             // Emit incoming message flow event
             try {

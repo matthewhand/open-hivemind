@@ -1,4 +1,4 @@
-import { Discord } from '@integrations/discord/DiscordService';
+import { Discord } from '../DiscordService';
 import type { IMessage } from '@message/interfaces/IMessage';
 import DiscordMessage from '../DiscordMessage';
 
@@ -54,8 +54,7 @@ export class DiscordMessageProvider {
    * - Logs errors to console for debugging
    */
   public async getMessages(channelId: string): Promise<IMessage[]> {
-    const messages = await this.discordSvc.getMessagesFromChannel(channelId);
-    return messages.map((msg: any) => new DiscordMessage(msg));
+    return await this.discordSvc.getMessagesFromChannel(channelId);
   }
 
   public async getForumOwner(forumId: string): Promise<string> {

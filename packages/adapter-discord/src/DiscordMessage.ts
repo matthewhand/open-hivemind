@@ -3,8 +3,8 @@ import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { Message, User, GuildMember } from 'discord.js';
 import { Collection, TextChannel } from 'discord.js';
-import type { HivemindError} from '../../types/errors';
-import { ErrorUtils } from '../../types/errors';
+import type { HivemindError} from '@types/errors';
+import { ErrorUtils } from '@types/errors';
 
 const debug = Debug('app:DiscordMessage');
 
