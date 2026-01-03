@@ -11,6 +11,7 @@ jest.isolateModules(() => {
     user: { id: 'bot1', tag: 'Test Bot#1234' },
     channels: {
       fetch: jest.fn().mockResolvedValue({
+        isTextBased: () => true,
         messages: {
           fetch: jest.fn().mockResolvedValue(new Map([
             ['123', {

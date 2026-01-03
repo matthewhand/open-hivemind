@@ -17,7 +17,7 @@ describe('flowiseConfig', () => {
     it('should have default values when no environment variables are set', () => {
       // Reset environment variables to test defaults, but keep NODE_ENV=test
       // to prevent config file from being loaded
-      process.env = { NODE_ENV: 'test' };
+      process.env = { NODE_ENV: 'test', NODE_CONFIG_DIR: '/dev/null' };
 
       // Reset modules to force re-import of config with new environment
       jest.resetModules();
