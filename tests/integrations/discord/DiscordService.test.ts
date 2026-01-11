@@ -143,7 +143,6 @@ describe('DiscordService', () => {
     mockGetDiscordBotConfigs.mockClear();
   });
 
-  // TODO: Fix singleton reset issues between test runs
   it('initializes correctly', async () => {
     await service.initialize();
     expect(service.getAllBots()).toHaveLength(1);
@@ -207,7 +206,6 @@ describe('DiscordService', () => {
     expect(combinedLogs).toContain(`tag=${bot.client.user.tag}`);
   });
 
-  // TODO: Fix singleton reset issues between test runs
   it('shuts down correctly', async () => {
     await service.initialize();
     const bot = service.getAllBots()[0];
@@ -215,7 +213,6 @@ describe('DiscordService', () => {
     expect(bot.client.destroy).toHaveBeenCalled();
   });
 
-  // TODO: Fix singleton reset issues between test runs
   it('handles bot and client management scenarios', async () => {
     // Test returns all bots via getAllBots
     await service.initialize();
@@ -356,7 +353,6 @@ describe('DiscordService', () => {
     expect(ctx.nameCandidates).toEqual(expect.arrayContaining(['seneca', 'Seneca']));
   });
 
-  // TODO: Fix mock issues - legacy token parsing and bot management
   it('handles configuration and bot management', async () => {
     // Test legacy configuration with comma-separated tokens
     process.env.DISCORD_BOT_TOKEN = 'token1,token2';
@@ -445,7 +441,6 @@ describe('DiscordService', () => {
     expect(newBot.config.token).toBe('new_token');
   });
 
-  // TODO: Fix singleton reset issues between test runs
   it.each([
     ['without token', {}],
     ['with empty token', { token: '' }]
