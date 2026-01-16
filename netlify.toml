@@ -1,6 +1,5 @@
 [build]
   command = "npm run build:serverless"
-  functions = "api"
   publish = "src/client/dist"
 
 [build.environment]
@@ -8,12 +7,11 @@
 
 [dev]
   command = "npm run dev:frontend-only"
-  functions = "api"
   publish = "src/client/dist"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/index/:splat"
+  to = "https://open-hivemind.fly.dev/api/:splat"
   status = 200
 
 [[redirects]]

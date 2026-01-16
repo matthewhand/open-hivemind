@@ -8,8 +8,9 @@ const buildUrl = (endpoint: string): string => {
     return endpoint;
   }
 
-  // In production or when API_BASE_URL is set, use the full URL
-  const baseUrl = API_BASE_URL || (import.meta.env.DEV ? '' : 'https://open-hivemind.fly.dev');
+  // Use the env var if set, otherwise default to empty string (relative path)
+  // This allows the Netlify redirect to handle the proxying to the backend
+  const baseUrl = API_BASE_URL || '';
   return `${baseUrl}${endpoint}`;
 };
 
