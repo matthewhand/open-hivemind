@@ -262,7 +262,7 @@ export interface ActivityResponse {
 }
 
 class ApiService {
-  public async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  public async get<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
@@ -286,8 +286,11 @@ class ApiService {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const url = buildUrl(endpoint);
+
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
       const response = await fetch(url, {
@@ -296,7 +299,9 @@ class ApiService {
           ...options?.headers,
         },
         ...options,
+        signal: controller.signal,
       });
+      clearTimeout(id);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
@@ -314,7 +319,10 @@ class ApiService {
         }
         throw new Error(`Invalid JSON response from server: ${text.slice(0, 100)}...`);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
+      }
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`API request failed for ${endpoint}:`, errorMessage);
       throw error;
