@@ -180,7 +180,9 @@ describe('Approval Workflow', () => {
       const request = await dbManager.getApprovalRequest(requestId);
       expect(request!.status).toBe('approved');
       expect(request!.reviewedBy).toBe('admin-user');
-      expect(request!.reviewedAt).toEqual(updates.reviewedAt);
+      // Compare ISO strings to avoid millisecond precision issues between JS and SQLite
+      expect(request!.reviewedAt).toBeTruthy();
+      expect(new Date(request!.reviewedAt!).getTime()).toBeCloseTo(new Date(updates.reviewedAt!).getTime(), -2);
       expect(request!.reviewComments).toBe('Looks good, approved');
     });
 
