@@ -27,7 +27,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       containerClassName,
       ...props
     },
-    ref
+    ref,
   ) => {
     const variantClasses = {
       primary: 'input-primary',
@@ -52,7 +52,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ghost && 'input-ghost',
       variant && variantClasses[variant],
       size && sizeClasses[size],
-      className
+      className,
     );
 
     const containerClasses = twMerge('relative', containerClassName);
@@ -61,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className={containerClasses}>
         {prefix && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <span className="text-gray-500 sm:text-sm">{prefix}</span>
+            <span className="text-base-content/60 sm:text-sm">{prefix}</span>
           </div>
         )}
         <input
@@ -72,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         />
         {suffix && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="text-gray-500 sm:text-sm">{suffix}</span>
+            <span className="text-base-content/60 sm:text-sm">{suffix}</span>
           </div>
         )}
         {loading && (
@@ -82,7 +82,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

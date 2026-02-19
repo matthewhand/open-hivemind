@@ -1,449 +1,88 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import type { Breakpoint } from '@mui/material';
 
-export interface ResponsiveProps {
-  children: React.ReactNode;
-  breakpoint?: Breakpoint;
-  orientation?: 'portrait' | 'landscape';
-}
+// Responsive Container
+export const ResponsiveContainer: React.FC<{ children: React.ReactNode; breakpoint?: string; orientation?: 'portrait' | 'landscape' }> = ({ children }) => (
+  <div className="container mx-auto px-4" role="region">
+    {children}
+  </div>
+);
 
-export const ResponsiveContainer: React.FC<ResponsiveProps> = ({
-  children,
-  breakpoint = 'sm',
-  orientation,
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down(breakpoint));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  const isPortrait = useMediaQuery('(orientation: portrait)');
-  const isLandscape = useMediaQuery('(orientation: landscape)');
-  
-  const shouldShow = !orientation || 
-    (orientation === 'portrait' && isPortrait) || 
-    (orientation === 'landscape' && isLandscape);
+// Adaptive Grid
+export const AdaptiveGrid: React.FC<{ children: React.ReactNode; spacing?: number; itemSpacing?: number; breakpoints?: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number } }> = ({ children, spacing = 2, itemSpacing = 2, breakpoints = { xs: 12, sm: 6, md: 4, lg: 3 } }) => (
+  <div className={`grid gap-${spacing} grid-cols-${breakpoints.xs}`}>
+    {children}
+  </div>
+);
 
-  return (
-    <Box
-      sx={{
-        display: shouldShow ? 'block' : 'none',
-        '& .mobile-only': { display: isMobile ? 'block' : 'none' },
-        '& .tablet-only': { display: isTablet ? 'block' : 'none' },
-        '& .desktop-only': { display: isDesktop ? 'block' : 'none' },
-        '& .portrait-only': { display: isPortrait ? 'block' : 'none' },
-        '& .landscape-only': { display: isLandscape ? 'block' : 'none' },
-      }}
-    >
-      {children}
-    </Box>
-  );
+// Responsive Card
+export const ResponsiveCard: React.FC<{ title: string; subtitle?: string; content: React.ReactNode; actions?: React.ReactNode; elevation?: number; image?: string; imageHeight?: number | string; variant?: 'outlined' | 'elevation' }> = ({ title, subtitle, content, actions, elevation = 2, image, imageHeight = 200, variant = 'elevation' }) => (
+  <div className={`card ${variant === 'outlined' ? 'card-bordered' : ''} shadow-${elevation}`}>
+    {image && (
+      <figure>
+        <img src={image} alt={title} style={{ height: imageHeight }} />
+      </figure>
+    )}
+    <div className="card-body">
+      <h2 className="card-title">{title}</h2>
+      {subtitle && <h3 className="text-sm opacity-70">{subtitle}</h3>}
+      <div>{content}</div>
+      {actions && <div className="card-actions justify-end">{actions}</div>}
+    </div>
+  </div>
+);
+
+// Responsive Typography
+export const ResponsiveTypography: React.FC<{ children: React.ReactNode; variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2'; mobileVariant?: string; component?: React.ElementType; color?: string; align?: 'left' | 'center' | 'right' | 'justify'; gutterBottom?: boolean; noWrap?: boolean }> = ({ children, variant = 'body1', mobileVariant, component: Component = 'p', color = 'text-base-content', align = 'left', gutterBottom = false, noWrap = false }) => {
+  const className = `${variant} ${mobileVariant ? `sm:${mobileVariant}` : ''} ${color} text-${align} ${gutterBottom ? 'mb-4' : ''} ${noWrap ? 'whitespace-nowrap' : ''}`;
+  return <Component className={className}>{children}</Component>;
 };
 
-export interface AdaptiveGridProps {
-  children: React.ReactNode;
-  spacing?: number;
-  itemSpacing?: number;
-  breakpoints?: {
-    xs?: number;
-    sm?: number;
-    md?: number;
-    lg?: number;
-    xl?: number;
-  };
-}
+// Responsive Button Group
+export const ResponsiveButtonGroup: React.FC<{ children: React.ReactNode; orientation?: 'horizontal' | 'vertical'; spacing?: number; fullWidth?: boolean }> = ({ children, orientation = 'horizontal', spacing = 1, fullWidth = false }) => (
+  <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} space-${spacing} ${fullWidth ? 'w-full' : ''}`}>{children}</div>
+);
 
-export const AdaptiveGrid: React.FC<AdaptiveGridProps> = ({
-  children,
-  spacing = 2,
-  itemSpacing = 2,
-  breakpoints = { xs: 12, sm: 6, md: 4, lg: 3 },
-}) => {
+// Responsive Table
+export const ResponsiveTable: React.FC<{ data: any[]; columns: { key: string; header: string; render?: (value: any, item: any) => React.ReactNode; sortable?: boolean; filterable?: boolean }[]; onRowClick?: (item: any) => void; loading?: boolean; emptyMessage?: string }> = ({ data, columns, onRowClick, loading = false, emptyMessage = 'No data available' }) => {
+  if (loading) {return <div className="flex justify-center py-4"><span className="loading loading-spinner" /></div>;}
+  if (!data.length) {return <div className="text-center py-4">{emptyMessage}</div>;}
   return (
-    <Grid container spacing={spacing}>
-      {React.Children.map(children, (child, index) => (
-        <Grid 
-          key={index} 
-          size={breakpoints}
-          sx={{ mb: itemSpacing }}
-        >
-          {child}
-        </Grid>
-      ))}
-    </Grid>
-  );
-};
-
-export interface ResponsiveCardProps {
-  title: string;
-  subtitle?: string;
-  content: React.ReactNode;
-  actions?: React.ReactNode;
-  elevation?: number;
-  image?: string;
-  imageHeight?: number | string;
-  variant?: 'outlined' | 'elevation';
-}
-
-export const ResponsiveCard: React.FC<ResponsiveCardProps> = ({
-  title,
-  subtitle,
-  content,
-  actions,
-  elevation = 2,
-  image,
-  imageHeight = 200,
-  variant = 'elevation',
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  return (
-    <Card
-      elevation={variant === 'elevation' ? elevation : 0}
-      variant={variant}
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: isMobile ? 2 : 3,
-      }}
-    >
-      {image && (
-        <Box
-          component="img"
-          src={image}
-          alt={title}
-          sx={{
-            height: imageHeight,
-            width: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      )}
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          component="h2"
-          gutterBottom
-        >
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            gutterBottom
-          >
-            {subtitle}
-          </Typography>
-        )}
-        <Box sx={{ mb: 2 }}>
-          {content}
-        </Box>
-      </CardContent>
-      {actions && (
-        <Box sx={{ p: 2, pt: 0 }}>
-          {actions}
-        </Box>
-      )}
-    </Card>
-  );
-};
-
-export interface ResponsiveTypographyProps {
-  children: React.ReactNode;
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2';
-  mobileVariant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2';
-  component?: React.ElementType;
-  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' | 'textPrimary' | 'textSecondary';
-  align?: 'left' | 'center' | 'right' | 'justify';
-  gutterBottom?: boolean;
-  noWrap?: boolean;
-}
-
-export const ResponsiveTypography: React.FC<ResponsiveTypographyProps> = ({
-  children,
-  variant = 'body1',
-  mobileVariant,
-  component,
-  color = 'textPrimary',
-  align = 'left',
-  gutterBottom = false,
-  noWrap = false,
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  return (
-    <Box
-      component="span"
-      sx={{
-        '& .mobile-text': { fontSize: '0.875rem' },
-        '& .tablet-text': { fontSize: '1rem' },
-        '& .desktop-text': { fontSize: '1.125rem' },
-      }}
-    >
-      <Box
-        component={component || 'span'}
-        sx={{
-          fontSize: isMobile && mobileVariant ? 
-            theme.typography[mobileVariant].fontSize : 
-            theme.typography[variant].fontSize,
-          fontWeight: theme.typography[variant].fontWeight,
-          lineHeight: theme.typography[variant].lineHeight,
-          color: color.startsWith('text') ? 
-            theme.palette.text[color.replace('text', '').toLowerCase() as 'primary' | 'secondary'] :
-            theme.palette[color as 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'].main,
-          textAlign: align,
-          mb: gutterBottom ? 2 : 0,
-          overflow: noWrap ? 'hidden' : 'visible',
-          textOverflow: noWrap ? 'ellipsis' : 'clip',
-          whiteSpace: noWrap ? 'nowrap' : 'normal',
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-};
-
-export interface ResponsiveButtonGroupProps {
-  children: React.ReactNode;
-  orientation?: 'horizontal' | 'vertical';
-  spacing?: number;
-  fullWidth?: boolean;
-}
-
-export const ResponsiveButtonGroup: React.FC<ResponsiveButtonGroupProps> = ({
-  children,
-  orientation = 'horizontal',
-  spacing = 1,
-  fullWidth = false,
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : orientation,
-        gap: spacing,
-        width: fullWidth ? '100%' : 'auto',
-        '& > *': {
-          flex: fullWidth ? 1 : 'none',
-        },
-      }}
-    >
-      {children}
-    </Box>
-  );
-};
-
-export interface ResponsiveTableProps<T> {
-  data: T[];
-  columns: {
-    key: keyof T;
-    header: string;
-    render?: (value: T[keyof T], item: T) => React.ReactNode;
-    sortable?: boolean;
-    filterable?: boolean;
-  }[];
-  onRowClick?: (item: T) => void;
-  loading?: boolean;
-  emptyMessage?: string;
-}
-
-export const ResponsiveTable = <T extends Record<string, unknown>>({
-  data,
-  columns,
-  onRowClick,
-  loading = false,
-  emptyMessage = 'No data available',
-}: ResponsiveTableProps<T>) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  if (loading) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography>Loading...</Typography>
-      </Box>
-    );
-  }
-  
-  if (data.length === 0) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">{emptyMessage}</Typography>
-      </Box>
-    );
-  }
-  
-  if (isMobile) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {data.map((item, index) => (
-          <Card
-            key={index}
-            onClick={() => onRowClick?.(item)}
-            sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
-          >
-            <CardContent>
-              {columns.map((column) => (
-                <Box key={String(column.key)} sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {column.header}:
-                  </Typography>
-                  <Typography variant="body2">
-                    {column.render 
-                      ? column.render(item[column.key], item)
-                      : String(item[column.key])
-                    }
-                  </Typography>
-                </Box>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
-    );
-  }
-  
-  return (
-    <Box sx={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div className="overflow-x-auto">
+      <table className="table w-full">
         <thead>
           <tr>
-            {columns.map((column) => (
-              <th
-                key={String(column.key)}
-                style={{
-                  textAlign: 'left',
-                  padding: theme.spacing(2),
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                  backgroundColor: theme.palette.background.paper,
-                }}
-              >
-                <Typography variant="subtitle2">
-                  {column.header}
-                </Typography>
-              </th>
+            {columns.map((col) => (
+              <th key={col.key}>{col.header}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr
-              key={index}
-              onClick={() => onRowClick?.(item)}
-              style={{
-                cursor: onRowClick ? 'pointer' : 'default',
-                '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
-                },
-              }}
-            >
-              {columns.map((column) => (
-                <td
-                  key={String(column.key)}
-                  style={{
-                    padding: theme.spacing(2),
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                  }}
-                >
-                  <Typography variant="body2">
-                    {column.render 
-                      ? column.render(item[column.key], item)
-                      : String(item[column.key])
-                    }
-                  </Typography>
-                </td>
+          {data.map((item, idx) => (
+            <tr key={idx} className={onRowClick ? 'cursor-pointer' : ''} onClick={() => onRowClick?.(item)}>
+              {columns.map((col) => (
+                <td key={col.key}>{col.render ? col.render(item[col.key], item) : item[col.key]}</td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-    </Box>
+    </div>
   );
 };
 
-export interface ResponsiveNavigationProps {
-  items: {
-    label: string;
-    icon?: React.ReactNode;
-    href?: string;
-    onClick?: () => void;
-    active?: boolean;
-    disabled?: boolean;
-  }[];
-  orientation?: 'horizontal' | 'vertical';
-  variant?: 'tabs' | 'pills' | 'underline';
-}
-
-export const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
-  items,
-  orientation = 'horizontal',
-  variant = 'tabs',
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : orientation,
-        gap: 1,
-        '& > *': {
-          minWidth: isMobile ? '100%' : 'auto',
-        },
-      }}
-    >
-      {items.map((item, index) => (
-        <Box
-          key={index}
-          component="button"
-          onClick={item.onClick}
-          disabled={item.disabled}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            px: 2,
-            py: 1,
-            border: 'none',
-            backgroundColor: item.active ? theme.palette.primary.main : 'transparent',
-            color: item.active ? theme.palette.primary.contrastText : theme.palette.text.primary,
-            borderRadius: variant === 'pills' ? 4 : 0,
-            borderBottom: variant === 'underline' && item.active ? 
-              `2px solid ${theme.palette.primary.main}` : 'none',
-            cursor: item.disabled ? 'not-allowed' : 'pointer',
-            opacity: item.disabled ? 0.5 : 1,
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: item.active ? 
-                theme.palette.primary.dark : 
-                theme.palette.action.hover,
-            },
-          }}
-        >
-          {item.icon}
-          <span>{item.label}</span>
-        </Box>
-      ))}
-    </Box>
-  );
-};
+// Responsive Navigation
+export const ResponsiveNavigation: React.FC<{ items: { label: string; icon?: React.ReactNode; href?: string; onClick?: () => void; active?: boolean; disabled?: boolean }[]; orientation?: 'horizontal' | 'vertical'; variant?: 'tabs' | 'pills' | 'underline' }> = ({ items, orientation = 'horizontal', variant = 'tabs' }) => (
+  <ul className={`menu ${orientation === 'vertical' ? 'menu-vertical' : 'menu-horizontal'} ${variant}`}>
+    {items.map((item, idx) => (
+      <li key={idx} className={item.disabled ? 'disabled' : ''}>
+        <a href={item.href} onClick={item.onClick} className={item.active ? 'active' : ''}>
+          {item.icon && <span className="mr-2">{item.icon}</span>}{item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+);
 
 export default {
   ResponsiveContainer,

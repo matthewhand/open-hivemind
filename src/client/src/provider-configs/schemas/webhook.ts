@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const webhookProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -9,7 +9,7 @@ export const webhookProviderSchema: ProviderConfigSchema = {
   color: '#6B7280',
   defaultConfig: {
     method: 'POST',
-    contentType: 'application/json'
+    contentType: 'application/json',
   },
   fields: [
     {
@@ -19,7 +19,7 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'URL that will receive webhook messages',
       placeholder: 'https://your-domain.com/api/webhook',
-      group: 'Configuration'
+      group: 'Configuration',
     },
     {
       name: 'secret',
@@ -28,7 +28,7 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Secret for validating webhook signatures',
       placeholder: 'your-webhook-secret',
-      group: 'Security'
+      group: 'Security',
     },
     {
       name: 'method',
@@ -39,10 +39,10 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       options: [
         { label: 'POST', value: 'POST' },
         { label: 'PUT', value: 'PUT' },
-        { label: 'PATCH', value: 'PATCH' }
+        { label: 'PATCH', value: 'PATCH' },
       ],
       defaultValue: 'POST',
-      group: 'Configuration'
+      group: 'Configuration',
     },
     {
       name: 'contentType',
@@ -53,10 +53,10 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       options: [
         { label: 'JSON', value: 'application/json' },
         { label: 'Form Data', value: 'application/x-www-form-urlencoded' },
-        { label: 'Plain Text', value: 'text/plain' }
+        { label: 'Plain Text', value: 'text/plain' },
       ],
       defaultValue: 'application/json',
-      group: 'Configuration'
+      group: 'Configuration',
     },
     {
       name: 'allowedIPs',
@@ -65,7 +65,7 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of IP addresses that can send webhooks (leave empty for all)',
       placeholder: '192.168.1.1, 10.0.0.1',
-      group: 'Security'
+      group: 'Security',
     },
     {
       name: 'autoResponse',
@@ -74,7 +74,7 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Automatically send 200 OK response to webhooks',
       defaultValue: true,
-      group: 'Behavior'
-    }
-  ]
+      group: 'Behavior',
+    },
+  ],
 };

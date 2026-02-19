@@ -1,33 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
-  Box, 
-  Chip, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem,
-  TextField,
+import {
+  Card,
+  Chip,
+  Select,
   Button,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Switch,
-  FormControlLabel,
+  Alert,
   Tooltip,
-  Alert
-} from '@mui/material';
-import { Agent } from '../../../services/agentService';
+} from '../../DaisyUI';
+import { Input } from '../../DaisyUI';
+import type { Agent } from '../../../services/agentService';
 import { useProviders, type ProviderInfo } from '../../../hooks/useProviders';
 import { usePersonas } from '../../../hooks/usePersonas';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import InfoIcon from '@mui/icons-material/Info';
+import { CheckCircle, X, Trash2, Plus, Info } from 'lucide-react';
 
 interface AgentCardProps {
   agent: Agent;
@@ -125,214 +110,251 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
 
   if (!configurable) {
     return (
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">{agent.name}</Typography>
-            <Chip label="online" color="success" size="small" />
-          </Box>
-          <Box mt={2}>
-            <Typography variant="body2">Provider: {agent.provider}</Typography>
-            {agent.persona && <Typography variant="body2">Persona: {agent.persona}</Typography>}
-          </Box>
-        </CardContent>
+      <Card className="w-full">
+        <div className="card-body">
+          <div className="flex justify-between items-center">
+            <h3 className="card-title text-lg">{agent.name}</h3>
+            <Chip variant="success" size="sm">online</Chip>
+          </div>
+          <div className="mt-2">
+            <p className="text-sm">Provider: {agent.provider}</p>
+            {agent.persona && <p className="text-sm">Persona: {agent.persona}</p>}
+          </div>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ 
-      textDecoration: isConfigured ? 'none' : 'line-through',
-      border: hasEnvOverrides ? '2px solid #1976d2' : 'none'
-    }}>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
+    <Card className={`w-full ${!isConfigured ? 'line-through' : ''} ${hasEnvOverrides ? 'border-2 border-info' : ''}`}>
+      <div className="card-body">
+        <div className="flex justify-between items-center">
+          <h3 className="card-title text-lg">
             {agent.name}
             {hasEnvOverrides && (
-              <Tooltip title="This agent has environment variable overrides">
-                <InfoIcon sx={{ fontSize: 16, ml: 1, color: '#1976d2' }} />
+              <Tooltip content="This agent has environment variable overrides">
+                <Info className="w-4 h-4 ml-1 text-info" />
               </Tooltip>
             )}
-          </Typography>
-          <Box>
-            {isConfigured ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
-            {connected ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
-          </Box>
-        </Box>
+          </h3>
+          <div className="flex gap-2">
+            {isConfigured ? <CheckCircle className="w-5 h-5 text-success" /> : <X className="w-5 h-5 text-error" />}
+            {connected ? <CheckCircle className="w-5 h-5 text-success" /> : <X className="w-5 h-5 text-error" />}
+          </div>
+        </div>
         
         {hasEnvOverrides && (
-          <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
-            <Typography variant="body2">
-              This agent has environment variable overrides. Some fields are read-only.
-            </Typography>
-          </Alert>
+          <div className="mt-2 mb-4">
+            <Alert status="info" message="This agent has environment variable overrides. Some fields are read-only." />
+          </div>
         )}
         
-        <Box mt={2}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>LLM Provider</InputLabel>
-            <Select 
-              value={llmProvider} 
-              label="LLM Provider" 
-              onChange={handleLlmChange} 
+        <div className="mt-4 space-y-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">LLM Provider</span>
+            </label>
+            <Select
+              value={llmProvider}
+              onChange={handleLlmChange}
               disabled={providersLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.isOverridden)}
+              options={llmOptions.map((provider) => ({
+                value: provider.key,
+                label: provider.label,
+                disabled: false,
+              }))}
             >
               {llmOptions.map((provider) => (
-                <MenuItem key={provider.key} value={provider.key}>
+                <option key={provider.key} value={provider.key}>
                   {provider.label}
-                  {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.isOverridden && (
-                    <Chip 
-                      label={`ENV: ${agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.redactedValue}`} 
-                      size="small" 
-                      sx={{ ml: 1, fontSize: '0.7rem' }} 
-                    />
-                  )}
-                </MenuItem>
+                </option>
               ))}
             </Select>
-          </FormControl>
+            {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.isOverridden && (
+              <div className="mt-1">
+                <Chip variant="info" size="sm">
+                  ENV: {agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_LLM_PROVIDER']?.redactedValue}
+                </Chip>
+              </div>
+            )}
+          </div>
           
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Messenger Provider</InputLabel>
-            <Select 
-              value={messengerProvider} 
-              label="Messenger Provider" 
-              onChange={handleMessengerChange} 
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Messenger Provider</span>
+            </label>
+            <Select
+              value={messengerProvider}
+              onChange={handleMessengerChange}
               disabled={providersLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.isOverridden)}
+              options={messengerOptions.map((provider) => ({
+                value: provider.key,
+                label: provider.label,
+                disabled: false,
+              }))}
             >
               {messengerOptions.map((provider) => (
-                <MenuItem key={provider.key} value={provider.key}>
+                <option key={provider.key} value={provider.key}>
                   {provider.label}
-                  {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.isOverridden && (
-                    <Chip 
-                      label={`ENV: ${agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.redactedValue}`} 
-                      size="small" 
-                      sx={{ ml: 1, fontSize: '0.7rem' }} 
-                    />
-                  )}
-                </MenuItem>
+                </option>
               ))}
             </Select>
-          </FormControl>
+            {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.isOverridden && (
+              <div className="mt-1">
+                <Chip variant="info" size="sm">
+                  ENV: {agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_MESSAGE_PROVIDER']?.redactedValue}
+                </Chip>
+              </div>
+            )}
+          </div>
           
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Persona</InputLabel>
-            <Select 
-              value={persona} 
-              label="Persona" 
-              onChange={handlePersonaChange} 
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Persona</span>
+            </label>
+            <Select
+              value={persona}
+              onChange={handlePersonaChange}
               disabled={personasLoading || (agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.isOverridden)}
+              options={personas.map((p) => ({
+                value: p.key,
+                label: p.name,
+                disabled: false,
+              }))}
             >
               {personas.map((p) => (
-                <MenuItem key={p.key} value={p.key}>
+                <option key={p.key} value={p.key}>
                   {p.name}
-                  {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.isOverridden && (
-                    <Chip 
-                      label={`ENV: ${agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.redactedValue}`} 
-                      size="small" 
-                      sx={{ ml: 1, fontSize: '0.7rem' }} 
-                    />
-                  )}
-                </MenuItem>
+                </option>
               ))}
             </Select>
-          </FormControl>
+            {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.isOverridden && (
+              <div className="mt-1">
+                <Chip variant="info" size="sm">
+                  ENV: {agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_PERSONA']?.redactedValue}
+                </Chip>
+              </div>
+            )}
+          </div>
           
-          <TextField
-            fullWidth
-            label="System Instruction"
-            multiline
-            rows={3}
-            value={systemInstruction}
-            onChange={handleSystemInstructionChange}
-            sx={{ mb: 2 }}
-            disabled={agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden}
-            helperText={
-              agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden 
-                ? `Overridden by ENV: ${agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.redactedValue}` 
-                : ""
-            }
-          />
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">System Instruction</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered h-24"
+              value={systemInstruction}
+              onChange={handleSystemInstructionChange}
+              disabled={agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden}
+            />
+            {agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden && (
+              <label className="label">
+                <span className="label-text-alt">
+                  Overridden by ENV: {agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.redactedValue}
+                </span>
+              </label>
+            )}
+          </div>
           
           {/* MCP Servers Section */}
-          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>MCP Servers</Typography>
-          <List>
-            {mcpServers.map((server, index) => (
-              <ListItem key={index} secondaryAction={
-                <IconButton edge="end" onClick={() => handleRemoveMcpServer(index)}>
-                  <DeleteIcon />
-                </IconButton>
-              }>
-                <ListItemText primary={server.name} secondary={server.serverUrl} />
-              </ListItem>
-            ))}
-          </List>
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold mb-2">MCP Servers</h4>
+            <ul className="space-y-2">
+              {mcpServers.map((server, index) => (
+                <li key={index} className="flex justify-between items-center p-2 bg-base-200 rounded">
+                  <div>
+                    <div className="font-medium">{server.name}</div>
+                    <div className="text-sm text-base-content/70">{server.serverUrl}</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveMcpServer(index)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
           
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-            <TextField
-              label="Server Name"
+          <div className="flex gap-2">
+            <Input
+              placeholder="Server Name"
               value={newMcpServer.name}
               onChange={(e) => setNewMcpServer({...newMcpServer, name: e.target.value})}
-              size="small"
+              size="sm"
+              className="flex-1"
             />
-            <TextField
-              label="Server URL"
+            <Input
+              placeholder="Server URL"
               value={newMcpServer.serverUrl}
               onChange={(e) => setNewMcpServer({...newMcpServer, serverUrl: e.target.value})}
-              size="small"
-              fullWidth
+              size="sm"
+              className="flex-1"
             />
-            <Button 
-              variant="outlined" 
-              startIcon={<AddIcon />} 
+            <Button
+              variant="secondary" className="btn-outline"
+              startIcon={<Plus className="w-4 h-4" />}
               onClick={handleAddMcpServer}
               disabled={!newMcpServer.name || !newMcpServer.serverUrl}
+              size="sm"
             >
               Add
             </Button>
-          </Box>
+          </div>
           
           {/* MCP Guard Section */}
-          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>MCP Tool Usage Guard</Typography>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={mcpGuard.enabled}
-                onChange={(e) => handleMcpGuardChange('enabled', e.target.checked)}
-              />
-            }
-            label="Enable MCP Tool Usage Guard"
-          />
-          
-          {mcpGuard.enabled && (
-            <Box sx={{ mt: 2 }}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Guard Type</InputLabel>
-                <Select 
-                  value={mcpGuard.type} 
-                  label="Guard Type" 
-                  onChange={(e) => handleMcpGuardChange('type', e.target.value)}
-                >
-                  <MenuItem value="owner">Forum Owner Only</MenuItem>
-                  <MenuItem value="custom">Custom User List</MenuItem>
-                </Select>
-              </FormControl>
-              
-              {mcpGuard.type === 'custom' && (
-                <TextField
-                  fullWidth
-                  label="Allowed User IDs (comma-separated)"
-                  multiline
-                  rows={2}
-                  value={mcpGuard.allowedUserIds?.join(', ') || ''}
-                  onChange={(e) => handleMcpGuardChange('allowedUserIds', e.target.value.split(',').map(id => id.trim()))}
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold mb-2">MCP Tool Usage Guard</h4>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Enable MCP Tool Usage Guard</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={mcpGuard.enabled}
+                  onChange={(e) => handleMcpGuardChange('enabled', e.target.checked)}
                 />
-              )}
-            </Box>
-          )}
-        </Box>
-      </CardContent>
+              </label>
+            </div>
+            
+            {mcpGuard.enabled && (
+              <div className="mt-4">
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text">Guard Type</span>
+                  </label>
+                  <Select
+                    value={mcpGuard.type}
+                    onChange={(e) => handleMcpGuardChange('type', e.target.value)}
+                    options={[
+                      { value: 'owner', label: 'Forum Owner Only', disabled: false },
+                      { value: 'custom', label: 'Custom User List', disabled: false },
+                    ]}
+                  >
+                    <option value="owner">Forum Owner Only</option>
+                    <option value="custom">Custom User List</option>
+                  </Select>
+                </div>
+                
+                {mcpGuard.type === 'custom' && (
+                  <div className="form-control mt-4">
+                    <label className="label">
+                      <span className="label-text">Allowed User IDs (comma-separated)</span>
+                    </label>
+                    <textarea
+                      className="textarea textarea-bordered h-16"
+                      value={mcpGuard.allowedUserIds?.join(', ') || ''}
+                      onChange={(e) => handleMcpGuardChange('allowedUserIds', e.target.value.split(',').map(id => id.trim()))}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 };

@@ -14,8 +14,8 @@ This project provides two Docker image variants optimized for different use case
 - **Best for**: Production deployments requiring full functionality
 
 **Includes:**
-- Python 3 + uvx package manager
-- Node.js + npx + MCP CLI tools
+- Python 3 + uv package manager (provides `uvx`)
+- Node.js + npx (+ MCP CLI tools when published)
 - FFmpeg for Discord voice processing
 - All integration features enabled
 
@@ -36,8 +36,8 @@ docker pull matthewhand/open-hivemind:latest
 - Basic integrations (no voice processing)
 
 **Excludes:**
-- Python tools and uvx
-- MCP CLI tools
+- Python tools and uv
+- MCP CLI tools (optional add-on)
 - FFmpeg (no Discord voice)
 - Additional runtime dependencies
 
@@ -57,10 +57,12 @@ docker pull matthewhand/open-hivemind:slim
 | Telegram Integration | ✅ | ✅ |
 | Python MCP Servers | ✅ | ❌ |
 | Node.js MCP Servers | ✅ | ❌ |
-| Custom MCP CLI Tools | ✅ | ❌ |
+| Custom MCP CLI Tools | ✅* | ❌ |
 | Advanced Audio Processing | ✅ | ❌ |
 | Image Size | ~500MB | ~150MB |
 | Memory Usage | ~256MB | ~128MB |
+
+`*` The image attempts to install the MCP CLI when the package is published to npm and logs a warning if it is unavailable.
 
 ## Build Arguments
 
@@ -149,6 +151,28 @@ const hasNodeTools = process.env.INCLUDE_NODE_TOOLS === 'true';
 - Use the `slim` image for edge deployments
 - Suitable for IoT devices or low-memory servers
 - Perfect for text-only bot deployments
+
+#### Build-Time Memory Controls
+
+When deploying to platforms with extremely small build containers (e.g., 512 MB Render plans), leverage the new environment variables exposed by the build scripts:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BUILD_MAX_OLD_SPACE_SIZE` | `2048` | Caps the Node.js heap (in MB) for both backend (`tsc`) and frontend builds. |
+| `BUILD_FRONTEND_MAX_OLD_SPACE_SIZE` | Inherits `BUILD_MAX_OLD_SPACE_SIZE` | Override the heap limit only for the Vite frontend build. |
+| `BUILD_POST_BUILD_SLEEP_SECONDS` | `3600` | Keeps the container alive after the backend build; set to `0` to disable the sleep entirely. |
+| `SKIP_FRONTEND_BUILD` | `false` | Skip the Vite build entirely (also implied by `LOW_MEMORY_MODE=true`). |
+| `FORCE_FRONTEND_BUILD` | `false` | Run the frontend build even when `LOW_MEMORY_MODE=true`. |
+| `RUNTIME_BUILD_ON_START` | `false` | When `true`, `npm start` will run `npm run build` before launching the server. Defaults to `false` to avoid re-building on constrained hosts. |
+| `RUNTIME_MAX_OLD_SPACE_SIZE` | `256` | Heap cap (MB) for the runtime process when using `npm start`, `npm run start:test`, or headless variants. |
+
+Example Render build command:
+
+```bash
+BUILD_MAX_OLD_SPACE_SIZE=384 BUILD_POST_BUILD_SLEEP_SECONDS=0 npm run build
+```
+
+These limits dramatically reduce build-time memory spikes and avoid repeated restarts on resource-constrained hosts.
 
 ## Migration
 

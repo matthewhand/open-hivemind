@@ -64,7 +64,7 @@ export const useSitemap = (): UseSitemapReturn => {
   }, [fetchSitemap]);
 
   const generateXml = useCallback((accessFilter?: string): string => {
-    if (!sitemapData) return '';
+    if (!sitemapData) {return '';}
     
     const filteredUrls = accessFilter 
       ? sitemapData.urls.filter(url => url.access === accessFilter)
@@ -87,7 +87,7 @@ export const useSitemap = (): UseSitemapReturn => {
 
   const exportXml = useCallback((accessFilter?: string) => {
     const xml = generateXml(accessFilter);
-    if (!xml) return;
+    if (!xml) {return;}
 
     const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
@@ -101,12 +101,12 @@ export const useSitemap = (): UseSitemapReturn => {
   }, [generateXml]);
 
   const findRoute = useCallback((path: string): SitemapUrl | undefined => {
-    if (!sitemapData) return undefined;
+    if (!sitemapData) {return undefined;}
     return sitemapData.urls.find(url => url.url === path);
   }, [sitemapData]);
 
   const getBreadcrumbs = useCallback((path: string): SitemapUrl[] => {
-    if (!sitemapData) return [];
+    if (!sitemapData) {return [];}
     
     const breadcrumbs: SitemapUrl[] = [];
     const segments = path.split('/').filter(Boolean);
@@ -142,7 +142,7 @@ export const useSitemap = (): UseSitemapReturn => {
     generateXml,
     exportXml,
     findRoute,
-    getBreadcrumbs
+    getBreadcrumbs,
   };
 };
 

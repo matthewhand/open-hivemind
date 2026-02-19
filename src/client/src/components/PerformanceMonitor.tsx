@@ -1,16 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
+import { Alert, Card, Loading, Button } from './DaisyUI';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';
@@ -26,8 +17,8 @@ const defaultMetrics = {
 };
 
 const toErrorMessage = (error: unknown): string => {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
+  if (!error) {return 'Unknown error';}
+  if (typeof error === 'string') {return error;}
 
   const baseQueryError = error as FetchBaseQueryError;
   if (typeof baseQueryError?.status !== 'undefined') {
@@ -75,84 +66,82 @@ const PerformanceMonitor: React.FC = () => {
   const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">
             Performance Monitor
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h1>
+          <p className="text-base-content/70">
             Real-time metrics for Open-Hivemind services
-          </Typography>
-        </Box>
+          </p>
+        </div>
         <Button
-          variant="outlined"
-          startIcon={isFetching ? <CircularProgress size={18} /> : <RefreshIcon />}
+          variant="secondary" className="btn-outline"
           onClick={() => refetch()}
           disabled={isFetching}
+          className="flex items-center gap-2"
         >
+          <ArrowPathIcon className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
-      </Box>
+      </div>
 
       {errorMessage && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert variant="error" className="mb-6">
           {errorMessage}
         </Alert>
       )}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Card elevation={1}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Resource Utilisation
-              </Typography>
-              <Stack spacing={1.5} sx={{ mt: 1 }}>
-                <Typography variant="body1">
-                  CPU Usage: {cpuUsage.toFixed(1)}%
-                </Typography>
-                <Typography variant="body1">
-                  Memory Usage: {memoryUsage.toFixed(1)}%
-                </Typography>
-                <Typography variant="body1">
-                  Active Connections: {activeConnections}
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card elevation={1}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Latency & Reliability
-              </Typography>
-              <Stack spacing={1.5} sx={{ mt: 1 }}>
-                <Typography variant="body1">
-                  Response Time: {responseTime.toFixed(1)} ms
-                </Typography>
-                <Typography variant="body1">
-                  Error Rate: {errorRate.toFixed(2)}%
-                </Typography>
-                <Typography variant="body1">
-                  Uptime: {uptimeHours}h {uptimeMinutes}m
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <Card.Body>
+            <Card.Title>
+              Resource Utilisation
+            </Card.Title>
+            <div className="space-y-3 mt-2">
+              <p className="text-base">
+                CPU Usage: {cpuUsage.toFixed(1)}%
+              </p>
+              <p className="text-base">
+                Memory Usage: {memoryUsage.toFixed(1)}%
+              </p>
+              <p className="text-base">
+                Active Connections: {activeConnections}
+              </p>
+            </div>
+          </Card.Body>
+        </Card>
+
+        <Card>
+          <Card.Body>
+            <Card.Title>
+              Latency & Reliability
+            </Card.Title>
+            <div className="space-y-3 mt-2">
+              <p className="text-base">
+                Response Time: {responseTime.toFixed(1)} ms
+              </p>
+              <p className="text-base">
+                Error Rate: {errorRate.toFixed(2)}%
+              </p>
+              <p className="text-base">
+                Uptime: {uptimeHours}h {uptimeMinutes}m
+              </p>
+            </div>
+          </Card.Body>
+        </Card>
+      </div>
 
       {isFetching && (
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 3 }}>
-          <CircularProgress size={20} />
-          <Typography variant="body2" color="text.secondary">
+        <div className="flex items-center gap-3 mt-6">
+          <span className="loading loading-spinner loading-sm"></span>
+          <p className="text-sm text-base-content/70">
             Updating metrics...
-          </Typography>
-        </Stack>
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

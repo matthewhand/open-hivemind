@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 // Mock the modules
 jest.mock('@llm/getLlmProvider');
-jest.mock('@integrations/discord/DiscordService');
+jest.mock('@hivemind/adapter-discord');
 jest.mock('@integrations/slack/SlackService');
 jest.mock('@integrations/mattermost/MattermostService');
 
@@ -24,7 +24,7 @@ describe('System Integration Tests', () => {
   const testStartTime = new Date();
 
   // Set a longer timeout for network calls and service initialization
-  jest.setTimeout(60000); 
+  jest.setTimeout(60000);
 
   beforeAll(async () => {
     console.log('🚀 Starting system integration tests...');
@@ -88,7 +88,7 @@ describe('System Integration Tests', () => {
 
   afterAll(async () => {
     console.log('🧹 Cleaning up system test resources...');
-    
+
     // Gracefully shut down services
     if (messengerService && typeof messengerService.shutdown === 'function') {
       try {
@@ -121,7 +121,7 @@ describe('System Integration Tests', () => {
 
     it('should send a basic test message successfully', async () => {
       const channelId = messengerService.getDefaultChannel();
-      
+
       if (!channelId) {
         throw new Error('No default channel configured. Please set the appropriate channel ID environment variable.');
       }
@@ -147,7 +147,7 @@ describe('System Integration Tests', () => {
 
     it('should be able to fetch messages from the default channel', async () => {
       const channelId = messengerService.getDefaultChannel();
-      
+
       if (typeof messengerService.fetchMessages === 'function') {
         const messages = await messengerService.fetchMessages(channelId, 5);
         expect(Array.isArray(messages)).toBe(true);
@@ -161,7 +161,7 @@ describe('System Integration Tests', () => {
   describe('LLM Provider Integration', () => {
     it('should have at least one LLM provider available', () => {
       expect(llmProviders.length).toBeGreaterThan(0);
-      
+
       llmProviders.forEach((provider, index) => {
         expect(provider).toBeTruthy();
         expect(typeof provider.generateChatCompletion).toBe('function');
@@ -172,9 +172,9 @@ describe('System Integration Tests', () => {
     it('should generate a response from the primary LLM provider', async () => {
       const primaryProvider = llmProviders[0];
       const testPrompt = "Write a single word: 'SUCCESS'";
-      
+
       console.log(`🤔 Testing LLM with prompt: "${testPrompt}"`);
-      
+
       const response = await primaryProvider.generateChatCompletion(
         testPrompt,
         [],
@@ -184,17 +184,17 @@ describe('System Integration Tests', () => {
       expect(response).toBeTruthy();
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
-      
+
       // Check that it's not an error response
       const isErrorResponse = response.includes("There was an error communicating with the AI service");
       expect(isErrorResponse).toBe(false);
-      
+
       console.log(`🎯 LLM Response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`);
     });
 
     it('should handle invalid prompts gracefully', async () => {
       const primaryProvider = llmProviders[0];
-      
+
       // Test with empty prompt
       await expect(
         primaryProvider.generateChatCompletion('', [], {})
@@ -207,7 +207,7 @@ describe('System Integration Tests', () => {
         [],
         { channelId: messengerService.getDefaultChannel() }
       );
-      
+
       expect(typeof response).toBe('string');
     });
 
@@ -217,7 +217,7 @@ describe('System Integration Tests', () => {
         { role: 'user', content: 'Hello' },
         { role: 'assistant', content: 'Hi there!' }
       ];
-      
+
       const response = await primaryProvider.generateChatCompletion(
         'What did I just say?',
         conversationHistory,
@@ -247,7 +247,7 @@ describe('System Integration Tests', () => {
       expect(llmResponse).toBeTruthy();
       expect(typeof llmResponse).toBe('string');
       expect(llmResponse.length).toBeGreaterThan(0);
-      
+
       const isErrorResponse = llmResponse.includes("There was an error communicating with the AI service");
       expect(isErrorResponse).toBe(false);
 
@@ -258,7 +258,7 @@ describe('System Integration Tests', () => {
       // Verify message was sent successfully
       expect(messageId).toBeTruthy();
       expect(typeof messageId).toBe('string');
-      
+
       console.log(`🎉 End-to-end test completed successfully!`);
       console.log(`📝 LLM Response: "${llmResponse}"`);
       console.log(`📨 Message ID: ${messageId}`);
@@ -278,7 +278,7 @@ describe('System Integration Tests', () => {
           [],
           { channelId: channelId }
         );
-        
+
         const message = `🔢 Concurrent test ${index + 1}: ${response}`;
         return await messengerService.sendMessageToChannel(channelId, message);
       });
@@ -299,11 +299,11 @@ describe('System Integration Tests', () => {
       // This test simulates resilience - in a real scenario, you might
       // temporarily disable network or use network simulation tools
       const channelId = messengerService.getDefaultChannel();
-      
+
       // Multiple attempts to ensure resilience
       let successCount = 0;
       const attempts = 3;
-      
+
       for (let i = 0; i < attempts; i++) {
         try {
           const message = `🔄 Resilience test attempt ${i + 1}`;
@@ -312,11 +312,11 @@ describe('System Integration Tests', () => {
         } catch (error) {
           console.warn(`⚠️ Attempt ${i + 1} failed:`, (error as Error).message);
         }
-        
+
         // Small delay between attempts
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      
+
       // At least one attempt should succeed
       expect(successCount).toBeGreaterThan(0);
       console.log(`💪 Resilience test: ${successCount}/${attempts} attempts succeeded`);
@@ -325,19 +325,19 @@ describe('System Integration Tests', () => {
     it('should handle service restart scenarios', async () => {
       // Test that the service can be reinitialized
       const originalClientId = messengerService.getClientId();
-      
+
       // In a real scenario, you might restart the service here
       // For now, we'll just verify the service is still functional
       const channelId = messengerService.getDefaultChannel();
       const testMessage = '🔄 Service continuity test';
-      
+
       const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
       expect(messageId).toBeTruthy();
-      
+
       // Verify service identity is maintained
       const currentClientId = messengerService.getClientId();
       expect(currentClientId).toBe(originalClientId);
-      
+
       console.log('🔄 Service continuity verified');
     });
   });
@@ -346,45 +346,45 @@ describe('System Integration Tests', () => {
     it('should handle rapid message sending within rate limits', async () => {
       const channelId = messengerService.getDefaultChannel();
       const messageCount = 5; // Conservative number to avoid rate limiting
-      
+
       console.log(`⚡ Testing rapid message sending (${messageCount} messages)...`);
-      
+
       const startTime = Date.now();
       const promises = [];
-      
+
       for (let i = 0; i < messageCount; i++) {
         const message = `⚡ Load test message ${i + 1}/${messageCount}`;
         promises.push(messengerService.sendMessageToChannel(channelId, message));
-        
+
         // Small delay to respect rate limits
         await new Promise(resolve => setTimeout(resolve, 200));
       }
-      
+
       const results = await Promise.all(promises);
       const duration = Date.now() - startTime;
-      
+
       // Verify all messages were sent
       results.forEach(messageId => {
         expect(messageId).toBeTruthy();
       });
-      
+
       console.log(`⚡ Load test completed: ${messageCount} messages in ${duration}ms`);
       expect(duration).toBeLessThan(30000); // Should complete within 30 seconds
     });
 
     it('should maintain performance with large message content', async () => {
       const channelId = messengerService.getDefaultChannel();
-      
+
       // Create a reasonably large message (but within platform limits)
       const largeContent = '📝 Large message test: ' + 'Lorem ipsum '.repeat(50);
-      
+
       const startTime = Date.now();
       const messageId = await messengerService.sendMessageToChannel(channelId, largeContent);
       const duration = Date.now() - startTime;
-      
+
       expect(messageId).toBeTruthy();
       expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
-      
+
       console.log(`📏 Large message test completed in ${duration}ms`);
     });
   });

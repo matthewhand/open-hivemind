@@ -4,9 +4,9 @@
 export function formatNumber(
   value: number,
   decimals: number = 2,
-  locale: string = 'en-US'
+  locale: string = 'en-US',
 ): string {
-  if (!isFinite(value)) return '0';
+  if (!isFinite(value)) {return '0';}
 
   try {
     // For integers, don't show decimals unless explicitly requested
@@ -28,7 +28,7 @@ export function formatNumber(
 export function formatDate(
   date: Date,
   options: Intl.DateTimeFormatOptions = {},
-  locale: string = 'en-US'
+  locale: string = 'en-US',
 ): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     return 'Invalid Date';
@@ -46,9 +46,9 @@ export function formatDate(
  */
 export function formatFileSize(
   bytes: number,
-  decimals: number = 2
+  decimals: number = 2,
 ): string {
-  if (bytes < 0) return '0 B';
+  if (bytes < 0) {return '0 B';}
 
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let unitIndex = 0;
@@ -71,11 +71,11 @@ export function truncateText(
   text: string | null | undefined,
   maxLength: number,
   suffix: string = '...',
-  preserveWords: boolean = false
+  preserveWords: boolean = false,
 ): string {
-  if (!text) return '';
+  if (!text) {return '';}
 
-  if (text.length <= maxLength) return text;
+  if (text.length <= maxLength) {return text;}
 
   if (preserveWords) {
     const words = text.split(' ');

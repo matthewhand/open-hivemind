@@ -13,7 +13,8 @@ describe('Health Route', () => {
         // Make routing case-sensitive and strict
         app.set('case sensitive routing', true);
         app.set('strict routing', true);
-        app.use('/', healthRouter);
+        // Mount health router at /health to match expected request paths
+        app.use('/health', healthRouter);
     });
 
     describe('GET /health endpoint', () => {
@@ -43,7 +44,7 @@ describe('Health Route', () => {
         it('should handle multiple concurrent requests', async () => {
             const requests = Array(10).fill(null).map(() => request(app).get('/health'));
             const responses = await Promise.all(requests);
-            
+
             responses.forEach(response => {
                 expect(response.status).toBe(200);
                 expect(response.body).toHaveProperty('status');
@@ -58,24 +59,14 @@ describe('Health Route', () => {
     });
 
     describe('Unsupported HTTP methods', () => {
-        it('should return 404 for POST requests', async () => {
-            const response = await request(app).post('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for PUT requests', async () => {
-            const response = await request(app).put('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for DELETE requests', async () => {
-            const response = await request(app).delete('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for PATCH requests', async () => {
-            const response = await request(app).patch('/health');
-            expect(response.status).toBe(404);
+        it.each([
+            { method: 'post', expectedStatus: 404 },
+            { method: 'put', expectedStatus: 404 },
+            { method: 'delete', expectedStatus: 404 },
+            { method: 'patch', expectedStatus: 404 },
+        ])('should return $expectedStatus for $method requests', async ({ method, expectedStatus }) => {
+            const response = await request(app)[method]('/health');
+            expect(response.status).toBe(expectedStatus);
         });
 
         it('should return 405 for OPTIONS requests if not explicitly handled', async () => {
@@ -104,8 +95,8 @@ describe('Health Route', () => {
 
         it('should return 404 for case-sensitive variations', async () => {
             const response = await request(app).get('/Health');
-            // Express is case-insensitive by default, so this returns 200
-            expect(response.status).toBe(200);
+            // With case-sensitive routing enabled, /Health !== /health
+            expect(response.status).toBe(404);
         });
     });
 
@@ -121,7 +112,7 @@ describe('Health Route', () => {
                 .get('/health')
                 .set('Authorization', 'Bearer token')
                 .set('Custom-Header', 'value');
-            
+
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('status');
         });
@@ -130,7 +121,7 @@ describe('Health Route', () => {
             const response = await request(app)
                 .get('/health')
                 .set('Accept', 'application/json');
-            
+
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('status');
         });
@@ -139,7 +130,7 @@ describe('Health Route', () => {
             const response = await request(app)
                 .get('/health')
                 .set('User-Agent', 'HealthCheck/1.0');
-            
+
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('status');
         });
@@ -190,7 +181,7 @@ describe('Health Route', () => {
             const response = await request(app)
                 .get('/health')
                 .set('Large-Header', largeHeaderValue);
-            
+
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('status');
         });
@@ -204,7 +195,8 @@ describe('Health Route', () => {
 
     describe('Integration with express runner helper', () => {
         it('should work with runRoute helper for GET requests', async () => {
-            const { res } = await runRoute(app as any, 'get', '/health');
+            // runRoute helper expects route path relative to router (/) not app mount point
+            const { res } = await runRoute(app as any, 'get', '/');
             expect(res.statusCode).toBe(200);
             expect(res.body).toHaveProperty('status');
         });
@@ -222,14 +214,14 @@ describe('Health Route', () => {
         it('should handle rapid successive requests', async () => {
             const startTime = Date.now();
             const promises = [];
-            
+
             for (let i = 0; i < 50; i++) {
                 promises.push(request(app).get('/health'));
             }
-            
+
             const responses = await Promise.all(promises);
             const duration = Date.now() - startTime;
-            
+
             expect(duration).toBeLessThan(5000); // Should complete 50 requests in under 5 seconds
             responses.forEach(response => {
                 expect(response.status).toBe(200);
@@ -240,19 +232,19 @@ describe('Health Route', () => {
         it('should have minimal memory footprint', async () => {
             // Test that multiple requests don't cause memory leaks
             const initialMemory = process.memoryUsage().heapUsed;
-            
+
             for (let i = 0; i < 100; i++) {
                 await request(app).get('/health');
             }
-            
+
             // Force garbage collection if available
             if (global.gc) {
                 global.gc();
             }
-            
+
             const finalMemory = process.memoryUsage().heapUsed;
             const memoryIncrease = finalMemory - initialMemory;
-            
+
             // Memory increase should be minimal (less than 10MB)
             expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
         });

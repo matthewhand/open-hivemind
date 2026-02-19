@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 
 // Extend Express Request interface to include user
@@ -46,7 +46,7 @@ export const requirePermission = (permission: string) => {
       return res.status(403).json({
         error: 'Insufficient permissions',
         required: permission,
-        userRole: user.role
+        userRole: user.role,
       });
     }
 
@@ -64,7 +64,7 @@ export const requireRole = (role: string) => {
       return res.status(403).json({
         error: 'Insufficient role',
         required: role,
-        userRole: req.user.role
+        userRole: req.user.role,
       });
     }
 

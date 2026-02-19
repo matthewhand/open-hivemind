@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -10,11 +11,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   initialConfig = {},
   onConfigChange,
   onTestConnection,
-  onAvatarLoad
+  onAvatarLoad,
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
-    ...initialConfig
+    ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +64,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       if (field.validation.custom) {
         const customError = field.validation.custom(value);
-        if (customError) return customError;
+        if (customError) {return customError;}
       }
     }
 
@@ -114,7 +115,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       return;
     }
 
-    if (!onTestConnection) return;
+    if (!onTestConnection) {return;}
 
     setIsLoading(true);
     setTestResult(null);
@@ -123,12 +124,12 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       const success = await onTestConnection(config);
       setTestResult({
         success,
-        message: success ? 'Connection successful!' : 'Connection failed'
+        message: success ? 'Connection successful!' : 'Connection failed',
       });
     } catch (error) {
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Connection test failed'
+        message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
       setIsLoading(false);
@@ -136,7 +137,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   };
 
   const handleLoadAvatar = async () => {
-    if (!onAvatarLoad) return;
+    if (!onAvatarLoad) {return;}
 
     setIsLoading(true);
     setAvatarUrl(null);
@@ -147,7 +148,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     } catch (error) {
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to load avatar'
+        message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
       setIsLoading(false);
@@ -158,178 +159,171 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = errors[field.name];
 
-    const baseInputClasses = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2";
-    const errorClasses = error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500";
+    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
+    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
       switch (field.type) {
-        case 'password':
-          return (
+      case 'password':
+        return (
+          <input
+            type="password"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
+
+      case 'number':
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
+            placeholder={field.placeholder}
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
+            className={inputClasses}
+          />
+        );
+
+      case 'url':
+        return (
+          <input
+            type="url"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
+
+      case 'select':
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            className={inputClasses}
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'multiselect':
+        return (
+          <select
+            multiple
+            value={Array.isArray(value) ? value : []}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              handleFieldChange(field.name, selectedOptions);
+            }}
+            className={`${inputClasses} h-24`}
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'boolean':
+        return (
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
-              type="password"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
             />
-          );
+            <span className="text-sm text-base-content/80">Enable</span>
+          </label>
+        );
 
-        case 'number':
+      case 'textarea':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            rows={4}
+            className={inputClasses}
+          />
+        );
+
+      case 'json':
+        return (
+          <textarea
+            value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value);
+                handleFieldChange(field.name, parsed);
+              } catch {
+                handleFieldChange(field.name, e.target.value);
+              }
+            }}
+            placeholder={field.placeholder || '{"key": "value"}'}
+            rows={4}
+            className={`${inputClasses} font-mono text-sm`}
+          />
+        );
+
+      case 'model-autocomplete':
+        if (field.component) {
+          const Component = field.component;
           return (
-            <input
-              type="number"
+            <Component
               value={value}
-              onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
-              placeholder={field.placeholder}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              step={field.validation?.min && field.validation?.min < 1 ? "0.1" : "1"}
-              className={inputClasses}
-            />
-          );
-
-        case 'url':
-          return (
-            <input
-              type="url"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
-            />
-          );
-
-        case 'select':
-          return (
-            <select
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              className={inputClasses}
-            >
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          );
-
-        case 'multiselect':
-          return (
-            <select
-              multiple
-              value={Array.isArray(value) ? value : []}
-              onChange={(e) => {
-                const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                handleFieldChange(field.name, selectedOptions);
-              }}
-              className={`${inputClasses} h-24`}
-            >
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          );
-
-        case 'boolean':
-          return (
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={Boolean(value)}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Enable</span>
-            </label>
-          );
-
-        case 'textarea':
-          return (
-            <textarea
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              rows={4}
-              className={inputClasses}
-            />
-          );
-
-        case 'json':
-          return (
-            <textarea
-              value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  handleFieldChange(field.name, parsed);
-                } catch {
-                  handleFieldChange(field.name, e.target.value);
+              onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
+              apiKey={config.apiKey}
+              baseUrl={config.baseUrl || config.endpoint}
+              onValidationError={(error: string) => {
+                // Show validation warnings instead of errors for API keys
+                if (field.name === 'apiKey') {
+                  console.warn(`API Key validation warning: ${error}`);
+                } else {
+                  setErrors(prev => ({ ...prev, [field.name]: error }));
                 }
               }}
-              placeholder={field.placeholder || '{"key": "value"}'}
-              rows={4}
-              className={`${inputClasses} font-mono text-sm`}
+              onValidationSuccess={() => {
+                setErrors(prev => {
+                  const { [field.name]: removed, ...rest } = prev;
+                  return rest;
+                });
+              }}
+              {...field.componentProps}
             />
           );
+        }
+        break;
 
-        case 'model-autocomplete':
-          if (field.component) {
-            const Component = field.component;
-            return (
-              <Component
-                value={value}
-                onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
-                apiKey={config.apiKey}
-                baseUrl={config.baseUrl || config.endpoint}
-                onValidationError={(error: string) => {
-                  // Show validation warnings instead of errors for API keys
-                  if (field.name === 'apiKey') {
-                    console.warn(`API Key validation warning: ${error}`);
-                  } else {
-                    setErrors(prev => ({ ...prev, [field.name]: error }));
-                  }
-                }}
-                onValidationSuccess={() => {
-                  setErrors(prev => {
-                    const { [field.name]: removed, ...rest } = prev;
-                    return rest;
-                  });
-                }}
-                {...field.componentProps}
-              />
-            );
-          }
-          break;
-
-        default:
-          return (
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
-            />
-          );
+      default:
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
       }
     };
 
     return (
-      <div key={field.name} className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+      <div className="space-y-1">
         {renderInput()}
-        {field.description && (
-          <p className="text-xs text-gray-500">{field.description}</p>
-        )}
         {error && (
-          <p className="text-xs text-red-500">{error}</p>
+          <p className="text-xs text-red-500 mt-1">{error}</p>
         )}
       </div>
     );
@@ -341,19 +335,50 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="flex items-center space-x-3 pb-4 border-b">
         <span className="text-2xl">{schema.icon}</span>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{schema.displayName}</h3>
-          <p className="text-sm text-gray-600">{schema.description}</p>
+          <h3 className="text-lg font-semibold text-base-content">{schema.displayName}</h3>
+          <p className="text-sm text-base-content/70">{schema.description}</p>
         </div>
       </div>
 
       {/* Form Fields by Group */}
       {Object.entries(groupedFields).map(([groupName, fields]) => (
-        <div key={groupName} className="space-y-4">
-          <h4 className="text-md font-medium text-gray-800 border-b pb-2">
-            {groupName}
-          </h4>
-          <div className="grid grid-cols-1 gap-4">
-            {fields.map(renderField)}
+        <div key={groupName} className="card bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-6">
+            <h3 className="card-title text-lg border-b border-base-200 pb-3 mb-4">
+              {groupName}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
+                    <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fields.map(field => (
+                    <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
+                      <td className="align-top py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-base-content/90">
+                            {field.label}
+                            {field.required && <span className="text-error ml-1">*</span>}
+                          </span>
+                          {field.description && (
+                            <span className="text-xs text-base-content/60 leading-tight">
+                              {field.description}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="align-top py-4">
+                        {renderField(field)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ))}
@@ -393,8 +418,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       )}
 
       {avatarUrl && (
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-sm text-gray-700 mb-2">Avatar loaded successfully:</p>
+        <div className="p-3 bg-base-200 border border-base-300 rounded-lg">
+          <p className="text-sm text-base-content/80 mb-2">Avatar loaded successfully:</p>
           <img src={avatarUrl} alt="Provider avatar" className="w-12 h-12 rounded-full" />
         </div>
       )}

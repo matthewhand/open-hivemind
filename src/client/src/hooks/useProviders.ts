@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { getLlmProviders, getMessengerProviders, type ProviderInfo } from '../services/providerService';
 

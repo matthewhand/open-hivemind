@@ -10,7 +10,7 @@ import {
   correlationMiddleware,
   globalErrorHandler,
   setupGlobalErrorHandlers,
-  setupGracefulShutdown
+  setupGracefulShutdown,
 } from '../middleware/errorHandler';
 
 // Route imports
@@ -25,6 +25,7 @@ import dashboardRouter from './routes/dashboard';
 import configRouter from './routes/config';
 import hotReloadRouter from './routes/hotReload';
 import sitemapRouter from './routes/sitemap';
+import personasRouter from './routes/personas';
 
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -72,10 +73,38 @@ export class WebUIServer {
 
     // Security middleware
     this.app.use(securityHeaders);
-    this.app.use(cors({
-      origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
-      credentials: true
-    }));
+    // Production-grade CORS configuration
+    const corsOptions = {
+      origin: (origin: string | undefined, callback: (err: Error | null, origin?: string) => void) => {
+        const allowedOrigins = process.env.CORS_ORIGIN
+          ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+          : [];
+
+        // In production, only allow specific origins
+        if (process.env.NODE_ENV === 'production') {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, origin);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        } else {
+          // In development, allow localhost origins
+          if (!origin || allowedOrigins.includes(origin) ||
+            origin.includes('localhost') || origin.includes('127.0.1')) {
+            callback(null, origin);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        }
+      },
+      credentials: true,
+      optionsSuccessStatus: 200,
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      maxAge: 86400,
+    };
+
+    this.app.use(cors(corsOptions));
 
     // Rate limiting (basic implementation)
     this.app.use('/api', (req, res, next) => {
@@ -86,6 +115,27 @@ export class WebUIServer {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+    // CSRF protection for sensitive routes
+    this.app.use((req, res, next) => {
+      // Skip CSRF for GET, OPTIONS, and health checks
+      if (req.method === 'GET' || req.method === 'OPTIONS' || req.path.startsWith('/health')) {
+        return next();
+      }
+
+      // Check for CSRF token in headers or body
+      const csrfToken = req.headers['x-csrf-token'] || req.body._csrf;
+      
+      // For now, we'll allow requests without CSRF token but log them
+      // In production, you should generate and validate proper CSRF tokens
+      if (!csrfToken) {
+        debug('CSRF token missing for non-GET request to:', req.path);
+        // TODO: Uncomment in production after implementing token generation
+        // return res.status(403).json({ error: 'CSRF token required' });
+      }
+
+      next();
+    });
 
     // Error handler for malformed JSON in health API endpoints
     this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -112,21 +162,21 @@ export class WebUIServer {
 
     // Audit logging for all requests
     this.app.use(auditMiddleware);
-    
+
     // Serve static files for the WebUI
     this.app.use('/admin', express.static(this.frontendDistPath));
     this.app.use('/webui', express.static(this.frontendDistPath));
-    
+
     debug('Middleware setup completed');
   }
 
   private setupRoutes(): void {
-    // Health check (no auth required)
-    this.app.use('/', healthRouter);
-    
+    // Health check (no auth required) - mount at /health for backward compatibility
+    this.app.use('/health', healthRouter);
+
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
-    
+
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
     this.app.use('/api/errors', optionalAuth, errorsRouter);
@@ -139,17 +189,18 @@ export class WebUIServer {
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
     this.app.use('/api/config', authenticateToken, configRouter);
+    this.app.use('/api/personas', authenticateToken, personasRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
-    
+
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
-    
+
     this.app.get('/webui/*', (req, res) => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
-    
+
     // API documentation
     this.app.get('/api', (req, res) => {
       res.json({
@@ -164,21 +215,21 @@ export class WebUIServer {
           webui: '/api/webui',
           dashboard: '/api/dashboard',
           config: '/api/config',
-          hotReload: '/api/hot-reload'
+          hotReload: '/api/hot-reload',
         },
-        documentation: '/api/docs'
+        documentation: '/api/docs',
       });
     });
-    
+
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
       res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
-    
+
     debug('Routes setup completed');
   }
 
@@ -200,14 +251,14 @@ export class WebUIServer {
       try {
         this.server = this.app.listen(this.port, () => {
           debug(`WebUI server started on port ${this.port}`);
-          console.log(`🚀 Hivemind WebUI available at:`);
+          console.log('🚀 Hivemind WebUI available at:');
           console.log(`   Admin Dashboard: http://localhost:${this.port}/admin`);
           console.log(`   WebUI Interface: http://localhost:${this.port}/webui`);
           console.log(`   API Endpoints:   http://localhost:${this.port}/api`);
           console.log(`   Health Check:    http://localhost:${this.port}/health`);
           resolve();
         });
-        
+
         this.server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
             console.error(`❌ Port ${this.port} is already in use`);

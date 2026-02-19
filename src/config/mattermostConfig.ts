@@ -6,20 +6,20 @@ const mattermostConfig = convict({
     doc: 'Mattermost server endpoint',
     format: String,
     default: '',
-    env: 'MATTERMOST_SERVER_URL'
+    env: 'MATTERMOST_SERVER_URL',
   },
   MATTERMOST_TOKEN: {
     doc: 'Mattermost authentication token',
     format: String,
     default: '',
-    env: 'MATTERMOST_TOKEN'
+    env: 'MATTERMOST_TOKEN',
   },
   MATTERMOST_CHANNEL: {
     doc: 'Default Mattermost channel for messages',
     format: String,
     default: '',
-    env: 'MATTERMOST_CHANNEL'
-  }
+    env: 'MATTERMOST_CHANNEL',
+  },
 });
 
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');

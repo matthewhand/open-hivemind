@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const ollamaProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -11,7 +11,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
     endpoint: 'http://localhost:11434',
     model: 'llama2',
     maxTokens: 2048,
-    temperature: 0.7
+    temperature: 0.7,
   },
   fields: [
     {
@@ -22,7 +22,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       description: 'URL of your Ollama server or Ollama-compatible API',
       placeholder: 'http://localhost:11434 or https://your-ollama-compatible-api.com',
       defaultValue: 'http://localhost:11434',
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'model',
@@ -32,7 +32,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       description: 'Select or enter the Ollama model to use. Models are automatically fetched from your Ollama instance.',
       placeholder: 'llama2, codellama, mistral, etc.',
       defaultValue: 'llama2',
-            group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'maxTokens',
@@ -43,7 +43,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       placeholder: '2048',
       defaultValue: 2048,
       validation: { min: 1, max: 8192 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'temperature',
@@ -54,7 +54,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       placeholder: '0.7',
       defaultValue: 0.7,
       validation: { min: 0, max: 2 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'topP',
@@ -65,7 +65,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       placeholder: '0.9',
       defaultValue: 0.9,
       validation: { min: 0, max: 1 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'keepAlive',
@@ -75,7 +75,7 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       description: 'How long to keep the model loaded in memory',
       placeholder: '5m',
       defaultValue: '5m',
-      group: 'Advanced'
-    }
-  ]
+      group: 'Advanced',
+    },
+  ],
 };

@@ -54,7 +54,7 @@ export const bounceVariants: AnimationVariants = {
       type: 'spring',
       stiffness: 300,
       damping: 20,
-    }
+    },
   },
   exit: { y: 50, opacity: 0 },
 };
@@ -65,8 +65,8 @@ export const staggerContainerVariants: AnimationVariants = {
     transition: {
       staggerChildren: 0.1,
       delayChildren: 0.2,
-    }
-  }
+    },
+  },
 };
 
 export const staggerItemVariants: AnimationVariants = {
@@ -81,8 +81,8 @@ export const pulseVariants: AnimationVariants = {
       duration: 2,
       repeat: Infinity,
       repeatType: 'reverse' as const,
-    }
-  }
+    },
+  },
 };
 
 export const shakeVariants: AnimationVariants = {
@@ -91,8 +91,8 @@ export const shakeVariants: AnimationVariants = {
     transition: {
       duration: 0.5,
       ease: 'easeInOut',
-    }
-  }
+    },
+  },
 };
 
 export const glowVariants: AnimationVariants = {
@@ -101,14 +101,14 @@ export const glowVariants: AnimationVariants = {
     boxShadow: [
       '0 0 0 rgba(59, 130, 246, 0)',
       '0 0 20px rgba(59, 130, 246, 0.5)',
-      '0 0 0 rgba(59, 130, 246, 0)'
+      '0 0 0 rgba(59, 130, 246, 0)',
     ],
     transition: {
       duration: 2,
       repeat: Infinity,
       repeatType: 'loop' as const,
-    }
-  }
+    },
+  },
 };
 
 export const flipVariants: AnimationVariants = {
@@ -125,6 +125,6 @@ export const morphingButtonVariants: AnimationVariants = {
       duration: 2,
       repeat: Infinity,
       repeatType: 'reverse' as const,
-    }
-  }
+    },
+  },
 };

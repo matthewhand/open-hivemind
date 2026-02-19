@@ -94,6 +94,8 @@ export interface OpenAIConfig {
   model?: string;
   /** OpenAI API base URL */
   baseUrl?: string;
+  /** OpenAI system prompt */
+  systemPrompt?: string;
 }
 
 /**
@@ -168,6 +170,12 @@ export interface BotConfig {
   messageProvider: MessageProvider;
   /** LLM provider type */
   llmProvider: LlmProvider;
+  /** LLM provider profile name */
+  llmProfile?: string;
+  /** Response profile name */
+  responseProfile?: string;
+  /** MCP guardrail profile name */
+  mcpGuardProfile?: string;
   /** Bot persona key */
   persona?: string;
   /** Bot system instruction/prompt */
@@ -205,7 +213,7 @@ export interface BotConfigSchema {
     default: MessageProvider;
     env: string;
   };
-  
+
   /** LLM provider configuration */
   LLM_PROVIDER: {
     doc: string;
@@ -213,7 +221,15 @@ export interface BotConfigSchema {
     default: LlmProvider;
     env: string;
   };
-  
+
+  /** LLM provider profile */
+  LLM_PROFILE: {
+    doc: string;
+    format: StringConstructor;
+    default: string;
+    env: string;
+  };
+
   /** Persona configuration */
   PERSONA: {
     doc: string;
@@ -221,7 +237,7 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   /** System instruction configuration */
   SYSTEM_INSTRUCTION: {
     doc: string;
@@ -229,7 +245,7 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   /** MCP servers configuration */
   MCP_SERVERS: {
     doc: string;
@@ -237,7 +253,7 @@ export interface BotConfigSchema {
     default: McpServerConfig[];
     env: string;
   };
-  
+
   /** MCP guard configuration */
   MCP_GUARD: {
     doc: string;
@@ -245,7 +261,7 @@ export interface BotConfigSchema {
     default: McpGuardConfig;
     env: string;
   };
-  
+
   /** Discord-specific configurations */
   DISCORD_BOT_TOKEN: {
     doc: string;
@@ -253,28 +269,28 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   DISCORD_CLIENT_ID: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   DISCORD_GUILD_ID: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   DISCORD_CHANNEL_ID: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   DISCORD_VOICE_CHANNEL_ID: {
     doc: string;
     format: StringConstructor;
@@ -289,35 +305,35 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   SLACK_APP_TOKEN: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   SLACK_SIGNING_SECRET: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   SLACK_JOIN_CHANNELS: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   SLACK_DEFAULT_CHANNEL_ID: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   SLACK_MODE: {
     doc: string;
     format: SlackMode[];
@@ -332,21 +348,21 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   MATTERMOST_TOKEN: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   MATTERMOST_CHANNEL: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   /** OpenAI configurations */
   OPENAI_API_KEY: {
     doc: string;
@@ -354,21 +370,21 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   OPENAI_MODEL: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   OPENAI_BASE_URL: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   /** Flowise configurations */
   FLOWISE_API_KEY: {
     doc: string;
@@ -376,14 +392,14 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   FLOWISE_API_BASE_URL: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   /** OpenWebUI configurations */
   OPENWEBUI_API_KEY: {
     doc: string;
@@ -391,14 +407,14 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   OPENWEBUI_API_URL: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   /** OpenSwarm configurations */
   OPENSWARM_BASE_URL: {
     doc: string;
@@ -406,14 +422,14 @@ export interface BotConfigSchema {
     default: string;
     env: string;
   };
-  
+
   OPENSWARM_API_KEY: {
     doc: string;
     format: StringConstructor;
     default: string;
     env: string;
   };
-  
+
   OPENSWARM_TEAM: {
     doc: string;
     format: StringConstructor;
@@ -522,10 +538,20 @@ export interface ConfigurationValidationResult {
  * Configuration override interface
  */
 export interface BotOverride {
+  /** Whether bot is disabled */
+  disabled?: boolean;
   /** Message provider override */
   messageProvider?: MessageProvider;
   /** LLM provider override */
   llmProvider?: LlmProvider;
+  /** LLM provider profile override */
+  llmProfile?: string;
+  /** Response profile override */
+  responseProfile?: string;
+  /** MCP guardrail profile override */
+  mcpGuardProfile?: string;
+  /** MCP server profile override */
+  mcpServerProfile?: string;
   /** Persona override */
   persona?: string;
   /** System instruction override */
@@ -534,6 +560,8 @@ export interface BotOverride {
   mcpServers?: McpServerConfig[];
   /** MCP guard override */
   mcpGuard?: McpGuardConfig;
+  /** Last update timestamp */
+  updatedAt?: Date;
 }
 
 /**
@@ -693,27 +721,27 @@ export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
 /**
  * Union type for all platform configurations
  */
-export type PlatformConfig = 
-  | DiscordConfig 
-  | SlackConfig 
+export type PlatformConfig =
+  | DiscordConfig
+  | SlackConfig
   | MattermostConfig;
 
 /**
  * Union type for all LLM provider configurations
  */
-export type LlmProviderConfig = 
-  | OpenAIConfig 
-  | FlowiseConfig 
-  | OpenWebUIConfig 
+export type LlmProviderConfig =
+  | OpenAIConfig
+  | FlowiseConfig
+  | OpenWebUIConfig
   | OpenSwarmConfig;
 
 /**
  * Union type for all configuration types
  */
-export type AnyConfig = 
-  | BotConfig 
-  | SecureConfig 
-  | PlatformConfig 
+export type AnyConfig =
+  | BotConfig
+  | SecureConfig
+  | PlatformConfig
   | LlmProviderConfig;
 
 /**

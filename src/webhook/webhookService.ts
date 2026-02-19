@@ -12,10 +12,9 @@
  */
 
 import express from 'express';
-import webhookConfig from '@config/webhookConfig';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import Debug from 'debug';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 const log = Debug('app:webhookService');
 
@@ -36,14 +35,14 @@ export const webhookService = {
     log('Registering platform-agnostic webhook routes');
     if (!messageService) {
       try {
-        configureWebhookRoutes(app, null as unknown as IMessengerService);
+        configureWebhookRoutes(app, null as unknown as IMessengerService, channelId);
       } catch {
         // Swallow route registration errors when no message service is provided
       }
     } else {
-      configureWebhookRoutes(app, messageService as IMessengerService);
+      configureWebhookRoutes(app, messageService as IMessengerService, channelId);
     }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
-  }
+  },
 };

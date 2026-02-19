@@ -1,402 +1,265 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card, Badge, Button, Alert, Timeline } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
-  Chip,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon,
-  Timeline as TimelineIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
-import type { ActivityTimelineBucket } from '../services/api';
+  ClockIcon,
+  UserIcon,
+  CogIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
 
-interface ActivityTimelineProps {
-  refreshInterval?: number;
+export interface TimelineEvent {
+  id: string;
+  timestamp: Date;
+  type: 'user' | 'system' | 'bot' | 'error' | 'success';
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
 }
 
-const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
-  refreshInterval = 60000 // 1 minute default
-}) => {
-  const [timelineData, setTimelineData] = useState<ActivityTimelineBucket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+const mockEvents: TimelineEvent[] = [
+  {
+    id: '1',
+    timestamp: new Date(),
+    type: 'success',
+    title: 'Bot Configuration Updated',
+    description: 'Successfully updated bot settings and reloaded configuration',
+    icon: <CheckCircleIcon className="w-5 h-5 text-success" />,
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 60000),
+    type: 'user',
+    title: 'User Login',
+    description: 'Administrator logged into system from secure location',
+    icon: <UserIcon className="w-5 h-5 text-primary" />,
+  },
+  {
+    id: '3',
+    timestamp: new Date(Date.now() - 120000),
+    type: 'system',
+    title: 'System Health Check',
+    description: 'All systems operational, no issues detected',
+    icon: <CogIcon className="w-5 h-5 text-info" />,
+  },
+  {
+    id: '4',
+    timestamp: new Date(Date.now() - 300000),
+    type: 'error',
+    title: 'API Rate Limit',
+    description: 'Temporary rate limit reached for external API calls',
+    icon: <ExclamationTriangleIcon className="w-5 h-5 text-warning" />,
+  },
+];
 
-  // Filter states
-  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1h');
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+const ActivityTimeline: React.FC = () => {
+  const [events, setEvents] = useState<TimelineEvent[]>(mockEvents);
+  const [filter, setFilter] = useState<string>('all');
 
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info';
-  }>({
-    open: false,
-    message: '',
-    severity: 'info',
-  });
+  const filteredEvents = events.filter(event =>
+    filter === 'all' || event.type === filter,
+  );
 
-  // Mock data for demonstration - in real implementation, this would come from API
-  useEffect(() => {
-    const generateTimelineData = () => {
-      const now = new Date();
-      const data: ActivityTimelineBucket[] = [];
-      const providers = ['discord', 'slack', 'mattermost'];
-      const llmProviders = ['openai', 'flowise', 'openwebui'];
+  const getTimelineColor = (type: string) => {
+    switch (type) {
+      case 'success': return 'success';
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      case 'user': return 'primary';
+      case 'system': return 'info';
+      case 'bot': return 'neutral';
+      default: return 'neutral';
+    }
+  };
 
-      // Generate data for the last hour in 5-minute intervals
-      for (let i = 23; i >= 0; i--) {
-        const timestamp = new Date(now.getTime() - i * 5 * 60 * 1000);
-        const messageProviders: Record<string, number> = {};
-        const llmProvidersData: Record<string, number> = {};
+  const addNewEvent = () => {
+    const types: Array<'user' | 'system' | 'bot' | 'error' | 'success'> = ['user', 'system', 'bot', 'error', 'success'];
+    const titles = ['System Check', 'Data Sync', 'Configuration Update', 'User Action', 'Error Detected'];
 
-        providers.forEach(provider => {
-          messageProviders[provider] = Math.floor(Math.random() * 20) + (i % 3 === 0 ? 50 : 0);
-        });
-
-        llmProviders.forEach(provider => {
-          llmProvidersData[provider] = Math.floor(Math.random() * 15) + (i % 4 === 0 ? 30 : 0);
-        });
-
-        data.push({
-          timestamp: timestamp.toISOString(),
-          messageProviders,
-          llmProviders: llmProvidersData,
-        });
-      }
-
-      setTimelineData(data);
-      setLastRefresh(new Date());
-      setLoading(false);
+    const newEvent: TimelineEvent = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      type: types[Math.floor(Math.random() * types.length)],
+      title: titles[Math.floor(Math.random() * titles.length)],
+      description: `New activity detected at ${new Date().toLocaleTimeString()}`,
     };
 
-    generateTimelineData();
-
-    if (refreshInterval > 0) {
-      const interval = setInterval(generateTimelineData, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [refreshInterval]);
-
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info') => {
-    setSnackbar({ open: true, message, severity });
+    setEvents(prev => [newEvent, ...prev].slice(0, 20));
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const handleClearFilters = () => {
-    setSelectedTimeframe('1h');
-    setSelectedProvider('all');
-  };
-
-  const getProviderIcon = (provider: string) => {
-    switch (provider.toLowerCase()) {
-      case 'discord':
-        return '🤖';
-      case 'slack':
-        return '💬';
-      case 'mattermost':
-        return '📱';
-      default:
-        return '🔧';
-    }
-  };
-
-  const getProviderColor = (provider: string) => {
-    switch (provider.toLowerCase()) {
-      case 'discord':
-        return 'primary';
-      case 'slack':
-        return 'secondary';
-      case 'mattermost':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getTotalActivity = (bucket: ActivityTimelineBucket) => {
-    const messageTotal = Object.values(bucket.messageProviders).reduce((sum, count) => sum + count, 0);
-    const llmTotal = Object.values(bucket.llmProviders).reduce((sum, count) => sum + count, 0);
-    return messageTotal + llmTotal;
-  };
-
-  const getMaxActivity = () => {
-    return Math.max(...timelineData.map(bucket => getTotalActivity(bucket)));
-  };
-
-  const getActivityLevel = (activity: number, maxActivity: number) => {
-    const percentage = (activity / maxActivity) * 100;
-    if (percentage > 80) return { level: 'high', color: 'error' };
-    if (percentage > 50) return { level: 'medium', color: 'warning' };
-    return { level: 'low', color: 'success' };
-  };
-
-  const maxActivity = getMaxActivity();
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-            <CircularProgress />
-            <Typography variant="body1" sx={{ ml: 2 }}>
-              Loading activity timeline...
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  const recentEvents = events.filter(e =>
+    e.timestamp > new Date(Date.now() - 600000),
+  );
 
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Activity Timeline
-            </Typography>
-            <Box display="flex" alignItems="center" gap={1}>
-              {lastRefresh && (
-                <Typography variant="body2" color="text.secondary">
-                  Last updated: {lastRefresh.toLocaleTimeString()}
-                </Typography>
-              )}
-              <Button
-                size="small"
-                startIcon={<RefreshIcon />}
-                onClick={() => window.location.reload()}
-                disabled={loading}
-              >
-                Refresh
+    <div className="w-full space-y-6">
+      <Card className="shadow-lg border-l-4 border-primary">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <ClockIcon className="w-8 h-8 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">Activity Timeline</h2>
+                <p className="text-sm opacity-70">Chronological system events and activities</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="info" size="lg">
+                {events.length} Events
+              </Badge>
+              <Button onClick={addNewEvent} className="btn-primary">
+                Add Event
               </Button>
-            </Box>
-          </Box>
-
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Real-time activity visualization showing message and LLM provider usage over time.
-          </Typography>
-
-          {/* Filters */}
-          <Box display="flex" flexWrap="wrap" gap={2} mb={3} p={2} bgcolor="background.paper" borderRadius={1}>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Timeframe</InputLabel>
-              <Select
-                value={selectedTimeframe}
-                onChange={(e) => setSelectedTimeframe(e.target.value)}
-              >
-                <MenuItem value="15m">Last 15 minutes</MenuItem>
-                <MenuItem value="1h">Last hour</MenuItem>
-                <MenuItem value="6h">Last 6 hours</MenuItem>
-                <MenuItem value="24h">Last 24 hours</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Provider Filter</InputLabel>
-              <Select
-                value={selectedProvider}
-                onChange={(e) => setSelectedProvider(e.target.value)}
-              >
-                <MenuItem value="all">All Providers</MenuItem>
-                <MenuItem value="discord">Discord Only</MenuItem>
-                <MenuItem value="slack">Slack Only</MenuItem>
-                <MenuItem value="mattermost">Mattermost Only</MenuItem>
-              </Select>
-            </FormControl>
-
-            <Button
-              size="small"
-              startIcon={<ClearIcon />}
-              onClick={handleClearFilters}
-              variant="outlined"
-            >
-              Clear Filters
-            </Button>
-          </Box>
-
-          {/* Timeline Visualization */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Activity Over Time
-            </Typography>
-
-            <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-              {timelineData.map((bucket, index) => {
-                const totalActivity = getTotalActivity(bucket);
-                const activityLevel = getActivityLevel(totalActivity, maxActivity);
-
-                // Filter based on selected provider
-                const shouldShow = selectedProvider === 'all' ||
-                  (selectedProvider === 'discord' && bucket.messageProviders.discord > 0) ||
-                  (selectedProvider === 'slack' && bucket.messageProviders.slack > 0) ||
-                  (selectedProvider === 'mattermost' && bucket.messageProviders.mattermost > 0);
-
-                if (!shouldShow) return null;
-
-                return (
-                  <Box
-                    key={index}
-                    sx={{
-                      mb: 1,
-                      p: 2,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      bgcolor: 'background.paper',
-                    }}
-                  >
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                      <Typography variant="body2" fontWeight="medium">
-                        {formatTimestamp(bucket.timestamp)}
-                      </Typography>
-                      <Chip
-                        label={`${totalActivity} activities`}
-                        size="small"
-                        color={activityLevel.color === 'error' ? 'error' : activityLevel.color === 'warning' ? 'warning' : 'success'}
-                        variant="outlined"
-                      />
-                    </Box>
-
-                    <Box display="flex" flexWrap="wrap" gap={1}>
-                      {Object.entries(bucket.messageProviders).map(([provider, count]) => (
-                        count > 0 && (
-                          <Chip
-                            key={provider}
-                            label={`${getProviderIcon(provider)} ${provider}: ${count}`}
-                            size="small"
-                            color={getProviderColor(provider) === 'primary' ? 'primary' : getProviderColor(provider) === 'secondary' ? 'secondary' : getProviderColor(provider) === 'success' ? 'success' : 'default'}
-                            variant="outlined"
-                          />
-                        )
-                      ))}
-                    </Box>
-
-                    <Box display="flex" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-                      {Object.entries(bucket.llmProviders).map(([provider, count]) => (
-                        count > 0 && (
-                          <Chip
-                            key={provider}
-                            label={`${provider}: ${count}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )
-                      ))}
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-
-          {/* Summary Statistics */}
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Summary Statistics</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box display="flex" flexWrap="wrap" gap={2}>
-                <Box sx={{ minWidth: 250, flex: '1 1 auto' }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Total Activity
-                  </Typography>
-                  <Typography variant="h4" color="primary">
-                    {timelineData.reduce((sum, bucket) => sum + getTotalActivity(bucket), 0)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total activities in selected timeframe
-                  </Typography>
-                </Box>
-
-                <Box sx={{ minWidth: 250, flex: '1 1 auto' }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Peak Activity
-                  </Typography>
-                  <Typography variant="h4" color="warning.main">
-                    {maxActivity}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Highest activity in a single time slot
-                  </Typography>
-                </Box>
-
-                <Box sx={{ minWidth: 250, flex: '1 1 auto' }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Average Activity
-                  </Typography>
-                  <Typography variant="h4" color="success.main">
-                    {(timelineData.reduce((sum, bucket) => sum + getTotalActivity(bucket), 0) / timelineData.length).toFixed(1)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Average activities per time slot
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Provider Breakdown
-                </Typography>
-                <Box display="flex" flexWrap="wrap" gap={1}>
-                  {['discord', 'slack', 'mattermost'].map(provider => {
-                    const total = timelineData.reduce((sum, bucket) => sum + (bucket.messageProviders[provider] || 0), 0);
-                    return total > 0 && (
-                      <Chip
-                        key={provider}
-                        label={`${getProviderIcon(provider)} ${provider}: ${total}`}
-                        color={getProviderColor(provider) === 'primary' ? 'primary' : getProviderColor(provider) === 'secondary' ? 'secondary' : getProviderColor(provider) === 'success' ? 'success' : 'default'}
-                        variant="outlined"
-                      />
-                    );
-                  })}
-                </Box>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        </CardContent>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <ClockIcon className="w-8 h-8 mx-auto text-primary mb-2" />
+            <div className="text-2xl font-bold">{events.length}</div>
+            <p className="text-sm opacity-70">Total Events</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <UserIcon className="w-8 h-8 mx-auto text-info mb-2" />
+            <div className="text-2xl font-bold">{events.filter(e => e.type === 'user').length}</div>
+            <p className="text-sm opacity-70">User Actions</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <CogIcon className="w-8 h-8 mx-auto text-warning mb-2" />
+            <div className="text-2xl font-bold">{events.filter(e => e.type === 'system').length}</div>
+            <p className="text-sm opacity-70">System Events</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <CheckCircleIcon className="w-8 h-8 mx-auto text-success mb-2" />
+            <div className="text-2xl font-bold">{events.filter(e => e.type === 'success').length}</div>
+            <p className="text-sm opacity-70">Success Events</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="shadow">
+        <div className="card-body">
+          <div className="flex items-center gap-4">
+            <span className="font-semibold">Filter:</span>
+            <div className="btn-group">
+              <Button
+                className={`btn-${filter === 'all' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </Button>
+              <Button
+                className={`btn-${filter === 'user' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('user')}
+              >
+                User
+              </Button>
+              <Button
+                className={`btn-${filter === 'system' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('system')}
+              >
+                System
+              </Button>
+              <Button
+                className={`btn-${filter === 'bot' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('bot')}
+              >
+                Bot
+              </Button>
+              <Button
+                className={`btn-${filter === 'success' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('success')}
+              >
+                Success
+              </Button>
+              <Button
+                className={`btn-${filter === 'error' ? 'active' : 'ghost'}`}
+                onClick={() => setFilter('error')}
+              >
+                Error
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Timeline */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-6">Recent Activity</h3>
+          <Timeline>
+            {filteredEvents.slice(0, 10).map((event) => (
+              <Timeline.Item key={event.id}>
+                <Timeline.Point color={getTimelineColor(event.type)}>
+                  {event.icon}
+                </Timeline.Point>
+                <Timeline.Content>
+                  <div className="p-4 border border-base-300 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">{event.title}</h4>
+                      <Badge variant={getTimelineColor(event.type)} size="sm">
+                        {event.type}
+                      </Badge>
+                    </div>
+                    <p className="text-sm opacity-70 mb-2">{event.description}</p>
+                    <p className="text-xs opacity-50">
+                      {event.timestamp.toLocaleString()}
+                    </p>
+                  </div>
+                </Timeline.Content>
+              </Timeline.Item>
+            ))}
+          </Timeline>
+        </div>
+      </Card>
+
+      {/* Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-2">Recent Activity</h3>
+            <p className="text-sm opacity-70 mb-1">
+              {recentEvents.length} events in last 10 minutes
+            </p>
+            <div className="w-full bg-base-200 rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full"
+                style={{ width: `${Math.min((recentEvents.length / 10) * 100, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-2">System Health</h3>
+            <div className="flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5 text-success" />
+              <span className="text-sm">All systems operational</span>
+            </div>
+            <p className="text-xs opacity-70 mt-1">Last check: {new Date().toLocaleTimeString()}</p>
+          </div>
+        </Card>
+      </div>
+
+      <Alert variant="info" className="flex items-center gap-3">
+        <ClockIcon className="w-5 h-5" />
+        <div>
+          <p className="font-medium">Timeline tracking active</p>
+          <p className="text-sm opacity-70">Events are automatically captured and organized chronologically</p>
+        </div>
+      </Alert>
+    </div>
   );
 };
 

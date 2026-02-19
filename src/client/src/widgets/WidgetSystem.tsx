@@ -1,29 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Button,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControlLabel,
-  Switch,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  Add as AddIcon,
-  Dashboard as DashboardIcon,
-  Edit as EditIcon,
-  Save as SaveIcon,
-} from '@mui/icons-material';
+  XMarkIcon,
+  PlusIcon,
+  Squares2X2Icon,
+  PencilIcon,
+  ArrowDownTrayIcon, // Used as SaveIcon replacement
+} from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
 
@@ -118,55 +101,37 @@ const MetricWidget: React.FC<{ widget: WidgetConfig; data: number }> = ({ widget
   const { settings } = widget;
   const threshold = settings.threshold as number || 100;
   const percentage = Math.min((data / threshold) * 100, 100);
-  const color = percentage > 80 ? 'error' : percentage > 60 ? 'warning' : 'success';
+  const colorClass = percentage > 80 ? 'text-error' : percentage > 60 ? 'text-warning' : 'text-success';
+  const bgClass = percentage > 80 ? 'bg-error' : percentage > 60 ? 'bg-warning' : 'bg-success';
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="h6" gutterBottom>
+    <div className="card bg-base-100 shadow-xl h-full flex flex-col">
+      <div className="card-body flex-1 flex flex-col">
+        <h2 className="card-title text-lg mb-2">
           {widget.title}
-        </Typography>
-        
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography
-              variant="h3"
-              color={`${color}.main`}
-              sx={{ fontWeight: 'bold' }}
-            >
-              {data.toFixed(1)}
-            </Typography>
-            <Typography variant="body2" sx={{ ml: 0.5 }}>
-              {settings.unit}
-            </Typography>
-          </Box>
-        </Box>
+        </h2>
 
-        <Box
-          sx={{
-            width: '100%',
-            height: 8,
-            backgroundColor: '#e0e0e0',
-            borderRadius: 4,
-            overflow: 'hidden',
-            mt: 2,
-          }}
-        >
-          <Box
-            sx={{
-              width: `${percentage}%`,
-              height: '100%',
-              backgroundColor: `${color}.main`,
-              transition: 'width 0.3s ease',
-            }}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className={`text-4xl font-bold ${colorClass}`}>
+              {data.toFixed(1)}
+              <span className="text-sm ml-1 text-base-content/70">{settings.unit}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full h-2 bg-base-300 rounded-full overflow-hidden mt-4">
+          <div
+            className={`h-full ${bgClass} transition-all duration-300 ease-out`}
+            style={{ width: `${percentage}%` }}
           />
-        </Box>
-        
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+        </div>
+
+        <p className="text-xs text-base-content/70 mt-2">
           {percentage.toFixed(0)}% of threshold ({threshold}{typeof settings.unit === 'string' ? settings.unit : 'ms'})
-        </Typography>
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+    </div>
   );
 };
 
@@ -176,57 +141,57 @@ const StatusWidget: React.FC<{ widget: WidgetConfig; data: Record<string, unknow
   const connectingCount = data.filter(item => item.status === 'connecting').length;
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <div className="card bg-base-100 shadow-xl h-full">
+      <div className="card-body">
+        <h2 className="card-title text-lg mb-2">
           {widget.title}
-        </Typography>
-        
-        <Box display="flex" flexDirection="column" gap={1}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2">Active</Typography>
-            <Chip label={activeCount} color="success" size="small" />
-          </Box>
-          
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2">Connecting</Typography>
-            <Chip label={connectingCount} color="warning" size="small" />
-          </Box>
-          
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2">Errors</Typography>
-            <Chip label={errorCount} color="error" size="small" />
-          </Box>
-        </Box>
+        </h2>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm">Active</span>
+            <div className="badge badge-success badge-sm">{activeCount}</div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm">Connecting</span>
+            <div className="badge badge-warning badge-sm">{connectingCount}</div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm">Errors</span>
+            <div className="badge badge-error badge-sm">{errorCount}</div>
+          </div>
+        </div>
+
+        <p className="text-xs text-base-content/70 mt-2 block">
           Total: {data.length} bots
-        </Typography>
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+    </div>
   );
 };
 
 const ChartWidget: React.FC<{ widget: WidgetConfig; data: number[] }> = ({ widget, data }) => {
   const { settings } = widget;
-  
+
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <div className="card bg-base-100 shadow-xl h-full">
+      <div className="card-body">
+        <h2 className="card-title text-lg mb-2">
           {widget.title}
-        </Typography>
-        
-        <Box sx={{ height: 200, position: 'relative' }}>
+        </h2>
+
+        <div className="h-48 relative">
           {/* Simple chart visualization */}
-          <svg width="100%" height="100%" viewBox="0 0 100 100">
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#1976d2" stopOpacity="0.8" />
                 <stop offset="100%" stopColor="#42a5f5" stopOpacity="0.2" />
               </linearGradient>
             </defs>
-            
+
             {/* Grid lines */}
             {[20, 40, 60, 80].map(y => (
               <line
@@ -235,39 +200,42 @@ const ChartWidget: React.FC<{ widget: WidgetConfig; data: number[] }> = ({ widge
                 y1={y}
                 x2="100"
                 y2={y}
-                stroke="#e0e0e0"
+                stroke="currentColor"
+                strokeOpacity="0.1"
                 strokeWidth="0.5"
               />
             ))}
-            
+
             {/* Data line */}
             <polyline
-              points={data.map((value, index) => 
-                `${(index / (data.length - 1)) * 100},${100 - (value / 100) * 80}`
+              points={data.map((value, index) =>
+                `${(index / (data.length - 1)) * 100},${100 - (value / 100) * 80}`,
               ).join(' ')}
               fill="none"
-              stroke="#1976d2"
+              stroke="currentColor"
               strokeWidth="2"
+              className="text-primary"
             />
-            
+
             {/* Data points */}
             {data.map((value, index) => (
               <circle
                 key={index}
                 cx={(index / (data.length - 1)) * 100}
                 cy={100 - (value / 100) * 80}
-                r="3"
-                fill="#1976d2"
+                r="2"
+                fill="currentColor"
+                className="text-primary"
               />
             ))}
           </svg>
-        </Box>
-        
-        <Typography variant="caption" color="text.secondary">
+        </div>
+
+        <p className="text-xs text-base-content/70">
           Chart Type: {typeof settings.chartType === 'string' ? settings.chartType : 'line'} • Range: {typeof settings.timeRange === 'string' ? settings.timeRange : '24h'}
-        </Typography>
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+    </div>
   );
 };
 
@@ -282,72 +250,54 @@ const WidgetRenderer: React.FC<{ widget: WidgetConfig; editable?: boolean; onEdi
   // Simulate data fetching based on dataSource
   const getWidgetData = () => {
     switch (widget.dataSource) {
-      case 'performance.responseTime':
-        return performance.responseTime || 0;
-      case 'performance.memoryUsage':
-        return performance.memoryUsage || 0;
-      case 'performance.cpuUsage':
-        return performance.cpuUsage || 0;
-      case 'performance.errorRate':
-        return performance.errorRate || 0;
-      case 'dashboard.bots':
-        return dashboard.bots || [];
-      case 'dashboard.analytics':
-        return dashboard.analytics || {};
-      default:
-        return Math.random() * 100; // Fallback for demo
+    case 'performance.responseTime':
+      return performance.responseTime || 0;
+    case 'performance.memoryUsage':
+      return performance.memoryUsage || 0;
+    case 'performance.cpuUsage':
+      return performance.cpuUsage || 0;
+    case 'performance.errorRate':
+      return performance.errorRate || 0;
+    case 'dashboard.bots':
+      return dashboard.bots || [];
+    case 'dashboard.analytics':
+      return dashboard.analytics || {};
+    default:
+      return Math.random() * 100; // Fallback for demo
     }
   };
 
   const data = getWidgetData();
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        '&:hover .widget-controls': {
-          opacity: editable ? 1 : 0,
-        },
-      }}
+    <div
+      className="relative w-full h-full group"
     >
       {/* Widget Content */}
       {widget.type === 'metric' && <MetricWidget widget={widget} data={data as number} />}
       {widget.type === 'status' && <StatusWidget widget={widget} data={data as Record<string, unknown>[]} />}
       {widget.type === 'chart' && <ChartWidget widget={widget} data={data as number[] || [20, 35, 45, 60, 75, 85, 70, 65]} />}
-      
+
       {/* Edit Controls */}
       {editable && (
-        <Box
-          className="widget-controls"
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            opacity: 0,
-            transition: 'opacity 0.2s',
-            display: 'flex',
-            gap: 0.5,
-          }}
+        <div
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1"
         >
-          <IconButton
-            size="small"
+          <button
+            className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm"
             onClick={onEdit}
-            sx={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: 1 }}
           >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
+            <PencilIcon className="w-3 h-3" />
+          </button>
+          <button
+            className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm text-error"
             onClick={onDelete}
-            sx={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: 1 }}
           >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
+            <XMarkIcon className="w-3 h-3" />
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -394,7 +344,7 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
       ...newWidget,
       id: `widget-${Date.now()}`,
     };
-    
+
     setWidgets([...widgets, widget]);
     onWidgetAdd(newWidget);
     setShowAddDialog(false);
@@ -402,33 +352,23 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
 
 
   return (
-    <Box sx={{ width: '100%', minHeight: 600 }}>
+    <div className="w-full min-h-[600px]">
       {/* Toolbar */}
       {showToolbar && editable && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 2,
-            p: 2,
-            backgroundColor: 'background.default',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h6">
-            <DashboardIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+        <div className="flex items-center justify-between mb-4 p-4 bg-base-200 rounded-box">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Squares2X2Icon className="w-6 h-6" />
             Dashboard Widgets
-          </Typography>
-          
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+          </h2>
+
+          <button
+            className="btn btn-primary"
             onClick={() => setShowAddDialog(true)}
           >
+            <PlusIcon className="w-5 h-5 mr-2" />
             Add Widget
-          </Button>
-        </Box>
+          </button>
+        </div>
       )}
 
       {/* Widget Grid */}
@@ -445,144 +385,170 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
       </AdaptiveGrid>
 
       {/* Add Widget Dialog */}
-      <Dialog
-        open={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Add New Widget</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Widget Title"
-              defaultValue="New Widget"
-              onChange={() => {
-                // Handle title change for new widget
-              }}
-            />
-            
-            <Select
-              fullWidth
-              defaultValue="metric"
-              label="Widget Type"
-            >
-              <MenuItem value="metric">Metric</MenuItem>
-              <MenuItem value="chart">Chart</MenuItem>
-              <MenuItem value="status">Status</MenuItem>
-              <MenuItem value="table">Table</MenuItem>
-            </Select>
-            
-            <TextField
-              fullWidth
-              label="Data Source"
-              defaultValue="performance.responseTime"
-              helperText="Select the data source for this widget"
-            />
-            
-            <TextField
-              fullWidth
-              label="Refresh Interval (ms)"
-              type="number"
-              defaultValue={5000}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAddDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => {
-            handleAddWidget({
-              type: 'metric',
-              title: 'New Widget',
-              position: { x: 0, y: 0, w: 3, h: 2 },
-              dataSource: 'performance.responseTime',
-              refreshInterval: 5000,
-              visible: true,
-              settings: {},
-            });
-          }}>
-            Add Widget
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {showAddDialog && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Add New Widget</h3>
+            <div className="py-4 space-y-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Widget Title</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  defaultValue="New Widget"
+                  onChange={() => {
+                    // Handle title change for new widget
+                  }}
+                />
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Widget Type</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  defaultValue="metric"
+                >
+                  <option value="metric">Metric</option>
+                  <option value="chart">Chart</option>
+                  <option value="status">Status</option>
+                  <option value="table">Table</option>
+                </select>
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Data Source</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  defaultValue="performance.responseTime"
+                />
+                <label className="label">
+                  <span className="label-text-alt">Select the data source for this widget</span>
+                </label>
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Refresh Interval (ms)</span>
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered w-full"
+                  defaultValue={5000}
+                />
+              </div>
+            </div>
+            <div className="modal-action">
+              <button className="btn" onClick={() => setShowAddDialog(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                handleAddWidget({
+                  type: 'metric',
+                  title: 'New Widget',
+                  position: { x: 0, y: 0, w: 3, h: 2 },
+                  dataSource: 'performance.responseTime',
+                  refreshInterval: 5000,
+                  visible: true,
+                  settings: {},
+                });
+              }}>
+                Add Widget
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Widget Dialog */}
-      <Dialog
-        open={!!editingWidget}
-        onClose={() => setEditingWidget(null)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Edit Widget</DialogTitle>
-        <DialogContent>
-          {editingWidget && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField
-                fullWidth
-                label="Widget Title"
-                defaultValue={editingWidget.title}
-                onChange={(e) => {
-                  setEditingWidget({ ...editingWidget, title: e.target.value });
-                }}
-              />
-              
-              <TextField
-                fullWidth
-                label="Description"
-                defaultValue={editingWidget.description || ''}
-                multiline
-                rows={3}
-                onChange={(e) => {
-                  setEditingWidget({ ...editingWidget, description: e.target.value });
-                }}
-              />
-              
-              <Select
-                fullWidth
-                value={editingWidget.type}
-                label="Widget Type"
-                onChange={(event) => {
-                  setEditingWidget({ ...editingWidget, type: event.target.value as 'metric' | 'chart' | 'status' | 'table' });
-                }}
-              >
-                <MenuItem value="metric">Metric</MenuItem>
-                <MenuItem value="chart">Chart</MenuItem>
-                <MenuItem value="status">Status</MenuItem>
-                <MenuItem value="table">Table</MenuItem>
-              </Select>
-              
-              <FormControlLabel
-                control={
-                  <Switch
+      {editingWidget && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Edit Widget</h3>
+            <div className="py-4 space-y-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Widget Title</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  defaultValue={editingWidget.title}
+                  onChange={(e) => {
+                    setEditingWidget({ ...editingWidget, title: e.target.value });
+                  }}
+                />
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Description</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  defaultValue={editingWidget.description || ''}
+                  rows={3}
+                  onChange={(e) => {
+                    setEditingWidget({ ...editingWidget, description: e.target.value });
+                  }}
+                />
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Widget Type</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={editingWidget.type}
+                  onChange={(event) => {
+                    setEditingWidget({ ...editingWidget, type: event.target.value as 'metric' | 'chart' | 'status' | 'table' });
+                  }}
+                >
+                  <option value="metric">Metric</option>
+                  <option value="chart">Chart</option>
+                  <option value="status">Status</option>
+                  <option value="table">Table</option>
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Visible</span>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
                     checked={editingWidget.visible}
                     onChange={(e) => {
                       setEditingWidget({ ...editingWidget, visible: e.target.checked });
                     }}
                   />
-                }
-                label="Visible"
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditingWidget(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            startIcon={<SaveIcon />}
-            onClick={() => {
-              if (editingWidget) {
-                onWidgetUpdate(editingWidget);
-                setEditingWidget(null);
-              }
-            }}
-          >
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                </label>
+              </div>
+            </div>
+            <div className="modal-action">
+              <button className="btn" onClick={() => setEditingWidget(null)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (editingWidget) {
+                    onWidgetUpdate(editingWidget);
+                    setEditingWidget(null);
+                  }
+                }}
+              >
+                <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

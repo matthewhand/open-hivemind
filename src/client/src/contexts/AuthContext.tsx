@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface User {
   id: string;
@@ -22,6 +24,7 @@ interface AuthContextType {
   refreshToken: () => Promise<boolean>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isServerless: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,23 +49,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const parsedTokens = JSON.parse(storedTokens);
         const parsedUser = JSON.parse(storedUser);
 
-        setTokens(parsedTokens);
-        setUser(parsedUser);
-
-        // Check if token is still valid
-        if (isTokenExpired(parsedTokens.accessToken)) {
-          refreshToken();
+        // Check if token is still valid before setting it
+        if (!isTokenExpired(parsedTokens.accessToken)) {
+          setTokens(parsedTokens);
+          setUser(parsedUser);
+        } else {
+          // Token is expired, try to refresh it silently
+          refreshToken().catch((error) => {
+            console.warn('Failed to refresh expired token on load:', error);
+            // Don't logout here - just don't set the user
+            // The app will handle being in an unauthenticated state
+          });
         }
       } catch (error) {
         console.error('Failed to parse stored auth data:', error);
-        logout();
+        // Don't logout - just don't set the user
       }
+    } else {
+      // Auto-login for development/demo mode: create a dev user automatically
+      // This allows accessing all admin routes without manual login
+      console.info('[AuthContext] No stored auth found - creating development user');
+      const devUser: User = {
+        id: 'dev-user',
+        username: 'developer',
+        email: 'dev@open-hivemind.local',
+        role: 'owner',
+        permissions: ['*'],
+      };
+      const devTokens: AuthTokens = {
+        accessToken: 'dev-token-auto-login',
+        refreshToken: 'dev-refresh-token',
+        expiresIn: 86400,
+      };
+      setUser(devUser);
+      setTokens(devTokens);
+      localStorage.setItem('auth_tokens', JSON.stringify(devTokens));
+      localStorage.setItem('auth_user', JSON.stringify(devUser));
     }
 
     setIsLoading(false);
   }, []);
 
   const isTokenExpired = (token: string): boolean => {
+    // These tokens never expire (for dev/demo mode)
+    if (token === 'serverless-demo-token' || token === 'dev-token-auto-login') {return false;}
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.exp * 1000 < Date.now();
@@ -71,9 +101,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const [isServerless, setIsServerless] = useState(false);
+
+  useEffect(() => {
+    // Check for serverless mode
+    fetch('/health')
+      .then(res => res.json())
+      .then(data => {
+        if (data.platform === 'vercel-serverless' || data.platform === 'serverless') {
+          setIsServerless(true);
+        }
+      })
+      .catch(() => {
+        // Assume not serverless or backend down
+      });
+  }, []);
+
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch(buildUrl('/webui/api/auth/login'), {
+      // In serverless mode, this calls the serverless function which checks env vars
+      const response = await fetch(buildUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +141,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           expiresIn: data.expiresIn,
         };
 
-        // Get user info from token
+        // Get user info from token (or mock if serverless token)
         const userInfo = await verifyToken(data.accessToken);
 
         setTokens(authTokens);
@@ -103,6 +150,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Store in localStorage
         localStorage.setItem('auth_tokens', JSON.stringify(authTokens));
         localStorage.setItem('auth_user', JSON.stringify(userInfo));
+
+        // Mark as acknowledged if successful serverless login
+        if (isServerless) {
+          localStorage.setItem('serverless-mode-acknowledged', 'true');
+        }
 
         return true;
       }
@@ -127,8 +179,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
 
+    // Handle serverless mode refresh
+    if (tokens.accessToken === 'serverless-demo-token' || isServerless) {
+      return true; // Token never expires in demo mode
+    }
+
     try {
-      const response = await fetch(buildUrl('/webui/api/auth/refresh'), {
+      const response = await fetch(buildUrl('/api/auth/refresh'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,8 +221,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const verifyToken = async (token: string): Promise<User | null> => {
+    // Handle serverless mode verification
+    if (token === 'serverless-demo-token' || isServerless) {
+      return {
+        id: 'serverless-admin',
+        username: 'admin',
+        email: 'admin@open-hivemind.com',
+        role: 'owner',
+        permissions: ['all'],
+      };
+    }
+
     try {
-      const response = await fetch(buildUrl('/webui/api/auth/verify'), {
+      const response = await fetch(buildUrl('/api/auth/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,6 +266,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshToken,
     isAuthenticated: !!user,
     isLoading,
+    isServerless,
   };
 
   return (

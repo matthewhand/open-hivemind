@@ -35,7 +35,7 @@ describe('openaiConfig', () => {
       expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
       expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com/v1');
       expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
-      expect(openaiConfig.get('OPENAI_MODEL')).toBe('university');
+      expect(openaiConfig.get('OPENAI_MODEL')).toBe('gpt-5.2');
       expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('Greetings, human...');
       expect(openaiConfig.get('OPENAI_FINISH_REASON_RETRY')).toBe('stop');
       expect(openaiConfig.get('OPENAI_VOICE')).toBe('nova');
@@ -79,10 +79,10 @@ describe('openaiConfig', () => {
       process.env.OPENAI_MODEL = 'gpt-4';
       process.env.OPENAI_BASE_URL = 'https://api.openai.com/v1';
       process.env.OPENAI_ORGANIZATION = 'org-test';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(config.get('OPENAI_API_KEY')).toBe('sk-test123456789');
       expect(config.get('OPENAI_MODEL')).toBe('gpt-4');
       expect(config.get('OPENAI_BASE_URL')).toBe('https://api.openai.com/v1');
@@ -94,10 +94,10 @@ describe('openaiConfig', () => {
       process.env.OPENAI_MAX_TOKENS = '200';
       process.env.OPENAI_TIMEOUT = '15000';
       process.env.OPENAI_MAX_RETRIES = '5';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(config.get('OPENAI_TEMPERATURE')).toBe(0.8);
       expect(config.get('OPENAI_MAX_TOKENS')).toBe(200);
       expect(config.get('OPENAI_TIMEOUT')).toBe(15000);
@@ -108,10 +108,10 @@ describe('openaiConfig', () => {
       process.env.OPENAI_FREQUENCY_PENALTY = '0.2';
       process.env.OPENAI_PRESENCE_PENALTY = '0.1';
       process.env.OPENAI_TOP_P = '0.95';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(config.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.2);
       expect(config.get('OPENAI_PRESENCE_PENALTY')).toBe(0.1);
       expect(config.get('OPENAI_TOP_P')).toBe(0.95);
@@ -122,10 +122,10 @@ describe('openaiConfig', () => {
       process.env.OPENAI_MODEL = 'gpt-3.5-turbo';
       process.env.OPENAI_TEMPERATURE = '0.5';
       process.env.OPENAI_SYSTEM_PROMPT = 'You are a helpful assistant.';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(config.get('OPENAI_API_KEY')).toBe('sk-complex123');
       expect(config.get('OPENAI_MODEL')).toBe('gpt-3.5-turbo');
       expect(config.get('OPENAI_TEMPERATURE')).toBe(0.5);
@@ -142,11 +142,11 @@ describe('openaiConfig', () => {
 
     it('should handle temperature bounds', () => {
       const temperatures = ['0.0', '0.5', '1.0', '2.0'];
-      
+
       temperatures.forEach(temp => {
         process.env.OPENAI_TEMPERATURE = temp;
         jest.resetModules();
-        
+
         expect(() => {
           const config = require('../../src/config/openaiConfig').default;
           const value = config.get('OPENAI_TEMPERATURE');
@@ -159,21 +159,21 @@ describe('openaiConfig', () => {
     it('should handle penalty value bounds', () => {
       process.env.OPENAI_FREQUENCY_PENALTY = '0.0';
       process.env.OPENAI_PRESENCE_PENALTY = '2.0';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(config.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.0);
       expect(config.get('OPENAI_PRESENCE_PENALTY')).toBe(2.0);
     });
 
     it('should validate API key format expectations', () => {
       const apiKeys = ['sk-test123', '', 'invalid-key', 'sk-' + 'x'.repeat(48)];
-      
+
       apiKeys.forEach(key => {
         process.env.OPENAI_API_KEY = key;
         jest.resetModules();
-        
+
         expect(() => {
           const config = require('../../src/config/openaiConfig').default;
           const value = config.get('OPENAI_API_KEY');
@@ -187,9 +187,9 @@ describe('openaiConfig', () => {
     it('should handle invalid numeric values gracefully', () => {
       process.env.OPENAI_TEMPERATURE = 'invalid-number';
       process.env.OPENAI_MAX_TOKENS = 'not-a-number';
-      
+
       jest.resetModules();
-      
+
       expect(() => {
         const config = require('../../src/config/openaiConfig').default;
         // Should either use defaults or handle gracefully
@@ -204,10 +204,10 @@ describe('openaiConfig', () => {
       process.env.OPENAI_API_KEY = '';
       process.env.OPENAI_MODEL = '';
       process.env.OPENAI_SYSTEM_PROMPT = '';
-      
+
       jest.resetModules();
       const config = require('../../src/config/openaiConfig').default;
-      
+
       expect(typeof config.get('OPENAI_API_KEY')).toBe('string');
       expect(typeof config.get('OPENAI_MODEL')).toBe('string');
       expect(typeof config.get('OPENAI_SYSTEM_PROMPT')).toBe('string');
@@ -239,15 +239,15 @@ describe('openaiConfig', () => {
       const stringKeys = ['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL', 'OPENAI_SYSTEM_PROMPT'];
       const numberKeys = ['OPENAI_TEMPERATURE', 'OPENAI_MAX_TOKENS', 'OPENAI_TIMEOUT'];
       const arrayKeys = ['OPENAI_STOP'];
-      
+
       stringKeys.forEach(key => {
         expect(typeof openaiConfig.get(key)).toBe('string');
       });
-      
+
       numberKeys.forEach(key => {
         expect(typeof openaiConfig.get(key)).toBe('number');
       });
-      
+
       arrayKeys.forEach(key => {
         expect(Array.isArray(openaiConfig.get(key))).toBe(true);
       });
@@ -259,11 +259,11 @@ describe('openaiConfig', () => {
         'https://api.openai.com/v1',
         'https://custom-endpoint.com/v1/'
       ];
-      
+
       urls.forEach(url => {
         process.env.OPENAI_BASE_URL = url;
         jest.resetModules();
-        
+
         const config = require('../../src/config/openaiConfig').default;
         const baseUrl = config.get('OPENAI_BASE_URL');
         expect(typeof baseUrl).toBe('string');

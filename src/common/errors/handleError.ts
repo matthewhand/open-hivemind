@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import { getRandomErrorMessage } from './getRandomErrorMessage';
 
 const debug = Debug('app:handleError');

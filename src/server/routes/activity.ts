@@ -89,7 +89,7 @@ router.get('/messages', async (req, res) => {
       startDate: req.query.startDate as string,
       endDate: req.query.endDate as string,
       limit: parseInt(req.query.limit as string) || 100,
-      offset: parseInt(req.query.offset as string) || 0
+      offset: parseInt(req.query.offset as string) || 0,
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -118,7 +118,7 @@ router.get('/messages', async (req, res) => {
     res.json({ 
       messages,
       total: messages.length,
-      filter 
+      filter, 
     });
   } catch (error) {
     debug('Error fetching message activity:', error);
@@ -133,7 +133,7 @@ router.get('/llm-usage', async (req, res) => {
       llmProvider: req.query.llmProvider as string,
       startDate: req.query.startDate as string,
       endDate: req.query.endDate as string,
-      limit: parseInt(req.query.limit as string) || 100
+      limit: parseInt(req.query.limit as string) || 100,
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -156,7 +156,7 @@ router.get('/summary', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       startDate: req.query.startDate as string,
-      endDate: req.query.endDate as string
+      endDate: req.query.endDate as string,
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -176,7 +176,7 @@ router.get('/summary', async (req, res) => {
       messagesByAgent: {}, // Mock data
       llmUsageByProvider: {}, // Mock data
       timeRangeStart: filter.startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      timeRangeEnd: filter.endDate || new Date().toISOString()
+      timeRangeEnd: filter.endDate || new Date().toISOString(),
     };
 
     res.json({ summary });
@@ -193,7 +193,7 @@ router.get('/chart-data', async (req, res) => {
       messageProvider: req.query.messageProvider as string,
       llmProvider: req.query.llmProvider as string,
       startDate: req.query.startDate as string,
-      endDate: req.query.endDate as string
+      endDate: req.query.endDate as string,
     };
 
     const interval = req.query.interval as string || 'hour'; // hour, day, week
@@ -221,7 +221,7 @@ router.get('/chart-data', async (req, res) => {
       messageActivityData.push({
         timestamp,
         count: Math.floor(Math.random() * 50) + 10,
-        provider: filter.messageProvider
+        provider: filter.messageProvider,
       });
       
       // Mock LLM usage data
@@ -229,7 +229,7 @@ router.get('/chart-data', async (req, res) => {
         timestamp,
         usage: Math.floor(Math.random() * 100) + 20,
         provider: filter.llmProvider,
-        responseTime: Math.floor(Math.random() * 1000) + 200
+        responseTime: Math.floor(Math.random() * 1000) + 200,
       });
     }
 
@@ -237,7 +237,7 @@ router.get('/chart-data', async (req, res) => {
       messageActivity: messageActivityData,
       llmUsage: llmUsageData,
       interval,
-      filter
+      filter,
     });
   } catch (error) {
     debug('Error fetching chart data:', error);
@@ -250,7 +250,7 @@ router.get('/agents', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       startDate: req.query.startDate as string,
-      endDate: req.query.endDate as string
+      endDate: req.query.endDate as string,
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -269,7 +269,7 @@ router.get('/agents', async (req, res) => {
         averageResponseTime: 320,
         errorRate: 0.01,
         lastActive: new Date().toISOString(),
-        status: 'active'
+        status: 'active',
       },
       {
         agentId: 'agent_2',
@@ -280,8 +280,8 @@ router.get('/agents', async (req, res) => {
         averageResponseTime: 280,
         errorRate: 0.03,
         lastActive: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        status: 'active'
-      }
+        status: 'active',
+      },
     ];
 
     res.json({ agents: agentActivity, filter });
@@ -297,7 +297,7 @@ router.get('/mcp-tools', async (req, res) => {
     const filter: ActivityFilter = {
       agentId: req.query.agentId as string,
       startDate: req.query.startDate as string,
-      endDate: req.query.endDate as string
+      endDate: req.query.endDate as string,
     };
 
     // Mock MCP tool usage data
@@ -308,7 +308,7 @@ router.get('/mcp-tools', async (req, res) => {
         usageCount: 45,
         averageExecutionTime: 1200,
         successRate: 0.96,
-        lastUsed: new Date().toISOString()
+        lastUsed: new Date().toISOString(),
       },
       {
         toolName: 'file_read',
@@ -316,8 +316,8 @@ router.get('/mcp-tools', async (req, res) => {
         usageCount: 23,
         averageExecutionTime: 150,
         successRate: 0.99,
-        lastUsed: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-      }
+        lastUsed: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      },
     ];
 
     res.json({ mcpTools: mcpToolUsage, filter });
@@ -339,7 +339,7 @@ router.post('/log', async (req, res) => {
       processingTime,
       status,
       errorMessage,
-      mcpToolsUsed
+      mcpToolsUsed,
     } = req.body;
 
     const dbManager = DatabaseManager.getInstance();
@@ -353,7 +353,7 @@ router.post('/log', async (req, res) => {
       messageProvider,
       llmProvider,
       messageType,
-      status
+      status,
     });
 
     res.json({ success: true });

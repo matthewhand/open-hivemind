@@ -43,7 +43,7 @@ describe.skip('Alert Component', () => {
   it('is dismissed from the screen when close button is clicked', () => {
     const handleClose = jest.fn();
     const { container } = render(
-      <Alert status="error" message="Error!" onClose={handleClose} />
+      <Alert status="error" message="Error!" onClose={handleClose} />,
     );
     fireEvent.click(screen.getByLabelText('Close alert'));
     expect(container.firstChild).toBeNull();

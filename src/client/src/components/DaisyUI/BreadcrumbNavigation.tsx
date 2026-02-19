@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { getActiveItem } from '../../config/navigation';
+
 
 interface BreadcrumbItem {
   label: string;

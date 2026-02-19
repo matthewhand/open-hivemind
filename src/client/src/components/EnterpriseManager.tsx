@@ -1,55 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  Alert,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
-  Tab,
-  Tabs,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-} from '@mui/material';
-import {
-  Security as SecurityIcon,
-  Cloud as CloudIcon,
-  Analytics as AnalyticsIcon,
-  IntegrationInstructions as IntegrationIcon,
-  Gavel as GovernanceIcon,
-  Speed as PerformanceIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { apiService } from '../services/api';
+  ShieldCheckIcon,
+  CloudIcon,
+  PuzzlePieceIcon,
+  ScaleIcon,
+  ChartBarIcon,
+  PlusIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
 
 interface ComplianceRule {
   id: string;
@@ -126,14 +88,14 @@ const EnterpriseManager: React.FC = () => {
     name: '',
     type: 'webhook' as Integration['type'],
     provider: '',
-    config: {} as Record<string, any>
+    config: {} as Record<string, any>,
   });
 
   const [cloudForm, setCloudForm] = useState({
     name: '',
     type: 'aws' as CloudProvider['type'],
     region: '',
-    credentials: {} as Record<string, any>
+    credentials: {} as Record<string, any>,
   });
 
   useEffect(() => {
@@ -154,7 +116,7 @@ const EnterpriseManager: React.FC = () => {
           category: 'Security',
           severity: 'high',
           status: 'compliant',
-          lastChecked: '2024-01-15T10:30:00Z'
+          lastChecked: '2024-01-15T10:30:00Z',
         },
         {
           id: 'rule_2',
@@ -163,7 +125,7 @@ const EnterpriseManager: React.FC = () => {
           category: 'Security',
           severity: 'critical',
           status: 'compliant',
-          lastChecked: '2024-01-15T10:30:00Z'
+          lastChecked: '2024-01-15T10:30:00Z',
         },
         {
           id: 'rule_3',
@@ -173,8 +135,8 @@ const EnterpriseManager: React.FC = () => {
           severity: 'medium',
           status: 'non-compliant',
           lastChecked: '2024-01-15T10:30:00Z',
-          remediation: 'Enable audit logging for all admin operations'
-        }
+          remediation: 'Enable audit logging for all admin operations',
+        },
       ];
 
       const mockCloudProviders: CloudProvider[] = [
@@ -187,8 +149,8 @@ const EnterpriseManager: React.FC = () => {
           resources: [
             { type: 'EC2', count: 3, status: 'running' },
             { type: 'RDS', count: 1, status: 'running' },
-            { type: 'S3', count: 2, status: 'active' }
-          ]
+            { type: 'S3', count: 2, status: 'active' },
+          ],
         },
         {
           id: 'azure_dev',
@@ -198,9 +160,9 @@ const EnterpriseManager: React.FC = () => {
           status: 'connected',
           resources: [
             { type: 'VM', count: 2, status: 'running' },
-            { type: 'Database', count: 1, status: 'running' }
-          ]
-        }
+            { type: 'Database', count: 1, status: 'running' },
+          ],
+        },
       ];
 
       const mockIntegrations: Integration[] = [
@@ -211,7 +173,7 @@ const EnterpriseManager: React.FC = () => {
           provider: 'Slack',
           status: 'active',
           lastSync: '2024-01-15T10:30:00Z',
-          config: { webhookUrl: 'https://hooks.slack.com/...' }
+          config: { webhookUrl: 'https://hooks.slack.com/...' },
         },
         {
           id: 'int_2',
@@ -220,7 +182,7 @@ const EnterpriseManager: React.FC = () => {
           provider: 'Datadog',
           status: 'active',
           lastSync: '2024-01-15T10:25:00Z',
-          config: { apiKey: '***', appKey: '***' }
+          config: { apiKey: '***', appKey: '***' },
         },
         {
           id: 'int_3',
@@ -229,8 +191,8 @@ const EnterpriseManager: React.FC = () => {
           provider: 'PostgreSQL',
           status: 'active',
           lastSync: '2024-01-15T10:20:00Z',
-          config: { host: 'db.example.com', database: 'open_hivemind' }
-        }
+          config: { host: 'db.example.com', database: 'open_hivemind' },
+        },
       ];
 
       const mockAuditEvents: AuditEvent[] = [
@@ -242,7 +204,7 @@ const EnterpriseManager: React.FC = () => {
           resource: 'bots/myBot',
           result: 'success',
           details: 'Created new bot instance',
-          ipAddress: '192.168.1.100'
+          ipAddress: '192.168.1.100',
         },
         {
           id: 'audit_2',
@@ -252,8 +214,8 @@ const EnterpriseManager: React.FC = () => {
           resource: 'config/production',
           result: 'success',
           details: 'Updated LLM provider configuration',
-          ipAddress: '192.168.1.101'
-        }
+          ipAddress: '192.168.1.101',
+        },
       ];
 
       const mockPerformanceMetrics: PerformanceMetric[] = [
@@ -264,7 +226,7 @@ const EnterpriseManager: React.FC = () => {
           unit: 'ms',
           trend: 'down',
           threshold: 500,
-          status: 'normal'
+          status: 'normal',
         },
         {
           id: 'metric_2',
@@ -273,7 +235,7 @@ const EnterpriseManager: React.FC = () => {
           unit: '%',
           trend: 'up',
           threshold: 90,
-          status: 'warning'
+          status: 'warning',
         },
         {
           id: 'metric_3',
@@ -282,8 +244,8 @@ const EnterpriseManager: React.FC = () => {
           unit: '%',
           trend: 'stable',
           threshold: 5,
-          status: 'normal'
-        }
+          status: 'normal',
+        },
       ];
 
       setComplianceRules(mockComplianceRules);
@@ -314,7 +276,7 @@ const EnterpriseManager: React.FC = () => {
         provider: integrationForm.provider,
         status: 'active',
         lastSync: new Date().toISOString(),
-        config: integrationForm.config
+        config: integrationForm.config,
       };
 
       setIntegrations(prev => [...prev, newIntegration]);
@@ -343,7 +305,7 @@ const EnterpriseManager: React.FC = () => {
         type: cloudForm.type,
         region: cloudForm.region,
         status: 'configuring',
-        resources: []
+        resources: [],
       };
 
       setCloudProviders(prev => [...prev, newProvider]);
@@ -357,8 +319,8 @@ const EnterpriseManager: React.FC = () => {
           prev.map(provider =>
             provider.id === newProvider.id
               ? { ...provider, status: 'connected' as const }
-              : provider
-          )
+              : provider,
+          ),
         );
       }, 3000);
     } catch (err) {
@@ -370,453 +332,429 @@ const EnterpriseManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-      case 'connected':
-      case 'compliant':
-        return 'success';
-      case 'inactive':
-      case 'disconnected':
-      case 'non-compliant':
-        return 'error';
-      case 'configuring':
-      case 'checking':
-        return 'warning';
-      default:
-        return 'default';
+    case 'active':
+    case 'connected':
+    case 'compliant':
+      return 'badge-success';
+    case 'inactive':
+    case 'disconnected':
+    case 'non-compliant':
+      return 'badge-error';
+    case 'configuring':
+    case 'checking':
+      return 'badge-warning';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
-      case 'low':
-        return 'success';
-      default:
-        return 'default';
+    case 'critical':
+      return 'badge-error';
+    case 'high':
+      return 'badge-warning';
+    case 'medium':
+      return 'badge-info';
+    case 'low':
+      return 'badge-success';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0: // Security & Compliance
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Compliance Rules
-            </Typography>
-            <Grid container spacing={3}>
-              {complianceRules.map((rule) => (
-                <Grid item xs={12} md={6} lg={4} key={rule.id}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Box>
-                          <Typography variant="h6" component="h2">
-                            {rule.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {rule.category}
-                          </Typography>
-                        </Box>
-                        <Box display="flex" gap={1}>
-                          <Chip
-                            label={rule.severity}
-                            color={getSeverityColor(rule.severity)}
-                            size="small"
-                          />
-                          <Chip
-                            label={rule.status}
-                            color={getStatusColor(rule.status)}
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                      <Typography variant="body2" mb={2}>
-                        {rule.description}
-                      </Typography>
-                      {rule.remediation && (
-                        <Alert severity="warning" sx={{ mb: 2 }}>
-                          <Typography variant="body2">
-                            {rule.remediation}
-                          </Typography>
-                        </Alert>
-                      )}
-                      <Typography variant="caption" color="text.secondary">
-                        Last checked: {new Date(rule.lastChecked).toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        );
+    case 0: // Security & Compliance
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {complianceRules.map((rule) => (
+              <div key={rule.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{rule.name}</h3>
+                      <p className="text-sm text-base-content/70">{rule.category}</p>
+                    </div>
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
+                        {rule.severity}
+                      </div>
+                      <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
+                        {rule.status}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm mb-2">{rule.description}</p>
+                  {rule.remediation && (
+                    <div className="alert alert-warning text-sm py-2">
+                      <ExclamationTriangleIcon className="w-4 h-4" />
+                      <span>{rule.remediation}</span>
+                    </div>
+                  )}
+                  <div className="text-xs text-base-content/50 mt-2">
+                      Last checked: {new Date(rule.lastChecked).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
 
-      case 1: // Multi-Cloud
-        return (
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h6">
-                Cloud Providers
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setAddCloudProviderDialog(true)}
-                disabled={loading}
-              >
+    case 1: // Multi-Cloud
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Cloud Providers</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setAddCloudProviderDialog(true)}
+              disabled={loading}
+            >
+              <PlusIcon className="w-4 h-4 mr-1" />
                 Add Provider
-              </Button>
-            </Box>
-            <Grid container spacing={3}>
-              {cloudProviders.map((provider) => (
-                <Grid item xs={12} md={6} key={provider.id}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Box>
-                          <Typography variant="h6" component="h2">
-                            {provider.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {provider.type.toUpperCase()} • {provider.region}
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={provider.status}
-                          color={getStatusColor(provider.status)}
-                        />
-                      </Box>
-                      <Typography variant="body2" gutterBottom>
-                        Resources:
-                      </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={1}>
-                        {provider.resources.map((resource, index) => (
-                          <Chip
-                            key={index}
-                            label={`${resource.type}: ${resource.count}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                        ))}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        );
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cloudProviders.map((provider) => (
+              <div key={provider.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{provider.name}</h3>
+                      <p className="text-sm text-base-content/70">
+                        {provider.type.toUpperCase()} • {provider.region}
+                      </p>
+                    </div>
+                    <div className={`badge ${getStatusColor(provider.status)}`}>
+                      {provider.status}
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold mb-1">Resources:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {provider.resources.map((resource, index) => (
+                      <div key={index} className="badge badge-outline badge-sm">
+                        {resource.type}: {resource.count}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
 
-      case 2: // Integrations
-        return (
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h6">
-                Enterprise Integrations
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setAddIntegrationDialog(true)}
-                disabled={loading}
-              >
+    case 2: // Integrations
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setAddIntegrationDialog(true)}
+              disabled={loading}
+            >
+              <PlusIcon className="w-4 h-4 mr-1" />
                 Add Integration
-              </Button>
-            </Box>
-            <Grid container spacing={3}>
-              {integrations.map((integration) => (
-                <Grid item xs={12} md={6} lg={4} key={integration.id}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Box>
-                          <Typography variant="h6" component="h2">
-                            {integration.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {integration.provider} • {integration.type}
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={integration.status}
-                          color={getStatusColor(integration.status)}
-                          size="small"
-                        />
-                      </Box>
-                      <Typography variant="body2" mb={1}>
-                        Last sync: {new Date(integration.lastSync).toLocaleString()}
-                      </Typography>
-                      <Box display="flex" gap={1}>
-                        <Button size="small" variant="outlined">
-                          Configure
-                        </Button>
-                        <Button size="small" variant="outlined">
-                          Test
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        );
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {integrations.map((integration) => (
+              <div key={integration.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{integration.name}</h3>
+                      <p className="text-sm text-base-content/70">
+                        {integration.provider} • {integration.type}
+                      </p>
+                    </div>
+                    <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
+                      {integration.status}
+                    </div>
+                  </div>
+                  <p className="text-sm mb-2">
+                      Last sync: {new Date(integration.lastSync).toLocaleString()}
+                  </p>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-xs btn-outline">Configure</button>
+                    <button className="btn btn-xs btn-outline">Test</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
 
-      case 3: // Audit & Governance
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Audit Events
-            </Typography>
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Timestamp</TableCell>
-                    <TableCell>User</TableCell>
-                    <TableCell>Action</TableCell>
-                    <TableCell>Resource</TableCell>
-                    <TableCell>Result</TableCell>
-                    <TableCell>IP Address</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {auditEvents.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>{new Date(event.timestamp).toLocaleString()}</TableCell>
-                      <TableCell>{event.user}</TableCell>
-                      <TableCell>{event.action}</TableCell>
-                      <TableCell>{event.resource}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.result}
-                          color={getStatusColor(event.result)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{event.ipAddress}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        );
+    case 3: // Audit & Governance
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
+          <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Result</th>
+                  <th>IP Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditEvents.map((event) => (
+                  <tr key={event.id}>
+                    <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
+                    <td>{event.user}</td>
+                    <td>{event.action}</td>
+                    <td>{event.resource}</td>
+                    <td>
+                      <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
+                        {event.result}
+                      </div>
+                    </td>
+                    <td className="font-mono text-xs">{event.ipAddress}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
 
-      case 4: // Performance Optimization
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Performance Metrics
-            </Typography>
-            <Grid container spacing={3}>
-              {performanceMetrics.map((metric) => (
-                <Grid item xs={12} md={6} lg={4} key={metric.id}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Typography variant="h6" component="h2">
-                          {metric.name}
-                        </Typography>
-                        <Chip
-                          label={metric.status}
-                          color={getStatusColor(metric.status)}
-                          size="small"
-                        />
-                      </Box>
-                      <Typography variant="h4" component="p" sx={{ mb: 1 }}>
-                        {metric.value} {metric.unit}
-                      </Typography>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                          Threshold: {metric.threshold} {metric.unit}
-                        </Typography>
-                        {metric.trend === 'up' && <Typography color="error">↗</Typography>}
-                        {metric.trend === 'down' && <Typography color="success">↘</Typography>}
-                        {metric.trend === 'stable' && <Typography color="text.secondary">→</Typography>}
-                      </Box>
-                      <Button size="small" variant="outlined">
-                        Optimize
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        );
+    case 4: // Performance Optimization
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {performanceMetrics.map((metric) => (
+              <div key={metric.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="card-title text-base">{metric.name}</h3>
+                    <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
+                      {metric.status}
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold mb-1">
+                    {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
+                  </div>
+                  <div className="flex items-center mb-2 text-sm text-base-content/70">
+                    <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
+                    {metric.trend === 'up' && <span className="text-error">↗</span>}
+                    {metric.trend === 'down' && <span className="text-success">↘</span>}
+                    {metric.trend === 'stable' && <span>→</span>}
+                  </div>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-sm btn-outline">Optimize</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
 
-      default:
-        return null;
+    default:
+      return null;
     }
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Enterprise Manager
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Enterprise Manager</h1>
+        <button
+          className="btn btn-outline"
           onClick={loadEnterpriseData}
           disabled={loading}
         >
+          <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Alerts */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <div className="alert alert-error mb-4">
+          <ExclamationCircleIcon className="w-6 h-6" />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost">✕</button>
+        </div>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-          {success}
-        </Alert>
+        <div className="alert alert-success mb-4">
+          <CheckCircleIcon className="w-6 h-6" />
+          <span>{success}</span>
+          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost">✕</button>
+        </div>
       )}
 
       {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
+      <div className="tabs tabs-boxed mb-6 bg-base-200 p-1">
+        <a
+          className={`tab ${activeTab === 0 ? 'tab-active' : ''}`}
+          onClick={() => setActiveTab(0)}
         >
-          <Tab
-            icon={<SecurityIcon />}
-            label="Security & Compliance"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<CloudIcon />}
-            label="Multi-Cloud"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<IntegrationIcon />}
-            label="Integrations"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<GovernanceIcon />}
-            label="Audit & Governance"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<PerformanceIcon />}
-            label="Performance"
-            iconPosition="start"
-          />
-        </Tabs>
-      </Paper>
+          <ShieldCheckIcon className="w-4 h-4 mr-2" />
+          Security & Compliance
+        </a>
+        <a
+          className={`tab ${activeTab === 1 ? 'tab-active' : ''}`}
+          onClick={() => setActiveTab(1)}
+        >
+          <CloudIcon className="w-4 h-4 mr-2" />
+          Multi-Cloud
+        </a>
+        <a
+          className={`tab ${activeTab === 2 ? 'tab-active' : ''}`}
+          onClick={() => setActiveTab(2)}
+        >
+          <PuzzlePieceIcon className="w-4 h-4 mr-2" />
+          Integrations
+        </a>
+        <a
+          className={`tab ${activeTab === 3 ? 'tab-active' : ''}`}
+          onClick={() => setActiveTab(3)}
+        >
+          <ScaleIcon className="w-4 h-4 mr-2" />
+          Audit & Governance
+        </a>
+        <a
+          className={`tab ${activeTab === 4 ? 'tab-active' : ''}`}
+          onClick={() => setActiveTab(4)}
+        >
+          <ChartBarIcon className="w-4 h-4 mr-2" />
+          Performance
+        </a>
+      </div>
 
       {/* Tab Content */}
       {renderTabContent()}
 
       {/* Add Integration Dialog */}
-      <Dialog open={addIntegrationDialog} onClose={() => setAddIntegrationDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Integration</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Integration Name"
-            value={integrationForm.name}
-            onChange={(e) => setIntegrationForm(prev => ({ ...prev, name: e.target.value }))}
-            sx={{ mb: 2, mt: 1 }}
-            required
-          />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Type</InputLabel>
-            <Select
+      <dialog className={`modal ${addIntegrationDialog ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Add Integration</h3>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Integration Name</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={integrationForm.name}
+              onChange={(e) => setIntegrationForm(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Type</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
               value={integrationForm.type}
               onChange={(e) => setIntegrationForm(prev => ({ ...prev, type: e.target.value as Integration['type'] }))}
             >
-              <MenuItem value="webhook">Webhook</MenuItem>
-              <MenuItem value="api">API</MenuItem>
-              <MenuItem value="database">Database</MenuItem>
-              <MenuItem value="monitoring">Monitoring</MenuItem>
-              <MenuItem value="logging">Logging</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            label="Provider"
-            value={integrationForm.provider}
-            onChange={(e) => setIntegrationForm(prev => ({ ...prev, provider: e.target.value }))}
-            sx={{ mb: 2 }}
-            required
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddIntegrationDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleAddIntegration}
-            variant="contained"
-            disabled={loading || !integrationForm.name.trim() || !integrationForm.provider.trim()}
-          >
-            {loading ? 'Adding...' : 'Add Integration'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              <option value="webhook">Webhook</option>
+              <option value="api">API</option>
+              <option value="database">Database</option>
+              <option value="monitoring">Monitoring</option>
+              <option value="logging">Logging</option>
+            </select>
+          </div>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Provider</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={integrationForm.provider}
+              onChange={(e) => setIntegrationForm(prev => ({ ...prev, provider: e.target.value }))}
+            />
+          </div>
+          <div className="modal-action">
+            <button className="btn" onClick={() => setAddIntegrationDialog(false)}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              onClick={handleAddIntegration}
+              disabled={loading || !integrationForm.name.trim() || !integrationForm.provider.trim()}
+            >
+              {loading ? 'Adding...' : 'Add Integration'}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setAddIntegrationDialog(false)}>close</button>
+        </form>
+      </dialog>
 
       {/* Add Cloud Provider Dialog */}
-      <Dialog open={addCloudProviderDialog} onClose={() => setAddCloudProviderDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Cloud Provider</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Provider Name"
-            value={cloudForm.name}
-            onChange={(e) => setCloudForm(prev => ({ ...prev, name: e.target.value }))}
-            sx={{ mb: 2, mt: 1 }}
-            required
-          />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Cloud Type</InputLabel>
-            <Select
+      <dialog className={`modal ${addCloudProviderDialog ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Add Cloud Provider</h3>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Provider Name</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={cloudForm.name}
+              onChange={(e) => setCloudForm(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Cloud Type</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
               value={cloudForm.type}
               onChange={(e) => setCloudForm(prev => ({ ...prev, type: e.target.value as CloudProvider['type'] }))}
             >
-              <MenuItem value="aws">Amazon Web Services</MenuItem>
-              <MenuItem value="azure">Microsoft Azure</MenuItem>
-              <MenuItem value="gcp">Google Cloud Platform</MenuItem>
-              <MenuItem value="digitalocean">DigitalOcean</MenuItem>
-              <MenuItem value="heroku">Heroku</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            label="Region"
-            value={cloudForm.region}
-            onChange={(e) => setCloudForm(prev => ({ ...prev, region: e.target.value }))}
-            sx={{ mb: 2 }}
-            required
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddCloudProviderDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleAddCloudProvider}
-            variant="contained"
-            disabled={loading || !cloudForm.name.trim() || !cloudForm.region.trim()}
-          >
-            {loading ? 'Adding...' : 'Add Provider'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+              <option value="aws">Amazon Web Services</option>
+              <option value="azure">Microsoft Azure</option>
+              <option value="gcp">Google Cloud Platform</option>
+              <option value="digitalocean">DigitalOcean</option>
+              <option value="heroku">Heroku</option>
+            </select>
+          </div>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text">Region</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={cloudForm.region}
+              onChange={(e) => setCloudForm(prev => ({ ...prev, region: e.target.value }))}
+            />
+          </div>
+          <div className="modal-action">
+            <button className="btn" onClick={() => setAddCloudProviderDialog(false)}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              onClick={handleAddCloudProvider}
+              disabled={loading || !cloudForm.name.trim() || !cloudForm.region.trim()}
+            >
+              {loading ? 'Adding...' : 'Add Provider'}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setAddCloudProviderDialog(false)}>close</button>
+        </form>
+      </dialog>
+    </div>
   );
 };
 

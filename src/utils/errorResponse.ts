@@ -5,9 +5,10 @@
  * HTTP status codes, error codes, and structured data.
  */
 
-import { Response } from 'express';
+import type { Response } from 'express';
 import { BaseHivemindError } from '../types/errorClasses';
-import { HivemindError, ErrorUtils } from '../types/errors';
+import type { HivemindError} from '../types/errors';
+import { ErrorUtils } from '../types/errors';
 
 /**
  * Standard error response structure
@@ -83,7 +84,7 @@ export const HTTP_STATUS_CODES = {
   BAD_GATEWAY: 502,
   SERVICE_UNAVAILABLE: 503,
   GATEWAY_TIMEOUT: 504,
-  NETWORK_AUTHENTICATION_REQUIRED: 511
+  NETWORK_AUTHENTICATION_REQUIRED: 511,
 } as const;
 
 /**
@@ -100,8 +101,8 @@ export class ErrorResponseBuilder {
         message: ErrorUtils.getMessage(error),
         type: this.getErrorType(error),
         correlationId,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
     // Add error details if available
@@ -116,7 +117,7 @@ export class ErrorResponseBuilder {
         canRecover: recovery.canRecover,
         retryDelay: recovery.retryDelay,
         maxRetries: recovery.maxRetries,
-        steps: recovery.recoverySteps
+        steps: recovery.recoverySteps,
       };
     }
   }
@@ -128,7 +129,7 @@ export class ErrorResponseBuilder {
     this.response.request = {
       path,
       method,
-      correlationId
+      correlationId,
     };
     return this;
   }
@@ -139,7 +140,7 @@ export class ErrorResponseBuilder {
   withDetails(details: Record<string, unknown>): ErrorResponseBuilder {
     this.response.error.details = {
       ...this.response.error.details,
-      ...details
+      ...details,
     };
     return this;
   }
@@ -167,36 +168,36 @@ export class ErrorResponseBuilder {
     
     // Check for specific status codes
     switch (error.code) {
-      case 'VALIDATION_ERROR':
-        return HTTP_STATUS_CODES.BAD_REQUEST;
-      case 'AUTH_ERROR':
-        return HTTP_STATUS_CODES.UNAUTHORIZED;
-      case 'AUTHZ_ERROR':
-        return HTTP_STATUS_CODES.FORBIDDEN;
-      case 'NOT_FOUND':
-        return HTTP_STATUS_CODES.NOT_FOUND;
-      case 'RATE_LIMIT_ERROR':
-        return HTTP_STATUS_CODES.TOO_MANY_REQUESTS;
-      case 'TIMEOUT_ERROR':
-        return HTTP_STATUS_CODES.REQUEST_TIMEOUT;
-      case 'CONFIG_ERROR':
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-      case 'DATABASE_ERROR':
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-      case 'NETWORK_ERROR':
-        // Check if it's a client or server error
-        if (error.details && typeof error.details === 'object' && 'response' in error.details) {
-          const response = (error.details as any).response;
-          if (response && typeof response === 'object' && 'status' in response) {
-            const status = Number(response.status);
-            if (status >= 400 && status < 600) {
-              return status;
-            }
+    case 'VALIDATION_ERROR':
+      return HTTP_STATUS_CODES.BAD_REQUEST;
+    case 'AUTH_ERROR':
+      return HTTP_STATUS_CODES.UNAUTHORIZED;
+    case 'AUTHZ_ERROR':
+      return HTTP_STATUS_CODES.FORBIDDEN;
+    case 'NOT_FOUND':
+      return HTTP_STATUS_CODES.NOT_FOUND;
+    case 'RATE_LIMIT_ERROR':
+      return HTTP_STATUS_CODES.TOO_MANY_REQUESTS;
+    case 'TIMEOUT_ERROR':
+      return HTTP_STATUS_CODES.REQUEST_TIMEOUT;
+    case 'CONFIG_ERROR':
+      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+    case 'DATABASE_ERROR':
+      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+    case 'NETWORK_ERROR':
+      // Check if it's a client or server error
+      if (error.details && typeof error.details === 'object' && 'response' in error.details) {
+        const response = (error.details as any).response;
+        if (response && typeof response === 'object' && 'status' in response) {
+          const status = Number(response.status);
+          if (status >= 400 && status < 600) {
+            return status;
           }
         }
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-      default:
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+      }
+      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+    default:
+      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
     }
   }
 
@@ -223,8 +224,8 @@ export class SuccessResponseBuilder<T = any> {
       data,
       meta: {
         timestamp: new Date().toISOString(),
-        correlationId
-      }
+        correlationId,
+      },
     };
   }
 
@@ -234,7 +235,7 @@ export class SuccessResponseBuilder<T = any> {
   withMeta(meta: Partial<StandardSuccessResponse<T>['meta']>): SuccessResponseBuilder<T> {
     this.response.meta = {
       ...this.response.meta,
-      ...meta
+      ...meta,
     } as StandardSuccessResponse<T>['meta'];
     return this;
   }
@@ -252,7 +253,7 @@ export class SuccessResponseBuilder<T = any> {
  */
 export function createErrorResponse(
   error: HivemindError,
-  correlationId?: string
+  correlationId?: string,
 ): ErrorResponseBuilder {
   return new ErrorResponseBuilder(error, correlationId);
 }
@@ -262,7 +263,7 @@ export function createErrorResponse(
  */
 export function createSuccessResponse<T>(
   data: T,
-  correlationId?: string
+  correlationId?: string,
 ): SuccessResponseBuilder<T> {
   return new SuccessResponseBuilder(data, correlationId);
 }
@@ -274,7 +275,7 @@ export function sendErrorResponse(
   res: Response,
   error: HivemindError,
   correlationId?: string,
-  requestInfo?: { path?: string; method?: string }
+  requestInfo?: { path?: string; method?: string },
 ): Response {
   const builder = createErrorResponse(error, correlationId);
   
@@ -300,7 +301,7 @@ export function sendSuccessResponse<T>(
   res: Response,
   data: T,
   correlationId?: string,
-  meta?: Partial<StandardSuccessResponse<T>['meta']>
+  meta?: Partial<StandardSuccessResponse<T>['meta']>,
 ): Response {
   const builder = createSuccessResponse(data, correlationId);
   
@@ -330,7 +331,7 @@ export const ErrorResponses = {
       code: 'BAD_REQUEST',
       message,
       type: 'validation' as const,
-      details
+      details,
     };
     return createErrorResponse(error);
   },
@@ -342,7 +343,7 @@ export const ErrorResponses = {
     const error = {
       code: 'UNAUTHORIZED',
       message,
-      type: 'authentication' as const
+      type: 'authentication' as const,
     };
     return createErrorResponse(error);
   },
@@ -354,7 +355,7 @@ export const ErrorResponses = {
     const error = {
       code: 'FORBIDDEN',
       message,
-      type: 'authorization' as const
+      type: 'authorization' as const,
     };
     return createErrorResponse(error);
   },
@@ -366,7 +367,7 @@ export const ErrorResponses = {
     const error = {
       code: 'NOT_FOUND',
       message: `${resource} not found`,
-      type: 'api' as const
+      type: 'api' as const,
     };
     return createErrorResponse(error);
   },
@@ -379,7 +380,7 @@ export const ErrorResponses = {
       code: 'METHOD_NOT_ALLOWED',
       message: `Method ${method} not allowed`,
       type: 'api' as const,
-      details: { allowedMethods }
+      details: { allowedMethods },
     };
     return createErrorResponse(error);
   },
@@ -392,7 +393,7 @@ export const ErrorResponses = {
       code: 'CONFLICT',
       message,
       type: 'api' as const,
-      details
+      details,
     };
     return createErrorResponse(error);
   },
@@ -405,7 +406,7 @@ export const ErrorResponses = {
       code: 'TOO_MANY_REQUESTS',
       message: 'Rate limit exceeded',
       type: 'rate-limit' as const,
-      details: { retryAfter, limit }
+      details: { retryAfter, limit },
     };
     return createErrorResponse(error);
   },
@@ -417,7 +418,7 @@ export const ErrorResponses = {
     const error = {
       code: 'INTERNAL_SERVER_ERROR',
       message,
-      type: 'unknown' as const
+      type: 'unknown' as const,
     };
     return createErrorResponse(error);
   },
@@ -429,7 +430,7 @@ export const ErrorResponses = {
     const error = {
       code: 'SERVICE_UNAVAILABLE',
       message,
-      type: 'api' as const
+      type: 'api' as const,
     };
     return createErrorResponse(error);
   },
@@ -442,7 +443,7 @@ export const ErrorResponses = {
       code: 'VALIDATION_ERROR',
       message: `Validation failed for field: ${field}`,
       type: 'validation' as const,
-      details: { field, value, expected, suggestions }
+      details: { field, value, expected, suggestions },
     };
     return createErrorResponse(error);
   },
@@ -455,7 +456,7 @@ export const ErrorResponses = {
       code: 'CONFIG_ERROR',
       message: `Configuration error for ${configKey}`,
       type: 'configuration' as const,
-      details: { configKey, expectedType, providedType }
+      details: { configKey, expectedType, providedType },
     };
     return createErrorResponse(error);
   },
@@ -468,7 +469,7 @@ export const ErrorResponses = {
       code: 'DATABASE_ERROR',
       message: `Database error during ${operation}`,
       type: 'database' as const,
-      details: { operation, table, query }
+      details: { operation, table, query },
     };
     return createErrorResponse(error);
   },
@@ -481,7 +482,7 @@ export const ErrorResponses = {
       code: 'NETWORK_ERROR',
       message,
       type: 'network' as const,
-      details: { response }
+      details: { response },
     };
     return createErrorResponse(error);
   },
@@ -494,10 +495,10 @@ export const ErrorResponses = {
       code: 'TIMEOUT_ERROR',
       message: `Operation ${operation} timed out after ${timeoutMs}ms`,
       type: 'timeout' as const,
-      details: { operation, timeoutMs }
+      details: { operation, timeoutMs },
     };
     return createErrorResponse(error);
-  }
+  },
 };
 
 /**
@@ -513,7 +514,7 @@ export const ResponseUtils = {
     page: number,
     limit: number,
     total: number,
-    correlationId?: string
+    correlationId?: string,
   ): Response {
     const totalPages = Math.ceil(total / limit);
     
@@ -525,8 +526,8 @@ export const ResponseUtils = {
         total,
         totalPages,
         hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     }, correlationId);
   },
 
@@ -537,7 +538,7 @@ export const ResponseUtils = {
     res: Response,
     data: T,
     correlationId?: string,
-    location?: string
+    location?: string,
   ): Response {
     const response = createSuccessResponse(data, correlationId).build();
     
@@ -558,7 +559,7 @@ export const ResponseUtils = {
   accepted<T>(
     res: Response,
     data: T,
-    correlationId?: string
+    correlationId?: string,
   ): Response {
     const response = createSuccessResponse(data, correlationId).build();
     
@@ -578,7 +579,7 @@ export const ResponseUtils = {
     }
     
     return res.status(HTTP_STATUS_CODES.NO_CONTENT).send();
-  }
+  },
 };
 
 export default {
@@ -588,5 +589,5 @@ export default {
   sendSuccessResponse,
   ErrorResponses,
   ResponseUtils,
-  HTTP_STATUS_CODES
+  HTTP_STATUS_CODES,
 };

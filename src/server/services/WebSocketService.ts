@@ -1,9 +1,10 @@
 import { Server as SocketIOServer } from 'socket.io';
-import { Server as HttpServer } from 'http';
+import type { Server as HttpServer } from 'http';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import os from 'os';
 import Debug from 'debug';
-import ApiMonitorService, { EndpointStatus } from '../../services/ApiMonitorService';
+import type { EndpointStatus } from '../../services/ApiMonitorService';
+import ApiMonitorService from '../../services/ApiMonitorService';
 
 const debug = Debug('app:WebSocketService');
 
@@ -99,7 +100,7 @@ export class WebSocketService {
     if (this.io && this.connectedClients > 0) {
       this.io.emit('api_status_update', {
         endpoint: status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
@@ -113,8 +114,8 @@ export class WebSocketService {
           endpointId: status.id,
           url: status.url,
           responseTime: status.responseTime,
-          consecutiveFailures: status.consecutiveFailures
-        }
+          consecutiveFailures: status.consecutiveFailures,
+        },
       });
     }
   }
@@ -126,7 +127,7 @@ export class WebSocketService {
     if (this.io && this.connectedClients > 0) {
       this.io.emit('api_health_check_result', {
         result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -143,7 +144,7 @@ export class WebSocketService {
     const messageEvent: MessageFlowEvent = {
       ...event,
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     this.messageFlow.push(messageEvent);
@@ -170,7 +171,7 @@ export class WebSocketService {
     const alertEvent: AlertEvent = {
       ...alert,
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     this.alerts.push(alertEvent);
@@ -179,7 +180,7 @@ export class WebSocketService {
     const key = alertEvent.botName || 'unknown';
     const list = this.botErrors.get(key) || [];
     list.push(`${alertEvent.level}: ${alertEvent.title}`);
-    if (list.length > 20) list.shift();
+    if (list.length > 20) {list.shift();}
     this.botErrors.set(key, list);
 
     // Keep only last 500 alerts
@@ -221,7 +222,7 @@ export class WebSocketService {
   public getBotStats(botName: string): { messageCount: number; errors: string[] } {
     return {
       messageCount: this.botMessageCounts.get(botName) || 0,
-      errors: [...(this.botErrors.get(botName) || [])]
+      errors: [...(this.botErrors.get(botName) || [])],
     };
   }
 
@@ -238,7 +239,7 @@ export class WebSocketService {
     const oneMinuteAgo = new Date(now.getTime() - 60000);
 
     const recentMessages = this.messageFlow.filter(event =>
-      new Date(event.timestamp) > oneMinuteAgo
+      new Date(event.timestamp) > oneMinuteAgo,
     );
 
     const currentRate = recentMessages.length;
@@ -252,7 +253,7 @@ export class WebSocketService {
 
     const recentErrors = this.alerts.filter(alert =>
       (alert.level === 'error' || alert.level === 'critical') &&
-      new Date(alert.timestamp) > oneMinuteAgo
+      new Date(alert.timestamp) > oneMinuteAgo,
     );
 
     const currentRate = recentErrors.length;
@@ -269,7 +270,19 @@ export class WebSocketService {
       }
 
       this.io = new SocketIOServer(server, {
-        path: '/webui/socket.io'
+        path: '/webui/socket.io',
+        cors: {
+          origin: [
+            /^https?:\/\/localhost(:\d+)?/,
+            /^https?:\/\/127\.0\.0\.1(:\d+)?/,
+            /^https:\/\/.*\.netlify\.app$/,
+            /^https:\/\/.*\.netlify\.com$/,
+            /^https:\/\/.*\.fly\.dev$/,
+          ],
+          methods: ['GET', 'POST'],
+          credentials: true,
+          allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control', 'X-CSRF-Token'],
+        },
       });
 
       this.setupEventHandlers();
@@ -279,7 +292,7 @@ export class WebSocketService {
       debug('CRITICAL: Failed to initialize WebSocket service:', {
         error: error.message,
         stack: error.stack,
-        serverProvided: !!server
+        serverProvided: !!server,
       });
       throw new Error(`WebSocket service initialization failed: ${error.message}`);
     }
@@ -290,7 +303,7 @@ export class WebSocketService {
    * Handles connection, disconnection, and various client requests
    */
   private setupEventHandlers(): void {
-    if (!this.io) return;
+    if (!this.io) {return;}
 
     this.io.on('connection', (socket) => {
       this.connectedClients++;
@@ -339,6 +352,8 @@ export class WebSocketService {
       socket.on('disconnect', () => {
         this.connectedClients--;
         debug(`Client disconnected. Total clients: ${this.connectedClients}`);
+        // Clean up event listeners to prevent memory leaks
+        socket.removeAllListeners();
       });
     });
   }
@@ -359,26 +374,26 @@ export class WebSocketService {
   }
 
   private broadcastMonitoringData(): void {
-    if (!this.io) return;
+    if (!this.io) {return;}
 
     // Broadcast message flow updates
     if (this.messageFlow.length > 0) {
       this.io.emit('message_flow_broadcast', {
         latest: this.messageFlow.slice(-5), // Last 5 messages
         total: this.messageFlow.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
 
     // Broadcast alert updates
     if (this.alerts.length > 0) {
       const recentAlerts = this.alerts.filter(alert =>
-        new Date(alert.timestamp) > new Date(Date.now() - 30000) // Last 30 seconds
+        new Date(alert.timestamp) > new Date(Date.now() - 30000), // Last 30 seconds
       );
       if (recentAlerts.length > 0) {
         this.io.emit('alerts_broadcast', {
           alerts: recentAlerts,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
@@ -389,9 +404,9 @@ export class WebSocketService {
         memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
         errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
-        activeConnections: this.connectedClients
+        activeConnections: this.connectedClients,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Broadcast compact per-bot stats (message counts and error counts)
@@ -400,11 +415,11 @@ export class WebSocketService {
       const stats = Object.entries(statsObj).map(([name, s]) => ({
         name,
         messageCount: s.messageCount,
-        errorCount: s.errors.length
+        errorCount: s.errors.length,
       }));
       this.io.emit('bot_stats_broadcast', {
         stats,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch {}
   }
@@ -430,8 +445,8 @@ export class WebSocketService {
           capabilities: {
             voiceSupport: !!bot.discord?.voiceChannelId,
             multiChannel: bot.messageProvider === 'slack' && !!bot.slack?.joinChannels,
-            hasSecrets: !!(bot.discord?.token || bot.slack?.botToken || bot.openai?.apiKey)
-          }
+            hasSecrets: !!(bot.discord?.token || bot.slack?.botToken || bot.openai?.apiKey),
+          },
         };
       });
 
@@ -439,7 +454,7 @@ export class WebSocketService {
         bots: status,
         timestamp: new Date().toISOString(),
         total: bots.length,
-        active: bots.length
+        active: bots.length,
       });
     } catch (error) {
       debug('Error sending bot status:', error);
@@ -456,13 +471,13 @@ export class WebSocketService {
           used: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
           total: Math.round(memUsage.heapTotal / 1024 / 1024), // MB
           external: Math.round(memUsage.external / 1024 / 1024), // MB
-          rss: Math.round(memUsage.rss / 1024 / 1024) // MB
+          rss: Math.round(memUsage.rss / 1024 / 1024), // MB
         },
         cpu: {
-          usage: process.cpuUsage()
+          usage: process.cpuUsage(),
         },
         connectedClients: this.connectedClients,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       socket.emit('system_metrics_update', metrics);
@@ -484,7 +499,7 @@ export class WebSocketService {
         botCount: bots.length,
         missingConfigs: this.findMissingConfigurations(bots),
         recommendations: this.generateRecommendations(bots),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       socket.emit('config_validation_update', validation);
@@ -536,19 +551,19 @@ export class WebSocketService {
   }
 
   private broadcastBotStatus(): void {
-    if (!this.io) return;
+    if (!this.io) {return;}
     this.io.emit('bot_status_broadcast', { timestamp: new Date().toISOString() });
   }
 
   private broadcastSystemMetrics(): void {
-    if (!this.io) return;
+    if (!this.io) {return;}
     this.io.sockets.sockets.forEach(socket => {
       this.sendSystemMetrics(socket);
     });
   }
 
   public broadcastConfigChange(): void {
-    if (!this.io) return;
+    if (!this.io) {return;}
     debug('Broadcasting configuration change');
     this.io.emit('config_changed', { timestamp: new Date().toISOString() });
     
@@ -565,7 +580,7 @@ export class WebSocketService {
       socket.emit('message_flow_update', {
         messages: messageFlow,
         total: this.messageFlow.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       debug('Error sending message flow:', error);
@@ -579,7 +594,7 @@ export class WebSocketService {
       socket.emit('alerts_update', {
         alerts,
         total: this.alerts.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       debug('Error sending alerts:', error);
@@ -621,7 +636,7 @@ export class WebSocketService {
         cpuUsage: Math.round(cpuPercent),
         activeConnections: this.connectedClients,
         messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
-        errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0
+        errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
       };
 
       this.performanceMetrics.push(currentMetric);
@@ -634,9 +649,9 @@ export class WebSocketService {
         current: currentMetric,
         history: {
           messageRate: this.getMessageRateHistory(),
-          errorRate: this.getErrorRateHistory()
+          errorRate: this.getErrorRateHistory(),
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       debug('Error sending performance metrics:', error);
@@ -657,24 +672,24 @@ export class WebSocketService {
           totalMessages: this.messageFlow.length,
           totalAlerts: this.alerts.length,
           uptime: process.uptime(),
-          connectedClients: this.connectedClients
+          connectedClients: this.connectedClients,
         },
         recentActivity: {
           messages: this.getMessageFlow(10),
-          alerts: this.getAlerts(5)
+          alerts: this.getAlerts(5),
         },
         performance: {
           current: {
             memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
             messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
-            errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0
+            errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
           },
           history: {
             messageRate: this.getMessageRateHistory(),
-            errorRate: this.getErrorRateHistory()
-          }
+            errorRate: this.getErrorRateHistory(),
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       socket.emit('monitoring_dashboard_update', dashboard);
@@ -692,7 +707,7 @@ export class WebSocketService {
       socket.emit('api_status_update', {
         endpoints: statuses,
         overall: overallHealth,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       debug('Error sending API status:', error);
@@ -706,7 +721,7 @@ export class WebSocketService {
 
       socket.emit('api_endpoints_update', {
         endpoints,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       debug('Error sending API endpoints:', error);
@@ -736,6 +751,10 @@ export class WebSocketService {
       }
       this.io = null;
     }
+
+    // Clean up per-bot statistics to prevent memory leaks
+    this.botMessageCounts.clear();
+    this.botErrors.clear();
 
     debug('WebSocket service shut down');
   }

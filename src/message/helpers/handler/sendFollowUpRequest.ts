@@ -1,28 +1,28 @@
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 import discordConfig from '@config/discordConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
+
+import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 /**
  * Sends an AI-generated follow-up message using chat completions.
  * @param msg - The message to follow up on.
  * @param channelId - The channel where the follow-up should be sent.
  * @param followUpText - The follow-up text to send.
+ * @param messageProvider - The provider to use for sending the message.
  */
 export async function sendFollowUpRequest(
   msg: IMessage,
   channelId: string,
-  followUpText: string
+  followUpText: string,
+  messageProvider: IMessageProvider,
+  senderKey?: string,
 ): Promise<void> {
-  const llmProvider = getLlmProvider();
-  if (!llmProvider.length) {
-    debug('No LLM providers available');
-    return;
-  }
-
-  if (!llmProvider[0].supportsChatCompletion()) {
+  const { provider, metadata } = getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
+  if (!provider.supportsChatCompletion()) {
     debug(`LLM provider does not support chat completions for channel: ${channelId}`);
     return;
   }
@@ -42,12 +42,11 @@ export async function sendFollowUpRequest(
   debug(`Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
+    const response = await provider.generateChatCompletion(followUpText, historyMessages, metadata);
     const followUpMessage = followUpText + ' ' + response;
     debug('Sending follow-up message:', followUpMessage);
-    // In a real implementation, we would send the message to the channel here
-    // For now, we're just logging it as the actual sending mechanism would depend on the platform
-    // Example: await sendMessageToChannel(channelId, followUpMessage);
+
+    await messageProvider.sendMessageToChannel(channelId, followUpMessage, senderKey);
   } catch (error) {
     debug('Error generating follow-up:', error);
   }

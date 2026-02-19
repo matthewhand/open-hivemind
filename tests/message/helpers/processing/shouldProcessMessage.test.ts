@@ -82,37 +82,29 @@ describe('shouldProcessMessage', () => {
       expect(shouldProcessMessage(message)).toBe(false);
     });
 
-    it('should ignore whitespace-only messages', () => {
-      const whitespaceMessages = [
-        '   ',
-        '\n\n\n',
-        '\t\t\t',
-        '   \n\t  ',
-        ' \r\n ',
-        '\u00A0\u00A0', // Non-breaking spaces
-      ];
-
-      whitespaceMessages.forEach(text => {
-        const message = createMockMessage(text, false);
-        expect(shouldProcessMessage(message)).toBe(false);
-      });
+    it.each([
+      ['spaces', '   '],
+      ['newlines', '\n\n\n'],
+      ['tabs', '\t\t\t'],
+      ['mixed whitespace', '   \n\t  '],
+      ['carriage return', ' \r\n '],
+      ['non-breaking spaces', '\u00A0\u00A0'],
+    ])('should ignore messages with only %s', (type, text) => {
+      const message = createMockMessage(text, false);
+      expect(shouldProcessMessage(message)).toBe(false);
     });
 
-    it('should process messages with actual content', () => {
-      const validMessages = [
-        'Hello',
-        'a',
-        '123',
-        '!@#$%',
-        'Hello\nWorld',
-        '  Hello  ', // Leading/trailing whitespace but has content
-        'emoji 🤖',
-      ];
-
-      validMessages.forEach(text => {
-        const message = createMockMessage(text, false);
-        expect(shouldProcessMessage(message)).toBe(true);
-      });
+    it.each([
+      ['simple text', 'Hello'],
+      ['single character', 'a'],
+      ['numbers', '123'],
+      ['special characters', '!@#$%'],
+      ['multiline', 'Hello\nWorld'],
+      ['whitespace with content', '  Hello  '],
+      ['emoji', 'emoji 🤖'],
+    ])('should process messages with %s', (type, text) => {
+      const message = createMockMessage(text, false);
+      expect(shouldProcessMessage(message)).toBe(true);
     });
 
     it('should handle null/undefined message text gracefully', () => {

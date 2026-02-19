@@ -1,6 +1,6 @@
 import Debug from 'debug';  // ✅ Added missing import
 import { handleStatusCommand } from '../commands/statusCommand';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:processCommand');  // ✅ Initialize Debug instance
 
@@ -16,7 +16,7 @@ const debug = Debug('app:processCommand');  // ✅ Initialize Debug instance
  */
 export async function processCommand(
   message: IMessage,
-  callback: (result: string) => Promise<void>
+  callback: (result: string) => Promise<void>,
 ): Promise<boolean> {
   try {
     const text = message.getText().trim();

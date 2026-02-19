@@ -6,6 +6,8 @@ interface BreakpointValues {
   lg: boolean;
   xl: boolean;
   '2xl': boolean;
+  isMobile: boolean;
+  isTablet: boolean;
 }
 
 const breakpoints = {
@@ -22,7 +24,7 @@ export const useResponsive = (): BreakpointValues => {
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const handleResize = () => {
       setWindowSize({
@@ -46,6 +48,8 @@ export const useResponsive = (): BreakpointValues => {
     lg: width >= breakpoints.lg,
     xl: width >= breakpoints.xl,
     '2xl': width >= breakpoints['2xl'],
+    isMobile: width < breakpoints.sm,
+    isTablet: width >= breakpoints.sm && width < breakpoints.lg,
   };
 };
 
@@ -53,14 +57,14 @@ export const useMediaQuery = (query: { maxWidth?: number; minWidth?: number }): 
   const [matches, setMatches] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const mediaQueryList = window.matchMedia(
       query.maxWidth 
         ? `(max-width: ${query.maxWidth}px)`
         : query.minWidth 
           ? `(min-width: ${query.minWidth}px)`
-          : ''
+          : '',
     );
 
     setMatches(mediaQueryList.matches);

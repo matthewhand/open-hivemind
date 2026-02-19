@@ -1,35 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Box,
   Card,
-  CardContent,
-  Typography,
-  Chip,
+  Badge,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
   Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Divider,
   Button,
   Tooltip,
-} from '@mui/material';
-import { Button as DaisyButton } from './DaisyUI';
+} from './DaisyUI';
 import {
-  ExpandMore as ExpandMoreIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  Refresh as RefreshIcon,
-  PlayArrow as PlayIcon,
-  Stop as StopIcon,
-  NetworkCheck as NetworkIcon,
-} from '@mui/icons-material';
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  ArrowPathIcon,
+  PlayIcon,
+  StopIcon,
+  SignalIcon,
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
-import io, { Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 
 interface EndpointStatus {
   id: string;
@@ -68,7 +60,7 @@ interface ApiStatusMonitorProps {
 }
 
 const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
-  refreshInterval = 30000
+  refreshInterval = 30000,
 }) => {
   const [apiStatus, setApiStatus] = useState<ApiStatusData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,36 +140,36 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   }, [fetchApiStatus, setupWebSocket, refreshInterval]);
 
   const getStatusIcon = (status: string) => {
+    const className = 'w-5 h-5';
     switch (status) {
-      case 'online':
-        return <CheckCircleIcon color="success" />;
-      case 'slow':
-        return <WarningIcon color="warning" />;
-      case 'offline':
-        return <ErrorIcon color="error" />;
-      case 'error':
-        return <ErrorIcon color="error" />;
-      default:
-        return <InfoIcon color="action" />;
+    case 'online':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'slow':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    case 'offline':
+    case 'error':
+      return <ExclamationCircleIcon className={`${className} text-error`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online':
-        return 'success';
-      case 'slow':
-        return 'warning';
-      case 'offline':
-      case 'error':
-        return 'error';
-      default:
-        return 'default';
+    case 'online':
+      return 'success';
+    case 'slow':
+      return 'warning';
+    case 'offline':
+    case 'error':
+      return 'error';
+    default:
+      return 'ghost';
     }
   };
 
   const formatResponseTime = (ms: number) => {
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
+    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
@@ -189,8 +181,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
 
-    if (hours > 0) return `${hours}h ${minutes % 60}m ago`;
-    if (minutes > 0) return `${minutes}m ago`;
+    if (hours > 0) {return `${hours}h ${minutes % 60}m ago`;}
+    if (minutes > 0) {return `${minutes}m ago`;}
     return `${seconds}s ago`;
   };
 
@@ -219,13 +211,13 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   if (loading) {
     return (
       <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-            <Typography variant="body1" sx={{ ml: 2 }}>
+        <Card.Body>
+          <div className="flex justify-center items-center py-8">
+            <p className="ml-2 text-base-content/70">
               Loading API status...
-            </Typography>
-          </Box>
-        </CardContent>
+            </p>
+          </div>
+        </Card.Body>
       </Card>
     );
   }
@@ -233,190 +225,178 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   if (!apiStatus) {
     return (
       <Card>
-        <CardContent>
-          <Alert severity="error">
+        <Card.Body>
+          <Alert variant="error">
             Failed to load API status data
           </Alert>
-        </CardContent>
+        </Card.Body>
       </Card>
     );
   }
 
+  const accordionItems = [
+    {
+      id: 'monitoring-details',
+      title: 'Monitoring Details',
+      icon: '📊',
+      content: (
+        <div className="flex flex-wrap gap-4">
+          <div className="min-w-[300px] flex-1">
+            <h4 className="font-medium mb-2">
+              Performance Metrics
+            </h4>
+            <p className="text-sm">
+              • Average Response Time: {formatResponseTime(
+                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
+              )}
+            </p>
+            <p className="text-sm">
+              • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
+            </p>
+            <p className="text-sm">
+              • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
+            </p>
+            <p className="text-sm">
+              • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
+                Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
+                  apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
+            </p>
+          </div>
+          <div className="min-w-[300px] flex-1">
+            <h4 className="font-medium mb-2">
+              Monitoring Status
+            </h4>
+            <p className="text-sm">
+              • Monitoring Active: {monitoringActive ? 'Yes' : 'No'}
+            </p>
+            <p className="text-sm">
+              • Last Update: {new Date(apiStatus.timestamp).toLocaleString()}
+            </p>
+            <p className="text-sm">
+              • WebSocket Connected: {socket?.connected ? 'Yes' : 'No'}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h6">
+      <Card.Body>
+        <div className="flex justify-between items-center mb-6">
+          <Card.Title>
             API Status Monitor
-          </Typography>
-          <Box display="flex" gap={1}>
-            <Tooltip title="Refresh">
-              <DaisyButton onClick={handleRefresh} size="sm" variant="ghost">
-                <RefreshIcon />
-              </DaisyButton>
+          </Card.Title>
+          <div className="flex items-center gap-3">
+            <Tooltip content="Refresh">
+              <Button onClick={handleRefresh} size="sm" variant="ghost">
+                <ArrowPathIcon className="w-5 h-5" />
+              </Button>
             </Tooltip>
             <Button
-              startIcon={monitoringActive ? <StopIcon /> : <PlayIcon />}
               onClick={monitoringActive ? handleStopMonitoring : handleStartMonitoring}
-              variant="outlined"
-              size="small"
+              variant="secondary" className="btn-outline"
+              size="sm"
+              className="flex items-center gap-2"
             >
+              {monitoringActive ? <StopIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
               {monitoringActive ? 'Stop' : 'Start'} Monitoring
             </Button>
             {lastRefresh && (
-              <Typography variant="body2" color="text.secondary">
+              <span className="text-sm text-base-content/70">
                 Last updated: {lastRefresh.toLocaleTimeString()}
-              </Typography>
+              </span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Overall Status */}
         <Alert
-          severity={apiStatus.overall.status === 'healthy' ? 'success' : apiStatus.overall.status === 'warning' ? 'warning' : 'error'}
-          sx={{ mb: 3 }}
+          variant={apiStatus.overall.status === 'healthy' ? 'success' : apiStatus.overall.status === 'warning' ? 'warning' : 'error'}
+          className="mb-6"
         >
           {apiStatus.overall.message}
         </Alert>
 
         {/* Status Summary */}
-        <Box display="flex" gap={2} mb={3}>
-          <Chip
-            label={`Total: ${apiStatus.overall.stats.total}`}
-            variant="outlined"
-            size="small"
-          />
-          <Chip
-            label={`Online: ${apiStatus.overall.stats.online}`}
-            color="success"
-            size="small"
-          />
-          <Chip
-            label={`Slow: ${apiStatus.overall.stats.slow}`}
-            color="warning"
-            size="small"
-          />
-          <Chip
-            label={`Offline: ${apiStatus.overall.stats.offline}`}
-            color="error"
-            size="small"
-          />
-          <Chip
-            label={`Errors: ${apiStatus.overall.stats.error}`}
-            color="error"
-            size="small"
-          />
-        </Box>
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <Badge variant="neutral" className="badge-outline" size="lg">
+            Total: {apiStatus.overall.stats.total}
+          </Badge>
+          <Badge variant="success" size="lg">
+            Online: {apiStatus.overall.stats.online}
+          </Badge>
+          <Badge variant="warning" size="lg">
+            Slow: {apiStatus.overall.stats.slow}
+          </Badge>
+          <Badge variant="error" size="lg">
+            Offline: {apiStatus.overall.stats.offline}
+          </Badge>
+          <Badge variant="error" size="lg">
+            Errors: {apiStatus.overall.stats.error}
+          </Badge>
+        </div>
 
         {/* Endpoint List */}
-        <Typography variant="h6" gutterBottom>
+        <h3 className="text-lg font-bold mb-4">
           Monitored Endpoints
-        </Typography>
+        </h3>
 
-        <List>
+        <ul className="menu bg-base-200 w-full rounded-box mb-6">
           {apiStatus.endpoints.map((endpoint, index) => (
             <React.Fragment key={endpoint.id}>
-              <ListItem>
-                <Box display="flex" alignItems="center" sx={{ mr: 2 }}>
-                  {getStatusIcon(endpoint.status)}
-                </Box>
-
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="subtitle2">
-                        {endpoint.name}
-                      </Typography>
-                      <Chip
-                        label={endpoint.status}
-                        size="small"
-                        color={getStatusColor(endpoint.status)}
-                      />
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
+              <li>
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(endpoint.status)}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{endpoint.name}</span>
+                        <Badge
+                          variant={getStatusColor(endpoint.status) as any}
+                          size="sm"
+                        >
+                          {endpoint.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-base-content/70 mt-1">
                         {endpoint.url}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      </div>
+                      <div className="text-xs text-base-content/50 mt-1">
                         Response: {formatResponseTime(endpoint.responseTime)} |
                         Last checked: {formatUptime(endpoint.lastChecked)} |
                         Success rate: {endpoint.totalChecks > 0 ? Math.round((endpoint.successfulChecks / endpoint.totalChecks) * 100) : 0}%
-                      </Typography>
+                      </div>
                       {endpoint.errorMessage && (
-                        <Typography variant="caption" color="error" display="block">
+                        <div className="text-xs text-error mt-1">
                           Error: {endpoint.errorMessage}
-                        </Typography>
+                        </div>
                       )}
-                    </Box>
-                  }
-                />
-              </ListItem>
-
-              {index < apiStatus.endpoints.length - 1 && <Divider />}
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {index < apiStatus.endpoints.length - 1 && <Divider className="my-0" />}
             </React.Fragment>
           ))}
-        </List>
+        </ul>
 
         {apiStatus.endpoints.length === 0 && (
-          <Box textAlign="center" py={4}>
-            <NetworkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="body1" color="text.secondary">
+          <div className="text-center py-8">
+            <SignalIcon className="w-12 h-12 mx-auto text-base-content/50 mb-4" />
+            <p className="text-base-content/70 mb-2">
               No API endpoints configured for monitoring
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </p>
+            <p className="text-sm text-base-content/50">
               Add endpoints to start monitoring their status
-            </Typography>
-          </Box>
+            </p>
+          </div>
         )}
 
         {/* Detailed Information */}
-        <Accordion sx={{ mt: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>Monitoring Details</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box display="flex" flexWrap="wrap" gap={2}>
-              <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Performance Metrics
-                </Typography>
-                <Typography variant="body2">
-                  • Average Response Time: {formatResponseTime(
-                    apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0
-                  )}
-                </Typography>
-                <Typography variant="body2">
-                  • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
-                </Typography>
-                <Typography variant="body2">
-                  • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
-                </Typography>
-                <Typography variant="body2">
-                  • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
-                    Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
-                    apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
-                </Typography>
-              </Box>
-              <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Monitoring Status
-                </Typography>
-                <Typography variant="body2">
-                  • Monitoring Active: {monitoringActive ? 'Yes' : 'No'}
-                </Typography>
-                <Typography variant="body2">
-                  • Last Update: {new Date(apiStatus.timestamp).toLocaleString()}
-                </Typography>
-                <Typography variant="body2">
-                  • WebSocket Connected: {socket?.connected ? 'Yes' : 'No'}
-                </Typography>
-              </Box>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      </CardContent>
+        <Accordion items={accordionItems} className="mt-4" />
+      </Card.Body>
     </Card>
   );
 };

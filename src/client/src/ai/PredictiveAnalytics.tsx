@@ -1,40 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  Grid,
-  Button,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Alert,
-  ToggleButton,
-  ToggleButtonGroup,
-  Slider,
-  FormControlLabel,
-  Switch
-} from '@mui/material';
-import { 
-  TrendingUp as TrendingIcon,
-  Insights as InsightsIcon,
-  Assessment as AssessmentIcon,
-  Schedule as TimeIcon,
-  ShowChart as ChartIcon,
-  Warning as WarningIcon,
-  Download as DownloadIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import {
+  ChartBarIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  ArrowTrendingUpIcon,
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline';
 
 export interface TimeSeriesData {
   timestamp: Date;
@@ -96,6 +72,7 @@ export interface PredictiveMetrics {
   forecastHorizon: number;
   computationalCost: number;
   memoryUsage: number;
+  [key: string]: number;
 }
 
 export interface PredictiveConfig {
@@ -140,8 +117,8 @@ const defaultConfig: PredictiveConfig = {
         changepoint_prior_scale: 0.05,
         seasonality_prior_scale: 10,
         holidays_prior_scale: 10,
-        seasonality_mode: 'multiplicative',
-      } as number,
+        seasonality_mode: 1, // 1 for multiplicative (simplified for type safety)
+      },
       features: ['timestamp', 'value', 'trend', 'seasonality'],
       target: 'bot_performance',
     },
@@ -198,14 +175,14 @@ const defaultConfig: PredictiveConfig = {
 const generateHistoricalData = (days: number = 30): TimeSeriesData[] => {
   const data: TimeSeriesData[] = [];
   const now = new Date();
-  
+
   for (let i = 0; i < days * 24; i++) { // Hourly data
     const timestamp = new Date(now.getTime() - (days * 24 - i) * 60 * 60 * 1000);
     const baseValue = 100 + Math.sin(i / 24) * 20; // Daily seasonality
     const trend = i * 0.1; // Upward trend
     const noise = (Math.random() - 0.5) * 10; // Random noise
     const anomaly = Math.random() > 0.95 ? (Math.random() - 0.5) * 50 : 0; // Occasional anomalies
-    
+
     data.push({
       timestamp,
       value: Math.max(0, baseValue + trend + noise + anomaly),
@@ -217,7 +194,7 @@ const generateHistoricalData = (days: number = 30): TimeSeriesData[] => {
       },
     });
   }
-  
+
   return data;
 };
 
@@ -225,14 +202,14 @@ const generateForecast = (historicalData: TimeSeriesData[], model: PredictionMod
   const forecast: ForecastResult[] = [];
   const lastTimestamp = historicalData[historicalData.length - 1].timestamp;
   const lastValue = historicalData[historicalData.length - 1].value;
-  
+
   for (let i = 1; i <= 24 * 7; i++) { // 7 days forecast
     const timestamp = new Date(lastTimestamp.getTime() + i * 60 * 60 * 1000);
-    
+
     // Simple forecast simulation based on model type
     let predicted = lastValue;
     let confidence = model.confidence;
-    
+
     switch (model.type) {
       case 'prophet':
         predicted = lastValue + Math.sin(i / 24) * 15 + i * 0.05;
@@ -247,13 +224,13 @@ const generateForecast = (historicalData: TimeSeriesData[], model: PredictionMod
         confidence = 0.85;
         break;
     }
-    
+
     const seasonalComponent = Math.sin(i / 24) * 10; // Daily seasonality
     const trendComponent = i * 0.1; // Linear trend
     const noise = (Math.random() - 0.5) * 5;
-    
+
     predicted = Math.max(0, predicted + seasonalComponent + trendComponent + noise);
-    
+
     forecast.push({
       timestamp,
       predicted,
@@ -269,25 +246,25 @@ const generateForecast = (historicalData: TimeSeriesData[], model: PredictionMod
       anomaly: Math.random() > 0.98, // 2% chance of anomaly
     });
   }
-  
+
   return forecast;
 };
 
 const detectAnomalies = (historicalData: TimeSeriesData[], forecast: ForecastResult[]): AnomalyDetection[] => {
   const anomalies: AnomalyDetection[] = [];
-  
+
   historicalData.forEach(data => {
-    const correspondingForecast = forecast.find(f => 
-      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000
+    const correspondingForecast = forecast.find(f =>
+      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000,
     );
-    
+
     if (correspondingForecast && correspondingForecast.anomaly) {
       const expected = correspondingForecast.predicted;
       const deviation = Math.abs(data.value - expected) / expected;
-      const severity = deviation > 0.5 ? 'critical' : 
-                      deviation > 0.3 ? 'high' : 
-                      deviation > 0.15 ? 'medium' : 'low';
-      
+      const severity = deviation > 0.5 ? 'critical' :
+        deviation > 0.3 ? 'high' :
+          deviation > 0.15 ? 'medium' : 'low';
+
       anomalies.push({
         timestamp: data.timestamp,
         value: data.value,
@@ -297,12 +274,12 @@ const detectAnomalies = (historicalData: TimeSeriesData[], forecast: ForecastRes
         type: data.value > expected ? 'spike' : 'drop',
         confidence: correspondingForecast.confidence,
         explanation: `Value deviated ${(deviation * 100).toFixed(1)}% from expected`,
-        recommendedAction: severity === 'critical' ? 'Investigate immediately' : 
-                           severity === 'high' ? 'Monitor closely' : 'Keep watching',
+        recommendedAction: severity === 'critical' ? 'Investigate immediately' :
+          severity === 'high' ? 'Monitor closely' : 'Keep watching',
       });
     }
   });
-  
+
   return anomalies.slice(0, 10); // Limit to 10 anomalies
 };
 
@@ -311,7 +288,7 @@ const calculateMetrics = (model: PredictionModel, forecast: ForecastResult[], an
   const modelAccuracy = model.accuracy;
   const anomalyRate = anomalies.length / forecast.length;
   const falsePositiveRate = anomalyRate * 0.1; // Estimated
-  
+
   return {
     modelAccuracy,
     predictionConfidence: avgConfidence,
@@ -359,7 +336,7 @@ export const PredictiveAnalytics: React.FC = () => {
   const generatePredictions = async () => {
     setIsLoading(true);
     setState(prev => ({ ...prev, isPredicting: true }));
-    
+
     // Simulate API delay
     setTimeout(() => {
       const historicalData = generateHistoricalData(30);
@@ -367,7 +344,7 @@ export const PredictiveAnalytics: React.FC = () => {
       const forecast = generateForecast(historicalData, selectedModel);
       const anomalies = detectAnomalies(historicalData, forecast);
       const metrics = calculateMetrics(selectedModel, forecast, anomalies);
-      
+
       setState(prev => ({
         ...prev,
         historicalData,
@@ -377,21 +354,21 @@ export const PredictiveAnalytics: React.FC = () => {
         isPredicting: false,
         lastUpdate: new Date(),
       }));
-      
+
       setIsLoading(false);
     }, 2000);
   };
 
   const retrainModel = async (modelId: string) => {
     setState(prev => ({ ...prev, isTraining: true }));
-    
+
     setTimeout(() => {
       setState(prev => ({
         ...prev,
         models: prev.models.map(model =>
           model.id === modelId
             ? { ...model, lastTrained: new Date(), accuracy: Math.min(0.99, model.accuracy + 0.02) }
-            : model
+            : model,
         ),
         isTraining: false,
       }));
@@ -407,7 +384,7 @@ export const PredictiveAnalytics: React.FC = () => {
       model: state.models.find(m => m.id === state.selectedModel),
       metrics: state.metrics,
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -427,382 +404,332 @@ export const PredictiveAnalytics: React.FC = () => {
   if (!currentUser) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        animation="fade-in"
+        className="p-6 flex justify-center items-center min-h-[400px]"
       >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <AssessmentIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
+        <div className="card bg-base-100 shadow-xl max-w-md text-center">
+          <div className="card-body">
+            <ChartBarIcon className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="card-title justify-center mb-2">
               Predictive Analytics
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
+            </h2>
+            <p className="text-base-content/70">
               Please log in to access predictive analytics features.
-            </Typography>
-          </CardContent>
-        </Card>
+            </p>
+          </div>
+        </div>
       </AnimatedBox>
     );
   }
 
   return (
     <AnimatedBox
-      animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-      sx={{ width: '100%' }}
+      animation="slide-up"
+      className="w-full space-y-6"
     >
       {/* Predictive Analytics Header */}
-      <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={2}>
-              <TrendingIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="h6">
+      <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
+        <div className="card-body p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <ArrowTrendingUpIcon className="w-10 h-10 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">
                   Predictive Analytics
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h2>
+                <p className="text-base-content/70">
                   {state.selectedModel} • {state.forecast.length} predictions • {state.anomalies.length} anomalies
-                </Typography>
-              </Box>
-            </Box>
-            
-            <Box display="flex" alignItems="center" gap={1}>
-              <Chip
-                label={state.models.find(m => m.id === state.selectedModel)?.accuracy ? `${(state.models.find(m => m.id === state.selectedModel)!.accuracy * 100).toFixed(0)}% accuracy` : 'N/A'}
-                size="small"
-                color="success"
-              />
-              <Chip
-                label={config.enabled ? 'AI Active' : 'AI Disabled'}
-                size="small"
-                color={config.enabled ? 'success' : 'default'}
-              />
-              <IconButton onClick={generatePredictions} disabled={isLoading}>
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="badge badge-success gap-1">
+                {state.models.find(m => m.id === state.selectedModel)?.accuracy ? `${(state.models.find(m => m.id === state.selectedModel)!.accuracy * 100).toFixed(0)}% accuracy` : 'N/A'}
+              </div>
+              <div className={`badge ${config.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                {config.enabled ? 'AI Active' : 'AI Disabled'}
+              </div>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={generatePredictions}
+                disabled={isLoading}
+              >
+                <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Model Performance Metrics */}
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="success.main">
-                  {(state.metrics.modelAccuracy * 100).toFixed(0)}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Model Accuracy
-                </Typography>
-                <ChartIcon color="success" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="info.main">
-                  {(state.metrics.predictionConfidence * 100).toFixed(0)}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Prediction Confidence
-                </Typography>
-                <InsightsIcon color="info" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="warning.main">
-                  {(state.metrics.anomalyDetectionRate * 100).toFixed(1)}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Anomaly Rate
-                </Typography>
-                <WarningIcon color="warning" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="primary.main">
-                  {state.metrics.forecastHorizon}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Forecast Horizon
-                </Typography>
-                <TimeIcon color="primary" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-success">
+              {(state.metrics.modelAccuracy * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Model Accuracy</p>
+            <ChartBarIcon className="w-6 h-6 text-success mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-info">
+              {(state.metrics.predictionConfidence * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Prediction Confidence</p>
+            <SparklesIcon className="w-6 h-6 text-info mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-warning">
+              {(state.metrics.anomalyDetectionRate * 100).toFixed(1)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Anomaly Rate</p>
+            <ExclamationTriangleIcon className="w-6 h-6 text-warning mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-primary">
+              {state.metrics.forecastHorizon}
+            </h3>
+            <p className="text-sm text-base-content/70">Forecast Horizon</p>
+            <ClockIcon className="w-6 h-6 text-primary mx-auto mt-2" />
+          </div>
+        </div>
+      </div>
 
       {/* Model Selection */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Prediction Models
-          </Typography>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6}>
-              <ToggleButtonGroup
-                value={state.selectedModel}
-                exclusive
-                onChange={(event, value) => value && setState(prev => ({ ...prev, selectedModel: value }))}
-                size="small"
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Prediction Models</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div className="join w-full">
+              {state.models.map(model => (
+                <input
+                  key={model.id}
+                  className="join-item btn flex-1"
+                  type="radio"
+                  name="model-selection"
+                  aria-label={`${model.name} (${(model.accuracy * 100).toFixed(0)}%)`}
+                  checked={state.selectedModel === model.id}
+                  onChange={() => setState(prev => ({ ...prev, selectedModel: model.id }))}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="btn btn-outline gap-2"
+                onClick={() => retrainModel(state.selectedModel!)}
+                disabled={state.isTraining}
               >
-                {state.models.map(model => (
-                  <ToggleButton key={model.id} value={model.id}>
-                    <Box textAlign="center">
-                      <Typography variant="body2">{model.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {(model.accuracy * 100).toFixed(0)}%
-                      </Typography>
-                    </Box>
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box display="flex" gap={1}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => retrainModel(state.selectedModel!)}
-                  disabled={state.isTraining}
-                  startIcon={state.isTraining ? <LinearProgress size={16} /> : <RefreshIcon />}
-                >
-                  {state.isTraining ? 'Training...' : 'Retrain Model'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={exportPredictions}
-                  startIcon={<DownloadIcon />}
-                >
-                  Export
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+                {state.isTraining ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <ArrowPathIcon className="w-4 h-4" />
+                )}
+                {state.isTraining ? 'Training...' : 'Retrain Model'}
+              </button>
+              <button
+                className="btn btn-outline gap-2"
+                onClick={exportPredictions}
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Forecast Configuration */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Forecast Configuration
-          </Typography>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" gutterBottom>
-                Forecast Days: {forecastDays}
-              </Typography>
-              <Slider
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Forecast Configuration</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">Forecast Days</span>
+                <span className="text-sm font-bold">{forecastDays} days</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="30"
                 value={forecastDays}
-                onChange={(event, value) => setForecastDays(Array.isArray(value) ? value[0] : value)}
-                min={1}
-                max={30}
-                marks={[
-                  { value: 1, label: '1d' },
-                  { value: 7, label: '7d' },
-                  { value: 14, label: '14d' },
-                  { value: 30, label: '30d' },
-                ]}
-                valueLabelDisplay="auto"
+                onChange={(e) => setForecastDays(parseInt(e.target.value))}
+                className="range range-primary range-sm"
+                step="1"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showConfidenceBands}
-                      onChange={(e) => setShowConfidenceBands(e.target.checked)}
-                    />
-                  }
-                  label="Show Confidence Bands"
+              <div className="w-full flex justify-between text-xs px-2 mt-2">
+                <span>1d</span>
+                <span>7d</span>
+                <span>14d</span>
+                <span>30d</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4">
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={showConfidenceBands}
+                  onChange={(e) => setShowConfidenceBands(e.target.checked)}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.anomalyDetection}
-                      onChange={() => toggleFeature('anomalyDetection')}
-                    />
-                  }
-                  label="Anomaly Detection"
+                <span className="label-text">Show Confidence Bands</span>
+              </label>
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={config.anomalyDetection}
+                  onChange={() => toggleFeature('anomalyDetection')}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.featureEngineering}
-                      onChange={() => toggleFeature('featureEngineering')}
-                    />
-                  }
-                  label="Feature Engineering"
+                <span className="label-text">Anomaly Detection</span>
+              </label>
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={config.featureEngineering}
+                  onChange={() => toggleFeature('featureEngineering')}
                 />
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+                <span className="label-text">Feature Engineering</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Anomaly Detection Table */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">
             Detected Anomalies ({state.anomalies.length})
-          </Typography>
+          </h3>
           {state.anomalies.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No anomalies detected in the current forecast period.
-            </Alert>
+            <div className="alert alert-info">
+              <InformationCircleIcon className="w-6 h-6" />
+              <span>No anomalies detected in the current forecast period.</span>
+            </div>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Timestamp</TableCell>
-                    <TableCell align="right">Value</TableCell>
-                    <TableCell align="right">Expected</TableCell>
-                    <TableCell align="right">Deviation</TableCell>
-                    <TableCell align="center">Severity</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Explanation</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <div className="overflow-x-auto">
+              <table className="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th className="text-right">Value</th>
+                    <th className="text-right">Expected</th>
+                    <th className="text-right">Deviation</th>
+                    <th className="text-center">Severity</th>
+                    <th>Type</th>
+                    <th>Explanation</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {state.anomalies.map((anomaly, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{anomaly.timestamp.toLocaleString()}</TableCell>
-                      <TableCell align="right">{anomaly.value.toFixed(2)}</TableCell>
-                      <TableCell align="right">{anomaly.expected.toFixed(2)}</TableCell>
-                      <TableCell align="right">{(anomaly.deviation * 100).toFixed(1)}%</TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={anomaly.severity}
-                          size="small"
-                          color={anomaly.severity === 'critical' ? 'error' : 
-                                 anomaly.severity === 'high' ? 'warning' : 'info'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={anomaly.type}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{anomaly.explanation}</TableCell>
-                    </TableRow>
+                    <tr key={index} className="hover">
+                      <td>{anomaly.timestamp.toLocaleString()}</td>
+                      <td className="text-right">{anomaly.value.toFixed(2)}</td>
+                      <td className="text-right">{anomaly.expected.toFixed(2)}</td>
+                      <td className="text-right">{(anomaly.deviation * 100).toFixed(1)}%</td>
+                      <td className="text-center">
+                        <div className={`badge badge-sm ${anomaly.severity === 'critical' ? 'badge-error' :
+                          anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
+                          }`}>
+                          {anomaly.severity}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="badge badge-ghost badge-outline badge-sm">
+                          {anomaly.type}
+                        </div>
+                      </td>
+                      <td className="text-sm opacity-70">{anomaly.explanation}</td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </tbody>
+              </table>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Model Details */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Model Details & Performance
-          </Typography>
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Model Details & Performance</h3>
           {state.selectedModel && (() => {
             const model = state.models.find(m => m.id === state.selectedModel)!;
             return (
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Box mb={2}>
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <div className="mb-6">
+                    <h4 className="font-bold mb-1">
                       {model.name} ({model.type.toUpperCase()})
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    </h4>
+                    <p className="text-sm text-base-content/70">
                       {model.description}
-                    </Typography>
-                  </Box>
-                  <Box mb={2}>
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
-                      Performance Metrics:
-                    </Typography>
-                    <Grid container spacing={1}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          Accuracy: {(model.accuracy * 100).toFixed(1)}%
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          Confidence: {(model.confidence * 100).toFixed(1)}%
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          Training Data: {model.trainingData} points
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          Last Trained: {model.lastTrained.toLocaleDateString()}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box mb={2}>
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
-                      Hyperparameters:
-                    </Typography>
-                    <Box display="flex" flexWrap="wrap" gap={1}>
+                    </p>
+                  </div>
+                  <div className="mb-6">
+                    <h4 className="font-bold mb-2">Performance Metrics:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-base-content/70">
+                        Accuracy: <span className="text-base-content font-medium">{(model.accuracy * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="text-base-content/70">
+                        Confidence: <span className="text-base-content font-medium">{(model.confidence * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="text-base-content/70">
+                        Training Data: <span className="text-base-content font-medium">{model.trainingData} points</span>
+                      </div>
+                      <div className="text-base-content/70">
+                        Last Trained: <span className="text-base-content font-medium">{model.lastTrained.toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-6">
+                    <h4 className="font-bold mb-2">Hyperparameters:</h4>
+                    <div className="flex flex-wrap gap-2">
                       {Object.entries(model.hyperparameters).map(([key, value]) => (
-                        <Chip
-                          key={key}
-                          label={`${key}: ${value}`}
-                          size="small"
-                          variant="outlined"
-                        />
+                        <div key={key} className="badge badge-ghost badge-outline">
+                          {key}: {value}
+                        </div>
                       ))}
-                    </Box>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
-                      Features Used:
-                    </Typography>
-                    <Box display="flex" flexWrap="wrap" gap={1}>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold mb-2">Features Used:</h4>
+                    <div className="flex flex-wrap gap-2">
                       {model.features.map(feature => (
-                        <Chip
-                          key={feature}
-                          label={feature}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
+                        <div key={feature} className="badge badge-primary badge-outline">
+                          {feature}
+                        </div>
                       ))}
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
+                    </div>
+                  </div>
+                </div>
+              </div>
             );
           })()}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </AnimatedBox>
   );
 };
+
+function InformationCircleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+    </svg>
+  );
+}
 
 export default PredictiveAnalytics;

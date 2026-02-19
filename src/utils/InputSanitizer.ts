@@ -103,6 +103,67 @@ export class InputSanitizer {
   }
 
   /**
+   * Strips surrounding quotes if and only if the text starts and ends with matching quotes.
+   * Handles standard quotes, smart quotes, guillemets, and backticks.
+   * Operates recursively to remove multiple layers of matching wrapping.
+   * Finally, applies a greedy pass to strip any remaining unmatched quotes at the start or end.
+   *
+   * @param text - The text to sanitize
+   * @returns The text with all layers of surrounding quotes removed.
+   */
+  static stripSurroundingQuotes(text: string): string {
+    if (!text) {return '';}
+
+    let current = text.trim();
+    let stripped = true;
+
+    const pairs = [
+      ['"', '"'],
+      ['\'', '\''],
+      ['“', '”'],
+      ['‘', '’'],
+      ['«', '»'],
+      ['`', '`'],
+    ];
+
+    // Phase 1: Recursive Matching Pairs
+    while (stripped && current.length >= 2) {
+      stripped = false;
+      const first = current[0];
+      const last = current[current.length - 1];
+
+      for (const [start, end] of pairs) {
+        if (first === start && last === end) {
+          current = current.substring(1, current.length - 1).trim();
+          stripped = true;
+          break;
+        }
+      }
+    }
+
+    // Phase 2: Greedy Unmatched Stripping
+    // Handles cases like '"Text' or 'Text"' or multi-line splits
+    const allQuotes = ['"', '\'', '“', '”', '‘', '’', '«', '»', '`'];
+
+    let greedyStripped = true;
+    while (greedyStripped && current.length > 0) {
+      greedyStripped = false;
+
+      if (allQuotes.includes(current[0])) {
+        current = current.substring(1).trim();
+        greedyStripped = true;
+      }
+
+      if (current.length > 0 && allQuotes.includes(current[current.length - 1])) {
+        current = current.substring(0, current.length - 1).trim();
+        greedyStripped = true;
+      }
+    }
+
+    return current;
+  }
+
+  /**
    * Sanitize configuration values
    *
    * @param value - Raw configuration value
@@ -111,25 +172,25 @@ export class InputSanitizer {
    */
   static sanitizeConfigValue(value: any, type: 'string' | 'number' | 'boolean'): any {
     switch (type) {
-      case 'string':
-        if (typeof value === 'string') {
-          return value.trim().substring(0, 1000);
-        }
-        return null;
+    case 'string':
+      if (typeof value === 'string') {
+        return value.trim().substring(0, 1000);
+      }
+      return null;
 
-      case 'number':
-        const num = Number(value);
-        return isNaN(num) ? null : num;
+    case 'number':
+      const num = Number(value);
+      return isNaN(num) ? null : num;
 
-      case 'boolean':
-        if (typeof value === 'boolean') return value;
-        if (typeof value === 'string') {
-          return value.toLowerCase() === 'true';
-        }
-        return null;
+    case 'boolean':
+      if (typeof value === 'boolean') {return value;}
+      if (typeof value === 'string') {
+        return value.toLowerCase() === 'true';
+      }
+      return null;
 
-      default:
-        return null;
+    default:
+      return null;
     }
   }
 }
@@ -151,7 +212,7 @@ export class RateLimiter {
   static checkLimit(
     identifier: string,
     maxAttempts: number = 10,
-    windowMs: number = 60000
+    windowMs: number = 60000,
   ): boolean {
     const now = Date.now();
     const attempts = this.attempts.get(identifier) || [];

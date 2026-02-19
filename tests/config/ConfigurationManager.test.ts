@@ -29,7 +29,7 @@ describe('ConfigurationManager', () => {
       const instance1 = ConfigurationManager.getInstance();
       const instance2 = ConfigurationManager.getInstance();
       const instance3 = ConfigurationManager.getInstance();
-      
+
       expect(instance1).toBe(instance2);
       expect(instance2).toBe(instance3);
       expect(instance1).toBeInstanceOf(ConfigurationManager);
@@ -43,10 +43,10 @@ describe('ConfigurationManager', () => {
 
     it('should maintain singleton across different contexts', () => {
       const instance1 = ConfigurationManager.getInstance();
-      
+
       // Simulate different module context
       const instance2 = ConfigurationManager.getInstance();
-      
+
       expect(instance1).toBe(instance2);
     });
   });
@@ -81,7 +81,7 @@ describe('ConfigurationManager', () => {
         const result1 = configManager.getConfig('TestConfig');
         const result2 = configManager.getConfig('testconfig');
         const result3 = configManager.getConfig('TESTCONFIG');
-        
+
         expect(result1).toBeNull();
         expect(result2).toBeNull();
         expect(result3).toBeNull();
@@ -97,7 +97,7 @@ describe('ConfigurationManager', () => {
     describe('setSession()', () => {
       it('should store session with correct format', () => {
         configManager.setSession(testIntegration, testChannel, testSession);
-        
+
         const retrievedSession = configManager.getSession(testIntegration, testChannel);
         expect(retrievedSession).toBe(`${testIntegration}-${testChannel}-${testSession}`);
       });
@@ -105,7 +105,7 @@ describe('ConfigurationManager', () => {
       it('should create integration namespace if it does not exist', () => {
         const newIntegration = 'discord';
         configManager.setSession(newIntegration, testChannel, testSession);
-        
+
         const sessions = configManager.getAllSessions(newIntegration);
         expect(sessions).toBeDefined();
         expect(sessions![testChannel]).toBe(`${newIntegration}-${testChannel}-${testSession}`);
@@ -114,10 +114,10 @@ describe('ConfigurationManager', () => {
       it('should overwrite existing sessions for same integration/channel', () => {
         const originalSession = 'original_session';
         const newSession = 'new_session';
-        
+
         configManager.setSession(testIntegration, testChannel, originalSession);
         configManager.setSession(testIntegration, testChannel, newSession);
-        
+
         const retrievedSession = configManager.getSession(testIntegration, testChannel);
         expect(retrievedSession).toBe(`${testIntegration}-${testChannel}-${newSession}`);
       });
@@ -127,10 +127,10 @@ describe('ConfigurationManager', () => {
         const channel2 = 'C222222222';
         const session1 = 'session1';
         const session2 = 'session2';
-        
+
         configManager.setSession(testIntegration, channel1, session1);
         configManager.setSession(testIntegration, channel2, session2);
-        
+
         expect(configManager.getSession(testIntegration, channel1)).toBe(`${testIntegration}-${channel1}-${session1}`);
         expect(configManager.getSession(testIntegration, channel2)).toBe(`${testIntegration}-${channel2}-${session2}`);
       });
@@ -139,9 +139,9 @@ describe('ConfigurationManager', () => {
         const specialIntegration = 'test-integration_v2';
         const specialChannel = 'channel@#$%';
         const specialSession = 'session!@#$%^&*()';
-        
+
         configManager.setSession(specialIntegration, specialChannel, specialSession);
-        
+
         const retrievedSession = configManager.getSession(specialIntegration, specialChannel);
         expect(retrievedSession).toBe(`${specialIntegration}-${specialChannel}-${specialSession}`);
       });
@@ -222,7 +222,7 @@ describe('ConfigurationManager', () => {
 
       it('should return all sessions for existing integration', () => {
         const sessions = configManager.getAllSessions(testIntegration);
-        
+
         expect(sessions).toBeDefined();
         expect(Object.keys(sessions!)).toHaveLength(2);
         expect(sessions!['channel1']).toBe(`${testIntegration}-channel1-session1`);
@@ -238,7 +238,7 @@ describe('ConfigurationManager', () => {
         configManager.setSession('empty_integration', 'temp', 'temp');
         // Clear the session by overwriting the integration store
         (configManager as any).sessionStore['empty_integration'] = {};
-        
+
         const sessions = configManager.getAllSessions('empty_integration');
         expect(sessions).toEqual({});
       });
@@ -246,7 +246,7 @@ describe('ConfigurationManager', () => {
       it('should not affect other integrations', () => {
         const slackSessions = configManager.getAllSessions(testIntegration);
         const otherSessions = configManager.getAllSessions('other_integration');
-        
+
         expect(slackSessions).not.toEqual(otherSessions);
         expect(Object.keys(slackSessions!)).toHaveLength(2);
         expect(Object.keys(otherSessions!)).toHaveLength(1);
@@ -258,11 +258,11 @@ describe('ConfigurationManager', () => {
         const integrations = ['slack', 'discord', 'teams', 'mattermost'];
         const channel = 'common_channel';
         const session = 'common_session';
-        
+
         integrations.forEach(integration => {
           configManager.setSession(integration, channel, session);
         });
-        
+
         integrations.forEach(integration => {
           const retrievedSession = configManager.getSession(integration, channel);
           expect(retrievedSession).toBe(`${integration}-${channel}-${session}`);
@@ -273,11 +273,11 @@ describe('ConfigurationManager', () => {
         const updates = 100;
         const integration = 'rapid_test';
         const channel = 'rapid_channel';
-        
+
         for (let i = 0; i < updates; i++) {
           configManager.setSession(integration, channel, `session_${i}`);
         }
-        
+
         const finalSession = configManager.getSession(integration, channel);
         expect(finalSession).toBe(`${integration}-${channel}-session_${updates - 1}`);
       });
@@ -290,10 +290,10 @@ describe('ConfigurationManager', () => {
           () => configManager.getAllSessions('int1'),
           () => configManager.setSession('int1', 'ch2', 'sess3'),
         ];
-        
+
         // Execute operations in sequence (simulating concurrent access)
         operations.forEach(op => op());
-        
+
         expect(configManager.getSession('int1', 'ch1')).toBe('int1-ch1-sess1');
         expect(configManager.getSession('int2', 'ch2')).toBe('int2-ch2-sess2');
         expect(configManager.getSession('int1', 'ch2')).toBe('int1-ch2-sess3');
@@ -304,11 +304,11 @@ describe('ConfigurationManager', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle memory pressure gracefully', () => {
       const largeDataSize = 1000;
-      
+
       for (let i = 0; i < largeDataSize; i++) {
         configManager.setSession(`integration_${i}`, `channel_${i}`, `session_${i}`);
       }
-      
+
       // Verify data integrity
       for (let i = 0; i < largeDataSize; i++) {
         const session = configManager.getSession(`integration_${i}`, `channel_${i}`);
@@ -318,17 +318,17 @@ describe('ConfigurationManager', () => {
 
     it('should maintain state consistency after errors', () => {
       configManager.setSession('test', 'channel1', 'session1');
-      
+
       // Trigger error
       try {
         configManager.setSession(null as any, 'channel2', 'session2');
       } catch (error) {
         // Expected error
       }
-      
+
       // Verify existing data is still intact
       expect(configManager.getSession('test', 'channel1')).toBe('test-channel1-session1');
-      
+
       // Verify new valid operations still work
       configManager.setSession('test', 'channel3', 'session3');
       expect(configManager.getSession('test', 'channel3')).toBe('test-channel3-session3');
@@ -338,9 +338,9 @@ describe('ConfigurationManager', () => {
       const unicodeIntegration = '测试集成';
       const unicodeChannel = '频道🎉';
       const unicodeSession = 'сессия';
-      
+
       configManager.setSession(unicodeIntegration, unicodeChannel, unicodeSession);
-      
+
       const result = configManager.getSession(unicodeIntegration, unicodeChannel);
       expect(result).toBe(`${unicodeIntegration}-${unicodeChannel}-${unicodeSession}`);
     });
@@ -353,21 +353,25 @@ describe('ConfigurationManager', () => {
       // Save original environment
       originalEnv = { ...process.env };
       jest.restoreAllMocks();
-      
+
       // Reset singleton instance for environment tests
       (ConfigurationManager as any).instance = null;
     });
 
     afterEach(() => {
-      // Restore original environment by resetting each key
-      for (const key of Object.keys(process.env)) {
-        if (!(key in originalEnv)) {
-          delete process.env[key];
+      // Safely restore original environment
+      if (originalEnv) {
+        for (const key of Object.keys(process.env)) {
+          if (!(key in originalEnv)) {
+            delete process.env[key];
+          }
+        }
+        for (const key of Object.keys(originalEnv)) {
+          process.env[key] = originalEnv[key];
         }
       }
-      for (const key of Object.keys(originalEnv)) {
-        process.env[key] = originalEnv[key];
-      }
+      // Reset singleton
+      (ConfigurationManager as any).instance = null;
     });
 
     describe('URL Environment Variables', () => {

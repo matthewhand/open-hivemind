@@ -117,17 +117,17 @@ export class ConfigurationTemplateService {
             token: '${DISCORD_BOT_TOKEN}',
             clientId: '${DISCORD_CLIENT_ID}',
             guildId: '${DISCORD_GUILD_ID}',
-            channelId: '${DISCORD_CHANNEL_ID}'
+            channelId: '${DISCORD_CHANNEL_ID}',
           },
           flowise: {
             apiKey: '${FLOWISE_API_KEY}',
-            endpoint: '${FLOWISE_ENDPOINT}'
-          }
+            endpoint: '${FLOWISE_ENDPOINT}',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
+        usageCount: 0,
       },
       {
         id: 'discord-voice',
@@ -143,17 +143,17 @@ export class ConfigurationTemplateService {
             clientId: '${DISCORD_CLIENT_ID}',
             guildId: '${DISCORD_GUILD_ID}',
             channelId: '${DISCORD_CHANNEL_ID}',
-            voiceChannelId: '${DISCORD_VOICE_CHANNEL_ID}'
+            voiceChannelId: '${DISCORD_VOICE_CHANNEL_ID}',
           },
           openai: {
             apiKey: '${OPENAI_API_KEY}',
-            model: 'gpt-4'
-          }
+            model: 'gpt-4',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
+        usageCount: 0,
       },
       {
         id: 'slack-basic',
@@ -168,17 +168,17 @@ export class ConfigurationTemplateService {
             botToken: '${SLACK_BOT_TOKEN}',
             appToken: '${SLACK_APP_TOKEN}',
             signingSecret: '${SLACK_SIGNING_SECRET}',
-            mode: 'socket'
+            mode: 'socket',
           },
           openwebui: {
             apiKey: '${OPENWEBUI_API_KEY}',
-            apiUrl: '${OPENWEBUI_API_URL}'
-          }
+            apiUrl: '${OPENWEBUI_API_URL}',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
+        usageCount: 0,
       },
       {
         id: 'mattermost-integration',
@@ -192,17 +192,17 @@ export class ConfigurationTemplateService {
           mattermost: {
             serverUrl: '${MATTERMOST_SERVER_URL}',
             token: '${MATTERMOST_TOKEN}',
-            team: '${MATTERMOST_TEAM}'
+            team: '${MATTERMOST_TEAM}',
           },
           flowise: {
             apiKey: '${FLOWISE_API_KEY}',
-            endpoint: '${FLOWISE_ENDPOINT}'
-          }
+            endpoint: '${FLOWISE_ENDPOINT}',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
+        usageCount: 0,
       },
       {
         id: 'openai-assistant',
@@ -217,17 +217,17 @@ export class ConfigurationTemplateService {
             apiKey: '${OPENAI_API_KEY}',
             model: 'gpt-4',
             temperature: 0.7,
-            maxTokens: 1000
+            maxTokens: 1000,
           },
           discord: {
             token: '${DISCORD_BOT_TOKEN}',
-            clientId: '${DISCORD_CLIENT_ID}'
-          }
+            clientId: '${DISCORD_CLIENT_ID}',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
+        usageCount: 0,
       },
       {
         id: 'webhook-integration',
@@ -240,14 +240,14 @@ export class ConfigurationTemplateService {
           llmProvider: 'flowise',
           flowise: {
             apiKey: '${FLOWISE_API_KEY}',
-            endpoint: '${FLOWISE_ENDPOINT}'
-          }
+            endpoint: '${FLOWISE_ENDPOINT}',
+          },
         },
         isBuiltIn: true,
         createdAt: now,
         updatedAt: now,
-        usageCount: 0
-      }
+        usageCount: 0,
+      },
     ];
   }
 
@@ -279,7 +279,7 @@ export class ConfigurationTemplateService {
         createdBy: request.createdBy,
         createdAt: new Date(),
         updatedAt: new Date(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       await this.saveTemplate(template);
@@ -321,7 +321,7 @@ export class ConfigurationTemplateService {
         category: request.category || existingTemplate.category,
         tags: request.tags || existingTemplate.tags,
         config: request.config || existingTemplate.config,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       await this.saveTemplate(updatedTemplate);
@@ -497,7 +497,7 @@ export class ConfigurationTemplateService {
         createdBy,
         createdAt: new Date(),
         updatedAt: new Date(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       await this.saveTemplate(duplicateTemplate);
@@ -548,7 +548,7 @@ export class ConfigurationTemplateService {
         category: templateData.category || 'general',
         tags: templateData.tags || [],
         config: templateData.config,
-        createdBy
+        createdBy,
       };
 
       return this.createTemplate(request);
@@ -582,7 +582,7 @@ export class ConfigurationTemplateService {
    * Check if template matches filter
    */
   private matchesFilter(template: ConfigurationTemplate, filter?: TemplateFilter): boolean {
-    if (!filter) return true;
+    if (!filter) {return true;}
 
     if (filter.category && template.category !== filter.category) {
       return false;
@@ -599,10 +599,10 @@ export class ConfigurationTemplateService {
     if (filter.tags && filter.tags.length > 0) {
       const hasMatchingTag = filter.tags.some(tag => 
         template.tags.some(templateTag => 
-          templateTag.toLowerCase().includes(tag.toLowerCase())
-        )
+          templateTag.toLowerCase().includes(tag.toLowerCase()),
+        ),
       );
-      if (!hasMatchingTag) return false;
+      if (!hasMatchingTag) {return false;}
     }
 
     if (filter.search) {
@@ -611,7 +611,7 @@ export class ConfigurationTemplateService {
         template.name,
         template.description,
         ...template.tags,
-        template.category
+        template.category,
       ].join(' ').toLowerCase();
       
       if (!searchableText.includes(searchLower)) {

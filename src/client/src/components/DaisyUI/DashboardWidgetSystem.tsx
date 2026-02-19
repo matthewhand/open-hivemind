@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 
 interface Widget {
@@ -41,7 +42,7 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
   const stats = widget.data?.stats || [
     { label: 'Active Bots', value: '3', change: '+2' },
     { label: 'Messages', value: '1.2K', change: '+15%' },
-    { label: 'Uptime', value: '99.9%', change: '+0.1%' }
+    { label: 'Uptime', value: '99.9%', change: '+0.1%' },
   ];
 
   return (
@@ -118,7 +119,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
     { time: '2 min ago', action: 'Bot connected', type: 'success' },
     { time: '5 min ago', action: 'Message processed', type: 'info' },
     { time: '12 min ago', action: 'User joined', type: 'success' },
-    { time: '18 min ago', action: 'Configuration updated', type: 'warning' }
+    { time: '18 min ago', action: 'Configuration updated', type: 'warning' },
   ];
 
   return (
@@ -141,8 +142,8 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
           <div key={index} className="flex items-center gap-3 p-2 bg-base-200 rounded-lg">
             <div className={`w-2 h-2 rounded-full ${
               activity.type === 'success' ? 'bg-success' :
-              activity.type === 'warning' ? 'bg-warning' :
-              activity.type === 'error' ? 'bg-error' : 'bg-info'
+                activity.type === 'warning' ? 'bg-warning' :
+                  activity.type === 'error' ? 'bg-error' : 'bg-info'
             }`} />
             <div className="flex-1">
               <div className="text-sm">{activity.action}</div>
@@ -160,7 +161,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
     { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
     { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
     { label: 'Settings', icon: '⚙️', color: 'btn-accent' },
-    { label: 'Help', icon: '❓', color: 'btn-info' }
+    { label: 'Help', icon: '❓', color: 'btn-info' },
   ];
 
   return (
@@ -195,7 +196,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
     cpu: 45,
     memory: 62,
     disk: 78,
-    network: 32
+    network: 32,
   };
 
   return (
@@ -221,7 +222,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
               <progress
                 className={`progress w-full ${
                   Number(value) > 80 ? 'progress-error' :
-                  Number(value) > 60 ? 'progress-warning' : 'progress-success'
+                    Number(value) > 60 ? 'progress-warning' : 'progress-success'
                 }`}
                 value={Number(value)}
                 max="100"
@@ -239,7 +240,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   initialWidgets = [],
   onWidgetsChange,
   readOnly = false,
-  gridSize = 20
+  gridSize = 20,
 }) => {
   const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
   const [isEditing, setIsEditing] = useState(false);
@@ -255,7 +256,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       icon: '📊',
       defaultSize: { width: 300, height: 200 },
       component: StatsWidget,
-      configurable: true
+      configurable: true,
     },
     {
       id: 'chart',
@@ -264,7 +265,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       icon: '📈',
       defaultSize: { width: 400, height: 250 },
       component: ChartWidget,
-      configurable: true
+      configurable: true,
     },
     {
       id: 'activity',
@@ -273,7 +274,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       icon: '📋',
       defaultSize: { width: 350, height: 300 },
       component: ActivityWidget,
-      configurable: true
+      configurable: true,
     },
     {
       id: 'actions',
@@ -282,7 +283,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       icon: '⚡',
       defaultSize: { width: 250, height: 150 },
       component: QuickActionsWidget,
-      configurable: true
+      configurable: true,
     },
     {
       id: 'health',
@@ -291,8 +292,8 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       icon: '💚',
       defaultSize: { width: 300, height: 200 },
       component: SystemHealthWidget,
-      configurable: true
-    }
+      configurable: true,
+    },
   ];
 
   // Save widgets to localStorage
@@ -318,7 +319,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
   const addWidget = (type: string) => {
     const widgetType = widgetTypes.find(t => t.id === type);
-    if (!widgetType) return;
+    if (!widgetType) {return;}
 
     const newWidget: Widget = {
       id: `widget-${Date.now()}`,
@@ -327,7 +328,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       position: { x: 50, y: 50 },
       size: widgetType.defaultSize,
       isVisible: true,
-      data: getDefaultWidgetData(type)
+      data: getDefaultWidgetData(type),
     };
 
     setWidgets(prev => [...prev, newWidget]);
@@ -336,42 +337,42 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
   const getDefaultWidgetData = (type: string) => {
     switch (type) {
-      case 'stats':
-        return {
-          stats: [
-            { label: 'Active Bots', value: '3', change: '+2' },
-            { label: 'Messages', value: '1.2K', change: '+15%' },
-            { label: 'Uptime', value: '99.9%', change: '+0.1%' }
-          ]
-        };
-      case 'activity':
-        return {
-          activities: [
-            { time: '2 min ago', action: 'Bot connected', type: 'success' },
-            { time: '5 min ago', action: 'Message processed', type: 'info' },
-            { time: '12 min ago', action: 'User joined', type: 'success' }
-          ]
-        };
-      case 'actions':
-        return {
-          actions: [
-            { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
-            { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
-            { label: 'Settings', icon: '⚙️', color: 'btn-accent' },
-            { label: 'Help', icon: '❓', color: 'btn-info' }
-          ]
-        };
-      case 'health':
-        return {
-          health: {
-            cpu: Math.floor(Math.random() * 100),
-            memory: Math.floor(Math.random() * 100),
-            disk: Math.floor(Math.random() * 100),
-            network: Math.floor(Math.random() * 100)
-          }
-        };
-      default:
-        return {};
+    case 'stats':
+      return {
+        stats: [
+          { label: 'Active Bots', value: '3', change: '+2' },
+          { label: 'Messages', value: '1.2K', change: '+15%' },
+          { label: 'Uptime', value: '99.9%', change: '+0.1%' },
+        ],
+      };
+    case 'activity':
+      return {
+        activities: [
+          { time: '2 min ago', action: 'Bot connected', type: 'success' },
+          { time: '5 min ago', action: 'Message processed', type: 'info' },
+          { time: '12 min ago', action: 'User joined', type: 'success' },
+        ],
+      };
+    case 'actions':
+      return {
+        actions: [
+          { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
+          { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
+          { label: 'Settings', icon: '⚙️', color: 'btn-accent' },
+          { label: 'Help', icon: '❓', color: 'btn-info' },
+        ],
+      };
+    case 'health':
+      return {
+        health: {
+          cpu: Math.floor(Math.random() * 100),
+          memory: Math.floor(Math.random() * 100),
+          disk: Math.floor(Math.random() * 100),
+          network: Math.floor(Math.random() * 100),
+        },
+      };
+    default:
+      return {};
     }
   };
 
@@ -384,20 +385,20 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent, widgetId: string) => {
-    if (!isEditing) return;
+    if (!isEditing) {return;}
     
     const widget = widgets.find(w => w.id === widgetId);
-    if (!widget) return;
+    if (!widget) {return;}
 
     setDraggedWidget(widgetId);
     setDragOffset({
       x: e.clientX - widget.position.x,
-      y: e.clientY - widget.position.y
+      y: e.clientY - widget.position.y,
     });
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!draggedWidget || !isEditing) return;
+    if (!draggedWidget || !isEditing) {return;}
 
     const newX = Math.max(0, e.clientX - dragOffset.x);
     const newY = Math.max(0, e.clientY - dragOffset.y);
@@ -405,7 +406,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     setWidgets(prev => prev.map(w => 
       w.id === draggedWidget 
         ? { ...w, position: { x: newX, y: newY } }
-        : w
+        : w,
     ));
   }, [draggedWidget, dragOffset, isEditing]);
 
@@ -430,8 +431,8 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       ...widget,
       position: { 
         x: (index % 3) * 350 + 50, 
-        y: Math.floor(index / 3) * 300 + 50 
-      }
+        y: Math.floor(index / 3) * 300 + 50, 
+      },
     }));
     setWidgets(resetWidgets);
   };
@@ -501,8 +502,8 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
           <div
             className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
-              backgroundImage: `radial-gradient(circle, #888 1px, transparent 1px)`,
-              backgroundSize: `${gridSize}px ${gridSize}px`
+              backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)',
+              backgroundSize: `${gridSize}px ${gridSize}px`,
             }}
           />
         )}
@@ -510,7 +511,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         {/* Widgets */}
         {widgets.filter(w => w.isVisible).map(widget => {
           const WidgetComponent = widgetTypes.find(t => t.id === widget.type)?.component;
-          if (!WidgetComponent) return null;
+          if (!WidgetComponent) {return null;}
 
           return (
             <div
@@ -522,7 +523,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
                 left: widget.position.x,
                 top: widget.position.y,
                 width: widget.size.width,
-                height: widget.size.height
+                height: widget.size.height,
               }}
               onMouseDown={(e) => handleMouseDown(e, widget.id)}
             >

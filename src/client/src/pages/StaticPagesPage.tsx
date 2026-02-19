@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button } from '@mui/material';
-import { Launch as LaunchIcon, Home as HomeIcon, HourglassEmpty as LoadingIcon, DesktopMac as ScreensaverIcon } from '@mui/icons-material';
-import { Breadcrumbs } from '../components/DaisyUI';
+import { Card, Button, Breadcrumbs } from '../components/DaisyUI';
+import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 const StaticPagesPage: React.FC = () => {
   const breadcrumbItems = [{ label: 'Static Pages', href: '/uber/static', isActive: true }];
@@ -10,24 +10,24 @@ const StaticPagesPage: React.FC = () => {
     {
       title: 'Enhanced Homepage',
       description: 'Beautiful landing page with enhanced UI and animations',
-      icon: <HomeIcon sx={{ fontSize: 40 }} />,
+      icon: <HomeIcon className="w-10 h-10" />,
       url: '/enhanced-homepage.html',
-      color: 'primary'
+      color: 'primary',
     },
     {
       title: 'Loading Page',
       description: 'Elegant loading screen with progress indicators',
-      icon: <LoadingIcon sx={{ fontSize: 40 }} />,
+      icon: <ClockIcon className="w-10 h-10" />,
       url: '/loading.html',
-      color: 'secondary'
+      color: 'secondary',
     },
     {
       title: 'Screensaver',
       description: 'Interactive screensaver display for idle states',
-      icon: <ScreensaverIcon sx={{ fontSize: 40 }} />,
+      icon: <ComputerDesktopIcon className="w-10 h-10" />,
       url: '/screensaver.html',
-      color: 'info'
-    }
+      color: 'info',
+    },
   ];
 
   const handleOpenPage = (url: string) => {
@@ -35,66 +35,53 @@ const StaticPagesPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Static Pages
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Browse and access static HTML pages and resources
-        </Typography>
-      </Box>
 
-      <Grid container spacing={3}>
-        {staticPages.map((page, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                <Box sx={{ color: `${page.color}.main`, mb: 2 }}>
-                  {page.icon}
-                </Box>
-                <Typography variant="h6" gutterBottom>
-                  {page.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {page.description}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 2, fontFamily: 'monospace', color: 'text.secondary' }}>
-                  {page.url}
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                <Button 
-                  variant="contained" 
-                  color={page.color as any}
-                  onClick={() => handleOpenPage(page.url)}
-                  startIcon={<LaunchIcon />}
-                >
-                  Open Page
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">Static Pages</h1>
+        <p className="text-base-content/70">Browse and access static HTML pages and resources</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {staticPages.map((page) => (
+          <Card key={page.url} className="flex flex-col h-full">
+            <div className="flex-grow text-center p-6">
+              <div className={`text-${page.color} mb-4 flex justify-center`}>
+                {page.icon}
+              </div>
+              <h3 className="text-xl font-semibold mb-2">{page.title}</h3>
+              <p className="text-sm text-base-content/70 mb-3">{page.description}</p>
+              <p className="text-sm font-mono text-base-content/60 mt-4">{page.url}</p>
+            </div>
+            <div className="flex justify-center pb-4">
+              <Button
+                variant={page.color as any}
+                onClick={() => handleOpenPage(page.url)}
+              >
+                <ArrowTopRightOnSquareIcon className="w-4 h-4 mr-2" />
+                Open Page
+              </Button>
+            </div>
+          </Card>
         ))}
-      </Grid>
+      </div>
 
-      <Box sx={{ mt: 4, p: 3, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          About Static Pages
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          These static HTML pages are served directly from the public directory and can be used for:
-        </Typography>
-        <ul>
-          <li><Typography variant="body2">Landing pages and marketing content</Typography></li>
-          <li><Typography variant="body2">Loading screens during application startup</Typography></li>
-          <li><Typography variant="body2">Screensavers for kiosk or display modes</Typography></li>
-          <li><Typography variant="body2">Offline fallback pages</Typography></li>
-        </ul>
-      </Box>
-    </Box>
+      <Card className="mt-8 bg-base-200">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-3">About Static Pages</h2>
+          <p className="text-sm text-base-content/70 mb-3">
+            These static HTML pages are served directly from the public directory and can be used for:
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li>Landing pages and marketing content</li>
+            <li>Loading screens during application startup</li>
+            <li>Screensavers for kiosk or display modes</li>
+            <li>Offline fallback pages</li>
+          </ul>
+        </div>
+      </Card>
+    </div>
   );
 };
 

@@ -1,178 +1,137 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Container,
-  Tabs,
-  Tab,
-  Paper,
-  Alert,
-} from '@mui/material';
-import {
-  Settings as SettingsIcon,
-  People as PeopleIcon,
-  Build as BuildIcon,
-  Edit as EditIcon,
-  Monitor as MonitorIcon,
-} from '@mui/icons-material';
 import EnhancedBotManager from '../../components/Admin/EnhancedBotManager';
 import PersonaManager from '../../components/PersonaManager';
 import MCPServerManager from '../../components/MCPServerManager';
-import ConfigurationEditor from '../../components/ConfigurationEditor';
+import ComprehensiveConfigPanel from '../../components/ComprehensiveConfigPanel';
 import ActivityMonitor from '../../components/ActivityMonitor';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel({ children, value, index, ...other }: TabPanelProps) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`admin-tabpanel-${index}`}
-      aria-labelledby={`admin-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import {
+  HomeIcon,
+  UsersIcon,
+  CommandLineIcon,
+  CpuChipIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+} from '@heroicons/react/24/outline';
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedBot, setSelectedBot] = useState<unknown>(null);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
   const handleBotSelect = (bot: unknown) => {
     setSelectedBot(bot);
     // Switch to configuration tab when a bot is selected
-    setActiveTab(3);
+    setActiveTab(4);
   };
 
   const tabs = [
     {
       label: 'Overview',
-      icon: <SettingsIcon />,
+      icon: HomeIcon,
       component: (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Admin Dashboard Overview
-          </Typography>
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Welcome to the Admin Dashboard. Use the tabs above to manage different aspects of your bot system.
-          </Alert>
+        <div className="space-y-6">
+          <div className="alert alert-info shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>
+              <h3 className="font-bold">Welcome to the Admin Dashboard</h3>
+              <div className="text-xs">Use the tabs above to manage different aspects of your bot system.</div>
+            </div>
+          </div>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 3 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Bot Management
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Create, configure, and manage your bot instances. Monitor their status and performance.
-              </Typography>
-            </Paper>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Bot Management</h2>
+                <p>Create, configure, and manage your bot instances. Monitor their status and performance.</p>
+              </div>
+            </div>
 
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Persona Management
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Create and manage AI personas that define your bots' behavior and personality.
-              </Typography>
-            </Paper>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Persona Management</h2>
+                <p>Create and manage AI personas that define your bots' behavior and personality.</p>
+              </div>
+            </div>
 
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                MCP Servers
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Connect and manage Model Context Protocol servers to extend your bots' capabilities.
-              </Typography>
-            </Paper>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">MCP Servers</h2>
+                <p>Connect and manage Model Context Protocol servers to extend your bots' capabilities.</p>
+              </div>
+            </div>
 
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Activity Monitoring
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Monitor bot activity, response times, and system performance in real-time.
-              </Typography>
-            </Paper>
-          </Box>
-        </Box>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Activity Monitoring</h2>
+                <p>Monitor bot activity, response times, and system performance in real-time.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       ),
     },
     {
       label: 'Bots',
-      icon: <PeopleIcon />,
+      icon: UsersIcon,
       component: <EnhancedBotManager onBotSelect={handleBotSelect} />,
     },
     {
       label: 'Personas',
-      icon: <PeopleIcon />,
+      icon: UsersIcon,
       component: <PersonaManager />,
     },
     {
       label: 'MCP Servers',
-      icon: <BuildIcon />,
+      icon: CommandLineIcon,
       component: <MCPServerManager />,
     },
     {
       label: 'Configuration',
-      icon: <EditIcon />,
-      component: <ConfigurationEditor bot={selectedBot} onSave={setSelectedBot} />,
+      icon: Cog6ToothIcon,
+      component: <ComprehensiveConfigPanel />,
     },
     {
       label: 'Activity',
-      icon: <MonitorIcon />,
+      icon: ChartBarIcon,
       component: <ActivityMonitor />,
     },
   ];
 
+  const ActiveComponent = tabs[activeTab].component;
+
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Admin Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-base-content/70">
           Administrative controls and system management for your Discord LLM bot
-        </Typography>
+        </p>
+      </div>
 
-        <Paper sx={{ width: '100%' }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            aria-label="admin dashboard tabs"
-            variant="scrollable"
-            scrollButtons="auto"
-          >
-            {tabs.map((tab, index) => (
-              <Tab
+      <div className="w-full">
+        <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-200 p-2 rounded-lg overflow-x-auto flex-nowrap">
+          {tabs.map((tab, index) => {
+            const Icon = tab.icon;
+            return (
+              <a
                 key={index}
-                label={tab.label}
-                icon={tab.icon}
-                iconPosition="start"
-                id={`admin-tab-${index}`}
-                aria-controls={`admin-tabpanel-${index}`}
-              />
-            ))}
-          </Tabs>
+                role="tab"
+                className={`tab h-10 gap-2 whitespace-nowrap ${activeTab === index ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab(index)}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </a>
+            );
+          })}
+        </div>
 
-          {tabs.map((tab, index) => (
-            <TabPanel key={index} value={activeTab} index={index}>
-              {tab.component}
-            </TabPanel>
-          ))}
-        </Paper>
-      </Box>
-    </Container>
+        <div className="bg-base-100 rounded-box min-h-[500px]">
+          {/* We render the component directly instead of using a wrapper to avoid unnecessary re-renders */}
+          {typeof ActiveComponent === 'object' ? ActiveComponent : <ActiveComponent />}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import { Request } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 
 const debug = Debug('app:auditMiddleware');
@@ -27,14 +28,14 @@ export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFu
 
     // Extract IP address
     const ipAddress = req.ip ||
-                     req.connection.remoteAddress ||
-                     (req as any).socket?.remoteAddress ||
-                     req.headers['x-forwarded-for'] as string ||
-                     req.headers['x-real-ip'] as string ||
-                     'unknown';
+      (req as any).connection?.remoteAddress ||
+      (req as any).socket?.remoteAddress ||
+      (req as any).headers?.['x-forwarded-for'] as string ||
+      (req as any).headers?.['x-real-ip'] as string ||
+      'unknown';
 
     // Extract user agent
-    const userAgent = req.headers['user-agent'] as string || 'unknown';
+    const userAgent = (req as any).headers?.['user-agent'] as string || 'unknown';
 
     // Attach to request for use in route handlers
     req.auditUser = user;
@@ -61,7 +62,7 @@ export const logConfigChange = (
     oldValue?: any;
     newValue?: any;
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logConfigChange(
@@ -73,8 +74,8 @@ export const logConfigChange = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 
@@ -91,7 +92,7 @@ export const logBotAction = (
     oldValue?: any;
     newValue?: any;
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logBotAction(
@@ -103,8 +104,8 @@ export const logBotAction = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 
@@ -119,7 +120,7 @@ export const logAdminAction = (
   details: string,
   options: {
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logAdminAction(
@@ -131,8 +132,8 @@ export const logAdminAction = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 

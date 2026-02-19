@@ -1,12 +1,11 @@
 import { watch } from 'fs';
-import { join } from 'path';
 import { EventEmitter } from 'events';
 
 export class ConfigWatcher extends EventEmitter {
   private watchers: Map<string, any> = new Map();
   
   watchConfig(configPath: string) {
-    if (this.watchers.has(configPath)) return;
+    if (this.watchers.has(configPath)) {return;}
     
     const watcher = watch(configPath, (eventType) => {
       if (eventType === 'change') {

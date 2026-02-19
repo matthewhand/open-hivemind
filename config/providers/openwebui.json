@@ -1,7 +1,0 @@
-{
-  "OPEN_WEBUI_API_URL": "http://host.docker.internal:3000/api/",
-  "OPEN_WEBUI_USERNAME": "admin",
-  "OPEN_WEBUI_PASSWORD": "password123",
-  "OPEN_WEBUI_KNOWLEDGE_FILE": "",
-  "OPEN_WEBUI_MODEL": "llama3.2"
-}

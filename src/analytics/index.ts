@@ -4,10 +4,10 @@ export { UsageTracker } from './UsageTracker';
 export type {
   AnalyticsEvent,
   UserSession,
-  AnalyticsSummary
+  AnalyticsSummary,
 } from './AnalyticsCollector';
 
 export type {
   UsageMetrics,
-  UserActivity
+  UserActivity,
 } from './UsageTracker';

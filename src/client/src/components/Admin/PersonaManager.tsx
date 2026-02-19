@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemText
-} from '@mui/material';
-import { Modal, ToastNotification, Checkbox, Button, Card, Form } from '../DaisyUI';
-import { 
-  getPersonas, 
-  createPersona, 
-  updatePersona, 
+import { Modal, Checkbox, Button, Card, Form } from '../DaisyUI';
+import {
+  getPersonas,
+  createPersona,
+  updatePersona,
   deletePersona,
-  type Persona 
+  type Persona,
 } from '../../services/agentService';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ArchiveBoxXMarkIcon,
+} from '@heroicons/react/24/outline';
 
 const PersonaManager: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -59,7 +54,7 @@ const PersonaManager: React.FC = () => {
   const handleFormSubmit = async (data: Record<string, string | number | boolean>) => {
     const name = data.name as string;
     const systemPrompt = data.systemPrompt as string;
-    
+
     try {
       if (editingPersona) {
         await updatePersona(editingPersona.key, { name, systemPrompt });
@@ -124,17 +119,17 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <Typography>Loading personas...</Typography>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <div className="text-error p-4">{error}</div>;
   }
 
   return (
     <Card title="Personas" className="p-4">
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Box display="flex" alignItems="center">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
           <Checkbox
             checked={personas.length > 0 && selectedPersonas.size === personas.length}
             indeterminate={selectedPersonas.size > 0 && selectedPersonas.size < personas.length}
@@ -145,61 +140,62 @@ const PersonaManager: React.FC = () => {
           {selectedPersonas.size > 0 && (
             <Button
               variant="secondary"
-              style="outline"
-              icon={<DeleteSweepIcon />}
+              className="btn-outline ml-2"
               onClick={handleDeleteSelected}
-              className="ml-2"
             >
+              <ArchiveBoxXMarkIcon className="w-4 h-4 mr-2" />
               Delete Selected ({selectedPersonas.size})
             </Button>
           )}
-        </Box>
+        </div>
         <Button
           variant="primary"
-          icon={<AddIcon />}
           onClick={() => handleOpenModal()}
         >
+          <PlusIcon className="w-4 h-4 mr-2" />
           Add Persona
         </Button>
-      </Box>
-      
-      <List>
+      </div>
+
+      <ul className="menu bg-base-100 w-full rounded-box p-2">
         {personas.map((persona) => (
-          <ListItem
-            key={persona.key}
-            secondaryAction={
-              <Box className="flex gap-2">
+          <li key={persona.key} className="border-b border-base-200 last:border-none">
+            <div className="flex items-center justify-between p-2 hover:bg-base-200 rounded-lg">
+              <div className="flex items-center gap-3 flex-1">
+                <Checkbox
+                  checked={selectedPersonas.has(persona.key)}
+                  onChange={() => handleToggleSelect(persona.key)}
+                  size="sm"
+                />
+                <div className="flex flex-col">
+                  <span className="font-bold">{persona.name}</span>
+                  <span className="text-xs text-base-content/70 truncate max-w-md">{persona.systemPrompt}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={<EditIcon />}
-                  onClick={() => handleOpenModal(persona)}
                   className="btn-square"
+                  onClick={() => handleOpenModal(persona)}
                 >
+                  <PencilIcon className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={<DeleteIcon />}
-                  onClick={() => handleDeletePersona(persona.key)}
                   className="btn-square text-error hover:bg-error hover:text-error-content"
+                  onClick={() => handleDeletePersona(persona.key)}
                 >
+                  <TrashIcon className="w-4 h-4" />
                 </Button>
-              </Box>
-            }
-          >
-            <Box display="flex" alignItems="center">
-              <Checkbox
-                checked={selectedPersonas.has(persona.key)}
-                onChange={() => handleToggleSelect(persona.key)}
-                size="sm"
-              />
-              <ListItemText primary={persona.name} secondary={persona.systemPrompt} sx={{ ml: 2 }} />
-            </Box>
-          </ListItem>
+              </div>
+            </div>
+          </li>
         ))}
-      </List>
-      
+      </ul>
+
       <Modal
         isOpen={openModal}
         onClose={handleCloseModal}
@@ -229,13 +225,14 @@ const PersonaManager: React.FC = () => {
           showCancel
         />
       </Modal>
-      
+
       {toastMessage && (
-        <ToastNotification
-          message={toastMessage}
-          type={toastType}
-          onClose={() => setToastMessage('')}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
+            <span>{toastMessage}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+          </div>
+        </div>
       )}
     </Card>
   );

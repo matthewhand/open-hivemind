@@ -138,7 +138,7 @@ export class RealTimeValidationService extends EventEmitter {
             field: 'name',
             value: config.name,
             suggestions: ['Provide a unique name for your bot configuration'],
-            category: 'required'
+            category: 'required',
           });
         }
         return {
@@ -146,9 +146,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0
+          score: errors.length === 0 ? 100 : 0,
         };
-      }
+      },
     });
 
     this.addRule({
@@ -167,7 +167,7 @@ export class RealTimeValidationService extends EventEmitter {
             field: 'messageProvider',
             value: config.messageProvider,
             suggestions: ['Select a message provider: discord, slack, mattermost, or webhook'],
-            category: 'required'
+            category: 'required',
           });
         }
         return {
@@ -175,9 +175,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0
+          score: errors.length === 0 ? 100 : 0,
         };
-      }
+      },
     });
 
     this.addRule({
@@ -196,7 +196,7 @@ export class RealTimeValidationService extends EventEmitter {
             field: 'llmProvider',
             value: config.llmProvider,
             suggestions: ['Select an LLM provider: openai, flowise, or openwebui'],
-            category: 'required'
+            category: 'required',
           });
         }
         return {
@@ -204,9 +204,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0
+          score: errors.length === 0 ? 100 : 0,
         };
-      }
+      },
     });
 
     // Format validation rules
@@ -227,7 +227,7 @@ export class RealTimeValidationService extends EventEmitter {
             value: config.name,
             expected: '^[a-zA-Z0-9_-]{1,100}$',
             suggestions: ['Use only alphanumeric characters, underscores, and hyphens'],
-            category: 'format'
+            category: 'format',
           });
         }
         return {
@@ -235,9 +235,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0
+          score: errors.length === 0 ? 100 : 0,
         };
-      }
+      },
     });
 
     // Discord-specific validation rules
@@ -260,7 +260,7 @@ export class RealTimeValidationService extends EventEmitter {
               field: 'discord.token',
               value: config.discord?.token,
               suggestions: ['Provide your Discord bot token from the Discord Developer Portal'],
-              category: 'required'
+              category: 'required',
             });
           } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(config.discord.token)) {
             warnings.push({
@@ -270,7 +270,7 @@ export class RealTimeValidationService extends EventEmitter {
               field: 'discord.token',
               value: '***REDACTED***',
               suggestions: ['Verify your Discord token format: it should be "BotToken.AppID.Secret"'],
-              category: 'required'
+              category: 'required',
             });
           }
         }
@@ -280,9 +280,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings,
           info: [],
-          score: errors.length === 0 ? (warnings.length === 0 ? 100 : 80) : 0
+          score: errors.length === 0 ? (warnings.length === 0 ? 100 : 80) : 0,
         };
-      }
+      },
     });
 
     // OpenAI-specific validation rules
@@ -305,7 +305,7 @@ export class RealTimeValidationService extends EventEmitter {
               field: 'openai.apiKey',
               value: config.openai?.apiKey,
               suggestions: ['Provide your OpenAI API key from the OpenAI dashboard'],
-              category: 'required'
+              category: 'required',
             });
           } else if (!/^sk-[A-Za-z0-9]+$/.test(config.openai.apiKey)) {
             warnings.push({
@@ -315,7 +315,7 @@ export class RealTimeValidationService extends EventEmitter {
               field: 'openai.apiKey',
               value: '***REDACTED***',
               suggestions: ['Verify your OpenAI API key format: it should start with "sk-"'],
-              category: 'required'
+              category: 'required',
             });
           }
         }
@@ -325,9 +325,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings,
           info: [],
-          score: errors.length === 0 ? (warnings.length === 0 ? 100 : 80) : 0
+          score: errors.length === 0 ? (warnings.length === 0 ? 100 : 80) : 0,
         };
-      }
+      },
     });
 
     // Business logic validation rules
@@ -350,7 +350,7 @@ export class RealTimeValidationService extends EventEmitter {
             field: 'name',
             value: config.name,
             suggestions: [`Consider using "${config.name}-2" or a different name`],
-            category: 'business'
+            category: 'business',
           });
         }
         
@@ -359,9 +359,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors,
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0
+          score: errors.length === 0 ? 100 : 0,
         };
-      }
+      },
     });
 
     // Security validation rules
@@ -380,7 +380,7 @@ export class RealTimeValidationService extends EventEmitter {
           /"apiKey":\s*"[^${]+"/,
           /"token":\s*"[^${]+"/,
           /"secret":\s*"[^${]+"/,
-          /"password":\s*"[^${]+"/
+          /"password":\s*"[^${]+"/,
         ];
         
         for (const pattern of secretPatterns) {
@@ -393,9 +393,9 @@ export class RealTimeValidationService extends EventEmitter {
               value: '***REDACTED***',
               suggestions: [
                 'Use environment variables with ${VAR_NAME} syntax',
-                'Store secrets in a secure configuration management system'
+                'Store secrets in a secure configuration management system',
               ],
-              category: 'security'
+              category: 'security',
             });
             break;
           }
@@ -406,9 +406,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors: [],
           warnings,
           info: [],
-          score: warnings.length === 0 ? 100 : 70
+          score: warnings.length === 0 ? 100 : 70,
         };
-      }
+      },
     });
 
     // Performance validation rules
@@ -433,9 +433,9 @@ export class RealTimeValidationService extends EventEmitter {
               value: model,
               suggestions: [
                 'GPT-4 is powerful but slower and more expensive',
-                'Consider GPT-3.5-turbo for faster responses and lower cost'
+                'Consider GPT-3.5-turbo for faster responses and lower cost',
               ],
-              category: 'performance'
+              category: 'performance',
             });
           } else if (model === 'gpt-3.5-turbo') {
             info.push({
@@ -446,9 +446,9 @@ export class RealTimeValidationService extends EventEmitter {
               value: model,
               suggestions: [
                 'GPT-3.5-turbo offers fast responses at a lower cost',
-                'Consider GPT-4 for complex reasoning tasks'
+                'Consider GPT-4 for complex reasoning tasks',
               ],
-              category: 'performance'
+              category: 'performance',
             });
           }
         }
@@ -458,9 +458,9 @@ export class RealTimeValidationService extends EventEmitter {
           errors: [],
           warnings: [],
           info,
-          score: 100
+          score: 100,
         };
-      }
+      },
     });
 
     debug(`Initialized ${this.rules.size} validation rules`);
@@ -478,12 +478,12 @@ export class RealTimeValidationService extends EventEmitter {
       ruleIds: Array.from(this.rules.keys()),
       isDefault: false,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Standard profile - most rules enabled
     const standardRuleIds = Array.from(this.rules.keys()).filter(id => 
-      !id.startsWith('performance-') // Exclude performance rules
+      !id.startsWith('performance-'), // Exclude performance rules
     );
     
     this.addProfile({
@@ -493,12 +493,12 @@ export class RealTimeValidationService extends EventEmitter {
       ruleIds: standardRuleIds,
       isDefault: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Quick profile - only required fields
     const quickRuleIds = Array.from(this.rules.keys()).filter(id => 
-      id.startsWith('required-') // Only required field rules
+      id.startsWith('required-'), // Only required field rules
     );
     
     this.addProfile({
@@ -508,7 +508,7 @@ export class RealTimeValidationService extends EventEmitter {
       ruleIds: quickRuleIds,
       isDefault: false,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     debug(`Initialized ${this.profiles.size} validation profiles`);
@@ -610,7 +610,7 @@ export class RealTimeValidationService extends EventEmitter {
   public async validateConfiguration(
     configId: number,
     profileId: string = 'standard',
-    clientId?: string
+    clientId?: string,
   ): Promise<ValidationReport> {
     const startTime = Date.now();
     
@@ -652,7 +652,7 @@ export class RealTimeValidationService extends EventEmitter {
               message: `Validation rule execution failed: ${(error as any).message}`,
               field: 'system',
               value: null,
-              category: 'required'
+              category: 'required',
             });
           }
         }
@@ -675,7 +675,7 @@ export class RealTimeValidationService extends EventEmitter {
         errors: allErrors,
         warnings: allWarnings,
         info: allInfo,
-        score: Math.round(score)
+        score: Math.round(score),
       };
 
       // Create validation report
@@ -686,7 +686,7 @@ export class RealTimeValidationService extends EventEmitter {
         configName: config.name,
         result,
         executionTime: Date.now() - startTime,
-        rulesExecuted
+        rulesExecuted,
       };
 
       // Store in history
@@ -726,14 +726,14 @@ export class RealTimeValidationService extends EventEmitter {
             message: `Validation failed: ${(error as any).message}`,
             field: 'system',
             value: null,
-            category: 'required'
+            category: 'required',
           }],
           warnings: [],
           info: [],
-          score: 0
+          score: 0,
         },
         executionTime: Date.now() - startTime,
-        rulesExecuted: 0
+        rulesExecuted: 0,
       };
 
       this.addToHistory(report);
@@ -748,7 +748,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   public validateConfigurationData(
     configData: any,
-    profileId: string = 'standard'
+    profileId: string = 'standard',
   ): ValidationResult {
     try {
       // Get validation profile
@@ -782,7 +782,7 @@ export class RealTimeValidationService extends EventEmitter {
               message: `Validation rule execution failed: ${(error as any).message}`,
               field: 'system',
               value: null,
-              category: 'required'
+              category: 'required',
             });
           }
         }
@@ -804,7 +804,7 @@ export class RealTimeValidationService extends EventEmitter {
         errors: allErrors,
         warnings: allWarnings,
         info: allInfo,
-        score: Math.round(score)
+        score: Math.round(score),
       };
     } catch (error) {
       debug('Error validating configuration data:', error);
@@ -817,11 +817,11 @@ export class RealTimeValidationService extends EventEmitter {
           message: `Validation failed: ${(error as any).message}`,
           field: 'system',
           value: null,
-          category: 'required'
+          category: 'required',
         }],
         warnings: [],
         info: [],
-        score: 0
+        score: 0,
       };
     }
   }
@@ -832,7 +832,7 @@ export class RealTimeValidationService extends EventEmitter {
   public subscribe(
     configId: number,
     clientId: string,
-    profileId: string = 'standard'
+    profileId: string = 'standard',
   ): ValidationSubscription {
     const subId = this.getSubscriptionId(configId, clientId);
     
@@ -849,7 +849,7 @@ export class RealTimeValidationService extends EventEmitter {
         clientId,
         profileId,
         isActive: true,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
       this.subscriptions.set(subId, subscription);
     }
@@ -883,7 +883,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   public getValidationHistory(
     configId?: number,
-    limit: number = 50
+    limit: number = 50,
   ): ValidationReport[] {
     let history = this.validationHistory;
     
@@ -906,7 +906,7 @@ export class RealTimeValidationService extends EventEmitter {
     rulesCount: number;
     profilesCount: number;
     activeSubscriptions: number;
-  } {
+    } {
     const totalReports = this.validationHistory.length;
     const validReports = this.validationHistory.filter(r => r.result.isValid).length;
     const invalidReports = totalReports - validReports;
@@ -928,7 +928,7 @@ export class RealTimeValidationService extends EventEmitter {
       averageExecutionTime: Math.round(averageExecutionTime),
       rulesCount: this.rules.size,
       profilesCount: this.profiles.size,
-      activeSubscriptions
+      activeSubscriptions,
     };
   }
 

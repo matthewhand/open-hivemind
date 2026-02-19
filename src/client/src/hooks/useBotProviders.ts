@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useCallback } from 'react';
-import {
+import type {
   MessageProvider,
   LLMProvider,
   MessageProviderType,
-  LLMProviderType,
+  LLMProviderType} from '../types/bot';
+import {
   MESSAGE_PROVIDER_CONFIGS,
-  LLM_PROVIDER_CONFIGS
+  LLM_PROVIDER_CONFIGS,
 } from '../types/bot';
 import { useBots } from './useBots';
 
@@ -20,7 +22,7 @@ const useBotProviders = () => {
     botId: string,
     type: MessageProviderType,
     name: string,
-    config: Record<string, any>
+    config: Record<string, any>,
   ): MessageProvider => {
     const providerConfig = MESSAGE_PROVIDER_CONFIGS[type];
     if (!providerConfig) {
@@ -34,7 +36,7 @@ const useBotProviders = () => {
       config,
       status: 'disconnected',
       lastConnected: null,
-      error: null
+      error: null,
     };
 
     return provider;
@@ -45,7 +47,7 @@ const useBotProviders = () => {
     botId: string,
     type: LLMProviderType,
     name: string,
-    config: Record<string, any>
+    config: Record<string, any>,
   ): LLMProvider => {
     const providerConfig = LLM_PROVIDER_CONFIGS[type];
     if (!providerConfig) {
@@ -59,7 +61,7 @@ const useBotProviders = () => {
       config,
       status: 'unavailable',
       lastConnected: null,
-      error: null
+      error: null,
     };
 
     return provider;
@@ -70,13 +72,13 @@ const useBotProviders = () => {
     botId: string,
     type: MessageProviderType,
     name: string,
-    config: Record<string, any>
+    config: Record<string, any>,
   ) => {
     const provider = createMessageProvider(botId, type, name, config);
 
     updateBot(botId, (prevBot) => ({
       ...prevBot,
-      messageProviders: [...prevBot.messageProviders, provider]
+      messageProviders: [...prevBot.messageProviders, provider],
     }));
 
     return provider;
@@ -87,13 +89,13 @@ const useBotProviders = () => {
     botId: string,
     type: LLMProviderType,
     name: string,
-    config: Record<string, any>
+    config: Record<string, any>,
   ) => {
     const provider = createLLMProvider(botId, type, name, config);
 
     updateBot(botId, (prevBot) => ({
       ...prevBot,
-      llmProviders: [...prevBot.llmProviders, provider]
+      llmProviders: [...prevBot.llmProviders, provider],
     }));
 
     return provider;
@@ -103,21 +105,21 @@ const useBotProviders = () => {
   const updateProvider = useCallback((
     botId: string,
     providerId: string,
-    updates: Partial<MessageProvider | LLMProvider>
+    updates: Partial<MessageProvider | LLMProvider>,
   ) => {
     updateBot(botId, (prevBot) => {
       const updatedMessageProviders = prevBot.messageProviders.map(p =>
-        p.id === providerId ? { ...p, ...updates } : p
+        p.id === providerId ? { ...p, ...updates } : p,
       );
 
       const updatedLLMProviders = prevBot.llmProviders.map(p =>
-        p.id === providerId ? { ...p, ...updates } : p
+        p.id === providerId ? { ...p, ...updates } : p,
       );
 
       return {
         ...prevBot,
         messageProviders: updatedMessageProviders,
-        llmProviders: updatedLLMProviders
+        llmProviders: updatedLLMProviders,
       };
     });
   }, [updateBot]);
@@ -127,14 +129,14 @@ const useBotProviders = () => {
     updateBot(botId, (prevBot) => ({
       ...prevBot,
       messageProviders: prevBot.messageProviders.filter(p => p.id !== providerId),
-      llmProviders: prevBot.llmProviders.filter(p => p.id !== providerId)
+      llmProviders: prevBot.llmProviders.filter(p => p.id !== providerId),
     }));
   }, [updateBot]);
 
   // Test provider connection
   const testProvider = useCallback(async (
     botId: string,
-    providerId: string
+    providerId: string,
   ): Promise<boolean> => {
     try {
       // Update provider status to testing
@@ -152,7 +154,7 @@ const useBotProviders = () => {
           const updatedProviders = prevBot.messageProviders.map(p =>
             p.id === providerId
               ? { ...p, status: 'connected' as const, lastConnected: new Date().toISOString(), error: null }
-              : p
+              : p,
           );
           return { ...prevBot, messageProviders: updatedProviders };
         }
@@ -161,7 +163,7 @@ const useBotProviders = () => {
           const updatedProviders = prevBot.llmProviders.map(p =>
             p.id === providerId
               ? { ...p, status: 'available' as const, lastConnected: new Date().toISOString(), error: null }
-              : p
+              : p,
           );
           return { ...prevBot, llmProviders: updatedProviders };
         }
@@ -181,7 +183,7 @@ const useBotProviders = () => {
           const updatedProviders = prevBot.messageProviders.map(p =>
             p.id === providerId
               ? { ...p, status: 'error' as const, error: errorMessage }
-              : p
+              : p,
           );
           return { ...prevBot, messageProviders: updatedProviders };
         }
@@ -190,7 +192,7 @@ const useBotProviders = () => {
           const updatedProviders = prevBot.llmProviders.map(p =>
             p.id === providerId
               ? { ...p, status: 'error' as const, error: errorMessage }
-              : p
+              : p,
           );
           return { ...prevBot, llmProviders: updatedProviders };
         }
@@ -229,7 +231,7 @@ const useBotProviders = () => {
     getAvailableMessageProviders,
     getAvailableLLMProviders,
     getMessageProviderConfig,
-    getLLMProviderConfig
+    getLLMProviderConfig,
   };
 };
 

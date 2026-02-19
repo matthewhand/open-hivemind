@@ -1,12 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 export interface BotInstance {
   id: string;
   name: string;
+  description?: string;
   status: BotStatus;
   provider: MessageProvider | LLMProvider;
+  messageProviders: MessageProvider[];
+  llmProviders: LLMProvider[];
   persona?: Persona;
+  personaId?: string;
   createdAt: string;
   updatedAt: string;
+  lastActive?: string;
+  error?: string | null;
   config: Record<string, any>;
+  envOverrides?: Record<string, any>;
 }
 
 export enum BotStatus {
@@ -94,9 +102,11 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType;
+  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
+  botId?: string | null;
+  isEdit?: boolean;
 }
 
 export interface ProviderTypeConfig {
@@ -124,18 +134,132 @@ export interface FieldConfig {
 export interface Bot {
   id: string;
   name: string;
-  description?: string;
-  instance: BotInstance;
+  messageProvider: string;
+  llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  mcpGuardProfile?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  isActive: boolean;
+  envOverrides?: Record<string, any>;
+  discord?: {
+    token?: string;
+    clientId?: string;
+    guildId?: string;
+    channelId?: string;
+    voiceChannelId?: string;
+  };
+  slack?: {
+    botToken?: string;
+    appToken?: string;
+    signingSecret?: string;
+    teamId?: string;
+    channels?: string[];
+    defaultChannelId?: string;
+    mode?: string;
+  };
+  mattermost?: {
+    url?: string;
+    accessToken?: string;
+    teamId?: string;
+    channelId?: string;
+    channel?: string;
+  };
+  openai?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    baseUrl?: string;
+  };
+  flowise?: {
+    apiKey?: string;
+    apiUrl?: string;
+    chatflowId?: string;
+  };
+  openwebui?: {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+  };
+  openswarm?: {
+    apiKey?: string;
+    apiUrl?: string;
+    swarmId?: string;
+    team?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateBotRequest {
   name: string;
-  description?: string;
-  providerId: string;
-  personaId?: string;
-  config: Record<string, any>;
+  messageProvider: string;
+  llmProvider?: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  isActive: boolean;
+  discord?: {
+    token?: string;
+    clientId?: string;
+    guildId?: string;
+    channelId?: string;
+    voiceChannelId?: string;
+  };
+  slack?: {
+    botToken?: string;
+    appToken?: string;
+    signingSecret?: string;
+    teamId?: string;
+    channels?: string[];
+    defaultChannelId?: string;
+    mode?: string;
+  };
+  mattermost?: {
+    url?: string;
+    accessToken?: string;
+    teamId?: string;
+    channelId?: string;
+    channel?: string;
+  };
+  openai?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    baseUrl?: string;
+  };
+  flowise?: {
+    apiKey?: string;
+    apiUrl?: string;
+    chatflowId?: string;
+  };
+  openwebui?: {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+  };
+  openswarm?: {
+    apiKey?: string;
+    apiUrl?: string;
+    swarmId?: string;
+    team?: string;
+  };
 }
 
 export const MESSAGE_PROVIDER_CONFIGS = {
@@ -144,36 +268,36 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     displayName: 'Slack',
     description: 'Connect to Slack workspaces',
     icon: '💬',
-    fields: []
+    fields: [],
   },
   discord: {
     type: MessageProviderType.DISCORD,
     displayName: 'Discord',
     description: 'Connect to Discord servers',
     icon: '🎮',
-    fields: []
+    fields: [],
   },
   telegram: {
     type: MessageProviderType.TELEGRAM,
     displayName: 'Telegram',
     description: 'Connect to Telegram groups',
     icon: '✈️',
-    fields: []
+    fields: [],
   },
   webhook: {
     type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
     description: 'Generic webhook integration',
     icon: '🔗',
-    fields: []
+    fields: [],
   },
   mattermost: {
     type: MessageProviderType.MATTERMOST,
     displayName: 'Mattermost',
     description: 'Connect to Mattermost instances',
     icon: '💻',
-    fields: []
-  }
+    fields: [],
+  },
 };
 
 export const LLM_PROVIDER_CONFIGS = {
@@ -182,36 +306,36 @@ export const LLM_PROVIDER_CONFIGS = {
     displayName: 'OpenAI',
     description: 'GPT models from OpenAI',
     icon: '🤖',
-    fields: []
+    fields: [],
   },
   anthropic: {
     type: LLMProviderType.ANTHROPIC,
     displayName: 'Anthropic',
     description: 'Claude models from Anthropic',
     icon: '🧠',
-    fields: []
+    fields: [],
   },
   ollama: {
     type: LLMProviderType.OLLAMA,
     displayName: 'Ollama',
     description: 'Local models via Ollama',
     icon: '🦙',
-    fields: []
+    fields: [],
   },
   huggingface: {
     type: LLMProviderType.HUGGINGFACE,
     displayName: 'Hugging Face',
     description: 'Models from Hugging Face',
     icon: '🤗',
-    fields: []
+    fields: [],
   },
   local: {
     type: LLMProviderType.LOCAL,
     displayName: 'Local',
     description: 'Custom local models',
     icon: '🏠',
-    fields: []
-  }
+    fields: [],
+  },
 };
 
 export const DEFAULT_PERSONA: Persona = {
@@ -221,11 +345,11 @@ export const DEFAULT_PERSONA: Persona = {
   systemPrompt: 'You are a helpful assistant. Be polite, professional, and provide accurate information.',
   traits: [
     { name: 'Tone', value: 'Friendly', weight: 1 },
-    { name: 'Style', value: 'Professional', weight: 1 }
+    { name: 'Style', value: 'Professional', weight: 1 },
   ],
   category: PersonaCategory.PROFESSIONAL,
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  updatedAt: new Date().toISOString(),
 };
 
 export const BUILTIN_PERSONAS: Persona[] = [
@@ -237,11 +361,11 @@ export const BUILTIN_PERSONAS: Persona[] = [
     systemPrompt: 'You are a customer service agent. Be polite, empathetic, and helpful.',
     traits: [
       { name: 'Tone', value: 'Professional', weight: 1 },
-      { name: 'Style', value: 'Empathetic', weight: 1 }
+      { name: 'Style', value: 'Empathetic', weight: 1 },
     ],
     category: PersonaCategory.PROFESSIONAL,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 'technical_support',
@@ -250,11 +374,11 @@ export const BUILTIN_PERSONAS: Persona[] = [
     systemPrompt: 'You are a technical support specialist. Provide clear, step-by-step assistance.',
     traits: [
       { name: 'Tone', value: 'Analytical', weight: 1 },
-      { name: 'Style', value: 'Technical', weight: 1 }
+      { name: 'Style', value: 'Technical', weight: 1 },
     ],
     category: PersonaCategory.TECHNICAL,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 'creative_writer',
@@ -263,12 +387,12 @@ export const BUILTIN_PERSONAS: Persona[] = [
     systemPrompt: 'You are a creative writer. Use vivid language and engaging storytelling.',
     traits: [
       { name: 'Tone', value: 'Creative', weight: 1 },
-      { name: 'Style', value: 'Artistic', weight: 1 }
+      { name: 'Style', value: 'Artistic', weight: 1 },
     ],
     category: PersonaCategory.CREATIVE,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 export interface PersonaModalState {

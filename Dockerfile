@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Install Python and additional tools based on feature flags
 # Set default feature flags - these can be overridden during build
@@ -16,15 +16,18 @@ RUN apk add --no-cache \
             py3-pip \
             python3-dev \
             build-base \
-            && pip3 install --no-cache uvx \
+            && python3 -m pip install --no-cache-dir --break-system-packages uv \
         ; fi
 
-# Install Node.js tools if enabled
+# Install Node.js tools (MCP CLI is optional until package is published)
 RUN if [ "$INCLUDE_NODE_TOOLS" = "true" ]; then \
-        npm install -g \
-            npx \
-            @modelcontextprotocol/cli \
-        ; fi
+        npm install -g npx; \
+        if npm view @modelcontextprotocol/cli >/dev/null 2>&1; then \
+            npm install -g @modelcontextprotocol/cli; \
+        else \
+            echo "Skipping @modelcontextprotocol/cli install (package not available)"; \
+        fi; \
+    fi
 
 # Install ffmpeg for Discord voice support if enabled
 RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
@@ -34,10 +37,15 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+COPY src/client/package.json src/client/
+RUN npm ci && npm cache clean --force
 
 COPY . .
+ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
 RUN npm run build
+
+# Remove dev dependencies after build to keep runtime image slim
+RUN npm prune --omit=dev
 
 # Create feature flag environment file
 RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \

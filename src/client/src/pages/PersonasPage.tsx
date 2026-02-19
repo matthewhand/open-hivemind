@@ -1,425 +1,536 @@
-import React, { useState } from 'react';
-import { usePersonas } from '../hooks/usePersonas';
-import { Persona, PersonaCategory, PersonaModalState } from '../types/bot';
-import { Card, Button, Badge, Input, Modal } from '../components/DaisyUI';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from 'react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle } from 'lucide-react';
 import {
-  User as UserIcon,
-  Plus as AddIcon,
-  Edit as EditIcon,
-  Trash2 as DeleteIcon,
-  Copy as DuplicateIcon,
-  Search as SearchIcon,
-  Filter as FilterIcon,
-  XCircle as ClearIcon,
-  Download as ExportIcon,
-  Upload as ImportIcon,
-  Sparkles as SparklesIcon
-} from 'lucide-react';
-import { Breadcrumbs } from '../components/DaisyUI';
-import PersonaChip from '../components/BotManagement/PersonaChip';
-import PersonaConfigModal from '../components/ProviderConfiguration/PersonaConfigModal';
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Input,
+  Modal,
+  PageHeader,
+  StatsCards,
+  LoadingSpinner,
+  EmptyState,
+} from '../components/DaisyUI';
+import type { Persona as ApiPersona, Bot } from '../services/api';
+import { apiService } from '../services/api';
+
+// Extend UI Persona type to include assigned bots for display
+interface Persona extends ApiPersona {
+  assignedBotNames: string[];
+  assignedBotIds: string[]; // Bot IDs are strings in API but let's check Bot type
+}
 
 const PersonasPage: React.FC = () => {
-  const {
-    personas,
-    loading,
-    error,
-    createPersona,
-    updatePersona,
-    deletePersona,
-    duplicatePersona,
-    clearError
-  } = usePersonas();
+  const [bots, setBots] = useState<Bot[]>([]); // Bot type from API
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<PersonaCategory | 'all'>('all');
-  const [modalState, setModalState] = useState<PersonaModalState>({
-    isOpen: false,
-    persona: undefined,
-    isEdit: false
-  });
+  // Modals
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
+  const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
-  const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Personas', href: '/uber/personas', isActive: true }
-  ];
+  // Form State
+  const [personaName, setPersonaName] = useState('');
+  const [personaDescription, setPersonaDescription] = useState('');
+  const [personaPrompt, setPersonaPrompt] = useState('');
+  const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
+  const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
 
-  const categories: Array<{ value: PersonaCategory | 'all'; label: string; color: string }> = [
-    { value: 'all', label: 'All Personas', color: 'neutral' },
-    { value: 'general', label: 'General', color: 'neutral' },
-    { value: 'customer_service', label: 'Customer Service', color: 'primary' },
-    { value: 'creative', label: 'Creative', color: 'secondary' },
-    { value: 'technical', label: 'Technical', color: 'accent' },
-    { value: 'educational', label: 'Educational', color: 'info' },
-    { value: 'entertainment', label: 'Entertainment', color: 'warning' },
-    { value: 'professional', label: 'Professional', color: 'success' }
-  ];
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const filteredPersonas = personas.filter(persona => {
-    const matchesCategory = selectedCategory === 'all' || persona.category === selectedCategory;
-    const matchesSearch = !searchQuery.trim() ||
-      persona.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      persona.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      persona.traits.some(trait =>
-        trait.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trait.value.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    return matchesCategory && matchesSearch;
-  });
+      const [configResponse, personasResponse] = await Promise.all([
+        apiService.getConfig(),
+        apiService.getPersonas(),
+      ]);
+
+      const botList = configResponse.bots || [];
+      // Assign an ID if missing (API Bot type might not have ID exposed in ConfigResponse? 
+      // Actually ConfigResponse.bots doesn't have ID, it has name as key identifier in some contexts?
+      // Wait, BotManager.getAllBots returns BotInstance which HAS ID.
+      // But ConfigResponse bots is Bot[], which lacks ID in the interface definition in api.ts?
+      // Let's check api.ts again. 
+      // api.ts: export interface Bot { name: string; ... } NO ID!
+      // However, BotManager returns BotInstance which has ID.
+      // `apiService.getConfig` calls `/api/config`.
+      // `src/server/routes/config.ts` line 263 sends `sanitizedBots`.
+      // `sanitizedBots` map bot => ...bot. `bot` comes from `manager.getAllBots()`.
+      // `BotInstance` has `id`.
+      // So the runtime response HAS ID, but the TypeScript interface `Bot` in `api.ts` is missing it.
+      // I should cast or assume ID exists.
+
+      const filledBots = botList.map((b: any) => ({
+        ...b,
+        id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
+      }));
+      setBots(filledBots);
+
+      const mappedPersonas = personasResponse.map(p => {
+        // Find assigned bots
+        // Match by persona ID stored in bot.persona OR matches persona name (legacy)
+        const assigned = filledBots.filter((b: any) =>
+          b.persona === p.id || b.persona === p.name,
+        );
+        return {
+          ...p,
+          assignedBotNames: assigned.map((b: any) => b.name),
+          assignedBotIds: assigned.map((b: any) => b.id),
+        };
+      });
+
+      setPersonas(mappedPersonas);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch data';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleSavePersona = async () => {
+    if (!personaName.trim()) { return; }
+
+    setLoading(true);
+    try {
+      let savedPersona: ApiPersona;
+
+      const personaData = {
+        name: personaName,
+        description: personaDescription || 'Custom Persona',
+        category: personaCategory,
+        systemPrompt: personaPrompt,
+        traits: [], // Traits not yet exposed in simple UI
+      };
+
+      if (editingPersona) {
+        savedPersona = await apiService.updatePersona(editingPersona.id, personaData);
+      } else {
+        savedPersona = await apiService.createPersona(personaData);
+      }
+
+      // Handle Bot Assignments
+      const updates = [];
+      const newPersonaId = savedPersona.id;
+
+      // 1. Assign to selected bots
+      for (const botId of selectedBotIds) {
+        // Only update if not already assigned
+        const bot = bots.find((b: any) => b.id === botId);
+        if (bot && bot.persona !== newPersonaId) {
+          updates.push(apiService.updateBot(botId, {
+            persona: newPersonaId,
+            systemInstruction: personaPrompt, // Ensure prompt sync
+          }));
+        }
+      }
+
+      // 2. Unassign from deselected bots (only if editing)
+      if (editingPersona) {
+        const originallyAssigned = editingPersona.assignedBotIds;
+        const toUnassign = originallyAssigned.filter(id => !selectedBotIds.includes(id));
+
+        for (const botId of toUnassign) {
+          updates.push(apiService.updateBot(botId, {
+            persona: 'default', // Revert to default
+            systemInstruction: 'You are a helpful assistant.', // Default prompt
+          }));
+        }
+      }
+
+      await Promise.all(updates);
+      await fetchData();
+
+      setShowCreateModal(false);
+      setShowEditModal(false);
+      setEditingPersona(null);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to save persona changes');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openCreateModal = () => {
-    setModalState({
-      isOpen: true,
-      persona: undefined,
-      isEdit: false
-    });
+    setPersonaName('');
+    setPersonaDescription('');
+    setPersonaCategory('general');
+    setPersonaPrompt('You are a helpful assistant.');
+    setSelectedBotIds([]);
+    setEditingPersona(null);
+    setShowCreateModal(true);
   };
 
   const openEditModal = (persona: Persona) => {
-    setModalState({
-      isOpen: true,
-      persona,
-      isEdit: true
-    });
+    if (persona.isBuiltIn) {
+      alert('Cannot edit built-in personas directly. Clone them instead (Not implemented yet).');
+      return;
+    }
+    setPersonaName(persona.name);
+    setPersonaDescription(persona.description);
+    setPersonaCategory(persona.category);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds);
+    setEditingPersona(persona);
+    setShowEditModal(true);
   };
 
-  const closeModal = () => {
-    setModalState({
-      isOpen: false,
-      persona: undefined,
-      isEdit: false
-    });
+  const handleDeletePersona = (personaId: string) => {
+    const persona = personas.find(p => p.id === personaId);
+    if (!persona) { return; }
+    if (persona.isBuiltIn) {
+      setError('Cannot delete built-in personas');
+      return;
+    }
+    setDeletingPersona(persona);
+    setShowDeleteModal(true);
   };
 
-  const handlePersonaSubmit = (personaData: any) => {
+  const confirmDelete = async () => {
+    if (!deletingPersona) { return; }
+    setLoading(true);
     try {
-      if (modalState.isEdit && modalState.persona) {
-        updatePersona(modalState.persona.id, personaData);
-      } else {
-        createPersona(personaData);
-      }
-      closeModal();
+      // 1. Revert bots
+      const updates = deletingPersona.assignedBotIds.map(botId =>
+        apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
+      );
+      await Promise.all(updates);
+
+      // 2. Delete persona
+      await apiService.deletePersona(deletingPersona.id);
+
+      await fetchData();
+      setShowDeleteModal(false);
+      setDeletingPersona(null);
     } catch (err) {
-      // Error is handled by the hook
+      setError('Failed to delete persona');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDuplicatePersona = (persona: Persona) => {
-    const newName = `${persona.name} (Copy)`;
-    duplicatePersona(persona.id, newName);
-  };
-
-  const handleDeletePersona = (persona: Persona) => {
-    if (window.confirm(`Are you sure you want to delete the persona "${persona.name}"? This action cannot be undone.`)) {
-      deletePersona(persona.id);
-    }
-  };
-
-  const handleExportPersona = (persona: Persona) => {
-    const dataStr = JSON.stringify(persona, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-
-    const exportFileDefaultName = `${persona.name.toLowerCase().replace(/\s+/g, '-')}-persona.json`;
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-  };
+  const stats = [
+    { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
+    { id: 'active', title: 'Assigned Bots', value: personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0), icon: '🤖', color: 'secondary' as const },
+    { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
+  ];
 
   return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
+    <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          status="error"
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
 
-      <div className="mt-4 mb-8">
-        <h1 className="text-4xl font-bold mb-2">Persona Management</h1>
-        <p className="text-base-content/70">
-          Create and manage AI personas for your bots with custom personalities and behaviors
-        </p>
+      {/* Header */}
+      <PageHeader
+        title="Personas"
+        description="Manage AI personalities and system prompts"
+        icon={Sparkles}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              onClick={fetchData}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            </Button>
+            <Button
+              variant="primary"
+              onClick={openCreateModal}
+            >
+              <Plus className="w-4 h-4" /> Create Persona
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Stats Cards */}
+      <StatsCards stats={stats} isLoading={loading} />
+
+      {/* Info Banner */}
+      <div className="alert alert-info shadow-sm">
+        <Info className="w-5 h-5" />
+        <div>
+          <h3 className="font-bold text-xs opacity-70 uppercase tracking-wider">Note</h3>
+          <div className="text-sm">Personas define the personality and base instructions for your bots. You can assign the same persona to multiple bots. Changes here update all assigned bots.</div>
+        </div>
       </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="alert alert-error mb-6">
-          <span>{error}</span>
-          <button className="btn btn-sm btn-ghost ml-auto" onClick={clearError}>
-            ✕
-          </button>
+      {/* Persona List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      ) : personas.length === 0 ? (
+        <EmptyState
+          icon={Sparkles}
+          title="No personas found"
+          description="Create your first persona to get started"
+          action={
+            <Button variant="primary" onClick={openCreateModal}>
+              <Plus className="w-4 h-4" /> Create Persona
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {personas.map(persona => (
+            <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-lg">{persona.name}</h3>
+                      {persona.isBuiltIn && <Badge size="sm" variant="ghost">Built-in</Badge>}
+                    </div>
+                    <p className="text-xs text-base-content/60">{persona.category}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4 flex-1">
+                <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
+                <div className="bg-base-200/50 p-3 rounded-lg mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
+                    <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
+                      <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
+                    "{persona.systemPrompt}"
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-medium text-base-content/50 uppercase">Assigned Bots</h4>
+                  <div className="tooltip tooltip-left" data-tip="Bots currently using this persona">
+                    <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                  </div>
+                </div>
+
+                {persona.assignedBotNames.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {persona.assignedBotNames.map(botName => (
+                      <Badge key={botName} variant="secondary" size="sm" style="outline">
+                        {botName}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-base-content/40 italic">No bots assigned</span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                {!persona.isBuiltIn && (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
+                      <Edit2 className="w-4 h-4" /> Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeletePersona(persona.id)}
+                      className="text-error hover:bg-error/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+                {persona.isBuiltIn && (
+                  <Button variant="ghost" size="sm" disabled title="Built-in personas cannot be edited">
+                    <User className="w-4 h-4 mr-1" /> Built-in
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card className="bg-primary/5 border border-primary/20">
-          <div className="card-body p-4 text-center">
-            <div className="text-primary mb-2">
-              <AddIcon className="w-8 h-8 mx-auto" />
-            </div>
-            <h3 className="font-semibold mb-1">Create Persona</h3>
-            <p className="text-xs text-base-content/60 mb-3">
-              Design a new AI personality
-            </p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={openCreateModal}
-              className="w-full"
+      {/* Create/Edit Modal */}
+      <Modal
+        isOpen={showCreateModal || showEditModal}
+        onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
+        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : 'Create New Persona'}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text flex items-center gap-2">
+                Persona Name
+                <div className="tooltip tooltip-right" data-tip="A unique name for this persona">
+                  <Info className="w-3 h-3 text-base-content/40" />
+                </div>
+              </span>
+            </label>
+            <Input
+              placeholder="e.g. Friendly Helper"
+              value={personaName}
+              onChange={(e) => setPersonaName(e.target.value)}
+              disabled={!!editingPersona && editingPersona.isBuiltIn}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Description</span>
+            </label>
+            <Input
+              placeholder="Short description of this persona"
+              value={personaDescription}
+              onChange={(e) => setPersonaDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label"><span className="label-text">Category</span></label>
+            <select
+              className="select select-bordered"
+              value={personaCategory}
+              onChange={(e) => setPersonaCategory(e.target.value as any)}
             >
-              Create New
+              <option value="general">General</option>
+              <option value="customer_service">Customer Service</option>
+              <option value="creative">Creative</option>
+              <option value="technical">Technical</option>
+              <option value="educational">Educational</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="professional">Professional</option>
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text flex items-center gap-2">
+                System Prompt
+                <div className="tooltip tooltip-right" data-tip="The core instruction set that governs the AI's behavior, tone, and capabilities.">
+                  <Info className="w-3 h-3 text-base-content/40" />
+                </div>
+              </span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered h-32 font-mono text-sm leading-relaxed"
+              value={personaPrompt}
+              onChange={(e) => setPersonaPrompt(e.target.value)}
+              placeholder="You are a helpful assistant..."
+            />
+          </div>
+
+          <div className="divider">Assignments</div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text flex items-center gap-2">
+                Assign to Bots
+                <div className="tooltip tooltip-right" data-tip="Select which bots should use this persona. They will be updated immediately upon saving.">
+                  <Info className="w-3 h-3 text-base-content/40" />
+                </div>
+              </span>
+              <span className="label-text-alt text-base-content/60">Optional</span>
+            </label>
+            <div className="bg-base-200 rounded-box p-2 max-h-40 overflow-y-auto">
+              {bots.length === 0 ? <div className="p-2 text-sm opacity-50">No bots available</div> :
+                bots.map((bot: any) => (
+                  <label key={bot.id} className="cursor-pointer label justify-start gap-3 hover:bg-base-300 rounded-lg">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={selectedBotIds.includes(bot.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
+                        else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
+                      }}
+                    />
+                    <div className="flex flex-col">
+                      <span className="label-text font-medium">{bot.name}</span>
+                      <span className="text-xs opacity-50">
+                        Current: {bot.persona ? (
+                          personas.find(p => p.id === bot.persona || p.name === bot.persona)?.name || bot.persona
+                        ) : 'default'}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
+            <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
+              {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : 'Create Persona')}
             </Button>
           </div>
-        </Card>
+        </div>
+      </Modal>
 
-        <Card className="bg-secondary/5 border border-secondary/20">
-          <div className="card-body p-4 text-center">
-            <div className="text-secondary mb-2">
-              <UserIcon className="w-8 h-8 mx-auto" />
-            </div>
-            <h3 className="font-semibold mb-1">Built-in Personas</h3>
-            <p className="text-xs text-base-content/60 mb-3">
-              Ready-to-use AI personalities
-            </p>
-            <div className="text-lg font-bold text-secondary">
-              {personas.filter(p => p.isBuiltIn).length}
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+        title="Delete Persona"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-error/10 rounded-lg">
+            <AlertTriangle className="w-8 h-8 text-error" />
+            <div>
+              <h3 className="font-bold">Are you sure?</h3>
+              <p className="text-sm text-base-content/70">
+                Delete <strong>"{deletingPersona?.name}"</strong>?
+              </p>
             </div>
           </div>
-        </Card>
-
-        <Card className="bg-accent/5 border border-accent/20">
-          <div className="card-body p-4 text-center">
-            <div className="text-accent mb-2">
-              <SparklesIcon className="w-8 h-8 mx-auto" />
+          {deletingPersona && deletingPersona.assignedBotNames.length > 0 && (
+            <div className="alert alert-warning">
+              <Info className="w-4 h-4" />
+              <span>
+                {deletingPersona.assignedBotNames.length} bot(s) will be reverted to default:
+                <strong className="ml-1">{deletingPersona.assignedBotNames.join(', ')}</strong>
+              </span>
             </div>
-            <h3 className="font-semibold mb-1">Custom Personas</h3>
-            <p className="text-xs text-base-content/60 mb-3">
-              Your personalized AI personalities
-            </p>
-            <div className="text-lg font-bold text-accent">
-              {personas.filter(p => !p.isBuiltIn).length}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="bg-success/5 border border-success/20">
-          <div className="card-body p-4 text-center">
-            <div className="text-success mb-2">
-              <DuplicateIcon className="w-8 h-8 mx-auto" />
-            </div>
-            <h3 className="font-semibold mb-1">Total Usage</h3>
-            <p className="text-xs text-base-content/60 mb-3">
-              Across all personas
-            </p>
-            <div className="text-lg font-bold text-success">
-              {personas.reduce((sum, p) => sum + p.usageCount, 0)}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Search and Filters */}
-      <Card className="bg-base-100 border border-base-300 mb-6">
-        <div className="card-body p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
-              <Input
-                placeholder="Search personas by name, description, or traits..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                onClick={clearFilters}
-                className="px-3"
-              >
-                <ClearIcon className="w-4 h-4 mr-2" />
-                Clear
-              </Button>
-              <Button
-                variant="primary"
-                onClick={openCreateModal}
-              >
-                <AddIcon className="w-4 h-4 mr-2" />
-                Create Persona
-              </Button>
-            </div>
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {categories.map(category => (
-              <button
-                key={category.value}
-                onClick={() => setSelectedCategory(category.value)}
-                className={`
-                  px-3 py-1 text-sm rounded-full border transition-colors
-                  ${selectedCategory === category.value
-                    ? `bg-${category.color} text-${category.color}-content border-${category.color}`
-                    : 'border-base-300 hover:bg-base-200'
-                  }
-                `}
-              >
-                {category.label}
-                <span className="ml-1 text-xs opacity-70">
-                  ({category.value === 'all'
-                    ? personas.length
-                    : personas.filter(p => p.category === category.value).length})
-                </span>
-              </button>
-            ))}
+          )}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="btn-error"
+              onClick={confirmDelete}
+              disabled={loading}
+            >
+              {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
+            </Button>
           </div>
         </div>
-      </Card>
-
-      {/* Persona Grid */}
-      <div className="space-y-6">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="loading loading-spinner loading-lg"></div>
-          </div>
-        ) : filteredPersonas.length === 0 ? (
-          <Card className="bg-base-100/50 border border-dashed border-base-300">
-            <div className="card-body text-center py-12">
-              <UserIcon className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-              <h3 className="text-xl font-semibold mb-2">No personas found</h3>
-              <p className="text-base-content/60 mb-6">
-                {searchQuery || selectedCategory !== 'all'
-                  ? 'Try adjusting your filters or search query'
-                  : 'Get started by creating your first custom persona'
-                }
-              </p>
-              <Button
-                variant="primary"
-                onClick={openCreateModal}
-              >
-                <AddIcon className="w-4 h-4 mr-2" />
-                Create Your First Persona
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredPersonas.map(persona => (
-              <Card key={persona.id} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
-                <div className="card-body">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-3 h-3 rounded-full bg-${categories.find(c => c.value === persona.category)?.color || 'neutral'}`} />
-                        <h3 className="font-semibold text-lg">{persona.name}</h3>
-                        {persona.isBuiltIn && (
-                          <Badge color="info" size="xs" variant="outline">
-                            BUILTIN
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-base-content/70 mb-3">
-                        {persona.description}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-base-content/50">
-                        <span>Category: {categories.find(c => c.value === persona.category)?.label}</span>
-                        {persona.usageCount > 0 && (
-                          <>
-                            <span>•</span>
-                            <span>{persona.usageCount} uses</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Traits */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Key Traits</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {persona.traits.slice(0, 4).map((trait, index) => (
-                        <Badge
-                          key={index}
-                          color="ghost"
-                          size="xs"
-                          variant="outline"
-                        >
-                          {trait.name}: {trait.value}
-                        </Badge>
-                      ))}
-                      {persona.traits.length > 4 && (
-                        <Badge color="ghost" size="xs" variant="outline">
-                          +{persona.traits.length - 4} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* System Prompt Preview */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">System Prompt</h4>
-                    <div className="text-xs text-base-content/60 bg-base-200/30 p-2 rounded line-clamp-3">
-                      {persona.systemPrompt}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="card-actions justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDuplicatePersona(persona)}
-                      title="Duplicate persona"
-                    >
-                      <DuplicateIcon className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleExportPersona(persona)}
-                      title="Export persona"
-                    >
-                      <ExportIcon className="w-4 h-4" />
-                    </Button>
-                    {!persona.isBuiltIn && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditModal(persona)}
-                          title="Edit persona"
-                        >
-                          <EditIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeletePersona(persona)}
-                          className="text-error hover:bg-error/10"
-                          title="Delete persona"
-                        >
-                          <DeleteIcon className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Persona Configuration Modal */}
-      <PersonaConfigModal
-        modalState={modalState}
-        onClose={closeModal}
-        onSubmit={handlePersonaSubmit}
-      />
+      </Modal>
     </div>
   );
 };

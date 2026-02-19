@@ -6,7 +6,6 @@
  */
 
 import { BaseHivemindError, TimeoutError } from '../types/errorClasses';
-import { ErrorLogger } from './errorLogger';
 import Debug from 'debug';
 
 const debug = Debug('app:error:recovery');
@@ -138,7 +137,7 @@ export class CircuitBreaker {
       state: this.state,
       failureCount: this.failureCount,
       successCount: this.successCount,
-      lastFailureTime: this.lastFailureTime
+      lastFailureTime: this.lastFailureTime,
     };
   }
 
@@ -165,8 +164,9 @@ export class RetryHandler {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ): Promise<RecoveryResult<T>> {
+    void context;
     const startTime = Date.now();
     let lastError: Error | undefined;
 
@@ -185,7 +185,7 @@ export class RetryHandler {
           result,
           attempts: attempt + 1,
           totalDuration: Date.now() - startTime,
-          strategy: 'retry'
+          strategy: 'retry',
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -212,7 +212,7 @@ export class RetryHandler {
       error: lastError,
       attempts: this.config.maxRetries + 1,
       totalDuration: Date.now() - startTime,
-      strategy: 'retry'
+      strategy: 'retry',
     };
   }
 
@@ -244,7 +244,7 @@ export class RetryHandler {
       'network',
       'temporary',
       'service unavailable',
-      'rate limit'
+      'rate limit',
     ];
 
     return retryablePatterns.some(pattern => message.includes(pattern));
@@ -315,8 +315,9 @@ export class FallbackManager {
   async executeWithFallback<T>(
     operationKey: string,
     primaryOperation: () => Promise<T>,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ): Promise<RecoveryResult<T>> {
+    void context;
     const startTime = Date.now();
     const fallbacks = this.fallbacks.get(operationKey) || [];
     
@@ -328,7 +329,7 @@ export class FallbackManager {
         result,
         attempts: 1,
         totalDuration: Date.now() - startTime,
-        strategy: 'primary'
+        strategy: 'primary',
       };
     } catch (primaryError) {
       const error = primaryError instanceof Error ? primaryError : new Error(String(primaryError));
@@ -346,7 +347,7 @@ export class FallbackManager {
             result,
             attempts: i + 2, // primary + this fallback
             totalDuration: Date.now() - startTime,
-            strategy: `fallback_${i + 1}`
+            strategy: `fallback_${i + 1}`,
           };
         } catch (fallbackError) {
           const fallbackErr = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
@@ -360,7 +361,7 @@ export class FallbackManager {
         error,
         attempts: 1 + fallbacks.length,
         totalDuration: Date.now() - startTime,
-        strategy: 'failed'
+        strategy: 'failed',
       };
     }
   }
@@ -397,7 +398,7 @@ export class AdaptiveRecoveryManager {
 
   constructor(
     private defaultRetryConfig: RetryConfig,
-    private defaultCircuitBreakerConfig: CircuitBreakerConfig
+    private defaultCircuitBreakerConfig: CircuitBreakerConfig,
   ) {}
 
   /**
@@ -413,7 +414,7 @@ export class AdaptiveRecoveryManager {
       retryConfig?: Partial<RetryConfig>;
       circuitBreakerConfig?: Partial<CircuitBreakerConfig>;
       context?: Record<string, unknown>;
-    } = {}
+    } = {},
   ): Promise<RecoveryResult<T>> {
     const {
       enableRetry = true,
@@ -421,7 +422,7 @@ export class AdaptiveRecoveryManager {
       enableFallback = true,
       retryConfig = {},
       circuitBreakerConfig = {},
-      context = {}
+      context = {},
     } = options;
 
     debug(`Executing operation ${operationKey} with adaptive recovery`);
@@ -451,7 +452,7 @@ export class AdaptiveRecoveryManager {
           result,
           attempts: 1,
           totalDuration: 0,
-          strategy: 'direct'
+          strategy: 'direct',
         };
       } catch (error) {
         debug(`Direct execution failed for ${operationKey}: ${error}`);
@@ -464,7 +465,7 @@ export class AdaptiveRecoveryManager {
       const fallbackResult = await fallbackManager.executeWithFallback(
         operationKey,
         operation,
-        context
+        context,
       );
       
       if (fallbackResult.success) {
@@ -478,7 +479,7 @@ export class AdaptiveRecoveryManager {
       error: new Error(`All recovery strategies failed for ${operationKey}`),
       attempts: 1,
       totalDuration: 0,
-      strategy: 'failed'
+      strategy: 'failed',
     };
   }
 
@@ -548,7 +549,7 @@ export class AdaptiveRecoveryManager {
     for (const [key, circuitBreaker] of this.circuitBreakers.entries()) {
       stats[key] = {
         circuitBreaker: circuitBreaker.getStats(),
-        fallbacks: this.fallbackManagers.get(key)?.getFallbacks(key).length || 0
+        fallbacks: this.fallbackManagers.get(key)?.getFallbacks(key).length || 0,
       };
     }
     
@@ -566,14 +567,14 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   backoffMultiplier: 2,
   jitter: true,
   retryableErrors: ['NetworkError', 'TimeoutError', 'ApiError'],
-  retryableStatusCodes: [408, 429, 500, 502, 503, 504]
+  retryableStatusCodes: [408, 429, 500, 502, 503, 504],
 };
 
 export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
   failureThreshold: 5,
   resetTimeout: 60000, // 1 minute
   monitoringPeriod: 10000, // 10 seconds
-  expectedRecoveryTime: 30000 // 30 seconds
+  expectedRecoveryTime: 30000, // 30 seconds
 };
 
 /**
@@ -581,7 +582,7 @@ export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
  */
 export const globalRecoveryManager = new AdaptiveRecoveryManager(
   DEFAULT_RETRY_CONFIG,
-  DEFAULT_CIRCUIT_BREAKER_CONFIG
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
 );
 
 /**
@@ -603,15 +604,15 @@ export const errorRecovery = {
       const result = await Promise.race([
         fn(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new TimeoutError('Operation timed out', timeoutMs)), timeoutMs)
-        )
+          setTimeout(() => reject(new TimeoutError('Operation timed out', timeoutMs)), timeoutMs),
+        ),
       ]);
       return {
         success: true,
         result,
         attempts: 1,
         totalDuration: Date.now() - startTime,
-        strategy: 'timeout'
+        strategy: 'timeout',
       };
     } catch (error) {
       return {
@@ -619,10 +620,10 @@ export const errorRecovery = {
         error: error instanceof Error ? error : new Error(String(error)),
         attempts: 1,
         totalDuration: Date.now() - startTime,
-        strategy: 'timeout'
+        strategy: 'timeout',
       };
     }
-  }
+  },
 };
 
 /**
@@ -638,7 +639,7 @@ export async function executeWithRecovery<T>(
     retryConfig?: Partial<RetryConfig>;
     circuitBreakerConfig?: Partial<CircuitBreakerConfig>;
     context?: Record<string, unknown>;
-  }
+  },
 ): Promise<RecoveryResult<T>> {
   return globalRecoveryManager.execute(operationKey, operation, options);
 }
@@ -659,5 +660,5 @@ export default {
   executeWithRecovery,
   registerFallback,
   DEFAULT_RETRY_CONFIG,
-  DEFAULT_CIRCUIT_BREAKER_CONFIG
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
 };

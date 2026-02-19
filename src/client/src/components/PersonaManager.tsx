@@ -1,32 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
+  Card,
   Button,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
-  Tooltip,
+  ModalForm,
+  Input,
+  Textarea,
   Alert,
-  Snackbar,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-} from '@mui/material';
+  DataTable,
+} from './DaisyUI';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Person as PersonIcon,
-} from '@mui/icons-material';
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  UserIcon,
+} from '@heroicons/react/24/outline';
 
 interface Persona {
   key: string;
@@ -41,7 +29,7 @@ const PersonaManager: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,7 +43,6 @@ const PersonaManager: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Use the admin API endpoint for personas
       const response = await fetch('/api/admin/personas');
       if (!response.ok) {
         throw new Error('Failed to fetch personas');
@@ -88,21 +75,21 @@ const PersonaManager: React.FC = () => {
         throw new Error('Failed to create persona');
       }
 
-      setSnackbar({ open: true, message: 'Persona created successfully', severity: 'success' });
+      setToast({ show: true, message: 'Persona created successfully', type: 'success' });
       setCreateDialogOpen(false);
       setFormData({ key: '', name: '', systemPrompt: '' });
       fetchPersonas();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : 'Failed to create persona',
-        severity: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleEditPersona = async () => {
-    if (!selectedPersona) return;
+    if (!selectedPersona) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${selectedPersona.key}`, {
@@ -120,22 +107,22 @@ const PersonaManager: React.FC = () => {
         throw new Error('Failed to update persona');
       }
 
-      setSnackbar({ open: true, message: 'Persona updated successfully', severity: 'success' });
+      setToast({ show: true, message: 'Persona updated successfully', type: 'success' });
       setEditDialogOpen(false);
       setSelectedPersona(null);
       setFormData({ key: '', name: '', systemPrompt: '' });
       fetchPersonas();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : 'Failed to update persona',
-        severity: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleDeletePersona = async (personaKey: string) => {
-    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) return;
+    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${personaKey}`, {
@@ -146,13 +133,13 @@ const PersonaManager: React.FC = () => {
         throw new Error('Failed to delete persona');
       }
 
-      setSnackbar({ open: true, message: 'Persona deleted successfully', severity: 'success' });
+      setToast({ show: true, message: 'Persona deleted successfully', type: 'success' });
       fetchPersonas();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : 'Failed to delete persona',
-        severity: 'error'
+        type: 'error',
       });
     }
   };
@@ -180,205 +167,218 @@ const PersonaManager: React.FC = () => {
     setFormData({
       ...formData,
       name,
-      key: formData.key || generateKey(name)
+      key: formData.key || generateKey(name),
     });
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
+  const columns = [
+    {
+      header: 'Key',
+      accessor: 'key' as const,
+      cell: (persona: Persona) => (
+        <div className="flex items-center gap-2">
+          <UserIcon className="w-4 h-4 text-base-content/70" />
+          <code className="text-sm">{persona.key}</code>
+        </div>
+      ),
+    },
+    {
+      header: 'Name',
+      accessor: 'name' as const,
+      cell: (persona: Persona) => (
+        <span className="font-medium">{persona.name}</span>
+      ),
+    },
+    {
+      header: 'System Prompt',
+      accessor: 'systemPrompt' as const,
+      cell: (persona: Persona) => (
+        <p className="max-w-xs truncate text-sm text-base-content/70">
+          {persona.systemPrompt}
+        </p>
+      ),
+    },
+    {
+      header: 'Actions',
+      accessor: 'key' as const,
+      cell: (persona: Persona) => (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            shape="circle"
+            color="ghost"
+            onClick={() => openEditDialog(persona)}
+            title="Edit"
+          >
+            <PencilIcon className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            shape="circle"
+            color="error"
+            variant="secondary" className="btn-outline"
+            onClick={() => handleDeletePersona(persona.key)}
+            title="Delete"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
-          Persona Management
-        </Typography>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Persona Management</h2>
         <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+          variant="primary"
+          startIcon={<PlusIcon className="w-5 h-5" />}
           onClick={openCreateDialog}
         >
           Create Persona
         </Button>
-      </Box>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Key</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>System Prompt</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {personas.map((persona) => (
-              <TableRow key={persona.key} hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <PersonIcon color="action" />
-                    <Typography variant="body2" fontFamily="monospace">
-                      {persona.key}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body1" fontWeight="medium">
-                    {persona.name}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      maxWidth: 300,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {persona.systemPrompt}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" gap={1}>
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => openEditDialog(persona)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeletePersona(persona.key)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={personas}
+        searchable
+        pagination
+        itemsPerPage={10}
+      />
 
       {/* Create Persona Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Create New Persona</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Name"
+      <ModalForm
+        open={createDialogOpen}
+        title="Create New Persona"
+        onClose={() => setCreateDialogOpen(false)}
+        onSubmit={handleCreatePersona}
+        submitLabel="Create Persona"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="label">
+              <span className="label-text">Name</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={formData.name}
               onChange={(e) => handleNameChange(e.target.value)}
               required
-              sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
-              label="Key"
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">Key</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               required
-              helperText="Unique identifier for the persona"
-              sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
-              multiline
+            <label className="label">
+              <span className="label-text-alt">Unique identifier for the persona</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">System Prompt</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered w-full"
               rows={4}
-              label="System Prompt"
               value={formData.systemPrompt}
               onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
               required
-              helperText="The system prompt that defines the persona's behavior"
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreatePersona} variant="contained">
-            Create Persona
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <label className="label">
+              <span className="label-text-alt">The system prompt that defines the persona's behavior</span>
+            </label>
+          </div>
+        </div>
+      </ModalForm>
 
       {/* Edit Persona Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Persona</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Name"
+      <ModalForm
+        open={editDialogOpen}
+        title="Edit Persona"
+        onClose={() => setEditDialogOpen(false)}
+        onSubmit={handleEditPersona}
+        submitLabel="Update Persona"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="label">
+              <span className="label-text">Name</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
-              label="Key"
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">Key</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               required
-              helperText="Unique identifier for the persona"
-              sx={{ mb: 2 }}
+              disabled
             />
-            <TextField
-              fullWidth
-              multiline
+            <label className="label">
+              <span className="label-text-alt">Unique identifier for the persona</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">System Prompt</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered w-full"
               rows={4}
-              label="System Prompt"
               value={formData.systemPrompt}
               onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
               required
-              helperText="The system prompt that defines the persona's behavior"
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleEditPersona} variant="contained">
-            Update Persona
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <label className="label">
+              <span className="label-text-alt">The system prompt that defines the persona's behavior</span>
+            </label>
+          </div>
+        </div>
+      </ModalForm>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {/* Toast Notifications */}
+      {toast.show && (
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

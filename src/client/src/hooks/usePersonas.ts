@@ -1,12 +1,15 @@
-import { useState, useCallback } from 'react';
-import {
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import { useState, useCallback, useEffect } from 'react';
+import type {
   Persona,
   PersonaCategory,
+  CreatePersonaRequest,
+  UpdatePersonaRequest,
+} from '../types/bot';
+import {
   PersonaTrait,
   BUILTIN_PERSONAS,
   DEFAULT_PERSONA,
-  CreatePersonaRequest,
-  UpdatePersonaRequest
 } from '../types/bot';
 
 interface UsePersonasReturn {
@@ -33,6 +36,35 @@ export const usePersonas = (): UsePersonasReturn => {
     setError(null);
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPersonas = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/personas');
+        if (!response.ok) {
+          throw new Error('Failed to fetch personas');
+        }
+        const data = await response.json();
+        const next = Array.isArray(data) ? data : [];
+        if (isMounted && next.length > 0) {
+          setPersonas(next);
+        }
+      } catch {
+        // Keep built-in personas as fallback
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPersonas();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const createPersona = useCallback((request: CreatePersonaRequest): Persona => {
     try {
       setLoading(true);
@@ -43,7 +75,7 @@ export const usePersonas = (): UsePersonasReturn => {
         ...request,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       setPersonas(prev => [...prev, newPersona]);
@@ -72,7 +104,7 @@ export const usePersonas = (): UsePersonasReturn => {
           return {
             ...persona,
             ...request,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           };
         }
         return persona;
@@ -134,7 +166,7 @@ export const usePersonas = (): UsePersonasReturn => {
         name: newName,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
-        usageCount: 0
+        usageCount: 0,
       };
 
       setPersonas(prev => [...prev, duplicatedPersona]);
@@ -157,7 +189,7 @@ export const usePersonas = (): UsePersonasReturn => {
       setPersonas(prev => prev.map(p =>
         p.id === personaId
           ? { ...p, usageCount: p.usageCount + 1 }
-          : p
+          : p,
       ));
 
       // In a real implementation, this would make an API call to update the bot
@@ -180,8 +212,8 @@ export const usePersonas = (): UsePersonasReturn => {
       persona.category.toLowerCase().includes(lowercaseQuery) ||
       persona.traits.some(trait =>
         trait.name.toLowerCase().includes(lowercaseQuery) ||
-        trait.value.toLowerCase().includes(lowercaseQuery)
-      )
+        trait.value.toLowerCase().includes(lowercaseQuery),
+      ),
     );
   }, [personas]);
 
@@ -197,6 +229,6 @@ export const usePersonas = (): UsePersonasReturn => {
     duplicatePersona,
     assignPersonaToBot,
     clearError,
-    searchPersonas
+    searchPersonas,
   };
 };

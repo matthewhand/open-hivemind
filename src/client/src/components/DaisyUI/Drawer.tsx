@@ -1,4 +1,5 @@
-import React, { ReactNode, useEffect, useRef } from 'react';
+import type { ReactNode} from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface DrawerProps {
   children: ReactNode;
@@ -13,13 +14,13 @@ const Drawer: React.FC<DrawerProps> = ({
   sideContent,
   drawerId,
   isOpen = false,
-  onClose = () => {}
+  onClose = () => {},
 }) => {
   const drawerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const drawer = drawerRef.current;
-    if (!drawer) return;
+    if (!drawer) {return;}
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {

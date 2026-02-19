@@ -1,7 +1,10 @@
-import { Router, Request, Response } from 'express';
-import { SecureConfigManager, SecureConfig } from '@config/SecureConfigManager';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
+import type { SecureConfig } from '@config/SecureConfigManager';
+import { SecureConfigManager } from '@config/SecureConfigManager';
 import Debug from 'debug';
-import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
+import type { AuditedRequest} from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -28,7 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
           name: config.name,
           type: config.type,
           createdAt: config.createdAt,
-          updatedAt: config.updatedAt
+          updatedAt: config.updatedAt,
         });
       }
     }
@@ -36,13 +39,13 @@ router.get('/', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: configs,
-      count: configs.length
+      count: configs.length,
     });
   } catch (error: any) {
     debug('Failed to list secure configs:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve configurations'
+      error: 'Failed to retrieve configurations',
     });
   }
 });
@@ -59,19 +62,19 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!config) {
       return res.status(404).json({
         success: false,
-        error: 'Configuration not found'
+        error: 'Configuration not found',
       });
     }
 
     res.json({
       success: true,
-      data: config
+      data: config,
     });
   } catch (error: any) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve configuration'
+      error: 'Failed to retrieve configuration',
     });
   }
 });
@@ -88,7 +91,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       logConfigChange(req, 'CREATE', `secure-config/${id}`, 'failure', 'Missing required fields: id, name, type, data');
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: id, name, type, data'
+        error: 'Missing required fields: id, name, type, data',
       });
     }
 
@@ -97,7 +100,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       name,
       type,
       data,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     await secureConfigManager.storeConfig(config);
@@ -107,14 +110,14 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
     res.status(201).json({
       success: true,
       message: 'Configuration stored securely',
-      data: { id, name, type }
+      data: { id, name, type },
     });
   } catch (error: any) {
     debug('Failed to create secure config:', error);
     logConfigChange(req, 'CREATE', `secure-config/${req.body?.id || 'unknown'}`, 'failure', `Failed to create secure configuration: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'Failed to store configuration'
+      error: 'Failed to store configuration',
     });
   }
 });
@@ -132,7 +135,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Missing required fields: name, type, data');
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: name, type, data'
+        error: 'Missing required fields: name, type, data',
       });
     }
 
@@ -142,7 +145,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
         success: false,
-        error: 'Configuration not found'
+        error: 'Configuration not found',
       });
     }
 
@@ -151,27 +154,27 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       name,
       type,
       data,
-      createdAt: existingConfig.createdAt
+      createdAt: existingConfig.createdAt,
     };
 
     await secureConfigManager.storeConfig(updatedConfig);
 
     logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'success', `Updated secure configuration ${name}`, {
       oldValue: existingConfig,
-      newValue: updatedConfig
+      newValue: updatedConfig,
     });
 
     res.json({
       success: true,
       message: 'Configuration updated successfully',
-      data: { id, name, type }
+      data: { id, name, type },
     });
   } catch (error: any) {
     debug(`Failed to update secure config ${req.params.id}:`, error);
     logConfigChange(req, 'UPDATE', `secure-config/${req.params.id}`, 'failure', `Failed to update secure configuration: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'Failed to update configuration'
+      error: 'Failed to update configuration',
     });
   }
 });
@@ -193,24 +196,24 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
         success: false,
-        error: 'Configuration not found'
+        error: 'Configuration not found',
       });
     }
 
     logConfigChange(req, 'DELETE', `secure-config/${id}`, 'success', `Deleted secure configuration ${configToDelete?.name || id}`, {
-      oldValue: configToDelete
+      oldValue: configToDelete,
     });
 
     res.json({
       success: true,
-      message: 'Configuration deleted successfully'
+      message: 'Configuration deleted successfully',
     });
   } catch (error: any) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
     logConfigChange(req, 'DELETE', `secure-config/${req.params.id}`, 'failure', `Failed to delete secure configuration: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete configuration'
+      error: 'Failed to delete configuration',
     });
   }
 });
@@ -228,14 +231,14 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
     res.json({
       success: true,
       message: 'Backup created successfully',
-      data: { backupId }
+      data: { backupId },
     });
   } catch (error: any) {
     debug('Failed to create backup:', error);
     logConfigChange(req, 'CREATE', 'secure-config/backup', 'failure', `Failed to create backup: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'Failed to create backup'
+      error: 'Failed to create backup',
     });
   }
 });
@@ -251,13 +254,13 @@ router.get('/backups/list', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: backups,
-      count: backups.length
+      count: backups.length,
     });
   } catch (error: any) {
     debug('Failed to list backups:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to retrieve backups'
+      error: 'Failed to retrieve backups',
     });
   }
 });
@@ -275,14 +278,14 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
 
     res.json({
       success: true,
-      message: `Successfully restored from backup ${backupId}`
+      message: `Successfully restored from backup ${backupId}`,
     });
   } catch (error: any) {
     debug(`Failed to restore backup ${req.params.backupId}:`, error);
     logConfigChange(req, 'UPDATE', 'secure-config/global', 'failure', `Failed to restore from backup ${req.params.backupId}: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'Failed to restore from backup'
+      error: 'Failed to restore from backup',
     });
   }
 });

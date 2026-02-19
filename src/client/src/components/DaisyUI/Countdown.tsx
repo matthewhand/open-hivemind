@@ -11,7 +11,7 @@ const Countdown: React.FC<CountdownProps> = ({
   targetDate,
   onComplete,
   size = 'md',
-  className = ''
+  className = '',
 }) => {
   const calculateTimeLeft = useCallback((): { days: number; hours: number; minutes: number; seconds: number; totalSeconds: number } => {
     const targetTime = typeof targetDate === 'number' ? targetDate : targetDate.getTime();
@@ -32,7 +32,7 @@ const Countdown: React.FC<CountdownProps> = ({
       hours,
       minutes,
       seconds,
-      totalSeconds: Math.floor(difference / 1000)
+      totalSeconds: Math.floor(difference / 1000),
     };
   }, [targetDate]);
 

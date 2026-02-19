@@ -1,38 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  LinearProgress,
-  Alert,
-  Button,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Collapse,
-  IconButton,
-} from '@mui/material';
-import {
-  TrendingUp as TrendingUpIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  AutoAwesome as AutoAwesomeIcon,
-  Insights as InsightsIcon,
-  Speed as SpeedIcon,
-  Memory as MemoryIcon,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import {
+  SparklesIcon,
+  InformationCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  BoltIcon,
+  ChartBarIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
 
 interface AIInsight {
   id: string;
@@ -66,8 +45,8 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   maxInsights = 10,
   showConfidence = true,
 }) => {
-  const { metrics, alerts } = useAppSelector(selectPerformance);
-  const { bots, analytics } = useAppSelector(selectDashboard);
+  const { metrics } = useAppSelector(selectPerformance);
+  const { bots } = useAppSelector(selectDashboard);
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
@@ -144,9 +123,9 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
     // Bot health predictions
     const activeBots = bots.filter(b => b.status === 'active').length;
     const totalBots = bots.length;
-    const healthPercentage = (activeBots / totalBots) * 100;
+    const healthPercentage = totalBots > 0 ? (activeBots / totalBots) * 100 : 0;
 
-    if (healthPercentage < 70) {
+    if (healthPercentage < 70 && totalBots > 0) {
       insights.push({
         id: 'health-001',
         type: 'prediction',
@@ -230,7 +209,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   useEffect(() => {
     const loadInsights = () => {
       setLoading(true);
-      
+
       // Simulate AI processing delay
       setTimeout(() => {
         const newInsights = generateAIInsights();
@@ -265,325 +244,282 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
       case 'high': return 'warning';
       case 'medium': return 'info';
       case 'low': return 'success';
-      default: return 'default';
+      default: return 'neutral';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'performance': return <SpeedIcon />;
-      case 'error': return <ErrorIcon />;
-      case 'optimization': return <InsightsIcon />;
-      case 'prediction': return <AutoAwesomeIcon />;
-      default: return <InfoIcon />;
+      case 'performance': return <BoltIcon className="w-5 h-5" />;
+      case 'error': return <ExclamationCircleIcon className="w-5 h-5" />;
+      case 'optimization': return <ChartBarIcon className="w-5 h-5" />;
+      case 'prediction': return <SparklesIcon className="w-5 h-5" />;
+      default: return <InformationCircleIcon className="w-5 h-5" />;
     }
   };
 
   const filteredInsights = insights.filter(insight => {
-    if (filterType !== 'all' && insight.type !== filterType) return false;
-    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) return false;
+    if (filterType !== 'all' && insight.type !== filterType) { return false; }
+    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) { return false; }
     return true;
   });
 
   if (loading) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{
-          p: 3,
-          backgroundColor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: 3,
-        }}
+        animation="fade-in"
+        className="p-6 bg-base-100 rounded-lg shadow-lg"
       >
-        <Box display="flex" alignItems="center" gap={2} mb={3}>
-          <AutoAwesomeIcon color="primary" />
-          <Typography variant="h5">AI Insights Panel</Typography>
-        </Box>
-        
-        <Box display="flex" alignItems="center" gap={2}>
-          <LinearProgress sx={{ flex: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            Analyzing system data with AI...
-          </Typography>
-        </Box>
+        <div className="flex items-center gap-2 mb-4">
+          <SparklesIcon className="w-6 h-6 text-primary" />
+          <h2 className="text-xl font-bold">AI Insights Panel</h2>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <progress className="progress progress-primary w-full" />
+          <span className="text-sm text-base-content/70 whitespace-nowrap">
+            Analyzing system data...
+          </span>
+        </div>
       </AnimatedBox>
     );
   }
 
   return (
     <AnimatedBox
-      animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-      sx={{ p: 3, backgroundColor: 'background.paper', borderRadius: 2, boxShadow: 3 }}
+      animation="slide-up"
+      className="p-6 bg-base-100 rounded-lg shadow-lg"
     >
       {/* Header */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <AutoAwesomeIcon color="primary" />
-          <Typography variant="h5">AI Insights</Typography>
-          <Chip
-            label={`${filteredInsights.length} insights`}
-            color="primary"
-            size="small"
-          />
-        </Box>
-        
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <SparklesIcon className="w-6 h-6 text-primary" />
+          <h2 className="text-xl font-bold">AI Insights</h2>
+          <div className="badge badge-primary badge-outline">
+            {filteredInsights.length} insights
+          </div>
+        </div>
+
         {showConfidence && (
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="body2" color="text.secondary">
-              AI Confidence: {(insights.reduce((sum, insight) => sum + insight.confidence, 0) / insights.length * 100).toFixed(0)}%
-            </Typography>
-          </Box>
+          <div className="text-sm text-base-content/70">
+            AI Confidence: {(insights.reduce((sum, insight) => sum + insight.confidence, 0) / (insights.length || 1) * 100).toFixed(0)}%
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Filter Chips */}
-      <Box display="flex" gap={1} mb={3} flexWrap="wrap">
-        <Chip
-          label="All Types"
+      <div className="flex flex-wrap gap-2 mb-6">
+        <button
+          className={`btn btn-sm ${filterType === 'all' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setFilterType('all')}
-          color={filterType === 'all' ? 'primary' : 'default'}
-          size="small"
-        />
-        <Chip
-          label="Performance"
+        >
+          All Types
+        </button>
+        <button
+          className={`btn btn-sm gap-2 ${filterType === 'performance' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setFilterType('performance')}
-          color={filterType === 'performance' ? 'primary' : 'default'}
-          size="small"
-          icon={<SpeedIcon />}
-        />
-        <Chip
-          label="Errors"
+        >
+          <BoltIcon className="w-4 h-4" />
+          Performance
+        </button>
+        <button
+          className={`btn btn-sm gap-2 ${filterType === 'error' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setFilterType('error')}
-          color={filterType === 'error' ? 'primary' : 'default'}
-          size="small"
-          icon={<ErrorIcon />}
-        />
-        <Chip
-          label="Optimization"
+        >
+          <ExclamationCircleIcon className="w-4 h-4" />
+          Errors
+        </button>
+        <button
+          className={`btn btn-sm gap-2 ${filterType === 'optimization' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setFilterType('optimization')}
-          color={filterType === 'optimization' ? 'primary' : 'default'}
-          size="small"
-          icon={<InsightsIcon />}
-        />
-        <Chip
-          label="Predictions"
+        >
+          <ChartBarIcon className="w-4 h-4" />
+          Optimization
+        </button>
+        <button
+          className={`btn btn-sm gap-2 ${filterType === 'prediction' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setFilterType('prediction')}
-          color={filterType === 'prediction' ? 'primary' : 'default'}
-          size="small"
-          icon={<AutoAwesomeIcon />}
-        />
-        
-        <Box sx={{ flexGrow: 1 }} />
-        
+        >
+          <SparklesIcon className="w-4 h-4" />
+          Predictions
+        </button>
+
+        <div className="flex-grow" />
+
         {['all', 'critical', 'high', 'medium', 'low'].map((severity) => (
-          <Chip
+          <button
             key={severity}
-            label={severity.charAt(0).toUpperCase() + severity.slice(1)}
+            className={`btn btn-sm ${filterSeverity === severity ? `btn-${getSeverityColor(severity)}` : 'btn-ghost'}`}
             onClick={() => setFilterSeverity(severity)}
-            color={filterSeverity === severity ? getSeverityColor(severity) : 'default'}
-            size="small"
-          />
+          >
+            {severity.charAt(0).toUpperCase() + severity.slice(1)}
+          </button>
         ))}
-      </Box>
+      </div>
 
       {/* Insights List */}
-      <List sx={{ p: 0 }}>
+      <div className="space-y-4">
         {filteredInsights.map((insight) => (
-          <ListItem
+          <div
             key={insight.id}
-            sx={{
-              p: 0,
-              mb: 2,
-              flexDirection: 'column',
-              alignItems: 'stretch',
-            }}
+            className={`card bg-base-200 border-l-4 border-${getSeverityColor(insight.severity)}`}
           >
-            <Card
-              sx={{
-                backgroundColor: 'background.default',
-                borderLeft: 4,
-                borderColor: `${getSeverityColor(insight.severity)}.main`,
-              }}
-            >
-              <CardContent sx={{ p: 2 }}>
-                {/* Insight Header */}
-                <Box display="flex" alignItems="flex-start" gap={2}>
-                  <ListItemIcon sx={{ minWidth: 32, color: 'primary.main' }}>
-                    {getTypeIcon(insight.type)}
-                  </ListItemIcon>
-                  
-                  <Box flex={1}>
-                    <Box display="flex" alignItems="center" gap={1} mb={1}>
-                      <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
-                        {insight.title}
-                      </Typography>
-                      <Chip
-                        label={insight.severity}
-                        color={getSeverityColor(insight.severity) as any}
-                        size="small"
-                      />
-                      {showConfidence && (
-                        <Chip
-                          label={`${(insight.confidence * 100).toFixed(0)}%`}
-                          variant="outlined"
-                          size="small"
-                          sx={{ ml: 'auto' }}
-                        />
+            <div className="card-body p-4">
+              {/* Insight Header */}
+              <div className="flex items-start gap-4">
+                <div className="text-primary mt-1">
+                  {getTypeIcon(insight.type)}
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <h3 className="font-bold text-lg">
+                      {insight.title}
+                    </h3>
+                    <div className={`badge badge-${getSeverityColor(insight.severity)}`}>
+                      {insight.severity}
+                    </div>
+                    {showConfidence && (
+                      <div className="badge badge-outline ml-auto">
+                        {(insight.confidence * 100).toFixed(0)}% confidence
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-base-content/80 mb-4">
+                    {insight.description}
+                  </p>
+
+                  {/* Metrics Display */}
+                  {insight.metrics && (
+                    <div className="flex gap-6 mb-4 p-3 bg-base-100 rounded-lg">
+                      <div>
+                        <div className="text-xs text-base-content/60 uppercase font-bold">
+                          Current
+                        </div>
+                        <div className="text-xl font-bold text-primary">
+                          {insight.metrics.current.toFixed(1)}{insight.metrics.unit}
+                        </div>
+                      </div>
+                      {insight.metrics.predicted && (
+                        <div>
+                          <div className="text-xs text-base-content/60 uppercase font-bold">
+                            Predicted
+                          </div>
+                          <div className="text-xl font-bold text-warning">
+                            {insight.metrics.predicted.toFixed(1)}{insight.metrics.unit}
+                          </div>
+                        </div>
                       )}
-                    </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {insight.description}
-                    </Typography>
+                      {insight.metrics.threshold && (
+                        <div>
+                          <div className="text-xs text-base-content/60 uppercase font-bold">
+                            Threshold
+                          </div>
+                          <div className="text-xl font-bold text-error">
+                            {insight.metrics.threshold}{insight.metrics.unit}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Metrics Display */}
-                    {insight.metrics && (
-                      <Box display="flex" gap={2} mb={2}>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Current
-                          </Typography>
-                          <Typography variant="h6" color="primary">
-                            {insight.metrics.current.toFixed(1)}{insight.metrics.unit}
-                          </Typography>
-                        </Box>
-                        {insight.metrics.predicted && (
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Predicted
-                            </Typography>
-                            <Typography variant="h6" color="warning.main">
-                              {insight.metrics.predicted.toFixed(1)}{insight.metrics.unit}
-                            </Typography>
-                          </Box>
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {insight.tags.map((tag) => (
+                      <div key={tag} className="badge badge-ghost badge-sm">
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Related Bots */}
+                  {insight.relatedBots && insight.relatedBots.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs text-base-content/60 mb-1">
+                        Related Bots:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {insight.relatedBots.slice(0, 5).map((bot) => (
+                          <div key={bot} className="badge badge-info badge-outline badge-sm">
+                            {bot}
+                          </div>
+                        ))}
+                        {insight.relatedBots.length > 5 && (
+                          <div className="badge badge-ghost badge-outline badge-sm">
+                            +{insight.relatedBots.length - 5} more
+                          </div>
                         )}
-                        {insight.metrics.threshold && (
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Threshold
-                            </Typography>
-                            <Typography variant="h6" color="error.main">
-                              {insight.metrics.threshold}{insight.metrics.unit}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    )}
+                      </div>
+                    </div>
+                  )}
 
-                    {/* Tags */}
-                    <Box display="flex" gap={1} mb={1} flexWrap="wrap">
-                      {insight.tags.map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          variant="outlined"
-                          size="small"
-                        />
-                      ))}
-                    </Box>
+                  {/* Recommendation */}
+                  <div className="bg-base-100 p-3 rounded-lg mt-2 border border-base-300">
+                    <div className="text-sm font-bold mb-1 flex items-center gap-2">
+                      <SparklesIcon className="w-4 h-4 text-secondary" />
+                      AI Recommendation:
+                    </div>
+                    <div className="text-sm">
+                      {insight.recommendation}
+                    </div>
+                  </div>
 
-                    {/* Related Bots */}
-                    {insight.relatedBots && insight.relatedBots.length > 0 && (
-                      <Box mb={2}>
-                        <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                          Related Bots:
-                        </Typography>
-                        <Box display="flex" gap={1} flexWrap="wrap">
-                          {insight.relatedBots.slice(0, 5).map((bot) => (
-                            <Chip
-                              key={bot}
-                              label={bot}
-                              size="small"
-                              color="info"
-                              variant="outlined"
-                            />
-                          ))}
-                          {insight.relatedBots.length > 5 && (
-                            <Chip
-                              label={`+${insight.relatedBots.length - 5} more`}
-                              size="small"
-                              variant="outlined"
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                    )}
+                  {/* Timestamp */}
+                  <div className="text-xs text-base-content/50 mt-2">
+                    {insight.timestamp.toLocaleString()}
+                  </div>
+                </div>
 
-                    {/* Recommendation */}
-                    <Box
-                      sx={{
-                        backgroundColor: 'action.hover',
-                        borderRadius: 1,
-                        p: 2,
-                        mt: 2,
-                      }}
-                    >
-                      <Typography variant="subtitle2" gutterBottom>
-                        AI Recommendation:
-                      </Typography>
-                      <Typography variant="body2">
-                        {insight.recommendation}
-                      </Typography>
-                    </Box>
+                <button
+                  className="btn btn-ghost btn-sm btn-circle"
+                  onClick={() => toggleInsightExpansion(insight.id)}
+                >
+                  {expandedInsights.has(insight.id) ? (
+                    <ChevronUpIcon className="w-5 h-5" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
 
-                    {/* Timestamp */}
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                      {insight.timestamp.toLocaleString()}
-                    </Typography>
-                  </Box>
+              {/* Expanded Content */}
+              {expandedInsights.has(insight.id) && (
+                <div className="mt-4 pt-4 border-t border-base-300 animate-fade-in">
+                  <h4 className="font-bold text-sm mb-2">Technical Details</h4>
+                  <p className="text-sm text-base-content/70 mb-4">
+                    This insight was generated using machine learning analysis of historical performance data,
+                    current system metrics, and bot behavior patterns. The confidence level indicates the
+                    reliability of this prediction based on similar patterns observed in the past.
+                  </p>
 
-                  <IconButton
-                    onClick={() => toggleInsightExpansion(insight.id)}
-                    size="small"
-                  >
-                    {expandedInsights.has(insight.id) ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  </IconButton>
-                </Box>
-
-                {/* Expanded Content */}
-                <Collapse in={expandedInsights.has(insight.id)} timeout="auto" unmountOnExit>
-                  <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Technical Details
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      This insight was generated using machine learning analysis of historical performance data,
-                      current system metrics, and bot behavior patterns. The confidence level indicates the
-                      reliability of this prediction based on similar patterns observed in the past.
-                    </Typography>
-                    
-                    <Box display="flex" justifyContent="flex-end" mt={2}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<InsightsIcon />}
-                      >
-                        View Detailed Analysis
-                      </Button>
-                    </Box>
-                  </Box>
-                </Collapse>
-              </CardContent>
-            </Card>
-          </ListItem>
+                  <div className="flex justify-end">
+                    <button className="btn btn-outline btn-sm gap-2">
+                      <ChartBarIcon className="w-4 h-4" />
+                      View Detailed Analysis
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         ))}
-      </List>
+      </div>
 
       {/* Empty State */}
       {filteredInsights.length === 0 && (
-        <Box textAlign="center" py={4}>
-          <AutoAwesomeIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="text-center py-12">
+          <SparklesIcon className="w-16 h-16 text-base-content/20 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-base-content/50 mb-2">
             No Insights Available
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {insights.length === 0 
+          </h3>
+          <p className="text-base-content/50">
+            {insights.length === 0
               ? 'AI analysis is in progress. Insights will appear here once analysis is complete.'
               : 'No insights match your current filters. Try adjusting the filter criteria.'
             }
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
     </AnimatedBox>
   );

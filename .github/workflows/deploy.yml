@@ -122,9 +122,3 @@ jobs:
         run: |
           echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
           echo "📝 To enable: Add secrets to GitHub repository settings"
-=======
-      - name: Netlify Deployment Skipped (Requires Configuration)
-        run: |
-          echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
-          echo "📝 To enable: Add secrets to GitHub repository settings"
->>>>>>> main

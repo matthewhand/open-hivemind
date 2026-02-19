@@ -1,24 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
+import { Card, Button, Modal, Input, Loading } from './DaisyUI';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
-import { Input } from './DaisyUI';
-import {
-  Refresh as RefreshIcon,
-  Clear as ClearIcon,
-  Download as DownloadIcon,
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  XMarkIcon,
+  ArrowDownTrayIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 
 interface QuickActionsProps {
@@ -27,24 +17,24 @@ interface QuickActionsProps {
 
 const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
   const [loading, setLoading] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-    severity: 'success' | 'error' | 'info';
+    type: 'success' | 'error' | 'info';
   }>({
-    open: false,
+    show: false,
     message: '',
-    severity: 'info',
+    type: 'info',
   });
   const [exportDialog, setExportDialog] = useState(false);
   const [exportFilename, setExportFilename] = useState('config-export');
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ show: true, message, type });
+    // Auto-hide after 6 seconds
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 6000);
   };
 
   const handleRefreshDashboard = async () => {
@@ -56,16 +46,16 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
         apiService.getStatus(),
       ]);
 
-      showSnackbar('Dashboard refreshed successfully', 'success');
+      showToast('Dashboard refreshed successfully', 'success');
 
       // Call the onRefresh callback if provided
       if (onRefresh) {
         onRefresh();
       }
     } catch (error) {
-      showSnackbar(
+      showToast(
         error instanceof Error ? error.message : 'Failed to refresh dashboard',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -77,11 +67,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     try {
       // Call the clear cache API endpoint
       const response = await apiService.clearCache();
-      showSnackbar(response.message || 'Cache cleared successfully', 'success');
+      showToast(response.message || 'Cache cleared successfully', 'success');
     } catch (error) {
-      showSnackbar(
+      showToast(
         error instanceof Error ? error.message : 'Failed to clear cache',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -105,11 +95,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
       document.body.removeChild(a);
 
       setExportDialog(false);
-      showSnackbar('Configuration exported successfully', 'success');
+      showToast('Configuration exported successfully', 'success');
     } catch (error) {
-      showSnackbar(
+      showToast(
         error instanceof Error ? error.message : 'Failed to export configuration',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -118,72 +108,80 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   const isLoading = (action: string) => loading === action;
 
+  const getToastIcon = () => {
+    switch (toast.type) {
+    case 'success': return <CheckCircleIcon className="w-6 h-6" />;
+    case 'error': return <ExclamationCircleIcon className="w-6 h-6" />;
+    default: return <InformationCircleIcon className="w-6 h-6" />;
+    }
+  };
+
+  const getToastClass = () => {
+    switch (toast.type) {
+    case 'success': return 'alert-success';
+    case 'error': return 'alert-error';
+    default: return 'alert-info';
+    }
+  };
+
   return (
     <>
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Quick Actions
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Button
-              variant="contained"
-              startIcon={
-                isLoading('refresh') ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <RefreshIcon />
-                )
-              }
-              onClick={handleRefreshDashboard}
-              disabled={isLoading('refresh')}
-              color="primary"
-            >
-              Refresh Dashboard
-            </Button>
+      <Card className="mb-6" title="Quick Actions">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="primary"
+            onClick={handleRefreshDashboard}
+            disabled={isLoading('refresh')}
+            className="flex items-center gap-2"
+          >
+            {isLoading('refresh') ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <ArrowPathIcon className="w-5 h-5" />
+            )}
+            Refresh Dashboard
+          </Button>
 
-            <Button
-              variant="contained"
-              startIcon={
-                isLoading('clear') ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <ClearIcon />
-                )
-              }
-              onClick={handleClearCache}
-              disabled={isLoading('clear')}
-              color="secondary"
-            >
-              Clear Cache
-            </Button>
+          <Button
+            variant="secondary"
+            onClick={handleClearCache}
+            disabled={isLoading('clear')}
+            className="flex items-center gap-2"
+          >
+            {isLoading('clear') ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <XMarkIcon className="w-5 h-5" />
+            )}
+            Clear Cache
+          </Button>
 
-            <Button
-              variant="contained"
-              startIcon={
-                isLoading('export') ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <DownloadIcon />
-                )
-              }
-              onClick={() => setExportDialog(true)}
-              disabled={isLoading('export')}
-              color="success"
-            >
-              Export Config
-            </Button>
-          </Box>
-        </CardContent>
+          <Button
+            variant="accent"
+            onClick={() => setExportDialog(true)}
+            disabled={isLoading('export')}
+            className="flex items-center gap-2"
+          >
+            {isLoading('export') ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <ArrowDownTrayIcon className="w-5 h-5" />
+            )}
+            Export Config
+          </Button>
+        </div>
       </Card>
 
-      {/* Export Configuration Dialog */}
-      <Dialog open={exportDialog} onClose={() => setExportDialog(false)}>
-        <DialogTitle>Export Configuration</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      {/* Export Configuration Modal */}
+      <Modal
+        isOpen={exportDialog}
+        onClose={() => setExportDialog(false)}
+        title="Export Configuration"
+      >
+        <div className="py-4">
+          <p className="text-sm text-base-content/70 mb-4">
             Enter a filename for the configuration export:
-          </Typography>
+          </p>
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Filename</span>
@@ -198,38 +196,30 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
               <span className="label-text-alt">File will be saved as .json</span>
             </label>
           </div>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExportDialog(false)}>Cancel</Button>
+        </div>
+        <div className="modal-action">
+          <Button onClick={() => setExportDialog(false)} variant="ghost">
+            Cancel
+          </Button>
           <Button
             onClick={handleExportConfig}
-            variant="contained"
+            variant="primary"
             disabled={!exportFilename.trim() || isLoading('export')}
           >
-            {isLoading('export') ? (
-              <CircularProgress size={20} />
-            ) : (
-              'Export'
-            )}
+            {isLoading('export') ? <span className="loading loading-spinner loading-sm"></span> : 'Export'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Toast notification */}
+      {toast.show && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className={`alert ${getToastClass()}`}>
+            {getToastIcon()}
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 };

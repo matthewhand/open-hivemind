@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const telegramProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -8,7 +8,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
   icon: '✈️',
   color: '#0088CC',
   defaultConfig: {
-    parseMode: 'HTML'
+    parseMode: 'HTML',
   },
   fields: [
     {
@@ -18,7 +18,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Telegram bot token from BotFather',
       placeholder: '1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'webhookUrl',
@@ -27,7 +27,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'URL for receiving updates (leave empty for polling)',
       placeholder: 'https://your-domain.com/api/telegram/webhook',
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'parseMode',
@@ -38,10 +38,10 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       options: [
         { label: 'HTML', value: 'HTML' },
         { label: 'Markdown', value: 'Markdown' },
-        { label: 'None', value: '' }
+        { label: 'None', value: '' },
       ],
       defaultValue: 'HTML',
-      group: 'Message Configuration'
+      group: 'Message Configuration',
     },
     {
       name: 'allowedChats',
@@ -50,7 +50,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of chat IDs the bot can respond in (leave empty for all)',
       placeholder: '-1001234567890, 123456789',
-      group: 'Permissions'
+      group: 'Permissions',
     },
     {
       name: 'blockedUsers',
@@ -59,7 +59,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of user IDs the bot cannot respond to',
       placeholder: '123456789, 987654321',
-      group: 'Permissions'
+      group: 'Permissions',
     },
     {
       name: 'enableCommands',
@@ -68,7 +68,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Enable bot commands (/start, /help, etc.)',
       defaultValue: true,
-      group: 'Features'
-    }
-  ]
+      group: 'Features',
+    },
+  ],
 };

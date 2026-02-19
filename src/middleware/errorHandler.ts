@@ -5,9 +5,10 @@
  * using the new error types, with proper logging and correlation tracking.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
-import { BaseHivemindError, ErrorFactory } from '../types/errorClasses';
+import type { BaseHivemindError} from '../types/errorClasses';
+import { ErrorFactory } from '../types/errorClasses';
 import { ErrorUtils, HivemindError } from '../types/errors';
 import { ErrorLogger, errorLogger } from '../utils/errorLogger';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
@@ -104,7 +105,7 @@ function extractErrorContext(req: Request): ErrorContext {
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
     params: req.params,
-    query: req.query
+    query: req.query,
   };
 }
 
@@ -118,7 +119,7 @@ function sanitizeRequestBody(body: any): any {
 
   const sensitiveFields = [
     'password', 'token', 'secret', 'key', 'auth', 'credential',
-    'authorization', 'bearer', 'apikey', 'api_key'
+    'authorization', 'bearer', 'apikey', 'api_key',
   ];
 
   const sanitized = { ...body };
@@ -138,7 +139,7 @@ function sanitizeRequestBody(body: any): any {
 function createErrorResponse(
   error: BaseHivemindError,
   context: ErrorContext,
-  includeStack: boolean = false
+  includeStack: boolean = false,
 ): ErrorResponse {
   const recovery = error.getRecoveryStrategy();
   
@@ -177,13 +178,13 @@ export function globalErrorHandler(
   error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   // Convert error to BaseHivemindError
   const hivemindError = ErrorFactory.createError(error, {
     path: req.path,
     method: req.method,
-    headers: req.headers
+    headers: req.headers,
   });
 
   const context = extractErrorContext(req);
@@ -219,7 +220,7 @@ export function globalErrorHandler(
  * Handle async errors in route handlers
  */
 export function asyncErrorHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>,
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -235,7 +236,7 @@ export function handleUncaughtException(error: Error): void {
   errorLogger.logError(hivemindError, {
     correlationId: 'uncaught_exception',
     path: 'global',
-    method: 'UNCAUGHT_EXCEPTION'
+    method: 'UNCAUGHT_EXCEPTION',
   });
 
   MetricsCollector.getInstance().incrementErrors();
@@ -259,7 +260,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
   errorLogger.logError(hivemindError, {
     correlationId: 'unhandled_rejection',
     path: 'global',
-    method: 'UNHANDLED_REJECTION'
+    method: 'UNHANDLED_REJECTION',
   });
 
   MetricsCollector.getInstance().incrementErrors();
@@ -280,14 +281,14 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
 function emitErrorEvent(
   error: BaseHivemindError,
   context: ErrorContext,
-  statusCode: number
+  statusCode: number,
 ): void {
   // Emit to any monitoring systems or event emitters
   (process as any).emit('hivemind:error', {
     error: error.toJSON(),
     context,
     statusCode,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -332,7 +333,7 @@ export function setupGracefulShutdown(): void {
 export function errorRecoveryMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   // Check if this is a retry request
   const retryCount = parseInt(req.headers['x-retry-count'] as string || '0');
@@ -355,7 +356,7 @@ export function errorRecoveryMiddleware(
 export function rateLimitErrorHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   // This would be used with rate limiting middleware
   // to provide consistent rate limit error responses
@@ -369,5 +370,5 @@ export default {
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
   errorRecoveryMiddleware,
-  rateLimitErrorHandler
+  rateLimitErrorHandler,
 };

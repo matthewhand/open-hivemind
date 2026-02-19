@@ -1,30 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
+import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  LinearProgress,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  Settings as SettingsIcon,
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  Cog6ToothIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/24/outline';
 import type { Bot } from '../services/api';
 
 interface BotStatusCardProps {
@@ -45,84 +30,85 @@ interface BotStatusCardProps {
 const BotStatusCard: React.FC<BotStatusCardProps> = ({
   bot,
   statusData,
-  onRefresh
+  onRefresh,
 }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const getStatusIcon = (status: string) => {
+    const className = 'w-5 h-5';
     switch (status?.toLowerCase()) {
-      case 'active':
-      case 'connected':
-        return <CheckCircleIcon color="success" />;
-      case 'error':
-      case 'disconnected':
-        return <ErrorIcon color="error" />;
-      case 'warning':
-      case 'connecting':
-        return <WarningIcon color="warning" />;
-      default:
-        return <InfoIcon color="action" />;
+    case 'active':
+    case 'connected':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'error':
+    case 'disconnected':
+      return <ExclamationCircleIcon className={`${className} text-error`} />;
+    case 'warning':
+    case 'connecting':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'error' | 'warning' | 'ghost' => {
     switch (status?.toLowerCase()) {
-      case 'active':
-      case 'connected':
-        return 'success';
-      case 'error':
-      case 'disconnected':
-        return 'error';
-      case 'warning':
-      case 'connecting':
-        return 'warning';
-      default:
-        return 'default';
+    case 'active':
+    case 'connected':
+      return 'success';
+    case 'error':
+    case 'disconnected':
+      return 'error';
+    case 'warning':
+    case 'connecting':
+      return 'warning';
+    default:
+      return 'ghost';
     }
   };
 
   const getProviderIcon = (provider: string) => {
     switch (provider?.toLowerCase()) {
-      case 'discord':
-        return '🤖';
-      case 'slack':
-        return '💬';
-      case 'mattermost':
-        return '📱';
-      default:
-        return '🔧';
+    case 'discord':
+      return '🤖';
+    case 'slack':
+      return '💬';
+    case 'mattermost':
+      return '📱';
+    default:
+      return '🔧';
     }
   };
 
   const formatUptime = (seconds: number) => {
-    if (!seconds) return 'N/A';
+    if (!seconds) {return 'N/A';}
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
   };
 
   const formatResponseTime = (ms: number) => {
-    if (!ms) return 'N/A';
-    if (ms < 1000) return `${ms}ms`;
+    if (!ms) {return 'N/A';}
+    if (ms < 1000) {return `${ms}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
   const getHealthScore = () => {
-    if (!statusData) return 0;
+    if (!statusData) {return 0;}
 
     let score = 100;
-    if (statusData.status !== 'active') score -= 30;
-    if (statusData.errorCount && statusData.errorCount > 0) score -= 20;
-    if (statusData.responseTime && statusData.responseTime > 2000) score -= 15;
-    if (!statusData.connected) score -= 25;
+    if (statusData.status !== 'active') {score -= 30;}
+    if (statusData.errorCount && statusData.errorCount > 0) {score -= 20;}
+    if (statusData.responseTime && statusData.responseTime > 2000) {score -= 15;}
+    if (!statusData.connected) {score -= 25;}
 
     return Math.max(0, score);
   };
 
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warning';
+  const getHealthVariant = (score: number): 'success' | 'warning' | 'error' => {
+    if (score >= 80) {return 'success';}
+    if (score >= 60) {return 'warning';}
     return 'error';
   };
 
@@ -130,335 +116,280 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
 
   return (
     <>
-      <Card
-        sx={{
-          minWidth: 350,
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: 3,
-          }
-        }}
-      >
-        <CardContent>
+      <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+        <Card.Body>
           {/* Header */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="h6" component="h3">
-                {getProviderIcon(bot.messageProvider)}
-              </Typography>
-              <Typography variant="h6" component="h3">
-                {bot.name}
-              </Typography>
-            </Box>
-            <Box display="flex" alignItems="center" gap={1}>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{getProviderIcon(bot.messageProvider)}</span>
+              <h3 className="text-lg font-bold">{bot.name}</h3>
+            </div>
+            <div className="flex items-center gap-2">
               {getStatusIcon(statusData?.status || 'unknown')}
-              <Chip
-                label={statusData?.status || 'unknown'}
-                size="small"
-                color={getStatusColor(statusData?.status || 'unknown')}
-              />
-            </Box>
-          </Box>
+              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
+                {statusData?.status || 'unknown'}
+              </Badge>
+            </div>
+          </div>
 
           {/* Provider and LLM Info */}
-          <Box display="flex" gap={1} mb={2}>
-            <Chip
-              label={`Provider: ${bot.messageProvider}`}
-              size="small"
-              color="primary"
-              variant="outlined"
-            />
-            <Chip
-              label={`LLM: ${bot.llmProvider}`}
-              size="small"
-              color="secondary"
-              variant="outlined"
-            />
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge variant="primary" size="sm">
+              Provider: {bot.messageProvider}
+            </Badge>
+            <Badge variant="secondary" size="sm">
+              LLM: {bot.llmProvider}
+            </Badge>
             {bot.persona && (
-              <Chip
-                label={`Persona: ${bot.persona}`}
-                size="small"
-                variant="outlined"
-              />
+              <Badge variant="accent" size="sm">
+                Persona: {bot.persona}
+              </Badge>
             )}
-          </Box>
+          </div>
 
           {/* Health Score */}
-          <Box mb={2}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography variant="body2" color="text.secondary">
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-base-content/70">
                 Health Score
-              </Typography>
-              <Typography variant="body2" fontWeight="medium">
+              </span>
+              <span className="text-sm font-medium">
                 {healthScore}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={healthScore}
-              color={getHealthColor(healthScore)}
-              sx={{ height: 8, borderRadius: 4 }}
-            />
-          </Box>
+              </span>
+            </div>
+            <Progress value={healthScore} variant={getHealthVariant(healthScore)} size="md" />
+          </div>
 
           {/* Quick Stats */}
-          <Box display="flex" justifyContent="space-between" mb={2}>
-            <Box textAlign="center">
-              <Typography variant="h6" color="primary">
+          <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+            <div>
+              <div className="text-xl font-bold text-primary">
                 {statusData?.messageCount || 0}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+              </div>
+              <div className="text-xs text-base-content/70">
                 Messages
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="h6" color="error">
+              </div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-error">
                 {statusData?.errorCount || 0}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+              </div>
+              <div className="text-xs text-base-content/70">
                 Errors
-              </Typography>
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="h6" color="success">
+              </div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-success">
                 {statusData?.connected ? '✓' : '✗'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+              </div>
+              <div className="text-xs text-base-content/70">
                 Connected
-              </Typography>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
 
           {/* Additional Info */}
-          <Box mb={2}>
-            <Typography variant="body2" color="text.secondary">
+          <div className="mb-4 space-y-1">
+            <p className="text-sm text-base-content/70">
               Response Time: {formatResponseTime(statusData?.responseTime || 0)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </p>
+            <p className="text-sm text-base-content/70">
               Uptime: {formatUptime(statusData?.uptime || 0)}
-            </Typography>
+            </p>
             {statusData?.lastActivity && (
-              <Typography variant="body2" color="text.secondary">
+              <p className="text-sm text-base-content/70">
                 Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
-              </Typography>
+              </p>
             )}
-          </Box>
+          </div>
 
           {/* Action Buttons */}
-          <Box display="flex" gap={1}>
+          <div className="flex gap-2">
             <Button
-              size="small"
-              variant="outlined"
-              startIcon={<SettingsIcon />}
+              size="sm"
+              variant="secondary" className="btn-outline"
               onClick={() => setDetailsOpen(true)}
+              className="flex items-center gap-2"
             >
+              <Cog6ToothIcon className="w-4 h-4" />
               Details
             </Button>
             <Button
-              size="small"
-              variant="outlined"
-              startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
+              size="sm"
+              variant="secondary" className="btn-outline"
               onClick={() => {
                 setLoading(true);
                 setTimeout(() => {
                   setLoading(false);
-                  if (onRefresh) onRefresh();
+                  if (onRefresh) {onRefresh();}
                 }, 1000);
               }}
               disabled={loading}
+              className="flex items-center gap-2"
             >
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
               Refresh
             </Button>
-          </Box>
-        </CardContent>
+          </div>
+        </Card.Body>
       </Card>
 
-      {/* Detailed Information Dialog */}
-      <Dialog
-        open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
+      {/* Detailed Information Modal */}
+      <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)}>
+        <Modal.Header>
           Bot Details - {bot.name}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="space-y-2">
             {/* Basic Information */}
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Basic Information</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Name:</strong>
-                    </Typography>
-                    <Typography variant="body2">{bot.name}</Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Message Provider:</strong>
-                    </Typography>
-                    <Typography variant="body2">{bot.messageProvider}</Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>LLM Provider:</strong>
-                    </Typography>
-                    <Typography variant="body2">{bot.llmProvider}</Typography>
-                  </Box>
-                  {bot.persona && (
-                    <Box display="flex" gap={2}>
-                      <Typography variant="body2" sx={{ minWidth: 120 }}>
-                        <strong>Persona:</strong>
-                      </Typography>
-                      <Typography variant="body2">{bot.persona}</Typography>
-                    </Box>
-                  )}
-                </Box>
-              </AccordionDetails>
+            <Accordion defaultOpen>
+              <Accordion.Item value="basic">
+                <Accordion.Trigger>
+                  <div className="flex items-center gap-2">
+                    <span>Basic Information</span>
+                  </div>
+                </Accordion.Trigger>
+                <Accordion.Content>
+                  <div className="space-y-3">
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Name:</span>
+                      <span className="text-sm">{bot.name}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Message Provider:</span>
+                      <span className="text-sm">{bot.messageProvider}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">LLM Provider:</span>
+                      <span className="text-sm">{bot.llmProvider}</span>
+                    </div>
+                    {bot.persona && (
+                      <div className="flex gap-4">
+                        <span className="text-sm font-semibold min-w-[120px]">Persona:</span>
+                        <span className="text-sm">{bot.persona}</span>
+                      </div>
+                    )}
+                  </div>
+                </Accordion.Content>
+              </Accordion.Item>
             </Accordion>
 
             {/* Status Information */}
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Status Information</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Status:</strong>
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {getStatusIcon(statusData?.status || 'unknown')}
-                      <Typography variant="body2">{statusData?.status || 'Unknown'}</Typography>
-                    </Box>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Connected:</strong>
-                    </Typography>
-                    <Typography variant="body2">
-                      {statusData?.connected ? 'Yes' : 'No'}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Health Score:</strong>
-                    </Typography>
-                    <Typography variant="body2">{healthScore}%</Typography>
-                  </Box>
-                </Box>
-              </AccordionDetails>
+            <Accordion defaultOpen>
+              <Accordion.Item value="status">
+                <Accordion.Trigger>Status Information</Accordion.Trigger>
+                <Accordion.Content>
+                  <div className="space-y-3">
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Status:</span>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(statusData?.status || 'unknown')}
+                        <span className="text-sm">{statusData?.status || 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Connected:</span>
+                      <span className="text-sm">
+                        {statusData?.connected ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Health Score:</span>
+                      <span className="text-sm">{healthScore}%</span>
+                    </div>
+                  </div>
+                </Accordion.Content>
+              </Accordion.Item>
             </Accordion>
 
             {/* Performance Metrics */}
             <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Performance Metrics</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Messages:</strong>
-                    </Typography>
-                    <Typography variant="body2">{statusData?.messageCount || 0}</Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Errors:</strong>
-                    </Typography>
-                    <Typography variant="body2" color="error">
-                      {statusData?.errorCount || 0}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Response Time:</strong>
-                    </Typography>
-                    <Typography variant="body2">
-                      {formatResponseTime(statusData?.responseTime || 0)}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" gap={2}>
-                    <Typography variant="body2" sx={{ minWidth: 120 }}>
-                      <strong>Uptime:</strong>
-                    </Typography>
-                    <Typography variant="body2">
-                      {formatUptime(statusData?.uptime || 0)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </AccordionDetails>
+              <Accordion.Item value="performance">
+                <Accordion.Trigger>Performance Metrics</Accordion.Trigger>
+                <Accordion.Content>
+                  <div className="space-y-3">
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Messages:</span>
+                      <span className="text-sm">{statusData?.messageCount || 0}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Errors:</span>
+                      <span className="text-sm text-error">
+                        {statusData?.errorCount || 0}
+                      </span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Response Time:</span>
+                      <span className="text-sm">
+                        {formatResponseTime(statusData?.responseTime || 0)}
+                      </span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="text-sm font-semibold min-w-[120px]">Uptime:</span>
+                      <span className="text-sm">
+                        {formatUptime(statusData?.uptime || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </Accordion.Content>
+              </Accordion.Item>
             </Accordion>
 
             {/* Health Details */}
             {statusData?.healthDetails && (
               <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Health Details</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    {Object.entries(statusData.healthDetails).map(([key, value]) => (
-                      <Box key={key} display="flex" gap={2}>
-                        <Typography variant="body2" sx={{ minWidth: 120 }}>
-                          <strong>{key}:</strong>
-                        </Typography>
-                        <Typography variant="body2">
-                          {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </AccordionDetails>
+                <Accordion.Item value="health">
+                  <Accordion.Trigger>Health Details</Accordion.Trigger>
+                  <Accordion.Content>
+                    <div className="space-y-3">
+                      {Object.entries(statusData.healthDetails).map(([key, value]) => (
+                        <div key={key} className="flex gap-4">
+                          <span className="text-sm font-semibold min-w-[120px]">{key}:</span>
+                          <span className="text-sm">
+                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Accordion.Content>
+                </Accordion.Item>
               </Accordion>
             )}
 
             {/* Configuration */}
             <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Configuration</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {bot.systemInstruction && (
-                    <Box>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>System Instruction:</strong>
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'background.paper', p: 1, borderRadius: 1 }}>
-                        {bot.systemInstruction}
-                      </Typography>
-                    </Box>
-                  )}
-                  {bot.mcpServers && (
-                    <Box>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>MCP Servers:</strong>
-                      </Typography>
-                      <Typography variant="body2">
-                        {Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1} server(s) configured
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </AccordionDetails>
+              <Accordion.Item value="config">
+                <Accordion.Trigger>Configuration</Accordion.Trigger>
+                <Accordion.Content>
+                  <div className="space-y-3">
+                    {bot.systemInstruction && (
+                      <div>
+                        <p className="text-sm font-semibold mb-2">System Instruction:</p>
+                        <p className="text-sm italic bg-base-200 p-3 rounded-lg">
+                          {bot.systemInstruction}
+                        </p>
+                      </div>
+                    )}
+                    {bot.mcpServers && (
+                      <div>
+                        <p className="text-sm font-semibold mb-2">MCP Servers:</p>
+                        <p className="text-sm">
+                          {Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1} server(s) configured
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </Accordion.Content>
+              </Accordion.Item>
             </Accordion>
-          </Box>
-        </DialogContent>
-        <DialogActions>
+          </div>
+        </Modal.Body>
+        <Modal.Actions>
           <Button onClick={() => setDetailsOpen(false)}>
             Close
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Modal.Actions>
+      </Modal>
     </>
   );
 };

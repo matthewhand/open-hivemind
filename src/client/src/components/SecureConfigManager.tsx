@@ -1,39 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useState, useEffect } from 'react';
+import { Card, Badge, Button, Modal, Input, Alert, Loading, Toggle, Tooltip } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Chip,
-  IconButton,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
-  Switch,
-  FormControlLabel,
-  Tooltip,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Security as SecurityIcon,
-  Lock as LockIcon,
-  LockOpen as LockOpenIcon,
-  Backup as BackupIcon,
-  Restore as RestoreIcon,
-} from '@mui/icons-material';
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import type { SecureConfig } from '../services/api';
 
@@ -48,14 +25,10 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   const [editingConfig, setEditingConfig] = useState<SecureConfig | null>(null);
   const [backupDialogOpen, setBackupDialogOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info';
-  }>({
-    open: false,
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    show: false,
     message: '',
-    severity: 'info',
+    type: 'info',
   });
 
   const [formData, setFormData] = useState({
@@ -63,79 +36,33 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     data: {},
     encryptSensitive: true,
   });
-
   const [backupFile, setBackupFile] = useState('');
 
-  // Mock data for demonstration - in real implementation, this would come from API
+  // Mock data
   useEffect(() => {
     const mockConfigs: SecureConfig[] = [
-      {
-        id: '1',
-        name: 'discord-tokens',
-        data: {
-          'bot1_token': '••••••••',
-          'bot2_token': '••••••••',
-          'webhook_secret': '••••••••'
-        },
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-19T14:30:00Z',
-        encrypted: true,
-      },
-      {
-        id: '2',
-        name: 'api-keys',
-        data: {
-          'openai_key': '••••••••',
-          'database_url': '••••••••',
-          'redis_password': '••••••••'
-        },
-        createdAt: '2024-01-16T09:15:00Z',
-        updatedAt: '2024-01-18T16:45:00Z',
-        encrypted: true,
-      },
-      {
-        id: '3',
-        name: 'ssl-certificates',
-        data: {
-          'cert_path': '/path/to/cert.pem',
-          'key_path': '/path/to/key.pem',
-          'ca_bundle': '••••••••'
-        },
-        createdAt: '2024-01-17T11:20:00Z',
-        updatedAt: '2024-01-17T11:20:00Z',
-        encrypted: false,
-      },
+      { id: '1', name: 'discord-tokens', data: { 'bot1_token': '••••••••', 'bot2_token': '••••••••', 'webhook_secret': '••••••••' }, createdAt: '2024-01-15T10:00:00Z', updatedAt: '2024-01-19T14:30:00Z', encrypted: true },
+      { id: '2', name: 'api-keys', data: { 'openai_key': '••••••••', 'database_url': '••••••••', 'redis_password': '••••••••' }, createdAt: '2024-01-16T09:15:00Z', updatedAt: '2024-01-18T16:45:00Z', encrypted: true },
+      { id: '3', name: 'ssl-certificates', data: { 'cert_path': '/path/to/cert.pem', 'key_path': '/path/to/key.pem', 'ca_bundle': '••••••••' }, createdAt: '2024-01-17T11:20:00Z', updatedAt: '2024-01-17T11:20:00Z', encrypted: false },
     ];
-
     setConfigs(mockConfigs);
     setLoading(false);
   }, []);
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      data: {},
-      encryptSensitive: true,
-    });
+    setFormData({ name: '', data: {}, encryptSensitive: true });
     setEditingConfig(null);
   };
 
   const handleOpenDialog = (config?: SecureConfig) => {
     if (config) {
       setEditingConfig(config);
-      setFormData({
-        name: config.name,
-        data: config.data,
-        encryptSensitive: config.encrypted,
-      });
+      setFormData({ name: config.name, data: config.data, encryptSensitive: config.encrypted });
     } else {
       resetForm();
     }
@@ -149,106 +76,75 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleSubmit = async () => {
     if (!formData.name) {
-      showSnackbar('Please enter a configuration name', 'error');
+      showToast('Please enter a configuration name', 'error');
       return;
     }
 
     try {
       if (editingConfig) {
-        // Update existing config
-        const updatedConfigs = configs.map(c =>
-          c.id === editingConfig.id
-            ? { ...c, ...formData, updatedAt: new Date().toISOString() }
-            : c
-        );
+        const updatedConfigs = configs.map(c => c.id === editingConfig.id ? { ...c, ...formData, updatedAt: new Date().toISOString() } : c);
         setConfigs(updatedConfigs);
-        showSnackbar(`Configuration "${formData.name}" updated successfully`, 'success');
+        showToast(`Configuration "${formData.name}" updated successfully`, 'success');
       } else {
-        // Create new config
-        const newConfig: SecureConfig = {
-          id: Date.now().toString(),
-          name: formData.name,
-          data: formData.data,
-          encrypted: formData.encryptSensitive,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+        const newConfig: SecureConfig = { id: Date.now().toString(), name: formData.name, data: formData.data, encrypted: formData.encryptSensitive, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
         setConfigs([...configs, newConfig]);
-        showSnackbar(`Configuration "${formData.name}" created successfully`, 'success');
+        showToast(`Configuration "${formData.name}" created successfully`, 'success');
       }
-
       handleCloseDialog();
-      if (onRefresh) onRefresh();
+      onRefresh?.();
     } catch {
-      showSnackbar('Failed to save configuration', 'error');
+      showToast('Failed to save configuration', 'error');
     }
   };
 
   const handleDeleteConfig = async (configId: string) => {
     const config = configs.find(c => c.id === configId);
-    if (!config) return;
-
-    if (!confirm(`Are you sure you want to delete configuration "${config.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
+    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
     try {
-      const updatedConfigs = configs.filter(c => c.id !== configId);
-      setConfigs(updatedConfigs);
-      showSnackbar(`Configuration "${config.name}" deleted successfully`, 'success');
-      if (onRefresh) onRefresh();
+      setConfigs(configs.filter(c => c.id !== configId));
+      showToast(`Configuration "${config.name}" deleted successfully`, 'success');
+      onRefresh?.();
     } catch {
-      showSnackbar('Failed to delete configuration', 'error');
+      showToast('Failed to delete configuration', 'error');
     }
   };
 
   const handleBackup = async () => {
     try {
       const response = await apiService.backupSecureConfigs();
-      showSnackbar(response.message || 'Backup created successfully', 'success');
+      showToast(response.message || 'Backup created successfully', 'success');
       setBackupDialogOpen(false);
     } catch {
-      showSnackbar('Failed to create backup', 'error');
+      showToast('Failed to create backup', 'error');
     }
   };
 
   const handleRestore = async () => {
     if (!backupFile) {
-      showSnackbar('Please select a backup file', 'error');
+      showToast('Please select a backup file', 'error');
       return;
     }
-
     try {
       const response = await apiService.restoreSecureConfigs(backupFile);
-      showSnackbar(response.message || 'Configuration restored successfully', 'success');
+      showToast(response.message || 'Configuration restored successfully', 'success');
       setRestoreDialogOpen(false);
       setBackupFile('');
-      if (onRefresh) onRefresh();
+      onRefresh?.();
     } catch {
-      showSnackbar('Failed to restore configuration', 'error');
+      showToast('Failed to restore configuration', 'error');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const formatBytes = (obj: Record<string, unknown>) => {
-    const str = JSON.stringify(obj);
-    return new Blob([str]).size;
-  };
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleString();
+  const formatBytes = (obj: Record<string, unknown>) => new Blob([JSON.stringify(obj)]).size;
 
   if (loading) {
     return (
       <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-            <CircularProgress />
-            <Typography variant="body1" sx={{ ml: 2 }}>
-              Loading secure configurations...
-            </Typography>
-          </Box>
-        </CardContent>
+        <div className="flex justify-center items-center py-8">
+          <span className="loading loading-spinner loading-lg"></span>
+          <p className="ml-4">Loading secure configurations...</p>
+        </div>
       </Card>
     );
   }
@@ -256,247 +152,150 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   return (
     <>
       <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              <SecurityIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Secure Configuration Manager
-            </Typography>
-            <Box display="flex" gap={1}>
-              <Button
-                variant="outlined"
-                startIcon={<BackupIcon />}
-                onClick={() => setBackupDialogOpen(true)}
-              >
-                Backup
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<RestoreIcon />}
-                onClick={() => setRestoreDialogOpen(true)}
-              >
-                Restore
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
-                color="primary"
-              >
-                Add Config
-              </Button>
-            </Box>
-          </Box>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheckIcon className="w-6 h-6" />
+            <h2 className="text-lg font-semibold">Secure Configuration Manager</h2>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" buttonStyle="outline" onClick={() => setBackupDialogOpen(true)} className="flex items-center gap-2">
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Backup
+            </Button>
+            <Button variant="secondary" buttonStyle="outline" onClick={() => setRestoreDialogOpen(true)} className="flex items-center gap-2">
+              <ArrowUpTrayIcon className="w-4 h-4" />
+              Restore
+            </Button>
+            <Button variant="primary" onClick={() => handleOpenDialog()} className="flex items-center gap-2">
+              <PlusIcon className="w-4 h-4" />
+              Add Config
+            </Button>
+          </div>
+        </div>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Manage encrypted configuration files and secure data storage.
-          </Typography>
+        <p className="text-sm text-base-content/70 mb-6">Manage encrypted configuration files and secure data storage.</p>
 
-          <List>
-            {configs.map((config, index) => (
-              <React.Fragment key={config.id}>
-                <ListItem>
-                  <Box display="flex" alignItems="center" sx={{ mr: 2 }}>
-                    {config.encrypted ? (
-                      <LockIcon color="error" />
-                    ) : (
-                      <LockOpenIcon color="success" />
-                    )}
-                  </Box>
+        <div className="space-y-2">
+          {configs.map((config) => (
+            <div key={config.id} className="flex items-center gap-3 p-4 bg-base-200 rounded-box hover:bg-base-300 transition-colors">
+              <div className="flex-shrink-0">
+                {config.encrypted ? <LockClosedIcon className="w-5 h-5 text-error" /> : <LockOpenIcon className="w-5 h-5 text-success" />}
+              </div>
 
-                  <ListItemText
-                    primary={
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="subtitle1" fontWeight="medium">
-                          {config.name}
-                        </Typography>
-                        <Chip
-                          label={config.encrypted ? 'Encrypted' : 'Plain Text'}
-                          size="small"
-                          color={config.encrypted ? 'error' : 'success'}
-                          variant="outlined"
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {Object.keys(config.data).length} keys • {formatBytes(config.data)} bytes
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Updated: {formatDate(config.updatedAt)}
-                        </Typography>
-                      </Box>
-                    }
-                  />
+              <div className="flex-grow">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium">{config.name}</span>
+                  <Badge variant={config.encrypted ? 'error' : 'success'} size="sm" style="outline">
+                    {config.encrypted ? 'Encrypted' : 'Plain Text'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-base-content/70">
+                  {Object.keys(config.data).length} keys • {formatBytes(config.data)} bytes
+                </p>
+                <p className="text-xs text-base-content/60">Updated: {formatDate(config.updatedAt)}</p>
+              </div>
 
-                  <ListItemSecondaryAction>
-                    <Tooltip title="Edit Configuration">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(config)}
-                        sx={{ mr: 1 }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
+              <div className="flex gap-2">
+                <Tooltip content="Edit Configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)}>
+                    <PencilIcon className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Delete Configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)}>
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+          ))}
+        </div>
 
-                    <Tooltip title="Delete Configuration">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteConfig(config.id)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </ListItemSecondaryAction>
-                </ListItem>
-
-                {index < configs.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-
-          {configs.length === 0 && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="body1" color="text.secondary">
-                No secure configurations found. Create your first configuration to get started.
-              </Typography>
-            </Box>
-          )}
-        </CardContent>
+        {configs.length === 0 && (
+          <div className="text-center py-8 text-base-content/70">
+            No secure configurations found. Create your first configuration to get started.
+          </div>
+        )}
       </Card>
 
-      {/* Add/Edit Configuration Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingConfig ? 'Edit Secure Configuration' : 'Add New Secure Configuration'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Configuration Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              sx={{ mb: 2 }}
-              placeholder="e.g., discord-tokens, api-keys"
-            />
+      {/* Add/Edit Configuration Modal */}
+      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title={editingConfig ? 'Edit Secure Configuration' : 'Add New Secure Configuration'}>
+        <div className="space-y-4 py-4">
+          <div className="form-control">
+            <label className="label"><span className="label-text">Configuration Name *</span></label>
+            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., discord-tokens, api-keys" />
+          </div>
 
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.encryptSensitive}
-                  onChange={(e) => setFormData({ ...formData, encryptSensitive: e.target.checked })}
-                />
-              }
-              label="Encrypt sensitive data"
-            />
+          <Toggle label="Encrypt sensitive data" checked={formData.encryptSensitive} onChange={(e) => setFormData({ ...formData, encryptSensitive: e.target.checked })} color="primary" />
 
-            <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
-              Configuration data should be provided as JSON. Sensitive values will be automatically encrypted if encryption is enabled.
-            </Alert>
+          <Alert status="info" message="Configuration data should be provided as JSON. Sensitive values will be automatically encrypted if encryption is enabled." />
 
-            <TextField
-              fullWidth
-              label="Configuration Data (JSON)"
-              multiline
+          <div className="form-control">
+            <label className="label"><span className="label-text">Configuration Data (JSON)</span></label>
+            <textarea
+              className="textarea textarea-bordered font-mono"
               rows={8}
               value={JSON.stringify(formData.data, null, 2)}
               onChange={(e) => {
                 try {
                   const parsed = JSON.parse(e.target.value);
                   setFormData({ ...formData, data: parsed });
-                } catch {
-                  // Invalid JSON, don't update
-                }
+                } catch { }
               }}
               placeholder='{"key": "value", "secret": "••••••••"}'
-              sx={{ fontFamily: 'monospace' }}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={!formData.name}
-          >
+          </div>
+        </div>
+        <div className="modal-action">
+          <Button onClick={handleCloseDialog} variant="ghost">Cancel</Button>
+          <Button onClick={handleSubmit} variant="primary" disabled={!formData.name}>
             {editingConfig ? 'Update Configuration' : 'Add Configuration'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      {/* Backup Dialog */}
-      <Dialog open={backupDialogOpen} onClose={() => setBackupDialogOpen(false)}>
-        <DialogTitle>Create Backup</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Create a backup of all secure configurations. This will download an encrypted backup file.
-          </Typography>
-          <Alert severity="warning">
-            Store backup files securely and do not share them with unauthorized users.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBackupDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleBackup} variant="contained" startIcon={<BackupIcon />}>
+      {/* Backup Modal */}
+      <Modal isOpen={backupDialogOpen} onClose={() => setBackupDialogOpen(false)} title="Create Backup">
+        <div className="py-4">
+          <p className="mb-4 text-sm">Create a backup of all secure configurations. This will download an encrypted backup file.</p>
+          <Alert status="warning" message="Store backup files securely and do not share them with unauthorized users." />
+        </div>
+        <div className="modal-action">
+          <Button onClick={() => setBackupDialogOpen(false)} variant="ghost">Cancel</Button>
+          <Button onClick={handleBackup} variant="primary" className="flex items-center gap-2">
+            <ArrowDownTrayIcon className="w-4 h-4" />
             Create Backup
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      {/* Restore Dialog */}
-      <Dialog open={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)}>
-        <DialogTitle>Restore from Backup</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Restore configurations from a backup file. This will replace all existing secure configurations.
-          </Typography>
-          <TextField
-            fullWidth
-            label="Backup File Path"
-            value={backupFile}
-            onChange={(e) => setBackupFile(e.target.value)}
-            placeholder="/path/to/backup.enc"
-            sx={{ mb: 2 }}
-          />
-          <Alert severity="error">
-            Warning: This will replace all existing secure configurations. Make sure you have a current backup before proceeding.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRestoreDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleRestore} variant="contained" color="error" startIcon={<RestoreIcon />}>
+      {/* Restore Modal */}
+      <Modal isOpen={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)} title="Restore from Backup">
+        <div className="space-y-4 py-4">
+          <p className="text-sm">Restore configurations from a backup file. This will replace all existing secure configurations.</p>
+          <div className="form-control">
+            <label className="label"><span className="label-text">Backup File Path</span></label>
+            <Input value={backupFile} onChange={(e) => setBackupFile(e.target.value)} placeholder="/path/to/backup.enc" />
+          </div>
+          <Alert status="error" message="Warning: This will replace all existing secure configurations. Make sure you have a current backup before proceeding." />
+        </div>
+        <div className="modal-action">
+          <Button onClick={() => setRestoreDialogOpen(false)} variant="ghost">Cancel</Button>
+          <Button onClick={handleRestore} variant="primary" className="btn-error flex items-center gap-2">
+            <ArrowUpTrayIcon className="w-4 h-4" />
             Restore Backup
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Toast */}
+      {toast.show && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : toast.type === 'error' ? 'alert-error' : 'alert-info'}`}>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 };

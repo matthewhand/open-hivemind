@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface NavItem {
@@ -23,16 +24,16 @@ interface NavbarWithSearchProps {
 }
 
 const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
-  title = "Open-Hivemind",
+  title = 'Open-Hivemind',
   navItems = [],
   onSearch,
   onNotificationClick,
   notificationCount = 0,
-  userName = "Admin",
+  userName = 'Admin',
   userAvatar,
-  currentPath = "/",
+  currentPath = '/',
   searchSuggestions = [],
-  searchCategories = ['bots', 'configs', 'logs', 'users', 'settings']
+  searchCategories = ['bots', 'configs', 'logs', 'users', 'settings'],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -148,7 +149,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     { value: 'forest', label: 'Forest', emoji: '🌲' },
     { value: 'aqua', label: 'Aqua', emoji: '💧' },
     { value: 'corporate', label: 'Corporate', emoji: '🏢' },
-    { value: 'retro', label: 'Retro', emoji: '📺' }
+    { value: 'retro', label: 'Retro', emoji: '📺' },
   ];
 
   return (

@@ -1,17 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  Chip
-} from '@mui/material';
-import { getEnvOverrides } from '../services/agentService';
+import { Badge, Alert } from '../DaisyUI';
+import { getEnvOverrides } from '../../services/agentService';
 
 const EnvMonitor: React.FC = () => {
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
@@ -34,62 +24,55 @@ const EnvMonitor: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Typography>Loading environment variables...</Typography>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <Alert status="error" message={error} />;
   }
 
   return (
-    <Paper sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Environment Variable Overrides
-      </Typography>
-      
+    <div className="card bg-base-100 shadow-xl p-6 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Environment Variable Overrides</h2>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={fetchEnvOverrides}
+          title="Refresh"
+        >
+          🔄 Refresh
+        </button>
+      </div>
+
       {Object.keys(envVars).length === 0 ? (
-        <Typography>No environment variable overrides detected</Typography>
+        <Alert status="info" message="No environment variable overrides detected" />
       ) : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Environment Variable</TableCell>
-                <TableCell>Value</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="overflow-x-auto">
+          <table className="table table-sm w-full">
+            <thead>
+              <tr>
+                <th>Environment Variable</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
               {Object.entries(envVars).map(([key, value]) => (
-                <TableRow key={key}>
-                  <TableCell>
-                    <Chip 
-                      label={key} 
-                      size="small" 
-                      sx={{ 
-                        fontFamily: 'monospace',
-                        fontSize: '0.8rem'
-                      }} 
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={value} 
-                      size="small" 
-                      sx={{ 
-                        fontFamily: 'monospace',
-                        fontSize: '0.8rem',
-                        backgroundColor: '#1976d2',
-                        color: 'white'
-                      }} 
-                    />
-                  </TableCell>
-                </TableRow>
+                <tr key={key}>
+                  <td>
+                    <code className="badge badge-outline font-mono text-xs">{key}</code>
+                  </td>
+                  <td>
+                    <Badge variant="primary">
+                      <code className="font-mono text-xs">{value}</code>
+                    </Badge>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 };
 

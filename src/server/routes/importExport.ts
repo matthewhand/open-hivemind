@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
 import { requireAdmin, authenticate } from '../../auth/middleware';
 import { body, query, param } from 'express-validator';
 import { validationResult } from 'express-validator';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { AuthMiddlewareRequest } from '../../auth/types';
  
 const multer = require('multer');
 import path from 'path';
@@ -28,7 +29,7 @@ const upload = multer({
     } else {
       cb(new Error('Invalid file type. Only JSON, YAML, CSV, and compressed/encrypted files are allowed.'));
     }
-  }
+  },
 });
 
 /**
@@ -39,7 +40,7 @@ const validateExportOptions = [
     .isArray({ min: 1 })
     .withMessage('At least one configuration ID is required')
     .custom((value) => {
-      if (!Array.isArray(value)) return false;
+      if (!Array.isArray(value)) {return false;}
       return value.every(id => typeof id === 'number' && id > 0);
     })
     .withMessage('All configuration IDs must be positive numbers'),
@@ -87,7 +88,7 @@ const validateExportOptions = [
     .isLength({ max: 100 })
     .withMessage('File name must be less than 100 characters')
     .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('File name can only contain letters, numbers, underscores, and hyphens')
+    .withMessage('File name can only contain letters, numbers, underscores, and hyphens'),
 ];
 
 /**
@@ -118,7 +119,7 @@ const validateImportOptions = [
   body('decryptionKey')
     .optional()
     .isLength({ min: 8 })
-    .withMessage('Decryption key must be at least 8 characters long')
+    .withMessage('Decryption key must be at least 8 characters long'),
 ];
 
 /**
@@ -149,7 +150,7 @@ const validateBackupCreation = [
     .optional()
     .if((value: any, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
-    .withMessage('Encryption key must be at least 8 characters long')
+    .withMessage('Encryption key must be at least 8 characters long'),
 ];
 
 /**
@@ -181,7 +182,7 @@ const validateBackupRestore = [
   body('decryptionKey')
     .optional()
     .isLength({ min: 8 })
-    .withMessage('Decryption key must be at least 8 characters long')
+    .withMessage('Decryption key must be at least 8 characters long'),
 ];
 
 /**
@@ -193,7 +194,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
   next();
@@ -207,17 +208,17 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message: 'File too large. Maximum size is 50MB.'
+        message: 'File too large. Maximum size is 50MB.',
       });
     }
     return res.status(400).json({
       success: false,
-      message: `File upload error: ${error.message}`
+      message: `File upload error: ${error.message}`,
     });
   } else if (error) {
     return res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
   next();
@@ -236,7 +237,7 @@ router.post('/export', requireAdmin, validateExportOptions, handleValidationErro
       req.body.configIds,
       req.body,
       req.body.fileName,
-      createdBy
+      createdBy,
     );
 
     if (result.success) {
@@ -246,14 +247,14 @@ router.post('/export', requireAdmin, validateExportOptions, handleValidationErro
         data: {
           filePath: result.filePath,
           size: result.size,
-          checksum: result.checksum
-        }
+          checksum: result.checksum,
+        },
       });
     } else {
       res.status(400).json({
         success: false,
         message: 'Export failed',
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
@@ -261,7 +262,7 @@ router.post('/export', requireAdmin, validateExportOptions, handleValidationErro
     res.status(500).json({
       success: false,
       message: 'Failed to export configurations',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -281,7 +282,7 @@ router.post('/import',
       if (!(req as any).file) {
         return res.status(400).json({
           success: false,
-          message: 'No file uploaded'
+          message: 'No file uploaded',
         });
       }
 
@@ -291,7 +292,7 @@ router.post('/import',
       const result = await importExportService.importConfigurations(
         (req as any).file.path,
         req.body,
-        importedBy
+        importedBy,
       );
 
       // Clean up uploaded file
@@ -304,7 +305,7 @@ router.post('/import',
       res.json({
         success: result.success,
         message: result.success ? 'Configurations imported successfully' : 'Import failed',
-        data: result
+        data: result,
       });
     } catch (error) {
       console.error('Error importing configurations:', error);
@@ -321,10 +322,10 @@ router.post('/import',
       res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: (error as any).message
+        error: (error as any).message,
       });
     }
-  }
+  },
 );
 
 /**
@@ -347,8 +348,8 @@ router.post('/backup', requireAdmin, validateBackupCreation, handleValidationErr
         includeTemplates: req.body.includeTemplates !== false,
         compress: req.body.compress !== false,
         encrypt: req.body.encrypt || false,
-        encryptionKey: req.body.encryptionKey
-      }
+        encryptionKey: req.body.encryptionKey,
+      },
     );
 
     if (result.success) {
@@ -358,14 +359,14 @@ router.post('/backup', requireAdmin, validateBackupCreation, handleValidationErr
         data: {
           filePath: result.filePath,
           size: result.size,
-          checksum: result.checksum
-        }
+          checksum: result.checksum,
+        },
       });
     } else {
       res.status(400).json({
         success: false,
         message: 'Backup creation failed',
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
@@ -373,7 +374,7 @@ router.post('/backup', requireAdmin, validateBackupCreation, handleValidationErr
     res.status(500).json({
       success: false,
       message: 'Failed to create backup',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -388,14 +389,14 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     res.json({
       success: true,
       data: backups,
-      count: backups.length
+      count: backups.length,
     });
   } catch (error) {
     console.error('Error listing backups:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -417,7 +418,7 @@ router.post('/backups/:backupId/restore', requireAdmin, validateBackupRestore, h
     if (!backup) {
       return res.status(404).json({
         success: false,
-        message: 'Backup not found'
+        message: 'Backup not found',
       });
     }
 
@@ -432,22 +433,22 @@ router.post('/backups/:backupId/restore', requireAdmin, validateBackupRestore, h
         overwrite: req.body.overwrite !== false,
         validateOnly: req.body.validateOnly || false,
         skipValidation: req.body.skipValidation || false,
-        decryptionKey: req.body.decryptionKey
+        decryptionKey: req.body.decryptionKey,
       },
-      restoredBy
+      restoredBy,
     );
 
     res.json({
       success: result.success,
       message: result.success ? 'Backup restored successfully' : 'Backup restoration failed',
-      data: result
+      data: result,
     });
   } catch (error) {
     console.error('Error restoring from backup:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to restore from backup',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -464,12 +465,12 @@ router.delete('/backups/:backupId', requireAdmin, async (req: AuthMiddlewareRequ
     if (success) {
       res.json({
         success: true,
-        message: 'Backup deleted successfully'
+        message: 'Backup deleted successfully',
       });
     } else {
       res.status(404).json({
         success: false,
-        message: 'Backup not found'
+        message: 'Backup not found',
       });
     }
   } catch (error) {
@@ -477,7 +478,7 @@ router.delete('/backups/:backupId', requireAdmin, async (req: AuthMiddlewareRequ
     res.status(500).json({
       success: false,
       message: 'Failed to delete backup',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -497,7 +498,7 @@ router.get('/backups/:backupId/download', requireAdmin, async (req: AuthMiddlewa
     if (!backup) {
       return res.status(404).json({
         success: false,
-        message: 'Backup not found'
+        message: 'Backup not found',
       });
     }
 
@@ -511,7 +512,7 @@ router.get('/backups/:backupId/download', requireAdmin, async (req: AuthMiddlewa
     } catch {
       return res.status(404).json({
         success: false,
-        message: 'Backup file not found'
+        message: 'Backup file not found',
       });
     }
 
@@ -524,7 +525,7 @@ router.get('/backups/:backupId/download', requireAdmin, async (req: AuthMiddlewa
     res.status(500).json({
       success: false,
       message: 'Failed to download backup',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -542,7 +543,7 @@ router.post('/validate',
       if (!(req as any).file) {
         return res.status(400).json({
           success: false,
-          message: 'No file uploaded'
+          message: 'No file uploaded',
         });
       }
 
@@ -552,8 +553,8 @@ router.post('/validate',
           format: req.body.format || 'json',
           validateOnly: true,
           skipValidation: false,
-          overwrite: false
-        }
+          overwrite: false,
+        },
       );
 
       // Clean up uploaded file
@@ -566,7 +567,7 @@ router.post('/validate',
       res.json({
         success: true,
         message: 'File validation completed',
-        data: result
+        data: result,
       });
     } catch (error) {
       console.error('Error validating file:', error);
@@ -583,10 +584,10 @@ router.post('/validate',
       res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: (error as any).message
+        error: (error as any).message,
       });
     }
-  }
+  },
 );
 
 export default router;

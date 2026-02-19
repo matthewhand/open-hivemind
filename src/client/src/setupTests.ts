@@ -1,41 +1,23 @@
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
-
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import '@testing-library/jest-dom'; // Generic import works for both
 import { configure } from '@testing-library/react';
+// vi is specific to Vitest, use jest global which works in both (Vitest aliases jest to vi)
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' });
-
-// Polyfill TextEncoder/TextDecoder for react-router
-if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
-  const { TextEncoder, TextDecoder } = require('util');
-  (global as any).TextEncoder = TextEncoder;
-  (global as any).TextDecoder = TextDecoder;
-}
 
 // Mock IntersectionObserver
 (global as any).IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   disconnect: jest.fn(),
   unobserve: jest.fn(),
-})) as any;
+}));
 
 // Mock ResizeObserver
 (global as any).ResizeObserver = class ResizeObserver {
-  constructor() {}
-  observe() {
-    return null;
-  }
-  disconnect() {
-    return null;
-  }
-  unobserve() {
-    return null;
-  }
+  observe() { return null; }
+  disconnect() { return null; }
+  unobserve() { return null; }
 };
 
 // Mock matchMedia
@@ -45,8 +27,8 @@ Object.defineProperty(window, 'matchMedia', {
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
@@ -62,7 +44,7 @@ const localStorageMock = {
   length: 0,
   key: jest.fn(),
 };
-(global as any).localStorage = localStorageMock as any;
+(global as any).localStorage = localStorageMock;
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -73,7 +55,7 @@ const sessionStorageMock = {
   length: 0,
   key: jest.fn(),
 };
-(global as any).sessionStorage = sessionStorageMock as any;
+(global as any).sessionStorage = sessionStorageMock;
 
 // Mock fetch if not already available
 if (!(global as any).fetch) {
@@ -92,23 +74,4 @@ if (!(global as any).fetch) {
   OPEN: 1,
   CLOSING: 2,
   CLOSED: 3,
-})) as unknown as typeof WebSocket;
-
-// Mock console methods to reduce noise in tests
-const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args: unknown[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning:') &&
-      args[0].includes('ReactDOMTestUtils')
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
-
-afterAll(() => {
-  console.error = originalError;
-});
+}));

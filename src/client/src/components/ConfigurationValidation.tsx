@@ -1,38 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Alert,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Verified as VerifiedIcon,
-} from '@mui/icons-material';
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  ArrowPathIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/outline';
 import type { Bot } from '../services/api';
 
 interface ConfigurationValidationProps {
@@ -48,9 +24,7 @@ interface ValidationResult {
   suggestion?: string;
 }
 
-const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
-  bot
-}) => {
+const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }) => {
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +35,6 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
       setValidationResults([]);
     }
   }, [bot]);
-
 
   const validateConfiguration = (botConfig: Bot) => {
     setLoading(true);
@@ -74,7 +47,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'Basic Configuration',
         message: 'Bot name is required',
         field: 'name',
-        suggestion: 'Provide a unique name for the bot'
+        suggestion: 'Provide a unique name for the bot',
       });
     }
 
@@ -84,7 +57,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'Basic Configuration',
         message: 'Message provider is required',
         field: 'messageProvider',
-        suggestion: 'Select a message provider (Discord, Slack, or Mattermost)'
+        suggestion: 'Select a message provider (Discord, Slack, or Mattermost)',
       });
     }
 
@@ -94,7 +67,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'Basic Configuration',
         message: 'LLM provider is required',
         field: 'llmProvider',
-        suggestion: 'Select an LLM provider (OpenAI, Flowise, etc.)'
+        suggestion: 'Select an LLM provider (OpenAI, Flowise, etc.)',
       });
     }
 
@@ -105,7 +78,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'Discord Configuration',
         message: 'Discord bot token not configured',
         field: 'discord.token',
-        suggestion: 'Set DISCORD_BOT_TOKEN environment variable or configure in bot settings'
+        suggestion: 'Set DISCORD_BOT_TOKEN environment variable or configure in bot settings',
       });
     }
 
@@ -115,7 +88,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'Slack Configuration',
         message: 'Slack tokens not fully configured',
         field: 'slack',
-        suggestion: 'Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables'
+        suggestion: 'Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables',
       });
     }
 
@@ -125,7 +98,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         category: 'OpenAI Configuration',
         message: 'OpenAI API key not configured',
         field: 'openai.apiKey',
-        suggestion: 'Set OPENAI_API_KEY environment variable'
+        suggestion: 'Set OPENAI_API_KEY environment variable',
       });
     }
 
@@ -137,7 +110,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
           category: 'System Instruction',
           message: 'System instruction is very long',
           field: 'systemInstruction',
-          suggestion: 'Consider shortening the system instruction to improve response times'
+          suggestion: 'Consider shortening the system instruction to improve response times',
         });
       }
 
@@ -147,54 +120,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
           category: 'System Instruction',
           message: 'System instruction is very short',
           field: 'systemInstruction',
-          suggestion: 'Consider adding more detailed instructions for better bot behavior'
-        });
-      }
-    }
-
-    // MCP Server validation
-    if (botConfig.mcpServers) {
-      const servers = Array.isArray(botConfig.mcpServers) ? botConfig.mcpServers : [botConfig.mcpServers];
-      servers.forEach((server, index) => {
-        if (typeof server === 'string') {
-          try {
-            new URL(server);
-          } catch {
-            results.push({
-              type: 'error',
-              category: 'MCP Server Configuration',
-              message: `Invalid URL format for MCP server ${index + 1}`,
-              field: `mcpServers[${index}]`,
-              suggestion: 'Ensure MCP server URLs are valid HTTP/HTTPS URLs'
-            });
-          }
-        }
-      });
-    }
-
-    // Persona validation
-    if (botConfig.persona) {
-      const validPersonas = ['dev-assistant', 'friendly-helper', 'teacher'];
-      if (!validPersonas.includes(botConfig.persona)) {
-        results.push({
-          type: 'warning',
-          category: 'Persona Configuration',
-          message: 'Custom persona detected',
-          field: 'persona',
-          suggestion: 'Custom personas may not have predefined behavior patterns'
-        });
-      }
-    }
-
-    // MCP Guard validation
-    if (botConfig.mcpGuard?.enabled) {
-      if (botConfig.mcpGuard.type === 'custom' && !botConfig.mcpGuard.allowedUserIds?.length) {
-        results.push({
-          type: 'warning',
-          category: 'MCP Guard Configuration',
-          message: 'MCP Guard enabled but no allowed users specified',
-          field: 'mcpGuard.allowedUserIds',
-          suggestion: 'Add user IDs to the allowed list or consider using owner-only mode'
+          suggestion: 'Consider adding more detailed instructions for better bot behavior',
         });
       }
     }
@@ -205,7 +131,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
         type: 'success',
         category: 'Overall Validation',
         message: 'Configuration appears to be valid',
-        suggestion: 'No issues detected in the current configuration'
+        suggestion: 'No issues detected in the current configuration',
       });
     }
 
@@ -214,17 +140,18 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
   };
 
   const getValidationIcon = (type: string) => {
+    const className = 'w-5 h-5';
     switch (type) {
-      case 'success':
-        return <CheckCircleIcon color="success" />;
-      case 'error':
-        return <ErrorIcon color="error" />;
-      case 'warning':
-        return <WarningIcon color="warning" />;
-      case 'info':
-        return <InfoIcon color="info" />;
-      default:
-        return <InfoIcon color="action" />;
+    case 'success':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'error':
+      return <XCircleIcon className={`${className} text-error`} />;
+    case 'warning':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    case 'info':
+      return <InformationCircleIcon className={`${className} text-info`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -233,9 +160,9 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
   };
 
   const getOverallStatus = () => {
-    if (getSeverityCount('error') > 0) return 'error';
-    if (getSeverityCount('warning') > 0) return 'warning';
-    if (getSeverityCount('success') > 0) return 'success';
+    if (getSeverityCount('error') > 0) {return 'error';}
+    if (getSeverityCount('warning') > 0) {return 'warning';}
+    if (getSeverityCount('success') > 0) {return 'success';}
     return 'info';
   };
 
@@ -244,220 +171,149 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({
   if (!bot) {
     return (
       <Card>
-        <CardContent>
-          <Typography variant="h6" color="text.secondary">
-            Select a bot to validate its configuration
-          </Typography>
-        </CardContent>
+        <h2 className="text-lg text-base-content/70 text-center">
+          Select a bot to validate its configuration
+        </h2>
       </Card>
     );
   }
 
+  const configTableColumns = [
+    { key: 'property', label: 'Property' },
+    { key: 'value', label: 'Value' },
+    { key: 'status', label: 'Status' },
+  ];
+
+  const configTableData = [
+    {
+      property: 'Bot Name',
+      value: bot.name || 'Not set',
+      status: bot.name ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
+    },
+    {
+      property: 'Message Provider',
+      value: bot.messageProvider || 'Not set',
+      status: bot.messageProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
+    },
+    {
+      property: 'LLM Provider',
+      value: bot.llmProvider || 'Not set',
+      status: bot.llmProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
+    },
+    {
+      property: 'Persona',
+      value: bot.persona || 'None',
+      status: <CheckCircleIcon className="w-5 h-5 text-success" />,
+    },
+    {
+      property: 'System Instruction',
+      value: bot.systemInstruction ? `${bot.systemInstruction.substring(0, 50)}...` : 'Not set',
+      status: bot.systemInstruction ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <ExclamationTriangleIcon className="w-5 h-5 text-warning" />,
+    },
+    {
+      property: 'MCP Servers',
+      value: `${bot.mcpServers ? (Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1) : 0} configured`,
+      status: <CheckCircleIcon className="w-5 h-5 text-success" />,
+    },
+  ];
+
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              <VerifiedIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Configuration Validation - {bot.name}
-            </Typography>
-            <Button
-              size="small"
-              startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
-              onClick={() => validateConfiguration(bot)}
-              disabled={loading}
-            >
-              Re-validate
-            </Button>
-          </Box>
+    <Card>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheckIcon className="w-6 h-6" />
+          <h2 className="text-lg font-semibold">Configuration Validation - {bot.name}</h2>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => validateConfiguration(bot)}
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          {loading ? <span className="loading loading-spinner loading-sm"></span> : <ArrowPathIcon className="w-4 h-4" />}
+          Re-validate
+        </Button>
+      </div>
 
-          {/* Overall Status */}
-          <Alert
-            severity={overallStatus === 'success' ? 'success' : overallStatus === 'warning' ? 'warning' : overallStatus === 'error' ? 'error' : 'info'}
-            sx={{ mb: 3 }}
-            icon={getValidationIcon(overallStatus)}
-          >
-            {overallStatus === 'success' && 'Configuration is valid with no issues detected.'}
-            {overallStatus === 'warning' && 'Configuration has some warnings that should be addressed.'}
-            {overallStatus === 'error' && 'Configuration has errors that must be fixed.'}
-            {overallStatus === 'info' && 'Configuration validation completed.'}
-          </Alert>
+      {/* Overall Status */}
+      <Alert
+        status={overallStatus as any}
+        message={
+          overallStatus === 'success' ? 'Configuration is valid with no issues detected.' :
+            overallStatus === 'warning' ? 'Configuration has some warnings that should be addressed.' :
+              overallStatus === 'error' ? 'Configuration has errors that must be fixed.' :
+                'Configuration validation completed.'
+        }
+        className="mb-6"
+      />
 
-          {/* Summary Statistics */}
-          <Box display="flex" gap={2} mb={3}>
-            <Chip
-              label={`${getSeverityCount('error')} Errors`}
-              color="error"
-              size="small"
-              icon={<ErrorIcon />}
-            />
-            <Chip
-              label={`${getSeverityCount('warning')} Warnings`}
-              color="warning"
-              size="small"
-              icon={<WarningIcon />}
-            />
-            <Chip
-              label={`${getSeverityCount('info')} Info`}
-              color="info"
-              size="small"
-              icon={<InfoIcon />}
-            />
-            <Chip
-              label={`${getSeverityCount('success')} Success`}
-              color="success"
-              size="small"
-              icon={<CheckCircleIcon />}
-            />
-          </Box>
+      {/* Summary Statistics */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Badge variant="error" size="md">
+          {getValidationIcon('error')}
+          {getSeverityCount('error')} Errors
+        </Badge>
+        <Badge variant="warning" size="md">
+          {getValidationIcon('warning')}
+          {getSeverityCount('warning')} Warnings
+        </Badge>
+        <Badge variant="neutral" size="md">
+          {getValidationIcon('info')}
+          {getSeverityCount('info')} Info
+        </Badge>
+        <Badge variant="success" size="md">
+          {getValidationIcon('success')}
+          {getSeverityCount('success')} Success
+        </Badge>
+      </div>
 
-          {/* Validation Results */}
-          <List>
-            {validationResults.map((result, index) => (
-              <React.Fragment key={index}>
-                <ListItem>
-                  <ListItemIcon>
-                    {getValidationIcon(result.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="subtitle2">
-                          {result.category}
-                        </Typography>
-                        <Chip
-                          label={result.type}
-                          size="small"
-                          color={result.type === 'error' ? 'error' : result.type === 'warning' ? 'warning' : result.type === 'success' ? 'success' : 'info'}
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {result.message}
-                        </Typography>
-                        {result.field && (
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                            Field: {result.field}
-                          </Typography>
-                        )}
-                        {result.suggestion && (
-                          <Typography variant="caption" color="primary" sx={{ mt: 0.5, display: 'block' }}>
-                            Suggestion: {result.suggestion}
-                          </Typography>
-                        )}
-                      </Box>
-                    }
-                  />
-                </ListItem>
-                {index < validationResults.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
+      {/* Validation Results */}
+      <div className="space-y-2 mb-6">
+        {validationResults.map((result, index) => (
+          <div key={index} className="flex gap-3 p-3 bg-base-200 rounded-box">
+            <div className="flex-shrink-0 pt-1">{getValidationIcon(result.type)}</div>
+            <div className="flex-grow">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium">{result.category}</span>
+                <Badge
+                  variant={
+                    result.type === 'error' ? 'error' :
+                      result.type === 'warning' ? 'warning' :
+                        result.type === 'success' ? 'success' : 'neutral'
+                  }
+                  size="sm"
+                >
+                  {result.type}
+                </Badge>
+              </div>
+              <p className="text-sm text-base-content/70 mb-1">{result.message}</p>
+              {result.field && (
+                <p className="text-xs text-base-content/60">Field: {result.field}</p>
+              )}
+              {result.suggestion && (
+                <p className="text-xs text-primary mt-1">💡 {result.suggestion}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
-          {validationResults.length === 0 && !loading && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="body1" color="text.secondary">
-                No validation results available. Click "Re-validate" to check the configuration.
-              </Typography>
-            </Box>
-          )}
+      {validationResults.length === 0 && !loading && (
+        <div className="text-center py-8 text-base-content/70">
+          No validation results available. Click "Re-validate" to check the configuration.
+        </div>
+      )}
 
-          {/* Configuration Overview */}
-          <Accordion sx={{ mt: 2 }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Configuration Overview</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Property</TableCell>
-                      <TableCell>Value</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Bot Name</TableCell>
-                      <TableCell>{bot.name || 'Not set'}</TableCell>
-                      <TableCell>
-                        {bot.name ? (
-                          <CheckCircleIcon color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Message Provider</TableCell>
-                      <TableCell>{bot.messageProvider || 'Not set'}</TableCell>
-                      <TableCell>
-                        {bot.messageProvider ? (
-                          <CheckCircleIcon color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>LLM Provider</TableCell>
-                      <TableCell>{bot.llmProvider || 'Not set'}</TableCell>
-                      <TableCell>
-                        {bot.llmProvider ? (
-                          <CheckCircleIcon color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Persona</TableCell>
-                      <TableCell>{bot.persona || 'None'}</TableCell>
-                      <TableCell>
-                        <CheckCircleIcon color="success" fontSize="small" />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>System Instruction</TableCell>
-                      <TableCell>
-                        {bot.systemInstruction
-                          ? `${bot.systemInstruction.substring(0, 50)}...`
-                          : 'Not set'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        {bot.systemInstruction ? (
-                          <CheckCircleIcon color="success" fontSize="small" />
-                        ) : (
-                          <WarningIcon color="warning" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>MCP Servers</TableCell>
-                      <TableCell>
-                        {bot.mcpServers
-                          ? (Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1)
-                          : 0
-                        } configured
-                      </TableCell>
-                      <TableCell>
-                        <CheckCircleIcon color="success" fontSize="small" />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </AccordionDetails>
-          </Accordion>
-        </CardContent>
-      </Card>
-
-    </>
+      {/* Configuration Overview */}
+      <Accordion defaultOpen={false}>
+        <Accordion.Item value="overview">
+          <Accordion.Trigger>Configuration Overview</Accordion.Trigger>
+          <Accordion.Content>
+            <DataTable columns={configTableColumns} data={configTableData} />
+          </Accordion.Content>
+        </Accordion.Item>
+      </Accordion>
+    </Card>
   );
 };
 

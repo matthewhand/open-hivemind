@@ -1,17 +1,18 @@
-import { AvatarService } from '../provider-configs/types';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import type { AvatarService } from '../provider-configs/types';
 
 class ProviderAvatarService implements AvatarService {
   async loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null> {
     try {
       switch (providerType) {
-        case 'discord':
-          return await this.loadDiscordAvatar(config);
-        case 'slack':
-          return await this.loadSlackAvatar(config);
-        case 'telegram':
-          return await this.loadTelegramAvatar(config);
-        default:
-          return null;
+      case 'discord':
+        return await this.loadDiscordAvatar(config);
+      case 'slack':
+        return await this.loadSlackAvatar(config);
+      case 'telegram':
+        return await this.loadTelegramAvatar(config);
+      default:
+        return null;
       }
     } catch (error) {
       console.error(`Failed to load avatar for ${providerType}:`, error);
@@ -25,7 +26,7 @@ class ProviderAvatarService implements AvatarService {
 
   private async loadDiscordAvatar(config: Record<string, any>): Promise<string | null> {
     const { botToken } = config;
-    if (!botToken) return null;
+    if (!botToken) {return null;}
 
     try {
       // In a real implementation, this would call your backend service
@@ -53,7 +54,7 @@ class ProviderAvatarService implements AvatarService {
 
   private async loadSlackAvatar(config: Record<string, any>): Promise<string | null> {
     const { botToken } = config;
-    if (!botToken) return null;
+    if (!botToken) {return null;}
 
     try {
       // In a real implementation, this would call your backend service
@@ -81,7 +82,7 @@ class ProviderAvatarService implements AvatarService {
 
   private async loadTelegramAvatar(config: Record<string, any>): Promise<string | null> {
     const { botToken } = config;
-    if (!botToken) return null;
+    if (!botToken) {return null;}
 
     try {
       // In a real implementation, this would call your backend service

@@ -1,53 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  Grid,
-  Button,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Slider,
-  FormControlLabel,
-  Switch,
-  CircularProgress
-} from '@mui/material';
-import { 
-  Warning as WarningIcon,
-  TrendingUp as TrendIcon,
-  Speed as SpeedIcon,
-  Assessment as AssessmentIcon,
-  Settings as SettingsIcon,
-  FilterList as FilterIcon,
-  Notifications as NotificationIcon,
-  CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
-  Refresh as RefreshIcon,
-  Visibility as ViewIcon,
-  Block as BlockIcon,
-  Timeline as TimelineIcon
-} from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import {
+  ExclamationTriangleIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 
 export interface AnomalyConfig {
   enabled: boolean;
@@ -255,8 +217,8 @@ const mockAlgorithms: AnomalyAlgorithm[] = [
     predictionTime: 25,
     memoryUsage: 512,
     hyperparameters: {
-      voting: 'soft',
-      weights: [0.4, 0.3, 0.3],
+      voting: 1, // 1 for soft voting (simplified)
+      weights: 0, // Simplified
       threshold: 0.5,
     },
     features: ['ensemble_features'],
@@ -268,23 +230,23 @@ const mockAlgorithms: AnomalyAlgorithm[] = [
 const generateMockAnomalies = (): AnomalyEvent[] => {
   const anomalies: AnomalyEvent[] = [];
   const now = new Date();
-  
+
   for (let i = 0; i < 20; i++) {
     const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
     const isAnomaly = Math.random() > 0.7;
-    
+
     if (isAnomaly) {
       const baseValue = 100 + Math.sin(i / 24) * 20;
       const anomalyValue = baseValue + (Math.random() - 0.5) * 100;
       const deviation = Math.abs(anomalyValue - baseValue) / baseValue;
-      
-      const severity: AnomalyEvent['severity'] = deviation > 0.5 ? 'critical' : 
-                                               deviation > 0.3 ? 'high' : 
-                                               deviation > 0.15 ? 'medium' : 'low';
-      
-      const type: AnomalyEvent['type'] = Math.random() > 0.7 ? 'point' : 
-                                        Math.random() > 0.5 ? 'contextual' : 'seasonal';
-      
+
+      const severity: AnomalyEvent['severity'] = deviation > 0.5 ? 'critical' :
+        deviation > 0.3 ? 'high' :
+          deviation > 0.15 ? 'medium' : 'low';
+
+      const type: AnomalyEvent['type'] = Math.random() > 0.7 ? 'point' :
+        Math.random() > 0.5 ? 'contextual' : 'seasonal';
+
       anomalies.push({
         id: `anomaly-${Date.now()}-${i}`,
         timestamp,
@@ -313,7 +275,7 @@ const generateMockAnomalies = (): AnomalyEvent[] => {
       });
     }
   }
-  
+
   return anomalies;
 };
 
@@ -405,7 +367,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       historicalDataWeight: 0.7,
     },
   });
-  
+
   const [state, setState] = useState<AnomalyState>({
     events: generateMockAnomalies(),
     algorithms: mockAlgorithms,
@@ -426,10 +388,8 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     lastDetection: new Date(),
     alerts: [],
   });
-  
-  const [selectedEvent, setSelectedEvent] = useState<AnomalyEvent | null>(null);
+
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize metrics
@@ -457,14 +417,14 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       averageConfidence: state.events.reduce((sum, e) => sum + e.confidence, 0) / state.events.length,
       responseTime: 150,
     };
-    
+
     setState(prev => ({ ...prev, metrics }));
   };
 
   const runAnomalyDetection = async () => {
     setIsLoading(true);
     setState(prev => ({ ...prev, isDetecting: true }));
-    
+
     // Simulate detection process
     setTimeout(() => {
       const newEvents = generateMockAnomalies();
@@ -474,38 +434,16 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
         isDetecting: false,
         lastDetection: new Date(),
       }));
-      
+
       // Trigger callback for new anomalies
       newEvents.forEach(event => {
         if (onAnomalyDetected) {
           onAnomalyDetected(event);
         }
       });
-      
+
       setIsLoading(false);
     }, 2000);
-  };
-
-  const acknowledgeAnomaly = (eventId: string) => {
-    setState(prev => ({
-      ...prev,
-      events: prev.events.map(event =>
-        event.id === eventId
-          ? { ...event, status: 'acknowledged', assignedTo: currentUser?.username }
-          : event
-      ),
-    }));
-  };
-
-  const markAsFalsePositive = (eventId: string) => {
-    setState(prev => ({
-      ...prev,
-      events: prev.events.map(event =>
-        event.id === eventId
-          ? { ...event, status: 'false-positive' }
-          : event
-      ),
-    }));
   };
 
   const toggleAlgorithm = (algorithmId: string) => {
@@ -514,7 +452,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       algorithms: prev.algorithms.map(algorithm =>
         algorithm.id === algorithmId
           ? { ...algorithm, isActive: !algorithm.isActive }
-          : algorithm
+          : algorithm,
       ),
       activeAlgorithms: prev.activeAlgorithms.includes(algorithmId)
         ? prev.activeAlgorithms.filter(id => id !== algorithmId)
@@ -529,450 +467,225 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     }));
   };
 
-  const updateSensitivity = (event: Event, newValue: number | number[]) => {
+  const updateSensitivity = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig(prev => ({
       ...prev,
-      sensitivity: Array.isArray(newValue) ? newValue[0] : newValue,
+      sensitivity: parseFloat(e.target.value),
     }));
   };
 
   if (!currentUser) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        animation="fade-in"
+        className="p-6 flex justify-center items-center min-h-[400px]"
       >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <WarningIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
+        <div className="card bg-base-100 shadow-xl max-w-md text-center">
+          <div className="card-body">
+            <ExclamationTriangleIcon className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="card-title justify-center mb-2">
               Anomaly Detection
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
+            </h2>
+            <p className="text-base-content/70">
               Please log in to access anomaly detection features.
-            </Typography>
-          </CardContent>
-        </Card>
+            </p>
+          </div>
+        </div>
       </AnimatedBox>
     );
   }
 
   return (
     <AnimatedBox
-      animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-      sx={{ width: '100%' }}
+      animation="slide-up"
+      className="w-full space-y-6"
     >
       {/* Anomaly Detection Header */}
-      <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={2}>
-              <AssessmentIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="h6">
+      <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
+        <div className="card-body p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <ChartBarIcon className="w-10 h-10 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">
                   Anomaly Detection
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h2>
+                <p className="text-base-content/70">
                   {state.events.length} anomalies detected • {state.activeAlgorithms.length}/{state.algorithms.length} algorithms active
-                </Typography>
-              </Box>
-            </Box>
-            
-            <Box display="flex" alignItems="center" gap={1}>
-              <Chip
-                label={state.metrics.falsePositiveRate < 0.1 ? 'Low FP' : 'High FP'}
-                size="small"
-                color={state.metrics.falsePositiveRate < 0.1 ? 'success' : 'warning'}
-              />
-              <IconButton onClick={runAnomalyDetection} disabled={isLoading}>
-                <RefreshIcon />
-              </IconButton>
-              <IconButton onClick={() => setShowConfigDialog(true)}>
-                <SettingsIcon />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className={`badge ${state.metrics.falsePositiveRate < 0.1 ? 'badge-success' : 'badge-warning'}`}>
+                {state.metrics.falsePositiveRate < 0.1 ? 'Low FP' : 'High FP'}
+              </div>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={runAnomalyDetection}
+                disabled={isLoading}
+              >
+                <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={() => setShowConfigDialog(!showConfigDialog)}
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Metrics Overview */}
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="error.main">
-                  {state.metrics.totalEvents}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Total Anomalies
-                </Typography>
-                <WarningIcon color="error" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="warning.main">
-                  {state.metrics.bySeverity.high + state.metrics.bySeverity.critical}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  High Priority
-                </Typography>
-                <WarningIcon color="warning" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="info.main">
-                  {(state.metrics.averageConfidence * 100).toFixed(0)}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Avg Confidence
-                </Typography>
-                <AssessmentIcon color="info" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box textAlign="center">
-                <Typography variant="h4" color="success.main">
-                  {state.metrics.detectionRate * 100}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Detection Rate
-                </Typography>
-                <CheckIcon color="success" />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-error">
+              {state.metrics.totalEvents}
+            </h3>
+            <p className="text-sm text-base-content/70">Total Anomalies</p>
+            <ExclamationTriangleIcon className="w-6 h-6 text-error mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-warning">
+              {(state.metrics.bySeverity.high || 0) + (state.metrics.bySeverity.critical || 0)}
+            </h3>
+            <p className="text-sm text-base-content/70">High Priority</p>
+            <ExclamationCircleIcon className="w-6 h-6 text-warning mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-info">
+              {(state.metrics.averageConfidence * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Avg Confidence</p>
+            <ChartBarIcon className="w-6 h-6 text-info mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-success">
+              {(state.metrics.detectionRate * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Detection Rate</p>
+            <CheckCircleIcon className="w-6 h-6 text-success mx-auto mt-2" />
+          </div>
+        </div>
+      </div>
 
       {/* Active Algorithms */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">
             Active Algorithms ({state.activeAlgorithms.length}/{state.algorithms.length})
-          </Typography>
-          <Grid container spacing={2}>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {state.algorithms.map(algorithm => (
-              <Grid item xs={12} sm={6} md={3} key={algorithm.id}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                      <Typography variant="subtitle2" fontWeight="medium">
-                        {algorithm.name}
-                      </Typography>
-                      <Chip
-                        label={algorithm.type}
-                        size="small"
-                        color={algorithm.isActive ? 'success' : 'default'}
-                        variant={algorithm.isActive ? 'filled' : 'outlined'}
-                      />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                      {algorithm.description}
-                    </Typography>
-                    <Box mb={2}>
-                      <Typography variant="body2" fontWeight="medium" gutterBottom>
-                        Performance:
-                      </Typography>
-                      <Grid container spacing={1}>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            Accuracy: {(algorithm.accuracy * 100).toFixed(0)}%
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            F1-Score: {(algorithm.f1Score * 100).toFixed(0)}%
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            Speed: {algorithm.predictionTime}ms
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
-                            Memory: {algorithm.memoryUsage}MB
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Chip
-                        label={algorithm.isActive ? 'Active' : 'Inactive'}
-                        size="small"
-                        color={algorithm.isActive ? 'success' : 'default'}
-                        onClick={() => toggleAlgorithm(algorithm.id)}
-                      />
-                      <IconButton size="small">
-                        <SettingsIcon />
-                      </IconButton>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <div key={algorithm.id} className="card bg-base-200 border border-base-300">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-sm">{algorithm.name}</h4>
+                    <div className={`badge badge-sm ${algorithm.isActive ? 'badge-success' : 'badge-ghost'}`}>
+                      {algorithm.type}
+                    </div>
+                  </div>
+                  <p className="text-xs text-base-content/70 mb-3 line-clamp-2">
+                    {algorithm.description}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1 text-xs mb-3">
+                    <span className="text-base-content/60">Acc: {(algorithm.accuracy * 100).toFixed(0)}%</span>
+                    <span className="text-base-content/60">F1: {(algorithm.f1Score * 100).toFixed(0)}%</span>
+                    <span className="text-base-content/60">Spd: {algorithm.predictionTime}ms</span>
+                    <span className="text-base-content/60">Mem: {algorithm.memoryUsage}MB</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-auto">
+                    <div
+                      className={`badge badge-sm cursor-pointer ${algorithm.isActive ? 'badge-success' : 'badge-ghost'}`}
+                      onClick={() => toggleAlgorithm(algorithm.id)}
+                    >
+                      {algorithm.isActive ? 'Active' : 'Inactive'}
+                    </div>
+                    <button className="btn btn-ghost btn-xs btn-square">
+                      <Cog6ToothIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </Grid>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
 
       {/* Sensitivity Control */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Detection Sensitivity
-          </Typography>
-          <Box mb={2}>
-            <Typography variant="body2" gutterBottom>
-              Sensitivity Level: {config.sensitivity.toFixed(2)}
-            </Typography>
-            <Slider
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Detection Sensitivity</h3>
+          <div className="mb-6">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm">Sensitivity Level</span>
+              <span className="text-sm font-bold">{config.sensitivity.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.1"
               value={config.sensitivity}
               onChange={updateSensitivity}
-              min={0.1}
-              max={1.0}
-              step={0.1}
-              marks={[
-                { value: 0.1, label: 'Low' },
-                { value: 0.5, label: 'Medium' },
-                { value: 1.0, label: 'High' },
-              ]}
-              valueLabelDisplay="auto"
+              className="range range-primary range-sm"
             />
-          </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={config.anomalyDetection}
-                    onChange={() => toggleFeature('anomalyDetection')}
-                  />
-                }
-                label="Anomaly Detection"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={config.learning.enabled}
-                    onChange={() => toggleFeature('learning')}
-                  />
-                }
-                label="ML Learning"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={config.autoResponse.enabled}
-                    onChange={() => toggleFeature('autoResponse')}
-                  />
-                }
-                label="Auto Response"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={config.notifications.enabled}
-                    onChange={() => toggleFeature('notifications')}
-                  />
-                }
-                label="Notifications"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+            <div className="w-full flex justify-between text-xs px-2 mt-2">
+              <span>Low</span>
+              <span>Medium</span>
+              <span>High</span>
+            </div>
+          </div>
 
-      {/* Recent Anomalies */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Recent Anomalies ({state.events.length})
-          </Typography>
-          {state.events.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No anomalies detected in the current time window.
-            </Alert>
-          ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Time</TableCell>
-                    <TableCell>Metric</TableCell>
-                    <TableCell align="right">Value</TableCell>
-                    <TableCell align="right">Expected</TableCell>
-                    <TableCell align="center">Severity</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Algorithm</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="center">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {state.events.slice(0, 10).map(event => (
-                    <TableRow key={event.id} hover>
-                      <TableCell>{event.timestamp.toLocaleString()}</TableCell>
-                      <TableCell>{event.metric}</TableCell>
-                      <TableCell align="right">{event.value.toFixed(2)}</TableCell>
-                      <TableCell align="right">{event.expected.toFixed(2)}</TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={event.severity}
-                          size="small"
-                          color={event.severity === 'critical' ? 'error' : 
-                                 event.severity === 'high' ? 'warning' : 
-                                 event.severity === 'medium' ? 'info' : 'success'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.type}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.algorithm}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={event.status}
-                          size="small"
-                          color={event.status === 'new' ? 'primary' : 
-                                 event.status === 'acknowledged' ? 'warning' : 
-                                 event.status === 'false-positive' ? 'success' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box display="flex" gap={1}>
-                          {event.status === 'new' && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => acknowledgeAnomaly(event.id)}
-                            >
-                              Ack
-                            </Button>
-                          )}
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            onClick={() => markAsFalsePositive(event.id)}
-                          >
-                              FP
-                          </Button>
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setSelectedEvent(event);
-                              setShowDetailsDialog(true);
-                            }}
-                          >
-                            <ViewIcon />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Anomaly Details Dialog */}
-      <Dialog
-        open={showDetailsDialog}
-        onClose={() => setShowDetailsDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        {selectedEvent && (
-          <>
-            <DialogTitle>
-              Anomaly Details - {selectedEvent.metric}
-            </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" fontWeight="medium" gutterBottom>
-                    Basic Information
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Timestamp: {selectedEvent.timestamp.toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Value: {selectedEvent.value.toFixed(2)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Expected: {selectedEvent.expected.toFixed(2)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Deviation: {(selectedEvent.deviation * 100).toFixed(1)}%
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" fontWeight="medium" gutterBottom>
-                    Detection Details
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Algorithm: {selectedEvent.algorithm}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Confidence: {(selectedEvent.confidence * 100).toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Type: {selectedEvent.type}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Severity: {selectedEvent.severity}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="body2" fontWeight="medium" gutterBottom>
-                    Explanation
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedEvent.explanation}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setShowDetailsDialog(false)}>
-                Close
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.anomalyDetection}
+                onChange={() => toggleFeature('anomalyDetection')}
+              />
+              <span className="label-text">Anomaly Detection</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.learning.enabled}
+                onChange={() => toggleFeature('learning')}
+              />
+              <span className="label-text">ML Learning</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.autoResponse.enabled}
+                onChange={() => toggleFeature('autoResponse')}
+              />
+              <span className="label-text">Auto Response</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.notifications.enabled}
+                onChange={() => toggleFeature('notifications')}
+              />
+              <span className="label-text">Notifications</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </AnimatedBox>
   );
 };

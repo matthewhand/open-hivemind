@@ -120,7 +120,7 @@ const Pagination: React.FC<PaginationProps> = ({
             <button key={index} className="join-item btn btn-disabled">
               {page}
             </button>
-          )
+          ),
         )}
 
       {style === 'compact' && (

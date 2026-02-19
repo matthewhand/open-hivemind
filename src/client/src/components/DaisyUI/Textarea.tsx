@@ -1,4 +1,5 @@
-import React, { forwardRef, TextareaHTMLAttributes } from 'react';
+import type { TextareaHTMLAttributes } from 'react';
+import React, { forwardRef } from 'react';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   variant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error' | 'ghost';
@@ -25,7 +26,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         success: 'textarea-success',
         warning: 'textarea-warning',
         error: 'textarea-error',
-        ghost: 'textarea-ghost'
+        ghost: 'textarea-ghost',
       };
       return variants[variant] || variants.primary;
     };
@@ -35,7 +36,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         xs: 'textarea-xs',
         sm: 'textarea-sm',
         md: 'textarea-md',
-        lg: 'textarea-lg'
+        lg: 'textarea-lg',
       };
       return sizes[size] || sizes.md;
     };
@@ -46,7 +47,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         none: 'resize-none',
         vertical: 'resize-y',
         horizontal: 'resize-x',
-        both: 'resize'
+        both: 'resize',
       };
       return resizes[resize] || resizes.vertical;
     };
@@ -58,7 +59,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {...props}
       />
     );
-  }
+  },
 );
 
 Textarea.displayName = 'Textarea';

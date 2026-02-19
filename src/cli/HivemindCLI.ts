@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { promises as fs } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-
-const debug = Debug('app:HivemindCLI');
 
 export class HivemindCLI {
   private program: Command;
@@ -262,27 +259,18 @@ export class HivemindCLI {
   }
 
   // Implementation methods
-  private async addBot(options: any): Promise<void> {
-    console.log(chalk.blue('Adding new bot...'));
-    
-    if (!options.name || !options.provider || !options.llm) {
-      console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
-      return;
-    }
+	  private async addBot(options: any): Promise<void> {
+	    console.log(chalk.blue('Adding new bot...'));
+	    
+	    if (!options.name || !options.provider || !options.llm) {
+	      console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
+	      return;
+	    }
 
-    const botConfig = {
-      name: options.name,
-      messageProvider: options.provider,
-      llmProvider: options.llm,
-      token: options.token,
-      enabled: true,
-      createdAt: new Date().toISOString()
-    };
-
-    // Here you would save to configuration
-    console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
-    console.log(`  Provider: ${options.provider} → ${options.llm}`);
-  }
+	    // Here you would save to configuration
+	    console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
+	    console.log(`  Provider: ${options.provider} → ${options.llm}`);
+	  }
 
   private async addBotInteractive(): Promise<void> {
     console.log(chalk.blue('Interactive Bot Setup'));
@@ -292,26 +280,26 @@ export class HivemindCLI {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required'
+        validate: (input: string) => input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
         name: 'provider',
         message: 'Message provider:',
-        choices: ['discord', 'slack', 'telegram', 'mattermost']
+        choices: ['discord', 'slack', 'telegram', 'mattermost'],
       },
       {
         type: 'list',
         name: 'llm',
         message: 'LLM provider:',
-        choices: ['openai', 'flowise', 'openwebui']
+        choices: ['openai', 'flowise', 'openwebui'],
       },
       {
         type: 'password',
         name: 'token',
         message: 'Bot token:',
-        mask: '*'
-      }
+        mask: '*',
+      },
     ]);
 
     await this.addBot(answers);
@@ -354,8 +342,8 @@ export class HivemindCLI {
           type: 'confirm',
           name: 'confirm',
           message: `Are you sure you want to remove bot '${name}'?`,
-          default: false
-        }
+          default: false,
+        },
       ]);
       
       if (!confirm) {
@@ -459,8 +447,8 @@ export class HivemindCLI {
           type: 'confirm',
           name: 'confirm',
           message: `Delete messages older than ${days} days?`,
-          default: false
-        }
+          default: false,
+        },
       ]);
       
       if (!confirm) {
@@ -537,7 +525,7 @@ export class HivemindCLI {
     const config = {
       bots: this.configManager.getAllBots(),
       exportedAt: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
     
     await fs.writeFile(path, JSON.stringify(config, null, 2));
@@ -555,8 +543,8 @@ export class HivemindCLI {
             type: 'confirm',
             name: 'confirm',
             message: `Import ${config.bots?.length || 0} bot(s) from ${path}?`,
-            default: false
-          }
+            default: false,
+          },
         ]);
         
         if (!confirm) {

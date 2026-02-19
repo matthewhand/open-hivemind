@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * @fileoverview System Information Component
  *
@@ -12,30 +13,18 @@
 import React, { useState } from 'react';
 import {
   Card,
-  CardContent,
-  Typography,
-  Grid,
-  Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  TextField,
-  Alert,
-  CircularProgress,
-  Paper,
-  IconButton,
+  Loading,
   Tooltip,
-} from '@mui/material';
+  ConfirmModal,
+} from './DaisyUI';
 import {
-  Download as DownloadIcon,
-  Refresh as RefreshIcon,
-  PowerSettingsNew as ShutdownIcon,
-  PlayArrow as RestartIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  PowerIcon,
+  PlayIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 
 const SystemInfo: React.FC = () => {
@@ -74,13 +63,23 @@ const SystemInfo: React.FC = () => {
   const handleSystemAction = async (action: 'restart' | 'shutdown') => {
     setIsLoading(true);
     try {
-      // TODO: Implement API call for system action
-      console.log(`Performing system ${action}...`);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated`]);
+      // Call the system action API
+      const response = await fetch(`/api/system/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `Failed to ${action} system`);
+      }
+
+      const data = await response.json();
+      console.log(`System ${action} initiated:`, data);
+      setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
       console.error(`Failed to ${action} system:`, error);
+      setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);
       setConfirmDialog({ open: false, action: null, message: '' });
@@ -116,170 +115,133 @@ const SystemInfo: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">
         System Information
-      </Typography>
+      </h1>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* System Status Card */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={1}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                System Status
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Last Updated: {new Date(lastUpdated).toLocaleString()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Auto Refresh: {isAutoRefresh ? 'Enabled' : 'Disabled'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Refresh Interval: {(refreshInterval / 1000).toFixed(1)}s
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Environment: {systemStatus.environment}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Uptime: {uptimeDisplay}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <Card.Body>
+            <Card.Title>System Status</Card.Title>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              <div>
+                <p className="text-sm text-base-content/70">Last Updated</p>
+                <p className="font-medium">{new Date(lastUpdated).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Auto Refresh</p>
+                <p className="font-medium">{isAutoRefresh ? 'Enabled' : 'Disabled'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Refresh Interval</p>
+                <p className="font-medium">{(refreshInterval / 1000).toFixed(1)}s</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Environment</p>
+                <p className="font-medium">{systemStatus.environment}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Uptime</p>
+                <p className="font-medium">{uptimeDisplay}</p>
+              </div>
+            </div>
+          </Card.Body>
+        </Card>
 
         {/* System Controls Card */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={1}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                System Controls
-              </Typography>
-              <Box display="flex" gap={2} flexWrap="wrap">
-                <Tooltip title="Restart System">
-                  <Button
-                    variant="outlined"
-                    color="warning"
-                    startIcon={<RestartIcon />}
-                    onClick={() => openConfirmDialog('restart')}
-                    disabled={isLoading}
-                  >
-                    Restart
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Shutdown System">
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<ShutdownIcon />}
-                    onClick={() => openConfirmDialog('shutdown')}
-                    disabled={isLoading}
-                  >
-                    Shutdown
-                  </Button>
-                </Tooltip>
-              </Box>
-              {isLoading && (
-                <Box display="flex" alignItems="center" gap={1} mt={2}>
-                  <CircularProgress size={20} />
-                  <Typography variant="body2" color="text.secondary">
-                    Processing system action...
-                  </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+        <Card>
+          <Card.Body>
+            <Card.Title>System Controls</Card.Title>
+            <div className="flex gap-4 flex-wrap mt-2">
+              <Tooltip content="Restart System">
+                <Button
+                  variant="warning"
+                  startIcon={<ArrowPathIcon className="w-5 h-5" />}
+                  onClick={() => openConfirmDialog('restart')}
+                  disabled={isLoading}
+                >
+                  Restart
+                </Button>
+              </Tooltip>
+              <Tooltip content="Shutdown System">
+                <Button
+                  variant="error"
+                  startIcon={<PowerIcon className="w-5 h-5" />}
+                  onClick={() => openConfirmDialog('shutdown')}
+                  disabled={isLoading}
+                >
+                  Shutdown
+                </Button>
+              </Tooltip>
+            </div>
+            {isLoading && (
+              <div className="flex items-center gap-2 mt-4 text-base-content/70">
+                <span className="loading loading-spinner loading-sm"></span>
+                <span className="text-sm">Processing system action...</span>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
         {/* System Logs Card */}
-        <Grid item xs={12}>
-          <Card elevation={1}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
-                  System Logs
-                </Typography>
-                <Box display="flex" gap={1}>
-                  <Tooltip title="Download Logs">
-                    <IconButton onClick={handleDownloadLogs} size="small">
-                      <DownloadIcon />
-                    </IconButton>
+        <div className="col-span-1 md:col-span-2">
+          <Card>
+            <Card.Body>
+              <div className="flex justify-between items-center mb-4">
+                <Card.Title>System Logs</Card.Title>
+                <div className="flex gap-2">
+                  <Tooltip content="Download Logs">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      shape="circle"
+                      onClick={handleDownloadLogs}
+                    >
+                      <ArrowDownTrayIcon className="w-5 h-5" />
+                    </Button>
                   </Tooltip>
-                  <Tooltip title="Clear Logs">
-                    <IconButton onClick={handleClearLogs} size="small">
-                      <ClearIcon />
-                    </IconButton>
+                  <Tooltip content="Clear Logs">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      shape="circle"
+                      onClick={handleClearLogs}
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </Button>
                   </Tooltip>
-                </Box>
-              </Box>
-              <Paper
-                sx={{
-                  p: 2,
-                  bgcolor: 'grey.900',
-                  color: 'grey.100',
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem',
-                  maxHeight: 400,
-                  overflow: 'auto',
-                }}
-              >
+                </div>
+              </div>
+              <div className="bg-base-300 p-4 rounded-lg font-mono text-sm h-96 overflow-auto text-base-content">
                 {logs.length === 0 ? (
-                  <Typography color="text.secondary">No logs available</Typography>
+                  <span className="text-base-content/50">No logs available</span>
                 ) : (
                   logs.map((log, index) => (
-                    <div key={index} style={{ marginBottom: 4 }}>
+                    <div key={index} className="mb-1 whitespace-pre-wrap">
                       {log}
                     </div>
                   ))
                 )}
-              </Paper>
-            </CardContent>
+              </div>
+            </Card.Body>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmDialog.open}
+      <ConfirmModal
+        isOpen={confirmDialog.open}
         onClose={closeConfirmDialog}
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-description"
-      >
-        <DialogTitle id="confirm-dialog-title">
-          Confirm System Action
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="confirm-dialog-description">
-            {confirmDialog.message}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeConfirmDialog} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => confirmDialog.action && handleSystemAction(confirmDialog.action)}
-            color={confirmDialog.action === 'shutdown' ? 'error' : 'warning'}
-            variant="contained"
-            disabled={isLoading}
-          >
-            {confirmDialog.action === 'shutdown' ? 'Shutdown' : 'Restart'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        onConfirm={() => confirmDialog.action && handleSystemAction(confirmDialog.action)}
+        title="Confirm System Action"
+        message={confirmDialog.message}
+        confirmText={confirmDialog.action === 'shutdown' ? 'Shutdown' : 'Restart'}
+        confirmVariant={confirmDialog.action === 'shutdown' ? 'error' : 'warning'}
+        loading={isLoading}
+      />
+    </div>
   );
 };
 

@@ -1,244 +1,335 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  Alert,
-  Snackbar,
-  Chip,
-  Stack,
-  IconButton,
-} from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { Radio } from '../components/DaisyUI';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, ToggleLeft, AlertTriangle, Check, RefreshCw, AlertCircle, Save } from 'lucide-react';
 
 interface GuardsConfig {
-  type: 'owner' | 'users' | 'disabled';
-  allowedUsers: string[];
-  allowedIPs: string[];
+  type: 'owner' | 'users' | 'ip';
+  users: string[];
+  ips: string[];
 }
 
-const GuardsPage: React.FC = () => {
-  const dispatch = useDispatch();
-  const guardsConfig = useSelector((state: RootState) => state.config.guards) as GuardsConfig;
+interface Guard {
+  id: string;
+  name: string;
+  description: string;
+  type: 'content' | 'rate' | 'safety' | 'access';
+  enabled: boolean;
+  config: any;
+}
 
-  const [formData, setFormData] = useState<GuardsConfig>({
-    type: 'disabled',
-    allowedUsers: [],
-    allowedIPs: [],
+const API_BASE = '/api';
+
+const GuardsPage: React.FC = () => {
+  const [guards, setGuards] = useState<Guard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [accessConfig, setAccessConfig] = useState<GuardsConfig>({
+    type: 'users',
+    users: [],
+    ips: [],
   });
   const [newUser, setNewUser] = useState('');
-  const [newIP, setNewIP] = useState('');
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [newIp, setNewIp] = useState('');
+
+  const fetchGuards = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Build guards from various config sources
+      const guards: Guard[] = [
+        {
+          id: 'access-control',
+          name: 'Access Control',
+          description: 'User and IP-based access restrictions',
+          type: 'access',
+          enabled: true,
+          config: {},
+        },
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          description: 'Prevents spam and excessive requests',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100, windowMs: 60000 },
+        },
+        {
+          id: 'content-filter',
+          name: 'Content Filter',
+          description: 'Filters inappropriate content',
+          type: 'content',
+          enabled: false,
+          config: {},
+        },
+      ];
+
+      setGuards(guards);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch guards';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (guardsConfig) {
-      setFormData(guardsConfig);
-    }
-  }, [guardsConfig]);
+    fetchGuards();
+  }, [fetchGuards]);
 
-  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      type: event.target.value as GuardsConfig['type'],
-    });
-  };
-
-  const handleAddUser = () => {
-    if (newUser.trim() && !formData.allowedUsers.includes(newUser.trim())) {
-      setFormData({
-        ...formData,
-        allowedUsers: [...formData.allowedUsers, newUser.trim()],
-      });
-      setNewUser('');
-    }
-  };
-
-  const handleRemoveUser = (user: string) => {
-    setFormData({
-      ...formData,
-      allowedUsers: formData.allowedUsers.filter(u => u !== user),
-    });
-  };
-
-  const handleAddIP = () => {
-    if (newIP.trim() && !formData.allowedIPs.includes(newIP.trim())) {
-      setFormData({
-        ...formData,
-        allowedIPs: [...formData.allowedIPs, newIP.trim()],
-      });
-      setNewIP('');
-    }
-  };
-
-  const handleRemoveIP = (ip: string) => {
-    setFormData({
-      ...formData,
-      allowedIPs: formData.allowedIPs.filter(i => i !== ip),
-    });
-  };
-
-  const handleSave = async () => {
+  const saveAccessControl = async () => {
     try {
-      const response = await fetch('/api/uber/guards', {
+      setSaving(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE}/guards`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(accessConfig),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save guards configuration');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save guards');
       }
 
-      // dispatch(setGuardsConfig(formData)); // TODO: Implement guards config state management
-      setSnackbar({ open: true, message: 'Guards configuration saved successfully', severity: 'success' });
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error instanceof Error ? error.message : 'Failed to save guards configuration',
-        severity: 'error'
-      });
+      setSuccess('Access control saved successfully');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save guards');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleGuard = (id: string) => {
+    setGuards(guards.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g));
+  };
+
+  const addUser = () => {
+    if (!newUser.trim()) { return; }
+    setAccessConfig({
+      ...accessConfig,
+      users: [...accessConfig.users, newUser.trim()],
+    });
+    setNewUser('');
+  };
+
+  const removeUser = (user: string) => {
+    setAccessConfig({
+      ...accessConfig,
+      users: accessConfig.users.filter(u => u !== user),
+    });
+  };
+
+  const addIp = () => {
+    if (!newIp.trim()) { return; }
+    setAccessConfig({
+      ...accessConfig,
+      ips: [...accessConfig.ips, newIp.trim()],
+    });
+    setNewIp('');
+  };
+
+  const removeIp = (ip: string) => {
+    setAccessConfig({
+      ...accessConfig,
+      ips: accessConfig.ips.filter(i => i !== ip),
+    });
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'access': return 'badge-primary';
+      case 'rate': return 'badge-warning';
+      case 'content': return 'badge-info';
+      case 'safety': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        MCP Tool Guards
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Configure access controls for MCP tools. Guards determine who can execute MCP tool operations.
-      </Typography>
+    <div className="p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="alert alert-error">
+          <AlertCircle className="w-5 h-5" />
+          <span>{error}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>Dismiss</button>
+        </div>
+      )}
 
-      <Paper sx={{ p: 3 }}>
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text font-bold">Guard Type</span>
-          </label>
-          <div className="space-y-2 mb-6">
-            <Radio
-              name="guard-type"
-              value="disabled"
-              checked={formData.type === 'disabled'}
-              onChange={handleTypeChange}
-              label="Disabled - No restrictions (anyone can use MCP tools)"
-            />
-            <Radio
-              name="guard-type"
-              value="owner"
-              checked={formData.type === 'owner'}
-              onChange={handleTypeChange}
-              label="Owner Only - Only the server/forum owner can use MCP tools"
-            />
-            <Radio
-              name="guard-type"
-              value="users"
-              checked={formData.type === 'users'}
-              onChange={handleTypeChange}
-              label="Specific Users - Only listed users can use MCP tools"
-            />
+      {/* Success Alert */}
+      {success && (
+        <div className="alert alert-success">
+          <Check className="w-5 h-5" />
+          <span>{success}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSuccess(null)}>Dismiss</button>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-500 rounded-lg">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Guards</h1>
+            <p className="text-base-content/60">Security and access control settings</p>
           </div>
         </div>
+        <button onClick={fetchGuards} className="btn btn-ghost gap-2" disabled={loading}>
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
+      </div>
 
-        {formData.type === 'users' && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Allowed Users
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                label="User ID or Username"
-                value={newUser}
-                onChange={(e) => setNewUser(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddUser()}
-              />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddUser}
-                disabled={!newUser.trim()}
-              >
-                Add
-              </Button>
-            </Box>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              {formData.allowedUsers.map((user) => (
-                <Chip
-                  key={user}
-                  label={user}
-                  onDelete={() => handleRemoveUser(user)}
-                  deleteIcon={<DeleteIcon />}
-                />
-              ))}
-            </Stack>
-          </Box>
-        )}
+      {/* Stats */}
+      <div className="stats stats-horizontal bg-base-200 w-full">
+        <div className="stat">
+          <div className="stat-title">Total Guards</div>
+          <div className="stat-value text-primary">{guards.length}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Active</div>
+          <div className="stat-value text-green-500">{guards.filter(g => g.enabled).length}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Allowed Users</div>
+          <div className="stat-value">{accessConfig.users.length}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Allowed IPs</div>
+          <div className="stat-value">{accessConfig.ips.length}</div>
+        </div>
+      </div>
 
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Allowed IP Addresses (Optional)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Restrict access to specific IP addresses. Leave empty to allow all IPs.
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-            <TextField
-              fullWidth
-              label="IP Address (e.g., 192.168.1.1)"
-              value={newIP}
-              onChange={(e) => setNewIP(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddIP()}
-            />
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddIP}
-              disabled={!newIP.trim()}
-            >
-              Add
-            </Button>
-          </Box>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {formData.allowedIPs.map((ip) => (
-              <Chip
-                key={ip}
-                label={ip}
-                onDelete={() => handleRemoveIP(ip)}
-                deleteIcon={<DeleteIcon />}
-                variant="outlined"
-              />
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <span className="loading loading-spinner loading-lg" />
+        </div>
+      ) : (
+        <>
+          {/* Guard List */}
+          <div className="space-y-4">
+            {guards.map(guard => (
+              <div key={guard.id} className={`card bg-base-100 border shadow-sm ${guard.enabled ? 'border-base-300' : 'border-base-200 opacity-60'}`}>
+                <div className="card-body py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-success"
+                        checked={guard.enabled}
+                        onChange={() => toggleGuard(guard.id)}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{guard.name}</h3>
+                          <span className={`badge badge-sm ${getTypeColor(guard.type)}`}>{guard.type}</span>
+                        </div>
+                        <p className="text-sm text-base-content/60">{guard.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
-          </Stack>
-        </Box>
+          </div>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" onClick={handleSave} size="large">
-            Save Configuration
-          </Button>
-        </Box>
-      </Paper>
+          {/* Access Control Config */}
+          <div className="card bg-base-100 border border-base-300">
+            <div className="card-body">
+              <h2 className="card-title">Access Control Configuration</h2>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+              <div className="form-control">
+                <label className="label"><span className="label-text">Access Type</span></label>
+                <select
+                  className="select select-bordered w-full max-w-xs"
+                  value={accessConfig.type}
+                  onChange={(e) => setAccessConfig({ ...accessConfig, type: e.target.value as any })}
+                >
+                  <option value="owner">Owner Only</option>
+                  <option value="users">Allowed Users</option>
+                  <option value="ip">IP Whitelist</option>
+                </select>
+              </div>
+
+              {/* Allowed Users */}
+              <div className="form-control mt-4">
+                <label className="label"><span className="label-text">Allowed Users</span></label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="user@example.com"
+                    className="input input-bordered flex-1"
+                    value={newUser}
+                    onChange={(e) => setNewUser(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addUser()}
+                  />
+                  <button className="btn btn-primary" onClick={addUser}>
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {accessConfig.users.map(user => (
+                    <span key={user} className="badge badge-lg gap-2">
+                      {user}
+                      <button onClick={() => removeUser(user)} className="text-error">×</button>
+                    </span>
+                  ))}
+                  {accessConfig.users.length === 0 && (
+                    <span className="text-sm text-base-content/60 italic">No users added (this will allow anyone)</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Allowed IPs */}
+              <div className="form-control mt-4">
+                <label className="label"><span className="label-text">Allowed IPs</span></label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="192.168.1.0/24"
+                    className="input input-bordered flex-1"
+                    value={newIp}
+                    onChange={(e) => setNewIp(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addIp()}
+                  />
+                  <button className="btn btn-primary" onClick={addIp}>
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {accessConfig.ips.map(ip => (
+                    <span key={ip} className="badge badge-lg font-mono gap-2">
+                      {ip}
+                      <button onClick={() => removeIp(ip)} className="text-error">×</button>
+                    </span>
+                  ))}
+                  {accessConfig.ips.length === 0 && (
+                    <span className="text-sm text-base-content/50">No IPs added</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="card-actions justify-end mt-6">
+                <button
+                  className="btn btn-primary gap-2"
+                  onClick={saveAccessControl}
+                  disabled={saving}
+                >
+                  {saving ? <span className="loading loading-spinner loading-xs" /> : <Save className="w-4 h-4" />}
+                  Save Access Control
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

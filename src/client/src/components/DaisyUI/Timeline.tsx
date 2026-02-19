@@ -4,7 +4,7 @@ export type EventType = 'success' | 'error' | 'warning' | 'info' | 'neutral';
 
 export interface TimelineEvent {
   id: string;
-  timestamp: Date;
+  timestamp: Date | string;
   title: string;
   description?: string;
   type: EventType;
@@ -24,47 +24,48 @@ export interface TimelineProps {
 
 const getEventIcon = (type: EventType): string => {
   switch (type) {
-    case 'success':
-      return '✓';
-    case 'error':
-      return '✗';
-    case 'warning':
-      return '⚠';
-    case 'info':
-      return 'ℹ';
-    case 'neutral':
-    default:
-      return '○';
+  case 'success':
+    return '✓';
+  case 'error':
+    return '✗';
+  case 'warning':
+    return '⚠';
+  case 'info':
+    return 'ℹ';
+  case 'neutral':
+  default:
+    return '○';
   }
 };
 
 const getEventColorClass = (type: EventType): string => {
   switch (type) {
-    case 'success':
-      return 'timeline-success';
-    case 'error':
-      return 'timeline-error';
-    case 'warning':
-      return 'timeline-warning';
-    case 'info':
-      return 'timeline-info';
-    case 'neutral':
-    default:
-      return 'timeline-neutral';
+  case 'success':
+    return 'timeline-success';
+  case 'error':
+    return 'timeline-error';
+  case 'warning':
+    return 'timeline-warning';
+  case 'info':
+    return 'timeline-info';
+  case 'neutral':
+  default:
+    return 'timeline-neutral';
   }
 };
 
 const formatTimestamp = (date: Date): string => {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) {return 'Just now';}
+  if (diffMins < 60) {return `${diffMins}m ago`;}
+  if (diffHours < 24) {return `${diffHours}h ago`;}
+  if (diffDays < 7) {return `${diffDays}d ago`;}
 
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
@@ -76,14 +77,14 @@ const Timeline: React.FC<TimelineProps> = ({
   showTimestamps = true,
   autoScroll = true,
   className = '',
-  onEventClick
+  onEventClick,
 }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
 
   // Sort events chronologically (newest first)
   const sortedEvents = [...events]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, maxEvents);
 
   // Auto-scroll to top when new events are added
@@ -131,8 +132,7 @@ const Timeline: React.FC<TimelineProps> = ({
             {/* Event content */}
             <div className="timeline-end">
               <div
-                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
-                  viewMode === 'compact' ? 'p-3' : 'p-4'
+                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'
                 }`}
                 onClick={() => handleEventClick(event)}
               >
@@ -145,7 +145,7 @@ const Timeline: React.FC<TimelineProps> = ({
                       </h3>
                       {showTimestamps && (
                         <div className="text-xs text-base-content/60 mt-1">
-                          {formatTimestamp(event.timestamp)}
+                          {formatTimestamp(new Date(event.timestamp))}
                         </div>
                       )}
                     </div>
@@ -246,7 +246,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         title: 'System Health Check',
         description: 'All systems operating normally',
         type: 'success',
-        metadata: { status: 'healthy' }
+        metadata: { status: 'healthy' },
       };
 
       setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)]); // Keep max 50 events

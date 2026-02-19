@@ -17,7 +17,7 @@ control or CI/CD automation.
    - Use the WebUI after startup to set overrides (saved to
      `config/user/bot-overrides.json`).
 4. Press **Start**. Pinokio launches `npm run dev`, serving the API and WebUI on
-   `http://localhost:5005`.
+   `http://localhost:3028`.
 5. When the menu shows **Open WebUI**, click it to open the dashboard and finish
    configuring personas, MCP servers, and platform tokens.
 
@@ -35,10 +35,10 @@ Pinokio keeps the service running in the background and remembers whether
 4. Install dependencies and start the dev server:
    ```bash
    npm install
-   npm run dev   # serves API + WebUI on 5005
+   npm run dev   # serves API + WebUI on 3028
    ```
    For a production build use `npm run build` followed by `npm start`.
-5. Open `http://localhost:5005` to confirm the WebUI is online.
+5. Open `http://localhost:3028` to confirm the WebUI is online.
 
 ## 3. Docker / Docker Compose
 1. Ensure Docker Desktop or the Docker CLI is available.

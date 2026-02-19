@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Slider, Chip, Tooltip } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -10,19 +9,6 @@ interface CSS3DNetworkProps {
   showLabels?: boolean;
   autoRotate?: boolean;
 }
-
-// interface BotNode {
-//   id: string;
-//   name: string;
-//   status: 'active' | 'connecting' | 'error';
-//   position: { x: number; y: number; z: number };
-//   connections: string[];
-//   metrics: {
-//     responseTime: number;
-//     memoryUsage: number;
-//     cpuUsage: number;
-//   };
-// }
 
 interface Connection {
   from: string;
@@ -48,55 +34,55 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
   // Generate 3D positions for nodes
   const generatePositions = () => {
     const positions = new Map<string, { x: number; y: number; z: number }>();
-    
+
     bots.forEach((bot, index) => {
       let position;
-      
+
       switch (viewMode) {
-        case 'sphere': {
-          const phi = Math.acos(-1 + (2 * Math.random()));
-          const theta = Math.random() * Math.PI * 2;
-          const radius = 150 + Math.random() * 50;
-          
-          position = {
-            x: radius * Math.sin(phi) * Math.cos(theta),
-            y: radius * Math.sin(phi) * Math.sin(theta),
-            z: radius * Math.cos(phi),
-          };
-          break;
-        }
-        case 'grid': {
-          const gridSize = Math.ceil(Math.sqrt(bots.length));
-          const row = Math.floor(index / gridSize);
-          const col = index % gridSize;
-          
-          position = {
-            x: (col - gridSize / 2) * 60,
-            y: (row - gridSize / 2) * 60,
-            z: 0,
-          };
-          break;
-        }
-        case 'tree': {
-          const level = Math.floor(Math.random() * 3);
-          const angle = (index / bots.length) * Math.PI * 2;
-          const radius = level * 80 + 60;
-          
-          position = {
-            x: Math.cos(angle) * radius,
-            y: -level * 80,
-            z: Math.sin(angle) * radius,
-          };
-          break;
-        }
-        default: {
-          position = { x: 0, y: 0, z: 0 };
-        }
+      case 'sphere': {
+        const phi = Math.acos(-1 + (2 * Math.random()));
+        const theta = Math.random() * Math.PI * 2;
+        const radius = 150 + Math.random() * 50;
+
+        position = {
+          x: radius * Math.sin(phi) * Math.cos(theta),
+          y: radius * Math.sin(phi) * Math.sin(theta),
+          z: radius * Math.cos(phi),
+        };
+        break;
       }
-      
+      case 'grid': {
+        const gridSize = Math.ceil(Math.sqrt(bots.length));
+        const row = Math.floor(index / gridSize);
+        const col = index % gridSize;
+
+        position = {
+          x: (col - gridSize / 2) * 60,
+          y: (row - gridSize / 2) * 60,
+          z: 0,
+        };
+        break;
+      }
+      case 'tree': {
+        const level = Math.floor(Math.random() * 3);
+        const angle = (index / bots.length) * Math.PI * 2;
+        const radius = level * 80 + 60;
+
+        position = {
+          x: Math.cos(angle) * radius,
+          y: -level * 80,
+          z: Math.sin(angle) * radius,
+        };
+        break;
+      }
+      default: {
+        position = { x: 0, y: 0, z: 0 };
+      }
+      }
+
       positions.set(bot.name, position);
     });
-    
+
     return positions;
   };
 
@@ -104,7 +90,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
 
   // Auto-rotation effect
   useEffect(() => {
-    if (!autoRotate) return;
+    if (!autoRotate) {return;}
 
     const interval = setInterval(() => {
       setRotation(prev => ({
@@ -122,7 +108,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging) {return;}
 
     const deltaX = event.clientX - lastMouse.x;
     const deltaY = event.clientY - lastMouse.y;
@@ -141,25 +127,25 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
 
   const getNodeColor = (status: string) => {
     switch (status) {
-      case 'active': return '#4caf50';
-      case 'connecting': return '#ff9800';
-      case 'error': return '#f44336';
-      default: return '#757575';
+    case 'active': return '#4caf50';
+    case 'connecting': return '#ff9800';
+    case 'error': return '#f44336';
+    default: return '#757575';
     }
   };
 
   const getNodeSize = (status: string) => {
     switch (status) {
-      case 'active': return 20 * nodeScale;
-      case 'connecting': return 15 * nodeScale;
-      case 'error': return 12 * nodeScale;
-      default: return 10 * nodeScale;
+    case 'active': return 20 * nodeScale;
+    case 'connecting': return 15 * nodeScale;
+    case 'error': return 12 * nodeScale;
+    default: return 10 * nodeScale;
     }
   };
 
   const getConnectionColor = (strength: number) => {
-    if (strength > 0.7) return '#4caf50';
-    if (strength > 0.4) return '#ff9800';
+    if (strength > 0.7) {return '#4caf50';}
+    if (strength > 0.4) {return '#ff9800';}
     return '#f44336';
   };
 
@@ -182,81 +168,65 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
       sx={{ width, height, position: 'relative', overflow: 'hidden' }}
     >
       {/* Controls Panel */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          zIndex: 100,
-          backgroundColor: 'background.paper',
-          borderRadius: 2,
-          p: 2,
-          boxShadow: 3,
-          maxWidth: 300,
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
+      <div className="absolute top-4 right-4 z-50 bg-base-100 rounded-box p-4 shadow-xl max-w-xs border border-base-200">
+        <h3 className="font-bold mb-2">
           Network Visualization
-        </Typography>
-        
+        </h3>
+
         {/* View Mode */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>View Mode:</Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <div className="mb-4">
+          <p className="text-xs mb-1">View Mode:</p>
+          <div className="flex gap-1 flex-wrap">
             {(['sphere', 'grid', 'tree'] as const).map((mode) => (
-              <Chip
+              <div
                 key={mode}
-                label={mode}
+                className={`badge cursor-pointer ${viewMode === mode ? 'badge-primary' : 'badge-ghost'}`}
                 onClick={() => setViewMode(mode)}
-                color={viewMode === mode ? 'primary' : 'default'}
-                size="small"
-              />
+              >
+                {mode}
+              </div>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Rotation Speed */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Rotation Speed:</Typography>
-          <Slider
+        <div className="mb-4">
+          <p className="text-xs mb-1">Rotation Speed: {rotationSpeed.toFixed(1)}x</p>
+          <input
+            type="range"
+            min="0"
+            max="10"
+            step="0.5"
             value={rotationSpeed * 10}
-            onChange={(_, value) => setRotationSpeed((value as number) / 10)}
-            min={0}
-            max={10}
-            step={0.5}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${(value / 10).toFixed(1)}x`}
+            onChange={(e) => setRotationSpeed(Number(e.target.value) / 10)}
+            className="range range-xs range-primary"
           />
-        </Box>
+        </div>
 
         {/* Node Scale */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Node Scale:</Typography>
-          <Slider
+        <div className="mb-4">
+          <p className="text-xs mb-1">Node Scale: {nodeScale.toFixed(1)}x</p>
+          <input
+            type="range"
+            min="5"
+            max="20"
+            step="0.5"
             value={nodeScale * 10}
-            onChange={(_, value) => setNodeScale((value as number) / 10)}
-            min={5}
-            max={20}
-            step={0.5}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${(value / 10).toFixed(1)}x`}
+            onChange={(e) => setNodeScale(Number(e.target.value) / 10)}
+            className="range range-xs range-primary"
           />
-        </Box>
+        </div>
 
         {/* Stats */}
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2">
-            Active Bots: {bots.filter(b => b.status === 'active').length}
-          </Typography>
-          <Typography variant="body2">
-            Total Bots: {bots.length}
-          </Typography>
-        </Box>
-      </Box>
+        <div className="mt-2 pt-2 border-t border-base-200 text-xs space-y-1">
+          <p>Active Bots: {bots.filter(b => b.status === 'active').length}</p>
+          <p>Total Bots: {bots.length}</p>
+        </div>
+      </div>
 
       {/* 3D Scene Container */}
-      <Box
-        sx={{
+      <div
+        style={{
           width: '100%',
           height: '100%',
           position: 'relative',
@@ -270,8 +240,8 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
         onMouseLeave={handleMouseUp}
       >
         {/* Starfield Background */}
-        <Box
-          sx={{
+        <div
+          style={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -287,18 +257,28 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
             backgroundRepeat: 'repeat',
             backgroundSize: '200px 100px',
             animation: 'twinkle 3s ease-in-out infinite alternate',
-            '@keyframes twinkle': {
-              '0%': { opacity: 0.8 },
-              '100%': { opacity: 1 },
-            },
             transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
             transformStyle: 'preserve-3d',
           }}
         />
+        <style>{`
+          @keyframes twinkle {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.9; }
+          }
+          @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px currentColor; }
+            50% { box-shadow: 0 0 40px currentColor; }
+          }
+        `}</style>
 
         {/* Connections */}
-        <Box
-          sx={{
+        <div
+          style={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -311,25 +291,25 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
           {connections.map((connection, index) => {
             const fromPos = positions.get(connection.from);
             const toPos = positions.get(connection.to);
-            
-            if (!fromPos || !toPos) return null;
+
+            if (!fromPos || !toPos) {return null;}
 
             const midX = (fromPos.x + toPos.x) / 2 + width / 2;
             const midY = (fromPos.y + toPos.y) / 2 + height / 2;
             const midZ = (fromPos.z + toPos.z) / 2;
-            
+
             const length = Math.sqrt(
               Math.pow(toPos.x - fromPos.x, 2) +
               Math.pow(toPos.y - fromPos.y, 2) +
-              Math.pow(toPos.z - fromPos.z, 2)
+              Math.pow(toPos.z - fromPos.z, 2),
             );
-            
+
             const angle = Math.atan2(toPos.y - fromPos.y, toPos.x - fromPos.x) * 180 / Math.PI;
 
             return (
-              <Box
+              <div
                 key={index}
-                sx={{
+                style={{
                   position: 'absolute',
                   left: midX,
                   top: midY,
@@ -340,19 +320,15 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
                   borderRadius: 1,
                   transform: `translate(-50%, -50%) rotate(${angle}deg) translateZ(${midZ}px)`,
                   animation: 'pulse 2s ease-in-out infinite',
-                  '@keyframes pulse': {
-                    '0%, 100%': { opacity: 0.6 },
-                    '50%': { opacity: 0.9 },
-                  },
                 }}
               />
             );
           })}
-        </Box>
+        </div>
 
         {/* Bot Nodes */}
-        <Box
-          sx={{
+        <div
+          style={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -364,62 +340,69 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
         >
           {bots.map((bot) => {
             const position = positions.get(bot.name);
-            if (!position) return null;
+            if (!position) {return null;}
 
             const x = position.x + width / 2;
             const y = position.y + height / 2;
             const z = position.z;
+            const color = getNodeColor(bot.status);
 
             return (
-              <Tooltip key={bot.name} title={`${bot.name} - ${bot.status}`}>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: x,
-                    top: y,
+              <div
+                key={bot.name}
+                className="tooltip"
+                data-tip={`${bot.name} - ${bot.status}`}
+                style={{
+                  position: 'absolute',
+                  left: x,
+                  top: y,
+                  transform: `translate(-50%, -50%) translateZ(${z}px)`,
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                <div
+                  style={{
                     width: getNodeSize(bot.status),
                     height: getNodeSize(bot.status),
-                    backgroundColor: getNodeColor(bot.status),
+                    backgroundColor: color,
                     borderRadius: '50%',
-                    transform: `translate(-50%, -50%) translateZ(${z}px)`,
-                    boxShadow: `0 0 20px ${getNodeColor(bot.status)}80`,
+                    boxShadow: `0 0 20px ${color}80`,
                     animation: bot.status === 'active' ? 'glow 2s ease-in-out infinite' : 'none',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: `translate(-50%, -50%) translateZ(${z + 10}px) scale(1.2)`,
-                    },
-                    '@keyframes glow': {
-                      '0%, 100%': { boxShadow: `0 0 20px ${getNodeColor(bot.status)}80` },
-                      '50%': { boxShadow: `0 0 40px ${getNodeColor(bot.status)}80` },
-                    },
+                    color: color, // for currentColor in keyframes
                   }}
-                >
-                  {showLabels && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: '50%',
-                        transform: 'translate(-50%, 8px)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: 1,
-                        fontSize: '12px',
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {bot.name}
-                    </Box>
-                  )}
-                </Box>
-              </Tooltip>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                />
+                {showLabels && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translate(-50%, 8px)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: 4,
+                      fontSize: '12px',
+                      whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {bot.name}
+                  </div>
+                )}
+              </div>
             );
           })}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </AnimatedBox>
   );
 };

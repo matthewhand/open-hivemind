@@ -1,4 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useEffect, useState } from 'react';
+import {
+  Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
+  HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
+  Users, Activity, Settings, Database, Wifi,
+} from 'lucide-react';
 
 interface StatItem {
   id: string;
@@ -6,7 +12,7 @@ interface StatItem {
   value: number | string;
   change?: number;
   changeType?: 'increase' | 'decrease' | 'neutral';
-  icon: string;
+  icon: string | React.ReactNode;
   description?: string;
   color?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'info';
 }
@@ -17,6 +23,36 @@ interface StatsCardsProps {
   className?: string;
 }
 
+// Icon mapping for string-based icons
+const iconMap: Record<string, React.ReactNode> = {
+  '🤖': <Bot className="w-8 h-8" />,
+  'bot': <Bot className="w-8 h-8" />,
+  '💬': <MessageCircle className="w-8 h-8" />,
+  'message': <MessageCircle className="w-8 h-8" />,
+  '✅': <CheckCircle className="w-8 h-8" />,
+  'check': <CheckCircle className="w-8 h-8" />,
+  '⏰': <Clock className="w-8 h-8" />,
+  'clock': <Clock className="w-8 h-8" />,
+  '🔧': <Server className="w-8 h-8" />,
+  'server': <Server className="w-8 h-8" />,
+  '⚡': <Zap className="w-8 h-8" />,
+  'zap': <Zap className="w-8 h-8" />,
+  '💾': <HardDrive className="w-8 h-8" />,
+  'storage': <HardDrive className="w-8 h-8" />,
+  '🚨': <AlertTriangle className="w-8 h-8" />,
+  'alert': <AlertTriangle className="w-8 h-8" />,
+  '👥': <Users className="w-8 h-8" />,
+  'users': <Users className="w-8 h-8" />,
+  '📊': <Activity className="w-8 h-8" />,
+  'activity': <Activity className="w-8 h-8" />,
+  '⚙️': <Settings className="w-8 h-8" />,
+  'settings': <Settings className="w-8 h-8" />,
+  '🗄️': <Database className="w-8 h-8" />,
+  'database': <Database className="w-8 h-8" />,
+  '📡': <Wifi className="w-8 h-8" />,
+  'wifi': <Wifi className="w-8 h-8" />,
+};
+
 const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
   const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({});
 
@@ -26,73 +62,105 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
       if (typeof stat.value === 'number') {
         const startValue = animatedValues[stat.id] || 0;
         const endValue = stat.value;
-        const duration = 1000; // 1 second
-        const steps = 60; // 60fps
+        const duration = 1000;
+        const steps = 60;
         const increment = (endValue - startValue) / steps;
-        
+
         let currentStep = 0;
         const timer = setInterval(() => {
           currentStep++;
           const currentValue = startValue + (increment * currentStep);
-          
+
           setAnimatedValues(prev => ({
             ...prev,
-            [stat.id]: currentStep >= steps ? endValue : currentValue
+            [stat.id]: currentStep >= steps ? endValue : currentValue,
           }));
-          
+
           if (currentStep >= steps) {
             clearInterval(timer);
           }
         }, duration / steps);
-        
+
         return () => clearInterval(timer);
       }
     });
   }, [stats]);
 
+  const getGradientBg = (color?: string) => {
+    switch (color) {
+    case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
+    case 'secondary': return 'bg-gradient-to-br from-secondary/20 via-secondary/10 to-transparent';
+    case 'accent': return 'bg-gradient-to-br from-accent/20 via-accent/10 to-transparent';
+    case 'success': return 'bg-gradient-to-br from-success/20 via-success/10 to-transparent';
+    case 'warning': return 'bg-gradient-to-br from-warning/20 via-warning/10 to-transparent';
+    case 'error': return 'bg-gradient-to-br from-error/20 via-error/10 to-transparent';
+    case 'info': return 'bg-gradient-to-br from-info/20 via-info/10 to-transparent';
+    default: return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
+    }
+  };
+
   const getStatColor = (color?: string) => {
     switch (color) {
-      case 'primary': return 'text-primary';
-      case 'secondary': return 'text-secondary';
-      case 'accent': return 'text-accent';
-      case 'success': return 'text-success';
-      case 'warning': return 'text-warning';
-      case 'error': return 'text-error';
-      case 'info': return 'text-info';
-      default: return 'text-primary';
+    case 'primary': return 'text-primary';
+    case 'secondary': return 'text-secondary';
+    case 'accent': return 'text-accent';
+    case 'success': return 'text-success';
+    case 'warning': return 'text-warning';
+    case 'error': return 'text-error';
+    case 'info': return 'text-info';
+    default: return 'text-primary';
+    }
+  };
+
+  const getIconBg = (color?: string) => {
+    switch (color) {
+    case 'primary': return 'bg-primary/20';
+    case 'secondary': return 'bg-secondary/20';
+    case 'accent': return 'bg-accent/20';
+    case 'success': return 'bg-success/20';
+    case 'warning': return 'bg-warning/20';
+    case 'error': return 'bg-error/20';
+    case 'info': return 'bg-info/20';
+    default: return 'bg-primary/20';
     }
   };
 
   const getChangeColor = (changeType?: string) => {
     switch (changeType) {
-      case 'increase': return 'text-success';
-      case 'decrease': return 'text-error';
-      case 'neutral': return 'text-base-content/60';
-      default: return 'text-base-content/60';
+    case 'increase': return 'text-success';
+    case 'decrease': return 'text-error';
+    case 'neutral': return 'text-base-content/60';
+    default: return 'text-base-content/60';
     }
   };
 
   const getChangeIcon = (changeType?: string) => {
     switch (changeType) {
-      case 'increase': return '📈';
-      case 'decrease': return '📉';
-      case 'neutral': return '➡️';
-      default: return '';
+    case 'increase': return <TrendingUp className="w-4 h-4" />;
+    case 'decrease': return <TrendingDown className="w-4 h-4" />;
+    case 'neutral': return <Minus className="w-4 h-4" />;
+    default: return null;
     }
   };
 
+  const resolveIcon = (icon: string | React.ReactNode): React.ReactNode => {
+    if (typeof icon === 'string') {
+      return iconMap[icon] || <Activity className="w-8 h-8" />;
+    }
+    return icon;
+  };
+
   const formatValue = (value: number | string, statId: string) => {
-    if (typeof value === 'string') return value;
-    
+    if (typeof value === 'string') {return value;}
+
     const animatedValue = animatedValues[statId] || value;
-    
-    // Format large numbers
+
     if (animatedValue >= 1000000) {
       return `${(animatedValue / 1000000).toFixed(1)}M`;
     } else if (animatedValue >= 1000) {
       return `${(animatedValue / 1000).toFixed(1)}K`;
     }
-    
+
     return Math.round(animatedValue).toLocaleString();
   };
 
@@ -100,19 +168,15 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="stats shadow">
-            <div className="stat">
-              <div className="stat-figure text-primary animate-pulse">
-                <div className="w-8 h-8 bg-base-300 rounded"></div>
-              </div>
-              <div className="stat-title animate-pulse">
-                <div className="h-4 bg-base-300 rounded w-24"></div>
-              </div>
-              <div className="stat-value animate-pulse">
-                <div className="h-8 bg-base-300 rounded w-16"></div>
-              </div>
-              <div className="stat-desc animate-pulse">
-                <div className="h-3 bg-base-300 rounded w-32"></div>
+          <div key={index} className="card bg-base-200/50 backdrop-blur-sm border border-base-300/50">
+            <div className="card-body p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-base-300 rounded w-24 animate-pulse" />
+                  <div className="h-8 bg-base-300 rounded w-16 animate-pulse" />
+                  <div className="h-3 bg-base-300 rounded w-32 animate-pulse" />
+                </div>
+                <div className="w-12 h-12 bg-base-300 rounded-xl animate-pulse" />
               </div>
             </div>
           </div>
@@ -123,37 +187,44 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
-      {stats.map((stat) => (
-        <div 
-          key={stat.id} 
-          className="stats shadow hover:shadow-lg transition-shadow duration-300 cursor-pointer hover:scale-105 transform transition-transform"
+      {stats.map((stat, index) => (
+        <div
+          key={stat.id}
+          className={`
+            card border border-base-300/50 backdrop-blur-sm
+            hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30
+            transition-all duration-300 cursor-pointer
+            hover:-translate-y-1 animate-fade-in
+            ${getGradientBg(stat.color)}
+          `}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
-          <div className="stat">
-            <div className={`stat-figure ${getStatColor(stat.color)}`}>
-              <span className="text-3xl">{stat.icon}</span>
-            </div>
-            
-            <div className="stat-title text-base-content/60">
-              {stat.title}
-            </div>
-            
-            <div className={`stat-value ${getStatColor(stat.color)} text-2xl lg:text-3xl`}>
-              {formatValue(stat.value, stat.id)}
-            </div>
-            
-            <div className="stat-desc flex items-center gap-1">
-              {stat.change !== undefined && (
-                <>
-                  <span className={getChangeColor(stat.changeType)}>
+          <div className="card-body p-4">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
+                  {stat.title}
+                </p>
+                <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
+                  {formatValue(stat.value, stat.id)}
+                </p>
+
+                {stat.change !== undefined && (
+                  <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>
                     {getChangeIcon(stat.changeType)}
-                    {Math.abs(stat.change)}%
-                  </span>
-                  <span className="text-base-content/40">vs last period</span>
-                </>
-              )}
-              {stat.description && !stat.change && (
-                <span className="text-base-content/60">{stat.description}</span>
-              )}
+                    <span className="font-medium">{Math.abs(stat.change)}%</span>
+                    <span className="text-base-content/40 text-xs">vs last period</span>
+                  </div>
+                )}
+
+                {stat.description && !stat.change && (
+                  <p className="text-sm text-base-content/60">{stat.description}</p>
+                )}
+              </div>
+
+              <div className={`p-3 rounded-xl ${getIconBg(stat.color)} ${getStatColor(stat.color)}`}>
+                {resolveIcon(stat.icon)}
+              </div>
             </div>
           </div>
         </div>
@@ -172,12 +243,10 @@ export const useSystemStats = () => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        
-        // In a real implementation, this would fetch from your API
-        // For now, we'll simulate with mock data
+
         const response = await fetch('/api/webui/system-status');
         const data = await response.json();
-        
+
         const mockStats: StatItem[] = [
           {
             id: 'total-bots',
@@ -185,7 +254,7 @@ export const useSystemStats = () => {
             value: data?.bots?.total || 12,
             change: 8.2,
             changeType: 'increase',
-            icon: '🤖',
+            icon: 'bot',
             color: 'primary',
           },
           {
@@ -194,7 +263,7 @@ export const useSystemStats = () => {
             value: data?.bots?.active || 8,
             change: 12.5,
             changeType: 'increase',
-            icon: '✅',
+            icon: 'check',
             color: 'success',
           },
           {
@@ -203,7 +272,7 @@ export const useSystemStats = () => {
             value: data?.database?.stats?.totalMessages || 2847,
             change: -2.1,
             changeType: 'decrease',
-            icon: '💬',
+            icon: 'message',
             color: 'info',
           },
           {
@@ -212,7 +281,7 @@ export const useSystemStats = () => {
             value: '99.9%',
             change: 0.1,
             changeType: 'neutral',
-            icon: '⏰',
+            icon: 'clock',
             color: 'warning',
           },
           {
@@ -220,7 +289,7 @@ export const useSystemStats = () => {
             title: 'MCP Servers',
             value: data?.mcp?.connected || 5,
             description: 'Connected',
-            icon: '🔧',
+            icon: 'server',
             color: 'secondary',
           },
           {
@@ -228,8 +297,8 @@ export const useSystemStats = () => {
             title: 'Avg Response',
             value: '245ms',
             change: -15.3,
-            changeType: 'increase', // Faster response time is good
-            icon: '⚡',
+            changeType: 'increase',
+            icon: 'zap',
             color: 'accent',
           },
           {
@@ -238,7 +307,7 @@ export const useSystemStats = () => {
             value: '68%',
             change: 3.2,
             changeType: 'increase',
-            icon: '💾',
+            icon: 'storage',
             color: 'warning',
           },
           {
@@ -246,12 +315,12 @@ export const useSystemStats = () => {
             title: 'Error Rate',
             value: '0.02%',
             change: -45.8,
-            changeType: 'increase', // Lower error rate is good
-            icon: '🚨',
+            changeType: 'increase',
+            icon: 'alert',
             color: 'error',
           },
         ];
-        
+
         setStats(mockStats);
         setError(null);
       } catch (err) {
@@ -263,8 +332,7 @@ export const useSystemStats = () => {
     };
 
     fetchStats();
-    
-    // Refresh stats every 30 seconds
+
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, []);

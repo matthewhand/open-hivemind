@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { requireAdmin, authenticate } from '../../auth/middleware';
 import { body, query, param } from 'express-validator';
 import { validationResult } from 'express-validator';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 
 const router = Router();
 const templateService = ConfigurationTemplateService.getInstance();
@@ -39,7 +40,7 @@ const validateTemplateCreation = [
     .isArray()
     .withMessage('Tags must be an array')
     .custom((value) => {
-      if (!Array.isArray(value)) return false;
+      if (!Array.isArray(value)) {return false;}
       return value.every(tag => typeof tag === 'string' && tag.length <= 50);
     })
     .withMessage('Tags must be an array of strings, each less than 50 characters'),
@@ -51,7 +52,7 @@ const validateTemplateCreation = [
       const validationResult = configValidator.validateBotConfig(value);
       return validationResult.isValid;
     })
-    .withMessage('Invalid template configuration')
+    .withMessage('Invalid template configuration'),
 ];
 
 /**
@@ -87,7 +88,7 @@ const validateTemplateUpdate = [
     .isArray()
     .withMessage('Tags must be an array')
     .custom((value) => {
-      if (!Array.isArray(value)) return false;
+      if (!Array.isArray(value)) {return false;}
       return value.every(tag => typeof tag === 'string' && tag.length <= 50);
     })
     .withMessage('Tags must be an array of strings, each less than 50 characters'),
@@ -100,7 +101,7 @@ const validateTemplateUpdate = [
       const validationResult = configValidator.validateBotConfig(value);
       return validationResult.isValid;
     })
-    .withMessage('Invalid template configuration')
+    .withMessage('Invalid template configuration'),
 ];
 
 /**
@@ -112,7 +113,7 @@ const validateTemplateId = [
     .notEmpty()
     .withMessage('Template ID is required')
     .matches(/^[a-zA-Z0-9-]+$/)
-    .withMessage('Invalid template ID format')
+    .withMessage('Invalid template ID format'),
 ];
 
 /**
@@ -156,7 +157,7 @@ const validateTemplateFilter = [
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be an integer between 1 and 100')
+    .withMessage('Limit must be an integer between 1 and 100'),
 ];
 
 /**
@@ -177,7 +178,7 @@ const validateTemplateDuplication = [
     .isLength({ min: 1, max: 100 })
     .withMessage('New template name must be between 1 and 100 characters')
     .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('Template name can only contain letters, numbers, underscores, and hyphens')
+    .withMessage('Template name can only contain letters, numbers, underscores, and hyphens'),
 ];
 
 /**
@@ -189,7 +190,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
   next();
@@ -207,7 +208,7 @@ router.get('/', authenticate, validateTemplateFilter, handleValidationErrors, as
       tags: req.query.tags as string[],
       search: req.query.search as string,
       isBuiltIn: req.query.isBuiltIn ? req.query.isBuiltIn === 'true' : undefined,
-      createdBy: req.query.createdBy as string
+      createdBy: req.query.createdBy as string,
     };
 
     // Filter by user if not admin
@@ -219,14 +220,14 @@ router.get('/', authenticate, validateTemplateFilter, handleValidationErrors, as
     res.json({
       success: true,
       data: templates,
-      count: templates.length
+      count: templates.length,
     });
   } catch (error) {
     console.error('Error getting templates:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get templates',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -242,14 +243,14 @@ router.get('/popular', authenticate, validateTemplateFilter, handleValidationErr
     res.json({
       success: true,
       data: templates,
-      count: templates.length
+      count: templates.length,
     });
   } catch (error) {
     console.error('Error getting popular templates:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get popular templates',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -265,14 +266,14 @@ router.get('/recent', authenticate, validateTemplateFilter, handleValidationErro
     res.json({
       success: true,
       data: templates,
-      count: templates.length
+      count: templates.length,
     });
   } catch (error) {
     console.error('Error getting recent templates:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get recent templates',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -288,14 +289,14 @@ router.get('/categories/:category', authenticate, validateTemplateFilter, handle
     res.json({
       success: true,
       data: templates,
-      count: templates.length
+      count: templates.length,
     });
   } catch (error) {
     console.error('Error getting templates by category:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get templates by category',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -312,20 +313,20 @@ router.get('/:templateId', authenticate, validateTemplateId, handleValidationErr
     if (!template) {
       return res.status(404).json({
         success: false,
-        message: 'Template not found'
+        message: 'Template not found',
       });
     }
 
     res.json({
       success: true,
-      data: template
+      data: template,
     });
   } catch (error) {
     console.error('Error getting template:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -341,20 +342,20 @@ router.post('/', requireAdmin, validateTemplateCreation, handleValidationErrors,
     
     const template = await templateService.createTemplate({
       ...req.body,
-      createdBy
+      createdBy,
     });
 
     res.status(201).json({
       success: true,
       message: 'Template created successfully',
-      data: template
+      data: template,
     });
   } catch (error) {
     console.error('Error creating template:', error);
     res.status(400).json({
       success: false,
       message: 'Failed to create template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -371,14 +372,14 @@ router.put('/:templateId', requireAdmin, validateTemplateId, validateTemplateUpd
     res.json({
       success: true,
       message: 'Template updated successfully',
-      data: template
+      data: template,
     });
   } catch (error) {
     console.error('Error updating template:', error);
     res.status(400).json({
       success: false,
       message: 'Failed to update template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -395,12 +396,12 @@ router.delete('/:templateId', requireAdmin, validateTemplateId, handleValidation
     if (success) {
       res.json({
         success: true,
-        message: 'Template deleted successfully'
+        message: 'Template deleted successfully',
       });
     } else {
       res.status(404).json({
         success: false,
-        message: 'Template not found'
+        message: 'Template not found',
       });
     }
   } catch (error) {
@@ -408,7 +409,7 @@ router.delete('/:templateId', requireAdmin, validateTemplateId, handleValidation
     res.status(400).json({
       success: false,
       message: 'Failed to delete template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -429,14 +430,14 @@ router.post('/:templateId/duplicate', requireAdmin, validateTemplateId, validate
     res.status(201).json({
       success: true,
       message: 'Template duplicated successfully',
-      data: template
+      data: template,
     });
   } catch (error) {
     console.error('Error duplicating template:', error);
     res.status(400).json({
       success: false,
       message: 'Failed to duplicate template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -458,7 +459,7 @@ router.get('/:templateId/export', authenticate, validateTemplateId, handleValida
     res.status(400).json({
       success: false,
       message: 'Failed to export template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -475,7 +476,7 @@ router.post('/import', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     if (!req.body || !req.body.templateData) {
       return res.status(400).json({
         success: false,
-        message: 'Template data is required'
+        message: 'Template data is required',
       });
     }
 
@@ -484,14 +485,14 @@ router.post('/import', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     res.status(201).json({
       success: true,
       message: 'Template imported successfully',
-      data: template
+      data: template,
     });
   } catch (error) {
     console.error('Error importing template:', error);
     res.status(400).json({
       success: false,
       message: 'Failed to import template',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });
@@ -507,14 +508,14 @@ router.post('/:templateId/use', authenticate, validateTemplateId, handleValidati
     
     res.json({
       success: true,
-      message: 'Template usage tracked successfully'
+      message: 'Template usage tracked successfully',
     });
   } catch (error) {
     console.error('Error tracking template usage:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to track template usage',
-      error: (error as any).message
+      error: (error as any).message,
     });
   }
 });

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import AdvancedMonitor from '../../monitoring/AdvancedMonitor';
-import { DiscordService } from '@integrations/discord/DiscordService';
+import { DiscordService } from '@hivemind/adapter-discord';
 import { SlackService } from '@integrations/slack/SlackService';
 import { createErrorResponse } from '../../utils/errorResponse';
 import Debug from 'debug';
@@ -20,14 +20,14 @@ router.get('/health', (req, res) => {
     // Get Discord and Slack service health
     let discordHealth = null;
     let slackHealth = null;
-    
+
     try {
       const discordService = DiscordService.getInstance();
       discordHealth = discordService.getHealthStatus();
     } catch (e) {
       debug('Could not get Discord health status:', e);
     }
-    
+
     try {
       const slackService = SlackService.getInstance();
       slackHealth = slackService.getMetrics();
@@ -44,12 +44,12 @@ router.get('/health', (req, res) => {
       services: {
         discord: discordHealth,
         slack: slackHealth,
-        core: healthStatus.services
-      }
+        core: healthStatus.services,
+      },
     };
 
     const statusCode = healthStatus.overall === 'healthy' ? 200 :
-                      healthStatus.overall === 'degraded' ? 200 : 503;
+      healthStatus.overall === 'degraded' ? 200 : 503;
 
     res.status(statusCode).json(response);
   } catch (error) {
@@ -79,12 +79,12 @@ router.get('/health/detailed', (req, res) => {
         arch: process.arch,
         nodeVersion: process.version,
         memory: process.memoryUsage(),
-        cpu: process.cpuUsage()
-      }
+        cpu: process.cpuUsage(),
+      },
     };
 
     const statusCode = healthStatus.overall === 'healthy' ? 200 :
-                      healthStatus.overall === 'degraded' ? 200 : 503;
+      healthStatus.overall === 'degraded' ? 200 : 503;
 
     res.status(statusCode).json(response);
   } catch (error) {
@@ -104,7 +104,7 @@ router.get('/health/metrics', (req, res) => {
     res.json({
       timestamp: new Date().toISOString(),
       system: systemMetrics,
-      application: applicationMetrics
+      application: applicationMetrics,
     });
   } catch (error) {
     debug('Metrics endpoint error:', error);
@@ -123,7 +123,7 @@ router.get('/health/alerts', (req, res) => {
       timestamp: new Date().toISOString(),
       alerts: alerts,
       total: alerts.length,
-      active: alerts.filter((a: any) => !a.resolved).length
+      active: alerts.filter((a: any) => !a.resolved).length,
     });
   } catch (error) {
     debug('Alerts endpoint error:', error);
@@ -142,13 +142,13 @@ router.post('/health/alerts/:alertId/resolve', (req, res) => {
       res.json({
         success: true,
         message: `Alert ${alertId} resolved`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } else {
       res.status(404).json({
         success: false,
         message: `Alert ${alertId} not found or already resolved`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   } catch (error) {
@@ -171,14 +171,14 @@ router.get('/health/ready', (req, res) => {
       res.status(200).json({
         status: 'ready',
         timestamp: new Date().toISOString(),
-        message: 'Service is ready to accept requests'
+        message: 'Service is ready to accept requests',
       });
     } else {
       res.status(503).json({
         status: 'not ready',
         timestamp: new Date().toISOString(),
         message: 'Service is not ready',
-        issues: healthStatus.alerts.filter((a: any) => !a.resolved).map((a: any) => a.message)
+        issues: healthStatus.alerts.filter((a: any) => !a.resolved).map((a: any) => a.message),
       });
     }
   } catch (error) {
@@ -196,7 +196,7 @@ router.get('/health/live', (req, res) => {
       status: 'alive',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memory: process.memoryUsage().heapUsed
+      memory: process.memoryUsage().heapUsed,
     });
   } catch (error) {
     debug('Liveness probe error:', error);
@@ -236,7 +236,7 @@ router.get('/health/metrics/prometheus', (req, res) => {
     prometheusOutput += '# HELP openhivemind_health_status Health status (0=healthy, 1=degraded, 2=unhealthy)\n';
     prometheusOutput += '# TYPE openhivemind_health_status gauge\n';
     const healthValue = metrics.health.overall === 'healthy' ? 0 :
-                       metrics.health.overall === 'degraded' ? 1 : 2;
+      metrics.health.overall === 'degraded' ? 1 : 2;
     prometheusOutput += `openhivemind_health_status ${healthValue}\n`;
 
     res.set('Content-Type', 'text/plain; charset=utf-8');
@@ -255,7 +255,7 @@ router.post('/health/cleanup', (req, res) => {
     res.json({
       success: true,
       message: 'Monitoring data cleanup completed',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     debug('Cleanup endpoint error:', error);

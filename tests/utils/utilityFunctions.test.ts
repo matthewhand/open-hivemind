@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { executeCommand, readFile } from '../../src/utils/utils';
 describe('Utility Functions Comprehensive Tests', () => {
   describe('Math Operations', () => {
     test('should handle basic arithmetic operations correctly', () => {
@@ -22,15 +25,19 @@ describe('Utility Functions Comprehensive Tests', () => {
   });
 
   describe('Boolean and Type Conversion', () => {
-    test('should convert various values to boolean correctly', () => {
-      expect(Boolean('x')).toBe(true);
-      expect(Boolean('')).toBe(false);
-      expect(Boolean(1)).toBe(true);
-      expect(Boolean(0)).toBe(false);
-      expect(Boolean([])).toBe(true);
-      expect(Boolean({})).toBe(true);
-      expect(Boolean(null)).toBe(false);
-      expect(Boolean(undefined)).toBe(false);
+    const booleanTestCases = [
+      { input: 'x', expected: true, description: 'non-empty string' },
+      { input: '', expected: false, description: 'empty string' },
+      { input: 1, expected: true, description: 'positive number' },
+      { input: 0, expected: false, description: 'zero' },
+      { input: [], expected: true, description: 'empty array' },
+      { input: {}, expected: true, description: 'empty object' },
+      { input: null, expected: false, description: 'null' },
+      { input: undefined, expected: false, description: 'undefined' },
+    ];
+
+    test.each(booleanTestCases)('should convert $description to boolean correctly', ({ input, expected }) => {
+      expect(Boolean(input)).toBe(expected);
     });
 
     test('should handle truthy and falsy values', () => {
@@ -90,11 +97,19 @@ describe('Utility Functions Comprehensive Tests', () => {
   });
 
   describe('Basic Assertions', () => {
-    test('should verify basic equality', () => {
-      expect(1).toBe(1);
-      expect(2).toBe(2);
-      expect('hello').toBe('hello');
-      expect(true).toBe(true);
+    test('should execute utility helpers for commands and file handling', async () => {
+      const commandOutput = await executeCommand('echo unit-test');
+      expect(commandOutput).toBe('unit-test\n');
+
+      const tempPath = path.join(__dirname, 'utility-sample.txt');
+      fs.writeFileSync(tempPath, 'utility file content');
+      const fileContent = await readFile(tempPath);
+      expect(fileContent).toBe('utility file content');
+      fs.unlinkSync(tempPath);
+    });
+
+    test('readFile should reject directories', async () => {
+      await expect(readFile(__dirname)).rejects.toThrow('Path is a directory');
     });
 
     test('should verify object equality', () => {

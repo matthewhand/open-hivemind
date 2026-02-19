@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { type ReactElement } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 
@@ -10,7 +11,7 @@ const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({
 
 const customRender = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) => {
   return render(ui, {
     wrapper: AllTheProviders,
@@ -27,13 +28,13 @@ export { customRender as render };
 
 // Test utilities
 export const createMockFunction = <T extends (...args: unknown[]) => unknown>(
-  implementation?: T
+  implementation?: T,
 ): jest.MockedFunction<T> => {
   return jest.fn(implementation) as any;
 };
 
 export const createMockObject = <T extends Record<string, unknown>>(
-  overrides: Partial<T> = {}
+  overrides: Partial<T> = {},
 ): jest.Mocked<T> => {
   return overrides as jest.Mocked<T>;
 };

@@ -1,18 +1,32 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      babel: {
+        presets: [
+          [
+            '@babel/preset-react',
+            { runtime: 'automatic', importSource: 'react', development: false },
+          ],
+        ],
+      },
+    }),
+    tailwindcss(),
+  ],
   server: {
-    port: 5173
+    port: 5173,
   },
   resolve: {
     alias: {
       '@src': './src',
       '@config': '../config',
-      '@webui': './webui/src'
-    }
+      '@webui': './webui/src',
+    },
   },
   build: {
     rollupOptions: {
@@ -23,13 +37,26 @@ export default defineConfig({
           redux: ['@reduxjs/toolkit', 'react-redux'],
           router: ['react-router-dom'],
           charts: ['recharts'],
-          daisyui: ['daisyui']
-        }
-      }
+          daisyui: ['daisyui'],
+        },
+      },
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts']
-  }
-})
+    include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
+  },
+  // @ts-expect-error - Vitest config
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/__tests__/**'],
+    },
+  },
+});

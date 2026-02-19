@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Form, FormField, FormFieldSet } from '../DaisyUI/Form';
+import type { FormField, FormFieldSet } from '../DaisyUI/Form';
+import { Form } from '../DaisyUI/Form';
 
 interface Agent {
   id: string;
@@ -61,8 +63,9 @@ const AgentForm: React.FC<AgentFormProps> = ({
   onCancel,
   loading = false,
 }) => {
-  const [guardUserInput, setGuardUserInput] = useState(
-    agent?.mcpGuard?.allowedUserIds?.join(', ') || ''
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_guardUserInput, _setGuardUserInput] = useState(
+    agent?.mcpGuard?.allowedUserIds?.join(', ') || '',
   );
 
   const formFields: FormField[] = [
@@ -149,26 +152,23 @@ const AgentForm: React.FC<AgentFormProps> = ({
         { value: 'owner', label: 'Message Server Owner Only' },
         { value: 'custom', label: 'Custom User List' },
       ],
-      helperText: 'Select how MCP tool access should be restricted',
-      disabled: (formData) => !formData.mcpGuardEnabled,
+      helperText: 'Select how MCP tool access should be restricted (only used when guard is enabled)',
     },
     {
       name: 'allowedUserIds',
       label: 'Allowed User IDs',
       type: 'textarea',
       placeholder: 'user1, user2, user3',
-      helperText: 'Comma-separated list of user IDs allowed to use MCP tools',
-      disabled: (formData) => !formData.mcpGuardEnabled || formData.mcpGuardType !== 'custom',
-      validation: (value) => {
-        if (value && formData?.mcpGuardType === 'custom') {
-          const ids = value.split(',').map(id => id.trim()).filter(id => id);
-          if (ids.length === 0) {
-            return 'Please enter at least one user ID';
-          }
-          for (const id of ids) {
-            if (!/^[\w-]+$/.test(id)) {
-              return 'User IDs must contain only letters, numbers, hyphens, and underscores';
-            }
+      helperText: 'Comma-separated list of user IDs allowed to use MCP tools (only used with Custom guard type)',
+      validation: (value: string) => {
+        if (!value) { return null; }
+        const ids = value.split(',').map((id: string) => id.trim()).filter((id: string) => id);
+        if (ids.length === 0) {
+          return null; // Empty is valid
+        }
+        for (const id of ids) {
+          if (!/^[\w-]+$/.test(id)) {
+            return 'User IDs must contain only letters, numbers, hyphens, and underscores';
           }
         }
         return null;
@@ -180,6 +180,12 @@ const AgentForm: React.FC<AgentFormProps> = ({
       type: 'checkbox',
       helperText: 'Enable this agent upon creation',
     },
+    {
+      name: 'envOverrides',
+      label: 'Custom Overrides',
+      type: 'key-value' as any, // Custom type
+      helperText: 'Add key-value pairs to override global settings for this agent',
+    },
   ];
 
   const fieldSets: FormFieldSet[] = [
@@ -189,27 +195,33 @@ const AgentForm: React.FC<AgentFormProps> = ({
       fields: ['name', 'messageProvider', 'llmProvider', 'persona'],
     },
     {
-      legend: 'Advanced Configuration',
-      description: 'Customize advanced agent behavior',
+      legend: 'Behavior & Tools',
+      description: 'Customize agent behavior and tool access',
       fields: ['systemInstruction', 'mcpServers', 'isActive'],
     },
     {
-      legend: 'MCP Tool Security',
-      description: 'Configure MCP tool access restrictions',
+      legend: 'MCP Security Guard',
+      description: 'Configure guardrails for MCP tool usage.',
       fields: ['mcpGuardEnabled', 'mcpGuardType', 'allowedUserIds'],
+    },
+    {
+      legend: 'Environment Overrides',
+      description: 'Override global settings for this agent (e.g., MESSAGE_MIN_DELAY)',
+      fields: ['envOverrides'],
     },
   ];
 
   const transformFormData = (formData: Record<string, any>): Partial<Agent> => {
-    const { mcpGuardEnabled, mcpGuardType, allowedUserIds, ...restData } = formData;
+    const { mcpGuardEnabled, mcpGuardType, allowedUserIds, envOverrides, ...restData } = formData;
 
     return {
       ...restData,
+      ...envOverrides, // Merge overrides into at root level
       mcpGuard: {
         enabled: mcpGuardEnabled || false,
         type: mcpGuardType || 'owner',
-        allowedUserIds: allowedUserIds ? 
-          allowedUserIds.split(',').map((id: string) => id.trim()).filter((id: string) => id) 
+        allowedUserIds: allowedUserIds ?
+          allowedUserIds.split(',').map((id: string) => id.trim()).filter((id: string) => id)
           : [],
       },
     };
@@ -220,11 +232,16 @@ const AgentForm: React.FC<AgentFormProps> = ({
     await onSubmit(agentData);
   };
 
+  const knownKeys = new Set(formFields.map(f => f.name).concat(['mcpGuard', 'isActive', 'envOverrides']));
+
   const initialData = agent ? {
     ...agent,
-    mcpGuardEnabled: agent.mcpGuard.enabled,
-    mcpGuardType: agent.mcpGuard.type,
-    allowedUserIds: agent.mcpGuard.allowedUserIds.join(', '),
+    mcpGuardEnabled: agent.mcpGuard?.enabled || false,
+    mcpGuardType: agent.mcpGuard?.type || 'owner',
+    allowedUserIds: agent.mcpGuard?.allowedUserIds?.join(', ') || '',
+    envOverrides: Object.entries(agent)
+      .filter(([key]) => !knownKeys.has(key))
+      .reduce((acc, [key, val]) => ({ ...acc, [key]: String(val) }), {}),
   } : {
     name: '',
     messageProvider: '',
@@ -236,6 +253,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     mcpGuardType: 'owner',
     allowedUserIds: '',
     isActive: true,
+    envOverrides: {},
   };
 
   return (

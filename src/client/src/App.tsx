@@ -6,23 +6,26 @@ import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRouter from './router/AppRouter';
 import { AuthProvider } from './contexts/AuthContext';
-import { WebSocketProvider } from './contexts/WebSocketContext';
 import ToastNotification from './components/DaisyUI/ToastNotification';
+import { BotProvider } from './contexts/BotContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 
 function App() {
   return (
     <ErrorBoundary>
       <Provider store={store}>
         <ReduxProvider>
-          <ToastNotification.Provider position="top-right" maxToasts={5}>
+          <ToastNotification position="top-right" maxToasts={5}>
             <AuthProvider>
-              <WebSocketProvider>
-                <BrowserRouter>
-                  <AppRouter />
-                </BrowserRouter>
-              </WebSocketProvider>
+              <BotProvider>
+                <WebSocketProvider>
+                  <BrowserRouter>
+                    <AppRouter />
+                  </BrowserRouter>
+                </WebSocketProvider>
+              </BotProvider>
             </AuthProvider>
-          </ToastNotification.Provider>
+          </ToastNotification>
         </ReduxProvider>
       </Provider>
     </ErrorBoundary>

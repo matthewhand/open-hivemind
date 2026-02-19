@@ -11,7 +11,7 @@ const Kbd: React.FC<KbdProps> = ({
   children, 
   size = 'md', 
   className = '', 
-  'aria-label': ariaLabel 
+  'aria-label': ariaLabel, 
 }) => {
   const sizeClasses = {
     xs: 'kbd-xs',

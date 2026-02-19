@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { RateLimitError } from '../../types/errorClasses';
 import Debug from 'debug';
 
@@ -23,23 +23,28 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
 
   // Content Security Policy (CSP)
   const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for WebSocket connections
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
-    "font-src 'self'",
-    "connect-src 'self' ws: wss:", // Allow WebSocket connections
-    "media-src 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
+    'default-src \'self\'',
+    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https:', // Allow inline scripts for WebSocket connections
+    'style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com',
+    'img-src \'self\' data: https:',
+    'font-src \'self\' https://fonts.gstatic.com',
+    'connect-src \'self\' ws: wss: https:', // Allow WebSocket connections
+    'media-src \'self\'',
+    'object-src \'none\'',
+    'frame-ancestors \'none\'',
+    'base-uri \'self\'',
+    'form-action \'self\'',
+    'frame-src \'none\'', // Prevent iframes
+    'worker-src \'none\'', // Prevent web workers
+    'manifest-src \'self\'',
+    'prefetch-src \'self\'',
   ];
 
   if (process.env.NODE_ENV === 'development') {
     // Relax CSP for development
-    cspDirectives.push("script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*");
-    cspDirectives.push("connect-src 'self' ws: wss: http://localhost:*");
+    cspDirectives.push('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://localhost:* https://localhost:*');
+    cspDirectives.push('connect-src \'self\' ws: wss: http://localhost:* https://localhost:*');
+    cspDirectives.push('style-src \'self\' \'unsafe-inline\' http://localhost:* https://fonts.googleapis.com');
   }
 
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
@@ -79,8 +84,8 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
       'content-type': req.get('content-type'),
       'accept': req.get('accept'),
       'referer': req.get('referer'),
-      'origin': req.get('origin')
-    }
+      'origin': req.get('origin'),
+    },
   });
 
   // Log response
@@ -91,7 +96,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
       url: req.url,
       status: res.statusCode,
       duration: `${duration}ms`,
-      ip: clientIP
+      ip: clientIP,
     });
 
     // Alert on suspicious activity
@@ -101,7 +106,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
         url: req.url,
         status: res.statusCode,
         ip: clientIP,
-        userAgent: userAgent.substring(0, 50)
+        userAgent: userAgent.substring(0, 50),
       });
     }
 
@@ -111,7 +116,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
         method: req.method,
         url: req.url,
         duration: `${duration}ms`,
-        ip: clientIP
+        ip: clientIP,
       });
     }
   });
@@ -155,7 +160,7 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
       retryAfter,
       maxRequests,
       0,
-      new Date(clientData.resetTime)
+      new Date(clientData.resetTime),
     );
   }
 
@@ -190,6 +195,10 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction): 
     sanitizeObject(req.body);
   }
 
+  // Sanitize headers and cookies
+  sanitizeHeaders(req);
+  sanitizeCookies(req);
+ 
   next();
 }
 
@@ -210,13 +219,41 @@ function sanitizeObject(obj: any): void {
             '<': '<',
             '>': '>',
             '"': '"',
-            "'": '&#x27;',
-            '&': '&'
+            '\'': '&#x27;',
+            '&': '&',
           };
           return entityMap[match] || match;
         });
     } else if (typeof value === 'object' && value !== null) {
       sanitizeObject(value);
+    }
+  }
+}
+
+/**
+ * Sanitize request headers
+ */
+function sanitizeHeaders(req: Request): void {
+  if (req.headers) {
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === 'string') {
+        // Remove potentially dangerous characters from headers
+        req.headers[key] = value.replace(/[<>'"&]/g, '');
+      }
+    }
+  }
+}
+
+/**
+ * Sanitize request cookies
+ */
+function sanitizeCookies(req: Request): void {
+  if (req.cookies) {
+    for (const [key, value] of Object.entries(req.cookies)) {
+      if (typeof value === 'string') {
+        // Remove potentially dangerous characters from cookies
+        req.cookies[key] = value.replace(/[<>'"&]/g, '');
+      }
     }
   }
 }
@@ -292,13 +329,13 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
       ip: clientIP,
       method: req.method,
       url: req.url,
-      userAgent: req.get('User-Agent')?.substring(0, 100)
+      userAgent: req.get('User-Agent')?.substring(0, 100),
     });
 
     res.status(403).json({
       error: 'Access Denied',
       message: 'Your IP address is not authorized to access this resource.',
-      ip: clientIP
+      ip: clientIP,
     });
     return;
   }
@@ -336,7 +373,7 @@ export function secureCORS(req: Request, res: Response, next: NextFunction): voi
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001'
+    'http://127.0.0.1:3001',
   ];
 
   // In production, you might want to restrict this further

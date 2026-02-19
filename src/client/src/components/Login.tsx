@@ -1,18 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login, isServerless } = useAuth();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -28,7 +23,7 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value,
     }));
-    if (error) setError(''); // Clear error on input change
+    if (error) {setError('');} // Clear error on input change
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,100 +32,93 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock authentication
-      if (formData.username === 'admin' && formData.password === 'admin') {
-        // For localhost development, just navigate to dashboard
+      const success = await login(formData.username, formData.password);
+      if (success) {
         navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid username or password');
       }
+    } catch (err) {
+      setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Open-Hivemind
-          </Typography>
+    <div className="min-h-screen flex items-center justify-center bg-base-200">
+      <Card className="max-w-md w-full mx-4">
+        <div className="p-8">
+          <h1 className="text-3xl font-bold text-center mb-2">Open-Hivemind</h1>
+          <h2 className="text-xl text-center mb-6">Sign In</h2>
 
-          <Typography variant="h6" component="h2" gutterBottom align="center">
-            Sign In
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
+          {isServerless && (
+            <div className="alert alert-warning mb-6 text-sm py-2">
+              <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
+              <span>Serverless Mode: Use ADMIN_PASSWORD or check logs for generated credentials.</span>
+            </div>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="username"
-              disabled={isLoading}
-              placeholder="Enter 'admin'"
-            />
+          {error && (
+            <Alert status="error" message={error} className="mb-4" />
+          )}
 
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="current-password"
-              disabled={isLoading}
-              placeholder="Enter 'admin'"
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Username *</span>
+              </label>
+              <Input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Enter 'admin'"
+                disabled={isLoading}
+                required
+                autoComplete="username"
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password *</span>
+              </label>
+              <Input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter password"
+                disabled={isLoading}
+                required
+                autoComplete="current-password"
+              />
+            </div>
 
             <Button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              variant="primary"
               disabled={isLoading}
-              size="large"
+              size="lg"
+              className="w-full mt-6"
             >
               {isLoading ? (
-                <CircularProgress size={24} />
+                <><span className="loading loading-spinner loading-sm mr-2"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}
             </Button>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Demo credentials: admin / admin
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
+            <div className="text-center mt-4">
+              <p className="text-sm text-base-content/70">
+                {isServerless ? 'Check deployment logs for password if not configured' : 'Enter your credentials'}
+              </p>
+            </div>
+          </form>
+        </div>
       </Card>
-    </Box>
+    </div>
   );
 };
 

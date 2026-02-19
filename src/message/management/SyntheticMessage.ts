@@ -22,13 +22,13 @@ export class SyntheticMessage extends IMessage {
    * The text content of the synthetic message.
    * @type {string}
    */
-  public content: string = "";
+  public content: string = '';
 
   /**
    * The channel ID where this synthetic message appears.
    * @type {string}
    */
-  public channelId: string = "";
+  public channelId: string = '';
 
   /**
    * Original message data preserved from the source message.
@@ -40,7 +40,7 @@ export class SyntheticMessage extends IMessage {
    * The role of the message sender, always "system" for synthetic messages.
    * @type {string}
    */
-  public role: string = "system";
+  public role: string = 'system';
 
   /**
    * Optional metadata inherited from the original message.

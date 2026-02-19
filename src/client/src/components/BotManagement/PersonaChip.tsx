@@ -1,5 +1,5 @@
 import React from 'react';
-import { Persona } from '../../types/bot';
+import type { Persona } from '../../types/bot';
 import { Badge } from '../DaisyUI';
 
 interface PersonaChipProps {
@@ -21,7 +21,7 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
   onEdit,
   onRemove,
   clickable = false,
-  onClick
+  onClick,
 }) => {
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -31,7 +31,7 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
       technical: 'accent',
       educational: 'info',
       entertainment: 'warning',
-      professional: 'success'
+      professional: 'success',
     };
     return colors[category] || 'neutral';
   };
@@ -40,7 +40,7 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
     const sizes = {
       sm: 'px-2 py-1 text-xs',
       md: 'px-3 py-1.5 text-sm',
-      lg: 'px-4 py-2 text-base'
+      lg: 'px-4 py-2 text-base',
     };
     return sizes[size];
   };
@@ -79,14 +79,14 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
 
       {/* Built-in indicator */}
       {persona.isBuiltIn && (
-        <Badge color="info" size="xs" variant="outline" className="ml-1">
+        <Badge variant="info" size="xs" className="badge-outline ml-1">
           BUILTIN
         </Badge>
       )}
 
       {/* Usage count */}
       {showUsage && persona.usageCount > 0 && (
-        <Badge color="neutral" size="xs" variant="ghost" className="ml-1">
+        <Badge variant="neutral" size="xs" className="badge-ghost ml-1">
           {persona.usageCount}
         </Badge>
       )}

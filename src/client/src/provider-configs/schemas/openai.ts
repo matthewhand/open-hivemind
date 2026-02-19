@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const openAIProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -10,7 +10,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
   defaultConfig: {
     model: 'gpt-4',
     maxTokens: 2048,
-    temperature: 0.7
+    temperature: 0.7,
   },
   fields: [
     {
@@ -20,7 +20,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your OpenAI API key',
       placeholder: 'sk-1234567890123456789012345678901234567890123456789012345678901234',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'organizationId',
@@ -29,7 +29,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Your OpenAI organization ID',
       placeholder: 'org-123456789012345678901234567890',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'baseUrl',
@@ -38,7 +38,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Custom API base URL for third-party OpenAI-compatible providers (OPENAI_BASE_URL)',
       placeholder: 'https://api.openai.com/v1 or https://your-proxy.com/v1',
-      group: 'Third-Party Compatibility'
+      group: 'Third-Party Compatibility',
     },
     {
       name: 'model',
@@ -48,7 +48,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       description: 'Select or enter the GPT model to use. Models are automatically fetched from your API.',
       placeholder: 'gpt-4-turbo-preview, gpt-4, gpt-3.5-turbo...',
       defaultValue: 'gpt-4',
-            group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'maxTokens',
@@ -59,7 +59,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: '2048',
       defaultValue: 2048,
       validation: { min: 1, max: 32768 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'temperature',
@@ -70,7 +70,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: '0.7',
       defaultValue: 0.7,
       validation: { min: 0, max: 2 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'topP',
@@ -81,7 +81,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: '1',
       defaultValue: 1,
       validation: { min: 0, max: 1 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'frequencyPenalty',
@@ -92,7 +92,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: '0',
       defaultValue: 0,
       validation: { min: -2, max: 2 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'presencePenalty',
@@ -103,7 +103,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: '0',
       defaultValue: 0,
       validation: { min: -2, max: 2 },
-      group: 'Model Configuration'
-    }
-  ]
+      group: 'Model Configuration',
+    },
+  ],
 };

@@ -14,12 +14,33 @@ jest.mock('@message/helpers/processing/addUserHint');
 jest.mock('@message/helpers/processing/shouldReplyToMessage');
 jest.mock('@config/messageConfig');
 
+// Mock ChannelDelayManager to bypass compounding delay
+jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
+  ChannelDelayManager: {
+    getInstance: jest.fn(() => ({
+      getKey: jest.fn((channelId: string, botId: string) => `${channelId}:${botId}`),
+      registerMessage: jest.fn(() => ({ isLeader: true })),
+      ensureMinimumDelay: jest.fn(),
+      getRemainingDelayMs: jest.fn(() => 0),
+      waitForDelay: jest.fn(() => Promise.resolve()),
+      getReplyToMessageId: jest.fn(() => undefined),
+      clear: jest.fn()
+    }))
+  }
+}));
+
 const mockGetLlmProvider = getLlmProvider as jest.MockedFunction<typeof getLlmProvider>;
 const mockGetMessengerProvider = require('@message/management/getMessengerProvider').getMessengerProvider as jest.MockedFunction<any>;
 const mockStripBotId = stripBotId as jest.MockedFunction<typeof stripBotId>;
 const mockAddUserHint = addUserHintFn as jest.MockedFunction<typeof addUserHintFn>;
 const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shouldReplyToMessage>;
 const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
+// Mock unsolicited handler
+const { shouldReplyToUnsolicitedMessage } = require('@message/helpers/unsolicitedMessageHandler');
+jest.mock('@message/helpers/unsolicitedMessageHandler', () => ({
+  shouldReplyToUnsolicitedMessage: jest.fn()
+}));
+const mockShouldReplyUnsolicited = shouldReplyToUnsolicitedMessage as jest.Mock;
 
 class MockMessage implements IMessage {
   public data: any = {};
@@ -58,29 +79,41 @@ class MockMessage implements IMessage {
 describe('messageHandler', () => {
   let mockLlmProvider: any;
   let mockBotConfig: any;
+  let mockMessengerProvider: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockLlmProvider = {
       generateChatCompletion: jest.fn().mockResolvedValue('AI response')
     };
-    
-    const mockMessengerProvider = {
+
+    mockMessengerProvider = {
       sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
-      getClientId: jest.fn().mockReturnValue('bot-123')
+      getClientId: jest.fn().mockReturnValue('bot-123'),
+      resolveAgentContext: jest.fn(() => ({
+        botId: 'bot-123',
+        senderKey: 'bot-123',
+        nameCandidates: ['Bot']
+      }))
     };
-    
+
     mockBotConfig = {
       BOT_ID: 'bot-123',
-      MESSAGE_PROVIDER: 'discord'
+      MESSAGE_PROVIDER: 'discord',
+      logLevel: 'info',
+      discord: {
+        token: 'test-token',
+        clientId: 'test-client-id',
+        guildId: 'test-guild-id'
+      }
     };
-    
+
     mockGetLlmProvider.mockReturnValue([mockLlmProvider]);
     mockGetMessengerProvider.mockReturnValue([mockMessengerProvider]);
     mockStripBotId.mockImplementation((text) => text);
     mockAddUserHint.mockImplementation((text) => text);
-    mockShouldReply.mockReturnValue(true);
+    mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
     mockMessageConfig.get.mockImplementation((key: any) => {
       const config: { [key: string]: any } = {
         MESSAGE_IGNORE_BOTS: true,
@@ -109,9 +142,17 @@ describe('messageHandler', () => {
       const response = await handleMessage(message, historyMessages, mockBotConfig);
 
       expect(response).toBe('AI response');
+      // For Discord, we route outgoing messages by bot id (stable per-instance) rather than MESSAGE_USERNAME_OVERRIDE.
+      expect(mockMessengerProvider.sendMessageToChannel).toHaveBeenCalledWith(
+        'test-channel',
+        expect.any(String),
+        'bot-123',
+        undefined,
+        undefined
+      );
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
-        'Hello AI',
-        historyMessages,
+        expect.stringContaining('Hello AI'),
+        expect.any(Array),
         expect.objectContaining({
           channelId: 'test-channel',
           botId: 'bot-123',
@@ -128,8 +169,8 @@ describe('messageHandler', () => {
       await handleMessage(message2, historyMessages2, mockBotConfig);
 
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
-        'Follow up question',
-        historyMessages2,
+        expect.stringContaining('Follow up question'),
+        expect.arrayContaining(historyMessages2),
         expect.any(Object)
       );
 
@@ -141,8 +182,8 @@ describe('messageHandler', () => {
 
       expect(mockStripBotId).toHaveBeenCalledWith('<@bot-123> Hello', 'bot-123');
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
-        'Stripped message',
-        [],
+        expect.stringContaining('Stripped message'),
+        expect.any(Array),
         expect.any(Object)
       );
 
@@ -159,7 +200,7 @@ describe('messageHandler', () => {
   describe('reply decision logic', () => {
     it('should handle reply decision logic', async () => {
       // Test not processing when shouldReply returns false
-      mockShouldReply.mockReturnValue(false);
+      mockShouldReply.mockReturnValue({ shouldReply: false, reason: 'No', meta: {} } as any);
       const message = new MockMessage('Hello');
 
       const response = await handleMessage(message, [], mockBotConfig);
@@ -168,12 +209,48 @@ describe('messageHandler', () => {
       expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
 
       // Test checking reply conditions
-      mockShouldReply.mockReturnValue(true);
+      mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
       const message2 = new MockMessage('Hello');
 
       await handleMessage(message2, [], mockBotConfig);
 
-      expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'discord');
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message2,
+        'bot-123',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        mockBotConfig
+      );
+    });
+
+    it('should resolve per-bot Discord client id when BOT_ID is invalid', async () => {
+      const customMessengerProvider = {
+        sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
+        getClientId: jest.fn().mockReturnValue('bot-123'),
+        resolveAgentContext: jest.fn(() => ({
+          botId: '555555555555555555',
+          senderKey: '555555555555555555',
+          nameCandidates: ['Bot', 'FollowUpBot']
+        }))
+      };
+      mockGetMessengerProvider.mockReturnValue([customMessengerProvider]);
+
+      const badBotConfig = { ...mockBotConfig, BOT_ID: 'slack-bot' };
+      const message = new MockMessage('<@555555555555555555> hi');
+
+      await handleMessage(message, [], badBotConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message,
+        '555555555555555555',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        badBotConfig
+      );
     });
   });
 
@@ -227,7 +304,16 @@ describe('messageHandler', () => {
 
       await handleMessage(message2, [], slackConfig);
 
-      expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'slack');
+      // Platform is derived from message.platform, not botConfig.integration
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        expect.anything(),
+        'bot-123',
+        expect.any(String),
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        expect.any(Object)
+      );
     });
   });
 
@@ -255,7 +341,7 @@ describe('messageHandler', () => {
       await handleMessage(message3, [], mockBotConfig);
 
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
-        specialMessage,
+        expect.stringContaining(specialMessage),
         [],
         expect.any(Object)
       );

@@ -3,6 +3,6 @@
  * @param channel - The channel object where the typing indicator is active.
  */
 export function stopTypingIndicator(channel: any): void {
-    if (!channel) return;
-    clearInterval(channel.typingInterval);
+  if (!channel) {return;}
+  clearInterval(channel.typingInterval);
 }

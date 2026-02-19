@@ -29,7 +29,7 @@ export const commandParser = {
     const args = parts.slice(1);
 
     return { command, args };
-  }
+  },
 };
 
 /**
@@ -77,7 +77,7 @@ export const messageParser = {
       .replace(/`([^`]+)`/g, '$1') // Remove inline code
       .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .trim();
-  }
+  },
 };
 
 /**
@@ -102,7 +102,7 @@ export const urlParser = {
     } catch {
       return false;
     }
-  }
+  },
 };
 
 /**
@@ -129,7 +129,7 @@ export const jsonParser = {
     } catch {
       return fallback;
     }
-  }
+  },
 };
 
 /**
@@ -158,5 +158,5 @@ export const numberParser = {
 
     const parsed = global.parseInt(value, 10);
     return isNaN(parsed) ? fallback : parsed;
-  }
+  },
 };

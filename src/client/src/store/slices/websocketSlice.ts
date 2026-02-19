@@ -174,10 +174,10 @@ export const selectUnreadMessages = (state: { websocket: WebSocketState }) =>
 export const selectConnectionStatus = (state: { websocket: WebSocketState }) => {
   const { isConnected, isConnecting, connectionError, connectionAttempts, maxConnectionAttempts } = state.websocket;
   
-  if (isConnecting) return 'connecting';
-  if (isConnected) return 'connected';
-  if (connectionError) return 'error';
-  if (connectionAttempts >= maxConnectionAttempts) return 'failed';
+  if (isConnecting) {return 'connecting';}
+  if (isConnected) {return 'connected';}
+  if (connectionError) {return 'error';}
+  if (connectionAttempts >= maxConnectionAttempts) {return 'failed';}
   return 'disconnected';
 };
 

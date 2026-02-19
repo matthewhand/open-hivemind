@@ -68,7 +68,7 @@ export class AnalyticsCollector extends EventEmitter {
     maxEvents: number = 10000,
     maxSessions: number = 1000,
     sessionTimeout: number = 1800000, // 30 minutes
-    isAnonymous: boolean = true
+    isAnonymous: boolean = true,
   ) {
     super();
     this.maxEvents = maxEvents;
@@ -87,7 +87,7 @@ export class AnalyticsCollector extends EventEmitter {
       id: this.generateEventId(),
       timestamp: new Date().toISOString(),
       sessionId,
-      ...event
+      ...event,
     };
 
     // Store event
@@ -119,7 +119,7 @@ export class AnalyticsCollector extends EventEmitter {
     path: string,
     userId?: string,
     referrer?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void> {
     await this.trackEvent({
       type: 'page_view',
@@ -131,15 +131,15 @@ export class AnalyticsCollector extends EventEmitter {
       referrer,
       userAgent,
       metadata: {
-        loadTime: performance.now() - (window as any).performance.timing.navigationStart
-      }
+        loadTime: performance.now() - (window as any).performance.timing.navigationStart,
+      },
     });
   }
 
   public async trackClick(
     element: string,
     userId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent({
       type: 'click',
@@ -147,7 +147,7 @@ export class AnalyticsCollector extends EventEmitter {
       action: 'click',
       label: element,
       userId,
-      metadata
+      metadata,
     });
   }
 
@@ -155,7 +155,7 @@ export class AnalyticsCollector extends EventEmitter {
     formName: string,
     success: boolean,
     userId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent({
       type: 'form_submit',
@@ -164,7 +164,7 @@ export class AnalyticsCollector extends EventEmitter {
       label: formName,
       value: success ? 1 : 0,
       userId,
-      metadata
+      metadata,
     });
   }
 
@@ -173,7 +173,7 @@ export class AnalyticsCollector extends EventEmitter {
     method: string,
     statusCode: number,
     responseTime: number,
-    userId?: string
+    userId?: string,
   ): Promise<void> {
     await this.trackEvent({
       type: 'api_call',
@@ -185,8 +185,8 @@ export class AnalyticsCollector extends EventEmitter {
       metadata: {
         method,
         statusCode,
-        responseTime
-      }
+        responseTime,
+      },
     });
   }
 
@@ -194,7 +194,7 @@ export class AnalyticsCollector extends EventEmitter {
     errorType: string,
     errorMessage: string,
     userId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent({
       type: 'error',
@@ -202,7 +202,7 @@ export class AnalyticsCollector extends EventEmitter {
       action: errorType,
       label: errorMessage,
       userId,
-      metadata
+      metadata,
     });
   }
 
@@ -210,7 +210,7 @@ export class AnalyticsCollector extends EventEmitter {
     metricName: string,
     value: number,
     userId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<void> {
     await this.trackEvent({
       type: 'performance',
@@ -218,7 +218,7 @@ export class AnalyticsCollector extends EventEmitter {
       action: metricName,
       value,
       userId,
-      metadata
+      metadata,
     });
   }
 
@@ -247,7 +247,7 @@ export class AnalyticsCollector extends EventEmitter {
       userId: this.isAnonymous ? undefined : userId,
       startTime: new Date().toISOString(),
       pageViews: 0,
-      events: []
+      events: [],
     };
 
     // Detect device and browser info
@@ -287,23 +287,23 @@ export class AnalyticsCollector extends EventEmitter {
     }
 
     // OS detection
-    if (/Windows/i.test(userAgent)) os = 'Windows';
-    else if (/Mac/i.test(userAgent)) os = 'macOS';
-    else if (/Linux/i.test(userAgent)) os = 'Linux';
-    else if (/Android/i.test(userAgent)) os = 'Android';
-    else if (/iOS|iPhone|iPad/i.test(userAgent)) os = 'iOS';
+    if (/Windows/i.test(userAgent)) {os = 'Windows';}
+    else if (/Mac/i.test(userAgent)) {os = 'macOS';}
+    else if (/Linux/i.test(userAgent)) {os = 'Linux';}
+    else if (/Android/i.test(userAgent)) {os = 'Android';}
+    else if (/iOS|iPhone|iPad/i.test(userAgent)) {os = 'iOS';}
 
     // Browser detection
-    if (/Chrome/i.test(userAgent)) browser = 'Chrome';
-    else if (/Firefox/i.test(userAgent)) browser = 'Firefox';
-    else if (/Safari/i.test(userAgent)) browser = 'Safari';
-    else if (/Edge/i.test(userAgent)) browser = 'Edge';
-    else if (/Opera/i.test(userAgent)) browser = 'Opera';
+    if (/Chrome/i.test(userAgent)) {browser = 'Chrome';}
+    else if (/Firefox/i.test(userAgent)) {browser = 'Firefox';}
+    else if (/Safari/i.test(userAgent)) {browser = 'Safari';}
+    else if (/Edge/i.test(userAgent)) {browser = 'Edge';}
+    else if (/Opera/i.test(userAgent)) {browser = 'Opera';}
 
     return {
       type: deviceType,
       os,
-      browser
+      browser,
     };
   }
 
@@ -350,7 +350,7 @@ export class AnalyticsCollector extends EventEmitter {
       const now = new Date().getTime();
       let cleanedCount = 0;
 
-      for (const [sessionId, session] of this.sessions.entries()) {
+      for (const [, session] of this.sessions.entries()) {
         if (!session.endTime) {
           const sessionAge = now - new Date(session.startTime).getTime();
 
@@ -483,7 +483,7 @@ export class AnalyticsCollector extends EventEmitter {
     const userActivity = {
       newUsers: 0, // Would need to compare with previous period
       returningUsers: uniqueUsers.size,
-      activeUsers: userIds.size
+      activeUsers: userIds.size,
     };
 
     // Calculate performance metrics
@@ -512,8 +512,8 @@ export class AnalyticsCollector extends EventEmitter {
       performance: {
         averagePageLoad,
         averageApiResponse,
-        errorRate
-      }
+        errorRate,
+      },
     };
   }
 
@@ -522,7 +522,7 @@ export class AnalyticsCollector extends EventEmitter {
       timestamp: new Date().toISOString(),
       events: this.events,
       sessions: Array.from(this.sessions.values()),
-      summary: await this.getAnalyticsSummary()
+      summary: await this.getAnalyticsSummary(),
     };
 
     return JSON.stringify(analyticsData, null, 2);

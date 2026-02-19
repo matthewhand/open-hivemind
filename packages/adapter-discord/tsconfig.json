@@ -1,0 +1,47 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "../../",
+        "outDir": "dist",
+        "declaration": true,
+        "declarationMap": true,
+        "composite": true,
+        "baseUrl": ".",
+        "paths": {
+            "@hivemind/shared-types": [
+                "../shared-types/src"
+            ],
+            "@src/*": [
+                "../../src/*"
+            ],
+            "@config/*": [
+                "../../src/config/*"
+            ],
+            "@message/*": [
+                "../../src/message/*"
+            ],
+            "@types/*": [
+                "../../src/types/*"
+            ],
+            "@server/*": [
+                "../../src/server/*"
+            ],
+            "@services/*": [
+                "../../src/services/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src/ui"
+    ],
+    "references": [
+        {
+            "path": "../shared-types"
+        }
+    ]
+}

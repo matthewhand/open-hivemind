@@ -7,7 +7,7 @@ Navigation: [Docs Index](../README.md) | [Monitoring Overview](overview.md) | [O
 The Monitoring API provides endpoints for accessing system metrics, health status, anomalies, and alerts. It integrates with Prometheus for metrics export and supports real-time notifications via WebSocket. This API is crucial for the anomaly detection pipeline, allowing external systems to consume metrics and receive alerts.
 
 ## Base URL
-All endpoints are relative to the server root (e.g., `http://localhost:3000`).
+All endpoints are relative to the server root (e.g., `http://localhost:3028`).
 
 ## Authentication
 Most endpoints require authentication via JWT tokens. Include `Authorization: Bearer <token>` header.
@@ -176,7 +176,7 @@ Most endpoints require authentication via JWT tokens. Include `Authorization: Be
 - **Status Codes**: `200`, `500`
 
 ## WebSocket Integration
-For real-time updates, connect to `ws://localhost:3000/webui/socket.io` (or HTTPS in production).
+For real-time updates, connect to `ws://localhost:3028/webui/socket.io` (or HTTPS in production).
 
 ### Connection
 - **Namespace**: `/webui`

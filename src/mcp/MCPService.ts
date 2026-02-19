@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider';
-import { DiscordMessageProvider } from '@integrations/discord/providers/DiscordMessageProvider';
+import { DiscordMessageProvider } from '@hivemind/adapter-discord/providers/DiscordMessageProvider';
 
 const debug = Debug('app:mcp');
 
@@ -24,7 +24,7 @@ export class MCPService {
   private clients: Map<string, any> = new Map();
   private tools: Map<string, MCPTool[]> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): MCPService {
     if (!MCPService.instance) {
@@ -39,39 +39,39 @@ export class MCPService {
   public async connectToServer(config: MCPConfig): Promise<MCPTool[]> {
     try {
       debug(`Connecting to MCP server: ${config.name} at ${config.serverUrl}`);
-      
+
       // Dynamically require the MCP SDK
       const { Client } = require('@modelcontextprotocol/sdk');
-      
+
       // Create a new client for this server
       const client = new Client({
         name: 'Open-Hivemind',
-        version: '1.0.0'
+        version: '1.0.0',
       });
 
       // Connect to the server
       await client.connect({
         url: config.serverUrl,
-        apiKey: config.apiKey
+        apiKey: config.apiKey,
       });
-      
+
       // Store the client
       this.clients.set(config.name, client);
-      
+
       // Discover tools
       const tools = await client.listTools();
-      
+
       // Add server name to each tool for identification
       const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
         ...tool,
-        serverName: config.name
+        serverName: config.name,
       }));
-      
+
       // Store tools
       this.tools.set(config.name, mcpTools);
-      
+
       debug(`Discovered ${tools.tools.length} tools from ${config.name}`);
-      
+
       return mcpTools;
     } catch (error) {
       debug(`Error connecting to MCP server ${config.name}:`, error);
@@ -135,7 +135,7 @@ export class MCPService {
       forumId?: string;
       forumOwnerId?: string;
       userId?: string;
-    }
+    },
   ): Promise<any> {
     try {
       if (context?.botName) {
@@ -150,10 +150,10 @@ export class MCPService {
       debug(`Executing tool ${toolName} on server ${serverName}`);
       const result = await client.callTool({
         name: toolName,
-        arguments: arguments_
+        arguments: arguments_,
       });
-      debug(`Tool execution result:`, result);
-      
+      debug('Tool execution result:', result);
+
       return result;
     } catch (error) {
       debug(`Error executing tool ${toolName} on server ${serverName}:`, error);

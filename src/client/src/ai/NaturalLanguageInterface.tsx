@@ -1,44 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  Grid,
-  Button,
-  TextField,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  ListItemButton,
-  Divider,
-  IconButton,
-  Badge,
-  Tooltip
-} from '@mui/material';
-import { 
-  Mic as MicIcon,
-  MicOff as MicOffIcon,
-  Send as SendIcon,
-  SmartToy as AIIcon,
-  History as HistoryIcon,
-  Star as StarIcon,
-  ThumbUp as LikeIcon,
-  ThumbDown as DisIcon,
-  Translate as TranslateIcon,
-  VolumeUp as VolumeIcon,
-  Settings as SettingsIcon,
-  Help as HelpIcon,
-  Clear as ClearIcon,
-  TrendingUp as TrendIcon,
-  Dashboard as DashboardIcon
-} from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import {
+  MicrophoneIcon,
+  PaperAirplaneIcon,
+  ChatBubbleLeftRightIcon,
+  ClockIcon,
+  HandThumbUpIcon,
+  HandThumbDownIcon,
+  SpeakerWaveIcon,
+  QuestionMarkCircleIcon,
+  XMarkIcon,
+  CheckCircleIcon,
+  CpuChipIcon,
+} from '@heroicons/react/24/outline';
+import { MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
+
+// Web Speech API type declarations
+interface SpeechRecognitionResult {
+  readonly length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  readonly isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string;
+  readonly message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+  SpeechRecognition?: new () => SpeechRecognition;
+}
 
 export interface NLCommand {
   id: string;
@@ -71,9 +94,9 @@ export interface NLEntity {
 export interface NLAction {
   type: 'show-widget' | 'hide-widget' | 'update-widget' | 'filter-data' | 'change-theme' | 'export-data';
   target: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   status: 'pending' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
 }
 
 export interface NLParameter {
@@ -128,7 +151,7 @@ export interface NLContext {
   currentPage: string;
   selectedWidgets: string[];
   timeRange: { start: Date; end: Date };
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   userRole: string;
   permissions: string[];
 }
@@ -243,7 +266,7 @@ const mockIntents: NLIntent[] = [
         name: 'theme',
         type: 'string',
         required: true,
-                description: 'Theme to apply',
+        description: 'Theme to apply',
         examples: ['dark', 'light', 'high contrast'],
       },
     ],
@@ -319,7 +342,7 @@ const mockCommands: NLCommand[] = [
     response: 'Adding chart widget for bot response times...',
     actions: [
       {
-        type: 'add-widget',
+        type: 'update-widget',
         target: 'response-time-chart',
         parameters: { type: 'line', data: 'bot_response_times' },
         status: 'completed',
@@ -342,7 +365,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [commands, setCommands] = useState<NLCommand[]>(mockCommands);
-  const [context, setContext] = useState<NLContext>({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_context, _setContext] = useState<NLContext>({
     currentPage: 'dashboard',
     selectedWidgets: [],
     timeRange: { start: new Date(Date.now() - 24 * 60 * 60 * 1000), end: new Date() },
@@ -352,7 +376,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   });
   const [showHelp, setShowHelp] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -363,25 +387,26 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   }, []);
 
   const initializeSpeechRecognition = () => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
+    const windowWithSpeech = window as WindowWithSpeechRecognition;
+    const SpeechRecognitionConstructor = windowWithSpeech.webkitSpeechRecognition || windowWithSpeech.SpeechRecognition;
+    if (SpeechRecognitionConstructor) {
+      recognitionRef.current = new SpeechRecognitionConstructor();
       recognitionRef.current.continuous = config.voiceRecognition.continuous;
       recognitionRef.current.interimResults = config.voiceRecognition.interimResults;
       recognitionRef.current.lang = config.voiceRecognition.language;
-      
-      recognitionRef.current.onresult = (event: any) => {
+
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result: SpeechRecognitionResult) => result[0].transcript)
           .join('');
         setInputText(transcript);
       };
-      
-      recognitionRef.current.onerror = (event: any) => {
+
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
-      
+
       recognitionRef.current.onend = () => {
         setIsListening(false);
       };
@@ -404,20 +429,20 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
 
   const processNaturalLanguage = async (text: string): Promise<NLCommand> => {
     setIsProcessing(true);
-    
+
     // Simulate NLP processing delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Simple intent matching (in real implementation, this would use actual NLP)
     const matchedIntent = mockIntents.find(intent =>
       intent.examples.some(example =>
         text.toLowerCase().includes(example.toLowerCase()) ||
-        example.toLowerCase().includes(text.toLowerCase())
-      )
+        example.toLowerCase().includes(text.toLowerCase()),
+      ),
     );
-    
+
     const confidence = matchedIntent ? 0.85 : 0.3;
-    
+
     const command: NLCommand = {
       id: `cmd-${Date.now()}`,
       text,
@@ -435,21 +460,21 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
       actions: generateActions(text, matchedIntent, confidence),
       status: 'completed',
     };
-    
+
     setIsProcessing(false);
     return command;
   };
 
   const extractEntities = (text: string): NLEntity[] => {
     const entities: NLEntity[] = [];
-    
+
     // Time range extraction
     const timePatterns = [
       { pattern: /last (\d+) hours?/i, type: 'time-range' as const, value: (match: RegExpMatchArray) => `last-${match[1]}h` },
       { pattern: /this week/i, type: 'time-range' as const, value: () => 'this-week' },
       { pattern: /past month/i, type: 'time-range' as const, value: () => 'past-month' },
     ];
-    
+
     timePatterns.forEach(({ pattern, type, value }) => {
       const match = text.match(pattern);
       if (match) {
@@ -461,7 +486,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         });
       }
     });
-    
+
     // Widget type extraction
     const widgetTypes = ['chart', 'table', 'gauge', 'counter', 'graph'];
     widgetTypes.forEach(widget => {
@@ -474,7 +499,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         });
       }
     });
-    
+
     // Metric extraction
     const metrics = ['cpu', 'memory', 'response time', 'throughput', 'error rate'];
     metrics.forEach(metric => {
@@ -487,19 +512,19 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         });
       }
     });
-    
+
     return entities;
   };
 
   const generateResponse = (text: string, intent: NLIntent | null, confidence: number): string => {
     if (confidence < config.confidenceThreshold) {
-      return "I didn't understand that. Could you please rephrase or ask for help?";
+      return 'I didn\'t understand that. Could you please rephrase or ask for help?';
     }
-    
+
     if (!intent) {
-      return "I'm not sure what you'd like me to do. Try asking for help to see what I can do.";
+      return 'I\'m not sure what you\'d like me to do. Try asking for help to see what I can do.';
     }
-    
+
     switch (intent.name) {
       case 'show_performance_dashboard':
         return 'Displaying performance dashboard with the requested metrics...';
@@ -520,10 +545,10 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     if (confidence < config.confidenceThreshold || !intent) {
       return [];
     }
-    
+
     // Generate actions based on intent
     const actions: NLAction[] = [];
-    
+
     switch (intent.name) {
       case 'show_performance_dashboard':
         actions.push({
@@ -535,7 +560,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         break;
       case 'add_widget':
         actions.push({
-          type: 'add-widget',
+          type: 'update-widget',
           target: 'dashboard',
           parameters: { type: 'chart', position: 'auto' },
           status: 'pending',
@@ -566,17 +591,17 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         });
         break;
     }
-    
+
     return actions;
   };
 
   const handleSubmit = async () => {
-    if (!inputText.trim()) return;
-    
+    if (!inputText.trim()) { return; }
+
     const command = await processNaturalLanguage(inputText);
     setCommands(prev => [command, ...prev].slice(0, config.maxHistory));
     setInputText('');
-    
+
     if (onCommandExecute) {
       onCommandExecute(command);
     }
@@ -597,7 +622,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     }
   };
 
-  const toggleFeature = (feature: keyof NLConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _toggleFeature = (feature: keyof NLConfig) => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
@@ -618,221 +644,206 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   if (!currentUser) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        animation="fade-in"
+        className="p-6 flex justify-center items-center min-h-[400px]"
       >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <AIIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
+        <div className="card bg-base-100 shadow-xl max-w-md text-center">
+          <div className="card-body">
+            <ChatBubbleLeftRightIcon className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="card-title justify-center mb-2">
               Natural Language Interface
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
+            </h2>
+            <p className="text-base-content/70">
               Please log in to access voice and text commands.
-            </Typography>
-          </CardContent>
-        </Card>
+            </p>
+          </div>
+        </div>
       </AnimatedBox>
     );
   }
 
   return (
     <AnimatedBox
-      animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-      sx={{ width: '100%' }}
+      animation="slide-up"
+      className="w-full space-y-6"
     >
       {/* Natural Language Interface Header */}
-      <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={2}>
-              <AIIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="h6">
+      <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
+        <div className="card-body p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <ChatBubbleLeftRightIcon className="w-10 h-10 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">
                   Natural Language Interface
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h2>
+                <p className="text-base-content/70">
                   Voice & text commands • {config.supportedLanguages.length} languages supported
-                </Typography>
-              </Box>
-            </Box>
-            
-            <Box display="flex" alignItems="center" gap={1}>
-              <Badge badgeContent={commands.length} color="primary">
-                <HistoryIcon />
-              </Badge>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="indicator">
+                <span className="indicator-item badge badge-primary badge-sm">{commands.length}</span>
+                <button className="btn btn-circle btn-ghost btn-sm">
+                  <ClockIcon className="w-5 h-5" />
+                </button>
+              </div>
               {voiceSupported && (
-                <IconButton
+                <button
+                  className={`btn btn-circle btn-sm ${isListening ? 'btn-error' : 'btn-ghost'}`}
                   onClick={toggleVoiceInput}
-                  color={isListening ? 'error' : 'default'}
                   disabled={!config.voiceInput}
                 >
-                  {isListening ? <MicIcon /> : <MicOffIcon />}
-                </IconButton>
+                  {isListening ? <MicrophoneSolidIcon className="w-5 h-5 animate-pulse" /> : <MicrophoneIcon className="w-5 h-5" />}
+                </button>
               )}
-              <IconButton onClick={() => setShowHelp(!showHelp)}>
-                <HelpIcon />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={() => setShowHelp(!showHelp)}
+              >
+                <QuestionMarkCircleIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Voice Input Status */}
       {voiceSupported && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="body2">
-                Voice Recognition: {config.voiceRecognition.enabled ? 'Enabled' : 'Disabled'}
-              </Typography>
-              <Chip
-                label={isListening ? 'Listening...' : 'Voice Ready'}
-                color={isListening ? 'error' : 'success'}
-                icon={isListening ? <MicIcon /> : <MicOffIcon />}
-                size="small"
-              />
-            </Box>
-          </CardContent>
-        </Card>
+        <div className="card bg-base-100 shadow-lg">
+          <div className="card-body p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">
+                Voice Recognition: <span className="font-bold">{config.voiceRecognition.enabled ? 'Enabled' : 'Disabled'}</span>
+              </span>
+              <div className={`badge ${isListening ? 'badge-error gap-2' : 'badge-success gap-2'}`}>
+                {isListening ? <MicrophoneSolidIcon className="w-3 h-3 animate-pulse" /> : <MicrophoneIcon className="w-3 h-3" />}
+                {isListening ? 'Listening...' : 'Voice Ready'}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Command Input */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Type your command here or use voice input..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isProcessing}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AIIcon color={isProcessing ? 'disabled' : 'primary'} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Box display="flex" gap={1}>
-                    {config.textToSpeech.enabled && (
-                      <IconButton onClick={() => speakResponse(inputText)} disabled={!inputText}>
-                        <VolumeIcon />
-                      </IconButton>
-                    )}
-                    <IconButton onClick={handleSubmit} disabled={!inputText || isProcessing}>
-                      <SendIcon />
-                    </IconButton>
-                  </Box>
-                </InputAdornment>
-              ),
-            }}
-          />
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <div className="form-control relative">
+            <div className="absolute top-3 left-3 text-primary">
+              <CpuChipIcon className={`w-5 h-5 ${isProcessing ? 'animate-spin' : ''}`} />
+            </div>
+            <textarea
+              className="textarea textarea-bordered pl-10 pr-24 h-24 w-full text-base"
+              placeholder="Type your command here or use voice input..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={isProcessing}
+            ></textarea>
+            <div className="absolute bottom-3 right-3 flex gap-1">
+              {config.textToSpeech.enabled && (
+                <button
+                  className="btn btn-circle btn-ghost btn-sm"
+                  onClick={() => speakResponse(inputText)}
+                  disabled={!inputText}
+                >
+                  <SpeakerWaveIcon className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                className="btn btn-circle btn-primary btn-sm"
+                onClick={handleSubmit}
+                disabled={!inputText || isProcessing}
+              >
+                <PaperAirplaneIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           {isProcessing && (
-            <LinearProgress sx={{ mt: 1 }} />
+            <progress className="progress progress-primary w-full mt-2"></progress>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Command History */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">
             Command History ({commands.length})
-          </Typography>
-          <List dense>
-            {commands.map((command, index) => (
-              <React.Fragment key={command.id}>
-                <ListItem
-                  secondaryAction={
-                    <Box display="flex" gap={1}>
-                      {command.feedback === 'positive' && <LikeIcon color="success" />}
-                      {command.feedback === 'negative' && <DisIcon color="error" />}
-                      <Chip
-                        label={`${(command.confidence * 100).toFixed(0)}%`}
-                        size="small"
-                        color={command.confidence > 0.8 ? 'success' : command.confidence > 0.6 ? 'warning' : 'error'}
-                      />
-                    </Box>
-                  }
-                >
-                  <ListItemIcon>
-                    {command.status === 'completed' ? (
-                      <CheckIcon color="success" />
-                    ) : command.status === 'failed' ? (
-                      <MicOffIcon color="error" />
-                    ) : (
-                      <AIIcon color="primary" />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={command.text}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
+          </h3>
+          <div className="overflow-y-auto max-h-[400px]">
+            <ul className="menu bg-base-100 w-full p-0">
+              {commands.map((command) => (
+                <li key={command.id} className="border-b border-base-200 last:border-none">
+                  <div className="flex flex-col gap-2 py-3 hover:bg-base-200">
+                    <div className="flex items-start gap-3 w-full">
+                      <div className="mt-1">
+                        {command.status === 'completed' ? (
+                          <CheckCircleIcon className="w-6 h-6 text-success" />
+                        ) : command.status === 'failed' ? (
+                          <XMarkIcon className="w-6 h-6 text-error" />
+                        ) : (
+                          <CpuChipIcon className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium">{command.text}</span>
+                          <div className="flex gap-2 items-center">
+                            {command.feedback === 'positive' && <HandThumbUpIcon className="w-4 h-4 text-success" />}
+                            {command.feedback === 'negative' && <HandThumbDownIcon className="w-4 h-4 text-error" />}
+                            <div className={`badge badge-sm ${command.confidence > 0.8 ? 'badge-success' :
+                              command.confidence > 0.6 ? 'badge-warning' : 'badge-error'
+                              }`}>
+                              {(command.confidence * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-base-200 rounded p-2 mt-2 text-sm">
                           {command.response}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {command.timestamp.toLocaleTimeString()} • {command.intent.category}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-                {index < commands.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
+                        </div>
+                        <div className="flex justify-between items-center mt-2 text-xs text-base-content/60">
+                          <span>{command.timestamp.toLocaleTimeString()} • {command.intent.category}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* Help Panel */}
       {showHelp && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Available Commands
-            </Typography>
-            <Grid container spacing={2}>
+        <div className="card bg-base-100 shadow-lg">
+          <div className="card-body">
+            <h3 className="card-title text-lg mb-4">Available Commands</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {mockIntents.map(intent => (
-                <Grid item xs={12} sm={6} key={intent.name}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="subtitle2" fontWeight="medium" gutterBottom>
-                        {intent.name.replace(/_/g, ' ')}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {intent.description}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Examples:
-                      </Typography>
-                      <List dense>
-                        {intent.examples.slice(0, 2).map(example => (
-                          <ListItem key={example} disableGutters>
-                            <ListItemIcon>
-                              <TrendIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={
-                                <Typography variant="caption">
-                                  "{example}"
-                                </Typography>
-                              }
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                <div key={intent.name} className="collapse collapse-arrow bg-base-200">
+                  <input type="radio" name="help-accordion" />
+                  <div className="collapse-title font-medium">
+                    {intent.name.replace(/_/g, ' ')}
+                  </div>
+                  <div className="collapse-content">
+                    <p className="text-sm mb-2">{intent.description}</p>
+                    <div className="divider my-1"></div>
+                    <p className="text-xs font-bold mb-1">Examples:</p>
+                    <ul className="list-disc list-inside text-xs text-base-content/70">
+                      {intent.examples.map((example, i) => (
+                        <li key={i}>{example}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               ))}
-            </Grid>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
       )}
     </AnimatedBox>
   );

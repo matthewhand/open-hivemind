@@ -6,40 +6,42 @@ const flowiseConfig = convict({
     doc: 'API endpoint for Flowise',
     format: String,
     default: '',
-    env: 'FLOWISE_API_ENDPOINT'
+    env: 'FLOWISE_API_ENDPOINT',
   },
   FLOWISE_API_KEY: {
     doc: 'API key for Flowise',
     format: String,
     default: '',
-    env: 'FLOWISE_API_KEY'
+    env: 'FLOWISE_API_KEY',
   },
   FLOWISE_CONVERSATION_CHATFLOW_ID: {
     doc: 'Chatflow ID for conversation interactions',
     format: String,
     default: '',
-    env: 'FLOWISE_CONVERSATION_CHATFLOW_ID'
+    env: 'FLOWISE_CONVERSATION_CHATFLOW_ID',
   },
   FLOWISE_COMPLETION_CHATFLOW_ID: {
     doc: 'Chatflow ID for text completion tasks',
     format: String,
     default: '',
-    env: 'FLOWISE_COMPLETION_CHATFLOW_ID'
+    env: 'FLOWISE_COMPLETION_CHATFLOW_ID',
   },
   FLOWISE_USE_REST: {
     doc: 'Flag to use REST client instead of SDK',
     format: (val: any) => {
-      if (typeof val === 'boolean') return val;
+      if (val === undefined || val === null) {return true;} // Default
+      if (typeof val === 'boolean') {return val;}
       if (typeof val === 'string') {
         const trimmed = val.trim();
-        if (trimmed === '' || trimmed === 'false' || trimmed === 'FALSE' || trimmed === '0' || trimmed === 'no' || trimmed === 'NO') return false;
+        if (trimmed === 'false' || trimmed === 'FALSE' || trimmed === '0' || trimmed === 'no' || trimmed === 'NO') {return false;}
+        if (trimmed === '') {return true;} // Default to true for empty string
         return true;
       }
       return Boolean(val);
     },
     default: true,
-    env: 'FLOWISE_USE_REST'
-  }
+    env: 'FLOWISE_USE_REST',
+  },
 });
 
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');

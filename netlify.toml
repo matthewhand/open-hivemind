@@ -1,28 +1,20 @@
-# Netlify configuration for Open-Hivemind
 [build]
-<<<<<<< HEAD
+  command = "npm run build:serverless"
   publish = "src/client/dist"
-  command = "npm run build:frontend"
-=======
-  publish = "src/client/dist"
-  command = "npm run build:frontend"
->>>>>>> main
 
 [build.environment]
   NODE_VERSION = "20"
-  NODE_ENV = "production"
+
+[dev]
+  command = "npm run dev:frontend-only"
+  publish = "src/client/dist"
 
 [[redirects]]
   from = "/api/*"
-  to = "${BACKEND_URL}/api/:splat"
+  to = "https://open-hivemind.fly.dev/api/:splat"
   status = 200
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[dev]
-  command = "npm run dev"
-  port = 3000
-  publish = "dist/public"

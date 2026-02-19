@@ -1,25 +1,26 @@
 import Debug from 'debug';
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { IMessage } from '@message/interfaces/IMessage';
-import { openAiProvider } from '@integrations/openai/openAiProvider';
-import flowiseProvider from '@integrations/flowise/flowiseProvider';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
+import { OpenAiProvider } from '@hivemind/provider-openai';
+import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import llmConfig from '@config/llmConfig';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import ProviderConfigManager from '@src/config/ProviderConfigManager';
 
 const debug = Debug('app:getLlmProvider');
 
-function withTokenCounting(provider: ILlmProvider): ILlmProvider {
+function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProvider {
   const metrics = MetricsCollector.getInstance();
 
   return {
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    // Add instance ID to provider object if interface allows, to help tracking?
+    // For now we map it.
     generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
       const response = await provider.generateChatCompletion(userMessage, historyMessages, metadata);
-      // Assuming the response is a string, we can estimate tokens by character count.
-      // This is a rough estimate. For more accurate token counting, a proper tokenizer library should be used.
       if (response) {
         metrics.recordLlmTokenUsage(response.length);
       }
@@ -35,25 +36,11 @@ function withTokenCounting(provider: ILlmProvider): ILlmProvider {
   };
 }
 
-/**
- * OpenWebUI provider adapter that wraps the OpenWebUI inference module
- * to conform to the ILlmProvider interface standard.
- *
- * IMPORTANT: This provider only supports chat completions, not text completions.
- * Use this when you want to connect to a local OpenWebUI instance instead of cloud services.
- *
- * @example
- * ```typescript
- * // This provider will be automatically included when LLM_PROVIDER includes 'openwebui'
- * const providers = getLlmProvider(); // Returns [openAiProvider, openWebUI] if configured
- * ```
- */
 const openWebUI: ILlmProvider = {
   name: 'openwebui',
   supportsChatCompletion: () => true,
   supportsCompletion: () => false,
   generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
-    // Check if openWebUI supports metadata by inspecting parameter count
     if (openWebUIImport.generateChatCompletion.length === 3) {
       const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages, metadata);
       return result.text || '';
@@ -67,99 +54,72 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-/**
- * Factory function that returns configured LLM providers based on environment configuration.
- *
- * USAGE PATTERNS:
- * - Single provider: LLM_PROVIDER=openai
- * - Multiple providers: LLM_PROVIDER=openai,flowise,openwebui
- * - Array format: LLM_PROVIDER=["openai","flowise"]
- *
- * PROVIDER DETAILS:
- * - openai: Full-featured OpenAI provider (chat + text completions)
- * - flowise: Flowise integration (chat completions only, requires channelId in metadata)
- * - openwebui: Local OpenWebUI instance (chat completions only)
- *
- * @returns {ILlmProvider[]} Array of initialized LLM providers in configured order
- * @throws {Error} If no valid providers are configured or all providers fail to initialize
- *
- * @example
- * ```typescript
- * // Basic usage
- * const providers = getLlmProvider();
- * const response = await providers[0].generateChatCompletion("Hello", [], {});
- *
- * // Multi-provider setup
- * process.env.LLM_PROVIDER = "openai,flowise";
- * const [openai, flowise] = getLlmProvider();
- *
- * // Fallback handling
- * try {
- *   const providers = getLlmProvider();
- *   if (providers.length === 0) throw new Error("No providers available");
- * } catch (error) {
- *   console.error("LLM configuration error:", error.message);
- * }
- * ```
- */
 export function getLlmProvider(): ILlmProvider[] {
-  const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown;
-  const providers = (typeof rawProvider === 'string'
-    ? rawProvider.split(',').map((v: string) => v.trim())
-    : Array.isArray(rawProvider)
-      ? rawProvider
-      : ['openai']) as string[];
+  const providerManager = ProviderConfigManager.getInstance();
+  const configuredProviders = providerManager.getAllProviders('llm').filter(p => p.enabled);
 
-  debug(`Configured LLM providers: ${providers.join(', ')}`);
   const llmProviders: ILlmProvider[] = [];
 
-  providers.forEach((provider) => {
-    try {
-      let providerInstance: ILlmProvider;
-      
-      switch (provider.toLowerCase()) {
-        case 'openai':
-          providerInstance = openAiProvider;
-          debug('Initialized OpenAI provider');
-          break;
-        case 'flowise':
-          providerInstance = flowiseProvider;
-          debug('Initialized Flowise provider');
-          break;
-        case 'openwebui':
-          providerInstance = openWebUI;
-          debug('Initialized OpenWebUI provider');
-          break;
-        default:
-          debug(`Unknown LLM provider: ${provider}, skipping`);
-          return;
-      }
-      
-      // Compatibility checks (safely handle missing methods)
-      const chatSupport = typeof providerInstance.supportsChatCompletion === 'function' 
-        ? providerInstance.supportsChatCompletion() : false;
-      const completionSupport = typeof providerInstance.supportsCompletion === 'function'
-        ? providerInstance.supportsCompletion() : false;
-      
-      if (!chatSupport && !completionSupport) {
-        debug(`Warning: Provider ${provider} supports neither chat nor completion`);
-      } else if (!chatSupport) {
-        debug(`Info: Provider ${provider} supports completion only (no chat)`);
-      } else if (!completionSupport) {
-        debug(`Info: Provider ${provider} supports chat only (no completion)`);
-      }
-      
-      llmProviders.push(withTokenCounting(providerInstance));
-      
-    } catch (error) {
-      debug(`Failed to initialize provider ${provider}: ${error}`);
-    }
-  });
+  if (configuredProviders.length > 0) {
+    // New System: Use configured instances
+    configuredProviders.forEach(config => {
+      try {
+        let instance: ILlmProvider | undefined;
+        switch (config.type.toLowerCase()) {
+          case 'openai':
+            instance = new OpenAiProvider(config.config);
+            debug(`Initialized OpenAI provider instance: ${config.name}`);
+            break;
+          case 'flowise':
+            instance = new FlowiseProvider(config.config);
+            debug(`Initialized Flowise provider instance: ${config.name}`);
+            break;
+          case 'openwebui':
+            instance = openWebUI; // Singleton/Stateless
+            debug(`Initialized OpenWebUI provider instance: ${config.name}`);
+            break;
+          default:
+            debug(`Unknown LLM provider type: ${config.type}`);
+        }
 
-  if (llmProviders.length === 0) {
-    throw new Error('No valid LLM providers initialized');
+        if (instance) {
+          // We could attach the instance ID to the provider object if we extend the interface
+          // We wrap it to count tokens
+          llmProviders.push(withTokenCounting(instance, config.id));
+        }
+      } catch (error) {
+        debug(`Failed to initialize provider ${config.name}: ${error}`);
+      }
+    });
   }
 
-  debug(`Successfully initialized ${llmProviders.length} LLM providers`);
+  if (llmProviders.length === 0) {
+    // Fallback: Check Legacy Env Var (LLM_PROVIDER)
+    // This is necessary if no migration happened or it failed, or for quick development.
+    const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown;
+    const legacyTypes = (typeof rawProvider === 'string'
+      ? rawProvider.split(',').map((v: string) => v.trim())
+      : Array.isArray(rawProvider) ? rawProvider : []) as string[];
+
+    if (legacyTypes.length > 0 && legacyTypes[0] !== '') {
+      debug(`Fallback to legacy LLM_PROVIDER env var: ${legacyTypes.join(',')}`);
+      legacyTypes.forEach(type => {
+        let instance: ILlmProvider | undefined;
+        switch (type.toLowerCase()) {
+          case 'openai': instance = new OpenAiProvider(); break;
+          case 'flowise': instance = new FlowiseProvider(); break;
+          case 'openwebui': instance = openWebUI; break;
+        }
+        if (instance) { llmProviders.push(withTokenCounting(instance, 'legacy')); }
+      });
+    }
+  }
+
+  if (llmProviders.length === 0) {
+    // If still empty, default to OpenAI (legacy default)
+    debug('No providers configured, defaulting to OpenAI (Legacy default)');
+    llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
+  }
+
   return llmProviders;
 }

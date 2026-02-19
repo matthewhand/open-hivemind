@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel, Button, Divider } from '@mui/material';
-import { Alert } from '../DaisyUI';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from 'react';
+import { Alert, Input, Select, Toggle, Button, Divider } from '../DaisyUI';
+import { Settings as SettingsIcon } from 'lucide-react';
+
+interface GeneralConfig {
+  instanceName: string;
+  description: string;
+  timezone: string;
+  language: string;
+  theme: string;
+  enableNotifications: boolean;
+  enableLogging: boolean;
+  logLevel: string;
+  maxConcurrentBots: number;
+  defaultResponseTimeout: number;
+  enableHealthChecks: boolean;
+  healthCheckInterval: number;
+}
 
 const SettingsGeneral: React.FC = () => {
-  const [settings, setSettings] = useState({
-    instanceName: 'Open-Hivemind Instance',
-    description: 'Multi-agent AI coordination platform',
+  const [settings, setSettings] = useState<GeneralConfig>({
+    instanceName: '',
+    description: '',
     timezone: 'UTC',
     language: 'en',
     theme: 'auto',
@@ -15,10 +31,46 @@ const SettingsGeneral: React.FC = () => {
     maxConcurrentBots: 10,
     defaultResponseTimeout: 30,
     enableHealthChecks: true,
-    healthCheckInterval: 60
+    healthCheckInterval: 60,
   });
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/config/global');
+      if (!response.ok) { throw new Error('Failed to fetch settings'); }
+      const data = await response.json();
+
+      // Extract relevant settings from user-saved config first, then fall back to defaults
+      const userSettings = data._userSettings?.values || {};
+      const config = data.config || {};
+      setSettings({
+        instanceName: userSettings['app.name'] || config.app?.name?.value || 'Open-Hivemind Instance',
+        description: userSettings['app.description'] || config.app?.description?.value || 'Multi-agent AI coordination platform',
+        timezone: userSettings['app.timezone'] || config.app?.timezone?.value || 'UTC',
+        language: userSettings['app.language'] || config.app?.language?.value || 'en',
+        theme: userSettings['webui.theme'] || config.webui?.theme?.value || 'auto',
+        enableNotifications: userSettings['webui.notifications'] ?? (config.webui?.notifications?.value !== false),
+        enableLogging: userSettings['logging.enabled'] ?? (config.logging?.enabled?.value !== false),
+        logLevel: userSettings['logging.level'] || config.logging?.level?.value || 'info',
+        maxConcurrentBots: userSettings['limits.maxBots'] || config.limits?.maxBots?.value || 10,
+        defaultResponseTimeout: userSettings['limits.timeout'] || config.limits?.timeout?.value || 30,
+        enableHealthChecks: userSettings['health.enabled'] ?? (config.health?.enabled?.value !== false),
+        healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
+      });
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Failed to load settings' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleChange = (field: string, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
@@ -27,214 +79,264 @@ const SettingsGeneral: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/config/global', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'app.name': settings.instanceName,
+          'app.description': settings.description,
+          'logging.level': settings.logLevel,
+          'logging.enabled': settings.enableLogging,
+        }),
+      });
+
+      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
+      setTimeout(() => setAlert(null), 3000);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save settings' });
+      setAlert({ type: 'error', message: 'Failed to save settings. Some settings may require environment variables.' });
     } finally {
       setIsSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
-        General Settings
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
-        Configure basic instance settings and preferences
-      </Typography>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-4">
+        <SettingsIcon className="w-5 h-5 text-primary" />
+        <div>
+          <h5 className="text-lg font-bold">General Settings</h5>
+          <p className="text-sm text-base-content/70">Configure basic instance settings and preferences</p>
+        </div>
+      </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
           message={alert.message}
           onClose={() => setAlert(null)}
         />
       )}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 3 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Instance Information */}
-        <Typography variant="h6">Instance Information</Typography>
-        
-        <TextField
-          label="Instance Name"
-          value={settings.instanceName}
-          onChange={(e) => handleChange('instanceName', e.target.value)}
-          fullWidth
-          helperText="Display name for this Open-Hivemind instance"
-        />
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-primary rounded-full"></span>
+            Instance Information
+          </h6>
 
-        <TextField
-          label="Description"
-          value={settings.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          multiline
-          rows={3}
-          fullWidth
-          helperText="Brief description of this instance's purpose"
-        />
+          <div className="form-control mb-4">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Instance Name</span>
+            </label>
+            <Input
+              value={settings.instanceName}
+              onChange={(e) => handleChange('instanceName', e.target.value)}
+              placeholder="Display name for this Open-Hivemind instance"
+              size="sm"
+            />
+          </div>
 
-        <Divider />
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Description</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered textarea-sm w-full"
+              value={settings.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Brief description of this instance's purpose"
+              rows={2}
+            />
+          </div>
+        </div>
 
         {/* Localization */}
-        <Typography variant="h6">Localization</Typography>
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-secondary rounded-full"></span>
+            Localization & Appearance
+          </h6>
 
-        <FormControl fullWidth>
-          <InputLabel>Timezone</InputLabel>
-          <Select
-            value={settings.timezone}
-            label="Timezone"
-            onChange={(e) => handleChange('timezone', e.target.value)}
-          >
-            <MenuItem value="UTC">UTC</MenuItem>
-            <MenuItem value="America/New_York">Eastern Time</MenuItem>
-            <MenuItem value="America/Chicago">Central Time</MenuItem>
-            <MenuItem value="America/Denver">Mountain Time</MenuItem>
-            <MenuItem value="America/Los_Angeles">Pacific Time</MenuItem>
-            <MenuItem value="Europe/London">London</MenuItem>
-            <MenuItem value="Europe/Paris">Paris</MenuItem>
-            <MenuItem value="Asia/Tokyo">Tokyo</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth>
-          <InputLabel>Language</InputLabel>
-          <Select
-            value={settings.language}
-            label="Language"
-            onChange={(e) => handleChange('language', e.target.value)}
-          >
-            <MenuItem value="en">English</MenuItem>
-            <MenuItem value="es">Spanish</MenuItem>
-            <MenuItem value="fr">French</MenuItem>
-            <MenuItem value="de">German</MenuItem>
-            <MenuItem value="ja">Japanese</MenuItem>
-            <MenuItem value="zh">Chinese</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Divider />
-
-        {/* Appearance */}
-        <Typography variant="h6">Appearance</Typography>
-
-        <FormControl fullWidth>
-          <InputLabel>Theme</InputLabel>
-          <Select
-            value={settings.theme}
-            label="Theme"
-            onChange={(e) => handleChange('theme', e.target.value)}
-          >
-            <MenuItem value="auto">Auto (System)</MenuItem>
-            <MenuItem value="light">Light</MenuItem>
-            <MenuItem value="dark">Dark</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Divider />
-
-        {/* System Behavior */}
-        <Typography variant="h6">System Behavior</Typography>
-
-        <TextField
-          label="Max Concurrent Bots"
-          type="number"
-          value={settings.maxConcurrentBots}
-          onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
-          fullWidth
-          helperText="Maximum number of bots that can run simultaneously"
-          inputProps={{ min: 1, max: 100 }}
-        />
-
-        <TextField
-          label="Default Response Timeout (seconds)"
-          type="number"
-          value={settings.defaultResponseTimeout}
-          onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
-          fullWidth
-          helperText="How long to wait for bot responses before timing out"
-          inputProps={{ min: 5, max: 300 }}
-        />
-
-        <Divider />
-
-        {/* Notifications & Logging */}
-        <Typography variant="h6">Notifications & Logging</Typography>
-
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.enableNotifications}
-              onChange={(e) => handleChange('enableNotifications', e.target.checked)}
+          <div className="form-control mb-4">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Timezone</span>
+            </label>
+            <Select
+              value={settings.timezone}
+              onChange={(e) => handleChange('timezone', e.target.value)}
+              size="sm"
+              options={[
+                { value: 'UTC', label: 'UTC' },
+                { value: 'America/New_York', label: 'Eastern Time' },
+                { value: 'America/Los_Angeles', label: 'Pacific Time' },
+                { value: 'Europe/London', label: 'London' },
+                { value: 'Asia/Tokyo', label: 'Tokyo' },
+                { value: 'Australia/Sydney', label: 'Sydney' },
+              ]}
             />
-          }
-          label="Enable system notifications"
-        />
+          </div>
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.enableLogging}
-              onChange={(e) => handleChange('enableLogging', e.target.checked)}
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Theme</span>
+            </label>
+            <Select
+              value={settings.theme}
+              onChange={(e) => handleChange('theme', e.target.value)}
+              size="sm"
+              options={[
+                { value: 'auto', label: 'Auto (System)' },
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
             />
-          }
-          label="Enable system logging"
-        />
+          </div>
+        </div>
 
-        <FormControl fullWidth disabled={!settings.enableLogging}>
-          <InputLabel>Log Level</InputLabel>
-          <Select
-            value={settings.logLevel}
-            label="Log Level"
-            onChange={(e) => handleChange('logLevel', e.target.value)}
-          >
-            <MenuItem value="debug">Debug</MenuItem>
-            <MenuItem value="info">Info</MenuItem>
-            <MenuItem value="warn">Warning</MenuItem>
-            <MenuItem value="error">Error</MenuItem>
-          </Select>
-        </FormControl>
+        {/* Logging */}
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-accent rounded-full"></span>
+            Logging & Notifications
+          </h6>
 
-        <Divider />
+          <div className="form-control mb-3">
+            <label className="label cursor-pointer py-1">
+              <span className="label-text text-sm">Enable system logging</span>
+              <Toggle
+                checked={settings.enableLogging}
+                onChange={(e) => handleChange('enableLogging', e.target.checked)}
+                size="sm"
+              />
+            </label>
+          </div>
 
-        {/* Health Monitoring */}
-        <Typography variant="h6">Health Monitoring</Typography>
-
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.enableHealthChecks}
-              onChange={(e) => handleChange('enableHealthChecks', e.target.checked)}
+          <div className="form-control mb-3">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Log Level</span>
+            </label>
+            <Select
+              value={settings.logLevel}
+              onChange={(e) => handleChange('logLevel', e.target.value)}
+              disabled={!settings.enableLogging}
+              size="sm"
+              options={[
+                { value: 'debug', label: 'Debug' },
+                { value: 'info', label: 'Info' },
+                { value: 'warn', label: 'Warning' },
+                { value: 'error', label: 'Error' },
+              ]}
             />
-          }
-          label="Enable automated health checks"
-        />
+          </div>
 
-        <TextField
-          label="Health Check Interval (seconds)"
-          type="number"
-          value={settings.healthCheckInterval}
-          onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
-          fullWidth
-          disabled={!settings.enableHealthChecks}
-          helperText="How often to run health checks"
-          inputProps={{ min: 10, max: 3600 }}
-        />
+          <div className="form-control">
+            <label className="label cursor-pointer py-1">
+              <span className="label-text text-sm">Enable notifications</span>
+              <Toggle
+                checked={settings.enableNotifications}
+                onChange={(e) => handleChange('enableNotifications', e.target.checked)}
+                size="sm"
+              />
+            </label>
+          </div>
+        </div>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={isSaving}
-            size="large"
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </Box>
-      </Box>
-    </Box>
+        {/* System Limits */}
+        <div className="card bg-base-200/50 p-4 border border-base-300">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-warning rounded-full"></span>
+            System Limits
+          </h6>
+
+          {/* Concurrent Bots: Range with Color (Primary) */}
+          <div className="form-control mb-6">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Max Concurrent Bots</span>
+              <span className="badge badge-primary font-mono">{settings.maxConcurrentBots}</span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={settings.maxConcurrentBots}
+              onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
+              className="range range-primary range-md"
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>1</span>
+              <span>50</span>
+              <span>100</span>
+            </div>
+          </div>
+
+          {/* Response Timeout: Range with Size (Small) */}
+          <div className="form-control mb-6">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Response Timeout (seconds)</span>
+              <span className="badge badge-ghost font-mono">{settings.defaultResponseTimeout}s</span>
+            </label>
+            <input
+              type="range"
+              min="5"
+              max="300"
+              value={settings.defaultResponseTimeout}
+              onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
+              className="range range-xs"
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>5s</span>
+              <span>300s</span>
+            </div>
+          </div>
+
+          {/* Health Check Interval: Range with Steps & Color (Accent) */}
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Health Check Interval</span>
+              <span className="badge badge-accent font-mono">{settings.healthCheckInterval}s</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="300"
+              step="30"
+              value={settings.healthCheckInterval}
+              onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
+              className="range range-accent"
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 font-mono">
+              <span>0</span>
+              <span>60</span>
+              <span>120</span>
+              <span>180</span>
+              <span>240</span>
+              <span>300</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          variant="primary"
+          loading={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save Settings'}
+        </Button>
+      </div>
+    </div>
   );
 };
 

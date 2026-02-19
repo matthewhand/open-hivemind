@@ -1,8 +1,8 @@
-import { VoiceCommandHandler } from '@src/integrations/discord/voice/voiceCommandHandler';
+import { VoiceCommandHandler } from '@hivemind/adapter-discord/voice/voiceCommandHandler';
 import { VoiceConnection } from '@discordjs/voice';
 
-jest.mock('@src/integrations/discord/voice/speechToText');
-jest.mock('@src/integrations/discord/media/convertOpusToWav');
+jest.mock('@hivemind/adapter-discord/voice/speechToText');
+jest.mock('@hivemind/adapter-discord/media/convertOpusToWav');
 jest.mock('@src/llm/getLlmProvider');
 jest.mock('openai');
 jest.mock('fs');
@@ -32,8 +32,8 @@ describe('VoiceCommandHandler', () => {
     jest.clearAllMocks();
 
     // Test voice processing when listening
-    const { transcribeAudio } = require('@src/integrations/discord/voice/speechToText');
-    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
+    const { transcribeAudio } = require('@hivemind/adapter-discord/voice/speechToText');
+    const { convertOpusToWav } = require('@hivemind/adapter-discord/media/convertOpusToWav');
     const { getLlmProvider } = require('@src/llm/getLlmProvider');
 
     transcribeAudio.mockResolvedValue('Hello bot');

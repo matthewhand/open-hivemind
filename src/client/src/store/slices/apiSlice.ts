@@ -51,24 +51,24 @@ export const apiSlice = createApi({
   tagTypes: ['Config', 'Status', 'SecureConfig', 'Analytics', 'Performance', 'Activity'],
   endpoints: (builder) => ({
     getConfig: builder.query<ConfigResponse, void>({
-      query: () => '/webui/api/config',
+      query: () => '/api/config',
       providesTags: ['Config'],
     }),
     
     getStatus: builder.query<StatusResponse, void>({
-      query: () => '/dashboard/api/status',
+      query: () => '/api/dashboard/api/status',
       providesTags: ['Status'],
       // Polling will be handled by a custom hook
     }),
     
     getConfigSources: builder.query<ConfigSourcesResponse, void>({
-      query: () => '/webui/api/config/sources',
+      query: () => '/api/config/sources',
       providesTags: ['Config'],
     }),
     
     reloadConfig: builder.mutation<{ success: boolean; message: string; timestamp: string }, void>({
       query: () => ({
-        url: '/webui/api/config/reload',
+        url: '/api/config/reload',
         method: 'POST',
       }),
       invalidatesTags: ['Config', 'Status'],
@@ -77,11 +77,11 @@ export const apiSlice = createApi({
     createBot: builder.mutation<{ success: boolean; message: string; bot: Bot }, {
       name: string;
       messageProvider: string;
-      llmProvider: string;
+      llmProvider?: string;
       config?: Record<string, unknown>;
     }>({
       query: (botData) => ({
-        url: '/webui/api/bots',
+        url: '/api/bots',
         method: 'POST',
         body: botData,
       }),
@@ -93,7 +93,7 @@ export const apiSlice = createApi({
       newName: string;
     }>({
       query: ({ name, newName }) => ({
-        url: `/webui/api/bots/${name}/clone`,
+        url: `/api/bots/${name}/clone`,
         method: 'POST',
         body: { newName },
       }),
@@ -109,7 +109,7 @@ export const apiSlice = createApi({
     }),
     
     getSecureConfigs: builder.query<{ configs: SecureConfig[] }, void>({
-      query: () => '/webui/api/secure-configs',
+      query: () => '/api/secure-configs',
       providesTags: ['SecureConfig'],
     }),
     
@@ -124,7 +124,7 @@ export const apiSlice = createApi({
       encryptSensitive?: boolean;
     }>({
       query: ({ name, data, encryptSensitive = true }) => ({
-        url: '/webui/api/secure-configs',
+        url: '/api/secure-configs',
         method: 'POST',
         body: { name, data, encryptSensitive },
       }),
@@ -141,14 +141,14 @@ export const apiSlice = createApi({
     
     backupSecureConfigs: builder.mutation<{ success: boolean; message: string; backupFile: string }, void>({
       query: () => ({
-        url: '/webui/api/secure-configs/backup',
+        url: '/api/secure-configs/backup',
         method: 'POST',
       }),
     }),
     
     restoreSecureConfigs: builder.mutation<{ success: boolean; message: string }, { backupFile: string }>({
       query: (backupFile) => ({
-        url: '/webui/api/secure-configs/restore',
+        url: '/api/secure-configs/restore',
         method: 'POST',
         body: backupFile,
       }),
@@ -160,13 +160,13 @@ export const apiSlice = createApi({
       directorySize: number;
       lastModified: string;
     }, void>({
-      query: () => '/webui/api/secure-configs/info',
+      query: () => '/api/secure-configs/info',
       providesTags: ['SecureConfig'],
     }),
 
     applyHotReloadChange: builder.mutation<HotReloadResponse, HotReloadRequest>({
       query: (payload) => ({
-        url: '/webui/api/config/hot-reload',
+        url: '/api/config/hot-reload',
         method: 'POST',
         body: payload,
       }),
@@ -176,14 +176,14 @@ export const apiSlice = createApi({
     // Advanced analytics endpoints
     getAnalytics: builder.query<AnalyticsResponse, { timeRange?: '24h' | '7d' | '30d' | '90d' }>({
       query: (params) => ({
-        url: '/webui/api/analytics',
+        url: '/api/analytics',
         params,
       }),
       providesTags: ['Analytics'],
     }),
     
     getPerformanceMetrics: builder.query<PerformanceMetricsResponse, void>({
-      query: () => '/webui/api/performance',
+      query: () => '/api/performance',
       providesTags: ['Performance'],
       // Polling will be handled by a custom hook
     }),
@@ -199,11 +199,11 @@ export const apiSlice = createApi({
         const searchParams = new URLSearchParams();
         if (params) {
           Object.entries(params).forEach(([key, value]) => {
-            if (value) searchParams.append(key, value);
+            if (value) {searchParams.append(key, value);}
           });
         }
         const queryString = searchParams.toString();
-        return `/dashboard/api/activity${queryString ? `?${queryString}` : ''}`;
+        return `/api/dashboard/api/activity${queryString ? `?${queryString}` : ''}`;
       },
       providesTags: ['Activity'],
     }),

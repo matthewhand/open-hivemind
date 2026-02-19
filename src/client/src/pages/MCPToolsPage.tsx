@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button, Chip, FormControl, InputLabel, Select, MenuItem, TextField, InputAdornment } from '@mui/material';
-import { Search as SearchIcon, Build as ToolIcon, PlayArrow as RunIcon } from '@mui/icons-material';
+import {
+  WrenchScrewdriverIcon as ToolIcon,
+  PlayIcon as RunIcon,
+  MagnifyingGlassIcon as SearchIcon,
+} from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
 interface MCPTool {
@@ -28,98 +32,50 @@ const MCPToolsPage: React.FC = () => {
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Tools', href: '/uber/mcp/tools', isActive: true }
-  ];
-
-  // Mock tools - in real app this would come from API
-  const mockTools: MCPTool[] = [
-    {
-      id: '1',
-      name: 'github_create_issue',
-      serverId: '1',
-      serverName: 'GitHub Integration',
-      description: 'Create a new issue in a GitHub repository',
-      category: 'git',
-      inputSchema: { repository: 'string', title: 'string', body: 'string' },
-      outputSchema: { issueNumber: 'number', url: 'string' },
-      usageCount: 45,
-      lastUsed: '2024-01-15T10:30:00Z',
-      enabled: true
-    },
-    {
-      id: '2',
-      name: 'github_list_repos',
-      serverId: '1',
-      serverName: 'GitHub Integration',
-      description: 'List all repositories for a user or organization',
-      category: 'git',
-      inputSchema: { owner: 'string', type: 'string' },
-      outputSchema: { repositories: 'array' },
-      usageCount: 23,
-      lastUsed: '2024-01-14T16:45:00Z',
-      enabled: true
-    },
-    {
-      id: '3',
-      name: 'db_query',
-      serverId: '2',
-      serverName: 'Database Tools',
-      description: 'Execute a SQL query against the database',
-      category: 'database',
-      inputSchema: { query: 'string', parameters: 'array' },
-      outputSchema: { rows: 'array', count: 'number' },
-      usageCount: 78,
-      lastUsed: '2024-01-15T09:15:00Z',
-      enabled: true
-    },
-    {
-      id: '4',
-      name: 'db_backup',
-      serverId: '2',
-      serverName: 'Database Tools',
-      description: 'Create a backup of the database',
-      category: 'database',
-      inputSchema: { tables: 'array', compression: 'boolean' },
-      outputSchema: { backupPath: 'string', size: 'number' },
-      usageCount: 12,
-      lastUsed: '2024-01-13T14:20:00Z',
-      enabled: false
-    },
-    {
-      id: '5',
-      name: 'fs_read_file',
-      serverId: '3',
-      serverName: 'File System',
-      description: 'Read contents of a file',
-      category: 'filesystem',
-      inputSchema: { path: 'string', encoding: 'string' },
-      outputSchema: { content: 'string', size: 'number' },
-      usageCount: 156,
-      lastUsed: '2024-01-12T11:30:00Z',
-      enabled: true
-    },
-    {
-      id: '6',
-      name: 'api_call',
-      serverId: '4',
-      serverName: 'API Gateway',
-      description: 'Make HTTP requests to external APIs',
-      category: 'network',
-      inputSchema: { url: 'string', method: 'string', headers: 'object' },
-      outputSchema: { response: 'object', status: 'number' },
-      usageCount: 34,
-      lastUsed: '2024-01-10T08:15:00Z',
-      enabled: true
-    }
+    { label: 'Tools', href: '/uber/mcp/tools', isActive: true },
   ];
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setTools(mockTools);
-      setFilteredTools(mockTools);
-      setLoading(false);
-    }, 1000);
+    const fetchTools = async () => {
+      try {
+        const res = await fetch('/api/mcp/servers');
+        if (res.ok) {
+          const json = await res.json();
+          const servers = json.servers || [];
+
+          // Flatten structure: Server[] -> Tool[]
+          const allTools: MCPTool[] = [];
+          servers.forEach((server: any) => {
+            if (server.tools && Array.isArray(server.tools)) {
+              server.tools.forEach((t: any) => {
+                allTools.push({
+                  id: `${server.name}-${t.name}`,
+                  name: t.name,
+                  serverId: server.name, // Using name as ID for consistency with API
+                  serverName: server.name,
+                  description: t.description || 'No description available',
+                  category: 'utility', // Default category as API doesn't provide it yet
+                  inputSchema: t.inputSchema,
+                  outputSchema: {},
+                  usageCount: 0,
+                  enabled: server.connected,
+                });
+              });
+            }
+          });
+
+          setTools(allTools);
+          setFilteredTools(allTools);
+        }
+      } catch (err) {
+        console.error('Failed to fetch MCP tools:', err);
+        setAlert({ type: 'error', message: 'Failed to load tools from server' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTools();
   }, []);
 
   useEffect(() => {
@@ -127,9 +83,9 @@ const MCPToolsPage: React.FC = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(tool => 
+      filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchTerm.toLowerCase())
+        tool.description.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -151,37 +107,62 @@ const MCPToolsPage: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      git: 'primary',
-      database: 'secondary',
-      filesystem: 'info',
-      network: 'success',
-      ai: 'warning'
+      git: 'badge-primary',
+      database: 'badge-secondary',
+      filesystem: 'badge-info',
+      network: 'badge-success',
+      ai: 'badge-warning',
+      utility: 'badge-ghost',
     };
-    return colors[category] || 'default';
+    return colors[category] || 'badge-ghost';
   };
 
   const handleRunTool = async (tool: MCPTool) => {
+    // Basic prompt for arguments (in real app, use a modal form based on inputSchema)
+    const argsString = prompt(`Enter arguments for ${tool.name} (JSON format):`, '{}');
+    if (!argsString) return;
+
     try {
-      // Simulate tool execution
-      setAlert({ type: 'success', message: `Tool "${tool.name}" executed successfully` });
-      
+      const args = JSON.parse(argsString);
+
+      const res = await fetch(`/api/mcp/servers/${tool.serverName}/call-tool`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          toolName: tool.name,
+          arguments: args,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to execute tool');
+      }
+
+      const json = await res.json();
+      console.log('Tool execution result:', json);
+      setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
+
       // Update usage count
-      setTools(prev => prev.map(t => 
-        t.id === tool.id 
+      setTools(prev => prev.map(t =>
+        t.id === tool.id
           ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
-          : t
+          : t,
       ));
-    } catch (error) {
-      setAlert({ type: 'error', message: `Failed to execute tool "${tool.name}"` });
+    } catch (error: any) {
+      console.error('Tool execution error:', error);
+      setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
     }
   };
 
   const handleToggleTool = async (toolId: string) => {
     try {
-      setTools(prev => prev.map(tool => 
-        tool.id === toolId 
+      setTools(prev => prev.map(tool =>
+        tool.id === toolId
           ? { ...tool, enabled: !tool.enabled }
-          : tool
+          : tool,
       ));
       setAlert({ type: 'success', message: 'Tool status updated' });
     } catch (error) {
@@ -191,163 +172,152 @@ const MCPToolsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading MCP tools...</Typography>
-      </Box>
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading MCP tools...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
           MCP Tools
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-base-content/70">
           Browse and manage tools available from your MCP servers
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
       )}
 
       {/* Filters */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <TextField
-          placeholder="Search tools..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 250 }}
-        />
-        
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryFilter}
-            label="Category"
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Categories</MenuItem>
-            {categories.map(category => (
-              <MenuItem key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
+          <div className="input-group">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search tools..."
+                className="input input-bordered w-full pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
+            </div>
+          </div>
+        </div>
 
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Server</InputLabel>
-          <Select
-            value={serverFilter}
-            label="Server"
-            onChange={(e) => setServerFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Servers</MenuItem>
-            {servers.map(server => (
-              <MenuItem key={server.id} value={server.id}>
-                {server.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+        <select
+          className="select select-bordered w-full md:w-auto"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="all">All Categories</option>
+          {categories.map(category => (
+            <option key={category} value={category}>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </option>
+          ))}
+        </select>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <select
+          className="select select-bordered w-full md:w-auto"
+          value={serverFilter}
+          onChange={(e) => setServerFilter(e.target.value)}
+        >
+          <option value="all">All Servers</option>
+          {servers.map(server => (
+            <option key={server.id} value={server.id}>
+              {server.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <p className="text-sm text-base-content/70 mb-4">
         Showing {filteredTools.length} of {tools.length} tools
-      </Typography>
+      </p>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTools.map((tool) => (
-          <Grid item xs={12} md={6} lg={4} key={tool.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ToolIcon color="action" />
-                    <Typography variant="h6" component="h2">
-                      {tool.name}
-                    </Typography>
-                  </Box>
-                  <Chip 
-                    label={tool.enabled ? 'Enabled' : 'Disabled'}
-                    color={tool.enabled ? 'success' : 'default'}
-                    size="small"
-                  />
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {tool.description}
-                </Typography>
+          <div key={tool.id} className="card bg-base-100 shadow-xl h-full">
+            <div className="card-body">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                  <ToolIcon className="w-5 h-5 text-base-content/70" />
+                  <h2 className="card-title text-lg">
+                    {tool.name}
+                  </h2>
+                </div>
+                <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                  {tool.enabled ? 'Enabled' : 'Disabled'}
+                </div>
+              </div>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                  <Chip 
-                    label={tool.category}
-                    color={getCategoryColor(tool.category) as any}
-                    size="small"
-                  />
-                  <Chip label={tool.serverName} variant="outlined" size="small" />
-                </Box>
+              <p className="text-sm text-base-content/70 mb-4">
+                {tool.description}
+              </p>
 
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Usage:</strong> {tool.usageCount} times
-                </Typography>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className={`badge ${getCategoryColor(tool.category)}`}>
+                  {tool.category}
+                </div>
+                <div className="badge badge-outline">{tool.serverName}</div>
+              </div>
 
+              <div className="text-xs space-y-1 mb-4">
+                <p><strong>Usage:</strong> {tool.usageCount} times</p>
                 {tool.lastUsed && (
-                  <Typography variant="body2" color="text.secondary">
+                  <p className="text-base-content/50">
                     Last used: {new Date(tool.lastUsed).toLocaleString()}
-                  </Typography>
+                  </p>
                 )}
-              </CardContent>
-              
-              <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Button
-                  size="small"
+              </div>
+
+              <div className="card-actions justify-between mt-auto">
+                <button
+                  className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
                   onClick={() => handleToggleTool(tool.id)}
-                  color={tool.enabled ? 'error' : 'success'}
                 >
                   {tool.enabled ? 'Disable' : 'Enable'}
-                </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<RunIcon />}
+                </button>
+                <button
+                  className="btn btn-sm btn-primary"
                   onClick={() => handleRunTool(tool)}
                   disabled={!tool.enabled}
                 >
+                  <RunIcon className="w-4 h-4 mr-1" />
                   Run Tool
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
       {filteredTools.length === 0 && !loading && (
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography variant="h6" color="text.secondary">
+        <div className="text-center mt-12">
+          <h3 className="text-lg font-medium text-base-content/70">
             No tools found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-sm text-base-content/50 mt-1">
             Try adjusting your search criteria or add more MCP servers
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

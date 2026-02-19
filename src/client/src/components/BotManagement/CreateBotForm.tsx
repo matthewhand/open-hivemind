@@ -8,7 +8,7 @@ interface CreateBotFormProps {
 
 const CreateBotForm: React.FC<CreateBotFormProps> = ({
   onSubmit,
-  onCancel
+  onCancel,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

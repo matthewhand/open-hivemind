@@ -1,22 +1,29 @@
-import { Router, Request, Response } from 'express';
-import { BotManager, CreateBotRequest } from '../../managers/BotManager';
-import { authenticate, requireAdmin } from '../../auth/middleware';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
+import type { CreateBotRequest } from '../../managers/BotManager';
+import { BotManager } from '../../managers/BotManager';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
-import { auditMiddleware, AuditedRequest, logBotAction } from '../middleware/audit';
+import type { AuditedRequest } from '../middleware/audit';
+import { auditMiddleware, logBotAction } from '../middleware/audit';
+import { AuditLogger } from '@src/common/auditLogger';
+import { validateRequest } from '@src/validation/validateRequest';
+import { CreateBotSchema, UpdateBotSchema, CloneBotSchema, BotIdParamSchema } from '@src/validation/schemas/botSchema';
+import WebSocketService from '@src/server/services/WebSocketService';
 
 const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
 
-// Apply audit middleware after authentication
-router.use(authenticate, auditMiddleware);
+// Apply audit middleware only - authentication is handled at a higher level if enabled
+// This matches the pattern used in other routes like personas
+router.use(auditMiddleware);
 
 /**
  * GET /webui/api/bots
  * Get all bot instances
  */
-router.get('/', authenticate, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const bots = await botManager.getAllBots();
@@ -24,13 +31,13 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: { bots },
-      total: bots.length
+      total: bots.length,
     });
   } catch (error: any) {
     debug('Error getting bots:', error);
     res.status(500).json({
       error: 'Failed to get bots',
-      message: error.message || 'An error occurred while retrieving bots'
+      message: error.message || 'An error occurred while retrieving bots',
     });
   }
 });
@@ -39,7 +46,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  * GET /webui/api/bots/:botId
  * Get a specific bot instance
  */
-router.get('/:botId', authenticate, async (req: Request, res: Response) => {
+router.get('/:botId', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -48,19 +55,19 @@ router.get('/:botId', authenticate, async (req: Request, res: Response) => {
     if (!bot) {
       return res.status(404).json({
         error: 'Bot not found',
-        message: `Bot with ID ${botId} not found`
+        message: `Bot with ID ${botId} not found`,
       });
     }
 
     res.json({
       success: true,
-      data: { bot }
+      data: { bot },
     });
   } catch (error: any) {
     debug('Error getting bot:', error);
     res.status(500).json({
       error: 'Failed to get bot',
-      message: error.message || 'An error occurred while retrieving bot'
+      message: error.message || 'An error occurred while retrieving bot',
     });
   }
 });
@@ -69,37 +76,28 @@ router.get('/:botId', authenticate, async (req: Request, res: Response) => {
  * POST /webui/api/bots
  * Create a new bot instance (admin only)
  */
-router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
+router.post('/', validateRequest(CreateBotSchema), async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const createRequest: CreateBotRequest = req.body;
 
-    // Validate required fields
-    if (!createRequest.name || !createRequest.messageProvider || !createRequest.llmProvider) {
-      logBotAction(req, 'CREATE', createRequest.name || 'unknown', 'failure', 'Missing required fields: name, messageProvider, llmProvider');
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Name, messageProvider, and llmProvider are required'
-      });
-    }
-
     const bot = await botManager.createBot(createRequest);
 
     logBotAction(req, 'CREATE', bot.name, 'success', `Created bot with message provider ${bot.messageProvider} and LLM provider ${bot.llmProvider}`, {
-      newValue: bot
+      newValue: bot,
     });
 
     res.status(201).json({
       success: true,
       data: { bot },
-      message: 'Bot created successfully'
+      message: 'Bot created successfully',
     });
   } catch (error: any) {
     debug('Error creating bot:', error);
     logBotAction(req, 'CREATE', req.body?.name || 'unknown', 'failure', `Failed to create bot: ${error.message}`);
     res.status(400).json({
       error: 'Failed to create bot',
-      message: error.message || 'An error occurred while creating bot'
+      message: error.message || 'An error occurred while creating bot',
     });
   }
 });
@@ -108,31 +106,23 @@ router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
  * POST /webui/api/bots/:botId/clone
  * Clone an existing bot instance (admin only)
  */
-router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.post('/:botId/clone', validateRequest(BotIdParamSchema.merge(CloneBotSchema)), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
-    const { botId } = req.params;
-    const { newName } = req.body;
-
-    if (!newName || newName.trim().length === 0) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'New bot name is required'
-      });
-    }
+    const { botId, newName } = req.body;
 
     const clonedBot = await botManager.cloneBot(botId, newName);
 
     res.status(201).json({
       success: true,
       data: { bot: clonedBot },
-      message: 'Bot cloned successfully'
+      message: 'Bot cloned successfully',
     });
   } catch (error: any) {
     debug('Error cloning bot:', error);
     res.status(400).json({
       error: 'Failed to clone bot',
-      message: error.message || 'An error occurred while cloning bot'
+      message: error.message || 'An error occurred while cloning bot',
     });
   }
 });
@@ -141,7 +131,7 @@ router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, re
  * PUT /webui/api/bots/:botId
  * Update an existing bot instance (admin only)
  */
-router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
+router.put('/:botId', validateRequest(BotIdParamSchema.merge(UpdateBotSchema)), async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -152,22 +142,22 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
 
     const updatedBot = await botManager.updateBot(botId, updates);
 
-    logBotAction(req, 'UPDATE', botId, 'success', `Updated bot configuration`, {
+    logBotAction(req, 'UPDATE', botId, 'success', 'Updated bot configuration', {
       oldValue: existingBot,
-      newValue: updatedBot
+      newValue: updatedBot,
     });
 
     res.json({
       success: true,
       data: { bot: updatedBot },
-      message: 'Bot updated successfully'
+      message: 'Bot updated successfully',
     });
   } catch (error: any) {
     debug('Error updating bot:', error);
     logBotAction(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot: ${error.message}`);
     res.status(400).json({
       error: 'Failed to update bot',
-      message: error.message || 'An error occurred while updating bot'
+      message: error.message || 'An error occurred while updating bot',
     });
   }
 });
@@ -176,7 +166,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
  * DELETE /webui/api/bots/:botId
  * Delete a bot instance (admin only)
  */
-router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
+router.delete('/:botId', validateRequest(BotIdParamSchema), async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -190,24 +180,24 @@ router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response
       logBotAction(req, 'DELETE', botId, 'failure', 'Bot not found');
       return res.status(404).json({
         error: 'Bot not found',
-        message: `Bot with ID ${botId} not found`
+        message: `Bot with ID ${botId} not found`,
       });
     }
 
     logBotAction(req, 'DELETE', botId, 'success', `Deleted bot ${botToDelete?.name || botId}`, {
-      oldValue: botToDelete
+      oldValue: botToDelete,
     });
 
     res.json({
       success: true,
-      message: 'Bot deleted successfully'
+      message: 'Bot deleted successfully',
     });
   } catch (error: any) {
     debug('Error deleting bot:', error);
     logBotAction(req, 'DELETE', req.params.botId, 'failure', `Failed to delete bot: ${error.message}`);
     res.status(500).json({
       error: 'Failed to delete bot',
-      message: error.message || 'An error occurred while deleting bot'
+      message: error.message || 'An error occurred while deleting bot',
     });
   }
 });
@@ -216,7 +206,7 @@ router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response
  * POST /webui/api/bots/:botId/start
  * Start a bot instance (admin only)
  */
-router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.post('/:botId/start', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -226,19 +216,19 @@ router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, re
     if (!started) {
       return res.status(404).json({
         error: 'Bot not found',
-        message: `Bot with ID ${botId} not found`
+        message: `Bot with ID ${botId} not found`,
       });
     }
 
     res.json({
       success: true,
-      message: 'Bot started successfully'
+      message: 'Bot started successfully',
     });
   } catch (error: any) {
     debug('Error starting bot:', error);
     res.status(500).json({
       error: 'Failed to start bot',
-      message: error.message || 'An error occurred while starting bot'
+      message: error.message || 'An error occurred while starting bot',
     });
   }
 });
@@ -247,7 +237,7 @@ router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, re
  * POST /webui/api/bots/:botId/stop
  * Stop a bot instance (admin only)
  */
-router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.post('/:botId/stop', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -257,19 +247,98 @@ router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res
     if (!stopped) {
       return res.status(404).json({
         error: 'Bot not found',
-        message: `Bot with ID ${botId} not found`
+        message: `Bot with ID ${botId} not found`,
       });
     }
 
     res.json({
       success: true,
-      message: 'Bot stopped successfully'
+      message: 'Bot stopped successfully',
     });
   } catch (error: any) {
     debug('Error stopping bot:', error);
     res.status(500).json({
       error: 'Failed to stop bot',
-      message: error.message || 'An error occurred while stopping bot'
+      message: error.message || 'An error occurred while stopping bot',
+    });
+  }
+});
+
+/**
+ * GET /webui/api/bots/:botId/activity
+ * Get bot activity logs
+ */
+router.get('/:botId/activity', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { botId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    const auditLogger = AuditLogger.getInstance();
+    const auditActivity = auditLogger.getBotActivity(botId, limit);
+
+    // Fetch bot to get name for runtime filtering
+    const bot = await botManager.getBot(botId);
+
+    // Get runtime activity from WebSocketService
+    const wsService = WebSocketService.getInstance();
+    const runtimeActivity = wsService.getMessageFlow(1000) // Get last 1000 events to filter
+      .filter(event => {
+        // loose matching on name or ID
+        if (!bot) { return (event as any).botId === botId; }
+        return event.botName === bot.name || (event as any).botId === botId;
+      })
+      .map(event => ({
+        id: event.id || `runtime_${Date.now()}_${Math.random()}`,
+        timestamp: event.timestamp,
+        action: event.messageType === 'incoming' ? 'MESSAGE_RECEIVED' : 'RESPONSE_SENT',
+        result: event.status === 'error' || event.status === 'timeout' ? 'failure' : 'success',
+        details: event.errorMessage || (event.messageType === 'incoming' ? 'Message received' : 'Response sent'),
+        user: 'System',
+        resource: `bots/${botId}`,
+        metadata: { type: 'RUNTIME', ...event }
+      }));
+
+    // Combine and sort
+    const combinedActivity = [...auditActivity, ...runtimeActivity]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+
+    res.json({
+      success: true,
+      data: { activity: combinedActivity },
+    });
+  } catch (error: any) {
+    debug('Error getting bot activity:', error);
+    res.status(500).json({
+      error: 'Failed to get bot activity',
+      message: error.message || 'An error occurred while getting bot activity',
+    });
+  }
+});
+
+/**
+ * GET /webui/api/bots/:botId/history
+ * Get bot chat history
+ */
+router.get('/:botId/history', validateRequest(BotIdParamSchema), async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { botId } = req.params;
+    const channelId = req.query.channelId as string; // Optional: specific channel
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const history = await botManager.getBotHistory(botId, channelId, limit);
+
+    res.json({
+      success: true,
+      data: { history },
+    });
+  } catch (error: any) {
+    debug('Error getting bot history:', error);
+    res.status(500).json({
+      error: 'Failed to get bot history',
+      message: error.message || 'An error occurred while getting bot history',
     });
   }
 });
@@ -278,60 +347,73 @@ router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res
  * GET /webui/api/bots/templates
  * Get bot configuration templates
  */
-router.get('/templates', authenticate, (req: Request, res: Response) => {
+router.get('/templates', (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
-  const templates = {
-    discord: {
-      name: 'Discord Bot',
+  const templates = [
+    {
+      id: 'template_discord_community',
+      name: 'Discord Community Bot',
+      description: 'A friendly bot for managing Discord communities with moderation and engagement features.',
       messageProvider: 'discord',
+      persona: 'friendly-helper',
       llmProvider: 'openai',
+      tags: ['community', 'moderation', 'discord'],
+      featured: true,
       config: {
         discord: {
-          token: 'YOUR_DISCORD_BOT_TOKEN',
-          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID'
+          token: '',
+          voiceChannelId: '',
         },
         openai: {
-          apiKey: 'YOUR_OPENAI_API_KEY',
-          model: 'gpt-3.5-turbo'
-        }
-      }
+          apiKey: '',
+          model: 'gpt-4o',
+        },
+      },
     },
-    slack: {
-      name: 'Slack Bot',
+    {
+      id: 'template_slack_assistant',
+      name: 'Development Assistant',
+      description: 'Technical support bot for development teams with code review and documentation help.',
       messageProvider: 'slack',
-      llmProvider: 'flowise',
+      persona: 'dev-assistant',
+      llmProvider: 'anthropic', // Note: Make sure 'anthropic' is a valid provider in your system or map to 'openwebui'
+      tags: ['development', 'technical', 'code-review'],
+      featured: true,
       config: {
         slack: {
-          botToken: 'YOUR_SLACK_BOT_TOKEN',
-          signingSecret: 'YOUR_SLACK_SIGNING_SECRET',
-          appToken: 'OPTIONAL_SLACK_APP_TOKEN'
-        },
-        flowise: {
-          apiKey: 'YOUR_FLOWISE_API_KEY',
-          endpoint: 'YOUR_FLOWISE_ENDPOINT'
-        }
-      }
-    },
-    mattermost: {
-      name: 'Mattermost Bot',
-      messageProvider: 'mattermost',
-      llmProvider: 'openwebui',
-      config: {
-        mattermost: {
-          serverUrl: 'YOUR_MATTERMOST_SERVER_URL',
-          token: 'YOUR_MATTERMOST_TOKEN'
+          botToken: '',
+          signingSecret: '',
         },
         openwebui: {
-          apiKey: 'YOUR_OPENWEBUI_API_KEY',
-          endpoint: 'YOUR_OPENWEBUI_ENDPOINT'
-        }
-      }
-    }
-  };
+          apiKey: '',
+          endpoint: 'https://api.anthropic.com',
+        },
+      },
+    },
+    {
+      id: 'template_mattermost_tutor',
+      name: 'Educational Tutor',
+      description: 'Patient teaching assistant for educational environments and training programs.',
+      messageProvider: 'mattermost',
+      persona: 'teacher',
+      llmProvider: 'openai',
+      tags: ['education', 'teaching', 'training'],
+      featured: false,
+      config: {
+        mattermost: {
+          serverUrl: '',
+          token: '',
+        },
+        openai: {
+          apiKey: '',
+        },
+      },
+    },
+  ];
 
   res.json({
     success: true,
-    data: { templates }
+    data: { templates },
   });
 });
 

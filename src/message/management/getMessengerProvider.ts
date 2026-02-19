@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const DiscordMgr = require('../../integrations/discord/DiscordService');
+const DiscordMgr = require('@hivemind/adapter-discord');
 const SlackMgr = require('../../integrations/slack/SlackService');
 const MattermostMgr = (() => {
   try {
@@ -27,7 +27,7 @@ const MattermostMgr = (() => {
  */
 // Ensure CommonJS require compatibility for tests using jest.mock()
 function __require(modulePath: string): any {
-   
+
   return require(modulePath);
 }
 
@@ -51,8 +51,8 @@ export function getMessengerProvider() {
   const providerFilter: string[] = typeof rawProviders === 'string'
     ? rawProviders.split(',').map((v: string) => v.trim().toLowerCase()).filter(Boolean)
     : Array.isArray(rawProviders)
-    ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
-    : [];
+      ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
+      : [];
 
   const wantProvider = (name: string) => {
     return providerFilter.length === 0 || providerFilter.includes(name.toLowerCase());
@@ -66,12 +66,13 @@ export function getMessengerProvider() {
   const hasType = (type: string) =>
     providersArray.some((p) => String(p.type).toLowerCase() === type.toLowerCase());
 
-  const hasDiscord = hasType('discord');
-  const hasSlack = hasType('slack');
-  const hasMattermost = hasType('mattermost');
+  const LOW_MEMORY = process.env.LOW_MEMORY_MODE === 'true';
+  const hasDiscord = hasType('discord') || providerFilter.includes('discord');
+  const hasSlack = hasType('slack') || providerFilter.includes('slack');
+  const hasMattermost = hasType('mattermost') || providerFilter.includes('mattermost');
 
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
-  if (wantProvider('discord') && hasDiscord) {
+  if (hasDiscord && wantProvider('discord')) {
     try {
       const svc =
         DiscordMgr?.DiscordService?.getInstance
@@ -83,7 +84,7 @@ export function getMessengerProvider() {
           (svc as any).provider = 'discord';
         }
         messengerServices.push(svc);
-        gmpDebug(`Initialized Discord provider`);
+        gmpDebug('Initialized Discord provider');
         gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
       }
     } catch (e: any) {
@@ -111,7 +112,7 @@ export function getMessengerProvider() {
           (svc as any).provider = 'slack';
         }
         messengerServices.push(svc);
-        gmpDebug(`Initialized Slack provider`);
+        gmpDebug('Initialized Slack provider');
         gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
       }
     } catch (e: any) {
@@ -125,15 +126,15 @@ export function getMessengerProvider() {
       const svc = MattermostMgr.MattermostService?.getInstance
         ? MattermostMgr.MattermostService.getInstance()
         : MattermostMgr.default?.getInstance
-        ? MattermostMgr.default.getInstance()
-        : MattermostMgr.getInstance
-        ? MattermostMgr.getInstance()
-        : null;
+          ? MattermostMgr.default.getInstance()
+          : MattermostMgr.getInstance
+            ? MattermostMgr.getInstance()
+            : null;
       if (svc) {
         messengerServices.push(svc);
-        gmpDebug(`Initialized Mattermost provider`);
+        gmpDebug('Initialized Mattermost provider');
       } else {
-        gmpDebug(`Mattermost provider module present but no getInstance found; skipping`);
+        gmpDebug('Mattermost provider module present but no getInstance found; skipping');
       }
     } catch (e: any) {
       const errMsg = (e && typeof e === 'object' && 'message' in e) ? (e as Error).message : String(e);
@@ -171,14 +172,14 @@ export function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
-          sendMessageToChannel: () => {},
+          sendMessageToChannel: () => { },
           getClientId: () => 'SLACK_CLIENT_ID',
         });
       }
     }
   }
 
-  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p:any)=>p?.provider).join(',')}`);
+  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p: any) => p?.provider).join(',')}`);
   return messengerServices;
 }
 

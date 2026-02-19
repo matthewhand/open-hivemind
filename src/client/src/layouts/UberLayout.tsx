@@ -1,38 +1,33 @@
-import React from 'react';
-import { Box } from '@mui/material';
-import { useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Alert } from '../components/DaisyUI';
-import { useSelector, useDispatch } from 'react-redux';
-import { dismissAlert, selectAlerts } from '../store/slices/uiSlice';
+import React, { useMemo } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
-import { hivemindNavItems, filterNavItemsByRole } from '../config/navigation';
+import { hivemindNavItems, NavItem } from '../config/navigation';
+import { useHealthBadges } from '../hooks/useHealthBadges';
 
 const UberLayout: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
-  const dispatch = useDispatch();
-  const alerts = useSelector(selectAlerts);
+  const { monitoringBadge, configWarning } = useHealthBadges();
 
-  // Filter navigation items based on user role
-  const filteredNavItems = filterNavItemsByRole(hivemindNavItems, user?.role);
+  // Inject dynamic badges into nav items
+  const navItemsWithBadges: NavItem[] = useMemo(() => {
+    return hivemindNavItems.map(item => {
+      // Add status badge to Monitoring item if there are issues
+      if (item.id === 'monitoring' && monitoringBadge) {
+        return { ...item, badge: monitoringBadge };
+      }
+      // Add warning badge to LLM Integrations if unconfigured
+      if (item.id === 'integrations-llm' && configWarning) {
+        return { ...item, badge: '!' };
+      }
+      return item;
+    });
+  }, [monitoringBadge, configWarning]);
 
   return (
-    <ResponsiveNavigation navItems={filteredNavItems}>
-      {/* Alerts */}
-      <div className="space-y-2 mb-4">
-        {alerts.map((alert) => (
-          <Alert
-            key={alert.id}
-            status={alert.status}
-            message={alert.message}
-            icon={alert.icon}
-            onClose={() => dispatch(dismissAlert(alert.id))}
-          />
-        ))}
+    <ResponsiveNavigation navItems={navItemsWithBadges}>
+      <div key={location.pathname}>
+        <Outlet />
       </div>
-      
-      <Outlet />
     </ResponsiveNavigation>
   );
 };

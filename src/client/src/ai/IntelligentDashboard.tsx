@@ -1,29 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  Grid,
-  Button,
-  LinearProgress,
-  Slider,
-  FormControlLabel,
-  Switch,
-  IconButton
-} from '@mui/material';
-import { 
-  AutoAwesome as AIIcon,
-  Psychology as BehaviorIcon,
-  Star as StarIcon,
-  ThumbUp as LikeIcon,
-  ThumbDown as DislikeIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import {
+  SparklesIcon,
+  UserIcon,
+  HandThumbUpIcon,
+  HandThumbDownIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 
 interface UserBehavior {
   userId: string;
@@ -112,8 +97,9 @@ interface IntelligentDashboardState {
   userFeedback: Record<string, 'liked' | 'disliked'>;
 }
 
-// Mock user behaviors for demonstration (currently unused but available for future expansion)
-const mockUserBehaviors: UserBehavior[] = [
+// Mock user behaviors for demonstration (prefixed to suppress lint - used for demo data)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _mockUserBehaviors: UserBehavior[] = [
   {
     userId: 'user-001',
     sessionId: 'session-123',
@@ -249,7 +235,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   // Simulate AI learning and recommendation generation
   useEffect(() => {
-    if (!config.enabled) return;
+    if (!config.enabled) { return; }
 
     const interval = setInterval(() => {
       simulateLearning();
@@ -263,7 +249,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   const simulateLearning = useCallback(() => {
     setIsLoading(true);
-    
+
     // Simulate ML processing delay
     setTimeout(() => {
       const newRecommendations = generateRecommendations();
@@ -286,7 +272,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   const generateRecommendations = (): DashboardRecommendation[] => {
     const recommendations: DashboardRecommendation[] = [];
-    
+
     // Generate widget recommendations based on behavior patterns
     state.behaviorPatterns.forEach(pattern => {
       if (pattern.confidence > confidenceLevel) {
@@ -336,22 +322,22 @@ export const IntelligentDashboard: React.FC = () => {
 
   const identifyUserSegment = (): UserSegment | null => {
     // Simple segment identification based on behavior patterns
-    const segment = state.userSegments.find(segment => 
+    const segment = state.userSegments.find(segment =>
       segment.confidence > confidenceLevel &&
-      segment.criteria.behaviorPatterns.some(pattern => 
-        state.behaviorPatterns.find(p => p.id === pattern && p.confidence > confidenceLevel)
-      )
+      segment.criteria.behaviorPatterns.some(pattern =>
+        state.behaviorPatterns.find(p => p.id === pattern && p.confidence > confidenceLevel),
+      ),
     );
-    
+
     return segment || null;
   };
 
   const generatePersonalizedWidgets = (): string[] => {
-    if (!state.currentSegment) return [];
-    
+    if (!state.currentSegment) { return []; }
+
     return state.currentSegment.characteristics.preferredWidgets.filter(widget => {
-      const pattern = state.behaviorPatterns.find(p => 
-        p.recommendedWidgets.includes(widget) && p.confidence > confidenceLevel
+      const pattern = state.behaviorPatterns.find(p =>
+        p.recommendedWidgets.includes(widget) && p.confidence > confidenceLevel,
       );
       return pattern !== undefined;
     });
@@ -361,7 +347,7 @@ export const IntelligentDashboard: React.FC = () => {
     const totalPatterns = state.behaviorPatterns.length;
     const highConfidencePatterns = state.behaviorPatterns.filter(p => p.confidence > confidenceLevel).length;
     const segmentConfidence = state.currentSegment?.confidence || 0;
-    
+
     return Math.min(100, (highConfidencePatterns / totalPatterns) * 100 * segmentConfidence);
   };
 
@@ -382,7 +368,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   const applyRecommendation = (recommendation: DashboardRecommendation) => {
     console.log('Applying recommendation:', recommendation);
-    
+
     // Simulate application
     setTimeout(() => {
       setState(prev => ({
@@ -392,8 +378,8 @@ export const IntelligentDashboard: React.FC = () => {
     }, 1000);
   };
 
-  const adjustConfidenceLevel = (event: Event, newValue: number | number[]) => {
-    setConfidenceLevel(Array.isArray(newValue) ? newValue[0] : newValue);
+  const adjustConfidenceLevel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfidenceLevel(parseFloat(e.target.value));
   };
 
   const toggleFeature = (feature: keyof AIDashboardConfig) => {
@@ -406,316 +392,284 @@ export const IntelligentDashboard: React.FC = () => {
   if (!currentUser) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        animation="fade-in"
+        className="p-6 flex justify-center items-center min-h-[400px]"
       >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <AIIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
+        <div className="card bg-base-100 shadow-xl max-w-md text-center">
+          <div className="card-body">
+            <SparklesIcon className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="card-title justify-center mb-2">
               AI-Powered Dashboard
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
+            </h2>
+            <p className="text-base-content/70">
               Please log in to access intelligent dashboard features.
-            </Typography>
-          </CardContent>
-        </Card>
+            </p>
+          </div>
+        </div>
       </AnimatedBox>
     );
   }
 
   return (
     <AnimatedBox
-      animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-      sx={{ width: '100%' }}
+      animation="slide-up"
+      className="w-full space-y-6"
     >
       {/* AI Dashboard Header */}
-      <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={2}>
-              <AIIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="h6">
+      <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
+        <div className="card-body p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <SparklesIcon className="w-10 h-10 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">
                   Intelligent Dashboard
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h2>
+                <p className="text-base-content/70">
                   {state.currentSegment ? `${state.currentSegment.name} • ${state.learningProgress.toFixed(0)}% learned` : 'Learning your preferences...'}
-                </Typography>
-              </Box>
-            </Box>
-            
-            <Box display="flex" alignItems="center" gap={1}>
-              <Chip
-                label={`${state.recommendations.length} Recommendations`}
-                size="small"
-                color="primary"
-              />
-              <Chip
-                label={config.enabled ? 'AI Active' : 'AI Disabled'}
-                size="small"
-                color={config.enabled ? 'success' : 'default'}
-              />
-              <IconButton onClick={simulateLearning} disabled={isLoading}>
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="badge badge-primary">
+                {state.recommendations.length} Recommendations
+              </div>
+              <div className={`badge ${config.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                {config.enabled ? 'AI Active' : 'AI Disabled'}
+              </div>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={simulateLearning}
+                disabled={isLoading}
+              >
+                <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Learning Progress */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            AI Learning Progress
-          </Typography>
-          <Box mb={2}>
-            <Box display="flex" justifyContent="space-between" mb={1}>
-              <Typography variant="body2">Personalization Level</Typography>
-              <Typography variant="body2">{state.learningProgress.toFixed(0)}%</Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">AI Learning Progress</h3>
+          <div className="mb-4">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm">Personalization Level</span>
+              <span className="text-sm font-bold">{state.learningProgress.toFixed(0)}%</span>
+            </div>
+            <progress
+              className={`progress w-full ${state.learningProgress > 80 ? 'progress-success' : state.learningProgress > 50 ? 'progress-warning' : 'progress-primary'}`}
               value={state.learningProgress}
-              sx={{
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: 'action.disabledBackground',
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 4,
-                  backgroundColor: state.learningProgress > 80 ? 'success.main' : state.learningProgress > 50 ? 'warning.main' : 'primary.main',
-                },
-              }}
-            />
-          </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">
-                Behavior Patterns: {state.behaviorPatterns.length}
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">
-                User Segments: {state.userSegments.length}
-              </Typography>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+              max="100"
+            ></progress>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="stat bg-base-200 rounded-box p-4">
+              <div className="stat-title">Behavior Patterns</div>
+              <div className="stat-value text-primary text-2xl">{state.behaviorPatterns.length}</div>
+            </div>
+            <div className="stat bg-base-200 rounded-box p-4">
+              <div className="stat-title">User Segments</div>
+              <div className="stat-value text-secondary text-2xl">{state.userSegments.length}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* User Segment Identification */}
       {state.currentSegment && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Identified User Segment
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2} mb={2}>
-              <BehaviorIcon color="primary" />
-              <Box>
-                <Typography variant="h6">
-                  {state.currentSegment.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {state.currentSegment.description}
-                </Typography>
-              </Box>
-              <Chip
-                label={`${(state.currentSegment.confidence * 100).toFixed(0)}% confidence`}
-                size="small"
-                color={state.currentSegment.confidence > 0.8 ? 'success' : 'warning'}
-              />
-            </Box>
-            <Box mb={2}>
-              <Typography variant="body2" fontWeight="medium" gutterBottom>
-                Preferred Widgets:
-              </Typography>
-              <Box display="flex" flexWrap="wrap" gap={1}>
+        <div className="card bg-base-100 shadow-lg">
+          <div className="card-body">
+            <h3 className="card-title text-lg mb-4">Identified User Segment</h3>
+            <div className="flex items-start gap-4 mb-4">
+              <UserIcon className="w-12 h-12 text-primary bg-primary/10 rounded-full p-2" />
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-xl">{state.currentSegment.name}</h4>
+                    <p className="text-base-content/70">{state.currentSegment.description}</p>
+                  </div>
+                  <div className={`badge ${state.currentSegment.confidence > 0.8 ? 'badge-success' : 'badge-warning'}`}>
+                    {(state.currentSegment.confidence * 100).toFixed(0)}% confidence
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h5 className="font-bold text-sm mb-2">Preferred Widgets:</h5>
+              <div className="flex flex-wrap gap-2">
                 {state.currentSegment.characteristics.preferredWidgets.map(widget => (
-                  <Chip key={widget} label={widget} size="small" variant="outlined" />
+                  <div key={widget} className="badge badge-outline p-3">
+                    {widget}
+                  </div>
                 ))}
-              </Box>
-            </Box>
-            <Box>
-              <Typography variant="body2" fontWeight="medium" gutterBottom>
-                Optimal Layout:
-              </Typography>
-              <Chip label={state.currentSegment.characteristics.optimalLayout} size="small" />
-            </Box>
-          </CardContent>
-        </Card>
+              </div>
+            </div>
+
+            <div>
+              <h5 className="font-bold text-sm mb-2">Optimal Layout:</h5>
+              <div className="badge badge-ghost p-3">
+                {state.currentSegment.characteristics.optimalLayout}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Personalized Widgets */}
       {state.personalizedWidgets.length > 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Personalized Widgets
-            </Typography>
-            <Grid container spacing={2}>
+        <div className="card bg-base-100 shadow-lg">
+          <div className="card-body">
+            <h3 className="card-title text-lg mb-4">Personalized Widgets</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {state.personalizedWidgets.map(widgetId => (
-                <Grid item xs={12} sm={6} md={4} key={widgetId}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <StarIcon color="primary" />
-                        <Typography variant="body2" fontWeight="medium">
-                          {widgetId.replace('-', ' ')}
-                        </Typography>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        AI Recommended
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                <div key={widgetId} className="card bg-base-200 border border-base-300">
+                  <div className="card-body p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <SparklesIcon className="w-5 h-5 text-primary" />
+                      <h4 className="font-bold text-sm">{widgetId.replace('-', ' ')}</h4>
+                    </div>
+                    <p className="text-xs text-base-content/60">AI Recommended</p>
+                  </div>
+                </div>
               ))}
-            </Grid>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* AI Recommendations */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">
             AI Recommendations ({state.recommendations.length})
-          </Typography>
+          </h3>
           {isLoading ? (
-            <Box display="flex" justifyContent="center" p={3}>
-              <LinearProgress sx={{ width: '100%', maxWidth: 300 }} />
-            </Box>
+            <div className="flex justify-center p-8">
+              <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
           ) : (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {state.recommendations.map(recommendation => (
-                <Grid item xs={12} sm={6} key={recommendation.id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                        <Typography variant="subtitle2" fontWeight="medium">
-                          {recommendation.title}
-                        </Typography>
-                        <Chip
-                          label={recommendation.impact.toUpperCase()}
-                          size="small"
-                          color={recommendation.impact === 'high' ? 'error' : recommendation.impact === 'medium' ? 'warning' : 'info'}
-                        />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" mb={2}>
-                        {recommendation.description}
-                      </Typography>
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Chip
-                          label={`${(recommendation.confidence * 100).toFixed(0)}% confidence`}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Box display="flex" gap={1}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRecommendationFeedback(recommendation.id, 'liked')}
-                            color={state.userFeedback[recommendation.id] === 'liked' ? 'primary' : 'default'}
-                          >
-                            <LikeIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRecommendationFeedback(recommendation.id, 'disliked')}
-                            color={state.userFeedback[recommendation.id] === 'disliked' ? 'error' : 'default'}
-                          >
-                            <DislikeIcon />
-                          </IconButton>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => applyRecommendation(recommendation)}
-                          >
-                            Apply
-                          </Button>
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        {recommendation.reasoning}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                <div key={recommendation.id} className="card bg-base-200 border border-base-300">
+                  <div className="card-body p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-bold text-sm">{recommendation.title}</h4>
+                      <div className={`badge badge-sm ${recommendation.impact === 'high' ? 'badge-error' :
+                        recommendation.impact === 'medium' ? 'badge-warning' : 'badge-info'
+                        }`}>
+                        {recommendation.impact.toUpperCase()}
+                      </div>
+                    </div>
+                    <p className="text-sm text-base-content/70 mb-3">
+                      {recommendation.description}
+                    </p>
+                    <div className="flex justify-between items-center mt-auto">
+                      <div className="badge badge-outline badge-sm">
+                        {(recommendation.confidence * 100).toFixed(0)}% confidence
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          className={`btn btn-ghost btn-xs btn-square ${state.userFeedback[recommendation.id] === 'liked' ? 'text-primary' : ''}`}
+                          onClick={() => handleRecommendationFeedback(recommendation.id, 'liked')}
+                        >
+                          <HandThumbUpIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          className={`btn btn-ghost btn-xs btn-square ${state.userFeedback[recommendation.id] === 'disliked' ? 'text-error' : ''}`}
+                          onClick={() => handleRecommendationFeedback(recommendation.id, 'disliked')}
+                        >
+                          <HandThumbDownIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="btn btn-primary btn-xs ml-2"
+                          onClick={() => applyRecommendation(recommendation)}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-base-content/50 mt-2 italic">
+                      {recommendation.reasoning}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </Grid>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* AI Configuration */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            AI Configuration
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" gutterBottom>
-                Confidence Threshold: {confidenceLevel.toFixed(2)}
-              </Typography>
-              <Slider
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">AI Configuration</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">Confidence Threshold</span>
+                <span className="text-sm font-bold">{confidenceLevel.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="0.95"
+                step="0.05"
                 value={confidenceLevel}
                 onChange={adjustConfidenceLevel}
-                min={0.5}
-                max={0.95}
-                step={0.05}
-                marks={[
-                  { value: 0.5, label: '50%' },
-                  { value: 0.7, label: '70%' },
-                  { value: 0.9, label: '90%' },
-                ]}
-                valueLabelDisplay="auto"
+                className="range range-primary range-sm"
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.enabled}
-                      onChange={() => toggleFeature('enabled')}
-                    />
-                  }
-                  label="AI Learning Enabled"
+              <div className="w-full flex justify-between text-xs px-2 mt-2">
+                <span>50%</span>
+                <span>70%</span>
+                <span>90%</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={config.enabled}
+                  onChange={() => toggleFeature('enabled')}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.behaviorTracking}
-                      onChange={() => toggleFeature('behaviorTracking')}
-                    />
-                  }
-                  label="Behavior Tracking"
+                <span className="label-text">AI Learning Enabled</span>
+              </label>
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={config.behaviorTracking}
+                  onChange={() => toggleFeature('behaviorTracking')}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.personalization}
-                      onChange={() => toggleFeature('personalization')}
-                    />
-                  }
-                  label="Personalization"
+                <span className="label-text">Behavior Tracking</span>
+              </label>
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={config.personalization}
+                  onChange={() => toggleFeature('personalization')}
                 />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.predictiveAnalytics}
-                      onChange={() => toggleFeature('predictiveAnalytics')}
-                    />
-                  }
-                  label="Predictive Analytics"
+                <span className="label-text">Personalization</span>
+              </label>
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={config.predictiveAnalytics}
+                  onChange={() => toggleFeature('predictiveAnalytics')}
                 />
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+                <span className="label-text">Predictive Analytics</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </AnimatedBox>
   );
 };

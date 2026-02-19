@@ -42,9 +42,9 @@ export const Badge: React.FC<BadgeProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'badge-xs';
-      case 'large': return 'badge-lg';
-      default: return 'badge-md';
+    case 'small': return 'badge-xs';
+    case 'large': return 'badge-lg';
+    default: return 'badge-md';
     }
   };
 

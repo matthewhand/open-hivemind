@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
 
 export const installer = new SwarmInstaller();
@@ -14,7 +15,7 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
       ok: true,
       pythonAvailable,
       swarmInstalled,
-      webUIUrl: installer.getSwarmWebUIUrl()
+      webUIUrl: installer.getSwarmWebUIUrl(),
     });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });

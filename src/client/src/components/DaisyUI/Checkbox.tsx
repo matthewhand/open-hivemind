@@ -40,19 +40,19 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
   const getVariantClass = () => {
     switch (variant) {
-      case 'primary': return 'checkbox-primary';
-      case 'secondary': return 'checkbox-secondary';
-      case 'accent': return 'checkbox-accent';
-      default: return '';
+    case 'primary': return 'checkbox-primary';
+    case 'secondary': return 'checkbox-secondary';
+    case 'accent': return 'checkbox-accent';
+    default: return '';
     }
   };
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'checkbox-xs';
-      case 'sm': return 'checkbox-sm';
-      case 'lg': return 'checkbox-lg';
-      default: return '';
+    case 'xs': return 'checkbox-xs';
+    case 'sm': return 'checkbox-sm';
+    case 'lg': return 'checkbox-lg';
+    default: return '';
     }
   };
 

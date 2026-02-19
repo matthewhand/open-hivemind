@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React from 'react';
 
 // Define the props for the Card component
 interface CardProps {
@@ -14,17 +15,17 @@ interface CardProps {
    * The body content of the card
    */
   children?: ReactNode;
- /**
-   * Actions to display in the card footer
-   */
+  /**
+    * Actions to display in the card footer
+    */
   actions?: ReactNode;
   /**
    * Optional image source for the card
    */
   imageSrc?: string;
- /**
-   * Alt text for the image
-   */
+  /**
+    * Alt text for the image
+    */
   imageAlt?: string;
   /**
    * Whether the card has an image overlay style
@@ -59,10 +60,27 @@ interface CardProps {
    */
   emptyState?: ReactNode;
   /**
+   * Whether to show hover effect with lift and glow
+   */
+  hover?: boolean;
+  /**
+   * Glow color variant for hover effect
+   */
+  glowColor?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
+  /**
    * Additional CSS classes to apply to the card
    */
   className?: string;
 }
+
+const glowMap = {
+  primary: 'hover:shadow-primary/20',
+  secondary: 'hover:shadow-secondary/20',
+  accent: 'hover:shadow-accent/20',
+  success: 'hover:shadow-success/20',
+  warning: 'hover:shadow-warning/20',
+  error: 'hover:shadow-error/20',
+};
 
 /**
  * A reusable DaisyUI Card component.
@@ -83,16 +101,28 @@ const Card: React.FC<CardProps> = ({
   borderVariant,
   loading = false,
   emptyState,
+  hover = false,
+  glowColor,
   className = '',
 }) => {
   // Construct CSS classes based on props
-  let cardClasses = 'card';
-  if (compact) cardClasses += ' card-compact';
-  if (side) cardClasses += ' card-side';
-  if (imageFull) cardClasses += ' image-full';
-  if (bgVariant) cardClasses += ` bg-${bgVariant}`;
-  if (borderVariant) cardClasses += ` border border-${borderVariant}`;
-  if (className) cardClasses += ` ${className}`;
+  let cardClasses = 'card bg-base-100';
+  if (compact) {cardClasses += ' card-compact';}
+  if (side) {cardClasses += ' card-side';}
+  if (imageFull) {cardClasses += ' image-full';}
+  if (bgVariant) {cardClasses += ` bg-${bgVariant}`;}
+  if (borderVariant) {cardClasses += ` border border-${borderVariant}`;}
+
+  // Enhanced hover effects
+  if (hover) {
+    cardClasses += ' transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl';
+    if (glowColor && glowMap[glowColor]) {
+      cardClasses += ` ${glowMap[glowColor]}`;
+    }
+  }
+
+  if (className) {cardClasses += ` ${className}`;}
+
 
   // If loading, show skeleton loaders
   if (loading) {

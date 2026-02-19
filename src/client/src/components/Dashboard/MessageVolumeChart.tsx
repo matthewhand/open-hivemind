@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, Typography } from '@mui/material';
+import { Card } from '../DaisyUI';
 import { useMetrics } from '../../../hooks/useMetrics';
 
 const MessageVolumeChart: React.FC = () => {
@@ -18,17 +18,17 @@ const MessageVolumeChart: React.FC = () => {
   }, [metrics]);
 
   if (loading && data.length === 0) {
-    return <Typography>Loading message volume...</Typography>;
+    return <p className="text-base-content">Loading message volume...</p>;
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <p className="text-error">{error}</p>;
   }
 
   return (
     <Card>
-      <CardContent>
-        <Typography variant="h6">Message Volume</Typography>
+      <Card.Body>
+        <Card.Title>Message Volume</Card.Title>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -39,7 +39,7 @@ const MessageVolumeChart: React.FC = () => {
             <Line type="monotone" dataKey="volume" stroke="#8884d8" name="Messages Processed" />
           </LineChart>
         </ResponsiveContainer>
-      </CardContent>
+      </Card.Body>
     </Card>
   );
 };

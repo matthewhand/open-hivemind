@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const anthropicProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -10,7 +10,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
   defaultConfig: {
     model: 'claude-3-sonnet-20240229',
     maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
   },
   fields: [
     {
@@ -20,7 +20,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Anthropic API key',
       placeholder: 'sk-ant-1234567890123456789012345678901234567890123456789012345678901234',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'baseUrl',
@@ -29,7 +29,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Custom API base URL for third-party Anthropic-compatible providers (ANTHROPIC_BASE_URL)',
       placeholder: 'https://api.anthropic.com or https://your-proxy.com',
-      group: 'Third-Party Compatibility'
+      group: 'Third-Party Compatibility',
     },
     {
       name: 'model',
@@ -39,7 +39,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       description: 'Select or enter the Claude model to use. Predefined models are shown, with support for custom models.',
       placeholder: 'claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307...',
       defaultValue: 'claude-3-sonnet-20240229',
-            group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'maxTokens',
@@ -50,7 +50,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       placeholder: '4096',
       defaultValue: 4096,
       validation: { min: 1, max: 4096 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'temperature',
@@ -61,7 +61,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       placeholder: '0.7',
       defaultValue: 0.7,
       validation: { min: 0, max: 1 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'topP',
@@ -72,7 +72,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       placeholder: '1',
       defaultValue: 1,
       validation: { min: 0, max: 1 },
-      group: 'Model Configuration'
+      group: 'Model Configuration',
     },
     {
       name: 'topK',
@@ -83,7 +83,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       placeholder: '0',
       defaultValue: 0,
       validation: { min: 0, max: 500 },
-      group: 'Model Configuration'
-    }
-  ]
+      group: 'Model Configuration',
+    },
+  ],
 };

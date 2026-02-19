@@ -19,7 +19,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     app = express();
     app.use(express.json());
     app.use('/health', healthRouter);
-    app.use('/', healthRouter); // Health routes also mounted at root
+    app.use('/health', healthRouter); // Health routes mounted at /health
   });
 
   beforeEach(() => {
@@ -40,11 +40,11 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
     it('should respond quickly for health checks', async () => {
       const start = Date.now();
-      
+
       await request(app)
         .get('/health')
         .expect(200);
-      
+
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(100); // Should be very fast
     });
@@ -100,7 +100,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
       const { memory } = response.body;
       const expectedPercentage = (memory.used / memory.total) * 100;
-      
+
       expect(memory.percentage).toBeCloseTo(expectedPercentage, 1);
       expect(memory.percentage).toBeGreaterThanOrEqual(0);
       expect(memory.percentage).toBeLessThanOrEqual(100);
@@ -112,7 +112,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
         .expect(200);
 
       const { system } = response.body;
-      
+
       expect(['linux', 'darwin', 'win32']).toContain(system.platform);
       expect(['x64', 'arm64', 'ia32']).toContain(system.arch);
       expect(system.nodeVersion).toMatch(/^v\d+\.\d+\.\d+/);
@@ -179,13 +179,13 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     it('should detect high memory usage alerts', async () => {
       // Force high memory usage scenario
       const largeArray = new Array(1000000).fill('test');
-      
+
       const response = await request(app)
         .get('/health/alerts')
         .expect(200);
 
       // Check if memory alert is generated when usage is high
-      const memoryAlerts = response.body.alerts.filter((alert: any) => 
+      const memoryAlerts = response.body.alerts.filter((alert: any) =>
         alert.message.toLowerCase().includes('memory')
       );
 
@@ -227,11 +227,11 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
     it('should respond very quickly for liveness checks', async () => {
       const start = Date.now();
-      
+
       await request(app)
         .get('/health/live')
         .expect(200);
-      
+
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(50); // Should be extremely fast
     });
@@ -254,7 +254,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
         .expect(200);
 
       const metrics = response.text;
-      
+
       // Should include process metrics
       expect(metrics).toMatch(/process_cpu_user_seconds_total/);
       expect(metrics).toMatch(/process_resident_memory_bytes/);
@@ -282,7 +282,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       );
 
       const responses = await Promise.all(requests);
-      
+
       responses.forEach(response => {
         expect(response.status).toBe(200);
         expect(response.body.status).toBe('healthy');
@@ -296,7 +296,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       );
 
       const responses = await Promise.all(heavyRequests);
-      
+
       responses.forEach(response => {
         expect([200, 500, 503]).toContain(response.status);
       });
@@ -310,7 +310,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
         .expect(200);
 
       const responseString = JSON.stringify(response.body);
-      
+
       // Should not contain sensitive paths or credentials
       expect(responseString).not.toMatch(/\/etc\/passwd/);
       expect(responseString).not.toMatch(/\/root\//);
@@ -331,7 +331,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       for (const injection of injectionAttempts) {
         const response = await request(app)
           .get(`/health?test=${encodeURIComponent(injection)}`);
-        
+
         expect([200, 400, 404]).toContain(response.status);
       }
     });
