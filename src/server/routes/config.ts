@@ -43,7 +43,7 @@ import {
 } from '../../config/mcpServerProfiles';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
-import { testDiscordConnection } from '../../integrations/discord/DiscordConnectionTest';
+import { testDiscordConnection } from '@hivemind/adapter-discord/DiscordConnectionTest';
 import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
 

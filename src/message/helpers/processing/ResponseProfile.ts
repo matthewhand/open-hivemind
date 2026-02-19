@@ -68,5 +68,5 @@ export function getMessageSetting<T = unknown>(key: string, botConfig?: Record<s
     }
   }
 
-  return messageConfig.get(key) as T;
+  return messageConfig.get(key as any) as T;
 }

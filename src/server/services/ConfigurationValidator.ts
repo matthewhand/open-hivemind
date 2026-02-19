@@ -26,7 +26,7 @@ export interface BotConfig {
     guildId?: string;
     channelId?: string;
     voiceChannelId?: string;
-  };
+  } | string;
   slack?: {
     botToken: string;
     appToken?: string;
@@ -34,44 +34,44 @@ export interface BotConfig {
     joinChannels?: string;
     defaultChannelId?: string;
     mode?: 'socket' | 'rtm';
-  };
+  } | string;
   mattermost?: {
     serverUrl: string;
     token: string;
     teamId?: string;
     channelId?: string;
-  };
+  } | string;
   openai?: {
     apiKey: string;
     model?: string;
     temperature?: number;
     maxTokens?: number;
-  };
+  } | string;
   flowise?: {
     apiKey: string;
     endpoint: string;
     chatflowId?: string;
-  };
+  } | string;
   openwebui?: {
     apiKey: string;
     endpoint: string;
     model?: string;
-  };
+  } | string;
   openswarm?: {
     apiKey: string;
     endpoint: string;
     agentId?: string;
-  };
+  } | string;
   persona?: string;
   mcpGuardProfile?: string;
   responseProfile?: string;
   systemInstruction?: string;
-  mcpServers?: string | string[];
+  mcpServers?: string | string[] | { name: string; serverUrl?: string }[];
   mcpGuard?: {
     enabled: boolean;
     type: 'owner' | 'custom';
     allowedUserIds?: string[];
-  };
+  } | string;
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
@@ -276,40 +276,46 @@ export class ConfigurationValidator {
     suggestions: string[],
   ): void {
     switch (config.messageProvider) {
-    case 'discord':
-      if (!config.discord?.token) {
+    case 'discord': {
+      const discord = typeof config.discord === 'string' ? undefined : config.discord;
+      if (!discord?.token) {
         errors.push('Discord bot token is required');
-      } else if (!config.discord.token.startsWith('M') && !config.discord.token.startsWith('Bot ')) {
+      } else if (!discord.token.startsWith('M') && !discord.token.startsWith('Bot ')) {
         warnings.push('Discord token should start with "Bot " prefix or be a valid bot token');
       }
       break;
+    }
 
-    case 'slack':
-      if (!config.slack?.botToken) {
+    case 'slack': {
+      const slack = typeof config.slack === 'string' ? undefined : config.slack;
+      if (!slack?.botToken) {
         errors.push('Slack bot token is required');
       }
-      if (!config.slack?.signingSecret) {
+      if (!slack?.signingSecret) {
         errors.push('Slack signing secret is required');
       }
-      if (config.slack?.mode === 'socket' && !config.slack?.appToken) {
+      if (slack?.mode === 'socket' && !slack?.appToken) {
         warnings.push('Slack app token is recommended when using socket mode');
       }
       break;
+    }
 
-    case 'mattermost':
-      if (!config.mattermost?.serverUrl) {
+    case 'mattermost': {
+      const mattermost = typeof config.mattermost === 'string' ? undefined : config.mattermost;
+      if (!mattermost?.serverUrl) {
         errors.push('Mattermost server URL is required');
       } else {
         try {
-          new URL(config.mattermost.serverUrl);
+          new URL(mattermost.serverUrl);
         } catch {
           errors.push('Mattermost server URL must be a valid URL');
         }
       }
-      if (!config.mattermost?.token) {
+      if (!mattermost?.token) {
         errors.push('Mattermost token is required');
       }
       break;
+    }
     }
   }
 
@@ -328,61 +334,69 @@ export class ConfigurationValidator {
     }
 
     switch (provider) {
-    case 'openai':
-      if (!config.openai?.apiKey) {
+    case 'openai': {
+      const openai = typeof config.openai === 'string' ? undefined : config.openai;
+      if (!openai?.apiKey) {
         errors.push('OpenAI API key is required');
-      } else if (!config.openai.apiKey.startsWith('sk-')) {
+      } else if (!openai.apiKey.startsWith('sk-')) {
         warnings.push('OpenAI API key should start with "sk-" prefix');
       }
-      if (!config.openai?.model) {
+      if (!openai?.model) {
         suggestions.push('Consider specifying an OpenAI model (e.g., gpt-3.5-turbo, gpt-4)');
       }
       break;
+    }
 
-    case 'flowise':
-      if (!config.flowise?.apiKey) {
+    case 'flowise': {
+      const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
+      if (!flowise?.apiKey) {
         errors.push('Flowise API key is required');
       }
-      if (!config.flowise?.endpoint) {
+      if (!flowise?.endpoint) {
         errors.push('Flowise endpoint is required');
       } else {
         try {
-          new URL(config.flowise.endpoint);
+          new URL(flowise.endpoint);
         } catch {
           errors.push('Flowise endpoint must be a valid URL');
         }
       }
       break;
+    }
 
-    case 'openwebui':
-      if (!config.openwebui?.apiKey) {
+    case 'openwebui': {
+      const openwebui = typeof config.openwebui === 'string' ? undefined : config.openwebui;
+      if (!openwebui?.apiKey) {
         errors.push('OpenWebUI API key is required');
       }
-      if (!config.openwebui?.endpoint) {
+      if (!openwebui?.endpoint) {
         errors.push('OpenWebUI endpoint is required');
       } else {
         try {
-          new URL(config.openwebui.endpoint);
+          new URL(openwebui.endpoint);
         } catch {
           errors.push('OpenWebUI endpoint must be a valid URL');
         }
       }
       break;
+    }
 
-    case 'openswarm':
-      if (!config.openswarm?.apiKey) {
+    case 'openswarm': {
+      const openswarm = typeof config.openswarm === 'string' ? undefined : config.openswarm;
+      if (!openswarm?.apiKey) {
         errors.push('OpenSwarm API key is required');
       }
-      if (!config.openswarm?.endpoint) {
+      if (!openswarm?.endpoint) {
         errors.push('OpenSwarm endpoint is required');
       } else {
         try {
-          new URL(config.openswarm.endpoint);
+          new URL(openswarm.endpoint);
         } catch {
           errors.push('OpenSwarm endpoint must be a valid URL');
         }
       }
       break;
+    }
     }
   }
 
@@ -420,8 +434,9 @@ export class ConfigurationValidator {
     }
 
     // MCP Guard validation
-    if (config.mcpGuard?.enabled) {
-      if (config.mcpGuard.type === 'custom' && !config.mcpGuard.allowedUserIds?.length) {
+    const mcpGuard = typeof config.mcpGuard === 'string' ? undefined : config.mcpGuard;
+    if (mcpGuard?.enabled) {
+      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUserIds?.length) {
         warnings.push('MCP Guard is enabled but no allowed users specified');
         suggestions.push('Add user IDs to the allowed list or consider using owner-only mode');
       }
