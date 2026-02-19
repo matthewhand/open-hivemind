@@ -1,7 +1,5 @@
-import type { BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import type { BotConfig } from './ConfigurationValidator';
-import { ConfigurationValidator } from './ConfigurationValidator';
+import { DatabaseManager, BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
+import { ConfigurationValidator, BotConfig } from './ConfigurationValidator';
 import { ConfigurationError } from '../../types/errorClasses';
 import Debug from 'debug';
 
@@ -10,7 +8,7 @@ const debug = Debug('app:BotConfigService');
 export interface CreateBotConfigRequest {
   name: string;
   messageProvider: string;
-  llmProvider?: string;
+  llmProvider: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: string | string[];
@@ -86,7 +84,7 @@ export class BotConfigService {
     if (!this.dbManager.isConfigured()) {
       throw new ConfigurationError(
         `Database is not configured. Unable to ${action}.`,
-        'database',
+        'database'
       );
     }
   }
@@ -103,13 +101,13 @@ export class BotConfigService {
    */
   async createBotConfig(
     configData: CreateBotConfigRequest,
-    createdBy?: string,
+    createdBy?: string
   ): Promise<BotConfigResponse> {
     try {
       this.ensureDatabaseEnabled('create bot configurations');
 
       // Validate configuration
-      const validationResult = this.configValidator.validateBotConfig(configData as unknown as BotConfig);
+      const validationResult = this.configValidator.validateBotConfig(configData);
       if (!validationResult.isValid) {
         throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
       }
@@ -124,23 +122,25 @@ export class BotConfigService {
       const botConfig: BotConfiguration = {
         name: configData.name,
         messageProvider: configData.messageProvider,
-        llmProvider: configData.llmProvider?.trim() || '',
+        llmProvider: configData.llmProvider,
         persona: configData.persona,
         systemInstruction: configData.systemInstruction,
-        mcpServers: configData.mcpServers as any,
-        mcpGuard: configData.mcpGuard as any,
-        discord: configData.discord as any,
-        slack: configData.slack as any,
-        mattermost: configData.mattermost as any,
-        openai: configData.openai as any,
-        flowise: configData.flowise as any,
-        openwebui: configData.openwebui as any,
-        openswarm: configData.openswarm as any,
+        mcpServers: Array.isArray(configData.mcpServers)
+          ? JSON.stringify(configData.mcpServers)
+          : configData.mcpServers,
+        mcpGuard: configData.mcpGuard ? JSON.stringify(configData.mcpGuard) : undefined,
+        discord: configData.discord ? JSON.stringify(configData.discord) : undefined,
+        slack: configData.slack ? JSON.stringify(configData.slack) : undefined,
+        mattermost: configData.mattermost ? JSON.stringify(configData.mattermost) : undefined,
+        openai: configData.openai ? JSON.stringify(configData.openai) : undefined,
+        flowise: configData.flowise ? JSON.stringify(configData.flowise) : undefined,
+        openwebui: configData.openwebui ? JSON.stringify(configData.openwebui) : undefined,
+        openswarm: configData.openswarm ? JSON.stringify(configData.openswarm) : undefined,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy,
-        updatedBy: createdBy,
+        updatedBy: createdBy
       };
 
       // Create configuration in database
@@ -152,7 +152,7 @@ export class BotConfigService {
         action: 'CREATE',
         newValues: JSON.stringify(configData),
         performedBy: createdBy,
-        performedAt: new Date(),
+        performedAt: new Date()
       });
 
       // Get the created configuration
@@ -184,7 +184,7 @@ export class BotConfigService {
       return {
         ...config,
         versions: await this.dbManager.getBotConfigurationVersions(id),
-        auditLog: await this.dbManager.getBotConfigurationAudit(id),
+        auditLog: await this.dbManager.getBotConfigurationAudit(id)
       };
     } catch (error) {
       debug('Error getting bot configuration:', error);
@@ -207,7 +207,7 @@ export class BotConfigService {
       return {
         ...config,
         versions: await this.dbManager.getBotConfigurationVersions(config.id!),
-        auditLog: await this.dbManager.getBotConfigurationAudit(config.id!),
+        auditLog: await this.dbManager.getBotConfigurationAudit(config.id!)
       };
     } catch (error) {
       debug('Error getting bot configuration by name:', error);
@@ -216,22 +216,14 @@ export class BotConfigService {
   }
 
   /**
-   * Get all bot configurations
+   * Get all bot configurations (optimized with bulk queries)
    */
   async getAllBotConfigs(): Promise<BotConfigResponse[]> {
     try {
       this.ensureDatabaseEnabled('list bot configurations');
 
-      const configs = await this.dbManager.getAllBotConfigurations();
-      const configsWithDetails = await Promise.all(
-        configs.map(async (config) => ({
-          ...config,
-          versions: await this.dbManager.getBotConfigurationVersions(config.id!),
-          auditLog: await this.dbManager.getBotConfigurationAudit(config.id!),
-        })),
-      );
-
-      return configsWithDetails;
+      // Use optimized bulk query method - reduces from 1+2N queries to just 3 queries total
+      return await this.dbManager.getAllBotConfigurationsWithDetails();
     } catch (error) {
       debug('Error getting all bot configurations:', error);
       throw error;
@@ -244,7 +236,7 @@ export class BotConfigService {
   async updateBotConfig(
     id: number,
     updates: UpdateBotConfigRequest,
-    updatedBy?: string,
+    updatedBy?: string
   ): Promise<BotConfigResponse> {
     try {
       this.ensureDatabaseEnabled('update bot configurations');
@@ -262,18 +254,18 @@ export class BotConfigService {
         llmProvider: updates.llmProvider ?? existingConfig.llmProvider,
         persona: updates.persona ?? existingConfig.persona,
         systemInstruction: updates.systemInstruction ?? existingConfig.systemInstruction,
-        mcpServers: (updates.mcpServers ?? existingConfig.mcpServers) as any,
-        mcpGuard: (updates.mcpGuard ?? existingConfig.mcpGuard) as any,
-        discord: (updates.discord ?? existingConfig.discord) as any,
-        slack: (updates.slack ?? existingConfig.slack) as any,
-        mattermost: (updates.mattermost ?? existingConfig.mattermost) as any,
-        openai: (updates.openai ?? existingConfig.openai) as any,
-        flowise: (updates.flowise ?? existingConfig.flowise) as any,
-        openwebui: (updates.openwebui ?? existingConfig.openwebui) as any,
-        openswarm: (updates.openswarm ?? existingConfig.openswarm) as any,
+        mcpServers: updates.mcpServers ?? existingConfig.mcpServers,
+        mcpGuard: updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard,
+        discord: updates.discord ? JSON.stringify(updates.discord) : existingConfig.discord,
+        slack: updates.slack ? JSON.stringify(updates.slack) : existingConfig.slack,
+        mattermost: updates.mattermost ? JSON.stringify(updates.mattermost) : existingConfig.mattermost,
+        openai: updates.openai ? JSON.stringify(updates.openai) : existingConfig.openai,
+        flowise: updates.flowise ? JSON.stringify(updates.flowise) : existingConfig.flowise,
+        openwebui: updates.openwebui ? JSON.stringify(updates.openwebui) : existingConfig.openwebui,
+        openswarm: updates.openswarm ? JSON.stringify(updates.openswarm) : existingConfig.openswarm,
         isActive: updates.isActive ?? existingConfig.isActive,
         createdAt: existingConfig.createdAt.toISOString(),
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const validationResult = this.configValidator.validateBotConfig(updatedConfigData);
@@ -284,7 +276,7 @@ export class BotConfigService {
       // Update configuration in database
       const updateData: any = {
         updatedAt: new Date(),
-        updatedBy,
+        updatedBy
       };
 
       if (updates.mcpGuard !== undefined) {
@@ -321,7 +313,7 @@ export class BotConfigService {
         oldValues: JSON.stringify(existingConfig),
         newValues: JSON.stringify(updates),
         performedBy: updatedBy,
-        performedAt: new Date(),
+        performedAt: new Date()
       });
 
       // Get updated configuration
@@ -357,7 +349,7 @@ export class BotConfigService {
         action: 'DELETE',
         oldValues: JSON.stringify(existingConfig),
         performedBy: deletedBy,
-        performedAt: new Date(),
+        performedAt: new Date()
       });
 
       // Delete configuration
@@ -384,7 +376,7 @@ export class BotConfigService {
       await this.dbManager.updateBotConfiguration(id, {
         isActive: true,
         updatedAt: new Date(),
-        updatedBy: activatedBy,
+        updatedBy: activatedBy
       });
 
       // Create audit log
@@ -392,7 +384,7 @@ export class BotConfigService {
         botConfigurationId: id,
         action: 'ACTIVATE',
         performedBy: activatedBy,
-        performedAt: new Date(),
+        performedAt: new Date()
       });
 
       const config = await this.dbManager.getBotConfiguration(id);
@@ -418,7 +410,7 @@ export class BotConfigService {
       await this.dbManager.updateBotConfiguration(id, {
         isActive: false,
         updatedAt: new Date(),
-        updatedBy: deactivatedBy,
+        updatedBy: deactivatedBy
       });
 
       // Create audit log
@@ -426,7 +418,7 @@ export class BotConfigService {
         botConfigurationId: id,
         action: 'DEACTIVATE',
         performedBy: deactivatedBy,
-        performedAt: new Date(),
+        performedAt: new Date()
       });
 
       const config = await this.dbManager.getBotConfiguration(id);
@@ -448,7 +440,7 @@ export class BotConfigService {
   async createBotConfigVersion(
     botConfigurationId: number,
     changeLog?: string,
-    createdBy?: string,
+    createdBy?: string
   ): Promise<BotConfigurationVersion> {
     try {
       this.ensureDatabaseEnabled('version bot configurations');
@@ -472,7 +464,9 @@ export class BotConfigService {
         llmProvider: currentConfig.llmProvider,
         persona: currentConfig.persona,
         systemInstruction: currentConfig.systemInstruction,
-        mcpServers: currentConfig.mcpServers,
+        mcpServers: typeof currentConfig.mcpServers === 'string'
+          ? currentConfig.mcpServers
+          : JSON.stringify(currentConfig.mcpServers || []),
         mcpGuard: currentConfig.mcpGuard,
         discord: currentConfig.discord,
         slack: currentConfig.slack,
@@ -484,7 +478,7 @@ export class BotConfigService {
         isActive: true,
         createdAt: new Date(),
         createdBy,
-        changeLog,
+        changeLog
       };
 
       const versionId = await this.dbManager.createBotConfigurationVersion(version);
@@ -517,7 +511,7 @@ export class BotConfigService {
         active: configs.filter(c => c.isActive).length,
         inactive: configs.filter(c => !c.isActive).length,
         byProvider: {} as { [key: string]: number },
-        byLlmProvider: {} as { [key: string]: number },
+        byLlmProvider: {} as { [key: string]: number }
       };
 
       configs.forEach(config => {
@@ -553,7 +547,7 @@ export class BotConfigService {
         isValid: false,
         errors: [error instanceof Error ? error.message : 'Validation failed'],
         warnings: [],
-        suggestions: [],
+        suggestions: []
       };
     }
   }
