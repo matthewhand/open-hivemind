@@ -14,6 +14,22 @@ function normalizeDate(dateInput: any): Date {
   return new Date();
 }
 
+// Mock functions for testing - these are jest mocks that can be cleared/checked
+export const mockRun = jest.fn();
+export const mockGet = jest.fn();
+export const mockAll = jest.fn();
+export const mockExec = jest.fn();
+export const mockClose = jest.fn();
+export const mockConfigure = jest.fn();
+export const mockDb = {
+  run: mockRun,
+  get: mockGet,
+  all: mockAll,
+  exec: mockExec,
+  close: mockClose,
+  configure: mockConfigure,
+};
+
 export class Database {
   private lastId: number;
   private data: Map<string, any[]>;
@@ -31,11 +47,21 @@ export class Database {
     this.lastId = 1;
   }
 
-  async exec(_sql: string): Promise<void> {
+  async exec(sql: string): Promise<void> {
+    // Call the mock function for tracking
+    await mockExec(sql);
     return;
   }
 
   async run(sql: string, ...args: any[]): Promise<{ lastID: number; changes: number }> {
+    // Call the mock function for tracking and get its result if mock was set up
+    const mockResult = await mockRun(sql, ...args);
+    
+    // If the mock returned a specific value (via mockResolvedValueOnce), use it
+    if (mockResult !== undefined) {
+      return mockResult;
+    }
+    
     let changes = 0;
     let lastID = 0;
 
@@ -247,6 +273,14 @@ export class Database {
   }
 
   async all(sql: string, ...args: any[]): Promise<any[]> {
+    // Call the mock function for tracking and get its result if mock was set up
+    const mockResult = await mockAll(sql, ...args);
+    
+    // If the mock returned a specific value (via mockResolvedValueOnce), use it
+    if (mockResult !== undefined) {
+      return mockResult;
+    }
+    
     // Handle case where parameters are passed as an array (common pattern in DatabaseManager)
     if (args.length === 1 && Array.isArray(args[0])) {
       args = args[0];
@@ -317,11 +351,34 @@ export class Database {
       }
       return audits;
     }
+    
+    // messages queries
+    if (sql.includes('messages')) {
+      return this.data.get('messages') || [];
+    }
+    
+    // anomalies queries
+    if (sql.includes('anomalies')) {
+      return this.data.get('anomalies') || [];
+    }
+    
+    // bot_metrics queries
+    if (sql.includes('bot_metrics')) {
+      return this.data.get('bot_metrics') || [];
+    }
 
     return [];
   }
 
   async get(sql: string, ...args: any[]): Promise<any> {
+    // Call the mock function for tracking and get its result if mock was set up
+    const mockResult = await mockGet(sql, ...args);
+    
+    // If the mock returned a specific value (via mockResolvedValueOnce), use it
+    if (mockResult !== undefined) {
+      return mockResult;
+    }
+    
     // Handle case where parameters are passed as an array (common pattern in DatabaseManager)
     if (args.length === 1 && Array.isArray(args[0])) {
       args = args[0];
@@ -354,20 +411,29 @@ export class Database {
   }
 
   async close(): Promise<void> {
+    // Call the mock function for tracking
+    await mockClose();
     return;
   }
 }
 
-export const open = async (config: any): Promise<Database> => {
+export const open = jest.fn(async (config: any): Promise<Database> => {
   const db = new Database();
   // Clear data if using in-memory database for test isolation
   if (config && (config.path === ':memory:' || config.memory)) {
     db.clearAllData();
   }
   return db;
-};
+});
 
 export default {
   open,
   Database,
+  mockRun,
+  mockGet,
+  mockAll,
+  mockExec,
+  mockClose,
+  mockConfigure,
+  mockDb,
 };

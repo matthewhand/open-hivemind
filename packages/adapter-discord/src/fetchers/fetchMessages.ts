@@ -1,6 +1,6 @@
 import type { TextChannel } from 'discord.js';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage';
+import DiscordMessage from '../DiscordMessage';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 /**
