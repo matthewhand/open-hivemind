@@ -14,8 +14,8 @@ import {
 } from '../middleware/errorHandler';
 
 // Route imports
-import healthRouter from '../routes/health';
-import errorsRouter from '../routes/errors';
+import healthRouter from './routes/health';
+import errorsRouter from './routes/errors';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import mcpRouter from './routes/mcp';

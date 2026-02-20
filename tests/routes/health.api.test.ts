@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 import { runRoute } from '../helpers/expressRunner';
-import healthRouter from '../../src/routes/health';
+import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
 
 describe('Health Routes - API Monitoring', () => {

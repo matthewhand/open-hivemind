@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
-import { errorLogger } from '../utils/errorLogger';
-import { ErrorFactory } from '../types/errorClasses';
+import { errorLogger } from '../../utils/errorLogger';
+import { ErrorFactory } from '../../types/errorClasses';
 
 const router = Router();
 
