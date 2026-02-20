@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
+import { csrfProtection, csrfTokenHandler } from '../middleware/csrf';
 import Debug from 'debug';
 import { validateRequest } from '../../validation/validateRequest';
 import {
@@ -18,6 +19,13 @@ import {
 const debug = Debug('app:AuthRoutes');
 const router = Router();
 const authManager = AuthManager.getInstance();
+
+/**
+ * GET /webui/api/auth/csrf-token
+ * Get CSRF token for state-changing requests
+ * This endpoint returns a CSRF token that must be included in POST/PUT/DELETE requests
+ */
+router.get('/csrf-token', csrfTokenHandler);
 
 /**
  * POST /webui/api/auth/login
@@ -134,7 +142,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
  * POST /webui/api/auth/register
  * User registration endpoint (admin only)
  */
-router.post('/register', authenticate, requireAdmin, validateRequest(RegisterSchema), async (req: Request, res: Response) => {
+router.post('/register', csrfProtection, authenticate, requireAdmin, validateRequest(RegisterSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const registerData: RegisterData = req.body;
@@ -185,7 +193,7 @@ router.post('/refresh', validateRequest(RefreshTokenSchema), async (req: Request
  * POST /webui/api/auth/logout
  * User logout endpoint
  */
-router.post('/logout', authenticate, validateRequest(LogoutSchema), async (req: Request, res: Response) => {
+router.post('/logout', csrfProtection, authenticate, validateRequest(LogoutSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { refreshToken } = req.body;
@@ -223,7 +231,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
  * PUT /webui/api/auth/password
  * Change user password
  */
-router.put('/password', authenticate, validateRequest(ChangePasswordSchema), async (req: Request, res: Response) => {
+router.put('/password', csrfProtection, authenticate, validateRequest(ChangePasswordSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { currentPassword, newPassword } = req.body;
@@ -342,7 +350,7 @@ router.get('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
  * PUT /webui/api/auth/users/:userId
  * Update user (admin only)
  */
-router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema.merge(UpdateUserSchema)), async (req: Request, res: Response) => {
+router.put('/users/:userId', csrfProtection, authenticate, requireAdmin, validateRequest(UserIdParamSchema.merge(UpdateUserSchema)), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
@@ -379,7 +387,7 @@ router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
  * DELETE /webui/api/auth/users/:userId
  * Delete user (admin only)
  */
-router.delete('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
+router.delete('/users/:userId', csrfProtection, authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;

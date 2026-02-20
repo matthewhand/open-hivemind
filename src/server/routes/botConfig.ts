@@ -12,6 +12,7 @@ import { ConfigurationError } from '../../types/errorClasses';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { validateBotConfigCreation, validateBotConfigUpdate, sanitizeBotConfig } from '../middleware/formValidation';
 import { BotConfigService } from '../services/BotConfigService';
+import { csrfProtection } from '../middleware/csrf';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
@@ -112,8 +113,9 @@ router.get('/:botId', async (req: Request, res: Response) => {
 /**
  * POST /webui/api/bot-config
  * Create a new bot configuration (admin only)
+ * Protected by CSRF middleware
  */
-router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, async (req: AuditedRequest, res: Response) => {
+router.post('/', csrfProtection, requireAdmin, validateBotConfigCreation, sanitizeBotConfig, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const configData = req.body;
@@ -153,8 +155,9 @@ router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, asy
 /**
  * PUT /webui/api/bot-config/:botId
  * Update an existing bot configuration (admin only)
+ * Protected by CSRF middleware
  */
-router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
+router.put('/:botId', csrfProtection, requireAdmin, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;

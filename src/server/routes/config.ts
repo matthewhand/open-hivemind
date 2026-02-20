@@ -6,6 +6,7 @@ import { UserConfigStore } from '../../config/UserConfigStore';
 import { HivemindError, ErrorUtils } from '../../types/errors';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigUpdateSchema, ConfigRestoreSchema, ConfigBackupSchema } from '../../validation/schemas/configSchema';
+import { csrfProtection } from '../middleware/csrf';
 import fs from 'fs';
 import path from 'path';
 
@@ -202,7 +203,7 @@ router.get('/bots', async (req, res) => {
 });
 
 // PUT /api/config/bots/:name - Update bot configuration (with secret handling)
-router.put('/bots/:name', async (req, res) => {
+router.put('/bots/:name', csrfProtection, async (req, res) => {
   try {
     const { name } = req.params;
     const updates = req.body;
@@ -275,7 +276,7 @@ router.get('/templates', (req, res) => {
 });
 
 // POST /api/config/templates/:id/create - Create bot from template
-router.post('/templates/:id/create', async (req, res) => {
+router.post('/templates/:id/create', csrfProtection, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, overrides } = req.body;
@@ -391,7 +392,7 @@ router.get('/global', (req, res) => {
 });
 
 // PUT /api/config/global - Update global configuration
-router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
+router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
@@ -686,7 +687,7 @@ router.get('/sources', (req, res) => {
 });
 
 // Reload configuration
-router.post('/reload', (req, res) => {
+router.post('/reload', csrfProtection, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     console.log('Manager instance obtained:', !!manager);
@@ -735,7 +736,7 @@ router.post('/reload', (req, res) => {
 });
 
 // Clear cache
-router.post('/api/cache/clear', (req, res) => {
+router.post('/api/cache/clear', csrfProtection, (req, res) => {
   try {
     // Clear any in-memory caches
     if ((global as any).configCache) {
@@ -867,7 +868,7 @@ router.get('/validate', (req, res) => {
 });
 
 // Create configuration backup
-router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
+router.post('/backup', csrfProtection, validateRequest(ConfigBackupSchema), (req: any, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -903,7 +904,7 @@ router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
 });
 
 // Restore configuration from backup
-router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) => {
+router.post('/restore', csrfProtection, validateRequest(ConfigRestoreSchema), (req: any, res) => {
   try {
     const { backupId } = req.body;
 
@@ -1130,7 +1131,7 @@ router.get('/guardrails', (req, res) => {
 });
 
 // PUT /api/config/guardrails - Update MCP guardrail profiles
-router.put('/guardrails', (req, res) => {
+router.put('/guardrails', csrfProtection, (req, res) => {
   try {
     const payload = req.body;
     const profiles = payload?.profiles;
@@ -1166,7 +1167,7 @@ router.put('/guardrails', (req, res) => {
 });
 
 // POST /api/config/guardrails - Create a guardrail profile
-router.post('/guardrails', (req, res) => {
+router.post('/guardrails', csrfProtection, (req, res) => {
   try {
     const profile = req.body as GuardrailProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1197,7 +1198,7 @@ router.post('/guardrails', (req, res) => {
 });
 
 // DELETE /api/config/guardrails/:key - Delete a guardrail profile
-router.delete('/guardrails/:key', (req, res) => {
+router.delete('/guardrails/:key', csrfProtection, (req, res) => {
   try {
     const key = req.params.key;
     const profiles = getGuardrailProfiles();
@@ -1235,7 +1236,7 @@ router.get('/response-profiles', (req, res) => {
 });
 
 // POST /api/config/response-profiles - Create a response profile
-router.post('/response-profiles', (req, res) => {
+router.post('/response-profiles', csrfProtection, (req, res) => {
   try {
     const profile = req.body as ResponseProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1261,7 +1262,7 @@ router.post('/response-profiles', (req, res) => {
 });
 
 // PUT /api/config/response-profiles/:key - Update a response profile
-router.put('/response-profiles/:key', (req, res) => {
+router.put('/response-profiles/:key', csrfProtection, (req, res) => {
   try {
     const key = req.params.key;
     const updates = req.body as Partial<ResponseProfile>;
@@ -1279,7 +1280,7 @@ router.put('/response-profiles/:key', (req, res) => {
 });
 
 // DELETE /api/config/response-profiles/:key - Delete a response profile
-router.delete('/response-profiles/:key', (req, res) => {
+router.delete('/response-profiles/:key', csrfProtection, (req, res) => {
   try {
     const key = req.params.key;
     deleteResponseProfile(key);
@@ -1388,7 +1389,7 @@ router.get('/llm-profiles', (req, res) => {
 });
 
 // PUT /api/config/llm-profiles - Update LLM profile templates
-router.put('/llm-profiles', (req, res) => {
+router.put('/llm-profiles', csrfProtection, (req, res) => {
   try {
     const payload = req.body;
     const profiles = payload?.profiles;
@@ -1440,7 +1441,7 @@ router.put('/llm-profiles', (req, res) => {
 });
 
 // POST /api/config/llm-profiles - Create an LLM profile
-router.post('/llm-profiles', (req, res) => {
+router.post('/llm-profiles', csrfProtection, (req, res) => {
   try {
     const profile = req.body as ProviderProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1476,7 +1477,7 @@ router.post('/llm-profiles', (req, res) => {
 });
 
 // DELETE /api/config/llm-profiles/:key - Delete an LLM profile
-router.delete('/llm-profiles/:key', (req, res) => {
+router.delete('/llm-profiles/:key', csrfProtection, (req, res) => {
   try {
     const key = req.params.key;
     const allProfiles = getLlmProfiles();
@@ -1499,7 +1500,7 @@ router.delete('/llm-profiles/:key', (req, res) => {
 });
 
 // PUT /api/config/messaging - Update messaging behavior settings
-router.put('/messaging', async (req, res) => {
+router.put('/messaging', csrfProtection, async (req, res) => {
   try {
     const updates = req.body;
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -1559,7 +1560,7 @@ router.get('/mcp-server-profiles', (_req, res) => {
 });
 
 // POST create new MCP server profile
-router.post('/mcp-server-profiles', (req, res) => {
+router.post('/mcp-server-profiles', csrfProtection, (req, res) => {
   try {
     const { key, name, description, mcpServers } = req.body;
 
@@ -1591,7 +1592,7 @@ router.post('/mcp-server-profiles', (req, res) => {
 });
 
 // PUT update MCP server profile
-router.put('/mcp-server-profiles/:key', (req, res) => {
+router.put('/mcp-server-profiles/:key', csrfProtection, (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
@@ -1612,7 +1613,7 @@ router.put('/mcp-server-profiles/:key', (req, res) => {
 });
 
 // DELETE MCP server profile
-router.delete('/mcp-server-profiles/:key', (req, res) => {
+router.delete('/mcp-server-profiles/:key', csrfProtection, (req, res) => {
   try {
     const { key } = req.params;
     const deleted = deleteMcpServerProfile(key);

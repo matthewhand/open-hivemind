@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { csrfProtection } from '../middleware/csrf';
 import fs from 'fs';
 import path from 'path';
 import { MCPService } from '../../mcp/MCPService';
@@ -85,7 +86,7 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
 });
 
 // POST /api/admin/tool-usage-guards - Create a new tool usage guard
-router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
+router.post('/api/admin/tool-usage-guards', csrfProtection, configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
 
@@ -132,7 +133,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
 });
 
 // PUT /api/admin/tool-usage-guards/:id - Update an existing tool usage guard
-router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+router.put('/api/admin/tool-usage-guards/:id', csrfProtection, configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
@@ -180,7 +181,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
 });
 
 // DELETE /api/admin/tool-usage-guards/:id - Delete a tool usage guard
-router.delete('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+router.delete('/api/admin/tool-usage-guards/:id', csrfProtection, configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -200,7 +201,7 @@ router.delete('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request
 });
 
 // POST /api/admin/tool-usage-guards/:id/toggle - Toggle tool usage guard active status
-router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res: Response) => {
+router.post('/api/admin/tool-usage-guards/:id/toggle', csrfProtection, configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -220,7 +221,7 @@ router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Re
   }
 });
 // POST /api/admin/llm-providers - Create a new LLM provider
-router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Response) => {
+router.post('/api/admin/llm-providers', csrfProtection, configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -266,7 +267,7 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
 });
 
 // PUT /api/admin/llm-providers/:id - Update an existing LLM provider
-router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+router.put('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -308,7 +309,7 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /api/admin/llm-providers/:id - Delete an LLM provider
-router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+router.delete('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -328,7 +329,7 @@ router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
 });
 
 // POST /api/admin/llm-providers/:id/toggle - Toggle LLM provider active status
-router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response) => {
+router.post('/api/admin/llm-providers/:id/toggle', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -359,7 +360,7 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
 });
 
 // POST /api/admin/messenger-providers - Create a new messenger provider
-router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
+router.post('/api/admin/messenger-providers', csrfProtection, (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -408,7 +409,7 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
 });
 
 // PUT /api/admin/messenger-providers/:id - Update an existing messenger provider
-router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+router.put('/api/admin/messenger-providers/:id', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -462,7 +463,7 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
 });
 
 // DELETE /api/admin/messenger-providers/:id - Delete a messenger provider
-router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+router.delete('/api/admin/messenger-providers/:id', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -482,7 +483,7 @@ router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response
 });
 
 // POST /api/admin/messenger-providers/:id/toggle - Toggle messenger provider active status
-router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Response) => {
+router.post('/api/admin/messenger-providers/:id/toggle', csrfProtection, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -593,7 +594,7 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
 });
 
 // Save a new persona
-router.post('/api/admin/personas', (req: Request, res: Response) => {
+router.post('/api/admin/personas', csrfProtection, (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
 
@@ -628,7 +629,7 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
 });
 
 // Update an existing persona
-router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
+router.put('/api/admin/personas/:key', csrfProtection, (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -657,7 +658,7 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
 });
 
 // Delete a persona
-router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
+router.delete('/api/admin/personas/:key', csrfProtection, (req: Request, res: Response) => {
   try {
     const { key } = req.params;
 
@@ -677,7 +678,7 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
 });
 
 // Connect to an MCP server
-router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Request, res: Response) => {
+router.post('/api/admin/mcp-servers/connect', csrfProtection, configRateLimit, async (req: Request, res: Response) => {
   try {
     const { serverUrl, apiKey, name } = req.body;
 
@@ -722,7 +723,7 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
 });
 
 // Disconnect from an MCP server
-router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Response) => {
+router.post('/api/admin/mcp-servers/disconnect', csrfProtection, async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
 

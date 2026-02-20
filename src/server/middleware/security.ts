@@ -1,14 +1,42 @@
 import type { Request, Response, NextFunction } from 'express';
 import { RateLimitError } from '../../types/errorClasses';
 import Debug from 'debug';
+import crypto from 'crypto';
 
 const debug = Debug('app:securityMiddleware');
 
 /**
+ * Generate a cryptographically secure nonce for CSP
+ * @returns Base64-encoded nonce string
+ */
+export function generateNonce(): string {
+  return crypto.randomBytes(16).toString('base64');
+}
+
+/**
+ * Get the CSP nonce from response locals, or generate a new one
+ * @param res Express response object
+ * @returns The CSP nonce string
+ */
+export function getCspNonce(res: Response): string {
+  if (!res.locals.cspNonce) {
+    res.locals.cspNonce = generateNonce();
+  }
+  return res.locals.cspNonce;
+}
+
+/**
  * Security middleware that adds comprehensive security headers
  * to protect against common web vulnerabilities
+ * 
+ * Implements nonce-based CSP to eliminate 'unsafe-inline' and 'unsafe-eval'
+ * directives that create XSS vulnerabilities.
  */
 export function securityHeaders(req: Request, res: Response, next: NextFunction): void {
+  // Generate nonce for this request - stored in res.locals for template access
+  const nonce = generateNonce();
+  res.locals.cspNonce = nonce;
+
   // Prevent clickjacking attacks
   res.setHeader('X-Frame-Options', 'DENY');
 
@@ -21,11 +49,12 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Content Security Policy (CSP)
+  // Content Security Policy (CSP) with nonce-based security
+  // Production CSP uses nonce instead of 'unsafe-inline'/'unsafe-eval'
   const cspDirectives = [
     'default-src \'self\'',
-    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https:', // Allow inline scripts for WebSocket connections
-    'style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com',
+    `script-src 'self' 'nonce-${nonce}' https:`,
+    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
     'img-src \'self\' data: https:',
     'font-src \'self\' https://fonts.gstatic.com',
     'connect-src \'self\' ws: wss: https:', // Allow WebSocket connections
@@ -40,18 +69,66 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     'prefetch-src \'self\'',
   ];
 
+  // Development mode: allow unsafe-eval for hot module replacement
+  // WARNING: This should NEVER be enabled in production
   if (process.env.NODE_ENV === 'development') {
-    // Relax CSP for development
-    cspDirectives.push('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://localhost:* https://localhost:*');
-    cspDirectives.push('connect-src \'self\' ws: wss: http://localhost:* https://localhost:*');
-    cspDirectives.push('style-src \'self\' \'unsafe-inline\' http://localhost:* https://fonts.googleapis.com');
+    // In development, we need unsafe-eval for HMR and dev tools
+    // But we still use nonce for inline scripts where possible
+    const devCspDirectives = [
+      'default-src \'self\'',
+      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://localhost:*`,
+      `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com`,
+      'img-src \'self\' data: https: http://localhost:* https://localhost:*',
+      'font-src \'self\' https://fonts.gstatic.com http://localhost:*',
+      'connect-src \'self\' ws: wss: http://localhost:* https://localhost:*',
+      'media-src \'self\'',
+      'object-src \'none\'',
+      'frame-ancestors \'none\'',
+      'base-uri \'self\'',
+      'form-action \'self\'',
+      'frame-src \'none\'',
+      'worker-src \'self\' blob:', // Allow workers for dev tools
+      'manifest-src \'self\'',
+      'prefetch-src \'self\'',
+    ];
+    res.setHeader('Content-Security-Policy', devCspDirectives.join('; '));
+  } else {
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
   }
-
-  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
 
   // HSTS (HTTP Strict Transport Security) - only in production
   if (process.env.NODE_ENV === 'production' && req.secure) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // Permissions Policy (formerly Feature-Policy)
+  // Restricts access to browser features that could be abused
+  res.setHeader('Permissions-Policy', [
+    'geolocation=()',
+    'microphone=()',
+    'camera=()',
+    'payment=()',
+    'usb=()',
+    'magnetometer=()',
+    'gyroscope=()',
+    'accelerometer=()',
+  ].join(', '));
+
+  // Cross-Origin headers for additional protection
+  // Note: Cross-Origin-Embedder-Policy can break some external resources
+  // Using 'credentialless' as a less restrictive alternative to 'require-corp'
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  }
+
+  // Cache control for sensitive pages
+  // Prevents caching of authentication and admin pages
+  if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/admin')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
   }
 
   // Remove server information
@@ -61,7 +138,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('X-Application-Name', 'Open-Hivemind');
   res.setHeader('X-Application-Version', process.env.npm_package_version || '1.0.0');
 
-  debug('Security headers applied to response');
+  debug('Security headers applied to response with nonce:', nonce.substring(0, 8) + '...');
   next();
 }
 
