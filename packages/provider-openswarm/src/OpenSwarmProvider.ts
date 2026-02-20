@@ -1,6 +1,6 @@
+import axios from 'axios';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
-import axios from 'axios';
 
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
@@ -24,24 +24,25 @@ export class OpenSwarmProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: any[],
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<string> {
     try {
       const teamName = metadata?.team || metadata?.model || 'default-team';
 
-      const response = await axios.post(`${this.baseUrl}/chat/completions`, {
-        model: teamName,
-        messages: [
-          ...historyMessages,
-          { role: 'user', content: userMessage },
-        ],
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
+      const response = await axios.post(
+        `${this.baseUrl}/chat/completions`,
+        {
+          model: teamName,
+          messages: [...historyMessages, { role: 'user', content: userMessage }],
         },
-        timeout: 15000,
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000,
+        }
+      );
 
       return response.data.choices[0]?.message?.content || 'No response';
     } catch (error: any) {

@@ -1,7 +1,6 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
-import { errorLogger } from '../../utils/errorLogger';
+import { Router, type Request, type Response } from 'express';
 import { ErrorFactory } from '../../types/errorClasses';
+import { errorLogger } from '../../utils/errorLogger';
 
 const router = Router();
 
@@ -76,20 +75,19 @@ router.post('/frontend', async (req: Request, res: Response) => {
       correlationId: errorReport.correlationId,
       message: 'Error report received and logged',
     });
-
   } catch (error) {
     console.error('Failed to process frontend error report:', error);
 
     // Log the processing error
     await errorLogger.logError(error as Error, {
-      correlationId: req.headers['x-correlation-id'] as string || 'unknown',
+      correlationId: (req.headers['x-correlation-id'] as string) || 'unknown',
       path: req.path,
       method: req.method,
       userAgent: req.headers['user-agent'],
     });
 
     // Set correlation ID in response header
-    const correlationId = req.headers['x-correlation-id'] as string || 'unknown';
+    const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
     res.status(500).json({

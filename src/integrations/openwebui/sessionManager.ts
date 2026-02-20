@@ -1,6 +1,6 @@
 import axios from 'axios';
-import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
+import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:sessionManager');
 let sessionKey: string | null = null; // Cache session key in memory.
@@ -21,7 +21,11 @@ export async function getSessionKey(): Promise<string> {
   debug('Requesting new session key for:', username);
 
   try {
-    const response = await axios.post(apiUrl + '/auth/login', { username, password }, { timeout: 15000 });
+    const response = await axios.post(
+      apiUrl + '/auth/login',
+      { username, password },
+      { timeout: 15000 }
+    );
     sessionKey = response.data.sessionKey;
 
     if (!sessionKey) {

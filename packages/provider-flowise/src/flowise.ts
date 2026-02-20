@@ -1,18 +1,21 @@
-import Debug from 'debug';
 import axios from 'axios';
+import Debug from 'debug';
 
 const debug = Debug('app:flowiseCommand');
 
 export class FlowiseCommand {
   name = 'flowise';
-  description = 'Interact with the Flowise API to retrieve information based on the provided endpoint ID.';
+  description =
+    'Interact with the Flowise API to retrieve information based on the provided endpoint ID.';
 
   /**
-     * Executes the Flowise API command.
-     * @param args The command arguments, including an optional endpointId.
-     * @returns An object indicating the success of the operation, a message, and optionally any additional data.
-     */
-  async execute(args: { endpointId?: string }): Promise<{ success: boolean, message: string, error?: string, data?: any }> {
+   * Executes the Flowise API command.
+   * @param args The command arguments, including an optional endpointId.
+   * @returns An object indicating the success of the operation, a message, and optionally any additional data.
+   */
+  async execute(args: {
+    endpointId?: string;
+  }): Promise<{ success: boolean; message: string; error?: string; data?: any }> {
     const { endpointId } = args;
 
     // Guard: Check if the API base URL is defined in the environment variables
@@ -47,7 +50,7 @@ export class FlowiseCommand {
 
     try {
       // Log the request headers for better debugging
-      const headers = { 'Authorization': 'Bearer ' + apiKey };
+      const headers = { Authorization: 'Bearer ' + apiKey };
       debug('Request Headers:', headers);
 
       // Make a GET request to the Flowise API

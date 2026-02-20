@@ -1,5 +1,7 @@
-import { WebClient } from '@slack/web-api';
 import * as fs from 'fs';
+import express from 'express';
+import { WebClient } from '@slack/web-api';
+import { SlackService } from '@integrations/slack/SlackService';
 
 // Top-level mocks
 jest.mock('fs');
@@ -42,12 +44,14 @@ const mockWebClientInstance = {
 
 const mockBotManagerInstance = {
   initialize: jest.fn().mockResolvedValue(undefined),
-  getAllBots: jest.fn().mockReturnValue([{
-    botToken: 'xoxb-test-token',
-    botUserId: 'bot1',
-    botUserName: 'Madgwick AI',
-    webClient: mockWebClientInstance,
-  }]),
+  getAllBots: jest.fn().mockReturnValue([
+    {
+      botToken: 'xoxb-test-token',
+      botUserId: 'bot1',
+      botUserName: 'Madgwick AI',
+      webClient: mockWebClientInstance,
+    },
+  ]),
   getBotByName: jest.fn().mockImplementation((name) => {
     if (name === 'LegacyBot1' || name === 'Madgwick AI' || !name) {
       return {
@@ -65,9 +69,6 @@ const mockBotManagerInstance = {
 jest.mock('@integrations/slack/SlackBotManager', () => ({
   SlackBotManager: jest.fn().mockImplementation(() => mockBotManagerInstance),
 }));
-
-import { SlackService } from '@integrations/slack/SlackService';
-import express from 'express';
 
 describe('SlackService', () => {
   let service: any;
@@ -104,16 +105,20 @@ describe('SlackService', () => {
     delete process.env.SLACK_SIGNING_SECRET;
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
 
-    (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
-      slack: {
-        instances: [{
-          name: 'LegacyBot1',
-          token: 'xoxb-legacy-token',
-          signingSecret: 'legacy-secret',
-        }],
-        mode: 'socket',
-      },
-    }));
+    (fs.readFileSync as jest.Mock).mockReturnValue(
+      JSON.stringify({
+        slack: {
+          instances: [
+            {
+              name: 'LegacyBot1',
+              token: 'xoxb-legacy-token',
+              signingSecret: 'legacy-secret',
+            },
+          ],
+          mode: 'socket',
+        },
+      })
+    );
 
     (fs.existsSync as jest.Mock).mockReturnValue(true);
 
@@ -135,46 +140,61 @@ describe('SlackService', () => {
   it('handles messaging operations', async () => {
     // Test sending message to channel
     await service.sendMessageToChannel('channel1', 'Hello', 'Madgwick AI');
-    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      channel: 'channel1',
-      text: 'Hello',
-      username: 'Madgwick AI',
-    }));
+    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'channel1',
+        text: 'Hello',
+        username: 'Madgwick AI',
+      })
+    );
 
     // Reset mocks and test fetching messages
     jest.clearAllMocks();
     await service.fetchMessages('channel1');
-    expect(mockBotManager.getBotByName().webClient.conversations.history).toHaveBeenCalledWith({ channel: 'channel1', limit: 10 });
+    expect(mockBotManager.getBotByName().webClient.conversations.history).toHaveBeenCalledWith({
+      channel: 'channel1',
+      limit: 10,
+    });
 
     // Reset mocks and test sending public announcement
     jest.clearAllMocks();
     await service.sendPublicAnnouncement('channel1', 'Announce');
-    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      channel: 'channel1',
-      text: 'Announce',
-      username: 'Madgwick AI',
-    }));
+    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'channel1',
+        text: 'Announce',
+        username: 'Madgwick AI',
+      })
+    );
   });
 
   it('handles channel and service operations', async () => {
     // Test joining channel
     await service.joinChannel('channel1');
-    expect(mockBotManager.getBotByName().webClient.conversations.join).toHaveBeenCalledWith({ channel: 'channel1' });
-    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockBotManager.getBotByName().webClient.conversations.join).toHaveBeenCalledWith({
       channel: 'channel1',
-      text: expect.stringContaining('Welcome'),
-      username: 'Madgwick AI',
-    }));
+    });
+    expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'channel1',
+        text: expect.stringContaining('Welcome'),
+        username: 'Madgwick AI',
+      })
+    );
 
     // Reset mocks and test sending welcome message
     jest.clearAllMocks();
     const welcomeHandler = service.getWelcomeHandler('LegacyBot1');
     await welcomeHandler.sendBotWelcomeMessage('channel1');
-    expect(mockBotManager.getBotByName('LegacyBot1').webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      channel: 'channel1',
-      text: expect.stringContaining('Welcome'),
-      username: 'Madgwick AI',
-    }));
+    expect(
+      mockBotManager.getBotByName('LegacyBot1').webClient.chat.postMessage
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'channel1',
+        text: expect.stringContaining('Welcome'),
+        username: 'Madgwick AI',
+      })
+    );
 
     // Test getting client ID
     expect(service.getClientId()).toBe('bot1');
@@ -184,6 +204,8 @@ describe('SlackService', () => {
 
     // Test shutdown
     await service.shutdown();
-    expect((require('@integrations/slack/SlackService').SlackService as any).instance).toBeUndefined();
+    expect(
+      (require('@integrations/slack/SlackService').SlackService as any).instance
+    ).toBeUndefined();
   });
 });

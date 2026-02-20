@@ -1,7 +1,6 @@
-import { test, expect } from '@jest/globals';
-import request from 'supertest';
 import express from 'express';
-
+import request from 'supertest';
+import { expect, test } from '@jest/globals';
 // Import the router directly
 import adminRouter from '../../src/server/routes/admin';
 
@@ -11,7 +10,7 @@ const app = express();
 // Disable authentication for testing by replacing the middleware
 jest.mock('../../src/auth/middleware', () => ({
   authenticate: (req: any, res: any, next: any) => next(),
-  requireAdmin: (req: any, res: any, next: any) => next()
+  requireAdmin: (req: any, res: any, next: any) => next(),
 }));
 
 // Use the router

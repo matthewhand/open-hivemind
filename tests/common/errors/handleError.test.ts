@@ -1,5 +1,5 @@
-import { handleError } from '../../../src/common/errors/handleError';
 import { getRandomErrorMessage } from '../../../src/common/errors/getRandomErrorMessage';
+import { handleError } from '../../../src/common/errors/handleError';
 
 jest.mock('../../../src/common/errors/getRandomErrorMessage');
 
@@ -60,7 +60,7 @@ describe('handleError', () => {
   describe('Channel validation', () => {
     it('should not send message if no messageChannel provided', () => {
       const error = new Error('Test error');
-      
+
       expect(() => handleError(error)).not.toThrow();
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
@@ -71,7 +71,7 @@ describe('handleError', () => {
       { channel: { send: undefined }, case: 'undefined send method' },
     ])('should not send message if messageChannel has $case', ({ channel }) => {
       const error = new Error('Test error');
-      
+
       expect(() => handleError(error, channel)).not.toThrow();
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
@@ -129,7 +129,7 @@ describe('handleError', () => {
     it('should handle errors in getRandomErrorMessage by not sending message', () => {
       const error = new Error('Original error');
       const messageChannel = { send: mockSend };
-      
+
       mockGetRandomErrorMessage.mockImplementation(() => {
         throw new Error('Error in getRandomErrorMessage');
       });
@@ -140,7 +140,7 @@ describe('handleError', () => {
       } catch (e) {
         // This is expected behavior when getRandomErrorMessage fails
       }
-      
+
       // The send should not be called if getRandomErrorMessage fails
       expect(mockSend).not.toHaveBeenCalled();
     });
@@ -158,7 +158,7 @@ describe('handleError', () => {
       } catch (e) {
         // This is expected behavior when send fails
       }
-      
+
       expect(failingSend).toHaveBeenCalledWith('Random error message');
     });
   });

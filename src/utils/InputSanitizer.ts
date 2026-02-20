@@ -16,18 +16,20 @@ export class InputSanitizer {
       return '';
     }
 
-    return content
-      // Remove script tags and javascript: protocols
-      .replace(/<script[^>]*>.*?<\/script>/gi, '')
-      .replace(/javascript:/gi, '')
-      // Remove potentially harmful HTML
-      .replace(/<[^>]*>/g, '')
-      // Remove null bytes and control characters
-      .replace(/[\x00-\x1F\x7F]/g, '')
-      // Trim whitespace
-      .trim()
-      // Limit length to prevent abuse
-      .substring(0, 10000);
+    return (
+      content
+        // Remove script tags and javascript: protocols
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/javascript:/gi, '')
+        // Remove potentially harmful HTML
+        .replace(/<[^>]*>/g, '')
+        // Remove null bytes and control characters
+        .replace(/[\x00-\x1F\x7F]/g, '')
+        // Trim whitespace
+        .trim()
+        // Limit length to prevent abuse
+        .substring(0, 10000)
+    );
   }
 
   /**
@@ -112,14 +114,16 @@ export class InputSanitizer {
    * @returns The text with all layers of surrounding quotes removed.
    */
   static stripSurroundingQuotes(text: string): string {
-    if (!text) {return '';}
+    if (!text) {
+      return '';
+    }
 
     let current = text.trim();
     let stripped = true;
 
     const pairs = [
       ['"', '"'],
-      ['\'', '\''],
+      ["'", "'"],
       ['“', '”'],
       ['‘', '’'],
       ['«', '»'],
@@ -143,7 +147,7 @@ export class InputSanitizer {
 
     // Phase 2: Greedy Unmatched Stripping
     // Handles cases like '"Text' or 'Text"' or multi-line splits
-    const allQuotes = ['"', '\'', '“', '”', '‘', '’', '«', '»', '`'];
+    const allQuotes = ['"', "'", '“', '”', '‘', '’', '«', '»', '`'];
 
     let greedyStripped = true;
     while (greedyStripped && current.length > 0) {
@@ -172,25 +176,27 @@ export class InputSanitizer {
    */
   static sanitizeConfigValue(value: any, type: 'string' | 'number' | 'boolean'): any {
     switch (type) {
-    case 'string':
-      if (typeof value === 'string') {
-        return value.trim().substring(0, 1000);
-      }
-      return null;
+      case 'string':
+        if (typeof value === 'string') {
+          return value.trim().substring(0, 1000);
+        }
+        return null;
 
-    case 'number':
-      const num = Number(value);
-      return isNaN(num) ? null : num;
+      case 'number':
+        const num = Number(value);
+        return isNaN(num) ? null : num;
 
-    case 'boolean':
-      if (typeof value === 'boolean') {return value;}
-      if (typeof value === 'string') {
-        return value.toLowerCase() === 'true';
-      }
-      return null;
+      case 'boolean':
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        if (typeof value === 'string') {
+          return value.toLowerCase() === 'true';
+        }
+        return null;
 
-    default:
-      return null;
+      default:
+        return null;
     }
   }
 }
@@ -202,8 +208,14 @@ export class RateLimiter {
   private static attempts = new Map<string, number[]>();
 
   // Bounded cache configuration
-  private static readonly MAX_IDENTIFIERS = parseInt(process.env.RATE_LIMITER_MAX_IDENTIFIERS || '10000', 10);
-  private static readonly MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(process.env.RATE_LIMITER_MAX_ATTEMPTS_PER_ID || '100', 10);
+  private static readonly MAX_IDENTIFIERS = parseInt(
+    process.env.RATE_LIMITER_MAX_IDENTIFIERS || '10000',
+    10
+  );
+  private static readonly MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(
+    process.env.RATE_LIMITER_MAX_ATTEMPTS_PER_ID || '100',
+    10
+  );
 
   /**
    * Enforce max identifiers limit by removing oldest entries.
@@ -240,7 +252,7 @@ export class RateLimiter {
 
     const now = Date.now();
     // Remove old attempts outside the window
-    const validAttempts = attempts.filter(time => now - time < windowMs);
+    const validAttempts = attempts.filter((time) => now - time < windowMs);
     // Also enforce max attempts per identifier to prevent unbounded array growth
     const limitedAttempts = validAttempts.slice(-this.MAX_ATTEMPTS_PER_IDENTIFIER);
     this.attempts.set(identifier, limitedAttempts);
@@ -257,13 +269,13 @@ export class RateLimiter {
   static checkLimit(
     identifier: string,
     maxAttempts: number = 10,
-    windowMs: number = 60000,
+    windowMs: number = 60000
   ): boolean {
     const now = Date.now();
     const attempts = this.attempts.get(identifier) || [];
 
     // Remove old attempts outside the window
-    const validAttempts = attempts.filter(time => now - time < windowMs);
+    const validAttempts = attempts.filter((time) => now - time < windowMs);
 
     if (validAttempts.length >= maxAttempts) {
       return false; // Rate limited

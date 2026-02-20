@@ -1,9 +1,13 @@
-import Debug from 'debug';
-import type { VoiceConnection } from '@discordjs/voice';
-import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
-import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
+import axios from 'axios';
+import Debug from 'debug';
+import {
+  AudioPlayerStatus,
+  createAudioPlayer,
+  createAudioResource,
+  type VoiceConnection,
+} from '@discordjs/voice';
 import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:playAudioResponse');
@@ -34,15 +38,19 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
   debug('OPENAI_BASE_URL: ' + narrationEndpointUrl);
 
   try {
-    const response = await axios.post(narrationEndpointUrl, {
-      input: text,
-      voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
-      audioConfig: { audioEncoding: 'MP3' },
-    }, {
-      headers: {
-        'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY') as string,
+    const response = await axios.post(
+      narrationEndpointUrl,
+      {
+        input: text,
+        voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
+        audioConfig: { audioEncoding: 'MP3' },
       },
-    });
+      {
+        headers: {
+          Authorization: ('Bearer ' + openaiConfig.get('OPENAI_API_KEY')) as string,
+        },
+      }
+    );
 
     const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
     const writeFile = util.promisify(fs.writeFile);
@@ -66,6 +74,9 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
       debug('Request timed out. Retrying...'); // Improvement: Added timeout handling
       return playAudioResponse(connection, text);
     }
-    debug('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      'Error generating or playing audio response: ' +
+        (error instanceof Error ? error.message : String(error))
+    );
   }
 }

@@ -1,6 +1,6 @@
-import { SlackInteractiveHandler } from '@integrations/slack/SlackInteractiveHandler';
-import { InteractiveActionHandlers } from '@integrations/slack/InteractiveActionHandlers';
 import { Request, Response } from 'express';
+import { InteractiveActionHandlers } from '@integrations/slack/InteractiveActionHandlers';
+import { SlackInteractiveHandler } from '@integrations/slack/SlackInteractiveHandler';
 
 describe('SlackInteractiveHandler', () => {
   let mockHandlers: jest.Mocked<InteractiveActionHandlers>;
@@ -44,13 +44,13 @@ describe('SlackInteractiveHandler', () => {
         type: 'block_actions',
         actions: [{ action_id: 'see_course_info' }],
         user: { id: 'U123' },
-        trigger_id: 'trigger123'
+        trigger_id: 'trigger123',
       };
 
       mockRequest = {
         body: {
-          payload: JSON.stringify(payload)
-        }
+          payload: JSON.stringify(payload),
+        },
       };
 
       process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
@@ -75,17 +75,17 @@ describe('SlackInteractiveHandler', () => {
           state: {
             values: {
               user_input_block: {
-                user_input: { value: 'Test question' }
-              }
-            }
-          }
-        }
+                user_input: { value: 'Test question' },
+              },
+            },
+          },
+        },
       };
 
       mockRequest = {
         body: {
-          payload: JSON.stringify(payload)
-        }
+          payload: JSON.stringify(payload),
+        },
       };
 
       await handler.handleRequest(mockRequest as Request, mockResponse);
@@ -102,13 +102,13 @@ describe('SlackInteractiveHandler', () => {
       } as any;
 
       payload = {
-        type: 'unknown_type'
+        type: 'unknown_type',
       };
 
       mockRequest = {
         body: {
-          payload: JSON.stringify(payload)
-        }
+          payload: JSON.stringify(payload),
+        },
       };
 
       await handler.handleRequest(mockRequest as Request, mockResponse);
@@ -126,8 +126,8 @@ describe('SlackInteractiveHandler', () => {
 
       mockRequest = {
         body: {
-          payload: 'invalid json'
-        }
+          payload: 'invalid json',
+        },
       };
 
       await handler.handleRequest(mockRequest as Request, mockResponse);
@@ -141,7 +141,7 @@ describe('SlackInteractiveHandler', () => {
     it('should handle block action scenarios', async () => {
       // Test see_course_info action
       let payload = {
-        actions: [{ action_id: 'see_course_info' }]
+        actions: [{ action_id: 'see_course_info' }],
       };
 
       process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
@@ -161,7 +161,7 @@ describe('SlackInteractiveHandler', () => {
       } as any;
 
       payload = {
-        actions: [{ action_id: 'unknown_action' }]
+        actions: [{ action_id: 'unknown_action' }],
       };
 
       await (handler as any).handleBlockAction(payload, mockResponse);

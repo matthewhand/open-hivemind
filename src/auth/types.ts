@@ -45,7 +45,7 @@ export interface AuthMiddlewareRequest<
   Params = Record<string, string>,
   ResBody = any,
   ReqBody = any,
-  ReqQuery = Record<string, unknown>
+  ReqQuery = Record<string, unknown>,
 > extends Request<Params, ResBody, ReqBody, ReqQuery> {
   user?: User;
   permissions?: string[];

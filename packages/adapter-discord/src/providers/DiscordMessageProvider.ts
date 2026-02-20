@@ -1,6 +1,6 @@
-import { Discord } from '../DiscordService';
 import type { IMessage } from '@message/interfaces/IMessage';
 import DiscordMessage from '../DiscordMessage';
+import { Discord } from '../DiscordService';
 
 /**
  * Discord-specific message provider that implements the low-level message transport interface.

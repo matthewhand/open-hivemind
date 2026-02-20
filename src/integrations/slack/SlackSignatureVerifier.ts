@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import type { NextFunction, Request, Response } from 'express';
 
 /**
  * Verifies Slack request signatures to ensure authentic requests
@@ -12,7 +12,7 @@ import crypto from 'crypto';
  */
 export class SlackSignatureVerifier {
   private signingSecret: string;
-  
+
   constructor(signingSecret: string) {
     this.signingSecret = signingSecret;
   }
@@ -46,12 +46,18 @@ export class SlackSignatureVerifier {
     }
 
     // Prefer a preserved raw body string if provided by upstream middleware
-    const bodyStr = (req as any).rawBody && typeof (req as any).rawBody === 'string'
-      ? (req as any).rawBody
-      : (typeof req.body === 'string' ? (req.body as string) : JSON.stringify(req.body));
+    const bodyStr =
+      (req as any).rawBody && typeof (req as any).rawBody === 'string'
+        ? (req as any).rawBody
+        : typeof req.body === 'string'
+          ? (req.body as string)
+          : JSON.stringify(req.body);
 
     const baseString = `v0:${timestamp}:${bodyStr}`;
-    const mySigHex = crypto.createHmac('sha256', this.signingSecret).update(baseString).digest('hex');
+    const mySigHex = crypto
+      .createHmac('sha256', this.signingSecret)
+      .update(baseString)
+      .digest('hex');
     const expected = Buffer.from(`v0=${mySigHex}`, 'utf8');
     const provided = Buffer.from(String(slackSignature), 'utf8');
 

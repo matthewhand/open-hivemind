@@ -11,7 +11,7 @@ describe('ILlmProvider', () => {
       getMessageId: () => 'msg-123',
       getChannelId: () => 'channel-123',
       getAuthorId: () => 'user-123',
-      role: 'user'
+      role: 'user',
     } as any;
 
     mockProvider = {
@@ -27,7 +27,7 @@ describe('ILlmProvider', () => {
     expect(mockProvider.supportsChatCompletion).toBeDefined();
     expect(mockProvider.supportsCompletion).toBeDefined();
     expect(mockProvider.generateChatCompletion).toBeDefined();
-    
+
     expect(typeof mockProvider.generateCompletion).toBe('function');
     expect(typeof mockProvider.supportsChatCompletion).toBe('function');
     expect(typeof mockProvider.supportsCompletion).toBe('function');
@@ -66,13 +66,13 @@ describe('ILlmProvider', () => {
   it('should handle metadata in chat completion', async () => {
     const metadata = { channelId: 'test-channel', userId: 'test-user' };
     await mockProvider.generateChatCompletion('test', [], metadata);
-    
+
     expect(mockProvider.generateChatCompletion).toHaveBeenCalledWith('test', [], metadata);
   });
 
   it('should handle empty message history', async () => {
     await mockProvider.generateChatCompletion('test message', []);
-    
+
     expect(mockProvider.generateChatCompletion).toHaveBeenCalledWith('test message', []);
   });
 
@@ -85,6 +85,8 @@ describe('ILlmProvider', () => {
     };
 
     await expect(errorProvider.generateCompletion('test')).rejects.toThrow('API Error');
-    await expect(errorProvider.generateChatCompletion('test', [])).rejects.toThrow('Chat API Error');
+    await expect(errorProvider.generateChatCompletion('test', [])).rejects.toThrow(
+      'Chat API Error'
+    );
   });
 });

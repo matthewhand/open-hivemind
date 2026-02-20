@@ -1,10 +1,10 @@
-import { SlackEventProcessor } from '@integrations/slack/SlackEventProcessor';
-import { SlackService } from '@integrations/slack/SlackService';
-import { SlackBotManager } from '@integrations/slack/SlackBotManager';
-import SlackMessage from '@integrations/slack/SlackMessage';
-import slackConfig from '@src/config/slackConfig';
-import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { WebClient } from '@slack/web-api';
+import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import slackConfig from '@src/config/slackConfig';
+import { SlackBotManager } from '@integrations/slack/SlackBotManager';
+import { SlackEventProcessor } from '@integrations/slack/SlackEventProcessor';
+import SlackMessage from '@integrations/slack/SlackMessage';
+import { SlackService } from '@integrations/slack/SlackService';
 
 jest.mock('@integrations/slack/SlackBotManager');
 jest.mock('@integrations/slack/SlackMessage');
@@ -15,7 +15,9 @@ jest.mock('@slack/web-api');
 const MockSlackBotManager = SlackBotManager as jest.MockedClass<typeof SlackBotManager>;
 const MockSlackMessage = SlackMessage as jest.MockedClass<typeof SlackMessage>;
 const MockSlackConfig = slackConfig as jest.Mocked<typeof slackConfig>;
-const MockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
+const MockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<
+  typeof BotConfigurationManager
+>;
 
 describe('SlackEventProcessor', () => {
   let slackServiceInstance: SlackService;
@@ -28,7 +30,9 @@ describe('SlackEventProcessor', () => {
     // Create properly mocked webClient methods
     const mockPostMessage = jest.fn().mockResolvedValue({ ts: 'mockTs' });
     const mockAuthTest = jest.fn().mockResolvedValue({ user_id: 'U123', user: 'testuser' });
-    const mockConversationsList = jest.fn().mockResolvedValue({ ok: true, channels: [{ id: 'C1', name: 'general' }] });
+    const mockConversationsList = jest
+      .fn()
+      .mockResolvedValue({ ok: true, channels: [{ id: 'C1', name: 'general' }] });
 
     // Create a mock webClient with properly structured methods
     const mockWebClient = {
@@ -74,30 +78,35 @@ describe('SlackEventProcessor', () => {
           appToken: 'xapp-test-token',
           defaultChannelId: 'C123',
           joinChannels: '#general',
-          mode: 'socket'
-        }
-      }
+          mode: 'socket',
+        },
+      },
     ]);
-    
+
     // Mock the static getInstance method
     MockBotConfigurationManager.getInstance = jest.fn().mockReturnValue({
-      getAllBots: mockGetAllBots
+      getAllBots: mockGetAllBots,
     } as any);
 
     // Mock slackConfig.get
     MockSlackConfig.get.mockImplementation((key: any): any => {
       switch (key) {
-        case 'SLACK_HELP_COMMAND_TOKEN': return 'valid_token';
-        case 'SLACK_JOIN_CHANNELS': return '#general';
-        case 'SLACK_DEFAULT_CHANNEL_ID': return 'C123';
-        case 'SLACK_MODE': return 'socket';
-        default: return undefined;
+        case 'SLACK_HELP_COMMAND_TOKEN':
+          return 'valid_token';
+        case 'SLACK_JOIN_CHANNELS':
+          return '#general';
+        case 'SLACK_DEFAULT_CHANNEL_ID':
+          return 'C123';
+        case 'SLACK_MODE':
+          return 'socket';
+        default:
+          return undefined;
       }
     });
 
     // Reset the singleton to force re-initialization with our mocks
     (SlackService as any).instance = undefined;
-    
+
     // Get the singleton instance of SlackService
     slackServiceInstance = SlackService.getInstance();
 
@@ -109,7 +118,9 @@ describe('SlackEventProcessor', () => {
     expect(eventProcessor).toBeDefined();
 
     // Test should throw an error if slackService is not provided to constructor
-    expect(() => new SlackEventProcessor(undefined as any)).toThrow('SlackService instance required');
+    expect(() => new SlackEventProcessor(undefined as any)).toThrow(
+      'SlackService instance required'
+    );
   });
 
   describe('handleActionRequest', () => {
@@ -136,7 +147,11 @@ describe('SlackEventProcessor', () => {
 
       await eventProcessor.handleActionRequest(mockReq, mockRes);
 
-      expect(MockSlackMessage).toHaveBeenCalledWith(mockPayload.text, mockPayload.channel.id, mockPayload);
+      expect(MockSlackMessage).toHaveBeenCalledWith(
+        mockPayload.text,
+        mockPayload.channel.id,
+        mockPayload
+      );
       const botManager = slackServiceInstance.getBotManager();
       expect(botManager).toBeDefined();
       expect(botManager?.handleMessage).toHaveBeenCalledTimes(1);
@@ -145,7 +160,12 @@ describe('SlackEventProcessor', () => {
     });
 
     it('should handle event_callback of type message and no subtype', async () => {
-      const mockEvent = { type: 'message', event_ts: '123.456', text: 'user message', channel: 'channel123' };
+      const mockEvent = {
+        type: 'message',
+        event_ts: '123.456',
+        text: 'user message',
+        channel: 'channel123',
+      };
       const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
       const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
 
@@ -188,7 +208,9 @@ describe('SlackEventProcessor', () => {
       expect(mockRes1.status).toHaveBeenCalledWith(200);
 
       // Same event_ts should be ignored on second pass
-      const mockReq2 = { body: { type: 'event_callback', event: { ...mockEvent, text: 'dup' } } } as any;
+      const mockReq2 = {
+        body: { type: 'event_callback', event: { ...mockEvent, text: 'dup' } },
+      } as any;
       const mockRes2 = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
       const botManager = slackServiceInstance.getBotManager();
       (botManager?.handleMessage as jest.Mock).mockClear();
@@ -211,7 +233,9 @@ describe('SlackEventProcessor', () => {
 
       // Still constructs SlackMessage with empty string text
       expect(MockSlackMessage).toHaveBeenCalledWith('', 'C2', mockEvent);
-      expect(botManager?.handleMessage).toHaveBeenCalledTimes((botManager?.getAllBots() || []).length || 1);
+      expect(botManager?.handleMessage).toHaveBeenCalledTimes(
+        (botManager?.getAllBots() || []).length || 1
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
@@ -246,7 +270,7 @@ describe('SlackEventProcessor', () => {
     beforeEach(() => {
       mockReq = { body: { token: 'valid_token', user_id: 'U123' } } as any;
       mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
-      
+
       // Mock slackConfig.get for handleHelpRequest
       MockSlackConfig.get.mockImplementation((key: any): any => {
         if (key === 'SLACK_HELP_COMMAND_TOKEN') return 'valid_token';
@@ -270,10 +294,12 @@ describe('SlackEventProcessor', () => {
 
         const bots = mockBotManagerInstance.getAllBots();
         expect(bots[0].webClient.chat.postMessage).toHaveBeenCalled();
-        expect(bots[0].webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-          channel: 'U123',
-          text: expect.stringContaining('Hi <@U123>, here’s my configuration:'),
-        }));
+        expect(bots[0].webClient.chat.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            channel: 'U123',
+            text: expect.stringContaining('Hi <@U123>, here’s my configuration:'),
+          })
+        );
       } finally {
         global.setImmediate = originalSetImmediate;
       }
@@ -295,7 +321,9 @@ describe('SlackEventProcessor', () => {
       await eventProcessor.debugEventPermissions();
 
       expect(bots[0].webClient.auth.test).toHaveBeenCalled();
-      expect(bots[0].webClient.conversations.list).toHaveBeenCalledWith({ types: 'public_channel,private_channel' });
+      expect(bots[0].webClient.conversations.list).toHaveBeenCalledWith({
+        types: 'public_channel,private_channel',
+      });
     });
 
     it('should handle errors during auth test', async () => {
@@ -312,7 +340,11 @@ describe('SlackEventProcessor', () => {
   describe('hasDeletedMessage', () => {
     it('should return true if message is deleted', () => {
       // Simulate a message_deleted event first to populate deletedMessages Set
-      const mockEvent = { type: 'message', subtype: 'message_deleted', previous_message: { ts: '123.456' } };
+      const mockEvent = {
+        type: 'message',
+        subtype: 'message_deleted',
+        previous_message: { ts: '123.456' },
+      };
       const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
       const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
 

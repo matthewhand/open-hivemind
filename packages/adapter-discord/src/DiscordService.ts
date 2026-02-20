@@ -1,35 +1,44 @@
-import type { Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
-import { Client, GatewayIntentBits } from 'discord.js';
-import Debug from 'debug';
-import discordConfig from '@config/discordConfig';
-import DiscordMessage from './DiscordMessage';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { UserConfigStore } from '@config/UserConfigStore';
-import {
-  ValidationError,
-  ConfigurationError,
-  NetworkError,
-  RateLimitError,
-} from '../../../src/types/errorClasses';
-import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
+import { EventEmitter } from 'events';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
 // import { AudioRecorder } from './voice/audioRecorder';
 // import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
-import ProviderConfigManager from '@config/ProviderConfigManager';
+import Debug from 'debug';
+import {
+  Client,
+  GatewayIntentBits,
+  type Message,
+  type NewsChannel,
+  type TextChannel,
+  type ThreadChannel,
+} from 'discord.js';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import discordConfig from '@config/discordConfig';
 // Optional channel routing feature flag and router
 import messageConfig from '@config/messageConfig';
-// ChannelRouter exports functions, not a class
-import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import WebSocketService from '../../../src/server/services/WebSocketService';
-import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
-import { SpecifyCommand } from './commands/speckit/specify';
-import { EventEmitter } from 'events';
+import ProviderConfigManager from '@config/ProviderConfigManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import TypingActivity from '@message/helpers/processing/TypingActivity';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+// ChannelRouter exports functions, not a class
+import {
+  computeScore as channelComputeScore,
+  pickBestChannel,
+} from '@message/routing/ChannelRouter';
+import WebSocketService from '../../../src/server/services/WebSocketService';
+import {
+  ConfigurationError,
+  NetworkError,
+  RateLimitError,
+  ValidationError,
+} from '../../../src/types/errorClasses';
+import { SpecifyCommand } from './commands/speckit/specify';
+import DiscordMessage from './DiscordMessage';
+import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
+import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -82,7 +91,11 @@ export const Discord = {
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
     private voiceManager: any;
-    private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
+    private currentHandler?: (
+      message: IMessage,
+      historyMessages: IMessage[],
+      botConfig: any
+    ) => Promise<string>;
     private configCache = new Map<string, any>();
     private lastConfigCheck = 0;
     private readonly CONFIG_CACHE_TTL = 60000; // 1 minute
@@ -95,10 +108,10 @@ export const Discord = {
 
     // Use SafeGatewayIntentBits fallbacks to avoid crashes if discord.js intents are unavailable
     private static readonly intents = [
-      SafeGatewayIntentBits.Guilds ?? (1 << 0),
-      SafeGatewayIntentBits.GuildMessages ?? (1 << 9),
-      SafeGatewayIntentBits.MessageContent ?? (1 << 15),
-      SafeGatewayIntentBits.GuildVoiceStates ?? (1 << 7),
+      SafeGatewayIntentBits.Guilds ?? 1 << 0,
+      SafeGatewayIntentBits.GuildMessages ?? 1 << 9,
+      SafeGatewayIntentBits.MessageContent ?? 1 << 15,
+      SafeGatewayIntentBits.GuildVoiceStates ?? 1 << 7,
     ];
 
     /**
@@ -129,14 +142,21 @@ export const Discord = {
       const userConfigStore = UserConfigStore.getInstance();
 
       const botConfigs = configManager.getDiscordBotConfigs();
-      const providers = providerManager.getAllProviders('message').filter(p => p.type === 'discord' && p.enabled);
+      const providers = providerManager
+        .getAllProviders('message')
+        .filter((p) => p.type === 'discord' && p.enabled);
 
       if (providers.length === 0) {
         // Fallback: Check for legacy DISCORD_BOT_TOKEN environment variable
         const legacyToken = process.env.DISCORD_BOT_TOKEN;
         if (legacyToken) {
-          log('Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)');
-          const tokens = legacyToken.split(',').map(t => t.trim()).filter(Boolean);
+          log(
+            'Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)'
+          );
+          const tokens = legacyToken
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
           tokens.forEach((token, index) => {
             const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
             this.addBotToPool(token, name, {
@@ -156,7 +176,7 @@ export const Discord = {
 
       if (botConfigs.length > 0) {
         // Mode A: Logical Bots Defined (Match to Providers)
-        botConfigs.forEach(botConfig => {
+        botConfigs.forEach((botConfig) => {
           // Check if bot is disabled in user config
           if (userConfigStore.isBotDisabled(botConfig.name)) {
             log(`Bot ${botConfig.name} is disabled in user config, skipping initialization.`);
@@ -164,10 +184,12 @@ export const Discord = {
           }
 
           // Find matching provider by ID, or fallback to first/default
-          let provider = providers.find(p => p.id === botConfig.messageProviderId);
+          let provider = providers.find((p) => p.id === botConfig.messageProviderId);
           if (!provider) {
             // Heuristic: If only 1 provider exists, use it.
-            if (providers.length === 1) { provider = providers[0]; }
+            if (providers.length === 1) {
+              provider = providers[0];
+            }
             // Heuristic: If multiple, maybe match by name? Or default?
             // For now, if no ID match and >1 providers, we might skip or default.
             // Defaulting to first is unsafe if they are different identities.
@@ -224,8 +246,6 @@ export const Discord = {
       });
     }
 
-
-
     public static getInstance(): DiscordService {
       if (!Discord.DiscordService.instance) {
         try {
@@ -239,7 +259,7 @@ export const Discord = {
           const networkError = new NetworkError(
             `Failed to create DiscordService instance: ${error instanceof Error ? error.message : String(error)}`,
             { status: 500, data: 'DISCORD_SERVICE_INIT_ERROR' } as any,
-            { url: 'service-initialization', originalError: error } as any,
+            { url: 'service-initialization', originalError: error } as any
           );
 
           console.error('Discord service instance creation network error:', networkError);
@@ -260,7 +280,9 @@ export const Discord = {
     public async initialize(): Promise<void> {
       // If no bots are configured at all, surface a clear warning and skip.
       if (!this.bots || this.bots.length === 0) {
-        log('DiscordService.initialize(): no Discord bots configured. Skipping Discord initialization.');
+        log(
+          'DiscordService.initialize(): no Discord bots configured. Skipping Discord initialization.'
+        );
         return;
       }
 
@@ -278,11 +300,11 @@ export const Discord = {
       if (invalidBots.length > 0) {
         log(
           `DiscordService.initialize(): found ${invalidBots.length} bot(s) with missing/empty tokens: ` +
-          invalidBots.map(b => b.name).join(', '),
+            invalidBots.map((b) => b.name).join(', ')
         );
         throw new ValidationError(
           'Cannot initialize DiscordService: One or more bot tokens are empty',
-          'DISCORD_EMPTY_TOKENS_INIT',
+          'DISCORD_EMPTY_TOKENS_INIT'
         );
       }
 
@@ -294,16 +316,18 @@ export const Discord = {
             const user = bot.client.user;
             // Structured debug: confirm Discord identity on startup
             log(
-              `Discord bot ready: name=${bot.botUserName}, tag=${user?.tag}, id=${user?.id}, username=${user?.username}`,
+              `Discord bot ready: name=${bot.botUserName}, tag=${user?.tag}, id=${user?.id}, username=${user?.username}`
             );
             bot.botUserId = user?.id || '';
             // Persist resolved Discord client id back into the bot config so downstream
             // reply eligibility (mentions/replies) uses the correct per-instance ID.
             try {
-              if (!bot.config) { bot.config = {}; }
+              if (!bot.config) {
+                bot.config = {};
+              }
               bot.config.BOT_ID = bot.botUserId;
               bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
-            } catch { }
+            } catch {}
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
           });
@@ -315,7 +339,7 @@ export const Discord = {
             log(`DiscordService.initialize(): login call completed for bot=${bot.botUserName}`);
           } catch (err: any) {
             log(
-              `DiscordService.initialize(): failed to login bot=${bot.botUserName}: ${err?.message || String(err)}`,
+              `DiscordService.initialize(): failed to login bot=${bot.botUserName}: ${err?.message || String(err)}`
             );
             resolve();
           }
@@ -336,19 +360,32 @@ export const Discord = {
       // ───────────────────────────────────────────────────────────────────────
       const defaultChannel = this.getDefaultChannel();
       const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
-      const limitToDefault = Boolean(messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'));
+      const limitToDefault = Boolean(
+        messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL')
+      );
       const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
       const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
-      const graceWindowMs = Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || 300000;
+      const graceWindowMs =
+        Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || 300000;
 
       console.info('\n╔══════════════════════════════════════════════════════════════╗');
       console.info('║                 🤖 DISCORD BOT-TO-BOT CONFIG                 ║');
       console.info('╠══════════════════════════════════════════════════════════════╣');
-      console.info(`║  MESSAGE_IGNORE_BOTS                    : ${ignoreBots ? '❌ true (BLOCKS ALL)' : '✅ false'}`);
-      console.info(`║  MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT   : ${limitToDefault ? '⚠️  true' : '✅ false'}`);
-      console.info(`║  MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED   : ${allowBotToBot ? '✅ true' : '❌ false'}`);
-      console.info(`║  MESSAGE_ONLY_WHEN_SPOKEN_TO            : ${onlyWhenSpokenTo ? '⚠️  true' : '✅ false'}`);
-      console.info(`║  GRACE_WINDOW_MS                        : ${graceWindowMs}ms (${(graceWindowMs / 60000).toFixed(1)}min)`);
+      console.info(
+        `║  MESSAGE_IGNORE_BOTS                    : ${ignoreBots ? '❌ true (BLOCKS ALL)' : '✅ false'}`
+      );
+      console.info(
+        `║  MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT   : ${limitToDefault ? '⚠️  true' : '✅ false'}`
+      );
+      console.info(
+        `║  MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED   : ${allowBotToBot ? '✅ true' : '❌ false'}`
+      );
+      console.info(
+        `║  MESSAGE_ONLY_WHEN_SPOKEN_TO            : ${onlyWhenSpokenTo ? '⚠️  true' : '✅ false'}`
+      );
+      console.info(
+        `║  GRACE_WINDOW_MS                        : ${graceWindowMs}ms (${(graceWindowMs / 60000).toFixed(1)}min)`
+      );
       console.info(`║  DEFAULT_CHANNEL_ID                     : ${defaultChannel || '(not set)'}`);
       console.info('╚══════════════════════════════════════════════════════════════╝\n');
 
@@ -358,8 +395,12 @@ export const Discord = {
       startupGreetingService.emit('service-ready', this);
     }
 
-    public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
-      if (this.handlerSet) { return; }
+    public setMessageHandler(
+      handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+    ): void {
+      if (this.handlerSet) {
+        return;
+      }
       this.handlerSet = true;
       this.currentHandler = handler;
 
@@ -370,17 +411,25 @@ export const Discord = {
             const user = (typing as any)?.user;
             const channel = (typing as any)?.channel;
             const channelId = (typing as any)?.channelId ?? channel?.id;
-            if (!channelId || !user) { return; }
-            if (user.bot) { return; }
+            if (!channelId || !user) {
+              return;
+            }
+            if (user.bot) {
+              return;
+            }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-          } catch { }
+          } catch {}
         });
 
         bot.client.on('messageCreate', async (message) => {
           try {
             // Defensive guards for malformed events
-            if (!message || !message.author) { return; }
-            if (!message.channelId) { return; }
+            if (!message || !message.author) {
+              return;
+            }
+            if (!message.channelId) {
+              return;
+            }
 
             // Config-based bot message handling
             // Logic moved to centralized handler (shouldReplyToMessage) works for complex logic,
@@ -401,13 +450,15 @@ export const Discord = {
                 contentLength: (message.content || '').length,
                 status: 'success',
               });
-            } catch { }
+            } catch {}
 
             let repliedMessage: any = null;
             try {
               const refId = (message as any)?.reference?.messageId;
               if (refId && message.channel && (message.channel as any).messages?.fetch) {
-                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+                repliedMessage = await (message.channel as any).messages
+                  .fetch(refId)
+                  .catch(() => null);
               }
             } catch {
               repliedMessage = null;
@@ -428,9 +479,13 @@ export const Discord = {
     public setInteractionHandler(): void {
       this.bots.forEach((bot) => {
         bot.client.on('interactionCreate', async (interaction) => {
-          if (!interaction.isCommand()) { return; }
+          if (!interaction.isCommand()) {
+            return;
+          }
 
-          if (!interaction.isChatInputCommand()) { return; }
+          if (!interaction.isChatInputCommand()) {
+            return;
+          }
           const commandName = interaction.commandName;
           const subcommand = interaction.options.getSubcommand();
 
@@ -448,7 +503,10 @@ export const Discord = {
       const token = botConfig?.discord?.token || botConfig?.token;
       const name = botConfig?.name || `Bot${this.bots.length + 1}`;
       if (!token) {
-        throw new ValidationError('Discord addBot requires a token', 'DISCORD_ADDBOT_MISSING_TOKEN');
+        throw new ValidationError(
+          'Discord addBot requires a token',
+          'DISCORD_ADDBOT_MISSING_TOKEN'
+        );
       }
 
       const client = new Client({ intents: Discord.DiscordService.intents });
@@ -457,7 +515,7 @@ export const Discord = {
         botUserId: '',
         botUserName: name,
         config: {
-          ...botConfig,  // Copy all config including system prompts
+          ...botConfig, // Copy all config including system prompts
           name,
           token,
           discord: { ...botConfig?.discord, token },
@@ -474,16 +532,24 @@ export const Discord = {
             const user = (typing as any)?.user;
             const channel = (typing as any)?.channel;
             const channelId = (typing as any)?.channelId ?? channel?.id;
-            if (!channelId || !user) { return; }
-            if (user.bot) { return; }
+            if (!channelId || !user) {
+              return;
+            }
+            if (user.bot) {
+              return;
+            }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-          } catch { }
+          } catch {}
         });
 
         client.on('messageCreate', async (message) => {
           try {
-            if (!message || !message.author) { return; }
-            if (!message.channelId) { return; }
+            if (!message || !message.author) {
+              return;
+            }
+            if (!message.channelId) {
+              return;
+            }
 
             // Config-based bot message handling (same as main handler)
             // Logic moved to centralized handler (shouldReplyToMessage)
@@ -492,7 +558,9 @@ export const Discord = {
             try {
               const refId = (message as any)?.reference?.messageId;
               if (refId && message.channel && (message.channel as any).messages?.fetch) {
-                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+                repliedMessage = await (message.channel as any).messages
+                  .fetch(refId)
+                  .catch(() => null);
               }
             } catch {
               repliedMessage = null;
@@ -514,8 +582,11 @@ export const Discord = {
           // Persist resolved client id into config for consistent downstream mention detection.
           try {
             newBot.config.BOT_ID = newBot.botUserId;
-            newBot.config.discord = { ...(newBot.config.discord || {}), clientId: newBot.botUserId };
-          } catch { }
+            newBot.config.discord = {
+              ...(newBot.config.discord || {}),
+              clientId: newBot.botUserId,
+            };
+          } catch {}
           resolve();
         });
         client.login(token).catch(reject);
@@ -536,15 +607,28 @@ export const Discord = {
      * Triggers a typing indicator in the channel.
      * Useful for long-running operations like LLM inference.
      */
-    public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
+    public async sendTyping(
+      channelId: string,
+      senderName?: string,
+      threadId?: string
+    ): Promise<void> {
       try {
         const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
         const botInfo =
           (senderName && isSnowflake(senderName)
-            ? this.bots.find((b) => b.botUserId === senderName || b.config?.BOT_ID === senderName || b.config?.discord?.clientId === senderName)
-            : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
+            ? this.bots.find(
+                (b) =>
+                  b.botUserId === senderName ||
+                  b.config?.BOT_ID === senderName ||
+                  b.config?.discord?.clientId === senderName
+              )
+            : this.bots.find(
+                (b) => b.botUserName === senderName || b.config?.name === senderName
+              )) || this.bots[0];
 
-        log(`sendTyping: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`);
+        log(
+          `sendTyping: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`
+        );
 
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
@@ -563,7 +647,13 @@ export const Discord = {
       }
     }
 
-    public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string, replyToMessageId?: string): Promise<string> {
+    public async sendMessageToChannel(
+      channelId: string,
+      text: string,
+      senderName?: string,
+      threadId?: string,
+      replyToMessageId?: string
+    ): Promise<string> {
       // Input validation for security
       if (!channelId || typeof channelId !== 'string') {
         throw new ValidationError('Invalid channelId provided', 'DISCORD_INVALID_CHANNEL_ID');
@@ -576,39 +666,47 @@ export const Discord = {
       }
 
       // Sanitize malicious content patterns (basic XSS/Injection prevention)
-      const suspiciousPatterns = [
-        /<script/i,
-        /javascript:/i,
-        /on\w+\s*=/i,
-        /<iframe/i,
-        /<object/i,
-      ];
+      const suspiciousPatterns = [/<script/i, /javascript:/i, /on\w+\s*=/i, /<iframe/i, /<object/i];
 
       for (const pattern of suspiciousPatterns) {
         if (pattern.test(text)) {
-          throw new ValidationError('Message contains potentially malicious content', 'DISCORD_MALICIOUS_CONTENT');
+          throw new ValidationError(
+            'Message contains potentially malicious content',
+            'DISCORD_MALICIOUS_CONTENT'
+          );
         }
       }
 
       if (this.bots.length === 0) {
-        throw new ConfigurationError('No Discord bot instances available', 'DISCORD_NO_BOTS_AVAILABLE');
+        throw new ConfigurationError(
+          'No Discord bot instances available',
+          'DISCORD_NO_BOTS_AVAILABLE'
+        );
       }
 
       // Rate limiting check - delay instead of error
       const rateLimitResult = this.checkRateLimitWithDelay(channelId);
       if (rateLimitResult.shouldWait) {
         log(`Rate limit: waiting ${rateLimitResult.waitMs}ms before sending to ${channelId}`);
-        await new Promise(resolve => setTimeout(resolve, rateLimitResult.waitMs));
+        await new Promise((resolve) => setTimeout(resolve, rateLimitResult.waitMs));
       }
 
       const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
       const botInfo =
         (senderName && isSnowflake(senderName)
-          ? this.bots.find((b) => b.botUserId === senderName || b.config?.BOT_ID === senderName || b.config?.discord?.clientId === senderName)
-          : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
+          ? this.bots.find(
+              (b) =>
+                b.botUserId === senderName ||
+                b.config?.BOT_ID === senderName ||
+                b.config?.discord?.clientId === senderName
+            )
+          : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
+        this.bots[0];
       const effectiveSenderName = botInfo.botUserName;
 
-      log(`sendMessageToChannel: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`);
+      log(
+        `sendMessageToChannel: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`
+      );
 
       // Feature-flagged channel routing: select best channel among candidates
       let selectedChannelId = channelId;
@@ -617,7 +715,9 @@ export const Discord = {
         const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
         if (enabled) {
           const defaultChannel = this.getDefaultChannel();
-          const candidates = Array.from(new Set([channelId, defaultChannel].filter(Boolean))) as string[];
+          const candidates = Array.from(
+            new Set([channelId, defaultChannel].filter(Boolean))
+          ) as string[];
           if (candidates.length > 0) {
             const picked = pickBestChannel(candidates, {
               provider: 'discord',
@@ -625,7 +725,9 @@ export const Discord = {
             });
             if (picked) {
               selectedChannelId = picked;
-              log(`ChannelRouter enabled: candidates=${JSON.stringify(candidates)} selected=${selectedChannelId}`);
+              log(
+                `ChannelRouter enabled: candidates=${JSON.stringify(candidates)} selected=${selectedChannelId}`
+              );
             } else {
               log(`ChannelRouter returned null; falling back to provided channelId=${channelId}`);
             }
@@ -641,7 +743,10 @@ export const Discord = {
         log(`Sending to channel ${selectedChannelId} as ${effectiveSenderName}`);
         const channel = await botInfo.client.channels.fetch(selectedChannelId);
         if (!channel || !channel.isTextBased()) {
-          throw new ValidationError(`Channel ${selectedChannelId} is not text-based or was not found`, 'DISCORD_INVALID_CHANNEL');
+          throw new ValidationError(
+            `Channel ${selectedChannelId} is not text-based or was not found`,
+            'DISCORD_INVALID_CHANNEL'
+          );
         }
 
         // Removed legacy typing delay logic to allow messageHandler to control pacing.
@@ -657,15 +762,22 @@ export const Discord = {
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
           if (!thread || !thread.isThread()) {
-            throw new ValidationError(`Thread ${threadId} is not a valid thread or was not found`, 'DISCORD_INVALID_THREAD');
+            throw new ValidationError(
+              `Thread ${threadId} is not a valid thread or was not found`,
+              'DISCORD_INVALID_THREAD'
+            );
           }
           message = await thread.send(payload);
         } else {
-          log(`Attempting send to channel ${selectedChannelId}: *${effectiveSenderName}*: ${text} ${replyToMessageId ? `(replying to ${replyToMessageId})` : ''}`);
+          log(
+            `Attempting send to channel ${selectedChannelId}: *${effectiveSenderName}*: ${text} ${replyToMessageId ? `(replying to ${replyToMessageId})` : ''}`
+          );
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(payload);
         }
 
-        log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
+        log(
+          `Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`
+        );
         // Emit outgoing message flow event
         try {
           WebSocketService.getInstance().recordMessageFlow({
@@ -677,11 +789,13 @@ export const Discord = {
             contentLength: (text || '').length,
             status: 'success',
           });
-        } catch { }
+        } catch {}
         return message.id;
       } catch (error: unknown) {
         if (error instanceof ValidationError) {
-          log(`Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`);
+          log(
+            `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`
+          );
           console.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
           try {
             WebSocketService.getInstance().recordAlert({
@@ -691,17 +805,19 @@ export const Discord = {
               botName: botInfo.botUserName,
               metadata: { channelId: selectedChannelId, errorType: 'ValidationError' },
             });
-          } catch { }
+          } catch {}
           return '';
         }
 
         const networkError = new NetworkError(
           `Failed to send message to channel ${selectedChannelId}: ${error instanceof Error ? error.message : String(error)}`,
           { status: 500, data: 'DISCORD_SEND_MESSAGE_ERROR' } as any,
-          { url: selectedChannelId, originalError: error } as any,
+          { url: selectedChannelId, originalError: error } as any
         );
 
-        log(`Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`);
+        log(
+          `Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`
+        );
         console.error(`[${effectiveSenderName}] Discord send message network error:`, networkError);
         try {
           WebSocketService.getInstance().recordAlert({
@@ -711,12 +827,16 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'NetworkError' },
           });
-        } catch { }
+        } catch {}
         return '';
       }
     }
 
-    public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
+    public async sendMessage(
+      channelId: string,
+      text: string,
+      senderName?: string
+    ): Promise<string> {
       return this.sendMessageToChannel(channelId, text, senderName);
     }
 
@@ -726,7 +846,7 @@ export const Discord = {
       const cap = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
       const effective = typeof limit === 'number' && limit > 0 ? Math.min(limit, cap) : cap;
       const limited = rawMessages.slice(0, effective);
-      return limited.map(msg => new DiscordMessage(msg));
+      return limited.map((msg) => new DiscordMessage(msg));
     }
 
     public async getMessages(channelId: string, limit?: number): Promise<IMessage[]> {
@@ -737,11 +857,18 @@ export const Discord = {
       const botInfo = this.bots[0];
       try {
         const channel = await botInfo.client.channels.fetch(channelId);
-        if (!channel || (typeof (channel as any).isTextBased === 'function' && !(channel as any).isTextBased())) {
+        if (
+          !channel ||
+          (typeof (channel as any).isTextBased === 'function' && !(channel as any).isTextBased())
+        ) {
           throw new Error('Channel is not text-based or was not found');
         }
-        const cap = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
-        const limit = typeof limitOverride === 'number' && limitOverride > 0 ? Math.min(limitOverride, cap) : cap;
+        const cap =
+          (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
+        const limit =
+          typeof limitOverride === 'number' && limitOverride > 0
+            ? Math.min(limitOverride, cap)
+            : cap;
         const messages = await (channel as TextChannel).messages.fetch({ limit });
         const arr = Array.from(messages.values());
         // Enforce hard cap and reverse to oldest-first order (Discord returns newest-first)
@@ -750,7 +877,7 @@ export const Discord = {
         const networkError = new NetworkError(
           `Failed to fetch messages from ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
           { status: 500, data: 'DISCORD_FETCH_MESSAGES_ERROR' } as any,
-          { url: channelId, originalError: error } as any,
+          { url: channelId, originalError: error } as any
         );
 
         log(`Network error fetching messages from ${channelId}: ${networkError.message}`);
@@ -765,7 +892,7 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId, errorType: 'NetworkError' },
           });
-        } catch { }
+        } catch {}
 
         return [];
       }
@@ -779,7 +906,9 @@ export const Discord = {
     public async getChannelTopic(channelId: string): Promise<string | null> {
       try {
         const botInfo = this.bots[0];
-        if (!botInfo) { return null; }
+        if (!botInfo) {
+          return null;
+        }
         const channel = await botInfo.client.channels.fetch(channelId);
         if (channel && 'topic' in channel && typeof (channel as any).topic === 'string') {
           return (channel as any).topic || null;
@@ -791,8 +920,11 @@ export const Discord = {
       }
     }
 
-    public async sendPublicAnnouncement(channelId: string, announcement: string, threadId?: string): Promise<void> {
-
+    public async sendPublicAnnouncement(
+      channelId: string,
+      announcement: string,
+      threadId?: string
+    ): Promise<void> {
       const botInfo = this.bots[0];
       const text = `**Announcement**: ${announcement}`;
       await this.sendMessageToChannel(channelId, text, botInfo.botUserName, threadId);
@@ -814,18 +946,13 @@ export const Discord = {
         return typeof p === 'string' ? p : String(p || '');
       };
 
-      const safeLlm = (cfg: any): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
+      const safeLlm = (
+        cfg: any
+      ): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
         const llmProvider =
-          cfg?.LLM_PROVIDER ??
-          cfg?.llmProvider ??
-          cfg?.llm?.provider ??
-          undefined;
+          cfg?.LLM_PROVIDER ?? cfg?.llmProvider ?? cfg?.llm?.provider ?? undefined;
 
-        const llmModel =
-          cfg?.OPENAI_MODEL ??
-          cfg?.openai?.model ??
-          cfg?.llm?.model ??
-          undefined;
+        const llmModel = cfg?.OPENAI_MODEL ?? cfg?.openai?.model ?? cfg?.llm?.model ?? undefined;
 
         const llmEndpoint =
           cfg?.OPENAI_BASE_URL ??
@@ -868,42 +995,41 @@ export const Discord = {
 
         const cfgId = isSnowflake(botConfig?.BOT_ID)
           ? String(botConfig.BOT_ID)
-          : (isSnowflake(botConfig?.discord?.clientId) ? String(botConfig.discord.clientId) : '');
+          : isSnowflake(botConfig?.discord?.clientId)
+            ? String(botConfig.discord.clientId)
+            : '';
 
         const byId = cfgId
-          ? this.bots.find((b) =>
-            b.botUserId === cfgId ||
-            b.config?.BOT_ID === cfgId ||
-            b.config?.discord?.clientId === cfgId,
-          )
+          ? this.bots.find(
+              (b) =>
+                b.botUserId === cfgId ||
+                b.config?.BOT_ID === cfgId ||
+                b.config?.discord?.clientId === cfgId
+            )
           : undefined;
 
         const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
         const byDisplayName = agentDisplayName ? this.getBotByName(agentDisplayName) : undefined;
         const bot = byId || byInstanceName || byDisplayName;
 
-        const botId =
-          String(
-            bot?.botUserId ||
-            cfgId ||
-            this.getClientId() ||
-            '',
-          );
+        const botId = String(bot?.botUserId || cfgId || this.getClientId() || '');
 
         // In Discord swarm mode, use the snowflake id as a stable sender key to pick the correct instance.
         const senderKey = botId || agentInstanceName || agentDisplayName;
 
-        const nameCandidates = Array.from(new Set(
-          [
-            agentDisplayName,
-            agentInstanceName,
-            bot?.botUserName,
-            bot?.client?.user?.username,
-            bot?.client?.user?.globalName,
-          ]
-            .filter(Boolean)
-            .map((v) => String(v)),
-        ));
+        const nameCandidates = Array.from(
+          new Set(
+            [
+              agentDisplayName,
+              agentInstanceName,
+              bot?.botUserName,
+              bot?.client?.user?.username,
+              bot?.client?.user?.globalName,
+            ]
+              .filter(Boolean)
+              .map((v) => String(v))
+          )
+        );
 
         return { botId, senderKey, nameCandidates };
       } catch {
@@ -916,13 +1042,13 @@ export const Discord = {
       const now = Date.now();
 
       // Check cache first
-      if (this.configCache.has(cacheKey) &&
-        (now - this.lastConfigCheck) < this.CONFIG_CACHE_TTL) {
+      if (this.configCache.has(cacheKey) && now - this.lastConfigCheck < this.CONFIG_CACHE_TTL) {
         return this.configCache.get(cacheKey);
       }
 
       // Update cache
-      const channelId = (discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
+      const channelId =
+        (discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
       this.configCache.set(cacheKey, channelId);
       this.lastConfigCheck = now;
 
@@ -932,7 +1058,7 @@ export const Discord = {
     /**
      * Updates the bot's presence/activity status with the current model ID.
      * This shows as "Playing <modelId>" in Discord.
-     * 
+     *
      * @param modelId - The model identifier to display
      * @param senderKey - Optional sender key to identify which bot instance to update
      */
@@ -941,10 +1067,11 @@ export const Discord = {
         // Find the bot to update
         let bot: Bot | undefined;
         if (senderKey) {
-          bot = this.bots.find(b =>
-            b.botUserName === senderKey ||
-            b.botUserId === senderKey ||
-            b.config?.name === senderKey,
+          bot = this.bots.find(
+            (b) =>
+              b.botUserName === senderKey ||
+              b.botUserId === senderKey ||
+              b.config?.name === senderKey
           );
         }
         if (!bot && this.bots.length > 0) {
@@ -1004,15 +1131,12 @@ export const Discord = {
      * @returns true if bot is connected, false otherwise
      */
     public isBotConnected(botName: string): boolean {
-      const bot = this.bots.find(
-        (b) => b.botUserName === botName || b.config?.name === botName
-      );
+      const bot = this.bots.find((b) => b.botUserName === botName || b.config?.name === botName);
       if (!bot) return false;
 
       // Check WebSocket status - 0 = READY
       return bot.client.ws.status === 0;
     }
-
 
     /**
      * Get health status for all Discord bot instances
@@ -1024,7 +1148,9 @@ export const Discord = {
         const uptime = bot.client.uptime ? bot.client.uptime / 1000 : 0;
         botStatus[bot.botUserName] = {
           connected: status === 0, // 0 = READY
-          status: ['READY', 'CONNECTING', 'RECONNECTING', 'IDLE', 'NEARLY', 'DISCONNECTED'][status] || 'UNKNOWN',
+          status:
+            ['READY', 'CONNECTING', 'RECONNECTING', 'IDLE', 'NEARLY', 'DISCONNECTED'][status] ||
+            'UNKNOWN',
           uptime: uptime,
           ping: bot.client.ws.ping,
         };
@@ -1040,7 +1166,9 @@ export const Discord = {
     public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
       try {
         const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
-        if (!enabled) { return 0; }
+        if (!enabled) {
+          return 0;
+        }
         return channelComputeScore(channelId, metadata);
       } catch (e) {
         log(`scoreChannel error; returning 0: ${e instanceof Error ? e.message : String(e)}`);
@@ -1068,7 +1196,7 @@ export const Discord = {
       const timestamps = this.messageRateLimit.get(channelKey)!;
 
       // Remove timestamps outside the window
-      const validTimestamps = timestamps.filter(ts => (now - ts) < this.RATE_LIMIT_WINDOW);
+      const validTimestamps = timestamps.filter((ts) => now - ts < this.RATE_LIMIT_WINDOW);
       this.messageRateLimit.set(channelKey, validTimestamps);
 
       // Check if under limit
@@ -1097,7 +1225,7 @@ export const Discord = {
       const timestamps = this.messageRateLimit.get(channelKey)!;
 
       // Remove timestamps outside the window
-      const validTimestamps = timestamps.filter(ts => (now - ts) < this.RATE_LIMIT_WINDOW);
+      const validTimestamps = timestamps.filter((ts) => now - ts < this.RATE_LIMIT_WINDOW);
       this.messageRateLimit.set(channelKey, validTimestamps);
 
       // Check if under limit
@@ -1123,7 +1251,12 @@ export const Discord = {
     }
 
     public async leaveVoiceChannel(channelId: string): Promise<void> {
-      if (!this.voiceManager) { throw new ConfigurationError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT'); }
+      if (!this.voiceManager) {
+        throw new ConfigurationError(
+          'Voice manager not initialized',
+          'DISCORD_VOICE_MANAGER_NOT_INIT'
+        );
+      }
       this.voiceManager.leaveChannel(channelId);
       log(`Left voice channel ${channelId}`);
     }
@@ -1146,30 +1279,50 @@ export const Discord = {
 
         // Create a lightweight wrapper that binds methods to this specific bot
         const serviceWrapper: IMessengerService = {
-          initialize: async () => { /* Already initialized by parent */ },
-          shutdown: async () => { /* Managed by parent */ },
-
-          sendMessageToChannel: async (channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string) => {
-            // Force the specific bot's identity
-            return this.sendMessageToChannel(channelId, message, bot.botUserName, threadId, replyToMessageId);
+          initialize: async () => {
+            /* Already initialized by parent */
+          },
+          shutdown: async () => {
+            /* Managed by parent */
           },
 
-          getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+          sendMessageToChannel: async (
+            channelId: string,
+            message: string,
+            senderName?: string,
+            threadId?: string,
+            replyToMessageId?: string
+          ) => {
+            // Force the specific bot's identity
+            return this.sendMessageToChannel(
+              channelId,
+              message,
+              bot.botUserName,
+              threadId,
+              replyToMessageId
+            );
+          },
 
-          sendPublicAnnouncement: async (channelId: string, announcement: any) => this.sendPublicAnnouncement(channelId, announcement),
+          getMessagesFromChannel: async (channelId: string) =>
+            this.getMessagesFromChannel(channelId),
+
+          sendPublicAnnouncement: async (channelId: string, announcement: any) =>
+            this.sendPublicAnnouncement(channelId, announcement),
 
           getClientId: () => bot.botUserId,
 
           getDefaultChannel: () => this.getDefaultChannel(),
 
           setMessageHandler: (handler) => {
-            // Setup a specific handler? 
-            // Currently DiscordService has one global handler. 
+            // Setup a specific handler?
+            // Currently DiscordService has one global handler.
             // This method might be a no-op if handlers are global, or we could support per-bot handlers later.
           },
 
           supportsChannelPrioritization: this.supportsChannelPrioritization,
-          scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined,
+          scoreChannel: this.scoreChannel
+            ? (cid, meta) => this.scoreChannel!(cid, meta)
+            : undefined,
         };
 
         return {

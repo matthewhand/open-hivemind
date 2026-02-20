@@ -3,8 +3,8 @@
  * Verifies graceful shutdown orchestration across 5 phases
  */
 
-import { ShutdownCoordinator, IShutdownable, ShutdownPhase } from '@src/server/ShutdownCoordinator';
 import { Server as HttpServer } from 'http';
+import { IShutdownable, ShutdownCoordinator, ShutdownPhase } from '@src/server/ShutdownCoordinator';
 
 // Mock HttpServer
 const createMockHttpServer = (): jest.Mocked<HttpServer> => {

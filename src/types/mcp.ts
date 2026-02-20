@@ -103,8 +103,14 @@ export interface MCPProviderManager {
 }
 
 export interface MCPProviderEvent {
-  type: 'provider_added' | 'provider_removed' | 'provider_updated' |
-        'provider_started' | 'provider_stopped' | 'provider_error' | 'provider_test_completed';
+  type:
+    | 'provider_added'
+    | 'provider_removed'
+    | 'provider_updated'
+    | 'provider_started'
+    | 'provider_stopped'
+    | 'provider_error'
+    | 'provider_test_completed';
   providerId: string;
   timestamp: Date;
   data?: any;

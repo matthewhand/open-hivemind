@@ -1,12 +1,12 @@
 /**
  * Flowise API Response Types
- * 
+ *
  * This file contains TypeScript interfaces and types for Flowise API responses,
  * replacing 'any' usage in Flowise integrations.
- * 
+ *
  * Based on analysis of:
  * - src/integrations/flowise/flowiseProvider.ts
- * - src/integrations/flowise/flowiseRestClient.ts  
+ * - src/integrations/flowise/flowiseRestClient.ts
  * - src/integrations/flowise/flowiseSdkClient.ts
  */
 
@@ -216,11 +216,7 @@ export function isFlowisePredictionResponse(obj: unknown): obj is FlowisePredict
  * Type guard for Flowise SDK completion
  */
 export function isFlowiseSdkCompletion(obj: unknown): obj is FlowiseSdkCompletion {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    ('text' in obj || 'error' in obj)
-  );
+  return typeof obj === 'object' && obj !== null && ('text' in obj || 'error' in obj);
 }
 
 /**
@@ -254,17 +250,12 @@ export function isFlowiseApiError(obj: unknown): obj is FlowiseApiError {
 /**
  * Union type for all Flowise response types
  */
-export type FlowiseResponse = 
-  | FlowisePredictionResponse 
-  | FlowiseSdkCompletion 
-  | FlowiseApiError;
+export type FlowiseResponse = FlowisePredictionResponse | FlowiseSdkCompletion | FlowiseApiError;
 
 /**
  * Union type for all Flowise request types
  */
-export type FlowiseRequest = 
-  | FlowiseRestRequest 
-  | FlowiseSdkRequest;
+export type FlowiseRequest = FlowiseRestRequest | FlowiseSdkRequest;
 
 /**
  * Flowise provider metadata structure
@@ -304,4 +295,4 @@ export const FLOWISE_ERROR_CODES = {
   NETWORK_ERROR: 'FLOWISE_NETWORK_ERROR',
 } as const;
 
-export type FlowiseErrorCode = typeof FLOWISE_ERROR_CODES[keyof typeof FLOWISE_ERROR_CODES];
+export type FlowiseErrorCode = (typeof FLOWISE_ERROR_CODES)[keyof typeof FLOWISE_ERROR_CODES];

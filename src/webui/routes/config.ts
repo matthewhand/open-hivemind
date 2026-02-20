@@ -69,7 +69,11 @@ router.get('/api/config/sources', (_req, res) => {
 // POST /webui/api/config/reload - Reload configuration
 router.post('/api/config/reload', (_req, res) => {
   try {
-    res.json({ success: true, message: 'Configuration reloaded successfully', timestamp: new Date().toISOString() });
+    res.json({
+      success: true,
+      message: 'Configuration reloaded successfully',
+      timestamp: new Date().toISOString(),
+    });
   } catch {
     res.status(500).json({ error: 'Failed to reload configuration' });
   }
@@ -88,10 +92,18 @@ router.get('/api/config/validate', (_req, res) => {
 
     (config || []).forEach((bot: any, index: number) => {
       if (!bot.name) {
-        errors.push({ field: `bots[${index}].name`, message: 'Bot name is required', severity: 'error' });
+        errors.push({
+          field: `bots[${index}].name`,
+          message: 'Bot name is required',
+          severity: 'error',
+        });
       }
       if (!bot.llmProvider) {
-        errors.push({ field: `bots[${index}].llmProvider`, message: 'LLM provider is required', severity: 'error' });
+        errors.push({
+          field: `bots[${index}].llmProvider`,
+          message: 'LLM provider is required',
+          severity: 'error',
+        });
       }
     });
 
@@ -181,4 +193,3 @@ router.get('/api/openapi', (_req, res) => {
 });
 
 export default router;
-

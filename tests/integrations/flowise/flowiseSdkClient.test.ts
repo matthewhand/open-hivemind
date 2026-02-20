@@ -1,6 +1,6 @@
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import { FlowiseClient } from 'flowise-sdk';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 
 jest.mock('flowise-sdk', () => {
   const createPrediction = jest.fn();
@@ -36,7 +36,9 @@ describe('flowiseSdkClient.getFlowiseSdkResponse', () => {
   });
 
   it('returns completion text on success and passes expected params', async () => {
-    const ctor = FlowiseClient as unknown as jest.Mock & { __mock: { createPrediction: jest.Mock } };
+    const ctor = FlowiseClient as unknown as jest.Mock & {
+      __mock: { createPrediction: jest.Mock };
+    };
     ctor.__mock.createPrediction.mockResolvedValueOnce({ text: 'hello from sdk' });
 
     const text = await getFlowiseSdkResponse('hi there', chatflowId);
@@ -56,7 +58,9 @@ describe('flowiseSdkClient.getFlowiseSdkResponse', () => {
   });
 
   it('returns empty string when SDK returns no text', async () => {
-    const ctor = FlowiseClient as unknown as jest.Mock & { __mock: { createPrediction: jest.Mock } };
+    const ctor = FlowiseClient as unknown as jest.Mock & {
+      __mock: { createPrediction: jest.Mock };
+    };
     ctor.__mock.createPrediction.mockResolvedValueOnce({});
 
     const text = await getFlowiseSdkResponse('no text', chatflowId);
@@ -64,7 +68,9 @@ describe('flowiseSdkClient.getFlowiseSdkResponse', () => {
   });
 
   it('returns empty string when SDK throws', async () => {
-    const ctor = FlowiseClient as unknown as jest.Mock & { __mock: { createPrediction: jest.Mock } };
+    const ctor = FlowiseClient as unknown as jest.Mock & {
+      __mock: { createPrediction: jest.Mock };
+    };
     ctor.__mock.createPrediction.mockRejectedValueOnce(new Error('network'));
 
     const text = await getFlowiseSdkResponse('boom', chatflowId);

@@ -1,8 +1,7 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { runRoute } from '../../helpers/expressRunner';
-
+import express, { NextFunction, Request, Response } from 'express';
 // Import after jest.doMock of config to allow per-test overrides
-import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
+import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
+import { runRoute } from '../../helpers/expressRunner';
 
 // Helper to mock webhookConfig.get dynamically per test
 jest.mock('@config/webhookConfig', () => {
@@ -54,7 +53,9 @@ describe('webhookSecurity edge cases', () => {
 
   describe('verifyWebhookToken', () => {
     it('allows when header matches configured token', async () => {
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'secret-token' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
       expect(res.statusCode).toBe(200);
     });
 
@@ -65,7 +66,9 @@ describe('webhookSecurity edge cases', () => {
     });
 
     it('blocks with 403 when token mismatches', async () => {
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'wrong' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'wrong' },
+      });
       expect(res.statusCode).toBe(403);
       expect(res.text).toContain('Invalid token');
     });
@@ -94,7 +97,9 @@ describe('webhookSecurity edge cases', () => {
   describe('verifyIpWhitelist', () => {
     it('allows all when whitelist is empty', async () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '' });
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'secret-token' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
       expect(res.statusCode).toBe(200);
     });
 
@@ -104,13 +109,17 @@ describe('webhookSecurity edge cases', () => {
       // Since we cannot read req.ip here, include multiple common loopback representations to guarantee a match.
       setConfig({ WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1' });
 
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'secret-token' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
       expect(res.statusCode).toBe(200);
     });
 
     it('blocks when request IP is not in whitelist', async () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '10.1.2.3,192.168.1.10' });
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'secret-token' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
       expect(res.statusCode).toBe(403);
       expect(res.text).toContain('Unauthorized IP address');
     });
@@ -118,7 +127,9 @@ describe('webhookSecurity edge cases', () => {
     it('documents limitation: CIDR ranges are not supported; mismatching despite CIDR entry', async () => {
       // Current implementation does simple includes() check and does not parse CIDR.
       setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.0/24' });
-      const { res } = await runRoute(app, 'post', '/secured', { headers: { 'x-webhook-token': 'secret-token' } });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
       // Since '127.0.0.1' !== '127.0.0.0/24', this will block.
       expect(res.statusCode).toBe(403);
     });

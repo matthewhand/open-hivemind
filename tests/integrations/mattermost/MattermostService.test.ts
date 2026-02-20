@@ -1,5 +1,5 @@
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 import MattermostClient from '@src/integrations/mattermost/mattermostClient';
+import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 
 jest.mock('@src/integrations/mattermost/mattermostClient');
 jest.mock('@src/config/BotConfigurationManager');
@@ -15,7 +15,7 @@ describe('MattermostService', () => {
       getChannelPosts: jest.fn().mockResolvedValue([]),
       getUser: jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' }),
       isConnected: jest.fn().mockReturnValue(true),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
     } as any;
 
     const { default: MockClient } = require('@src/integrations/mattermost/mattermostClient');
@@ -23,15 +23,17 @@ describe('MattermostService', () => {
 
     const { default: BotConfigurationManager } = require('@src/config/BotConfigurationManager');
     BotConfigurationManager.getInstance.mockReturnValue({
-      getAllBots: () => [{
-        name: 'test-bot',
-        messageProvider: 'mattermost',
-        mattermost: {
-          serverUrl: 'https://mattermost.example.com',
-          token: 'test-token',
-          channel: 'general'
-        }
-      }]
+      getAllBots: () => [
+        {
+          name: 'test-bot',
+          messageProvider: 'mattermost',
+          mattermost: {
+            serverUrl: 'https://mattermost.example.com',
+            token: 'test-token',
+            channel: 'general',
+          },
+        },
+      ],
     });
 
     service = MattermostService.getInstance();
@@ -44,7 +46,7 @@ describe('MattermostService', () => {
 
   it('should initialize successfully', async () => {
     await service.initialize();
-    
+
     expect(mockClient.connect).toHaveBeenCalled();
   });
 
@@ -53,36 +55,38 @@ describe('MattermostService', () => {
     let result = await service.sendMessageToChannel('general', 'Hello world');
     expect(mockClient.postMessage).toHaveBeenCalledWith({
       channel: 'general',
-      text: 'Hello world'
+      text: 'Hello world',
     });
     expect(result).toBe('post123');
 
     // Reset mocks and test fetching messages
     jest.clearAllMocks();
-    const mockPosts = [{
-      id: 'post1',
-      message: 'Test message',
-      channel_id: 'channel123',
-      user_id: 'user123',
-      create_at: Date.now(),
-      update_at: 0,
-      edit_at: 0,
-      delete_at: 0,
-      is_pinned: false,
-      type: '',
-      props: {},
-      hashtags: '',
-      pending_post_id: '',
-      reply_count: 0,
-      metadata: {}
-    }];
+    const mockPosts = [
+      {
+        id: 'post1',
+        message: 'Test message',
+        channel_id: 'channel123',
+        user_id: 'user123',
+        create_at: Date.now(),
+        update_at: 0,
+        edit_at: 0,
+        delete_at: 0,
+        is_pinned: false,
+        type: '',
+        props: {},
+        hashtags: '',
+        pending_post_id: '',
+        reply_count: 0,
+        metadata: {},
+      },
+    ];
     mockClient.getChannelPosts.mockResolvedValue(mockPosts);
     mockClient.getUser.mockResolvedValue({
       id: 'user123',
       username: 'testuser',
       email: 'test@example.com',
       first_name: 'Test',
-      last_name: 'User'
+      last_name: 'User',
     });
     const messages = await service.fetchMessages('channel123', 10);
     expect(messages).toHaveLength(1);
@@ -101,7 +105,7 @@ describe('MattermostService', () => {
     await service.sendPublicAnnouncement('general', 'Important announcement');
     expect(mockClient.postMessage).toHaveBeenCalledWith({
       channel: 'general',
-      text: 'Important announcement'
+      text: 'Important announcement',
     });
   });
 

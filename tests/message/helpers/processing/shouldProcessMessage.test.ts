@@ -1,35 +1,39 @@
-import { shouldProcessMessage, getMinIntervalMs } from '@message/helpers/processing/shouldProcessMessage';
-import { IMessage } from '@message/interfaces/IMessage';
 import messageConfig from '@config/messageConfig';
+import {
+  getMinIntervalMs,
+  shouldProcessMessage,
+} from '@message/helpers/processing/shouldProcessMessage';
+import { IMessage } from '@message/interfaces/IMessage';
 
 jest.mock('@config/messageConfig', () => ({
   __esModule: true,
   default: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 }));
 
 const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
 
 const createMockMessage = (
-  text: string, 
-  fromBot = false, 
+  text: string,
+  fromBot = false,
   channelId = 'test-channel',
   authorId = 'test-user',
   messageId = 'test-message-id',
   timestamp = new Date()
-): IMessage => ({
-  getText: () => text,
-  isFromBot: () => fromBot,
-  getChannelId: () => channelId,
-  getAuthorId: () => authorId,
-  getMessageId: () => messageId,
-  getTimestamp: () => timestamp,
-  getAuthorName: () => 'Test User',
-  setText: jest.fn(),
-  getUserMentions: () => [],
-  hasAttachments: () => false,
-} as any);
+): IMessage =>
+  ({
+    getText: () => text,
+    isFromBot: () => fromBot,
+    getChannelId: () => channelId,
+    getAuthorId: () => authorId,
+    getMessageId: () => messageId,
+    getTimestamp: () => timestamp,
+    getAuthorName: () => 'Test User',
+    setText: jest.fn(),
+    getUserMentions: () => [],
+    hasAttachments: () => false,
+  }) as any;
 
 describe('shouldProcessMessage', () => {
   beforeEach(() => {
@@ -59,7 +63,7 @@ describe('shouldProcessMessage', () => {
       mockMessageConfig.get.mockReturnValue(undefined);
       const userMessage = createMockMessage('User message', false);
       const botMessage = createMockMessage('Bot message', true);
-      
+
       expect(shouldProcessMessage(userMessage)).toBe(true);
       // Should default to ignoring bots when config is undefined
       expect(shouldProcessMessage(botMessage)).toBe(false);
@@ -110,11 +114,11 @@ describe('shouldProcessMessage', () => {
     it('should handle null/undefined message text gracefully', () => {
       const messageWithNullText = {
         ...createMockMessage('', false),
-        getText: () => null as any
+        getText: () => null as any,
       };
       const messageWithUndefinedText = {
         ...createMockMessage('', false),
-        getText: () => undefined as any
+        getText: () => undefined as any,
       };
 
       expect(shouldProcessMessage(messageWithNullText)).toBe(false);
@@ -136,7 +140,7 @@ describe('shouldProcessMessage', () => {
         { isFromBot: () => false }, // Missing getText
       ];
 
-      malformedMessages.forEach(message => {
+      malformedMessages.forEach((message) => {
         expect(() => shouldProcessMessage(message as any)).not.toThrow();
         expect(shouldProcessMessage(message as any)).toBe(false);
       });
@@ -144,7 +148,9 @@ describe('shouldProcessMessage', () => {
 
     it('should handle messages with throwing methods', () => {
       const throwingMessage = {
-        getText: () => { throw new Error('getText failed'); },
+        getText: () => {
+          throw new Error('getText failed');
+        },
         isFromBot: () => false,
       };
 
@@ -166,7 +172,7 @@ describe('shouldProcessMessage', () => {
 
     it('should handle different config key cases', () => {
       const message = createMockMessage('Bot message', true);
-      
+
       // Test that it calls config with the correct key
       shouldProcessMessage(message);
       expect(mockMessageConfig.get).toHaveBeenCalledWith('MESSAGE_IGNORE_BOTS');
@@ -175,12 +181,12 @@ describe('shouldProcessMessage', () => {
 
   describe('Performance', () => {
     it('should process many messages quickly', () => {
-      const messages = Array.from({ length: 1000 }, (_, i) => 
+      const messages = Array.from({ length: 1000 }, (_, i) =>
         createMockMessage(`Message ${i}`, i % 2 === 0)
       );
 
       const startTime = Date.now();
-      messages.forEach(message => shouldProcessMessage(message));
+      messages.forEach((message) => shouldProcessMessage(message));
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(100); // Should complete in less than 100ms
@@ -237,8 +243,8 @@ describe('getMinIntervalMs', () => {
 
     it('should handle non-numeric values gracefully', () => {
       const nonNumericValues = ['invalid', true, {}, [], NaN];
-      
-      nonNumericValues.forEach(value => {
+
+      nonNumericValues.forEach((value) => {
         mockMessageConfig.get.mockReturnValue(value);
         const result = getMinIntervalMs();
         expect(typeof result).toBe('number');
@@ -259,11 +265,11 @@ describe('getMinIntervalMs', () => {
   describe('Performance and consistency', () => {
     it('should be consistent across multiple calls', () => {
       mockMessageConfig.get.mockReturnValue(5000);
-      
+
       const result1 = getMinIntervalMs();
       const result2 = getMinIntervalMs();
       const result3 = getMinIntervalMs();
-      
+
       expect(result1).toBe(result2);
       expect(result2).toBe(result3);
       expect(result1).toBe(5000);
@@ -271,23 +277,23 @@ describe('getMinIntervalMs', () => {
 
     it('should execute quickly', () => {
       mockMessageConfig.get.mockReturnValue(1500);
-      
+
       const startTime = Date.now();
       for (let i = 0; i < 1000; i++) {
         getMinIntervalMs();
       }
       const endTime = Date.now();
-      
+
       expect(endTime - startTime).toBeLessThan(50); // Should complete quickly
     });
 
     it('should handle rapid successive calls', () => {
       mockMessageConfig.get.mockReturnValue(2500);
-      
+
       const results = Array.from({ length: 100 }, () => getMinIntervalMs());
-      
+
       // All results should be the same
-      expect(results.every(result => result === 2500)).toBe(true);
+      expect(results.every((result) => result === 2500)).toBe(true);
     });
   });
 });

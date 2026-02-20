@@ -30,7 +30,7 @@ const openWebUIConfig = convict({
   knowledgeFile: {
     doc: 'Path to the knowledge file to upload (optional)',
     format: String,
-    default: '',  // Default to an empty string to indicate no file
+    default: '', // Default to an empty string to indicate no file
     env: 'OPEN_WEBUI_KNOWLEDGE_FILE',
   },
   model: {

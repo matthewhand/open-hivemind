@@ -1,9 +1,9 @@
-import { ConfigurationValidator } from './ConfigurationValidator';
+import { EventEmitter } from 'events';
+import Debug from 'debug';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import Debug from 'debug';
-import { EventEmitter } from 'events';
+import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:RealTimeValidationService');
 
@@ -222,7 +222,8 @@ export class RealTimeValidationService extends EventEmitter {
           errors.push({
             id: 'fmt-name-1',
             ruleId: 'format-bot-name',
-            message: 'Bot name must be 1-100 characters and contain only letters, numbers, underscores, and hyphens',
+            message:
+              'Bot name must be 1-100 characters and contain only letters, numbers, underscores, and hyphens',
             field: 'name',
             value: config.name,
             expected: '^[a-zA-Z0-9_-]{1,100}$',
@@ -250,7 +251,7 @@ export class RealTimeValidationService extends EventEmitter {
       validator: (config: any) => {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
-        
+
         if (config.messageProvider === 'discord') {
           if (!config.discord || !config.discord.token) {
             errors.push({
@@ -269,12 +270,14 @@ export class RealTimeValidationService extends EventEmitter {
               message: 'Discord token format appears invalid',
               field: 'discord.token',
               value: '***REDACTED***',
-              suggestions: ['Verify your Discord token format: it should be "BotToken.AppID.Secret"'],
+              suggestions: [
+                'Verify your Discord token format: it should be "BotToken.AppID.Secret"',
+              ],
               category: 'required',
             });
           }
         }
-        
+
         return {
           isValid: errors.length === 0,
           errors,
@@ -295,7 +298,7 @@ export class RealTimeValidationService extends EventEmitter {
       validator: (config: any) => {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
-        
+
         if (config.llmProvider === 'openai') {
           if (!config.openai || !config.openai.apiKey) {
             errors.push({
@@ -319,7 +322,7 @@ export class RealTimeValidationService extends EventEmitter {
             });
           }
         }
-        
+
         return {
           isValid: errors.length === 0,
           errors,
@@ -339,7 +342,7 @@ export class RealTimeValidationService extends EventEmitter {
       severity: 'error',
       validator: (config: any) => {
         const errors: ValidationError[] = [];
-        
+
         if (config.name) {
           // This is a synchronous validator for simplicity
           // In a real implementation, you would make this async
@@ -353,7 +356,7 @@ export class RealTimeValidationService extends EventEmitter {
             category: 'business',
           });
         }
-        
+
         return {
           isValid: errors.length === 0,
           errors,
@@ -374,7 +377,7 @@ export class RealTimeValidationService extends EventEmitter {
       validator: (config: any) => {
         const warnings: ValidationWarning[] = [];
         const configStr = JSON.stringify(config);
-        
+
         // Check for potential hardcoded secrets
         const secretPatterns = [
           /"apiKey":\s*"[^${]+"/,
@@ -382,7 +385,7 @@ export class RealTimeValidationService extends EventEmitter {
           /"secret":\s*"[^${]+"/,
           /"password":\s*"[^${]+"/,
         ];
-        
+
         for (const pattern of secretPatterns) {
           if (pattern.test(configStr)) {
             warnings.push({
@@ -400,7 +403,7 @@ export class RealTimeValidationService extends EventEmitter {
             break;
           }
         }
-        
+
         return {
           isValid: true,
           errors: [],
@@ -420,10 +423,10 @@ export class RealTimeValidationService extends EventEmitter {
       severity: 'info',
       validator: (config: any) => {
         const info: ValidationInfo[] = [];
-        
+
         if (config.llmProvider === 'openai' && config.openai?.model) {
           const model = config.openai.model;
-          
+
           if (model === 'gpt-4') {
             info.push({
               id: 'perf-model-1',
@@ -452,7 +455,7 @@ export class RealTimeValidationService extends EventEmitter {
             });
           }
         }
-        
+
         return {
           isValid: true,
           errors: [],
@@ -482,10 +485,10 @@ export class RealTimeValidationService extends EventEmitter {
     });
 
     // Standard profile - most rules enabled
-    const standardRuleIds = Array.from(this.rules.keys()).filter(id => 
-      !id.startsWith('performance-'), // Exclude performance rules
+    const standardRuleIds = Array.from(this.rules.keys()).filter(
+      (id) => !id.startsWith('performance-') // Exclude performance rules
     );
-    
+
     this.addProfile({
       id: 'standard',
       name: 'Standard Validation',
@@ -497,10 +500,10 @@ export class RealTimeValidationService extends EventEmitter {
     });
 
     // Quick profile - only required fields
-    const quickRuleIds = Array.from(this.rules.keys()).filter(id => 
-      id.startsWith('required-'), // Only required field rules
+    const quickRuleIds = Array.from(this.rules.keys()).filter(
+      (id) => id.startsWith('required-') // Only required field rules
     );
-    
+
     this.addProfile({
       id: 'quick',
       name: 'Quick Validation',
@@ -541,10 +544,10 @@ export class RealTimeValidationService extends EventEmitter {
     const removed = this.rules.delete(ruleId);
     if (removed) {
       debug(`Removed validation rule: ${ruleId}`);
-      
+
       // Remove from all profiles
       for (const profile of this.profiles.values()) {
-        profile.ruleIds = profile.ruleIds.filter(id => id !== ruleId);
+        profile.ruleIds = profile.ruleIds.filter((id) => id !== ruleId);
       }
     }
     return removed;
@@ -579,7 +582,7 @@ export class RealTimeValidationService extends EventEmitter {
     const removed = this.profiles.delete(profileId);
     if (removed) {
       debug(`Removed validation profile: ${profileId}`);
-      
+
       // Remove related subscriptions
       for (const [subId, sub] of this.subscriptions) {
         if (sub.profileId === profileId) {
@@ -610,10 +613,10 @@ export class RealTimeValidationService extends EventEmitter {
   public async validateConfiguration(
     configId: number,
     profileId: string = 'standard',
-    clientId?: string,
+    clientId?: string
   ): Promise<ValidationReport> {
     const startTime = Date.now();
-    
+
     try {
       // Get configuration
       const config = await this.botConfigService.getBotConfig(configId);
@@ -644,7 +647,7 @@ export class RealTimeValidationService extends EventEmitter {
             rulesExecuted++;
           } catch (error) {
             debug(`Error executing rule ${ruleId}:`, error);
-            
+
             // Add error for failed rule execution
             allErrors.push({
               id: `rule-error-${ruleId}`,
@@ -662,12 +665,15 @@ export class RealTimeValidationService extends EventEmitter {
       const errorWeight = 10;
       const warningWeight = 3;
       const infoWeight = 1;
-      const totalDeductions = (allErrors.length * errorWeight) + 
-                             (allWarnings.length * warningWeight) + 
-                             (allInfo.length * infoWeight);
+      const totalDeductions =
+        allErrors.length * errorWeight +
+        allWarnings.length * warningWeight +
+        allInfo.length * infoWeight;
       const maxPossibleDeductions = rulesExecuted * errorWeight;
-      const score = maxPossibleDeductions > 0 ? 
-        Math.max(0, 100 - (totalDeductions / maxPossibleDeductions) * 100) : 100;
+      const score =
+        maxPossibleDeductions > 0
+          ? Math.max(0, 100 - (totalDeductions / maxPossibleDeductions) * 100)
+          : 100;
 
       // Create validation result
       const result: ValidationResult = {
@@ -707,12 +713,14 @@ export class RealTimeValidationService extends EventEmitter {
         this.emit('validationFailed', report);
       }
 
-      debug(`Validated configuration ${config.name} (${configId}): ${result.isValid ? 'VALID' : 'INVALID'} (${result.score}/100)`);
-      
+      debug(
+        `Validated configuration ${config.name} (${configId}): ${result.isValid ? 'VALID' : 'INVALID'} (${result.score}/100)`
+      );
+
       return report;
     } catch (error) {
       debug('Error validating configuration:', error);
-      
+
       // Create error report
       const report: ValidationReport = {
         id: this.generateReportId(),
@@ -720,14 +728,16 @@ export class RealTimeValidationService extends EventEmitter {
         configId,
         result: {
           isValid: false,
-          errors: [{
-            id: 'validation-error',
-            ruleId: 'system',
-            message: `Validation failed: ${(error as any).message}`,
-            field: 'system',
-            value: null,
-            category: 'required',
-          }],
+          errors: [
+            {
+              id: 'validation-error',
+              ruleId: 'system',
+              message: `Validation failed: ${(error as any).message}`,
+              field: 'system',
+              value: null,
+              category: 'required',
+            },
+          ],
           warnings: [],
           info: [],
           score: 0,
@@ -738,7 +748,7 @@ export class RealTimeValidationService extends EventEmitter {
 
       this.addToHistory(report);
       this.emit('validationError', report);
-      
+
       return report;
     }
   }
@@ -748,7 +758,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   public validateConfigurationData(
     configData: any,
-    profileId: string = 'standard',
+    profileId: string = 'standard'
   ): ValidationResult {
     try {
       // Get validation profile
@@ -774,7 +784,7 @@ export class RealTimeValidationService extends EventEmitter {
             rulesExecuted++;
           } catch (error) {
             debug(`Error executing rule ${ruleId}:`, error);
-            
+
             // Add error for failed rule execution
             allErrors.push({
               id: `rule-error-${ruleId}`,
@@ -792,12 +802,15 @@ export class RealTimeValidationService extends EventEmitter {
       const errorWeight = 10;
       const warningWeight = 3;
       const infoWeight = 1;
-      const totalDeductions = (allErrors.length * errorWeight) + 
-                             (allWarnings.length * warningWeight) + 
-                             (allInfo.length * infoWeight);
+      const totalDeductions =
+        allErrors.length * errorWeight +
+        allWarnings.length * warningWeight +
+        allInfo.length * infoWeight;
       const maxPossibleDeductions = rulesExecuted * errorWeight;
-      const score = maxPossibleDeductions > 0 ? 
-        Math.max(0, 100 - (totalDeductions / maxPossibleDeductions) * 100) : 100;
+      const score =
+        maxPossibleDeductions > 0
+          ? Math.max(0, 100 - (totalDeductions / maxPossibleDeductions) * 100)
+          : 100;
 
       return {
         isValid: allErrors.length === 0,
@@ -808,17 +821,19 @@ export class RealTimeValidationService extends EventEmitter {
       };
     } catch (error) {
       debug('Error validating configuration data:', error);
-      
+
       return {
         isValid: false,
-        errors: [{
-          id: 'validation-error',
-          ruleId: 'system',
-          message: `Validation failed: ${(error as any).message}`,
-          field: 'system',
-          value: null,
-          category: 'required',
-        }],
+        errors: [
+          {
+            id: 'validation-error',
+            ruleId: 'system',
+            message: `Validation failed: ${(error as any).message}`,
+            field: 'system',
+            value: null,
+            category: 'required',
+          },
+        ],
         warnings: [],
         info: [],
         score: 0,
@@ -832,10 +847,10 @@ export class RealTimeValidationService extends EventEmitter {
   public subscribe(
     configId: number,
     clientId: string,
-    profileId: string = 'standard',
+    profileId: string = 'standard'
   ): ValidationSubscription {
     const subId = this.getSubscriptionId(configId, clientId);
-    
+
     let subscription = this.subscriptions.get(subId);
     if (subscription) {
       // Update existing subscription
@@ -855,7 +870,7 @@ export class RealTimeValidationService extends EventEmitter {
     }
 
     debug(`Subscribed client ${clientId} to validation for config ${configId}`);
-    
+
     // Perform initial validation
     this.validateConfiguration(configId, profileId, clientId).catch((error: any) => {
       debug('Error in initial validation for subscription:', error);
@@ -870,27 +885,24 @@ export class RealTimeValidationService extends EventEmitter {
   public unsubscribe(configId: number, clientId: string): boolean {
     const subId = this.getSubscriptionId(configId, clientId);
     const removed = this.subscriptions.delete(subId);
-    
+
     if (removed) {
       debug(`Unsubscribed client ${clientId} from validation for config ${configId}`);
     }
-    
+
     return removed;
   }
 
   /**
    * Get validation history
    */
-  public getValidationHistory(
-    configId?: number,
-    limit: number = 50,
-  ): ValidationReport[] {
+  public getValidationHistory(configId?: number, limit: number = 50): ValidationReport[] {
     let history = this.validationHistory;
-    
+
     if (configId) {
-      history = history.filter(report => report.configId === configId);
+      history = history.filter((report) => report.configId === configId);
     }
-    
+
     return history.slice(0, limit);
   }
 
@@ -906,19 +918,24 @@ export class RealTimeValidationService extends EventEmitter {
     rulesCount: number;
     profilesCount: number;
     activeSubscriptions: number;
-    } {
+  } {
     const totalReports = this.validationHistory.length;
-    const validReports = this.validationHistory.filter(r => r.result.isValid).length;
+    const validReports = this.validationHistory.filter((r) => r.result.isValid).length;
     const invalidReports = totalReports - validReports;
-    
-    const averageScore = totalReports > 0 ?
-      this.validationHistory.reduce((sum, r) => sum + r.result.score, 0) / totalReports : 0;
-    
-    const averageExecutionTime = totalReports > 0 ?
-      this.validationHistory.reduce((sum, r) => sum + r.executionTime, 0) / totalReports : 0;
 
-    const activeSubscriptions = Array.from(this.subscriptions.values())
-      .filter(sub => sub.isActive).length;
+    const averageScore =
+      totalReports > 0
+        ? this.validationHistory.reduce((sum, r) => sum + r.result.score, 0) / totalReports
+        : 0;
+
+    const averageExecutionTime =
+      totalReports > 0
+        ? this.validationHistory.reduce((sum, r) => sum + r.executionTime, 0) / totalReports
+        : 0;
+
+    const activeSubscriptions = Array.from(this.subscriptions.values()).filter(
+      (sub) => sub.isActive
+    ).length;
 
     return {
       totalReports,
@@ -936,8 +953,7 @@ export class RealTimeValidationService extends EventEmitter {
    * Validate all subscribed configurations
    */
   private async validateSubscribedConfigurations(): Promise<void> {
-    const activeSubs = Array.from(this.subscriptions.values())
-      .filter(sub => sub.isActive);
+    const activeSubs = Array.from(this.subscriptions.values()).filter((sub) => sub.isActive);
 
     for (const sub of activeSubs) {
       try {
@@ -953,7 +969,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   private addToHistory(report: ValidationReport): void {
     this.validationHistory.unshift(report);
-    
+
     // Limit history size
     if (this.validationHistory.length > this.maxHistorySize) {
       this.validationHistory = this.validationHistory.slice(0, this.maxHistorySize);

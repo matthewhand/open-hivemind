@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { performance } from 'perf_hooks';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { performance } from 'perf_hooks';
+import { Request, Response } from 'express';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -101,7 +101,7 @@ export class HealthChecker {
       const startTime = performance.now();
       // Placeholder for actual database check
       // In real implementation, this would ping the database
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       const responseTime = performance.now() - startTime;
 
       return {
@@ -122,7 +122,7 @@ export class HealthChecker {
     try {
       const startTime = performance.now();
       // Placeholder for WebSocket service check
-      await new Promise(resolve => setTimeout(resolve, 5));
+      await new Promise((resolve) => setTimeout(resolve, 5));
       const responseTime = performance.now() - startTime;
 
       services.websocket = {
@@ -140,7 +140,7 @@ export class HealthChecker {
     try {
       const startTime = performance.now();
       // Placeholder for LLM service check
-      await new Promise(resolve => setTimeout(resolve, 15));
+      await new Promise((resolve) => setTimeout(resolve, 15));
       const responseTime = performance.now() - startTime;
 
       services.llm = {
@@ -158,7 +158,7 @@ export class HealthChecker {
     try {
       const startTime = performance.now();
       // Placeholder for external integrations check
-      await new Promise(resolve => setTimeout(resolve, 20));
+      await new Promise((resolve) => setTimeout(resolve, 20));
       const responseTime = performance.now() - startTime;
 
       services.integrations = {
@@ -219,26 +219,31 @@ export class HealthChecker {
     }
   }
 
-  private determineOverallStatus(healthCheck: HealthCheckResult): 'healthy' | 'degraded' | 'unhealthy' {
+  private determineOverallStatus(
+    healthCheck: HealthCheckResult
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     // Check for critical failures
     if (healthCheck.database.status === 'error') {
       return 'unhealthy';
     }
 
     // Check service statuses
-    const downServices = Object.values(healthCheck.services).filter(s => s.status === 'down');
+    const downServices = Object.values(healthCheck.services).filter((s) => s.status === 'down');
     if (downServices.length > 1) {
       return 'unhealthy';
     }
 
     // Check for degraded performance
-    if (healthCheck.memory.percentage > 90 || (healthCheck.metrics.diskUsage && healthCheck.metrics.diskUsage > 90)) {
+    if (
+      healthCheck.memory.percentage > 90 ||
+      (healthCheck.metrics.diskUsage && healthCheck.metrics.diskUsage > 90)
+    ) {
       return 'degraded';
     }
 
     // Check response times
-    const slowResponses = Object.values(healthCheck.services).filter(s =>
-      s.responseTime && s.responseTime > 1000,
+    const slowResponses = Object.values(healthCheck.services).filter(
+      (s) => s.responseTime && s.responseTime > 1000
     );
     if (slowResponses.length > 0) {
       return 'degraded';
@@ -289,7 +294,7 @@ export class HealthChecker {
       degraded: number;
       unhealthy: number;
     };
-    } {
+  } {
     if (this.healthHistory.length === 0) {
       return {
         uptime: 0,
@@ -300,18 +305,24 @@ export class HealthChecker {
     }
 
     const totalChecks = this.healthHistory.length;
-    const statusCounts = this.healthHistory.reduce((acc, check) => {
-      acc[check.status]++;
-      return acc;
-    }, { healthy: 0, degraded: 0, unhealthy: 0 });
-
-    const responseTimes = this.healthHistory.flatMap(check =>
-      Object.values(check.services).map(s => s.responseTime || 0).filter(t => t > 0),
+    const statusCounts = this.healthHistory.reduce(
+      (acc, check) => {
+        acc[check.status]++;
+        return acc;
+      },
+      { healthy: 0, degraded: 0, unhealthy: 0 }
     );
 
-    const averageResponseTime = responseTimes.length > 0
-      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
-      : 0;
+    const responseTimes = this.healthHistory.flatMap((check) =>
+      Object.values(check.services)
+        .map((s) => s.responseTime || 0)
+        .filter((t) => t > 0)
+    );
+
+    const averageResponseTime =
+      responseTimes.length > 0
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+        : 0;
 
     return {
       uptime: this.healthHistory[this.healthHistory.length - 1]?.uptime || 0,

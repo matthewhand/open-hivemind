@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 
 /**
@@ -133,14 +133,14 @@ export class LoginPage extends BasePage {
    * Check if username field has focus
    */
   async isUsernameFieldFocused(): Promise<boolean> {
-    return await this.usernameInput.evaluate(el => document.activeElement === el);
+    return await this.usernameInput.evaluate((el) => document.activeElement === el);
   }
 
   /**
    * Check if password field has focus
    */
   async isPasswordFieldFocused(): Promise<boolean> {
-    return await this.passwordInput.evaluate(el => document.activeElement === el);
+    return await this.passwordInput.evaluate((el) => document.activeElement === el);
   }
 
   /**
@@ -180,16 +180,16 @@ export class LoginPage extends BasePage {
     const usernameLabel = this.page.locator('label[for="username"], label:has-text("Username")');
     const passwordLabel = this.page.locator('label[for="password"], label:has-text("Password")');
 
-    if (await usernameLabel.count() > 0) {
+    if ((await usernameLabel.count()) > 0) {
       await expect(usernameLabel.first()).toBeVisible();
     }
 
-    if (await passwordLabel.count() > 0) {
+    if ((await passwordLabel.count()) > 0) {
       await expect(passwordLabel.first()).toBeVisible();
     }
 
     // Check for proper heading
-    if (await this.pageTitle.count() > 0) {
+    if ((await this.pageTitle.count()) > 0) {
       await expect(this.pageTitle.first()).toBeVisible();
     }
 

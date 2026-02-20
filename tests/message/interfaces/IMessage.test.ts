@@ -89,7 +89,7 @@ describe('IMessage Integration Tests', () => {
     it('should create a valid IMessage instance with TestMessage', () => {
       const testData = { platform: 'test', raw: 'test data' };
       const timestamp = new Date('2024-01-01T00:00:00Z');
-      
+
       const message = new TestMessage(
         testData,
         'user',
@@ -140,9 +140,13 @@ describe('IMessage Integration Tests', () => {
 
     it('should handle assistant role messages with tool calls', () => {
       const toolCalls = [
-        { id: 'call-1', type: 'function', function: { name: 'get_weather', arguments: '{"location": "Seattle"}' } }
+        {
+          id: 'call-1',
+          type: 'function',
+          function: { name: 'get_weather', arguments: '{"location": "Seattle"}' },
+        },
       ];
-      
+
       const message = new TestMessage(
         {},
         'assistant',
@@ -157,7 +161,7 @@ describe('IMessage Integration Tests', () => {
         [],
         true
       );
-      
+
       message.tool_calls = toolCalls;
 
       expect(message.role).toBe('assistant');
@@ -180,7 +184,7 @@ describe('IMessage Integration Tests', () => {
       );
 
       expect(message.getText()).toBe('Original content');
-      
+
       message.setText('Updated content');
       expect(message.getText()).toBe('Updated content');
       expect(message.content).toBe('Updated content');
@@ -199,7 +203,7 @@ describe('IMessage Integration Tests', () => {
       );
 
       expect(message.getText()).toBe('');
-      
+
       message.setText('New content');
       expect(message.getText()).toBe('New content');
     });
@@ -209,7 +213,7 @@ describe('IMessage Integration Tests', () => {
     it('should provide unique message identifiers', () => {
       const timestamp1 = new Date('2024-01-01T00:00:00Z');
       const timestamp2 = new Date('2024-01-01T00:00:01Z');
-      
+
       const message1 = new TestMessage(
         {},
         'user',
@@ -239,7 +243,7 @@ describe('IMessage Integration Tests', () => {
 
     it('should provide consistent timestamps', () => {
       const timestamp = new Date('2024-01-01T12:00:00Z');
-      
+
       const message = new TestMessage(
         {},
         'user',
@@ -306,7 +310,7 @@ describe('IMessage Integration Tests', () => {
 
     it('should provide user mentions', () => {
       const mentions = ['user-111', 'user-222', 'user-333'];
-      
+
       const message = new TestMessage(
         {},
         'user',
@@ -327,7 +331,7 @@ describe('IMessage Integration Tests', () => {
 
     it('should provide channel users', () => {
       const channelUsers = ['user-111', 'user-222', 'user-333', 'user-444'];
-      
+
       const message = new TestMessage(
         {},
         'user',
@@ -401,18 +405,20 @@ describe('IMessage Integration Tests', () => {
   describe('Integration with Message Processing', () => {
     it('should work with message history arrays', () => {
       const messages: IMessage[] = [];
-      
+
       for (let i = 0; i < 5; i++) {
-        messages.push(new TestMessage(
-          { index: i },
-          i % 2 === 0 ? 'user' : 'assistant',
-          `Message ${i}`,
-          `msg-${i}`,
-          new Date(Date.now() + i * 1000),
-          'channel-456',
-          `user-${i}`,
-          `User ${i}`
-        ));
+        messages.push(
+          new TestMessage(
+            { index: i },
+            i % 2 === 0 ? 'user' : 'assistant',
+            `Message ${i}`,
+            `msg-${i}`,
+            new Date(Date.now() + i * 1000),
+            'channel-456',
+            `user-${i}`,
+            `User ${i}`
+          )
+        );
       }
 
       expect(messages).toHaveLength(5);
@@ -425,12 +431,30 @@ describe('IMessage Integration Tests', () => {
     it('should support filtering by role', () => {
       const messages: IMessage[] = [
         new TestMessage({}, 'user', 'User message', 'msg-1', new Date(), 'ch-1', 'user-1', 'User'),
-        new TestMessage({}, 'assistant', 'Assistant message', 'msg-2', new Date(), 'ch-1', 'bot-1', 'Bot'),
-        new TestMessage({}, 'system', 'System message', 'msg-3', new Date(), 'ch-1', 'sys-1', 'System'),
+        new TestMessage(
+          {},
+          'assistant',
+          'Assistant message',
+          'msg-2',
+          new Date(),
+          'ch-1',
+          'bot-1',
+          'Bot'
+        ),
+        new TestMessage(
+          {},
+          'system',
+          'System message',
+          'msg-3',
+          new Date(),
+          'ch-1',
+          'sys-1',
+          'System'
+        ),
       ];
 
-      const userMessages = messages.filter(m => m.role === 'user');
-      const assistantMessages = messages.filter(m => m.role === 'assistant');
+      const userMessages = messages.filter((m) => m.role === 'user');
+      const assistantMessages = messages.filter((m) => m.role === 'assistant');
 
       expect(userMessages).toHaveLength(1);
       expect(assistantMessages).toHaveLength(1);

@@ -1,20 +1,17 @@
 import Debug from 'debug';
 // import type { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:completeSentence');
 
 /**
  * Completes a sentence using the OpenAI API.
- * 
+ *
  * @param client - The OpenAiService instance.
  * @param content - The content to complete.
  * @returns The completed sentence.
  */
-export async function completeSentence(
-  client: any,
-  content: string,
-): Promise<string> {
+export async function completeSentence(client: any, content: string): Promise<string> {
   try {
     // Using generateChatCompletion to get the completion
     const response = await client.generateChatCompletion(content, []);

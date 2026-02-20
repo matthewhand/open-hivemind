@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 
 /**
@@ -20,17 +20,33 @@ export class GuardsPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    
+
     // Initialize guards-specific locators
-    this.guardsHeading = page.locator('h1:has-text("MCP Tool Guards"), [data-testid="guards-title"]');
-    this.ownerModeRadio = page.locator('input[type="radio"][value="owner"], label:has-text("Owner"), [data-testid="owner-mode"]');
-    this.specificUsersRadio = page.locator('input[type="radio"][value="specific_users"], label:has-text("Specific Users"), [data-testid="specific-users-mode"]');
-    this.userIdInput = page.locator('input[placeholder*="User ID"], input[placeholder*="Username"], [data-testid="user-id-input"]');
-    this.ipAddressInput = page.locator('input[placeholder*="IP Address"], [data-testid="ip-address-input"]');
+    this.guardsHeading = page.locator(
+      'h1:has-text("MCP Tool Guards"), [data-testid="guards-title"]'
+    );
+    this.ownerModeRadio = page.locator(
+      'input[type="radio"][value="owner"], label:has-text("Owner"), [data-testid="owner-mode"]'
+    );
+    this.specificUsersRadio = page.locator(
+      'input[type="radio"][value="specific_users"], label:has-text("Specific Users"), [data-testid="specific-users-mode"]'
+    );
+    this.userIdInput = page.locator(
+      'input[placeholder*="User ID"], input[placeholder*="Username"], [data-testid="user-id-input"]'
+    );
+    this.ipAddressInput = page.locator(
+      'input[placeholder*="IP Address"], [data-testid="ip-address-input"]'
+    );
     this.addUserButton = page.locator('button:has-text("Add"), [data-testid="add-user-button"]');
-    this.addIpButton = page.locator('button:has-text("Add"):nth-of-type(2), [data-testid="add-ip-button"]');
-    this.saveConfigurationButton = page.locator('button:has-text("Save Configuration"), [data-testid="save-configuration"]');
-    this.successMessage = page.locator('[role="alert"]:has-text("saved"), .success-message:has-text("saved"), [data-testid="success-message"]');
+    this.addIpButton = page.locator(
+      'button:has-text("Add"):nth-of-type(2), [data-testid="add-ip-button"]'
+    );
+    this.saveConfigurationButton = page.locator(
+      'button:has-text("Save Configuration"), [data-testid="save-configuration"]'
+    );
+    this.successMessage = page.locator(
+      '[role="alert"]:has-text("saved"), .success-message:has-text("saved"), [data-testid="success-message"]'
+    );
     this.userChips = page.locator('.MuiChip-label:has-text("test"), [data-testid="user-chip"]');
     this.ipChips = page.locator('.MuiChip-label:has-text("10."), [data-testid="ip-chip"]');
     this.guardConfigurationForm = page.locator('form, [data-testid="guard-form"]');
@@ -158,7 +174,9 @@ export class GuardsPage extends BasePage {
    * Check if user chip is visible for specific user
    */
   async isUserChipVisible(userId: string): Promise<boolean> {
-    const userChip = this.page.locator(`.MuiChip-label:has-text("${userId}"), [data-testid="user-${userId}"]`);
+    const userChip = this.page.locator(
+      `.MuiChip-label:has-text("${userId}"), [data-testid="user-${userId}"]`
+    );
     return await this.isElementVisible(userChip);
   }
 
@@ -166,7 +184,9 @@ export class GuardsPage extends BasePage {
    * Check if IP chip is visible for specific IP
    */
   async isIpChipVisible(ipAddress: string): Promise<boolean> {
-    const ipChip = this.page.locator(`.MuiChip-label:has-text("${ipAddress}"), [data-testid="ip-${ipAddress}"]`);
+    const ipChip = this.page.locator(
+      `.MuiChip-label:has-text("${ipAddress}"), [data-testid="ip-${ipAddress}"]`
+    );
     return await this.isElementVisible(ipChip);
   }
 
@@ -177,14 +197,15 @@ export class GuardsPage extends BasePage {
     const chips = this.page.locator('.MuiChip-label, [data-testid="user-chip"]');
     const count = await chips.count();
     const userIds: string[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const chipText = await chips.nth(i).textContent();
-      if (chipText && !chipText.includes('.') && chipText.trim()) { // Exclude IP addresses
+      if (chipText && !chipText.includes('.') && chipText.trim()) {
+        // Exclude IP addresses
         userIds.push(chipText.trim());
       }
     }
-    
+
     return userIds;
   }
 
@@ -195,14 +216,15 @@ export class GuardsPage extends BasePage {
     const chips = this.page.locator('.MuiChip-label, [data-testid="ip-chip"]');
     const count = await chips.count();
     const ipAddresses: string[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const chipText = await chips.nth(i).textContent();
-      if (chipText && chipText.includes('.') && chipText.trim()) { // Include only IP-like patterns
+      if (chipText && chipText.includes('.') && chipText.trim()) {
+        // Include only IP-like patterns
         ipAddresses.push(chipText.trim());
       }
     }
-    
+
     return ipAddresses;
   }
 
@@ -211,8 +233,10 @@ export class GuardsPage extends BasePage {
    */
   async removeUserChip(userId: string): Promise<void> {
     const userChip = this.page.locator(`.MuiChip-label:has-text("${userId}")`);
-    const removeButton = userChip.locator('..').locator('button[aria-label="Delete"], .MuiChip-deleteIcon');
-    
+    const removeButton = userChip
+      .locator('..')
+      .locator('button[aria-label="Delete"], .MuiChip-deleteIcon');
+
     if (await removeButton.isVisible()) {
       await this.clickElement(removeButton);
       await this.waitForLoadingToComplete();
@@ -224,8 +248,10 @@ export class GuardsPage extends BasePage {
    */
   async removeIpChip(ipAddress: string): Promise<void> {
     const ipChip = this.page.locator(`.MuiChip-label:has-text("${ipAddress}")`);
-    const removeButton = ipChip.locator('..').locator('button[aria-label="Delete"], .MuiChip-deleteIcon');
-    
+    const removeButton = ipChip
+      .locator('..')
+      .locator('button[aria-label="Delete"], .MuiChip-deleteIcon');
+
     if (await removeButton.isVisible()) {
       await this.clickElement(removeButton);
       await this.waitForLoadingToComplete();
@@ -260,12 +286,15 @@ export class GuardsPage extends BasePage {
     users: string[];
     ips: string[];
   }> {
-    const mode = await this.isOwnerModeSelected() ? 'owner' : 
-                  await this.isSpecificUsersModeSelected() ? 'specific_users' : null;
-    
+    const mode = (await this.isOwnerModeSelected())
+      ? 'owner'
+      : (await this.isSpecificUsersModeSelected())
+        ? 'specific_users'
+        : null;
+
     const users = await this.getAllUserChips();
     const ips = await this.getAllIpChips();
-    
+
     return { mode, users, ips };
   }
 
@@ -340,28 +369,30 @@ export class GuardsPage extends BasePage {
   async checkAccessibility(): Promise<void> {
     // Check for proper heading hierarchy
     await expect(this.guardsHeading).toBeVisible();
-    
+
     // Check for proper form labels
     const ownerLabel = this.page.locator('label[for*="owner"], label:has-text("Owner")');
-    const specificUsersLabel = this.page.locator('label[for*="specific"], label:has-text("Specific Users")');
-    
-    if (await ownerLabel.count() > 0) {
+    const specificUsersLabel = this.page.locator(
+      'label[for*="specific"], label:has-text("Specific Users")'
+    );
+
+    if ((await ownerLabel.count()) > 0) {
       await expect(ownerLabel.first()).toBeVisible();
     }
-    
-    if (await specificUsersLabel.count() > 0) {
+
+    if ((await specificUsersLabel.count()) > 0) {
       await expect(specificUsersLabel.first()).toBeVisible();
     }
 
     // Check for proper input labels
     const userIdLabel = this.page.locator('label[for*="user"], label:has-text("User ID")');
     const ipAddressLabel = this.page.locator('label[for*="ip"], label:has-text("IP Address")');
-    
-    if (await userIdLabel.count() > 0 && await this.userIdInput.isVisible()) {
+
+    if ((await userIdLabel.count()) > 0 && (await this.userIdInput.isVisible())) {
       await expect(userIdLabel.first()).toBeVisible();
     }
-    
-    if (await ipAddressLabel.count() > 0 && await this.ipAddressInput.isVisible()) {
+
+    if ((await ipAddressLabel.count()) > 0 && (await this.ipAddressInput.isVisible())) {
       await expect(ipAddressLabel.first()).toBeVisible();
     }
 
@@ -385,14 +416,14 @@ export class GuardsPage extends BasePage {
       await this.selectOwnerMode();
     } else {
       await this.selectSpecificUsersMode();
-      
+
       // Add users if provided
       if (config.users) {
         for (const user of config.users) {
           await this.addUser(user);
         }
       }
-      
+
       // Add IPs if provided
       if (config.ips) {
         for (const ip of config.ips) {
@@ -400,7 +431,7 @@ export class GuardsPage extends BasePage {
         }
       }
     }
-    
+
     // Save configuration
     await this.saveConfiguration();
     await this.waitForConfigurationSave();

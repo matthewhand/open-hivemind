@@ -1,7 +1,7 @@
 import { Server } from 'http';
 import express from 'express';
-import { WebSocketService } from '../src/server/services/WebSocketService';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
+import { WebSocketService } from '../src/server/services/WebSocketService';
 
 // Set default timeout for all tests
 jest.setTimeout(60000);
@@ -19,7 +19,7 @@ beforeAll((done) => {
 
     const validationService = RealTimeValidationService.getInstance();
     RealTimeValidationService.prototype.setupEventHandlers = originalSetupEventHandlers;
-    
+
     console.log('Test environment initialized');
     done();
   } catch (error) {

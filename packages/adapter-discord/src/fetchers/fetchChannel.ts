@@ -1,6 +1,5 @@
-import type { Client} from 'discord.js';
-import { TextChannel } from 'discord.js';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { TextChannel, type Client } from 'discord.js';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 /**
  * Fetch Channel

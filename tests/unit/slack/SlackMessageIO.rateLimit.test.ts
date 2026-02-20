@@ -14,7 +14,8 @@ describe('SlackMessageIO send queue and backoff', () => {
     const err429: any = new Error('ratelimited');
     err429.status = 429;
     err429.data = { retry_after: 0.001 }; // 1ms
-    const mockPost = jest.fn()
+    const mockPost = jest
+      .fn()
       .mockRejectedValueOnce(err429)
       .mockResolvedValueOnce({ ts: '123.45' });
     const io = makeIO(mockPost);
@@ -42,4 +43,3 @@ describe('SlackMessageIO send queue and backoff', () => {
     expect(mockPost).toHaveBeenCalledTimes(2);
   });
 });
-

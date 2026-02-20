@@ -1,10 +1,9 @@
-import { Server as SocketIOServer } from 'socket.io';
 import type { Server as HttpServer } from 'http';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import os from 'os';
 import Debug from 'debug';
-import type { EndpointStatus } from '../../services/ApiMonitorService';
-import ApiMonitorService from '../../services/ApiMonitorService';
+import { Server as SocketIOServer } from 'socket.io';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
 
 const debug = Debug('app:WebSocketService');
 
@@ -121,7 +120,9 @@ export class WebSocketService {
   }
 
   private handleApiHealthCheckResult(result: any): void {
-    debug(`API health check result: ${result.endpointId} - ${result.success ? 'success' : 'failed'}`);
+    debug(
+      `API health check result: ${result.endpointId} - ${result.success ? 'success' : 'failed'}`
+    );
 
     // Broadcast health check results to connected clients
     if (this.io && this.connectedClients > 0) {
@@ -180,7 +181,9 @@ export class WebSocketService {
     const key = alertEvent.botName || 'unknown';
     const list = this.botErrors.get(key) || [];
     list.push(`${alertEvent.level}: ${alertEvent.title}`);
-    if (list.length > 20) {list.shift();}
+    if (list.length > 20) {
+      list.shift();
+    }
     this.botErrors.set(key, list);
 
     // Keep only last 500 alerts
@@ -238,8 +241,8 @@ export class WebSocketService {
     const now = new Date();
     const oneMinuteAgo = new Date(now.getTime() - 60000);
 
-    const recentMessages = this.messageFlow.filter(event =>
-      new Date(event.timestamp) > oneMinuteAgo,
+    const recentMessages = this.messageFlow.filter(
+      (event) => new Date(event.timestamp) > oneMinuteAgo
     );
 
     const currentRate = recentMessages.length;
@@ -251,9 +254,10 @@ export class WebSocketService {
     const now = new Date();
     const oneMinuteAgo = new Date(now.getTime() - 60000);
 
-    const recentErrors = this.alerts.filter(alert =>
-      (alert.level === 'error' || alert.level === 'critical') &&
-      new Date(alert.timestamp) > oneMinuteAgo,
+    const recentErrors = this.alerts.filter(
+      (alert) =>
+        (alert.level === 'error' || alert.level === 'critical') &&
+        new Date(alert.timestamp) > oneMinuteAgo
     );
 
     const currentRate = recentErrors.length;
@@ -281,7 +285,15 @@ export class WebSocketService {
           ],
           methods: ['GET', 'POST'],
           credentials: true,
-          allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control', 'X-CSRF-Token'],
+          allowedHeaders: [
+            'Origin',
+            'X-Requested-With',
+            'Content-Type',
+            'Accept',
+            'Authorization',
+            'Cache-Control',
+            'X-CSRF-Token',
+          ],
         },
       });
 
@@ -303,7 +315,9 @@ export class WebSocketService {
    * Handles connection, disconnection, and various client requests
    */
   private setupEventHandlers(): void {
-    if (!this.io) {return;}
+    if (!this.io) {
+      return;
+    }
 
     this.io.on('connection', (socket) => {
       this.connectedClients++;
@@ -374,7 +388,9 @@ export class WebSocketService {
   }
 
   private broadcastMonitoringData(): void {
-    if (!this.io) {return;}
+    if (!this.io) {
+      return;
+    }
 
     // Broadcast message flow updates
     if (this.messageFlow.length > 0) {
@@ -387,8 +403,8 @@ export class WebSocketService {
 
     // Broadcast alert updates
     if (this.alerts.length > 0) {
-      const recentAlerts = this.alerts.filter(alert =>
-        new Date(alert.timestamp) > new Date(Date.now() - 30000), // Last 30 seconds
+      const recentAlerts = this.alerts.filter(
+        (alert) => new Date(alert.timestamp) > new Date(Date.now() - 30000) // Last 30 seconds
       );
       if (recentAlerts.length > 0) {
         this.io.emit('alerts_broadcast', {
@@ -428,8 +444,8 @@ export class WebSocketService {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
-      
-      const status = bots.map(bot => {
+
+      const status = bots.map((bot) => {
         const hasProviderSecret = !!(
           bot.discord?.token ||
           bot.slack?.botToken ||
@@ -492,7 +508,7 @@ export class WebSocketService {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
       const warnings = manager.getWarnings();
-      
+
       const validation = {
         isValid: warnings.length === 0,
         warnings,
@@ -511,8 +527,8 @@ export class WebSocketService {
 
   private findMissingConfigurations(bots: any[]): string[] {
     const missing: string[] = [];
-    
-    bots.forEach(bot => {
+
+    bots.forEach((bot) => {
       if (bot.messageProvider === 'discord' && !bot.discord?.token) {
         missing.push(`${bot.name}: Missing Discord bot token`);
       }
@@ -532,17 +548,17 @@ export class WebSocketService {
 
   private generateRecommendations(bots: any[]): string[] {
     const recommendations: string[] = [];
-    
+
     if (bots.length === 0) {
       recommendations.push('No bots configured. Add at least one bot to get started.');
     }
-    
-    const providers = new Set(bots.map(b => b.messageProvider));
+
+    const providers = new Set(bots.map((b) => b.messageProvider));
     if (providers.size === 1 && providers.has('discord')) {
       recommendations.push('Consider adding Slack integration for broader platform support.');
     }
-    
-    const llmProviders = new Set(bots.map(b => b.llmProvider));
+
+    const llmProviders = new Set(bots.map((b) => b.llmProvider));
     if (llmProviders.size === 1) {
       recommendations.push('Consider configuring multiple LLM providers for redundancy.');
     }
@@ -551,24 +567,30 @@ export class WebSocketService {
   }
 
   private broadcastBotStatus(): void {
-    if (!this.io) {return;}
+    if (!this.io) {
+      return;
+    }
     this.io.emit('bot_status_broadcast', { timestamp: new Date().toISOString() });
   }
 
   private broadcastSystemMetrics(): void {
-    if (!this.io) {return;}
-    this.io.sockets.sockets.forEach(socket => {
+    if (!this.io) {
+      return;
+    }
+    this.io.sockets.sockets.forEach((socket) => {
       this.sendSystemMetrics(socket);
     });
   }
 
   public broadcastConfigChange(): void {
-    if (!this.io) {return;}
+    if (!this.io) {
+      return;
+    }
     debug('Broadcasting configuration change');
     this.io.emit('config_changed', { timestamp: new Date().toISOString() });
-    
+
     // Send updated data to all clients
-    this.io.sockets.sockets.forEach(socket => {
+    this.io.sockets.sockets.forEach((socket) => {
       this.sendBotStatus(socket);
       this.sendConfigValidation(socket);
     });
@@ -614,16 +636,17 @@ export class WebSocketService {
       const totalCpuMicros = currentCpu.user + currentCpu.system;
       const cpuCores = Math.max(1, os.cpus()?.length || 1);
       // percent of a single core, normalized by core count
-      const cpuPercent = elapsedMs > 0
-        ? Math.min(100, Math.max(0, (totalCpuMicros / (elapsedMs * 1000)) * (100 / cpuCores)))
-        : 0;
+      const cpuPercent =
+        elapsedMs > 0
+          ? Math.min(100, Math.max(0, (totalCpuMicros / (elapsedMs * 1000)) * (100 / cpuCores)))
+          : 0;
       this.lastCpuUsage = process.cpuUsage();
       this.lastHrTime = nowHr;
 
       // Approximate response time as average processingTime of last 10 message events (if present)
       const recentWithTimes = this.messageFlow
         .slice(-20)
-        .map(m => m.processingTime)
+        .map((m) => m.processingTime)
         .filter((t): t is number => typeof t === 'number' && isFinite(t));
       const avgResponse = recentWithTimes.length
         ? Math.round(recentWithTimes.reduce((a, b) => a + b, 0) / recentWithTimes.length)
@@ -740,9 +763,15 @@ export class WebSocketService {
         // Proactively disconnect sockets without touching the underlying HTTP server
         try {
           this.io.sockets.sockets.forEach((socket) => {
-            try { socket.disconnect(true); } catch { /* ignore */ }
+            try {
+              socket.disconnect(true);
+            } catch {
+              /* ignore */
+            }
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         // Remove listeners to avoid emitting errors on the shared HTTP server
         this.io.removeAllListeners();
         // Avoid calling close() to prevent 'Server is not running' errors in certain environments

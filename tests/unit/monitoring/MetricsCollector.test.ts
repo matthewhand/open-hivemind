@@ -53,16 +53,16 @@ describe('MetricsCollector', () => {
       { scenario: 'zero response time', times: [0] },
       { scenario: 'large response time', times: [999999] },
     ])('should record $scenario correctly', ({ times }) => {
-      times.forEach(time => collector.recordResponseTime(time));
+      times.forEach((time) => collector.recordResponseTime(time));
       const metrics = collector.getMetrics();
-      times.forEach(time => {
+      times.forEach((time) => {
         expect(metrics.responseTime).toContain(time);
       });
     });
 
     it('should maintain a history of response times', () => {
       const responseTimes = [10, 20, 30, 40, 50, 60];
-      responseTimes.forEach(time => collector.recordResponseTime(time));
+      responseTimes.forEach((time) => collector.recordResponseTime(time));
       const metrics = collector.getMetrics();
       expect(metrics.responseTime.length).toBeGreaterThanOrEqual(responseTimes.length);
     });
@@ -75,7 +75,9 @@ describe('MetricsCollector', () => {
       const updatedMetrics = collector.getMetrics();
       expect(updatedMetrics.errors).toBe(initial + 1);
       expect(collector.getLatestValue('errors')).toBe(initial + 1);
-      expect(collector.getAllMetrics().filter(entry => entry.name === 'errors').length).toBeGreaterThan(0);
+      expect(
+        collector.getAllMetrics().filter((entry) => entry.name === 'errors').length
+      ).toBeGreaterThan(0);
       const summary = collector.getMetricsSummary();
       expect(summary.metrics.errors).toBeGreaterThanOrEqual(updatedMetrics.errors);
     });
@@ -98,8 +100,8 @@ describe('MetricsCollector', () => {
       expect(prometheus2).toMatch(/hivemind_uptime_seconds\s+\d+/);
 
       // Be valid Prometheus format
-      const lines = prometheus2.split('\n').filter(line => line.trim());
-      lines.forEach(line => {
+      const lines = prometheus2.split('\n').filter((line) => line.trim());
+      lines.forEach((line) => {
         if (!line.startsWith('#')) {
           expect(line).toMatch(/^[a-zA-Z_][a-zA-Z0-9_]*(\{[^}]*\})?\s+\d+(\.\d+)?$/);
         }

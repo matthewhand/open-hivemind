@@ -1,66 +1,65 @@
-
-import MessageDelayScheduler from '../../../../src/message/helpers/handler/MessageDelayScheduler';
 import messageConfig from '../../../../src/config/messageConfig';
+import MessageDelayScheduler from '../../../../src/message/helpers/handler/MessageDelayScheduler';
 
 // Mock config
 jest.mock('../../../../src/config/messageConfig', () => ({
-    get: jest.fn()
+  get: jest.fn(),
 }));
 
 describe('MessageDelayScheduler', () => {
-    let scheduler: MessageDelayScheduler;
+  let scheduler: MessageDelayScheduler;
 
-    beforeEach(() => {
-        // Clear instance for singleton test if possible, or just re-get
-        // In this simple impl, getInstance returns same object.
-        scheduler = MessageDelayScheduler.getInstance();
-        jest.useFakeTimers();
-        jest.clearAllMocks();
+  beforeEach(() => {
+    // Clear instance for singleton test if possible, or just re-get
+    // In this simple impl, getInstance returns same object.
+    scheduler = MessageDelayScheduler.getInstance();
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('should be a singleton', () => {
+    const s1 = MessageDelayScheduler.getInstance();
+    const s2 = MessageDelayScheduler.getInstance();
+    expect(s1).toBe(s2);
+  });
+
+  it('should schedule and execute message with delay', async () => {
+    const sendFn = jest.fn().mockResolvedValue('sent-id');
+    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'MESSAGE_MIN_DELAY') return 1000;
+      if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
+      return undefined;
     });
 
-    afterEach(() => {
-        jest.useRealTimers();
-    });
+    const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
 
-    it('should be a singleton', () => {
-        const s1 = MessageDelayScheduler.getInstance();
-        const s2 = MessageDelayScheduler.getInstance();
-        expect(s1).toBe(s2);
-    });
+    // Should not have called yet
+    expect(sendFn).not.toHaveBeenCalled();
 
-    it('should schedule and execute message with delay', async () => {
-        const sendFn = jest.fn().mockResolvedValue('sent-id');
-        (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
-            if (key === 'MESSAGE_MIN_DELAY') return 1000;
-            if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
-            return undefined;
-        });
+    // Advance time
+    jest.advanceTimersByTime(1000);
 
-        const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
+    await promise;
 
-        // Should not have called yet
-        expect(sendFn).not.toHaveBeenCalled();
+    expect(sendFn).toHaveBeenCalledWith('Hello');
+  });
 
-        // Advance time
-        jest.advanceTimersByTime(1000);
+  it('should use default delay if config missing', async () => {
+    const sendFn = jest.fn().mockResolvedValue('sent-id');
+    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
+      return undefined;
+    }); // Simulate missing delay config
 
-        await promise;
+    const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
 
-        expect(sendFn).toHaveBeenCalledWith('Hello');
-    });
+    jest.advanceTimersByTime(1000); // Default is 1000 in code
+    await promise;
 
-    it('should use default delay if config missing', async () => {
-        const sendFn = jest.fn().mockResolvedValue('sent-id');
-        (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
-            if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
-            return undefined;
-        }); // Simulate missing delay config
-
-        const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
-
-        jest.advanceTimersByTime(1000); // Default is 1000 in code
-        await promise;
-
-        expect(sendFn).toHaveBeenCalled();
-    });
+    expect(sendFn).toHaveBeenCalled();
+  });
 });

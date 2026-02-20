@@ -10,24 +10,30 @@ export function splitMessageContent(messageText: string, maxLength = 1997): stri
   let chunkStartIndex = 0;
 
   // Minimum required length to accommodate ellipses "..." (3) + content (1) + "..." (3) = 7
-  // But practically we can handle "..." + 1 char. = 4. 
-  if (maxLength < 10) {maxLength = 10;} // Enforce sanity lower bound
+  // But practically we can handle "..." + 1 char. = 4.
+  if (maxLength < 10) {
+    maxLength = 10;
+  } // Enforce sanity lower bound
 
   while (chunkStartIndex < messageText.length) {
-    const isFirstPart = (parts.length === 0);
+    const isFirstPart = parts.length === 0;
 
     // Calculate max content we can fit in this part
     // Base is maxLength.
     // Subtract 3 for leading '...' if not first part.
     let availableSpace = maxLength;
-    if (!isFirstPart) {availableSpace -= 3;}
+    if (!isFirstPart) {
+      availableSpace -= 3;
+    }
 
     const remainingLength = messageText.length - chunkStartIndex;
 
     if (remainingLength <= availableSpace) {
       // The rest fits
       let chunk = messageText.slice(chunkStartIndex);
-      if (!isFirstPart) {chunk = '...' + chunk;}
+      if (!isFirstPart) {
+        chunk = '...' + chunk;
+      }
       parts.push(chunk);
       break;
     }
@@ -41,7 +47,7 @@ export function splitMessageContent(messageText: string, maxLength = 1997): stri
 
     // Try to break at space if possible
     const lastSpace = chunkContent.lastIndexOf(' ');
-    if (lastSpace > (chunkContent.length * 0.5)) {
+    if (lastSpace > chunkContent.length * 0.5) {
       chunkContent = chunkContent.slice(0, lastSpace);
     }
 
@@ -54,17 +60,19 @@ export function splitMessageContent(messageText: string, maxLength = 1997): stri
       }
     }
 
-    const actualConsumedLength = chunkContent.length; // From the slice we took, spaces inside are consumed. 
+    const actualConsumedLength = chunkContent.length; // From the slice we took, spaces inside are consumed.
     // Wait, if we 'broke at space' logic:
-    // "abc def" -> break at space -> "abc". 
-    // We consumed "abc". 
+    // "abc def" -> break at space -> "abc".
+    // We consumed "abc".
     // chunkStartIndex += 3.
     // Next loop starts at " def". trimStart at next loop handles it?
     // My previous logic had manual whitespace skip.
 
     // Construct part
     let finalPart = chunkContent + '...';
-    if (!isFirstPart) {finalPart = '...' + finalPart;}
+    if (!isFirstPart) {
+      finalPart = '...' + finalPart;
+    }
     parts.push(finalPart);
 
     // Advance

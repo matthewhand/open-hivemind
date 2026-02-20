@@ -1,6 +1,6 @@
+import Debug from 'debug';
 import { FlowiseClient } from 'flowise-sdk';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
-import Debug from 'debug';
 
 const debug = Debug('app:flowiseSdkClient');
 
@@ -22,7 +22,7 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
       question: prompt,
       overrideConfig: {
         credentials: {
-          'DefaultKey': apiKey,
+          DefaultKey: apiKey,
         },
       },
       streaming: false, // Disabled streaming

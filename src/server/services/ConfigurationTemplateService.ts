@@ -1,8 +1,8 @@
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { ConfigurationValidator } from './ConfigurationValidator';
-import Debug from 'debug';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import Debug from 'debug';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
 
@@ -84,7 +84,7 @@ export class ConfigurationTemplateService {
   private async loadBuiltInTemplates(): Promise<void> {
     try {
       const builtInTemplates = this.getBuiltInTemplates();
-      
+
       for (const template of builtInTemplates) {
         const existingTemplate = await this.getTemplateById(template.id);
         if (!existingTemplate) {
@@ -102,7 +102,7 @@ export class ConfigurationTemplateService {
    */
   private getBuiltInTemplates(): ConfigurationTemplate[] {
     const now = new Date();
-    
+
     return [
       {
         id: 'discord-basic',
@@ -259,7 +259,9 @@ export class ConfigurationTemplateService {
       // Validate template configuration
       const validationResult = this.configValidator.validateBotConfig(request.config);
       if (!validationResult.isValid) {
-        throw new Error(`Template configuration validation failed: ${validationResult.errors.join(', ')}`);
+        throw new Error(
+          `Template configuration validation failed: ${validationResult.errors.join(', ')}`
+        );
       }
 
       // Check if template name already exists
@@ -284,7 +286,7 @@ export class ConfigurationTemplateService {
 
       await this.saveTemplate(template);
       debug('Created template:', template.name);
-      
+
       return template;
     } catch (error) {
       debug('Error creating template:', error);
@@ -295,7 +297,10 @@ export class ConfigurationTemplateService {
   /**
    * Update an existing template
    */
-  async updateTemplate(templateId: string, request: UpdateTemplateRequest): Promise<ConfigurationTemplate> {
+  async updateTemplate(
+    templateId: string,
+    request: UpdateTemplateRequest
+  ): Promise<ConfigurationTemplate> {
     try {
       const existingTemplate = await this.getTemplateById(templateId);
       if (!existingTemplate) {
@@ -310,7 +315,9 @@ export class ConfigurationTemplateService {
       if (request.config) {
         const validationResult = this.configValidator.validateBotConfig(request.config);
         if (!validationResult.isValid) {
-          throw new Error(`Template configuration validation failed: ${validationResult.errors.join(', ')}`);
+          throw new Error(
+            `Template configuration validation failed: ${validationResult.errors.join(', ')}`
+          );
         }
       }
 
@@ -326,7 +333,7 @@ export class ConfigurationTemplateService {
 
       await this.saveTemplate(updatedTemplate);
       debug('Updated template:', updatedTemplate.name);
-      
+
       return updatedTemplate;
     } catch (error) {
       debug('Error updating template:', error);
@@ -350,7 +357,7 @@ export class ConfigurationTemplateService {
 
       const filePath = join(this.templatesDir, `${templateId}.json`);
       await fs.unlink(filePath);
-      
+
       debug('Deleted template:', template.name);
       return true;
     } catch (error) {
@@ -367,11 +374,11 @@ export class ConfigurationTemplateService {
       const filePath = join(this.templatesDir, `${templateId}.json`);
       const data = await fs.readFile(filePath, 'utf-8');
       const template = JSON.parse(data);
-      
+
       // Convert date strings back to Date objects
       template.createdAt = new Date(template.createdAt);
       template.updatedAt = new Date(template.updatedAt);
-      
+
       return template;
     } catch (error) {
       if ((error as any).code === 'ENOENT') {
@@ -388,7 +395,7 @@ export class ConfigurationTemplateService {
   async getTemplateByName(name: string): Promise<ConfigurationTemplate | null> {
     try {
       const templates = await this.getAllTemplates();
-      return templates.find(template => template.name === name) || null;
+      return templates.find((template) => template.name === name) || null;
     } catch (error) {
       debug('Error getting template by name:', error);
       throw new Error(`Failed to get template by name: ${error}`);
@@ -409,11 +416,11 @@ export class ConfigurationTemplateService {
             const filePath = join(this.templatesDir, file);
             const data = await fs.readFile(filePath, 'utf-8');
             const template = JSON.parse(data);
-            
+
             // Convert date strings back to Date objects
             template.createdAt = new Date(template.createdAt);
             template.updatedAt = new Date(template.updatedAt);
-            
+
             // Apply filters
             if (this.matchesFilter(template, filter)) {
               templates.push(template);
@@ -443,9 +450,7 @@ export class ConfigurationTemplateService {
    */
   async getPopularTemplates(limit: number = 10): Promise<ConfigurationTemplate[]> {
     const templates = await this.getAllTemplates();
-    return templates
-      .sort((a, b) => b.usageCount - a.usageCount)
-      .slice(0, limit);
+    return templates.sort((a, b) => b.usageCount - a.usageCount).slice(0, limit);
   }
 
   /**
@@ -453,9 +458,7 @@ export class ConfigurationTemplateService {
    */
   async getRecentTemplates(limit: number = 10): Promise<ConfigurationTemplate[]> {
     const templates = await this.getAllTemplates();
-    return templates
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return templates.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
   }
 
   /**
@@ -470,7 +473,7 @@ export class ConfigurationTemplateService {
 
       template.usageCount += 1;
       template.updatedAt = new Date();
-      
+
       await this.saveTemplate(template);
       debug('Incremented usage count for template:', template.name);
     } catch (error) {
@@ -481,7 +484,11 @@ export class ConfigurationTemplateService {
   /**
    * Duplicate a template
    */
-  async duplicateTemplate(templateId: string, newName: string, createdBy?: string): Promise<ConfigurationTemplate> {
+  async duplicateTemplate(
+    templateId: string,
+    newName: string,
+    createdBy?: string
+  ): Promise<ConfigurationTemplate> {
     try {
       const originalTemplate = await this.getTemplateById(templateId);
       if (!originalTemplate) {
@@ -502,7 +509,7 @@ export class ConfigurationTemplateService {
 
       await this.saveTemplate(duplicateTemplate);
       debug('Duplicated template:', originalTemplate.name, 'as', newName);
-      
+
       return duplicateTemplate;
     } catch (error) {
       debug('Error duplicating template:', error);
@@ -533,7 +540,7 @@ export class ConfigurationTemplateService {
   async importTemplate(jsonData: string, createdBy?: string): Promise<ConfigurationTemplate> {
     try {
       const templateData = JSON.parse(jsonData);
-      
+
       // Validate template structure
       if (!templateData.name || !templateData.config) {
         throw new Error('Invalid template format');
@@ -541,7 +548,7 @@ export class ConfigurationTemplateService {
 
       // Remove ID to generate a new one
       delete templateData.id;
-      
+
       const request: CreateTemplateRequest = {
         name: templateData.name,
         description: templateData.description || '',
@@ -571,18 +578,23 @@ export class ConfigurationTemplateService {
    * Generate template ID from name
    */
   private generateTemplateId(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      + '-' + Date.now().toString(36);
+    return (
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') +
+      '-' +
+      Date.now().toString(36)
+    );
   }
 
   /**
    * Check if template matches filter
    */
   private matchesFilter(template: ConfigurationTemplate, filter?: TemplateFilter): boolean {
-    if (!filter) {return true;}
+    if (!filter) {
+      return true;
+    }
 
     if (filter.category && template.category !== filter.category) {
       return false;
@@ -597,12 +609,12 @@ export class ConfigurationTemplateService {
     }
 
     if (filter.tags && filter.tags.length > 0) {
-      const hasMatchingTag = filter.tags.some(tag => 
-        template.tags.some(templateTag => 
-          templateTag.toLowerCase().includes(tag.toLowerCase()),
-        ),
+      const hasMatchingTag = filter.tags.some((tag) =>
+        template.tags.some((templateTag) => templateTag.toLowerCase().includes(tag.toLowerCase()))
       );
-      if (!hasMatchingTag) {return false;}
+      if (!hasMatchingTag) {
+        return false;
+      }
     }
 
     if (filter.search) {
@@ -612,8 +624,10 @@ export class ConfigurationTemplateService {
         template.description,
         ...template.tags,
         template.category,
-      ].join(' ').toLowerCase();
-      
+      ]
+        .join(' ')
+        .toLowerCase();
+
       if (!searchableText.includes(searchLower)) {
         return false;
       }

@@ -36,12 +36,26 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
   const connect = () => {
-    if (socket?.connected) {return;}
+    if (socket?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
+    const tokenString = localStorage.getItem('auth_tokens');
+    let token = '';
+    if (tokenString) {
+      try {
+        const tokens = JSON.parse(tokenString);
+        token = tokens.accessToken;
+      } catch (e) {
+        console.error('Failed to parse auth token', e);
+      }
+    }
+
     const newSocket = io(connectionTarget, {
       path: '/webui/socket.io',
       transports: ['websocket', 'polling'],
+      auth: {
+        token: token
+      }
     });
 
     newSocket.on('connect', () => {

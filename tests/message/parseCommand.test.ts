@@ -28,7 +28,7 @@ describe('parseCommand', () => {
   });
 
   test('trims surrounding whitespace', () => {
-    expect(parseCommand(  '  !CMD    alpha   ' )).toEqual({
+    expect(parseCommand('  !CMD    alpha   ')).toEqual({
       commandName: 'cmd',
       action: '',
       args: ['alpha'],

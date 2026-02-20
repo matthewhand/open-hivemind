@@ -110,7 +110,7 @@ export class AuditLogger {
       oldValue?: any;
       newValue?: any;
       metadata?: Record<string, any>;
-    } = {},
+    } = {}
   ): void {
     this.log({
       user,
@@ -134,7 +134,7 @@ export class AuditLogger {
       oldValue?: any;
       newValue?: any;
       metadata?: Record<string, any>;
-    } = {},
+    } = {}
   ): void {
     this.log({
       user,
@@ -156,7 +156,7 @@ export class AuditLogger {
       ipAddress?: string;
       userAgent?: string;
       metadata?: Record<string, any>;
-    } = {},
+    } = {}
   ): void {
     this.log({
       user,
@@ -175,10 +175,13 @@ export class AuditLogger {
       }
 
       const content = fs.readFileSync(this.logFilePath, 'utf8');
-      const lines = content.trim().split('\n').filter(line => line.trim());
+      const lines = content
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim());
 
       const events: AuditEvent[] = lines
-        .map(line => {
+        .map((line) => {
           try {
             return JSON.parse(line) as AuditEvent;
           } catch {
@@ -197,23 +200,22 @@ export class AuditLogger {
 
   public getAuditEventsByUser(user: string, limit: number = 100): AuditEvent[] {
     const allEvents = this.getAuditEvents(1000); // Get more to filter
-    return allEvents
-      .filter(event => event.user === user)
-      .slice(0, limit);
+    return allEvents.filter((event) => event.user === user).slice(0, limit);
   }
 
   public getAuditEventsByAction(action: string, limit: number = 100): AuditEvent[] {
     const allEvents = this.getAuditEvents(1000); // Get more to filter
-    return allEvents
-      .filter(event => event.action === action)
-      .slice(0, limit);
+    return allEvents.filter((event) => event.action === action).slice(0, limit);
   }
 
   public getBotActivity(botId: string, limit: number = 50): AuditEvent[] {
-    const allEvents = this.getAuditEvents(2000); 
+    const allEvents = this.getAuditEvents(2000);
     const resourceKey = `bots/${botId}`;
     return allEvents
-      .filter(event => event.resource === resourceKey || (event.metadata && event.metadata.botId === botId))
+      .filter(
+        (event) =>
+          event.resource === resourceKey || (event.metadata && event.metadata.botId === botId)
+      )
       .slice(0, limit);
   }
 

@@ -3,10 +3,10 @@
  */
 
 import {
-  DatabaseManager,
   BotConfiguration,
+  BotConfigurationAudit,
   BotConfigurationVersion,
-  BotConfigurationAudit
+  DatabaseManager,
 } from '../../src/database/DatabaseManager';
 
 describe('N+1 Query Optimization', () => {
@@ -17,7 +17,7 @@ describe('N+1 Query Optimization', () => {
     // Initialize database with a unique instance for these tests
     dbManager = new DatabaseManager({
       type: 'sqlite',
-      path: ':memory:'
+      path: ':memory:',
     });
 
     await dbManager.connect();
@@ -34,7 +34,7 @@ describe('N+1 Query Optimization', () => {
         mcpServers: [{ name: `server-${i}`, serverUrl: `https://server-${i}.example.com` }],
         discord: { channelId: `channel-${i}`, token: `token-${i}` },
         openai: { apiKey: `key-${i}`, model: 'gpt-4' },
-        isActive: true
+        isActive: true,
       });
     }
 
@@ -44,7 +44,7 @@ describe('N+1 Query Optimization', () => {
       const configWithDates: BotConfiguration = {
         ...config,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
       const id = await dbManager.createBotConfiguration(configWithDates);
       testConfigIds.push(id);
@@ -68,7 +68,7 @@ describe('N+1 Query Optimization', () => {
           isActive: v === 2, // Last version is active
           createdAt: new Date(),
           createdBy: 'test-user',
-          changeLog: `Version ${v} created`
+          changeLog: `Version ${v} created`,
         };
         await dbManager.createBotConfigurationVersion(version);
       }
@@ -83,7 +83,7 @@ describe('N+1 Query Optimization', () => {
           performedBy: `user-${a}`,
           performedAt: new Date(),
           ipAddress: `192.168.1.${a}`,
-          userAgent: `test-agent-${a}`
+          userAgent: `test-agent-${a}`,
         };
         await dbManager.createBotConfigurationAudit(audit);
       }
@@ -104,7 +104,7 @@ describe('N+1 Query Optimization', () => {
       expect(configs.length).toBe(5);
 
       // Verify each configuration has versions and audit logs
-      configs.forEach(config => {
+      configs.forEach((config) => {
         expect(config.versions).toBeDefined();
         expect(Array.isArray(config.versions)).toBe(true);
         expect(config.auditLog).toBeDefined();
@@ -117,14 +117,14 @@ describe('N+1 Query Optimization', () => {
         expect(config.auditLog.length).toBeGreaterThanOrEqual(3);
 
         // Verify data structure
-        config.versions.forEach(version => {
+        config.versions.forEach((version) => {
           expect(version).toHaveProperty('id');
           expect(version).toHaveProperty('botConfigurationId');
           expect(version).toHaveProperty('version');
           expect(version.botConfigurationId).toBe(config.id);
         });
 
-        config.auditLog.forEach(audit => {
+        config.auditLog.forEach((audit) => {
           expect(audit).toHaveProperty('id');
           expect(audit).toHaveProperty('botConfigurationId');
           expect(audit.botConfigurationId).toBe(config.id);
@@ -142,7 +142,7 @@ describe('N+1 Query Optimization', () => {
       // Create a new database manager with empty database
       const emptyDbManager = DatabaseManager.getInstance({
         type: 'sqlite',
-        path: ':memory:'
+        path: ':memory:',
       });
 
       await emptyDbManager.connect();
@@ -163,14 +163,14 @@ describe('N+1 Query Optimization', () => {
       expect(versionsMap.size).toBe(testConfigIds.length);
 
       // Verify all configuration IDs are present
-      testConfigIds.forEach(configId => {
+      testConfigIds.forEach((configId) => {
         expect(versionsMap.has(configId)).toBe(true);
         expect(versionsMap.get(configId)!.length).toBeGreaterThanOrEqual(2);
       });
 
       // Verify version data integrity
       versionsMap.forEach((versions, configId) => {
-        versions.forEach(version => {
+        versions.forEach((version) => {
           expect(version.botConfigurationId).toBe(configId);
           expect(typeof version.version).toBe('string');
           expect(version.createdAt).toBeInstanceOf(Date);
@@ -185,14 +185,14 @@ describe('N+1 Query Optimization', () => {
       expect(auditMap.size).toBe(testConfigIds.length);
 
       // Verify all configuration IDs are present
-      testConfigIds.forEach(configId => {
+      testConfigIds.forEach((configId) => {
         expect(auditMap.has(configId)).toBe(true);
         expect(auditMap.get(configId)!.length).toBeGreaterThanOrEqual(3);
       });
 
       // Verify audit data integrity
       auditMap.forEach((audits, configId) => {
-        audits.forEach(audit => {
+        audits.forEach((audit) => {
           expect(audit.botConfigurationId).toBe(configId);
           expect(['CREATE', 'UPDATE', 'DELETE', 'ACTIVATE', 'DEACTIVATE']).toContain(audit.action);
           expect(audit.performedAt).toBeInstanceOf(Date);
@@ -233,7 +233,7 @@ describe('N+1 Query Optimization', () => {
         individualResults.push({
           ...config,
           versions,
-          auditLog
+          auditLog,
         });
       }
       const individualEndTime = Date.now();
@@ -255,8 +255,8 @@ describe('N+1 Query Optimization', () => {
       expect(bulkTime).toBeLessThanOrEqual(individualTime * 2 + 10);
 
       // Verify data consistency - both should have same IDs
-      const individualIds = individualResults.map(r => r.id).sort();
-      const bulkIds = bulkResults.map(r => r.id).sort();
+      const individualIds = individualResults.map((r) => r.id).sort();
+      const bulkIds = bulkResults.map((r) => r.id).sort();
       expect(individualIds).toEqual(bulkIds);
     });
   });
@@ -265,14 +265,17 @@ describe('N+1 Query Optimization', () => {
     test('should handle database disconnection gracefully in bulk queries', async () => {
       const disconnectedDb = new DatabaseManager();
 
-      await expect(disconnectedDb.getBotConfigurationVersionsBulk(testConfigIds))
-        .rejects.toThrow('Database is not configured');
+      await expect(disconnectedDb.getBotConfigurationVersionsBulk(testConfigIds)).rejects.toThrow(
+        'Database is not configured'
+      );
 
-      await expect(disconnectedDb.getBotConfigurationAuditBulk(testConfigIds))
-        .rejects.toThrow('Database is not configured');
+      await expect(disconnectedDb.getBotConfigurationAuditBulk(testConfigIds)).rejects.toThrow(
+        'Database is not configured'
+      );
 
-      await expect(disconnectedDb.getAllBotConfigurationsWithDetails())
-        .rejects.toThrow('Database is not configured');
+      await expect(disconnectedDb.getAllBotConfigurationsWithDetails()).rejects.toThrow(
+        'Database is not configured'
+      );
     });
 
     test('should handle malformed data in bulk queries', async () => {
@@ -284,7 +287,7 @@ describe('N+1 Query Optimization', () => {
       expect(Array.isArray(results)).toBe(true);
 
       // All results should have the expected structure
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toHaveProperty('id');
         expect(result).toHaveProperty('name');
         expect(result).toHaveProperty('versions');

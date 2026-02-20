@@ -5,9 +5,9 @@ jest.mock('@hivemind/adapter-discord', () => ({
     getInstance: jest.fn(() => ({
       sendMessageToChannel: jest.fn(),
       getClientId: jest.fn(),
-      provider: 'discord'
-    }))
-  }
+      provider: 'discord',
+    })),
+  },
 }));
 
 jest.mock('@src/integrations/slack/SlackService', () => ({
@@ -15,18 +15,17 @@ jest.mock('@src/integrations/slack/SlackService', () => ({
     getInstance: jest.fn(() => ({
       sendMessageToChannel: jest.fn(),
       getClientId: jest.fn(),
-      provider: 'slack'
-    }))
-  }
+      provider: 'slack',
+    })),
+  },
 }));
 
 jest.mock('fs', () => ({
-  readFileSync: jest.fn(() => JSON.stringify({
-    providers: [
-      { type: 'discord' },
-      { type: 'slack' }
-    ]
-  }))
+  readFileSync: jest.fn(() =>
+    JSON.stringify({
+      providers: [{ type: 'discord' }, { type: 'slack' }],
+    })
+  ),
 }));
 
 describe('getMessengerProvider Unit Test', () => {

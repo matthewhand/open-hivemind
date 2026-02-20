@@ -1,11 +1,11 @@
-import { SlackSignatureVerifier } from '../../../src/integrations/slack/SlackSignatureVerifier';
-import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { NextFunction, Request, Response } from 'express';
+import { SlackSignatureVerifier } from '../../../src/integrations/slack/SlackSignatureVerifier';
 
 const mockRequest = (headers: Record<string, string>, body: object = {}) => ({
   headers,
   body,
-  get: jest.fn()
+  get: jest.fn(),
 });
 
 const mockResponse = () => {
@@ -46,10 +46,13 @@ describe('SlackSignatureVerifier', () => {
     const body = { event: 'test' };
     const base = `v0:${ts}:${JSON.stringify(body)}`;
     const sig = `v0=${crypto.createHmac('sha256', signingSecret).update(base).digest('hex')}`;
-    const req = mockRequest({
-      'x-slack-request-timestamp': ts,
-      'x-slack-signature': sig,
-    }, body);
+    const req = mockRequest(
+      {
+        'x-slack-request-timestamp': ts,
+        'x-slack-signature': sig,
+      },
+      body
+    );
     const res = mockResponse();
 
     verifier.verify(req as unknown as Request, res as Response, mockNext);
@@ -60,10 +63,13 @@ describe('SlackSignatureVerifier', () => {
     const ts = String(Math.floor(Date.now() / 1000));
     const reqBody = { challenge: 'test' };
     const badSig = 'v0=deadbeef';
-    const req = mockRequest({
-      'x-slack-request-timestamp': ts,
-      'x-slack-signature': badSig,
-    }, reqBody);
+    const req = mockRequest(
+      {
+        'x-slack-request-timestamp': ts,
+        'x-slack-signature': badSig,
+      },
+      reqBody
+    );
     const res = mockResponse();
     verifier.verify(req as unknown as Request, res as Response, mockNext);
     expect(res.status).toHaveBeenCalledWith(403);

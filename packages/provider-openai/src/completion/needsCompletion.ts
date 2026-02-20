@@ -12,7 +12,7 @@ const debug = Debug('app:needsCompletion');
 export function needsCompletion(
   maxTokensReached: boolean,
   finishReason: string,
-  content: string,
+  content: string
 ): boolean {
   const endsInPunctuation = /[.!?]$/.test(content.trim());
 

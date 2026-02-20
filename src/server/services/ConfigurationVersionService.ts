@@ -1,7 +1,11 @@
-import type { BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { ConfigurationValidator } from './ConfigurationValidator';
 import Debug from 'debug';
+import {
+  DatabaseManager,
+  type BotConfiguration,
+  type BotConfigurationAudit,
+  type BotConfigurationVersion,
+} from '../../database/DatabaseManager';
+import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationVersionService');
 
@@ -66,8 +70,10 @@ export class ConfigurationVersionService {
       }
 
       // Check if version already exists
-      const existingVersions = await this.dbManager.getBotConfigurationVersions(request.botConfigurationId);
-      const existingVersion = existingVersions.find(v => v.version === request.version);
+      const existingVersions = await this.dbManager.getBotConfigurationVersions(
+        request.botConfigurationId
+      );
+      const existingVersion = existingVersions.find((v) => v.version === request.version);
       if (existingVersion) {
         throw new Error(`Version ${request.version} already exists for this configuration`);
       }
@@ -98,16 +104,18 @@ export class ConfigurationVersionService {
 
       // Save version to database
       const versionId = await this.dbManager.createBotConfigurationVersion(versionData);
-      
+
       // Get the created version with ID - need to find it in the versions list
       const versions = await this.dbManager.getBotConfigurationVersions(request.botConfigurationId);
-      const createdVersion = versions.find(v => v.version === request.version);
-      
+      const createdVersion = versions.find((v) => v.version === request.version);
+
       if (!createdVersion) {
         throw new Error('Failed to create configuration version');
       }
 
-      debug(`Created configuration version: ${request.version} for bot configuration ID: ${request.botConfigurationId}`);
+      debug(
+        `Created configuration version: ${request.version} for bot configuration ID: ${request.botConfigurationId}`
+      );
       return createdVersion;
     } catch (error) {
       debug('Error creating configuration version:', error);
@@ -137,10 +145,13 @@ export class ConfigurationVersionService {
   /**
    * Get a specific version of a bot configuration
    */
-  async getVersion(botConfigurationId: number, version: string): Promise<BotConfigurationVersion | null> {
+  async getVersion(
+    botConfigurationId: number,
+    version: string
+  ): Promise<BotConfigurationVersion | null> {
     try {
       const versions = await this.dbManager.getBotConfigurationVersions(botConfigurationId);
-      return versions.find(v => v.version === version) || null;
+      return versions.find((v) => v.version === version) || null;
     } catch (error) {
       debug('Error getting configuration version:', error);
       throw new Error(`Failed to get configuration version: ${error}`);
@@ -153,12 +164,12 @@ export class ConfigurationVersionService {
   async compareVersions(
     botConfigurationId: number,
     version1: string,
-    version2: string,
+    version2: string
   ): Promise<VersionComparisonResult> {
     try {
       const versions = await this.dbManager.getBotConfigurationVersions(botConfigurationId);
-      const v1 = versions.find(v => v.version === version1);
-      const v2 = versions.find(v => v.version === version2);
+      const v1 = versions.find((v) => v.version === version1);
+      const v2 = versions.find((v) => v.version === version2);
 
       if (!v1 || !v2) {
         throw new Error('One or both versions not found');
@@ -183,14 +194,14 @@ export class ConfigurationVersionService {
    * Restore a bot configuration to a specific version
    */
   async restoreVersion(
-    botConfigurationId: number, 
-    version: string, 
-    restoredBy?: string,
+    botConfigurationId: number,
+    version: string,
+    restoredBy?: string
   ): Promise<BotConfiguration> {
     try {
       // Get the version to restore
       const versions = await this.dbManager.getBotConfigurationVersions(botConfigurationId);
-      const versionData = versions.find(v => v.version === version);
+      const versionData = versions.find((v) => v.version === version);
       if (!versionData) {
         throw new Error(`Version ${version} not found`);
       }
@@ -255,18 +266,25 @@ export class ConfigurationVersionService {
       // Check if this is the currently active version
       const currentConfig = await this.dbManager.getBotConfiguration(botConfigurationId);
       if (currentConfig) {
-        const versionToDelete = versions.find(v => v.version === version);
-        if (versionToDelete &&
-            versionToDelete.messageProvider === currentConfig.messageProvider &&
-            versionToDelete.llmProvider === currentConfig.llmProvider &&
-            versionToDelete.persona === currentConfig.persona) {
+        const versionToDelete = versions.find((v) => v.version === version);
+        if (
+          versionToDelete &&
+          versionToDelete.messageProvider === currentConfig.messageProvider &&
+          versionToDelete.llmProvider === currentConfig.llmProvider &&
+          versionToDelete.persona === currentConfig.persona
+        ) {
           throw new Error('Cannot delete the currently active version');
         }
       }
 
-      const deleted = await this.dbManager.deleteBotConfigurationVersion(botConfigurationId, version);
+      const deleted = await this.dbManager.deleteBotConfigurationVersion(
+        botConfigurationId,
+        version
+      );
       if (deleted) {
-        debug(`Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`);
+        debug(
+          `Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`
+        );
       }
       return deleted;
     } catch (error) {
@@ -278,7 +296,10 @@ export class ConfigurationVersionService {
   /**
    * Get audit log for a bot configuration
    */
-  async getAuditLog(botConfigurationId: number, limit: number = 50): Promise<BotConfigurationAudit[]> {
+  async getAuditLog(
+    botConfigurationId: number,
+    limit: number = 50
+  ): Promise<BotConfigurationAudit[]> {
     try {
       const audits = await this.dbManager.getBotConfigurationAudit(botConfigurationId);
       return audits.slice(0, limit);
@@ -291,16 +312,19 @@ export class ConfigurationVersionService {
   /**
    * Compare two configuration objects and find differences
    */
-  private compareConfigurations(config1: BotConfigurationVersion, config2: BotConfigurationVersion): ConfigurationDifference[] {
+  private compareConfigurations(
+    config1: BotConfigurationVersion,
+    config2: BotConfigurationVersion
+  ): ConfigurationDifference[] {
     const differences: ConfigurationDifference[] = [];
-    
+
     // Helper function to compare objects recursively
     const compareObjects = (obj1: any, obj2: any, path: string = '') => {
       const allKeys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
-      
+
       for (const key of allKeys) {
         const currentPath = path ? `${path}.${key}` : key;
-        
+
         if (!(key in obj1)) {
           differences.push({
             field: key,
@@ -334,9 +358,10 @@ export class ConfigurationVersionService {
     // Compare all configuration fields
     const config1Plain = { ...config1 };
     const config2Plain = { ...config2 };
-    
+
     // Remove fields that shouldn't be compared
-    const { id, botConfigurationId, version, createdAt, createdBy, changeLog, ...config1Clean } = config1Plain;
+    const { id, botConfigurationId, version, createdAt, createdBy, changeLog, ...config1Clean } =
+      config1Plain;
     const {
       id: id2,
       botConfigurationId: botConfigurationId2,
@@ -348,7 +373,7 @@ export class ConfigurationVersionService {
     } = config2Plain;
 
     compareObjects(config1Plain, config2Plain);
-    
+
     return differences;
   }
 
@@ -356,9 +381,12 @@ export class ConfigurationVersionService {
    * Generate a summary of differences
    */
   private generateDifferenceSummary(differences: ConfigurationDifference[]) {
-    return differences.reduce((summary, diff) => {
-      summary[diff.changeType]++;
-      return summary;
-    }, { added: 0, modified: 0, removed: 0 });
+    return differences.reduce(
+      (summary, diff) => {
+        summary[diff.changeType]++;
+        return summary;
+      },
+      { added: 0, modified: 0, removed: 0 }
+    );
   }
 }

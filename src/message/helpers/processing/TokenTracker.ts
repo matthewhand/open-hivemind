@@ -4,13 +4,13 @@ import messageConfig from '@config/messageConfig';
 const debug = Debug('app:TokenTracker');
 
 interface TokenRecord {
-    tokens: number;
-    timestamp: number;
+  tokens: number;
+  timestamp: number;
 }
 
 /**
  * Token Tracker - tracks token usage per channel to prevent spam
- * 
+ *
  * Features:
  * - Tracks tokens generated per channel in a sliding window (default: 1 minute)
  * - Reduces response probability based on recent token usage
@@ -38,36 +38,38 @@ class TokenTracker {
   }
 
   /**
-     * Record tokens generated for a channel
-     */
+   * Record tokens generated for a channel
+   */
   public recordTokens(channelId: string, tokenCount: number): void {
     const now = Date.now();
     const records = this.channelTokens.get(channelId) || [];
 
     // Clean old records
-    const recentRecords = records.filter(r => (now - r.timestamp) < this.WINDOW_MS);
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
 
     // Add new record
     recentRecords.push({ tokens: tokenCount, timestamp: now });
     this.channelTokens.set(channelId, recentRecords);
 
-    debug(`Recorded ${tokenCount} tokens for channel ${channelId}. Total in window: ${this.getTokensInWindow(channelId)}`);
+    debug(
+      `Recorded ${tokenCount} tokens for channel ${channelId}. Total in window: ${this.getTokensInWindow(channelId)}`
+    );
   }
 
   /**
-     * Get total tokens in the current window for a channel
-     */
+   * Get total tokens in the current window for a channel
+   */
   public getTokensInWindow(channelId: string): number {
     const now = Date.now();
     const records = this.channelTokens.get(channelId) || [];
-    const recentRecords = records.filter(r => (now - r.timestamp) < this.WINDOW_MS);
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
     return recentRecords.reduce((sum, r) => sum + r.tokens, 0);
   }
 
   /**
-     * Get response probability modifier based on token usage
-     * Returns 1.0 for normal, 0.0-1.0 for reduced probability
-     */
+   * Get response probability modifier based on token usage
+   * Returns 1.0 for normal, 0.0-1.0 for reduced probability
+   */
   public getResponseProbabilityModifier(channelId: string): number {
     const tokensUsed = this.getTokensInWindow(channelId);
 
@@ -85,14 +87,16 @@ class TokenTracker {
     const reduction = (tokensOverThreshold / 100) * this.REDUCTION_FACTOR;
     const modifier = Math.max(0.1, 1.0 - reduction); // Never go below 10%
 
-    debug(`Channel ${channelId} high usage (${tokensUsed} tokens), probability modifier: ${modifier}`);
+    debug(
+      `Channel ${channelId} high usage (${tokensUsed} tokens), probability modifier: ${modifier}`
+    );
     return modifier;
   }
 
   /**
-     * Get adjusted max tokens based on recent usage
-     * Returns reduced max_tokens after high usage to prevent walls of text
-     */
+   * Get adjusted max tokens based on recent usage
+   * Returns reduced max_tokens after high usage to prevent walls of text
+   */
   public getAdjustedMaxTokens(channelId: string, defaultMaxTokens: number): number {
     const tokensUsed = this.getTokensInWindow(channelId);
 
@@ -104,7 +108,9 @@ class TokenTracker {
     const usageRatio = tokensUsed / this.MAX_TOKENS_IN_WINDOW;
     const adjustedMax = Math.max(50, Math.floor(defaultMaxTokens * (1 - usageRatio * 0.7)));
 
-    debug(`Channel ${channelId} high usage, reducing max_tokens from ${defaultMaxTokens} to ${adjustedMax}`);
+    debug(
+      `Channel ${channelId} high usage, reducing max_tokens from ${defaultMaxTokens} to ${adjustedMax}`
+    );
     return adjustedMax;
   }
 
@@ -122,22 +128,24 @@ class TokenTracker {
     // Increase delay as token usage increases
     // At max tokens, delay is 4x normal
     const usageRatio = tokensUsed / this.MAX_TOKENS_IN_WINDOW;
-    const multiplier = 1.0 + (usageRatio * 3); // 1x to 4x
+    const multiplier = 1.0 + usageRatio * 3; // 1x to 4x
 
-    debug(`Channel ${channelId} high usage (${tokensUsed} tokens), delay multiplier: ${multiplier.toFixed(2)}x`);
+    debug(
+      `Channel ${channelId} high usage (${tokensUsed} tokens), delay multiplier: ${multiplier.toFixed(2)}x`
+    );
     return multiplier;
   }
 
   /**
-     * Estimate token count from text (rough approximation: ~4 chars per token)
-     */
+   * Estimate token count from text (rough approximation: ~4 chars per token)
+   */
   public estimateTokens(text: string): number {
     return Math.ceil(text.length / 4);
   }
 
   /**
-     * Clear records (for testing)
-     */
+   * Clear records (for testing)
+   */
   public clear(channelId?: string): void {
     if (channelId) {
       this.channelTokens.delete(channelId);

@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 
 /**
@@ -20,12 +20,18 @@ export class MonitoringPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    
+
     // Initialize monitoring-specific locators
-    this.monitoringHeading = page.locator('h1:has-text("System Monitoring"), [data-testid="monitoring-title"]');
-    this.performanceMonitorHeading = page.locator('h2:has-text("Performance Monitor"), [data-testid="performance-monitor-title"]');
+    this.monitoringHeading = page.locator(
+      'h1:has-text("System Monitoring"), [data-testid="monitoring-title"]'
+    );
+    this.performanceMonitorHeading = page.locator(
+      'h2:has-text("Performance Monitor"), [data-testid="performance-monitor-title"]'
+    );
     this.refreshButton = page.locator('button:has-text("Refresh"), [data-testid="refresh-button"]');
-    this.resourceUtilization = page.locator('text=Resource Utilisation, [data-testid="resource-utilization"]');
+    this.resourceUtilization = page.locator(
+      'text=Resource Utilisation, [data-testid="resource-utilization"]'
+    );
     this.alertPanel = page.locator('[role="alert"], .alert, [data-testid="alert-panel"]');
     this.systemMetrics = page.locator('.metrics, [data-testid="system-metrics"]');
     this.cpuUsage = page.locator('[data-testid="cpu-usage"], .cpu-usage');
@@ -123,7 +129,7 @@ export class MonitoringPage extends BasePage {
   async hasErrorAlert(): Promise<boolean> {
     const alertText = await this.getAlertMessage();
     if (!alertText) return false;
-    
+
     const errorPatterns = /error|failed|unavailable|critical|warning/i;
     return errorPatterns.test(alertText);
   }
@@ -192,7 +198,7 @@ export class MonitoringPage extends BasePage {
    */
   async areMetricsLoading(): Promise<boolean> {
     const loadingIndicators = this.page.locator('.loading, .spinner, [data-testid="loading"]');
-    return await loadingIndicators.count() > 0;
+    return (await loadingIndicators.count()) > 0;
   }
 
   /**
@@ -201,12 +207,15 @@ export class MonitoringPage extends BasePage {
   async waitForMetricsToLoad(): Promise<void> {
     // Wait for loading indicators to disappear
     await this.waitForLoadingToComplete();
-    
+
     // Wait for at least one metric to be visible
-    await this.waitForCondition(async () => {
-      const metrics = await this.getAllMetrics();
-      return Object.values(metrics).some(value => value !== null && value !== '');
-    }, { timeout: 10000 });
+    await this.waitForCondition(
+      async () => {
+        const metrics = await this.getAllMetrics();
+        return Object.values(metrics).some((value) => value !== null && value !== '');
+      },
+      { timeout: 10000 }
+    );
   }
 
   /**
@@ -224,14 +233,15 @@ export class MonitoringPage extends BasePage {
       const logLines = this.logViewer.locator('.log-line, .log-entry, div, p');
       const count = await logLines.count();
       const entries: string[] = [];
-      
-      for (let i = 0; i < Math.min(count, 50); i++) { // Limit to first 50 entries
+
+      for (let i = 0; i < Math.min(count, 50); i++) {
+        // Limit to first 50 entries
         const entryText = await logLines.nth(i).textContent();
         if (entryText && entryText.trim()) {
           entries.push(entryText.trim());
         }
       }
-      
+
       return entries;
     }
     return [];
@@ -248,7 +258,9 @@ export class MonitoringPage extends BasePage {
    * Get status of specific service
    */
   async getServiceStatus(serviceName: string): Promise<string | null> {
-    const serviceIndicator = this.page.locator(`[data-testid="${serviceName}-status"], .status:has-text("${serviceName}")`);
+    const serviceIndicator = this.page.locator(
+      `[data-testid="${serviceName}-status"], .status:has-text("${serviceName}")`
+    );
     if (await this.isElementVisible(serviceIndicator)) {
       return await this.getElementText(serviceIndicator);
     }
@@ -261,11 +273,11 @@ export class MonitoringPage extends BasePage {
   async getAllServiceStatuses(): Promise<Record<string, string | null>> {
     const services = ['database', 'api', 'messaging', 'monitoring'];
     const statuses: Record<string, string | null> = {};
-    
+
     for (const service of services) {
       statuses[service] = await this.getServiceStatus(service);
     }
-    
+
     return statuses;
   }
 
@@ -273,7 +285,9 @@ export class MonitoringPage extends BasePage {
    * Click on specific metric to view details
    */
   async clickMetricDetails(metricName: string): Promise<void> {
-    const metric = this.page.locator(`[data-testid="${metricName}-details"], .metric:has-text("${metricName}")`);
+    const metric = this.page.locator(
+      `[data-testid="${metricName}-details"], .metric:has-text("${metricName}")`
+    );
     if (await this.isElementVisible(metric)) {
       await this.clickElement(metric);
       await this.waitForLoadingToComplete();
@@ -289,7 +303,7 @@ export class MonitoringPage extends BasePage {
     const refreshControl = this.page.locator('[data-testid="auto-refresh"], .refresh-control');
     if (await this.isElementVisible(refreshControl)) {
       const intervalInput = refreshControl.locator('input, select');
-      if (await intervalInput.count() > 0) {
+      if ((await intervalInput.count()) > 0) {
         await intervalInput.first().fill(seconds.toString());
         await this.page.keyboard.press('Enter');
         await this.waitForLoadingToComplete();
@@ -315,10 +329,12 @@ export class MonitoringPage extends BasePage {
    * Export monitoring data
    */
   async exportMonitoringData(format: 'json' | 'csv' = 'json'): Promise<void> {
-    const exportButton = this.page.locator(`button:has-text("Export"), [data-testid="export-${format}"]`);
+    const exportButton = this.page.locator(
+      `button:has-text("Export"), [data-testid="export-${format}"]`
+    );
     if (await this.isElementVisible(exportButton)) {
       await this.clickElement(exportButton);
-      
+
       // Handle download if applicable
       const downloadPromise = this.page.waitForEvent('download');
       await downloadPromise;
@@ -338,28 +354,28 @@ export class MonitoringPage extends BasePage {
   async checkAccessibility(): Promise<void> {
     // Check for proper heading hierarchy
     await expect(this.monitoringHeading).toBeVisible();
-    
+
     if (await this.performanceMonitorHeading.isVisible()) {
       await expect(this.performanceMonitorHeading).toBeVisible();
     }
-    
+
     // Check for proper landmark regions
     const main = this.page.locator('main, [role="main"]');
-    if (await main.count() > 0) {
+    if ((await main.count()) > 0) {
       await expect(main.first()).toBeVisible();
     }
 
     // Check for proper table structure if metrics are displayed in tables
     const tables = this.page.locator('table');
     const tableCount = await tables.count();
-    
+
     for (let i = 0; i < tableCount; i++) {
       const table = tables.nth(i);
       await expect(table).toHaveAttribute('role', 'table');
-      
+
       // Check for proper headers
       const headers = table.locator('th');
-      if (await headers.count() > 0) {
+      if ((await headers.count()) > 0) {
         await expect(headers.first()).toBeVisible();
       }
     }
@@ -373,11 +389,14 @@ export class MonitoringPage extends BasePage {
    */
   async waitForRealtimeUpdate(): Promise<void> {
     const initialMetrics = await this.getAllMetrics();
-    
+
     // Wait for metrics to change (indicating real-time update)
-    await this.waitForCondition(async () => {
-      const currentMetrics = await this.getAllMetrics();
-      return JSON.stringify(initialMetrics) !== JSON.stringify(currentMetrics);
-    }, { timeout: 15000 });
+    await this.waitForCondition(
+      async () => {
+        const currentMetrics = await this.getAllMetrics();
+        return JSON.stringify(initialMetrics) !== JSON.stringify(currentMetrics);
+      },
+      { timeout: 15000 }
+    );
   }
 }

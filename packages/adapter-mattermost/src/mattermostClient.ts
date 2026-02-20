@@ -1,5 +1,4 @@
-import type { AxiosInstance } from 'axios';
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import type { MattermostPost } from './MattermostMessage';
 
 interface MattermostClientOptions {
@@ -43,11 +42,11 @@ export default class MattermostClient {
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
     this.token = options.token;
-    
+
     this.api = axios.create({
       baseURL: `${this.serverUrl}/api/v4`,
       headers: {
-        'Authorization': `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.token}`,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
@@ -75,14 +74,14 @@ export default class MattermostClient {
 
     try {
       const channelId = await this.resolveChannelId(options.channel);
-      
+
       const response = await this.api.post('/posts', {
         channel_id: channelId,
         message: options.text,
         root_id: options.root_id,
         file_ids: options.file_ids || [],
       });
-      
+
       return response.data;
     } catch (error: any) {
       console.error('Failed to post message:', error.message);
@@ -90,12 +89,16 @@ export default class MattermostClient {
     }
   }
 
-  async getChannelPosts(channelId: string, page: number = 0, perPage: number = 60): Promise<MattermostPost[]> {
+  async getChannelPosts(
+    channelId: string,
+    page: number = 0,
+    perPage: number = 60
+  ): Promise<MattermostPost[]> {
     try {
       const response = await this.api.get(`/channels/${channelId}/posts`, {
         params: { page, per_page: perPage },
       });
-      
+
       const posts = response.data.posts;
       return Object.values(posts) as MattermostPost[];
     } catch (error: any) {
@@ -144,11 +147,11 @@ export default class MattermostClient {
     if (channel.match(/^[a-z0-9]{26}$/)) {
       return channel;
     }
-    
+
     try {
       const teamsResponse = await this.api.get('/users/me/teams');
       const teams = teamsResponse.data;
-      
+
       for (const team of teams) {
         const channelData = await this.getChannelByName(team.id, channel);
         if (channelData) {
@@ -158,7 +161,7 @@ export default class MattermostClient {
     } catch (error) {
       console.error('Failed to resolve channel:', error);
     }
-    
+
     throw new Error(`Channel not found: ${channel}`);
   }
 
@@ -182,9 +185,13 @@ export default class MattermostClient {
    * Best-effort typing indicator (requires server support for /users/{id}/typing).
    */
   async sendTyping(channelId: string, parentId?: string): Promise<void> {
-    if (!this.connected) {return;}
+    if (!this.connected) {
+      return;
+    }
     const userId = this.getCurrentUserId();
-    if (!userId) {return;}
+    if (!userId) {
+      return;
+    }
     try {
       await this.api.post(`/users/${userId}/typing`, {
         channel_id: channelId,

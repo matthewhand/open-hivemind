@@ -1,6 +1,6 @@
 /**
  * Discord API Response Interfaces
- * 
+ *
  * This file defines TypeScript interfaces for Discord API responses to replace 'any' types
  * throughout the codebase. These interfaces provide type safety for Discord API interactions,
  * including message objects, user data, channel information, and other Discord-specific entities.
@@ -25,7 +25,7 @@ export interface DiscordAPIError {
 export interface DiscordMessage {
   id: string;
   channel_id: string;
- guild_id?: string;
+  guild_id?: string;
   author: DiscordUser;
   member?: DiscordGuildMember;
   content: string;
@@ -47,8 +47,8 @@ export interface DiscordMessage {
   application?: DiscordMessageApplication;
   message_reference?: DiscordMessageReference;
   flags?: number;
- referenced_message?: DiscordMessage | null;
- interaction?: DiscordMessageInteraction;
+  referenced_message?: DiscordMessage | null;
+  interaction?: DiscordMessageInteraction;
   thread?: DiscordChannel;
   components?: DiscordMessageComponent[];
   sticker_items?: DiscordStickerItem[];
@@ -65,12 +65,12 @@ export interface DiscordUser {
   discriminator: string;
   global_name: string | null;
   avatar?: string | null;
- bot?: boolean;
- system?: boolean;
+  bot?: boolean;
+  system?: boolean;
   mfa_enabled?: boolean;
   banner?: string | null;
   accent_color?: number | null;
- locale?: string;
+  locale?: string;
   verified?: boolean;
   email?: string | null;
   flags?: number;
@@ -124,14 +124,14 @@ export interface DiscordEmbed {
   description?: string;
   url?: string;
   timestamp?: string;
- color?: number;
+  color?: number;
   footer?: DiscordEmbedFooter;
   image?: DiscordEmbedImage;
   thumbnail?: DiscordEmbedThumbnail;
   video?: DiscordEmbedVideo;
   provider?: DiscordEmbedProvider;
   author?: DiscordEmbedAuthor;
- fields?: DiscordEmbedField[];
+  fields?: DiscordEmbedField[];
 }
 
 export interface DiscordEmbedFooter {
@@ -149,7 +149,7 @@ export interface DiscordEmbedImage {
 
 export interface DiscordEmbedThumbnail {
   url?: string;
- proxy_url?: string;
+  proxy_url?: string;
   height?: number;
   width?: number;
 }
@@ -162,7 +162,7 @@ export interface DiscordEmbedVideo {
 
 export interface DiscordEmbedProvider {
   name?: string;
- url?: string;
+  url?: string;
 }
 
 export interface DiscordEmbedAuthor {
@@ -228,7 +228,7 @@ export interface DiscordMessageInteraction {
   id: string;
   type: number;
   name: string;
- user: DiscordUser;
+  user: DiscordUser;
   member?: DiscordGuildMember;
 }
 
@@ -255,8 +255,8 @@ export interface DiscordPartialEmoji {
 
 export interface DiscordSelectOption {
   label: string;
- value: string;
- description?: string;
+  value: string;
+  description?: string;
   emoji?: DiscordPartialEmoji;
   default?: boolean;
 }
@@ -358,7 +358,7 @@ export interface DiscordThreadMetadata {
   archived: boolean;
   auto_archive_duration: number;
   archive_timestamp: string;
- locked: boolean;
+  locked: boolean;
   invitable?: boolean;
   create_timestamp?: string | null;
 }
@@ -374,7 +374,7 @@ export interface DiscordThreadMember {
 export interface DiscordTag {
   id: string;
   name: string;
- moderated: boolean;
+  moderated: boolean;
   emoji_id?: string | null;
   emoji_name?: string | null;
 }
@@ -388,7 +388,7 @@ export interface DiscordDefaultReaction {
 export interface DiscordGuild {
   id: string;
   name: string;
- icon?: string | null;
+  icon?: string | null;
   icon_hash?: string | null;
   splash?: string | null;
   discovery_splash?: string | null;
@@ -413,7 +413,7 @@ export interface DiscordGuild {
   max_presences?: number | null;
   max_members?: number;
   vanity_url_code?: string | null;
- description?: string | null;
+  description?: string | null;
   banner?: string | null;
   premium_tier: number;
   premium_subscription_count?: number;
@@ -436,7 +436,7 @@ export interface DiscordRole {
   hoist: boolean;
   icon?: string | null;
   unicode_emoji?: string | null;
- position: number;
+  position: number;
   permissions: string;
   managed: boolean;
   mentionable: boolean;
@@ -569,38 +569,32 @@ export interface DiscordMessageProvider {
 
 // Type Guards for Runtime Type Checking
 export function isDiscordMessage(obj: any): obj is DiscordMessage {
-  return obj && 
-         typeof obj.id === 'string' && 
-         typeof obj.channel_id === 'string' && 
-         typeof obj.content === 'string' &&
-         obj.author && typeof obj.author.id === 'string';
+  return (
+    obj &&
+    typeof obj.id === 'string' &&
+    typeof obj.channel_id === 'string' &&
+    typeof obj.content === 'string' &&
+    obj.author &&
+    typeof obj.author.id === 'string'
+  );
 }
 
 export function isDiscordUser(obj: any): obj is DiscordUser {
-  return obj && 
-         typeof obj.id === 'string' && 
-         typeof obj.username === 'string';
+  return obj && typeof obj.id === 'string' && typeof obj.username === 'string';
 }
 
 export function isDiscordChannel(obj: any): obj is DiscordChannel {
-  return obj && 
-         typeof obj.id === 'string' && 
-         typeof obj.type === 'number';
+  return obj && typeof obj.id === 'string' && typeof obj.type === 'number';
 }
 
 export function isDiscordGuild(obj: any): obj is DiscordGuild {
-  return obj && 
-         typeof obj.id === 'string' && 
-         typeof obj.name === 'string';
+  return obj && typeof obj.id === 'string' && typeof obj.name === 'string';
 }
 
 export function isDiscordAPIResponse(obj: any): obj is DiscordAPIResponse {
-  return obj && 
-         typeof obj.ok === 'boolean';
+  return obj && typeof obj.ok === 'boolean';
 }
 
 export function isDiscordAPIError(obj: any): obj is DiscordAPIError {
-  return obj && 
-         typeof obj.code === 'number' && 
-         typeof obj.message === 'string';
+  return obj && typeof obj.code === 'number' && typeof obj.message === 'string';
 }

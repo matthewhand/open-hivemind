@@ -13,19 +13,24 @@ jest.isolateModules(() => {
       fetch: jest.fn().mockResolvedValue({
         isTextBased: () => true,
         messages: {
-          fetch: jest.fn().mockResolvedValue(new Map([
-            ['123', {
-              id: '123',
-              content: 'test message',
-              author: { id: 'test-author', bot: false },
-              channelId: 'test-channel',
-              mentions: { users: new Map(), roles: new Map(), channels: new Map() },
-              attachments: new Map(),
-              stickers: new Map(),
-              embeds: [],
-              reactions: { cache: new Map() },
-            }],
-          ])),
+          fetch: jest.fn().mockResolvedValue(
+            new Map([
+              [
+                '123',
+                {
+                  id: '123',
+                  content: 'test message',
+                  author: { id: 'test-author', bot: false },
+                  channelId: 'test-channel',
+                  mentions: { users: new Map(), roles: new Map(), channels: new Map() },
+                  attachments: new Map(),
+                  stickers: new Map(),
+                  embeds: [],
+                  reactions: { cache: new Map() },
+                },
+              ],
+            ])
+          ),
         },
       }),
     },
@@ -39,7 +44,6 @@ jest.isolateModules(() => {
       MessageContent: 4,
     },
   }));
-
 
   describe('DiscordMessageProvider', () => {
     let service: any;
@@ -90,15 +94,16 @@ jest.isolateModules(() => {
       await service.initialize();
 
       // Load Provider class from the same isolated module context
-      ({ DiscordMessageProvider } = require('@hivemind/adapter-discord/providers/DiscordMessageProvider'));
-
+      ({
+        DiscordMessageProvider,
+      } = require('@hivemind/adapter-discord/providers/DiscordMessageProvider'));
 
       // Ensure a bot is present (workaround for CI config loading issues)
       if (service.getAllBots().length === 0) {
         await service.addBot({
           name: 'TestBot',
           discord: { token: 'test-token' },
-          token: 'test-token'
+          token: 'test-token',
         });
       }
 

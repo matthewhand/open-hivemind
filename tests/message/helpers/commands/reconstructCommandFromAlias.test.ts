@@ -1,24 +1,24 @@
 /**
  * @file reconstructCommandFromAlias.test.ts
  * @description Comprehensive test suite for reconstructCommandFromAlias utility functions
- * 
+ *
  * Tests all exported functions including:
  * - resolveAlias: Resolves aliases to commands
  * - reconstructCommand: Reconstructs full commands from aliases and arguments
  * - getAliasDescription: Retrieves descriptions for aliases
  * - listAliases: Lists all available aliases
- * 
+ *
  * @module tests/reconstructCommandFromAlias
  * @category Testing
  */
 
 import {
-  resolveAlias,
-  reconstructCommand,
+  Alias,
+  AliasMapping,
   getAliasDescription,
   listAliases,
-  Alias,
-  AliasMapping
+  reconstructCommand,
+  resolveAlias,
 } from '../../../../src/message/helpers/commands/reconstructCommandFromAlias';
 
 // Mock debug module
@@ -32,11 +32,11 @@ describe('reconstructCommandFromAlias', () => {
   beforeEach(() => {
     // Reset aliases before each test
     mockAliases = {
-      'help': { command: 'show help', description: 'Display help information' },
-      'h': { command: 'show help', description: 'Display help information (short)' },
-      'greet': { command: 'send greeting', description: 'Send a greeting message' },
-      'status': { command: 'get system status', description: 'Check system status' },
-      'restart': { command: 'restart service', description: 'Restart the bot service' }
+      help: { command: 'show help', description: 'Display help information' },
+      h: { command: 'show help', description: 'Display help information (short)' },
+      greet: { command: 'send greeting', description: 'Send a greeting message' },
+      status: { command: 'get system status', description: 'Check system status' },
+      restart: { command: 'restart service', description: 'Restart the bot service' },
     };
   });
 
@@ -81,20 +81,22 @@ describe('reconstructCommandFromAlias', () => {
 
       // Complex mappings
       const complexAliases = {
-        'start': { command: 'service start', description: 'Start service' },
-        'stop': { command: 'service stop', description: 'Stop service' },
-        'restart': { command: 'service restart', description: 'Restart service' },
-        'svc': { command: 'service', description: 'Service management' }
+        start: { command: 'service start', description: 'Start service' },
+        stop: { command: 'service stop', description: 'Stop service' },
+        restart: { command: 'service restart', description: 'Restart service' },
+        svc: { command: 'service', description: 'Service management' },
       };
 
       expect(resolveAlias('start', complexAliases)).toBe('service start');
-      expect(reconstructCommand('start', ['--force'], complexAliases)).toBe('service start --force');
+      expect(reconstructCommand('start', ['--force'], complexAliases)).toBe(
+        'service start --force'
+      );
 
       // Unicode and special characters
       const unicodeAliases = {
-        'hola': { command: 'greet spanish', description: 'Spanish greeting' },
-        '你好': { command: 'greet chinese', description: 'Chinese greeting' },
-        '😊': { command: 'send smile', description: 'Send smile emoji' }
+        hola: { command: 'greet spanish', description: 'Spanish greeting' },
+        你好: { command: 'greet chinese', description: 'Chinese greeting' },
+        '😊': { command: 'send smile', description: 'Send smile emoji' },
       };
 
       expect(resolveAlias('hola', unicodeAliases)).toBe('greet spanish');
@@ -103,10 +105,11 @@ describe('reconstructCommandFromAlias', () => {
 
       // Edge cases: Large mappings
       const largeAliases: AliasMapping = {};
-      for (let i = 0; i < 100; i++) {  // Reduced from 1000 to 100 for test speed
+      for (let i = 0; i < 100; i++) {
+        // Reduced from 1000 to 100 for test speed
         largeAliases[`alias${i}`] = {
           command: `command${i}`,
-          description: `Description for alias ${i}`
+          description: `Description for alias ${i}`,
         };
       }
 
@@ -118,12 +121,12 @@ describe('reconstructCommandFromAlias', () => {
       expect(getAliasDescription('alias50', largeAliases)).toBe('Description for alias 50');
 
       // Long strings
-      const longString = 'a'.repeat(100);  // Reduced from 1000 to 100
+      const longString = 'a'.repeat(100); // Reduced from 1000 to 100
       const longAliases = {
         [longString]: {
           command: longString + '_command',
-          description: longString + '_description'
-        }
+          description: longString + '_description',
+        },
       };
 
       expect(resolveAlias(longString, longAliases)).toBe(longString + '_command');

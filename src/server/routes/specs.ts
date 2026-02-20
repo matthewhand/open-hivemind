@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
+import { Router } from 'express';
 import { z } from 'zod';
 
 const router = Router();
@@ -46,11 +46,11 @@ router.post('/', async (req, res) => {
     const index = await getSpecsIndex();
     index.push(newSpec);
     await saveSpecsIndex(index);
-    
+
     const specDir = path.join(specsDirectory, id, version);
     await fs.mkdir(specDir, { recursive: true });
     await fs.writeFile(path.join(specDir, 'spec.md'), content);
-    
+
     res.status(201).json(newSpec);
   } catch (error) {
     console.error('Failed to save spec:', error);
@@ -71,7 +71,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const index = await getSpecsIndex();
-    const spec = index.find(s => s.id === id);
+    const spec = index.find((s) => s.id === id);
 
     if (!spec) {
       return res.status(404).json({ error: 'Specification not found' });

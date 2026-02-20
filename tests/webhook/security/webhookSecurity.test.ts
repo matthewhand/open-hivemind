@@ -1,9 +1,9 @@
-import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
 
 // Mock webhook config
 jest.mock('@config/webhookConfig', () => ({
-  get: jest.fn()
+  get: jest.fn(),
 }));
 
 const mockWebhookConfig = require('@config/webhookConfig');
@@ -17,11 +17,11 @@ describe('WebhookSecurity', () => {
     jest.clearAllMocks();
     req = {
       headers: {},
-      ip: '127.0.0.1'
+      ip: '127.0.0.1',
     };
     res = {
       status: jest.fn().mockReturnThis(),
-      send: jest.fn()
+      send: jest.fn(),
     };
     next = jest.fn();
   });
@@ -145,13 +145,13 @@ describe('WebhookSecurity', () => {
         if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
         return '';
       });
-      
+
       req.headers = { 'x-webhook-token': 'valid-token' };
       req.ip = '127.0.0.1';
 
       verifyWebhookToken(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledTimes(1);
-      
+
       verifyIpWhitelist(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledTimes(2);
     });
@@ -162,13 +162,13 @@ describe('WebhookSecurity', () => {
         if (key === 'WEBHOOK_IP_WHITELIST') return '192.168.1.100';
         return '';
       });
-      
+
       req.headers = { 'x-webhook-token': 'valid-token' };
       req.ip = '127.0.0.1';
 
       verifyWebhookToken(req as Request, res as Response, next);
       expect(next).toHaveBeenCalledTimes(1);
-      
+
       verifyIpWhitelist(req as Request, res as Response, next);
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.send).toHaveBeenCalledWith('Forbidden: Unauthorized IP address');

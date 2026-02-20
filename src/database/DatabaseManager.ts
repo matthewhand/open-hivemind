@@ -1,9 +1,9 @@
-import sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
-import Debug from 'debug';
-import { join } from 'path';
 import { promises as fs } from 'fs';
-import { DatabaseError, ConfigurationError } from '@src/types/errorClasses';
+import { join } from 'path';
+import Debug from 'debug';
+import { Database, open } from 'sqlite';
+import sqlite3 from 'sqlite3';
+import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 
 const debug = Debug('app:DatabaseManager');
 
@@ -304,6 +304,21 @@ export class DatabaseManager {
     }
   }
 
+  /**
+   * Gets the singleton instance of DatabaseManager.
+   *
+   * @param {DatabaseConfig} [config] - Optional database configuration to apply
+   * @returns {DatabaseManager} The singleton instance
+   * @example
+   * ```typescript
+   * const db = DatabaseManager.getInstance({
+   *   type: 'sqlite',
+   *   path: './data/hivemind.db'
+   * });
+   * await db.connect();
+   * ```
+   */
+
   static getInstance(config?: DatabaseConfig): DatabaseManager {
     if (!DatabaseManager.instance) {
       DatabaseManager.instance = new DatabaseManager(config);
@@ -346,7 +361,7 @@ export class DatabaseManager {
 
       if (this.config.type === 'sqlite') {
         const dbPath = this.config.path || 'data/hivemind.db';
-        
+
         // Ensure directory exists
         if (dbPath !== ':memory:') {
           const dbDir = join(dbPath, '..');
@@ -355,14 +370,17 @@ export class DatabaseManager {
 
         this.db = await open({
           filename: dbPath,
-          driver: sqlite3.Database
+          driver: sqlite3.Database,
         });
 
         await this.createTables();
         await this.createIndexes();
         await this.migrate();
       } else {
-        throw new ConfigurationError(`Database type ${this.config.type} not yet implemented`, 'DATABASE_TYPE_NOT_SUPPORTED');
+        throw new ConfigurationError(
+          `Database type ${this.config.type} not yet implemented`,
+          'DATABASE_TYPE_NOT_SUPPORTED'
+        );
       }
 
       this.connected = true;
@@ -372,7 +390,10 @@ export class DatabaseManager {
       if (error instanceof DatabaseError) {
         throw error;
       }
-      throw new DatabaseError(`Failed to connect to database: ${error instanceof Error ? error.message : 'Unknown error'}`, 'DATABASE_CONNECTION_FAILED');
+      throw new DatabaseError(
+        `Failed to connect to database: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'DATABASE_CONNECTION_FAILED'
+      );
     }
   }
 
@@ -627,31 +648,69 @@ export class DatabaseManager {
   private async createIndexes(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`);
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`
+    );
 
     // Bot configuration indexes
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`);
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`
+    );
 
     // Approval requests indexes
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`);
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`);
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`
+    );
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`
+    );
 
     // Anomalies indexes
-    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`
+    );
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
@@ -676,19 +735,33 @@ export class DatabaseManager {
       await this.db!.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
       await this.db!.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
       await this.db!.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-      await this.db!.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-      await this.db!.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+      await this.db!.exec(
+        `ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`
+      );
+      await this.db!.exec(
+        `ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`
+      );
 
       // Add foreign keys if possible (SQLite limited, but for new DB ok)
       // Note: Foreign keys added only if table recreated; for existing, manual migration needed
 
       // Add indexes for tenantId
-      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`);
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`
+      );
       await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`);
-      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`);
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`
+      );
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`
+      );
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`
+      );
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`
+      );
       await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
       await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
       await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
@@ -725,7 +798,12 @@ export class DatabaseManager {
     return this.connected;
   }
 
-  async saveMessage(channelId: string, userId: string, content: string, provider: string = 'unknown'): Promise<number> {
+  async saveMessage(
+    channelId: string,
+    userId: string,
+    content: string,
+    provider: string = 'unknown'
+  ): Promise<number> {
     if (!this.db || !this.connected) {
       // Return mock ID for tests when not connected
       return Math.floor(Math.random() * 1000000);
@@ -733,18 +811,21 @@ export class DatabaseManager {
 
     try {
       const timestamp = new Date();
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [
-        `${Date.now()}-${Math.random()}`, // Generate unique messageId
-        channelId,
-        content,
-        userId,
-        'Unknown User', // We can enhance this later
-        timestamp.toISOString(),
-        provider
-      ]);
+      `,
+        [
+          `${Date.now()}-${Math.random()}`, // Generate unique messageId
+          channelId,
+          content,
+          userId,
+          'Unknown User', // We can enhance this later
+          timestamp.toISOString(),
+          provider,
+        ]
+      );
 
       const messageId = result.lastID as number;
       debug(`Message saved with ID: ${messageId}`);
@@ -764,21 +845,27 @@ export class DatabaseManager {
 
     try {
       // Ensure timestamp is a Date object
-      const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp || Date.now());
-      
-      const result = await this.db!.run(`
+      const timestamp =
+        message.timestamp instanceof Date
+          ? message.timestamp
+          : new Date(message.timestamp || Date.now());
+
+      const result = await this.db!.run(
+        `
         INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, metadata)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        message.messageId,
-        message.channelId,
-        message.content,
-        message.authorId,
-        message.authorName,
-        timestamp.toISOString(),
-        message.provider,
-        message.metadata ? JSON.stringify(message.metadata) : null
-      ]);
+      `,
+        [
+          message.messageId,
+          message.channelId,
+          message.content,
+          message.authorId,
+          message.authorName,
+          timestamp.toISOString(),
+          message.provider,
+          message.metadata ? JSON.stringify(message.metadata) : null,
+        ]
+      );
 
       const messageId = result.lastID as number;
       debug(`Message stored with ID: ${messageId}`);
@@ -797,14 +884,17 @@ export class DatabaseManager {
     }
 
     try {
-      const rows = await this.db!.all(`
+      const rows = await this.db!.all(
+        `
         SELECT * FROM messages 
         WHERE channelId = ? 
         ORDER BY timestamp DESC 
         LIMIT ?
-      `, [channelId, limit]);
+      `,
+        [channelId, limit]
+      );
 
-      const messages: MessageRecord[] = rows.map(row => ({
+      const messages: MessageRecord[] = rows.map((row) => ({
         id: row.id,
         messageId: row.messageId,
         channelId: row.channelId,
@@ -813,7 +903,7 @@ export class DatabaseManager {
         authorName: row.authorName,
         timestamp: new Date(row.timestamp),
         provider: row.provider,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       }));
 
       debug(`Retrieved ${messages.length} messages for channel: ${channelId}`);
@@ -825,7 +915,11 @@ export class DatabaseManager {
     }
   }
 
-  async getMessages(channelId: string, limit: number = 50, offset: number = 0): Promise<MessageRecord[]> {
+  async getMessages(
+    channelId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<MessageRecord[]> {
     return this.getMessageHistory(channelId, limit);
   }
 
@@ -833,17 +927,20 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO conversation_summaries (channelId, summary, messageCount, startTimestamp, endTimestamp, provider)
         VALUES (?, ?, ?, ?, ?, ?)
-      `, [
-        summary.channelId,
-        summary.summary,
-        summary.messageCount,
-        summary.startTimestamp.toISOString(),
-        summary.endTimestamp.toISOString(),
-        summary.provider
-      ]);
+      `,
+        [
+          summary.channelId,
+          summary.summary,
+          summary.messageCount,
+          summary.startTimestamp.toISOString(),
+          summary.endTimestamp.toISOString(),
+          summary.provider,
+        ]
+      );
 
       const summaryId = result.lastID as number;
       debug(`Conversation summary stored with ID: ${summaryId}`);
@@ -858,20 +955,23 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      await this.db!.run(`
+      await this.db!.run(
+        `
         INSERT OR REPLACE INTO bot_metrics (
           botName, messagesSent, messagesReceived, conversationsHandled,
           averageResponseTime, lastActivity, provider, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `, [
-        metrics.botName,
-        metrics.messagesSent,
-        metrics.messagesReceived,
-        metrics.conversationsHandled,
-        metrics.averageResponseTime,
-        metrics.lastActivity.toISOString(),
-        metrics.provider
-      ]);
+      `,
+        [
+          metrics.botName,
+          metrics.messagesSent,
+          metrics.messagesReceived,
+          metrics.conversationsHandled,
+          metrics.averageResponseTime,
+          metrics.lastActivity.toISOString(),
+          metrics.provider,
+        ]
+      );
 
       debug(`Bot metrics updated for: ${metrics.botName}`);
     } catch (error) {
@@ -896,7 +996,7 @@ export class DatabaseManager {
 
       const rows = await this.db!.all(query, params);
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         botName: row.botName,
         messagesSent: row.messagesSent,
@@ -904,7 +1004,7 @@ export class DatabaseManager {
         conversationsHandled: row.conversationsHandled,
         averageResponseTime: row.averageResponseTime,
         lastActivity: new Date(row.lastActivity),
-        provider: row.provider
+        provider: row.provider,
       }));
     } catch (error) {
       debug('Error retrieving bot metrics:', error);
@@ -925,7 +1025,7 @@ export class DatabaseManager {
         this.db!.get('SELECT COUNT(*) as count FROM messages'),
         this.db!.get('SELECT COUNT(DISTINCT channelId) as count FROM messages'),
         this.db!.get('SELECT COUNT(DISTINCT authorId) as count FROM messages'),
-        this.db!.all('SELECT provider, COUNT(*) as count FROM messages GROUP BY provider')
+        this.db!.all('SELECT provider, COUNT(*) as count FROM messages GROUP BY provider'),
       ]);
 
       const providers: { [key: string]: number } = {};
@@ -937,7 +1037,7 @@ export class DatabaseManager {
         totalMessages: totalMessages.count,
         totalChannels: totalChannels.count,
         totalAuthors: totalAuthors.count,
-        providers
+        providers,
       };
     } catch (error) {
       debug('Error getting stats:', error);
@@ -950,34 +1050,37 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO bot_configurations (
           name, messageProvider, llmProvider, persona, systemInstruction,
           mcpServers, mcpGuard, discord, slack, mattermost,
           openai, flowise, openwebui, openswarm,
           isActive, createdAt, updatedAt, createdBy, updatedBy
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        config.name,
-        config.messageProvider,
-        config.llmProvider,
-        config.persona,
-        config.systemInstruction,
-        config.mcpServers,
-        config.mcpGuard,
-        config.discord,
-        config.slack,
-        config.mattermost,
-        config.openai,
-        config.flowise,
-        config.openwebui,
-        config.openswarm,
-        config.isActive ? 1 : 0,
-        config.createdAt.toISOString(),
-        config.updatedAt.toISOString(),
-        config.createdBy,
-        config.updatedBy
-      ]);
+      `,
+        [
+          config.name,
+          config.messageProvider,
+          config.llmProvider,
+          config.persona,
+          config.systemInstruction,
+          config.mcpServers,
+          config.mcpGuard,
+          config.discord,
+          config.slack,
+          config.mattermost,
+          config.openai,
+          config.flowise,
+          config.openwebui,
+          config.openswarm,
+          config.isActive ? 1 : 0,
+          config.createdAt.toISOString(),
+          config.updatedAt.toISOString(),
+          config.createdBy,
+          config.updatedBy,
+        ]
+      );
 
       debug(`Bot configuration created with ID: ${result.lastID}`);
       return result.lastID as number;
@@ -1015,7 +1118,7 @@ export class DatabaseManager {
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
         createdBy: row.createdBy,
-        updatedBy: row.updatedBy
+        updatedBy: row.updatedBy,
       };
     } catch (error) {
       debug('Error getting bot configuration:', error);
@@ -1051,7 +1154,7 @@ export class DatabaseManager {
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
         createdBy: row.createdBy,
-        updatedBy: row.updatedBy
+        updatedBy: row.updatedBy,
       };
     } catch (error) {
       debug('Error getting bot configuration by name:', error);
@@ -1065,7 +1168,7 @@ export class DatabaseManager {
     try {
       const rows = await this.db!.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         name: row.name,
         messageProvider: row.messageProvider,
@@ -1085,7 +1188,7 @@ export class DatabaseManager {
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
         createdBy: row.createdBy,
-        updatedBy: row.updatedBy
+        updatedBy: row.updatedBy,
       }));
     } catch (error) {
       debug('Error getting all bot configurations:', error);
@@ -1096,28 +1199,34 @@ export class DatabaseManager {
   /**
    * Get all bot configurations with their versions and audit logs in optimized bulk queries
    */
-  async getAllBotConfigurationsWithDetails(): Promise<Array<BotConfiguration & {
-    versions: BotConfigurationVersion[];
-    auditLog: BotConfigurationAudit[];
-  }>> {
+  async getAllBotConfigurationsWithDetails(): Promise<
+    Array<
+      BotConfiguration & {
+        versions: BotConfigurationVersion[];
+        auditLog: BotConfigurationAudit[];
+      }
+    >
+  > {
     this.ensureConnected();
 
     try {
-      const configs = await this.db!.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
+      const configs = await this.db!.all(
+        'SELECT * FROM bot_configurations ORDER BY updatedAt DESC'
+      );
 
       if (configs.length === 0) {
         return [];
       }
 
-      const configIds = configs.map(config => config.id);
+      const configIds = configs.map((config) => config.id);
 
       // Get all versions and audit logs in bulk
       const [versionsMap, auditMap] = await Promise.all([
         this.getBotConfigurationVersionsBulk(configIds),
-        this.getBotConfigurationAuditBulk(configIds)
+        this.getBotConfigurationAuditBulk(configIds),
       ]);
 
-      return configs.map(row => ({
+      return configs.map((row) => ({
         id: row.id,
         name: row.name,
         messageProvider: row.messageProvider,
@@ -1139,7 +1248,7 @@ export class DatabaseManager {
         createdBy: row.createdBy,
         updatedBy: row.updatedBy,
         versions: versionsMap.get(row.id) || [],
-        auditLog: auditMap.get(row.id) || []
+        auditLog: auditMap.get(row.id) || [],
       }));
     } catch (error) {
       debug('Error getting all bot configurations with details:', error);
@@ -1263,35 +1372,38 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO bot_configuration_versions (
           botConfigurationId, version, name, messageProvider, llmProvider,
           persona, systemInstruction, mcpServers, mcpGuard, discord,
           slack, mattermost, openai, flowise,
           openwebui, openswarm, isActive, createdAt, createdBy, changeLog
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        version.botConfigurationId,
-        version.version,
-        version.name,
-        version.messageProvider,
-        version.llmProvider,
-        version.persona,
-        version.systemInstruction,
-        version.mcpServers,
-        version.mcpGuard,
-        version.discord,
-        version.slack,
-        version.mattermost,
-        version.openai,
-        version.flowise,
-        version.openwebui,
-        version.openswarm,
-        version.isActive ? 1 : 0,
-        version.createdAt.toISOString(),
-        version.createdBy,
-        version.changeLog
-      ]);
+      `,
+        [
+          version.botConfigurationId,
+          version.version,
+          version.name,
+          version.messageProvider,
+          version.llmProvider,
+          version.persona,
+          version.systemInstruction,
+          version.mcpServers,
+          version.mcpGuard,
+          version.discord,
+          version.slack,
+          version.mattermost,
+          version.openai,
+          version.flowise,
+          version.openwebui,
+          version.openswarm,
+          version.isActive ? 1 : 0,
+          version.createdAt.toISOString(),
+          version.createdBy,
+          version.changeLog,
+        ]
+      );
 
       debug(`Bot configuration version created with ID: ${result.lastID}`);
       return result.lastID as number;
@@ -1301,7 +1413,9 @@ export class DatabaseManager {
     }
   }
 
-  async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
+  async getBotConfigurationVersions(
+    botConfigurationId: number
+  ): Promise<BotConfigurationVersion[]> {
     this.ensureConnected();
 
     try {
@@ -1310,7 +1424,7 @@ export class DatabaseManager {
         [botConfigurationId]
       );
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         botConfigurationId: row.botConfigurationId,
         version: row.version,
@@ -1331,7 +1445,7 @@ export class DatabaseManager {
         isActive: row.isActive === 1,
         createdAt: new Date(row.createdAt),
         createdBy: row.createdBy,
-        changeLog: row.changeLog
+        changeLog: row.changeLog,
       }));
     } catch (error) {
       debug('Error getting bot configuration versions:', error);
@@ -1342,7 +1456,9 @@ export class DatabaseManager {
   /**
    * Get bot configuration versions for multiple configurations in a single query
    */
-  async getBotConfigurationVersionsBulk(botConfigurationIds: number[]): Promise<Map<number, BotConfigurationVersion[]>> {
+  async getBotConfigurationVersionsBulk(
+    botConfigurationIds: number[]
+  ): Promise<Map<number, BotConfigurationVersion[]>> {
     this.ensureConnected();
 
     if (botConfigurationIds.length === 0) {
@@ -1358,7 +1474,7 @@ export class DatabaseManager {
 
       const versionsMap = new Map<number, BotConfigurationVersion[]>();
 
-      rows.forEach(row => {
+      rows.forEach((row) => {
         const configId = row.botConfigurationId;
         const version: BotConfigurationVersion = {
           id: row.id,
@@ -1381,7 +1497,7 @@ export class DatabaseManager {
           isActive: row.isActive === 1,
           createdAt: new Date(row.createdAt),
           createdBy: row.createdBy,
-          changeLog: row.changeLog
+          changeLog: row.changeLog,
         };
 
         if (!versionsMap.has(configId)) {
@@ -1401,21 +1517,24 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO bot_configuration_audit (
           botConfigurationId, action, oldValues, newValues, performedBy,
           performedAt, ipAddress, userAgent
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        audit.botConfigurationId,
-        audit.action,
-        audit.oldValues,
-        audit.newValues,
-        audit.performedBy,
-        audit.performedAt.toISOString(),
-        audit.ipAddress,
-        audit.userAgent
-      ]);
+      `,
+        [
+          audit.botConfigurationId,
+          audit.action,
+          audit.oldValues,
+          audit.newValues,
+          audit.performedBy,
+          audit.performedAt.toISOString(),
+          audit.ipAddress,
+          audit.userAgent,
+        ]
+      );
 
       debug(`Bot configuration audit created with ID: ${result.lastID}`);
       return result.lastID as number;
@@ -1434,7 +1553,7 @@ export class DatabaseManager {
         [botConfigurationId]
       );
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         botConfigurationId: row.botConfigurationId,
         action: row.action,
@@ -1443,7 +1562,7 @@ export class DatabaseManager {
         performedBy: row.performedBy,
         performedAt: new Date(row.performedAt),
         ipAddress: row.ipAddress,
-        userAgent: row.userAgent
+        userAgent: row.userAgent,
       }));
     } catch (error) {
       debug('Error getting bot configuration audit:', error);
@@ -1454,7 +1573,9 @@ export class DatabaseManager {
   /**
    * Get bot configuration audit logs for multiple configurations in a single query
    */
-  async getBotConfigurationAuditBulk(botConfigurationIds: number[]): Promise<Map<number, BotConfigurationAudit[]>> {
+  async getBotConfigurationAuditBulk(
+    botConfigurationIds: number[]
+  ): Promise<Map<number, BotConfigurationAudit[]>> {
     this.ensureConnected();
 
     if (botConfigurationIds.length === 0) {
@@ -1470,7 +1591,7 @@ export class DatabaseManager {
 
       const auditMap = new Map<number, BotConfigurationAudit[]>();
 
-      rows.forEach(row => {
+      rows.forEach((row) => {
         const configId = row.botConfigurationId;
         const audit: BotConfigurationAudit = {
           id: row.id,
@@ -1481,7 +1602,7 @@ export class DatabaseManager {
           performedBy: row.performedBy,
           performedAt: new Date(row.performedAt),
           ipAddress: row.ipAddress,
-          userAgent: row.userAgent
+          userAgent: row.userAgent,
         };
 
         if (!auditMap.has(configId)) {
@@ -1504,25 +1625,28 @@ export class DatabaseManager {
     }
 
     try {
-      await this.db!.run(`
+      await this.db!.run(
+        `
         INSERT OR REPLACE INTO anomalies (
           id, timestamp, metric, value, expectedMean, standardDeviation,
           zScore, threshold, severity, explanation, resolved, tenantId
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        anomaly.id,
-        anomaly.timestamp,
-        anomaly.metric,
-        anomaly.value,
-        anomaly.expectedMean,
-        anomaly.standardDeviation,
-        anomaly.zScore,
-        anomaly.threshold,
-        anomaly.severity,
-        anomaly.explanation,
-        anomaly.resolved ? 1 : 0,
-        anomaly.tenantId
-      ]);
+      `,
+        [
+          anomaly.id,
+          anomaly.timestamp,
+          anomaly.metric,
+          anomaly.value,
+          anomaly.expectedMean,
+          anomaly.standardDeviation,
+          anomaly.zScore,
+          anomaly.threshold,
+          anomaly.severity,
+          anomaly.explanation,
+          anomaly.resolved ? 1 : 0,
+          anomaly.tenantId,
+        ]
+      );
 
       debug(`Anomaly stored: ${anomaly.id}`);
     } catch (error) {
@@ -1549,7 +1673,7 @@ export class DatabaseManager {
 
       const rows = await this.db!.all(query, params);
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         timestamp: new Date(row.timestamp),
         metric: row.metric,
@@ -1587,7 +1711,7 @@ export class DatabaseManager {
 
       const rows = await this.db!.all(query, params);
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         timestamp: new Date(row.timestamp),
         metric: row.metric,
@@ -1630,7 +1754,10 @@ export class DatabaseManager {
     }
   }
 
-  async deleteBotConfigurationVersion(botConfigurationId: number, version: string): Promise<boolean> {
+  async deleteBotConfigurationVersion(
+    botConfigurationId: number,
+    version: string
+  ): Promise<boolean> {
     this.ensureConnected();
 
     try {
@@ -1643,11 +1770,13 @@ export class DatabaseManager {
       // Check if this is the currently active version
       const currentConfig = await this.getBotConfiguration(botConfigurationId);
       if (currentConfig) {
-        const versionToDelete = versions.find(v => v.version === version);
-        if (versionToDelete &&
-            versionToDelete.messageProvider === currentConfig.messageProvider &&
-            versionToDelete.llmProvider === currentConfig.llmProvider &&
-            versionToDelete.persona === currentConfig.persona) {
+        const versionToDelete = versions.find((v) => v.version === version);
+        if (
+          versionToDelete &&
+          versionToDelete.messageProvider === currentConfig.messageProvider &&
+          versionToDelete.llmProvider === currentConfig.llmProvider &&
+          versionToDelete.persona === currentConfig.persona
+        ) {
           throw new Error('Cannot delete the currently active version');
         }
       }
@@ -1660,7 +1789,9 @@ export class DatabaseManager {
       const deleted = (result.changes ?? 0) > 0;
 
       if (deleted) {
-        debug(`Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`);
+        debug(
+          `Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`
+        );
 
         // Create audit log entry
         await this.createBotConfigurationAudit({
@@ -1668,7 +1799,7 @@ export class DatabaseManager {
           action: 'DELETE',
           oldValues: JSON.stringify({ deletedVersion: version }),
           newValues: JSON.stringify({ status: 'deleted' }),
-          performedAt: new Date()
+          performedAt: new Date(),
         });
       }
 
@@ -1684,23 +1815,26 @@ export class DatabaseManager {
     this.ensureConnected();
 
     try {
-      const result = await this.db!.run(`
+      const result = await this.db!.run(
+        `
         INSERT INTO approval_requests (
           resourceType, resourceId, changeType, requestedBy, diff, status,
           reviewedBy, reviewedAt, reviewComments, tenantId
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        request.resourceType,
-        request.resourceId,
-        request.changeType,
-        request.requestedBy,
-        request.diff,
-        request.status,
-        request.reviewedBy,
-        request.reviewedAt ? request.reviewedAt.toISOString() : null,
-        request.reviewComments,
-        request.tenantId
-      ]);
+      `,
+        [
+          request.resourceType,
+          request.resourceId,
+          request.changeType,
+          request.requestedBy,
+          request.diff,
+          request.status,
+          request.reviewedBy,
+          request.reviewedAt ? request.reviewedAt.toISOString() : null,
+          request.reviewComments,
+          request.tenantId,
+        ]
+      );
 
       debug(`Approval request created with ID: ${result.lastID}`);
       return result.lastID as number;
@@ -1730,7 +1864,7 @@ export class DatabaseManager {
         reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
         reviewComments: row.reviewComments,
         createdAt: new Date(row.createdAt),
-        tenantId: row.tenantId
+        tenantId: row.tenantId,
       };
     } catch (error) {
       debug('Error getting approval request:', error);
@@ -1738,7 +1872,11 @@ export class DatabaseManager {
     }
   }
 
-  async getApprovalRequests(resourceType?: string, resourceId?: number, status?: string): Promise<ApprovalRequest[]> {
+  async getApprovalRequests(
+    resourceType?: string,
+    resourceId?: number,
+    status?: string
+  ): Promise<ApprovalRequest[]> {
     this.ensureConnected();
 
     try {
@@ -1764,7 +1902,7 @@ export class DatabaseManager {
 
       const rows = await this.db!.all(query, params);
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         id: row.id,
         resourceType: row.resourceType,
         resourceId: row.resourceId,
@@ -1776,7 +1914,7 @@ export class DatabaseManager {
         reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
         reviewComments: row.reviewComments,
         createdAt: new Date(row.createdAt),
-        tenantId: row.tenantId
+        tenantId: row.tenantId,
       }));
     } catch (error) {
       debug('Error getting approval requests:', error);
@@ -1784,7 +1922,12 @@ export class DatabaseManager {
     }
   }
 
-  async updateApprovalRequest(id: number, updates: Partial<Pick<ApprovalRequest, 'status' | 'reviewedBy' | 'reviewedAt' | 'reviewComments'>>): Promise<boolean> {
+  async updateApprovalRequest(
+    id: number,
+    updates: Partial<
+      Pick<ApprovalRequest, 'status' | 'reviewedBy' | 'reviewedAt' | 'reviewComments'>
+    >
+  ): Promise<boolean> {
     this.ensureConnected();
 
     try {

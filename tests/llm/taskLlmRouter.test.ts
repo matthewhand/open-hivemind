@@ -6,8 +6,8 @@ let mockProviderInstances: any[] = [];
 jest.mock('@config/llmTaskConfig', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(() => '')
-  }
+    get: jest.fn(() => ''),
+  },
 }));
 
 // Mock ProviderConfigManager
@@ -15,17 +15,17 @@ jest.mock('@src/config/ProviderConfigManager', () => ({
   __esModule: true,
   default: {
     getInstance: () => ({
-      getAllProviders: () => mockProviderInstances
-    })
-  }
+      getAllProviders: () => mockProviderInstances,
+    }),
+  },
 }));
 
 // Mock MetricsCollector so token counting wrapper stays inert
 jest.mock('@src/monitoring/MetricsCollector', () => ({
   __esModule: true,
   MetricsCollector: {
-    getInstance: () => ({ recordLlmTokenUsage: jest.fn() })
-  }
+    getInstance: () => ({ recordLlmTokenUsage: jest.fn() }),
+  },
 }));
 
 // Mock OpenAI provider to surface constructor config + metadata
@@ -38,8 +38,8 @@ jest.mock('@hivemind/provider-openai', () => ({
     generateChatCompletion: jest.fn(async (_msg: string, _hist: any[], metadata?: any) => {
       return `openai:${String(cfg?.model || '')}:${String(metadata?.modelOverride || '')}`;
     }),
-    generateCompletion: jest.fn(async () => '')
-  }))
+    generateCompletion: jest.fn(async () => ''),
+  })),
 }));
 
 // Mock Flowise provider
@@ -50,8 +50,8 @@ jest.mock('@integrations/flowise/flowiseProvider', () => ({
     supportsChatCompletion: () => true,
     supportsCompletion: () => false,
     generateChatCompletion: jest.fn(async () => 'flowise'),
-    generateCompletion: jest.fn(async () => '')
-  }))
+    generateCompletion: jest.fn(async () => ''),
+  })),
 }));
 
 // Mock OpenWebUI
@@ -113,8 +113,8 @@ describe('taskLlmRouter.getTaskLlm', () => {
         category: 'llm',
         name: 'Default OpenAI',
         enabled: true,
-        config: { model: 'base-model' }
-      }
+        config: { model: 'base-model' },
+      },
     ];
 
     process.env.LLM_SEMANTIC_PROVIDER = 'openai-default';
@@ -138,7 +138,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
         category: 'llm',
         name: 'Flowise A',
         enabled: true,
-        config: {}
+        config: {},
       },
       {
         id: 'openai-1',
@@ -146,8 +146,8 @@ describe('taskLlmRouter.getTaskLlm', () => {
         category: 'llm',
         name: 'OpenAI A',
         enabled: true,
-        config: {}
-      }
+        config: {},
+      },
     ];
 
     process.env.LLM_SEMANTIC_PROVIDER = 'openai';

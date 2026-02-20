@@ -1,52 +1,54 @@
-import { Router } from 'express';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
-import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
-import { UserConfigStore } from '../../config/UserConfigStore';
-import { HivemindError, ErrorUtils } from '../../types/errors';
-import { validateRequest } from '../../validation/validateRequest';
-import { ConfigUpdateSchema, ConfigRestoreSchema, ConfigBackupSchema } from '../../validation/schemas/configSchema';
-import { csrfProtection } from '../middleware/csrf';
 import fs from 'fs';
 import path from 'path';
-
+import { Router } from 'express';
+import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import discordConfig from '../../config/discordConfig';
+import flowiseConfig from '../../config/flowiseConfig';
+import {
+  getGuardrailProfiles,
+  saveGuardrailProfiles,
+  type GuardrailProfile,
+} from '../../config/guardrailProfiles';
+import llmConfig from '../../config/llmConfig';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
+import mattermostConfig from '../../config/mattermostConfig';
+import {
+  createMcpServerProfile,
+  deleteMcpServerProfile,
+  getMcpServerProfileByKey,
+  getMcpServerProfiles,
+  McpServerProfile,
+  updateMcpServerProfile,
+} from '../../config/mcpServerProfiles';
 // Import all convict config modules
 import messageConfig from '../../config/messageConfig';
-import llmConfig from '../../config/llmConfig';
-import discordConfig from '../../config/discordConfig';
-import slackConfig from '../../config/slackConfig';
-import openaiConfig from '../../config/openaiConfig';
-import flowiseConfig from '../../config/flowiseConfig';
 import ollamaConfig from '../../config/ollamaConfig';
-import mattermostConfig from '../../config/mattermostConfig';
+import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
-import webhookConfig from '../../config/webhookConfig';
-import type { GuardrailProfile } from '../../config/guardrailProfiles';
-import { getGuardrailProfiles, saveGuardrailProfiles } from '../../config/guardrailProfiles';
-import type { ProviderProfile } from '../../config/llmProfiles';
-import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
-import type {
-  ResponseProfile,
-} from '../../config/responseProfileManager';
 import {
-  getResponseProfiles,
   createResponseProfile,
-  updateResponseProfile,
   deleteResponseProfile,
+  getResponseProfiles,
+  updateResponseProfile,
+  type ResponseProfile,
 } from '../../config/responseProfileManager';
-import {
-  getMcpServerProfiles,
-  getMcpServerProfileByKey,
-  createMcpServerProfile,
-  updateMcpServerProfile,
-  deleteMcpServerProfile,
-  McpServerProfile,
-} from '../../config/mcpServerProfiles';
-import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import { BotManager } from '../../managers/BotManager';
-import { testDiscordConnection } from '@hivemind/adapter-discord/DiscordConnectionTest';
-import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
+import slackConfig from '../../config/slackConfig';
+import { UserConfigStore } from '../../config/UserConfigStore';
+import webhookConfig from '../../config/webhookConfig';
 import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
+// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
+import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
+import { BotManager } from '../../managers/BotManager';
+import { ErrorUtils, HivemindError } from '../../types/errors';
+import {
+  ConfigBackupSchema,
+  ConfigRestoreSchema,
+  ConfigUpdateSchema,
+} from '../../validation/schemas/configSchema';
+import { validateRequest } from '../../validation/validateRequest';
+import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
 
 const router = Router();
 
@@ -76,7 +78,7 @@ const loadDynamicConfigs = () => {
     if (fs.existsSync(providersDir)) {
       const files = fs.readdirSync(providersDir);
 
-      files.forEach(file => {
+      files.forEach((file) => {
         // Match pattern: type-name.json e.g. openai-dev.json
         const match = file.match(/^([a-z]+)-(.+)\.json$/);
         if (match) {
@@ -93,7 +95,9 @@ const loadDynamicConfigs = () => {
             newConfig.loadFile(path.join(providersDir, file));
             try {
               newConfig.validate({ allowed: 'warn' });
-            } catch (e) { console.warn(`Validation warning for ${name}:`, e); }
+            } catch (e) {
+              console.warn(`Validation warning for ${name}:`, e);
+            }
 
             globalConfigs[name] = newConfig;
           }
@@ -119,18 +123,20 @@ router.get('/ping', (req, res) => {
 });
 
 // Sensitive key patterns for redaction
-const SENSITIVE_PATTERNS = [
-  /token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i,
-];
+const SENSITIVE_PATTERNS = [/token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i];
 
 function isSensitiveKey(key: string): boolean {
-  return SENSITIVE_PATTERNS.some(pattern => pattern.test(key));
+  return SENSITIVE_PATTERNS.some((pattern) => pattern.test(key));
 }
 
 function redactValue(value: unknown): string {
-  if (!value) { return ''; }
+  if (!value) {
+    return '';
+  }
   const str = String(value);
-  if (str.length <= 8) { return '••••••••'; }
+  if (str.length <= 8) {
+    return '••••••••';
+  }
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
@@ -184,7 +190,7 @@ router.get('/bots', async (req, res) => {
         config: redactObject(bot.config || {}),
         errorCount: 0, // Placeholder as BotInstance currently doesn't track error counts in this view
         messageCount: 0, // Placeholder
-        connected: bot.isActive // Simplified connected status
+        connected: bot.isActive, // Simplified connected status
       };
     });
 
@@ -203,7 +209,7 @@ router.get('/bots', async (req, res) => {
 });
 
 // PUT /api/config/bots/:name - Update bot configuration (with secret handling)
-router.put('/bots/:name', csrfProtection, async (req, res) => {
+router.put('/bots/:name', async (req, res) => {
   try {
     const { name } = req.params;
     const updates = req.body;
@@ -248,22 +254,24 @@ router.get('/templates', (req, res) => {
       return res.json({ templates: [] });
     }
 
-    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.json'));
-    const templates = files.map(file => {
-      try {
-        const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
-        return {
-          id: file.replace('.json', ''),
-          name: content.name || file.replace('.json', ''),
-          description: content.description || 'No description provided',
-          provider: content.provider || content.messageProvider || 'unknown',
-          content,
-        };
-      } catch (e) {
-        console.warn(`Failed to parse template ${file}:`, e);
-        return null; // Skip invalid
-      }
-    }).filter(t => t !== null);
+    const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith('.json'));
+    const templates = files
+      .map((file) => {
+        try {
+          const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
+          return {
+            id: file.replace('.json', ''),
+            name: content.name || file.replace('.json', ''),
+            description: content.description || 'No description provided',
+            provider: content.provider || content.messageProvider || 'unknown',
+            content,
+          };
+        } catch (e) {
+          console.warn(`Failed to parse template ${file}:`, e);
+          return null; // Skip invalid
+        }
+      })
+      .filter((t) => t !== null);
 
     res.json({ templates });
   } catch (error: unknown) {
@@ -276,7 +284,7 @@ router.get('/templates', (req, res) => {
 });
 
 // POST /api/config/templates/:id/create - Create bot from template
-router.post('/templates/:id/create', csrfProtection, async (req, res) => {
+router.post('/templates/:id/create', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, overrides } = req.body;
@@ -306,7 +314,6 @@ router.post('/templates/:id/create', csrfProtection, async (req, res) => {
     await manager.addBot(newBotConfig);
 
     res.json({ success: true, message: `Bot "${name}" created from template "${id}"` });
-
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
@@ -353,10 +360,12 @@ router.get('/global', (req, res) => {
           if (typeof obj[k] === 'object' && obj[k] !== null) {
             redactObject(obj[k]);
           } else if (typeof k === 'string') {
-            if (k.toLowerCase().includes('token') ||
+            if (
+              k.toLowerCase().includes('token') ||
               k.toLowerCase().includes('key') ||
               k.toLowerCase().includes('secret') ||
-              k.toLowerCase().includes('password')) {
+              k.toLowerCase().includes('password')
+            ) {
               obj[k] = '********';
             }
           }
@@ -392,7 +401,7 @@ router.get('/global', (req, res) => {
 });
 
 // PUT /api/config/global - Update global configuration
-router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async (req, res) => {
+router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
@@ -406,7 +415,13 @@ router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async
       await userConfigStore.setGeneralSettings(settingsToSave);
 
       if (process.env.NODE_ENV !== 'test') {
-        logConfigChange(req as any, 'UPDATE', 'config/general', 'success', 'Updated general settings');
+        logConfigChange(
+          req as any,
+          'UPDATE',
+          'config/general',
+          'success',
+          'Updated general settings'
+        );
       }
 
       return res.json({ success: true, message: 'General settings updated and persisted' });
@@ -426,7 +441,9 @@ router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async
         globalConfigs[configName] = config;
         createdNew = true;
       } else {
-        return res.status(400).json({ error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}` });
+        return res.status(400).json({
+          error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}`,
+        });
       }
     }
 
@@ -437,16 +454,35 @@ router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async
     // If it's one of the base sources, use its standard file, else use dynamic name
     if (schemaSources[configName] && !createdNew) {
       switch (configName) {
-        case 'message': targetFile = 'providers/message.json'; break;
-        case 'llm': targetFile = 'providers/llm.json'; break;
-        case 'discord': targetFile = 'providers/discord.json'; break;
-        case 'slack': targetFile = 'providers/slack.json'; break;
-        case 'openai': targetFile = 'providers/openai.json'; break;
-        case 'flowise': targetFile = 'providers/flowise.json'; break;
-        case 'mattermost': targetFile = 'providers/mattermost.json'; break;
-        case 'openwebui': targetFile = 'providers/openwebui.json'; break;
-        case 'webhook': targetFile = 'providers/webhook.json'; break;
-        default: targetFile = `providers/${configName}.json`;
+        case 'message':
+          targetFile = 'providers/message.json';
+          break;
+        case 'llm':
+          targetFile = 'providers/llm.json';
+          break;
+        case 'discord':
+          targetFile = 'providers/discord.json';
+          break;
+        case 'slack':
+          targetFile = 'providers/slack.json';
+          break;
+        case 'openai':
+          targetFile = 'providers/openai.json';
+          break;
+        case 'flowise':
+          targetFile = 'providers/flowise.json';
+          break;
+        case 'mattermost':
+          targetFile = 'providers/mattermost.json';
+          break;
+        case 'openwebui':
+          targetFile = 'providers/openwebui.json';
+          break;
+        case 'webhook':
+          targetFile = 'providers/webhook.json';
+          break;
+        default:
+          targetFile = `providers/${configName}.json`;
       }
     } else {
       // Dynamic named config
@@ -482,11 +518,16 @@ router.put('/global', csrfProtection, validateRequest(ConfigUpdateSchema), async
 
     // Log audit
     if (process.env.NODE_ENV !== 'test') {
-      logConfigChange(req as any, 'UPDATE', `config/${configName}`, 'success', `Updated configuration for ${configName}`);
+      logConfigChange(
+        req as any,
+        'UPDATE',
+        `config/${configName}`,
+        'success',
+        `Updated configuration for ${configName}`
+      );
     }
 
     res.json({ success: true, message: 'Configuration updated and persisted' });
-
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
@@ -507,7 +548,7 @@ router.get('/', async (req, res) => {
 
     // Redact sensitive information
     // Bots default to active/connected unless explicitly disabled via user config
-    const sanitizedBots = bots.map(bot => {
+    const sanitizedBots = bots.map((bot) => {
       // Merge config into top-level for frontend compatibility
       const mergedBot: any = {
         ...bot,
@@ -520,35 +561,50 @@ router.get('/', async (req, res) => {
         // Use name as the ID since that's what the bots API expects
         id: mergedBot.id || mergedBot.name,
         // If disabled in user config, set status to 'disabled', otherwise 'active'
-        status: isDisabled ? 'disabled' : (mergedBot.status || 'active'),
+        status: isDisabled ? 'disabled' : mergedBot.status || 'active',
         // If disabled, set connected to false
-        connected: isDisabled ? false : (mergedBot.connected !== false),
-        discord: mergedBot.discord ? {
-          ...mergedBot.discord,
-          token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-        } : undefined,
-        slack: mergedBot.slack ? {
-          ...mergedBot.slack,
-          botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-          appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-          signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', mergedBot.slack.signingSecret || ''),
-        } : undefined,
-        openai: mergedBot.openai ? {
-          ...mergedBot.openai,
-          apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-        } : undefined,
-        flowise: mergedBot.flowise ? {
-          ...mergedBot.flowise,
-          apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-        } : undefined,
-        openwebui: mergedBot.openwebui ? {
-          ...mergedBot.openwebui,
-          apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-        } : undefined,
-        openswarm: mergedBot.openswarm ? {
-          ...mergedBot.openswarm,
-          apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-        } : undefined,
+        connected: isDisabled ? false : mergedBot.connected !== false,
+        discord: mergedBot.discord
+          ? {
+              ...mergedBot.discord,
+              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+            }
+          : undefined,
+        slack: mergedBot.slack
+          ? {
+              ...mergedBot.slack,
+              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+              signingSecret: redactSensitiveInfo(
+                'SLACK_SIGNING_SECRET',
+                mergedBot.slack.signingSecret || ''
+              ),
+            }
+          : undefined,
+        openai: mergedBot.openai
+          ? {
+              ...mergedBot.openai,
+              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+            }
+          : undefined,
+        flowise: mergedBot.flowise
+          ? {
+              ...mergedBot.flowise,
+              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+            }
+          : undefined,
+        openwebui: mergedBot.openwebui
+          ? {
+              ...mergedBot.openwebui,
+              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+            }
+          : undefined,
+        openswarm: mergedBot.openswarm
+          ? {
+              ...mergedBot.openswarm,
+              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+            }
+          : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
     });
@@ -584,27 +640,32 @@ router.get('/', async (req, res) => {
 router.get('/sources', (req, res) => {
   try {
     const envVars = Object.keys(process.env)
-      .filter(key =>
-        key.startsWith('BOTS_') ||
-        key.includes('DISCORD_') ||
-        key.includes('SLACK_') ||
-        key.includes('OPENAI_') ||
-        key.includes('FLOWISE_') ||
-        key.includes('OPENWEBUI_') ||
-        key.includes('MATTERMOST_') ||
-        key.includes('MESSAGE_') ||
-        key.includes('WEBHOOK_'),
+      .filter(
+        (key) =>
+          key.startsWith('BOTS_') ||
+          key.includes('DISCORD_') ||
+          key.includes('SLACK_') ||
+          key.includes('OPENAI_') ||
+          key.includes('FLOWISE_') ||
+          key.includes('OPENWEBUI_') ||
+          key.includes('MATTERMOST_') ||
+          key.includes('MESSAGE_') ||
+          key.includes('WEBHOOK_')
       )
-      .reduce((acc, key) => {
-        acc[key] = {
-          source: 'environment',
-          value: redactSensitiveInfo(key, process.env[key] || ''),
-          sensitive: key.toLowerCase().includes('token') ||
-            key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret'),
-        };
-        return acc;
-      }, {} as Record<string, any>);
+      .reduce(
+        (acc, key) => {
+          acc[key] = {
+            source: 'environment',
+            value: redactSensitiveInfo(key, process.env[key] || ''),
+            sensitive:
+              key.toLowerCase().includes('token') ||
+              key.toLowerCase().includes('key') ||
+              key.toLowerCase().includes('secret'),
+          };
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
     // Detect config files
     const fs = require('fs');
@@ -637,21 +698,25 @@ router.get('/sources', (req, res) => {
     let bots: any[] = [];
     try {
       const res = (manager as any).getAllBots?.();
-      if (Array.isArray(res)) { bots = res; }
+      if (Array.isArray(res)) {
+        bots = res;
+      }
     } catch {
       bots = [];
     }
 
-    bots.forEach(bot => {
+    bots.forEach((bot) => {
       // Check for environment variable overrides
       const envKeys = Object.keys(process.env);
       const botName = bot.name.toLowerCase().replace(/\s+/g, '_');
 
-      envKeys.forEach(envKey => {
-        if (envKey.toLowerCase().includes(botName) ||
+      envKeys.forEach((envKey) => {
+        if (
+          envKey.toLowerCase().includes(botName) ||
           envKey.includes('DISCORD_') ||
           envKey.includes('SLACK_') ||
-          envKey.includes('OPENAI_')) {
+          envKey.includes('OPENAI_')
+        ) {
           overrides.push({
             key: envKey,
             value: redactSensitiveInfo(envKey, process.env[envKey] || ''),
@@ -687,7 +752,7 @@ router.get('/sources', (req, res) => {
 });
 
 // Reload configuration
-router.post('/reload', csrfProtection, (req, res) => {
+router.post('/reload', (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     console.log('Manager instance obtained:', !!manager);
@@ -696,7 +761,13 @@ router.post('/reload', csrfProtection, (req, res) => {
     // Skip audit logging entirely in test mode
     if (process.env.NODE_ENV !== 'test') {
       try {
-        logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
+        logConfigChange(
+          req,
+          'RELOAD',
+          'config/global',
+          'success',
+          'Configuration reloaded from files'
+        );
       } catch (auditError) {
         console.warn('Audit logging failed:', auditError);
       }
@@ -721,7 +792,13 @@ router.post('/reload', csrfProtection, (req, res) => {
     // Skip audit logging entirely in test mode
     if (process.env.NODE_ENV !== 'test') {
       try {
-        logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
+        logConfigChange(
+          req,
+          'RELOAD',
+          'config/global',
+          'failure',
+          `Configuration reload failed: ${hivemindError.message}`
+        );
       } catch (auditError) {
         console.warn('Audit logging failed:', auditError);
       }
@@ -736,7 +813,7 @@ router.post('/reload', csrfProtection, (req, res) => {
 });
 
 // Clear cache
-router.post('/api/cache/clear', csrfProtection, (req, res) => {
+router.post('/api/cache/clear', (req, res) => {
   try {
     // Clear any in-memory caches
     if ((global as any).configCache) {
@@ -839,7 +916,10 @@ router.get('/validate', (req, res) => {
           errors.push({ field: `bots[${index}].llmProvider`, message: 'LLM provider is required' });
         }
         if (!bot.messageProvider) {
-          errors.push({ field: `bots[${index}].messageProvider`, message: 'Message provider is required' });
+          errors.push({
+            field: `bots[${index}].messageProvider`,
+            message: 'Message provider is required',
+          });
         }
       });
     }
@@ -868,7 +948,7 @@ router.get('/validate', (req, res) => {
 });
 
 // Create configuration backup
-router.post('/backup', csrfProtection, validateRequest(ConfigBackupSchema), (req: any, res) => {
+router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -904,7 +984,7 @@ router.post('/backup', csrfProtection, validateRequest(ConfigBackupSchema), (req
 });
 
 // Restore configuration from backup
-router.post('/restore', csrfProtection, validateRequest(ConfigRestoreSchema), (req: any, res) => {
+router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) => {
   try {
     const { backupId } = req.body;
 
@@ -1059,8 +1139,10 @@ router.get('/api/openapi', (req, res) => {
   }
 });
 
-
-function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.getInstance>): Record<string, any> {
+function buildFieldMetadata(
+  bot: any,
+  store: ReturnType<typeof UserConfigStore.getInstance>
+): Record<string, any> {
   const botName: string = bot?.name || 'unknown';
   const overrides = store.getBotOverride(botName) || {};
 
@@ -1099,11 +1181,15 @@ router.get('/messaging', (req, res) => {
   try {
     res.json({
       MESSAGE_ONLY_WHEN_SPOKEN_TO: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'),
-      MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'),
+      MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: messageConfig.get(
+        'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'
+      ),
       MESSAGE_UNSOLICITED_ADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_ADDRESSED'),
       MESSAGE_UNSOLICITED_UNADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED'),
       MESSAGE_UNSOLICITED_BASE_CHANCE: messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE'),
-      MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS'),
+      MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get(
+        'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS'
+      ),
       MESSAGE_RESPONSE_PROFILES: messageConfig.get('MESSAGE_RESPONSE_PROFILES'),
     });
   } catch (error: unknown) {
@@ -1131,7 +1217,7 @@ router.get('/guardrails', (req, res) => {
 });
 
 // PUT /api/config/guardrails - Update MCP guardrail profiles
-router.put('/guardrails', csrfProtection, (req, res) => {
+router.put('/guardrails', (req, res) => {
   try {
     const payload = req.body;
     const profiles = payload?.profiles;
@@ -1167,7 +1253,7 @@ router.put('/guardrails', csrfProtection, (req, res) => {
 });
 
 // POST /api/config/guardrails - Create a guardrail profile
-router.post('/guardrails', csrfProtection, (req, res) => {
+router.post('/guardrails', (req, res) => {
   try {
     const profile = req.body as GuardrailProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1181,7 +1267,7 @@ router.post('/guardrails', csrfProtection, (req, res) => {
     }
 
     const profiles = getGuardrailProfiles();
-    if (profiles.some(p => p.key === profile.key)) {
+    if (profiles.some((p) => p.key === profile.key)) {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
@@ -1198,11 +1284,11 @@ router.post('/guardrails', csrfProtection, (req, res) => {
 });
 
 // DELETE /api/config/guardrails/:key - Delete a guardrail profile
-router.delete('/guardrails/:key', csrfProtection, (req, res) => {
+router.delete('/guardrails/:key', (req, res) => {
   try {
     const key = req.params.key;
     const profiles = getGuardrailProfiles();
-    const index = profiles.findIndex(p => p.key === key);
+    const index = profiles.findIndex((p) => p.key === key);
 
     if (index === -1) {
       return res.status(404).json({ error: `Profile with key '${key}' not found` });
@@ -1236,7 +1322,7 @@ router.get('/response-profiles', (req, res) => {
 });
 
 // POST /api/config/response-profiles - Create a response profile
-router.post('/response-profiles', csrfProtection, (req, res) => {
+router.post('/response-profiles', (req, res) => {
   try {
     const profile = req.body as ResponseProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1253,7 +1339,9 @@ router.post('/response-profiles', csrfProtection, (req, res) => {
     res.status(201).json({ success: true, profile: created });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const statusCode = hivemindError.message?.includes('already exists') ? 409 : (hivemindError.statusCode || 500);
+    const statusCode = hivemindError.message?.includes('already exists')
+      ? 409
+      : hivemindError.statusCode || 500;
     res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_POST_ERROR',
@@ -1262,7 +1350,7 @@ router.post('/response-profiles', csrfProtection, (req, res) => {
 });
 
 // PUT /api/config/response-profiles/:key - Update a response profile
-router.put('/response-profiles/:key', csrfProtection, (req, res) => {
+router.put('/response-profiles/:key', (req, res) => {
   try {
     const key = req.params.key;
     const updates = req.body as Partial<ResponseProfile>;
@@ -1271,7 +1359,9 @@ router.put('/response-profiles/:key', csrfProtection, (req, res) => {
     res.json({ success: true, profile: updated });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const statusCode = hivemindError.message?.includes('not found') ? 404 : (hivemindError.statusCode || 500);
+    const statusCode = hivemindError.message?.includes('not found')
+      ? 404
+      : hivemindError.statusCode || 500;
     res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_PUT_ERROR',
@@ -1280,16 +1370,18 @@ router.put('/response-profiles/:key', csrfProtection, (req, res) => {
 });
 
 // DELETE /api/config/response-profiles/:key - Delete a response profile
-router.delete('/response-profiles/:key', csrfProtection, (req, res) => {
+router.delete('/response-profiles/:key', (req, res) => {
   try {
     const key = req.params.key;
     deleteResponseProfile(key);
     res.json({ success: true, deletedKey: key });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const statusCode = hivemindError.message?.includes('not found') ? 404
-      : hivemindError.message?.includes('built-in') ? 403
-        : (hivemindError.statusCode || 500);
+    const statusCode = hivemindError.message?.includes('not found')
+      ? 404
+      : hivemindError.message?.includes('built-in')
+        ? 403
+        : hivemindError.statusCode || 500;
     res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_DELETE_ERROR',
@@ -1303,13 +1395,13 @@ router.get('/llm-status', async (req, res) => {
     const llmDefaults = getLlmDefaultStatus();
     const botManager = BotManager.getInstance();
     const bots = await botManager.getAllBots();
-    const missing = bots.filter(bot => !bot.llmProvider || String(bot.llmProvider).trim() === '');
+    const missing = bots.filter((bot) => !bot.llmProvider || String(bot.llmProvider).trim() === '');
 
     res.json({
       defaultConfigured: llmDefaults.configured,
       defaultProviders: llmDefaults.providers,
       libraryStatus: llmDefaults.libraryStatus,
-      botsMissingLlmProvider: missing.map(bot => bot.name),
+      botsMissingLlmProvider: missing.map((bot) => bot.name),
       hasMissing: missing.length > 0,
     });
   } catch (error: unknown) {
@@ -1324,7 +1416,9 @@ router.get('/llm-status', async (req, res) => {
 // POST /api/config/message-provider/test - Test message provider connectivity
 router.post('/message-provider/test', async (req, res) => {
   try {
-    const provider = String(req.body?.provider || '').trim().toLowerCase();
+    const provider = String(req.body?.provider || '')
+      .trim()
+      .toLowerCase();
     const config = req.body?.config as Record<string, unknown> | undefined;
 
     if (!provider) {
@@ -1336,17 +1430,17 @@ router.post('/message-provider/test', async (req, res) => {
     }
 
     if (provider === 'discord') {
-      const rawToken = String(
-        (config as any).DISCORD_BOT_TOKEN || (config as any).token || '',
-      );
+      const rawToken = String((config as any).DISCORD_BOT_TOKEN || (config as any).token || '');
       const token = rawToken.split(',')[0]?.trim() || '';
+      const { testDiscordConnection } =
+        await import('@hivemind/adapter-discord/DiscordConnectionTest');
       const result = await testDiscordConnection(token);
       return res.json(result);
     }
 
     if (provider === 'slack') {
       const token = String(
-        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || '',
+        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || ''
       ).trim();
       const result = await testSlackConnection(token);
       return res.json(result);
@@ -1354,11 +1448,12 @@ router.post('/message-provider/test', async (req, res) => {
 
     if (provider === 'mattermost') {
       const serverUrl = String(
-        (config as any).MATTERMOST_SERVER_URL || (config as any).serverUrl || (config as any).url || '',
+        (config as any).MATTERMOST_SERVER_URL ||
+          (config as any).serverUrl ||
+          (config as any).url ||
+          ''
       ).trim();
-      const token = String(
-        (config as any).MATTERMOST_TOKEN || (config as any).token || '',
-      ).trim();
+      const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);
       return res.json(result);
     }
@@ -1389,7 +1484,7 @@ router.get('/llm-profiles', (req, res) => {
 });
 
 // PUT /api/config/llm-profiles - Update LLM profile templates
-router.put('/llm-profiles', csrfProtection, (req, res) => {
+router.put('/llm-profiles', (req, res) => {
   try {
     const payload = req.body;
     const profiles = payload?.profiles;
@@ -1426,7 +1521,9 @@ router.put('/llm-profiles', csrfProtection, (req, res) => {
 
     for (const profile of llmProfiles) {
       const error = validateProfile(profile);
-      if (error) { return res.status(400).json({ error }); }
+      if (error) {
+        return res.status(400).json({ error });
+      }
     }
 
     saveLlmProfiles({ llm: llmProfiles });
@@ -1441,7 +1538,7 @@ router.put('/llm-profiles', csrfProtection, (req, res) => {
 });
 
 // POST /api/config/llm-profiles - Create an LLM profile
-router.post('/llm-profiles', csrfProtection, (req, res) => {
+router.post('/llm-profiles', (req, res) => {
   try {
     const profile = req.body as ProviderProfile;
     if (!profile.key || typeof profile.key !== 'string') {
@@ -1452,7 +1549,7 @@ router.post('/llm-profiles', csrfProtection, (req, res) => {
     }
 
     const allProfiles = getLlmProfiles();
-    if (allProfiles.llm.some(p => p.key === profile.key)) {
+    if (allProfiles.llm.some((p) => p.key === profile.key)) {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
@@ -1477,11 +1574,11 @@ router.post('/llm-profiles', csrfProtection, (req, res) => {
 });
 
 // DELETE /api/config/llm-profiles/:key - Delete an LLM profile
-router.delete('/llm-profiles/:key', csrfProtection, (req, res) => {
+router.delete('/llm-profiles/:key', (req, res) => {
   try {
     const key = req.params.key;
     const allProfiles = getLlmProfiles();
-    const index = allProfiles.llm.findIndex(p => p.key === key);
+    const index = allProfiles.llm.findIndex((p) => p.key === key);
 
     if (index === -1) {
       return res.status(404).json({ error: `Profile with key '${key}' not found` });
@@ -1500,7 +1597,7 @@ router.delete('/llm-profiles/:key', csrfProtection, (req, res) => {
 });
 
 // PUT /api/config/messaging - Update messaging behavior settings
-router.put('/messaging', csrfProtection, async (req, res) => {
+router.put('/messaging', async (req, res) => {
   try {
     const updates = req.body;
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -1511,7 +1608,9 @@ router.put('/messaging', csrfProtection, async (req, res) => {
     if (fs.existsSync(targetPath)) {
       try {
         existing = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
-      } catch { /* ignore parse errors, start fresh */ }
+      } catch {
+        /* ignore parse errors, start fresh */
+      }
     }
 
     // Merge updates
@@ -1524,7 +1623,9 @@ router.put('/messaging', csrfProtection, async (req, res) => {
     // Reload config (convict will pick up new values on next get, but we force load here)
     try {
       messageConfig.loadFile(targetPath);
-    } catch { /* validation may fail, ignore */ }
+    } catch {
+      /* validation may fail, ignore */
+    }
 
     res.json({
       success: true,
@@ -1560,7 +1661,7 @@ router.get('/mcp-server-profiles', (_req, res) => {
 });
 
 // POST create new MCP server profile
-router.post('/mcp-server-profiles', csrfProtection, (req, res) => {
+router.post('/mcp-server-profiles', (req, res) => {
   try {
     const { key, name, description, mcpServers } = req.body;
 
@@ -1592,7 +1693,7 @@ router.post('/mcp-server-profiles', csrfProtection, (req, res) => {
 });
 
 // PUT update MCP server profile
-router.put('/mcp-server-profiles/:key', csrfProtection, (req, res) => {
+router.put('/mcp-server-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
@@ -1613,7 +1714,7 @@ router.put('/mcp-server-profiles/:key', csrfProtection, (req, res) => {
 });
 
 // DELETE MCP server profile
-router.delete('/mcp-server-profiles/:key', csrfProtection, (req, res) => {
+router.delete('/mcp-server-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const deleted = deleteMcpServerProfile(key);

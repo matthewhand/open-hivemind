@@ -3,8 +3,8 @@ import Debug from 'debug';
 const debug = Debug('app:GlobalActivityTracker');
 
 interface ActivityState {
-    score: number;
-    lastUpdate: number;
+  score: number;
+  lastUpdate: number;
 }
 
 /**
@@ -20,7 +20,7 @@ export class GlobalActivityTracker {
   private readonly DECAY_PER_MINUTE = 0.5; // Score drops by 0.5 every minute
   private readonly SCORE_LIMIT = 5.0; // Arbitrary cap to prevent runaway scores
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): GlobalActivityTracker {
     if (!GlobalActivityTracker.instance) {
@@ -30,9 +30,9 @@ export class GlobalActivityTracker {
   }
 
   /**
-     * Record new activity for a bot (increment score).
-     * Call this when the bot successfully sends a message.
-     */
+   * Record new activity for a bot (increment score).
+   * Call this when the bot successfully sends a message.
+   */
   public recordActivity(botId: string, cost: number = 1.0): void {
     const currentState = this.getUpdatedState(botId);
 
@@ -44,16 +44,16 @@ export class GlobalActivityTracker {
   }
 
   /**
-     * Get the current fatigue score for a bot (decayed based on elapsed time).
-     * Returns a float >= 0.
-     */
+   * Get the current fatigue score for a bot (decayed based on elapsed time).
+   * Returns a float >= 0.
+   */
   public getScore(botId: string): number {
     return this.getUpdatedState(botId).score;
   }
 
   /**
-     * Helper to retrieve state and apply pending decay.
-     */
+   * Helper to retrieve state and apply pending decay.
+   */
   private getUpdatedState(botId: string): ActivityState {
     const now = Date.now();
     const state = this.states.get(botId) || { score: 0, lastUpdate: now };

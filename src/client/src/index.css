@@ -609,6 +609,18 @@ textarea {
   border-color: hsl(var(--er) / 0.3);
 }
 
+/* Dark mode visibility adjustment */
+.text-error {
+  color: oklch(var(--er));
+}
+
+[data-theme='dark'] .text-error,
+[data-theme='night'] .text-error,
+[data-theme='dracula'] .text-error {
+  color: hsl(0, 100%, 75%); /* Brighter red for dark backgrounds */
+  text-shadow: 0 0 1px rgba(0,0,0,0.5);
+}
+
 /* Alert icon glow */
 .alert svg:first-child {
   filter: drop-shadow(0 0 6px currentColor);

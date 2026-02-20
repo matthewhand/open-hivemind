@@ -16,7 +16,7 @@ describe('HistoryBudgeter', () => {
       inputBudgetTokens: 80,
       promptText: 'user prompt',
       systemPromptText: 'system',
-      perMessageOverheadTokens: 0
+      perMessageOverheadTokens: 0,
     });
 
     // Expect it to keep the most recent tail of the array
@@ -30,10 +30,9 @@ describe('HistoryBudgeter', () => {
       inputBudgetTokens: 5, // absurdly small
       promptText: 'x'.repeat(200),
       systemPromptText: 'y'.repeat(200),
-      minKeepMessages: 2
+      minKeepMessages: 2,
     });
     expect(res.trimmed).toHaveLength(2);
     expect(res.meta.trimmedCount).toBe(1);
   });
 });
-

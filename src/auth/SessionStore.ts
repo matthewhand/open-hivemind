@@ -5,23 +5,32 @@ const debug = Debug('app:SessionStore');
 
 /**
  * SessionStore handles secure storage and retrieval of session data.
- * 
+ *
  * Memory-bounded with automatic TTL cleanup to prevent unbounded growth.
  */
 export class SessionStore {
-  private sessions: Map<string, { userId: string; token: string; role: string; createdAt: Date; expiresAt: Date }>;
+  private sessions: Map<
+    string,
+    { userId: string; token: string; role: string; createdAt: Date; expiresAt: Date }
+  >;
   private userIdToSessionIds: Map<string, string[]>;
 
   // Bounded cache configuration
   private readonly MAX_SESSIONS = parseInt(process.env.SESSION_STORE_MAX_SESSIONS || '10000', 10);
-  private readonly CLEANUP_INTERVAL_MS = parseInt(process.env.SESSION_STORE_CLEANUP_INTERVAL_MS || '300000', 10); // 5 minutes
+  private readonly CLEANUP_INTERVAL_MS = parseInt(
+    process.env.SESSION_STORE_CLEANUP_INTERVAL_MS || '300000',
+    10
+  ); // 5 minutes
   private cleanupTimerId: string | null = null;
 
   constructor() {
     this.sessions = new Map();
     this.userIdToSessionIds = new Map();
-    debug('SessionStore initialized with MAX_SESSIONS=%d, CLEANUP_INTERVAL_MS=%d', 
-      this.MAX_SESSIONS, this.CLEANUP_INTERVAL_MS);
+    debug(
+      'SessionStore initialized with MAX_SESSIONS=%d, CLEANUP_INTERVAL_MS=%d',
+      this.MAX_SESSIONS,
+      this.CLEANUP_INTERVAL_MS
+    );
     this.startCleanup();
   }
 
@@ -38,7 +47,7 @@ export class SessionStore {
 
     const sessionId = this.generateSessionId();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 24 hours
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
 
     this.sessions.set(sessionId, {
       userId,
@@ -90,7 +99,7 @@ export class SessionStore {
 
         // Remove from user's session list
         const userSessions = this.userIdToSessionIds.get(session.userId) || [];
-        const updatedUserSessions = userSessions.filter(id => id !== sessionId);
+        const updatedUserSessions = userSessions.filter((id) => id !== sessionId);
         this.userIdToSessionIds.set(session.userId, updatedUserSessions);
 
         debug('Token invalidated: %s', token);
@@ -105,14 +114,14 @@ export class SessionStore {
    */
   public async invalidateUserSessions(userId: string): Promise<void> {
     const sessionIds = this.userIdToSessionIds.get(userId) || [];
-    
+
     for (const sessionId of sessionIds) {
       const session = this.sessions.get(sessionId);
       if (session && session.userId === userId) {
         this.sessions.delete(sessionId);
       }
     }
-    
+
     this.userIdToSessionIds.delete(userId);
     debug('All sessions invalidated for user: %s', userId);
   }
@@ -135,9 +144,9 @@ export class SessionStore {
       if (session) {
         // Remove from user's session list
         const userSessions = this.userIdToSessionIds.get(session.userId) || [];
-        const updatedUserSessions = userSessions.filter(id => id !== sessionId);
+        const updatedUserSessions = userSessions.filter((id) => id !== sessionId);
         this.userIdToSessionIds.set(session.userId, updatedUserSessions);
-        
+
         this.sessions.delete(sessionId);
       }
     }
@@ -162,7 +171,7 @@ export class SessionStore {
       'session-store-cleanup',
       () => this.cleanExpiredSessions(),
       this.CLEANUP_INTERVAL_MS,
-      'SessionStore periodic cleanup',
+      'SessionStore periodic cleanup'
     );
   }
 
@@ -182,7 +191,7 @@ export class SessionStore {
 
         // Remove from user's session list
         const userSessions = this.userIdToSessionIds.get(session.userId) || [];
-        const updatedUserSessions = userSessions.filter(id => id !== sessionId);
+        const updatedUserSessions = userSessions.filter((id) => id !== sessionId);
         if (updatedUserSessions.length === 0) {
           this.userIdToSessionIds.delete(session.userId);
         } else {

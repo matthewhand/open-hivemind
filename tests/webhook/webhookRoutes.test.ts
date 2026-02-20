@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
-import { runRoute } from '../helpers/expressRunner';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import * as security from '@webhook/security/webhookSecurity';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { runRoute } from '../helpers/expressRunner';
 
 // Mock security middlewares to be controllable per test
 jest.mock('@webhook/security/webhookSecurity', () => {
@@ -64,11 +64,15 @@ describe('webhookRoutes', () => {
   });
 
   it('returns 400 when predictionId or status is missing', async () => {
-    const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: { status: 'succeeded', output: [] } });
+    const { res: res1 } = await runRoute(app, 'post', '/webhook', {
+      body: { status: 'succeeded', output: [] },
+    });
     expect(res1.statusCode).toBe(400);
     expect(res1.body.error).toBe('Invalid request body');
 
-    const { res: res2 } = await runRoute(app, 'post', '/webhook', { body: { id: 'pred-x', output: [] } });
+    const { res: res2 } = await runRoute(app, 'post', '/webhook', {
+      body: { id: 'pred-x', output: [] },
+    });
     expect(res2.statusCode).toBe(400);
     expect(res2.body.error).toBe('Invalid request body');
 
@@ -82,8 +86,8 @@ describe('webhookRoutes', () => {
     expect(res1.body.details).toEqual(['Request body must be a valid JSON object']);
 
     // Invalid output type
-    const { res: res2 } = await runRoute(app, 'post', '/webhook', { 
-      body: { id: 'test', status: 'succeeded', output: 'not-array' } 
+    const { res: res2 } = await runRoute(app, 'post', '/webhook', {
+      body: { id: 'test', status: 'succeeded', output: 'not-array' },
     });
     expect(res2.statusCode).toBe(400);
     expect(res2.body.details).toEqual(['Invalid "output" field (must be array if present)']);
@@ -94,46 +98,54 @@ describe('webhookRoutes', () => {
   it('returns 500 when message service fails', async () => {
     messageService.sendPublicAnnouncement.mockRejectedValueOnce(new Error('send failed'));
 
-    const { res } = await runRoute(app, 'post', '/webhook', { body: {
-      id: 'pred-err',
-      status: 'succeeded',
-      output: ['Hello'],
-    }});
+    const { res } = await runRoute(app, 'post', '/webhook', {
+      body: {
+        id: 'pred-err',
+        status: 'succeeded',
+        output: ['Hello'],
+      },
+    });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Failed to process webhook');
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
   });
 
-
-
   it('returns 403 when verifyWebhookToken blocks', async () => {
-    const { verifyWebhookToken } = jest.requireMock('@webhook/security/webhookSecurity') as typeof security;
+    const { verifyWebhookToken } = jest.requireMock(
+      '@webhook/security/webhookSecurity'
+    ) as typeof security;
     (verifyWebhookToken as jest.Mock).mockImplementationOnce((req: Request, res: Response) => {
       res.status(403).send('Forbidden: Invalid token');
     });
 
-    const { res } = await runRoute(app, 'post', '/webhook', { body: {
-      id: 'pred-3',
-      status: 'succeeded',
-      output: [],
-    }});
+    const { res } = await runRoute(app, 'post', '/webhook', {
+      body: {
+        id: 'pred-3',
+        status: 'succeeded',
+        output: [],
+      },
+    });
 
     expect(res.statusCode).toBe(403);
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
 
   it('returns 403 when verifyIpWhitelist blocks', async () => {
-    const { verifyIpWhitelist } = jest.requireMock('@webhook/security/webhookSecurity') as typeof security;
+    const { verifyIpWhitelist } = jest.requireMock(
+      '@webhook/security/webhookSecurity'
+    ) as typeof security;
     (verifyIpWhitelist as jest.Mock).mockImplementationOnce((req: Request, res: Response) => {
       res.status(403).send('Forbidden: Unauthorized IP address');
     });
 
-    const { res } = await runRoute(app, 'post', '/webhook', { body: {
-      id: 'pred-4',
-      status: 'succeeded',
-      output: [],
-    }});
+    const { res } = await runRoute(app, 'post', '/webhook', {
+      body: {
+        id: 'pred-4',
+        status: 'succeeded',
+        output: [],
+      },
+    });
 
     expect(res.statusCode).toBe(403);
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();

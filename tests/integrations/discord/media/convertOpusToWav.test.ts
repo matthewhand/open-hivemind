@@ -1,6 +1,6 @@
-import { convertOpusToWav } from '@hivemind/adapter-discord/media/convertOpusToWav';
 import { exec } from 'child_process';
 import fs from 'fs';
+import { convertOpusToWav } from '@hivemind/adapter-discord/media/convertOpusToWav';
 
 jest.mock('child_process');
 jest.mock('fs');
@@ -13,7 +13,7 @@ describe('convertOpusToWav', () => {
     jest.clearAllMocks();
     mockFs.promises = {
       writeFile: jest.fn(),
-      unlink: jest.fn()
+      unlink: jest.fn(),
     } as any;
   });
 
@@ -41,8 +41,7 @@ describe('convertOpusToWav', () => {
       return {} as any;
     });
 
-    await expect(convertOpusToWav(opusBuffer, '/temp'))
-      .rejects.toThrow('ffmpeg not found');
+    await expect(convertOpusToWav(opusBuffer, '/temp')).rejects.toThrow('ffmpeg not found');
   });
 
   it('should handle file write errors', async () => {
@@ -50,7 +49,6 @@ describe('convertOpusToWav', () => {
 
     mockFs.promises.writeFile = jest.fn().mockRejectedValue(new Error('Permission denied'));
 
-    await expect(convertOpusToWav(opusBuffer, '/temp'))
-      .rejects.toThrow('Permission denied');
+    await expect(convertOpusToWav(opusBuffer, '/temp')).rejects.toThrow('Permission denied');
   });
 });

@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import Debug from 'debug';
+import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
 
 const debug = Debug('app:webui:activity');
@@ -59,22 +59,22 @@ interface ActivitySummary {
 const buildWhereClause = (filter: ActivityFilter): { clause: string; params: any[] } => {
   const conditions: string[] = [];
   const params: any[] = [];
-  
+
   if (filter.startDate) {
     conditions.push('timestamp >= ?');
     params.push(filter.startDate);
   }
-  
+
   if (filter.endDate) {
     conditions.push('timestamp <= ?');
     params.push(filter.endDate);
   }
-  
+
   if (filter.messageProvider) {
     conditions.push('provider = ?');
     params.push(filter.messageProvider);
   }
-  
+
   const clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { clause, params };
 };
@@ -99,26 +99,26 @@ router.get('/messages', async (req, res) => {
 
     // Build query with filters
     const { clause, params } = buildWhereClause(filter);
-    
+
     // Mock query - in real implementation, this would query the actual database
     // For now, we'll simulate the response structure
     const messages: MessageActivity[] = [];
-    
+
     // In a real implementation, this would be something like:
     // const query = `
-    //   SELECT m.*, a.name as agentName, a.llmProvider 
-    //   FROM messages m 
-    //   LEFT JOIN agents a ON m.agentId = a.id 
+    //   SELECT m.*, a.name as agentName, a.llmProvider
+    //   FROM messages m
+    //   LEFT JOIN agents a ON m.agentId = a.id
     //   ${clause}
-    //   ORDER BY timestamp DESC 
+    //   ORDER BY timestamp DESC
     //   LIMIT ? OFFSET ?
     // `;
     // const messages = await db.all(query, [...params, filter.limit, filter.offset]);
 
-    res.json({ 
+    res.json({
       messages,
       total: messages.length,
-      filter, 
+      filter,
     });
   } catch (error) {
     debug('Error fetching message activity:', error);
@@ -143,7 +143,7 @@ router.get('/llm-usage', async (req, res) => {
 
     // Mock LLM usage data
     const usage: LLMUsageMetric[] = [];
-    
+
     res.json({ usage, filter });
   } catch (error) {
     debug('Error fetching LLM usage:', error);
@@ -166,7 +166,7 @@ router.get('/summary', async (req, res) => {
 
     // Get database statistics
     const stats = await dbManager.getStats();
-    
+
     const summary: ActivitySummary = {
       totalMessages: stats.totalMessages,
       totalAgents: stats.totalChannels, // Using channels as proxy for agents
@@ -196,8 +196,8 @@ router.get('/chart-data', async (req, res) => {
       endDate: req.query.endDate as string,
     };
 
-    const interval = req.query.interval as string || 'hour'; // hour, day, week
-    
+    const interval = (req.query.interval as string) || 'hour'; // hour, day, week
+
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
       return res.status(503).json({ error: 'Database not connected' });
@@ -205,25 +205,32 @@ router.get('/chart-data', async (req, res) => {
 
     // Generate mock time-series data
     const now = new Date();
-    const startTime = filter.startDate ? new Date(filter.startDate) : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const startTime = filter.startDate
+      ? new Date(filter.startDate)
+      : new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const endTime = filter.endDate ? new Date(filter.endDate) : now;
-    
+
     const messageActivityData: Array<{ timestamp: string; count: number; provider?: string }> = [];
-    const llmUsageData: Array<{ timestamp: string; usage: number; provider?: string; responseTime: number }> = [];
-    
+    const llmUsageData: Array<{
+      timestamp: string;
+      usage: number;
+      provider?: string;
+      responseTime: number;
+    }> = [];
+
     // Generate hourly data points
     const intervalMs = interval === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-    
+
     for (let time = startTime.getTime(); time <= endTime.getTime(); time += intervalMs) {
       const timestamp = new Date(time).toISOString();
-      
+
       // Mock message activity data
       messageActivityData.push({
         timestamp,
         count: Math.floor(Math.random() * 50) + 10,
         provider: filter.messageProvider,
       });
-      
+
       // Mock LLM usage data
       llmUsageData.push({
         timestamp,

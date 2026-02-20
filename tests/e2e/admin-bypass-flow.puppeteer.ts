@@ -14,7 +14,7 @@ describe('Admin Bypass E2E Flow', () => {
   beforeAll(async () => {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
   });
 
@@ -31,7 +31,7 @@ describe('Admin Bypass E2E Flow', () => {
 
     // Mock localhost for the browser
     await page.setExtraHTTPHeaders({
-      'X-Forwarded-For': '127.0.0.1'
+      'X-Forwarded-For': '127.0.0.1',
     });
   });
 
@@ -59,13 +59,13 @@ describe('Admin Bypass E2E Flow', () => {
 
       // Verify we're logged in as admin
       const usernameElement = await page.$('[data-testid="current-user"]');
-      const username = await usernameElement?.evaluate(el => el.textContent);
+      const username = await usernameElement?.evaluate((el) => el.textContent);
       expect(username).toBe('admin');
 
       // Check for bypass indicator or notification
       const bypassNotification = await page.$('[data-testid="localhost-bypass-notice"]');
       if (bypassNotification) {
-        const noticeText = await bypassNotification.evaluate(el => el.textContent);
+        const noticeText = await bypassNotification.evaluate((el) => el.textContent);
         expect(noticeText).toContain('localhost');
       }
     });
@@ -84,7 +84,7 @@ describe('Admin Bypass E2E Flow', () => {
       const adminSections = [
         '[data-testid="user-management"]',
         '[data-testid="system-settings"]',
-        '[data-testid="security-settings"]'
+        '[data-testid="security-settings"]',
       ];
 
       for (const selector of adminSections) {
@@ -118,10 +118,7 @@ describe('Admin Bypass E2E Flow', () => {
 
       // Should show error message
       await page.waitForSelector('[data-testid="login-error"]');
-      const errorMessage = await page.$eval(
-        '[data-testid="login-error"]',
-        el => el.textContent
-      );
+      const errorMessage = await page.$eval('[data-testid="login-error"]', (el) => el.textContent);
       expect(errorMessage).toContain('Invalid credentials');
 
       // Clear form and try correct password
@@ -140,7 +137,7 @@ describe('Admin Bypass E2E Flow', () => {
       // Check for admin password usage notification
       const adminPassNotice = await page.$('[data-testid="admin-password-notice"]');
       if (adminPassNotice) {
-        const noticeText = await adminPassNotice.evaluate(el => el.textContent);
+        const noticeText = await adminPassNotice.evaluate((el) => el.textContent);
         expect(noticeText).toContain('ADMIN_PASSWORD');
       }
     });
@@ -150,7 +147,7 @@ describe('Admin Bypass E2E Flow', () => {
     it('should prevent bypass from non-localhost context', async () => {
       // Simulate external IP context
       await page.setExtraHTTPHeaders({
-        'X-Forwarded-For': '192.168.1.100'
+        'X-Forwarded-For': '192.168.1.100',
       });
 
       await page.goto('http://localhost:3028/login');
@@ -171,16 +168,12 @@ describe('Admin Bypass E2E Flow', () => {
 
     it('should handle concurrent login attempts', async () => {
       // Open multiple pages/tabs
-      const pages = await Promise.all([
-        browser.newPage(),
-        browser.newPage(),
-        browser.newPage()
-      ]);
+      const pages = await Promise.all([browser.newPage(), browser.newPage(), browser.newPage()]);
 
       try {
         // Set localhost for all pages
         await Promise.all(
-          pages.map(p => p.setExtraHTTPHeaders({ 'X-Forwarded-For': '127.0.0.1' }))
+          pages.map((p) => p.setExtraHTTPHeaders({ 'X-Forwarded-For': '127.0.0.1' }))
         );
 
         // Perform login on all pages simultaneously
@@ -191,7 +184,7 @@ describe('Admin Bypass E2E Flow', () => {
         const results = await Promise.all(loginPromises);
 
         // All should succeed
-        results.forEach(success => {
+        results.forEach((success) => {
           expect(success).toBe(true);
         });
 
@@ -202,16 +195,13 @@ describe('Admin Bypass E2E Flow', () => {
 
         const adminUsers = await adminPage.$$eval(
           '[data-testid="user-item"]',
-          elements => elements.filter(el =>
-            el.textContent?.includes('admin')
-          ).length
+          (elements) => elements.filter((el) => el.textContent?.includes('admin')).length
         );
 
         expect(adminUsers).toBe(1);
-
       } finally {
         // Clean up pages
-        await Promise.all(pages.map(p => p.close()));
+        await Promise.all(pages.map((p) => p.close()));
       }
     });
   });
@@ -258,9 +248,7 @@ describe('Admin Bypass E2E Flow', () => {
       await performLogin('admin', 'session-test-password');
 
       // Get initial token
-      const initialToken = await page.evaluate(() =>
-        localStorage.getItem('accessToken')
-      );
+      const initialToken = await page.evaluate(() => localStorage.getItem('accessToken'));
 
       expect(initialToken).toBeTruthy();
 
@@ -302,10 +290,7 @@ describe('Admin Bypass E2E Flow', () => {
 
       // Should fail with error
       await page.waitForSelector('[data-testid="login-error"]');
-      const errorMessage = await page.$eval(
-        '[data-testid="login-error"]',
-        el => el.textContent
-      );
+      const errorMessage = await page.$eval('[data-testid="login-error"]', (el) => el.textContent);
       expect(errorMessage).toContain('Invalid credentials');
 
       // Should show no bypass indicator
@@ -345,7 +330,11 @@ describe('Admin Bypass E2E Flow', () => {
     await page.waitForSelector('[data-testid="admin-dashboard"]');
   }
 
-  async function performLoginOnPage(targetPage: Page, username: string, password: string): Promise<boolean> {
+  async function performLoginOnPage(
+    targetPage: Page,
+    username: string,
+    password: string
+  ): Promise<boolean> {
     try {
       await targetPage.goto('http://localhost:3028/login');
       await targetPage.waitForSelector('[data-testid="login-form"]');

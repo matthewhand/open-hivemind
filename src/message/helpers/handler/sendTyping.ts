@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { Client} from 'discord.js';
-import { TextChannel, NewsChannel } from 'discord.js';
+import { NewsChannel, TextChannel, type Client } from 'discord.js';
 
 const debug = Debug('app:sendTyping');
 
@@ -38,6 +37,11 @@ export async function sendTyping(client: Client, channelId: string): Promise<voi
       debug('Channel ID: ' + channelId + ' does not support typing.');
     }
   } catch (error: any) {
-    debug('Failed to start typing in channel ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      'Failed to start typing in channel ID: ' +
+        channelId +
+        ': ' +
+        (error instanceof Error ? error.message : String(error))
+    );
   }
 }

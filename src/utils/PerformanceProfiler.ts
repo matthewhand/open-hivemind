@@ -1,7 +1,7 @@
-import Debug from 'debug';
-import * as v8 from 'v8';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as v8 from 'v8';
+import Debug from 'debug';
 
 const debug = Debug('app:PerformanceProfiler');
 
@@ -109,11 +109,7 @@ export class PerformanceProfiler {
   /**
    * Profile a method execution
    */
-  public profileMethod<T>(
-    methodName: string,
-    fn: () => T,
-    className?: string
-  ): T {
+  public profileMethod<T>(methodName: string, fn: () => T, className?: string): T {
     if (!this.isProfiling) {
       return fn();
     }
@@ -190,7 +186,7 @@ export class PerformanceProfiler {
         peak_malloced_memory: 0,
         does_zap_garbage: false,
         number_of_native_contexts: 0,
-        number_of_detached_contexts: 0
+        number_of_detached_contexts: 0,
       } as any;
     }
 
@@ -198,7 +194,7 @@ export class PerformanceProfiler {
       timestamp,
       memoryUsage,
       heapStatistics,
-      cpuUsage: process.cpuUsage()
+      cpuUsage: process.cpuUsage(),
     };
 
     this.snapshots.push(snapshot);
@@ -234,14 +230,14 @@ export class PerformanceProfiler {
         peak_malloced_memory: 0,
         does_zap_garbage: false,
         number_of_native_contexts: 0,
-        number_of_detached_contexts: 0
+        number_of_detached_contexts: 0,
       } as any;
     }
 
     return {
       memoryUsage,
       heapStatistics,
-      methodProfiles: Array.from(this.methodProfiles.values())
+      methodProfiles: Array.from(this.methodProfiles.values()),
     };
   }
 
@@ -254,7 +250,7 @@ export class PerformanceProfiler {
       startTime: this.startTime,
       snapshots: this.snapshots,
       methodProfiles: Array.from(this.methodProfiles.entries()),
-      currentMetrics: this.getCurrentMetrics()
+      currentMetrics: this.getCurrentMetrics(),
     };
 
     const fileName = filename || `performance-profile-${this.profileName}-${Date.now()}.json`;
@@ -272,7 +268,6 @@ export class PerformanceProfiler {
     return filePath;
   }
 
-  
   private recordMethodExecution(
     methodName: string,
     className: string | undefined,
@@ -291,7 +286,7 @@ export class PerformanceProfiler {
         minExecutionTime: Number.MAX_VALUE,
         maxExecutionTime: 0,
         lastExecutionTime: 0,
-        errorCount: 0
+        errorCount: 0,
       });
     }
 
@@ -320,32 +315,52 @@ export class PerformanceProfiler {
       heapTotal: finalSnapshot.memoryUsage.heapTotal - initialSnapshot.memoryUsage.heapTotal,
       heapUsed: finalSnapshot.memoryUsage.heapUsed - initialSnapshot.memoryUsage.heapUsed,
       external: finalSnapshot.memoryUsage.external - initialSnapshot.memoryUsage.external,
-      arrayBuffers: finalSnapshot.memoryUsage.arrayBuffers - initialSnapshot.memoryUsage.arrayBuffers
+      arrayBuffers:
+        finalSnapshot.memoryUsage.arrayBuffers - initialSnapshot.memoryUsage.arrayBuffers,
     };
 
     const alerts: string[] = [];
 
     // Generate alerts for performance issues
-    if (memoryDelta.heapUsed > 50 * 1024 * 1024) { // 50MB increase
-      alerts.push(`High memory usage increase: +${(memoryDelta.heapUsed / 1024 / 1024).toFixed(2)}MB`);
+    if (memoryDelta.heapUsed > 50 * 1024 * 1024) {
+      // 50MB increase
+      alerts.push(
+        `High memory usage increase: +${(memoryDelta.heapUsed / 1024 / 1024).toFixed(2)}MB`
+      );
     }
 
     // Check for slow methods
     const slowMethods = Array.from(this.methodProfiles.values())
-      .filter(profile => profile.averageExecutionTime > 1000) // Methods taking > 1 second on average
+      .filter((profile) => profile.averageExecutionTime > 1000) // Methods taking > 1 second on average
       .sort((a, b) => b.averageExecutionTime - a.averageExecutionTime);
 
     if (slowMethods.length > 0) {
-      alerts.push(`Slow methods detected: ${slowMethods.slice(0, 3).map(m => `${m.methodName} (${m.averageExecutionTime.toFixed(2)}ms)`).join(', ')}`);
+      alerts.push(
+        `Slow methods detected: ${slowMethods
+          .slice(0, 3)
+          .map((m) => `${m.methodName} (${m.averageExecutionTime.toFixed(2)}ms)`)
+          .join(', ')}`
+      );
     }
 
     // Check for methods with high error rates
     const errorProneMethods = Array.from(this.methodProfiles.values())
-      .filter(profile => profile.executionCount > 10 && (profile.errorCount / profile.executionCount) > 0.1) // > 10% error rate
-      .sort((a, b) => (b.errorCount / b.executionCount) - (a.errorCount / a.executionCount));
+      .filter(
+        (profile) =>
+          profile.executionCount > 10 && profile.errorCount / profile.executionCount > 0.1
+      ) // > 10% error rate
+      .sort((a, b) => b.errorCount / b.executionCount - a.errorCount / a.executionCount);
 
     if (errorProneMethods.length > 0) {
-      alerts.push(`Error-prone methods: ${errorProneMethods.slice(0, 3).map(m => `${m.methodName} (${((m.errorCount / m.executionCount) * 100).toFixed(1)}% errors)`).join(', ')}`);
+      alerts.push(
+        `Error-prone methods: ${errorProneMethods
+          .slice(0, 3)
+          .map(
+            (m) =>
+              `${m.methodName} (${((m.errorCount / m.executionCount) * 100).toFixed(1)}% errors)`
+          )
+          .join(', ')}`
+      );
     }
 
     return {
@@ -354,20 +369,23 @@ export class PerformanceProfiler {
       memory: {
         initial: initialSnapshot,
         final: finalSnapshot,
-        delta: memoryDelta
+        delta: memoryDelta,
       },
       methods: Array.from(this.methodProfiles.values()),
-      alerts
+      alerts,
     };
   }
-/**
+  /**
    * Start automatic cleanup interval
    */
   private startAutomaticCleanup(): void {
     // Run cleanup every hour
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupOldData();
-    }, 60 * 60 * 1000); // 1 hour
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanupOldData();
+      },
+      60 * 60 * 1000
+    ); // 1 hour
 
     debug('Automatic cleanup started');
   }
@@ -394,7 +412,7 @@ export class PerformanceProfiler {
 
     // Clean old snapshots
     const originalSnapshotLength = this.snapshots.length;
-    this.snapshots = this.snapshots.filter(snapshot => snapshot.timestamp > cutoffTime);
+    this.snapshots = this.snapshots.filter((snapshot) => snapshot.timestamp > cutoffTime);
     cleanedSnapshots = originalSnapshotLength - this.snapshots.length;
 
     // Clean old method profiles
@@ -407,7 +425,9 @@ export class PerformanceProfiler {
     }
 
     if (cleanedSnapshots > 0 || cleanedProfiles > 0) {
-      debug(`Cleanup completed: ${cleanedSnapshots} snapshots, ${cleanedProfiles} profiles removed`);
+      debug(
+        `Cleanup completed: ${cleanedSnapshots} snapshots, ${cleanedProfiles} profiles removed`
+      );
     }
   }
 
@@ -437,13 +457,18 @@ export class PerformanceProfiler {
     if (config.cleanupIntervalMinutes !== undefined) {
       this.stopAutomaticCleanup();
       if (config.cleanupIntervalMinutes > 0) {
-        this.cleanupInterval = setInterval(() => {
-          this.cleanupOldData();
-        }, config.cleanupIntervalMinutes * 60 * 1000);
+        this.cleanupInterval = setInterval(
+          () => {
+            this.cleanupOldData();
+          },
+          config.cleanupIntervalMinutes * 60 * 1000
+        );
       }
     }
 
-    debug(`Cleanup config updated: maxSnapshots=${this.maxSnapshots}, maxAge=${this.maxProfileAge}ms`);
+    debug(
+      `Cleanup config updated: maxSnapshots=${this.maxSnapshots}, maxAge=${this.maxProfileAge}ms`
+    );
   }
 
   /**
@@ -455,13 +480,15 @@ export class PerformanceProfiler {
     estimatedMemoryUsage: number;
   } {
     const snapshotSize = JSON.stringify(this.snapshots).length * 2; // Rough estimate
-    const profilesSize = Array.from(this.methodProfiles.entries())
-      .reduce((size, [key, profile]) => size + key.length + JSON.stringify(profile).length * 2, 0);
+    const profilesSize = Array.from(this.methodProfiles.entries()).reduce(
+      (size, [key, profile]) => size + key.length + JSON.stringify(profile).length * 2,
+      0
+    );
 
     return {
       snapshotsCount: this.snapshots.length,
       profilesCount: this.methodProfiles.size,
-      estimatedMemoryUsage: snapshotSize + profilesSize
+      estimatedMemoryUsage: snapshotSize + profilesSize,
     };
   }
 

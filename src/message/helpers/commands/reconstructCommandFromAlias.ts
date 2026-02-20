@@ -31,10 +31,10 @@ const debug = Debug('app:reconstructCommandFromAlias');
  * @interface Alias
  */
 export interface Alias {
-    /** The full command string that this alias maps to */
-    command: string;
-    /** A human-readable description of what this alias does */
-    description: string;
+  /** The full command string that this alias maps to */
+  command: string;
+  /** A human-readable description of what this alias does */
+  description: string;
 }
 
 /**

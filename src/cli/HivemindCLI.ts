@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-
-import { Command } from 'commander';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { DatabaseManager } from '../database/DatabaseManager';
 import { promises as fs } from 'fs';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import inquirer from 'inquirer';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { DatabaseManager } from '../database/DatabaseManager';
 
 export class HivemindCLI {
   private program: Command;
@@ -20,34 +19,32 @@ export class HivemindCLI {
   }
 
   private setupCommands(): void {
-    this.program
-      .name('hivemind')
-      .description('Hivemind AI Bot Management CLI')
-      .version('1.0.0');
+    this.program.name('hivemind').description('Hivemind AI Bot Management CLI').version('1.0.0');
 
     // Bot management commands
     this.setupBotCommands();
-    
+
     // Database commands
     this.setupDatabaseCommands();
-    
+
     // Server management commands
     this.setupServerCommands();
-    
+
     // Configuration commands
     this.setupConfigCommands();
   }
 
   private setupBotCommands(): void {
-    const botCommand = this.program
-      .command('bot')
-      .description('Bot management commands');
+    const botCommand = this.program.command('bot').description('Bot management commands');
 
     botCommand
       .command('add')
       .description('Add a new bot configuration')
       .option('-n, --name <name>', 'Bot name')
-      .option('-p, --provider <provider>', 'Message provider (discord, slack, telegram, mattermost)')
+      .option(
+        '-p, --provider <provider>',
+        'Message provider (discord, slack, telegram, mattermost)'
+      )
       .option('-l, --llm <llm>', 'LLM provider (openai, flowise, openwebui)')
       .option('-t, --token <token>', 'Bot token')
       .option('-i, --interactive', 'Interactive mode')
@@ -114,9 +111,7 @@ export class HivemindCLI {
   }
 
   private setupDatabaseCommands(): void {
-    const dbCommand = this.program
-      .command('db')
-      .description('Database management commands');
+    const dbCommand = this.program.command('db').description('Database management commands');
 
     dbCommand
       .command('init')
@@ -259,22 +254,22 @@ export class HivemindCLI {
   }
 
   // Implementation methods
-	  private async addBot(options: any): Promise<void> {
-	    console.log(chalk.blue('Adding new bot...'));
-	    
-	    if (!options.name || !options.provider || !options.llm) {
-	      console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
-	      return;
-	    }
+  private async addBot(options: any): Promise<void> {
+    console.log(chalk.blue('Adding new bot...'));
 
-	    // Here you would save to configuration
-	    console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
-	    console.log(`  Provider: ${options.provider} → ${options.llm}`);
-	  }
+    if (!options.name || !options.provider || !options.llm) {
+      console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
+      return;
+    }
+
+    // Here you would save to configuration
+    console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
+    console.log(`  Provider: ${options.provider} → ${options.llm}`);
+  }
 
   private async addBotInteractive(): Promise<void> {
     console.log(chalk.blue('Interactive Bot Setup'));
-    
+
     const answers = await inquirer.prompt([
       {
         type: 'input',
@@ -307,18 +302,18 @@ export class HivemindCLI {
 
   private listBots(verbose: boolean = false): void {
     const bots = this.configManager.getAllBots();
-    
+
     if (bots.length === 0) {
       console.log(chalk.yellow('No bots configured'));
       return;
     }
 
     console.log(chalk.blue(`Found ${bots.length} bot(s):`));
-    
+
     bots.forEach((bot, index) => {
       console.log(`${index + 1}. ${chalk.green(bot.name)}`);
       console.log(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
-      
+
       if (verbose) {
         console.log(`   Enabled: ${(bot as any).enabled ? chalk.green('Yes') : chalk.red('No')}`);
         console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
@@ -329,8 +324,8 @@ export class HivemindCLI {
 
   private async removeBot(name: string, force: boolean = false): Promise<void> {
     const bots = this.configManager.getAllBots();
-    const bot = bots.find(b => b.name === name);
-    
+    const bot = bots.find((b) => b.name === name);
+
     if (!bot) {
       console.error(chalk.red(`Bot '${name}' not found`));
       return;
@@ -345,7 +340,7 @@ export class HivemindCLI {
           default: false,
         },
       ]);
-      
+
       if (!confirm) {
         console.log(chalk.yellow('Operation cancelled'));
         return;
@@ -370,14 +365,14 @@ export class HivemindCLI {
 
   private showBotStatus(name?: string): void {
     const bots = this.configManager.getAllBots();
-    
+
     if (name) {
-      const bot = bots.find(b => b.name === name);
+      const bot = bots.find((b) => b.name === name);
       if (!bot) {
         console.error(chalk.red(`Bot '${name}' not found`));
         return;
       }
-      
+
       console.log(chalk.blue(`Status for bot '${name}':`));
       console.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
       console.log(`  Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
@@ -397,7 +392,7 @@ export class HivemindCLI {
 
   private async initializeDatabase(path: string): Promise<void> {
     console.log(chalk.blue(`Initializing database at ${path}...`));
-    
+
     const config = { type: 'sqlite' as const, path };
     const dbManager = DatabaseManager.getInstance(config);
     this.dbManager = dbManager;
@@ -419,12 +414,12 @@ export class HivemindCLI {
 
     try {
       const stats = await this.dbManager.getStats();
-      
+
       console.log(chalk.blue('Database Statistics:'));
       console.log(`  Total messages: ${chalk.green(stats.totalMessages)}`);
       console.log(`  Total channels: ${chalk.green(stats.totalChannels)}`);
       console.log(`  Total authors: ${chalk.green(stats.totalAuthors)}`);
-      
+
       console.log('\n  Messages by provider:');
       Object.entries(stats.providers).forEach(([provider, count]) => {
         console.log(`    ${provider}: ${chalk.green(count)}`);
@@ -450,7 +445,7 @@ export class HivemindCLI {
           default: false,
         },
       ]);
-      
+
       if (!confirm) {
         console.log(chalk.yellow('Cleanup cancelled'));
         return;
@@ -464,7 +459,7 @@ export class HivemindCLI {
 
   private async startServer(options: any): Promise<void> {
     console.log(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
-    
+
     if (options.daemon) {
       console.log(chalk.green('✓ Server started as daemon'));
     } else {
@@ -496,18 +491,18 @@ export class HivemindCLI {
 
   private validateConfiguration(): void {
     console.log(chalk.blue('Validating configuration...'));
-    
+
     const warnings = this.configManager.getWarnings();
     const bots = this.configManager.getAllBots();
-    
+
     if (warnings.length === 0 && bots.length > 0) {
       console.log(chalk.green('✓ Configuration is valid'));
     } else {
       if (bots.length === 0) {
         console.log(chalk.yellow('⚠ No bots configured'));
       }
-      
-      warnings.forEach(warning => {
+
+      warnings.forEach((warning) => {
         console.log(chalk.yellow(`⚠ ${warning}`));
       });
     }
@@ -521,13 +516,13 @@ export class HivemindCLI {
 
   private async exportConfiguration(path: string): Promise<void> {
     console.log(chalk.blue(`Exporting configuration to ${path}...`));
-    
+
     const config = {
       bots: this.configManager.getAllBots(),
       exportedAt: new Date().toISOString(),
       version: '1.0.0',
     };
-    
+
     await fs.writeFile(path, JSON.stringify(config, null, 2));
     console.log(chalk.green('✓ Configuration exported'));
   }
@@ -536,7 +531,7 @@ export class HivemindCLI {
     try {
       const data = await fs.readFile(path, 'utf8');
       const config = JSON.parse(data);
-      
+
       if (!force) {
         const { confirm } = await inquirer.prompt([
           {
@@ -546,7 +541,7 @@ export class HivemindCLI {
             default: false,
           },
         ]);
-        
+
         if (!confirm) {
           console.log(chalk.yellow('Import cancelled'));
           return;

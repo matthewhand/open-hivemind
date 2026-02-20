@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { Client } from 'discord.js';
-import { VoiceChannel } from 'discord.js';
+import { VoiceChannel, type Client } from 'discord.js';
 import { getRandomDelay } from '@src/common/getRandomDelay';
 
 const debug = Debug('app:connectToVoiceChannel');
@@ -22,7 +21,7 @@ const debug = Debug('app:connectToVoiceChannel');
  */
 export async function connectToVoiceChannel(
   client: Client,
-  channelId: string,
+  channelId: string
 ): Promise<VoiceChannel> {
   try {
     const channel = await client.channels.fetch(channelId);
@@ -33,10 +32,13 @@ export async function connectToVoiceChannel(
     debug('Connecting to voice channel: ' + channel.name);
     const delay = getRandomDelay(1000, 5000);
     debug('Simulating connection delay of ' + delay + 'ms');
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
     return channel;
   } catch (error: any) {
-    debug('Error connecting to voice channel: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      'Error connecting to voice channel: ' +
+        (error instanceof Error ? error.message : String(error))
+    );
     throw error;
   }
 }

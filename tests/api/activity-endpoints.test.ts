@@ -1,7 +1,7 @@
 import express, { Express } from 'express';
 import request from 'supertest';
-import activityRouter from '../../src/server/routes/activity';
 import { authenticate, requireAdmin } from '../../src/auth/middleware';
+import activityRouter from '../../src/server/routes/activity';
 
 jest.mock('../../src/auth/middleware', () => ({
   authenticate: jest.fn((req, res, next) => {
@@ -25,10 +25,10 @@ jest.mock('../../src/database/DatabaseManager', () => ({
       getStats: jest.fn(() => ({
         totalMessages: 1000,
         totalChannels: 5,
-        providers: { discord: 600, slack: 400 }
-      }))
-    }))
-  }
+        providers: { discord: 600, slack: 400 },
+      })),
+    })),
+  },
 }));
 
 describe('Activity API Endpoints', () => {
@@ -57,13 +57,11 @@ describe('Activity API Endpoints', () => {
     });
 
     it('should apply query filters', async () => {
-      const response = await request(app)
-        .get('/api/activity/messages')
-        .query({
-          messageProvider: 'discord',
-          limit: '50',
-          offset: '10'
-        });
+      const response = await request(app).get('/api/activity/messages').query({
+        messageProvider: 'discord',
+        limit: '50',
+        offset: '10',
+      });
       expect(response.status).toBe(200);
       expect(response.body.filter.messageProvider).toBe('discord');
       expect(response.body.filter.limit).toBe(50);
@@ -113,12 +111,10 @@ describe('Activity API Endpoints', () => {
     });
 
     it('should apply filters and interval', async () => {
-      const response = await request(app)
-        .get('/api/activity/chart-data')
-        .query({
-          messageProvider: 'discord',
-          interval: 'day'
-        });
+      const response = await request(app).get('/api/activity/chart-data').query({
+        messageProvider: 'discord',
+        interval: 'day',
+      });
       expect(response.status).toBe(200);
       expect(response.body.interval).toBe('day');
       expect(response.body.filter.messageProvider).toBe('discord');
@@ -158,12 +154,10 @@ describe('Activity API Endpoints', () => {
         messageType: 'incoming',
         contentLength: 100,
         processingTime: 250,
-        status: 'success'
+        status: 'success',
       };
 
-      const response = await request(app)
-        .post('/api/activity/log')
-        .send(activityData);
+      const response = await request(app).post('/api/activity/log').send(activityData);
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
@@ -177,12 +171,10 @@ describe('Activity API Endpoints', () => {
         contentLength: 200,
         processingTime: 300,
         status: 'success',
-        mcpToolsUsed: ['web_search', 'file_read']
+        mcpToolsUsed: ['web_search', 'file_read'],
       };
 
-      const response = await request(app)
-        .post('/api/activity/log')
-        .send(activityData);
+      const response = await request(app).post('/api/activity/log').send(activityData);
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });

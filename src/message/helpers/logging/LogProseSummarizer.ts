@@ -1,5 +1,5 @@
-import { OpenAI } from 'openai';
 import Debug from 'debug';
+import { OpenAI } from 'openai';
 
 const debug = Debug('app:logProseSummarizer');
 
@@ -33,7 +33,8 @@ export async function summarizeLogWithLlm(originalProse: string): Promise<string
       messages: [
         {
           role: 'system',
-          content: 'Rewrite the following bot log message to be cynical, sardonic, and extremely laconic. Keep it short (under 15 words) but very expressive of the bot\'s internal monologue. Do not use quotes.',
+          content:
+            "Rewrite the following bot log message to be cynical, sardonic, and extremely laconic. Keep it short (under 15 words) but very expressive of the bot's internal monologue. Do not use quotes.",
         },
         {
           role: 'user',

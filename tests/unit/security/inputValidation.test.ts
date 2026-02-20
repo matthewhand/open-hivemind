@@ -1,6 +1,6 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
+import request from 'supertest';
 import { validate } from '../../../src/middleware/validationMiddleware';
 
 describe('Input Validation Middleware', () => {
@@ -11,12 +11,17 @@ describe('Input Validation Middleware', () => {
     app.use(express.json());
 
     // Add test route with validation
-    app.post('/test', [
-      body('username').isEmail().withMessage('Invalid email'),
-      body('password').isLength({ min: 8 }).withMessage('Password too short'),
-    ], validate, (req: Request, res: Response) => {
-      res.status(200).json({ message: 'Success' });
-    });
+    app.post(
+      '/test',
+      [
+        body('username').isEmail().withMessage('Invalid email'),
+        body('password').isLength({ min: 8 }).withMessage('Password too short'),
+      ],
+      validate,
+      (req: Request, res: Response) => {
+        res.status(200).json({ message: 'Success' });
+      }
+    );
 
     // Add route without validation for comparison
     app.post('/no-validation', (req: Request, res: Response) => {
@@ -29,7 +34,7 @@ describe('Input Validation Middleware', () => {
       .post('/test')
       .send({
         username: 'invalid-email',
-        password: 'short'
+        password: 'short',
       })
       .expect(400);
 
@@ -54,7 +59,7 @@ describe('Input Validation Middleware', () => {
       .post('/test')
       .send({
         username: 'valid@example.com',
-        password: 'longenoughpassword'
+        password: 'longenoughpassword',
       })
       .expect(200);
 
@@ -62,19 +67,13 @@ describe('Input Validation Middleware', () => {
   });
 
   test('should allow requests to non-validated endpoints', async () => {
-    const response = await request(app)
-      .post('/no-validation')
-      .send({ any: 'data' })
-      .expect(200);
+    const response = await request(app).post('/no-validation').send({ any: 'data' }).expect(200);
 
     expect(response.body.message).toBe('Success');
   });
 
   test('should handle missing required fields', async () => {
-    const response = await request(app)
-      .post('/test')
-      .send({})
-      .expect(400);
+    const response = await request(app).post('/test').send({}).expect(400);
 
     // Check that errors array exists and has errors
     expect(response.body.errors).toBeDefined();
@@ -85,7 +84,7 @@ describe('Input Validation Middleware', () => {
     const usernameError = response.body.errors.find((e: any) => e.path === 'username');
     expect(usernameError).toBeDefined();
 
-    // Check for password error  
+    // Check for password error
     const passwordError = response.body.errors.find((e: any) => e.path === 'password');
     expect(passwordError).toBeDefined();
   });

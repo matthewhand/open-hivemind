@@ -24,7 +24,7 @@ export function validateMessage(message: IMessage): boolean {
 
     const isValid = textLength > 0 && authorId !== '';
     debug(`Message validation ${isValid ? 'passed' : 'failed'}`);
-        
+
     return isValid;
   } catch (error: any) {
     debug('Failed to validate message: ' + error.message);

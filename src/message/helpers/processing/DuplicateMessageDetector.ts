@@ -1,19 +1,19 @@
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig';
 import TimerRegistry from '@src/utils/TimerRegistry';
+import messageConfig from '@config/messageConfig';
 
 const debug = Debug('app:DuplicateMessageDetector');
 
 interface MessageRecord {
-    content: string;
-    timestamp: number;
-    channelId: string;
+  content: string;
+  timestamp: number;
+  channelId: string;
 }
 
 /**
  * Detects and suppresses duplicate/repetitive bot messages.
  * Tracks recent messages per channel and rejects duplicates within a configurable time window.
- * 
+ *
  * Memory-bounded with automatic cleanup to prevent unbounded growth.
  */
 export default class DuplicateMessageDetector {
@@ -21,13 +21,22 @@ export default class DuplicateMessageDetector {
   private recentMessages: Map<string, MessageRecord[]> = new Map();
 
   // Bounded cache configuration
-  private readonly MAX_CHANNELS = parseInt(process.env.DUPLICATE_DETECTOR_MAX_CHANNELS || '1000', 10);
-  private readonly CLEANUP_INTERVAL_MS = parseInt(process.env.DUPLICATE_DETECTOR_CLEANUP_INTERVAL_MS || '60000', 10);
+  private readonly MAX_CHANNELS = parseInt(
+    process.env.DUPLICATE_DETECTOR_MAX_CHANNELS || '1000',
+    10
+  );
+  private readonly CLEANUP_INTERVAL_MS = parseInt(
+    process.env.DUPLICATE_DETECTOR_CLEANUP_INTERVAL_MS || '60000',
+    10
+  );
   private cleanupTimerId: string | null = null;
 
   private constructor() {
-    debug('DuplicateMessageDetector initialized with MAX_CHANNELS=%d, CLEANUP_INTERVAL_MS=%d', 
-      this.MAX_CHANNELS, this.CLEANUP_INTERVAL_MS);
+    debug(
+      'DuplicateMessageDetector initialized with MAX_CHANNELS=%d, CLEANUP_INTERVAL_MS=%d',
+      this.MAX_CHANNELS,
+      this.CLEANUP_INTERVAL_MS
+    );
     this.startCleanup();
   }
 
@@ -39,18 +48,18 @@ export default class DuplicateMessageDetector {
   }
 
   /**
-     * Check if a message is a duplicate
-     * @param channelId The channel ID
-     * @param content The message content to check
-     * @returns true if the message is a duplicate and should be suppressed
-     */
+   * Check if a message is a duplicate
+   * @param channelId The channel ID
+   * @param content The message content to check
+   * @returns true if the message is a duplicate and should be suppressed
+   */
   /**
-     * Check if a message is a duplicate
-     * @param channelId The channel ID
-     * @param content The message content to check
-     * @param externalHistory Optional list of recent message contents from the channel (to check against other users/bots)
-     * @returns true if the message is a duplicate and should be suppressed
-     */
+   * Check if a message is a duplicate
+   * @param channelId The channel ID
+   * @param content The message content to check
+   * @param externalHistory Optional list of recent message contents from the channel (to check against other users/bots)
+   * @returns true if the message is a duplicate and should be suppressed
+   */
   public isDuplicate(channelId: string, content: string, externalHistory: string[] = []): boolean {
     try {
       const suppressEnabled = messageConfig.get('MESSAGE_SUPPRESS_DUPLICATES');
@@ -65,24 +74,26 @@ export default class DuplicateMessageDetector {
       const history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages outside the time window
-      const recentHistory = history.filter(msg => (now - msg.timestamp) < windowMs);
+      const recentHistory = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Normalize content for comparison (trim, lowercase, remove extra whitespace)
       const normalizedContent = this.normalizeContent(content);
 
       // Check for duplicates in internal history (what WE sent recently)
-      const isInternalDupe = recentHistory.some(msg =>
-        this.normalizeContent(msg.content) === normalizedContent,
+      const isInternalDupe = recentHistory.some(
+        (msg) => this.normalizeContent(msg.content) === normalizedContent
       );
 
       // Check for duplicates in external history (what OTHERS sent recently)
       // Increased to last 15 messages to catch wider mirroring
-      const isExternalDupe = externalHistory.slice(-15).some(msgContent =>
-        this.areMessagesDuplicate(msgContent, normalizedContent),
-      );
+      const isExternalDupe = externalHistory
+        .slice(-15)
+        .some((msgContent) => this.areMessagesDuplicate(msgContent, normalizedContent));
 
       if (isInternalDupe || isExternalDupe) {
-        debug(`Duplicate message detected in channel ${channelId}: "${content.substring(0, 50)}..."`);
+        debug(
+          `Duplicate message detected in channel ${channelId}: "${content.substring(0, 50)}..."`
+        );
         return true;
       }
 
@@ -95,7 +106,9 @@ export default class DuplicateMessageDetector {
 
   private areMessagesDuplicate(content1: string, normalizedContent2: string): boolean {
     const norm1 = this.normalizeContent(content1);
-    if (norm1 === normalizedContent2) {return true;}
+    if (norm1 === normalizedContent2) {
+      return true;
+    }
 
     // Fuzzy check: if edit distance is very small relative to length
     // e.g. "Hello world." vs "Hello world!"
@@ -110,19 +123,30 @@ export default class DuplicateMessageDetector {
   }
 
   private levenshteinDistance(a: string, b: string): number {
-    if (a.length === 0) {return b.length;}
-    if (b.length === 0) {return a.length;}
+    if (a.length === 0) {
+      return b.length;
+    }
+    if (b.length === 0) {
+      return a.length;
+    }
     const matrix = [];
     let i;
-    for (i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+    for (i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
     let j;
-    for (j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+    for (j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
     for (i = 1; i <= b.length; i++) {
       for (j = 1; j <= a.length; j++) {
         if (b.charAt(i - 1) == a.charAt(j - 1)) {
           matrix[i][j] = matrix[i - 1][j - 1];
         } else {
-          matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+          );
         }
       }
     }
@@ -130,10 +154,10 @@ export default class DuplicateMessageDetector {
   }
 
   /**
-     * Record a message that was sent successfully
-     * @param channelId The channel ID
-     * @param content The message content
-     */
+   * Record a message that was sent successfully
+   * @param channelId The channel ID
+   * @param content The message content
+   */
   public recordMessage(channelId: string, content: string): void {
     try {
       const windowMs = messageConfig.get('MESSAGE_DUPLICATE_WINDOW_MS') || 300000;
@@ -144,7 +168,7 @@ export default class DuplicateMessageDetector {
       let history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages
-      history = history.filter(msg => (now - msg.timestamp) < windowMs);
+      history = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Add new message
       history.push({
@@ -166,10 +190,10 @@ export default class DuplicateMessageDetector {
   }
 
   /**
-     * Returns a temperature boost based on repeated words across recent bot messages.
-     * This helps discourage persistent tics (e.g., saying "shrug" every reply) even when
-     * the full response isn't a duplicate.
-     */
+   * Returns a temperature boost based on repeated words across recent bot messages.
+   * This helps discourage persistent tics (e.g., saying "shrug" every reply) even when
+   * the full response isn't a duplicate.
+   */
   public getRepetitionTemperatureBoost(channelId: string): number {
     try {
       const windowMs = messageConfig.get('MESSAGE_DUPLICATE_WINDOW_MS') || 300000;
@@ -189,9 +213,13 @@ export default class DuplicateMessageDetector {
 
       const now = Date.now();
       const history = this.recentMessages.get(channelId) || [];
-      const recentHistory = history.filter(msg => (now - msg.timestamp) < windowMs).slice(-historySize);
+      const recentHistory = history
+        .filter((msg) => now - msg.timestamp < windowMs)
+        .slice(-historySize);
 
-      if (recentHistory.length < minHistory) {return 0;}
+      if (recentHistory.length < minHistory) {
+        return 0;
+      }
 
       const docFreq = new Map<string, number>();
       for (const msg of recentHistory) {
@@ -205,7 +233,9 @@ export default class DuplicateMessageDetector {
       let bestRatio = 0;
       let bestWord = '';
       for (const [w, c] of docFreq.entries()) {
-        if (c < Math.min(minDocFreq, denom)) {continue;}
+        if (c < Math.min(minDocFreq, denom)) {
+          continue;
+        }
         const ratio = c / denom;
         if (ratio >= ratioThreshold && ratio > bestRatio) {
           bestRatio = ratio;
@@ -213,13 +243,17 @@ export default class DuplicateMessageDetector {
         }
       }
 
-      if (!bestWord) {return 0;}
+      if (!bestWord) {
+        return 0;
+      }
 
       // Map ratioThreshold..1 -> 0..1
       const score = ratioThreshold >= 1 ? 1 : (bestRatio - ratioThreshold) / (1 - ratioThreshold);
       const boost = Math.max(0, Math.min(maxBoost, maxBoost * score));
       if (boost > 0) {
-        debug(`Repetition temp boost for ${channelId}: word="${bestWord}" ratio=${bestRatio.toFixed(2)} boost=${boost.toFixed(2)}`);
+        debug(
+          `Repetition temp boost for ${channelId}: word="${bestWord}" ratio=${bestRatio.toFixed(2)} boost=${boost.toFixed(2)}`
+        );
       }
       return boost;
     } catch (error) {
@@ -229,9 +263,9 @@ export default class DuplicateMessageDetector {
   }
 
   /**
-     * Normalize message content for comparison
-     * Strips non-alphanumeric (keeps spaces) to catch "Hello." vs "Hello"
-     */
+   * Normalize message content for comparison
+   * Strips non-alphanumeric (keeps spaces) to catch "Hello." vs "Hello"
+   */
   private normalizeContent(content: string): string {
     return content
       .toLowerCase()
@@ -242,22 +276,73 @@ export default class DuplicateMessageDetector {
 
   private tokenizeWords(content: string): string[] {
     const stop = new Set([
-      'the', 'a', 'an', 'and', 'or', 'but', 'so', 'to', 'of', 'in', 'on', 'for', 'with', 'at', 'by', 'from',
-      'is', 'are', 'was', 'were', 'be', 'been', 'being', 'it', 'this', 'that', 'these', 'those',
-      'i', 'you', 'we', 'they', 'he', 'she', 'me', 'my', 'your', 'our', 'their', 'him', 'her', 'them',
-      'as', 'if', 'then', 'than', 'just', 'like', 'okay', 'ok', 'yeah', 'yep', 'no', 'yes', 'not',
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'so',
+      'to',
+      'of',
+      'in',
+      'on',
+      'for',
+      'with',
+      'at',
+      'by',
+      'from',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'it',
+      'this',
+      'that',
+      'these',
+      'those',
+      'i',
+      'you',
+      'we',
+      'they',
+      'he',
+      'she',
+      'me',
+      'my',
+      'your',
+      'our',
+      'their',
+      'him',
+      'her',
+      'them',
+      'as',
+      'if',
+      'then',
+      'than',
+      'just',
+      'like',
+      'okay',
+      'ok',
+      'yeah',
+      'yep',
+      'no',
+      'yes',
+      'not',
     ]);
 
     const matches = (content || '').toLowerCase().match(/[a-z0-9']+/g) || [];
     return matches
-      .map(w => w.replace(/^'+|'+$/g, ''))
-      .filter(w => w.length >= 3)
-      .filter(w => !stop.has(w));
+      .map((w) => w.replace(/^'+|'+$/g, ''))
+      .filter((w) => w.length >= 3)
+      .filter((w) => !stop.has(w));
   }
 
   /**
-     * Clear message history (useful for testing)
-     */
+   * Clear message history (useful for testing)
+   */
   public clearHistory(channelId?: string): void {
     if (channelId) {
       this.recentMessages.delete(channelId);
@@ -275,7 +360,7 @@ export default class DuplicateMessageDetector {
       'duplicate-detector-cleanup',
       () => this.cleanup(),
       this.CLEANUP_INTERVAL_MS,
-      'DuplicateMessageDetector periodic cleanup',
+      'DuplicateMessageDetector periodic cleanup'
     );
   }
 
@@ -290,7 +375,7 @@ export default class DuplicateMessageDetector {
 
     // Remove expired messages from each channel
     for (const [channelId, history] of this.recentMessages) {
-      const filtered = history.filter(msg => (now - msg.timestamp) < windowMs);
+      const filtered = history.filter((msg) => now - msg.timestamp < windowMs);
       if (filtered.length === 0) {
         this.recentMessages.delete(channelId);
         cleaned++;
@@ -321,7 +406,11 @@ export default class DuplicateMessageDetector {
     }
 
     if (cleaned > 0) {
-      debug('Cleanup removed %d empty/old channels, current size: %d', cleaned, this.recentMessages.size);
+      debug(
+        'Cleanup removed %d empty/old channels, current size: %d',
+        cleaned,
+        this.recentMessages.size
+      );
     }
   }
 

@@ -19,8 +19,8 @@ export function redactSensitiveValue(value: string): string {
  * @param envVarName The environment variable name to check
  * @returns Object with isOverridden flag and redacted value if overridden
  */
-export function checkEnvOverride(envVarName: string): { 
-  isOverridden: boolean; 
+export function checkEnvOverride(envVarName: string): {
+  isOverridden: boolean;
   redactedValue?: string;
   rawValue?: string;
 } {
@@ -28,7 +28,7 @@ export function checkEnvOverride(envVarName: string): {
   if (rawValue === undefined) {
     return { isOverridden: false };
   }
-  
+
   return {
     isOverridden: true,
     redactedValue: redactSensitiveValue(rawValue),
@@ -42,7 +42,7 @@ export function checkEnvOverride(envVarName: string): {
  */
 export function getRelevantEnvVars(): Record<string, string> {
   const relevantEnvVars: Record<string, string> = {};
-  
+
   // Common configuration prefixes
   const prefixes = [
     'BOTS_',
@@ -56,9 +56,9 @@ export function getRelevantEnvVars(): Record<string, string> {
     'MESSAGE_',
     'LLM_',
   ];
-  
-  Object.keys(process.env).forEach(envVar => {
-    if (prefixes.some(prefix => envVar.startsWith(prefix))) {
+
+  Object.keys(process.env).forEach((envVar) => {
+    if (prefixes.some((prefix) => envVar.startsWith(prefix))) {
       const rawValue = process.env[envVar] || '';
       // Redact sensitive values (assume anything with 'KEY', 'SECRET', 'TOKEN' is sensitive)
       if (envVar.includes('KEY') || envVar.includes('SECRET') || envVar.includes('TOKEN')) {
@@ -68,7 +68,7 @@ export function getRelevantEnvVars(): Record<string, string> {
       }
     }
   });
-  
+
   return relevantEnvVars;
 }
 
@@ -77,13 +77,16 @@ export function getRelevantEnvVars(): Record<string, string> {
  * @param botName The name of the bot to check
  * @returns Object mapping configuration keys to their override status
  */
-export function checkBotEnvOverrides(botName: string): Record<string, { 
-  isOverridden: boolean; 
-  redactedValue?: string;
-}> {
+export function checkBotEnvOverrides(botName: string): Record<
+  string,
+  {
+    isOverridden: boolean;
+    redactedValue?: string;
+  }
+> {
   const overrides: Record<string, { isOverridden: boolean; redactedValue?: string }> = {};
   const upperName = botName.toUpperCase();
-  
+
   // Common bot configuration keys
   const configKeys = [
     `BOTS_${upperName}_MESSAGE_PROVIDER`,
@@ -100,8 +103,8 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
     `BOTS_${upperName}_RESPONSE_PROFILE`,
     `BOTS_${upperName}_MCP_GUARD_PROFILE`,
   ];
-  
-  configKeys.forEach(key => {
+
+  configKeys.forEach((key) => {
     const result = checkEnvOverride(key);
     if (result.isOverridden) {
       overrides[key] = {
@@ -110,6 +113,6 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
       };
     }
   });
-  
+
   return overrides;
 }

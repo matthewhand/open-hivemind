@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { TextChannel} from 'discord.js';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, type TextChannel } from 'discord.js';
 
 const debug = Debug('app:mutingUtils');
 
@@ -17,7 +16,7 @@ const debug = Debug('app:mutingUtils');
 export async function muteUser(channel: TextChannel, userId: string): Promise<void> {
   debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
   const member = await channel.guild.members.fetch(userId);
-  const role = channel.guild.roles?.cache.find(role => role.name === 'Muted');
+  const role = channel.guild.roles?.cache.find((role) => role.name === 'Muted');
   if (!role) {
     debug('Mute role not found');
     return;

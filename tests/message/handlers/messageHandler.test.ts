@@ -1,10 +1,10 @@
-import { handleMessage } from '@message/handlers/messageHandler';
-import { IMessage } from '@message/interfaces/IMessage';
+import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
-import { stripBotId } from '@message/helpers/processing/stripBotId';
+import { handleMessage } from '@message/handlers/messageHandler';
 import { addUserHintFn } from '@message/helpers/processing/addUserHint';
 import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
-import messageConfig from '@config/messageConfig';
+import { stripBotId } from '@message/helpers/processing/stripBotId';
+import { IMessage } from '@message/interfaces/IMessage';
 
 // Mock dependencies
 jest.mock('@llm/getLlmProvider');
@@ -24,13 +24,14 @@ jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
       getRemainingDelayMs: jest.fn(() => 0),
       waitForDelay: jest.fn(() => Promise.resolve()),
       getReplyToMessageId: jest.fn(() => undefined),
-      clear: jest.fn()
-    }))
-  }
+      clear: jest.fn(),
+    })),
+  },
 }));
 
 const mockGetLlmProvider = getLlmProvider as jest.MockedFunction<typeof getLlmProvider>;
-const mockGetMessengerProvider = require('@message/management/getMessengerProvider').getMessengerProvider as jest.MockedFunction<any>;
+const mockGetMessengerProvider = require('@message/management/getMessengerProvider')
+  .getMessengerProvider as jest.MockedFunction<any>;
 const mockStripBotId = stripBotId as jest.MockedFunction<typeof stripBotId>;
 const mockAddUserHint = addUserHintFn as jest.MockedFunction<typeof addUserHintFn>;
 const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shouldReplyToMessage>;
@@ -38,7 +39,7 @@ const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
 // Mock unsolicited handler
 const { shouldReplyToUnsolicitedMessage } = require('@message/helpers/unsolicitedMessageHandler');
 jest.mock('@message/helpers/unsolicitedMessageHandler', () => ({
-  shouldReplyToUnsolicitedMessage: jest.fn()
+  shouldReplyToUnsolicitedMessage: jest.fn(),
 }));
 const mockShouldReplyUnsolicited = shouldReplyToUnsolicitedMessage as jest.Mock;
 
@@ -60,20 +61,48 @@ class MockMessage implements IMessage {
     this.content = text;
   }
 
-  getText(): string { return this.text; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return this.authorId; }
-  getMessageId(): string { return this.messageId; }
-  isFromBot(): boolean { return this.isBot; }
-  getTimestamp(): Date { return new Date(); }
-  setText(text: string): void { this.text = text; }
-  getChannelTopic(): string | null { return 'Test Topic'; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user1', 'user2']; }
-  mentionsUsers(userId: string): boolean { return false; }
-  getAuthorName(): string { return 'Test User'; }
-  getGuildOrWorkspaceId(): string | null { return 'test-guild'; }
-  isReplyToBot(): boolean { return false; }
+  getText(): string {
+    return this.text;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return this.authorId;
+  }
+  getMessageId(): string {
+    return this.messageId;
+  }
+  isFromBot(): boolean {
+    return this.isBot;
+  }
+  getTimestamp(): Date {
+    return new Date();
+  }
+  setText(text: string): void {
+    this.text = text;
+  }
+  getChannelTopic(): string | null {
+    return 'Test Topic';
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user1', 'user2'];
+  }
+  mentionsUsers(userId: string): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'Test User';
+  }
+  getGuildOrWorkspaceId(): string | null {
+    return 'test-guild';
+  }
+  isReplyToBot(): boolean {
+    return false;
+  }
 }
 
 describe('messageHandler', () => {
@@ -85,7 +114,7 @@ describe('messageHandler', () => {
     jest.clearAllMocks();
 
     mockLlmProvider = {
-      generateChatCompletion: jest.fn().mockResolvedValue('AI response')
+      generateChatCompletion: jest.fn().mockResolvedValue('AI response'),
     };
 
     mockMessengerProvider = {
@@ -94,8 +123,8 @@ describe('messageHandler', () => {
       resolveAgentContext: jest.fn(() => ({
         botId: 'bot-123',
         senderKey: 'bot-123',
-        nameCandidates: ['Bot']
-      }))
+        nameCandidates: ['Bot'],
+      })),
     };
 
     mockBotConfig = {
@@ -105,15 +134,19 @@ describe('messageHandler', () => {
       discord: {
         token: 'test-token',
         clientId: 'test-client-id',
-        guildId: 'test-guild-id'
-      }
+        guildId: 'test-guild-id',
+      },
     };
 
     mockGetLlmProvider.mockReturnValue([mockLlmProvider]);
     mockGetMessengerProvider.mockReturnValue([mockMessengerProvider]);
     mockStripBotId.mockImplementation((text) => text);
     mockAddUserHint.mockImplementation((text) => text);
-    mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
+    mockShouldReply.mockReturnValue({
+      shouldReply: true,
+      reason: 'Directly addressed',
+      meta: {},
+    } as any);
     mockMessageConfig.get.mockImplementation((key: any) => {
       const config: { [key: string]: any } = {
         MESSAGE_IGNORE_BOTS: true,
@@ -163,7 +196,7 @@ describe('messageHandler', () => {
       const message2 = new MockMessage('Follow up question');
       const historyMessages2 = [
         new MockMessage('Previous message 1'),
-        new MockMessage('Previous message 2')
+        new MockMessage('Previous message 2'),
       ];
 
       await handleMessage(message2, historyMessages2, mockBotConfig);
@@ -175,7 +208,9 @@ describe('messageHandler', () => {
       );
 
       // Test bot ID stripping
-      mockStripBotId.mockImplementation((text) => text.includes('<@bot-123>') ? 'Stripped message' : text);
+      mockStripBotId.mockImplementation((text) =>
+        text.includes('<@bot-123>') ? 'Stripped message' : text
+      );
       const message3 = new MockMessage('<@bot-123> Hello');
 
       await handleMessage(message3, [], mockBotConfig);
@@ -209,7 +244,11 @@ describe('messageHandler', () => {
       expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
 
       // Test checking reply conditions
-      mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
+      mockShouldReply.mockReturnValue({
+        shouldReply: true,
+        reason: 'Directly addressed',
+        meta: {},
+      } as any);
       const message2 = new MockMessage('Hello');
 
       await handleMessage(message2, [], mockBotConfig);
@@ -232,8 +271,8 @@ describe('messageHandler', () => {
         resolveAgentContext: jest.fn(() => ({
           botId: '555555555555555555',
           senderKey: '555555555555555555',
-          nameCandidates: ['Bot', 'FollowUpBot']
-        }))
+          nameCandidates: ['Bot', 'FollowUpBot'],
+        })),
       };
       mockGetMessengerProvider.mockReturnValue([customMessengerProvider]);
 

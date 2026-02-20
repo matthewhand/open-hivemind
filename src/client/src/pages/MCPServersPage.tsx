@@ -20,6 +20,18 @@ interface MCPServer {
   lastConnected?: string;
 }
 
+const getAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const stored = localStorage.getItem('auth_tokens');
+    if (stored) {
+      const parsed = JSON.parse(stored) as { accessToken?: string };
+      if (parsed.accessToken) headers['Authorization'] = `Bearer ${parsed.accessToken}`;
+    }
+  } catch { /* ignore */ }
+  return headers;
+};
+
 const MCPServersPage: React.FC = () => {
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +51,7 @@ const MCPServersPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/admin/mcp-servers');
+      const response = await fetch('/api/admin/mcp-servers', { headers: getAuthHeaders() });
       if (!response.ok) {
         throw new Error(`Failed to fetch MCP servers: ${response.statusText}`);
       }
@@ -146,7 +158,7 @@ const MCPServersPage: React.FC = () => {
         // For editing, we disconnect and reconnect
         await fetch('/api/admin/mcp-servers/disconnect', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ name: selectedServer.id }),
         });
       }
@@ -154,7 +166,7 @@ const MCPServersPage: React.FC = () => {
       // Connect to server
       const response = await fetch('/api/admin/mcp-servers/connect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: selectedServer.name,
           serverUrl: selectedServer.url,
@@ -179,7 +191,7 @@ const MCPServersPage: React.FC = () => {
       try {
         const response = await fetch('/api/admin/mcp-servers/disconnect', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ name: serverId }),
         });
 

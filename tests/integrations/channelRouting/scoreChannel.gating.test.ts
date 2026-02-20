@@ -9,7 +9,7 @@
  * scoreChannel method on lightweight facades if available. If services require heavy
  * dependencies, we stub their modules to minimal shapes exposing scoreChannel logic.
  */
-import { jest, describe, beforeEach, test, expect } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 const channelId = 'C123';
 const meta = { foo: 'bar' };

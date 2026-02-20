@@ -2,10 +2,7 @@
  * Simple test for database optimization
  */
 
-import {
-  DatabaseManager,
-  BotConfiguration
-} from '../../src/database/DatabaseManager';
+import { BotConfiguration, DatabaseManager } from '../../src/database/DatabaseManager';
 
 describe('Database Query Optimization', () => {
   let dbManager: DatabaseManager;
@@ -16,7 +13,7 @@ describe('Database Query Optimization', () => {
 
     dbManager = DatabaseManager.getInstance({
       type: 'sqlite',
-      path: ':memory:'
+      path: ':memory:',
     });
     await dbManager.connect();
 
@@ -43,7 +40,7 @@ describe('Database Query Optimization', () => {
       systemInstruction: 'Test instruction',
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const id = await dbManager.createBotConfiguration(config);
@@ -67,7 +64,7 @@ describe('Database Query Optimization', () => {
         persona: `test-persona-${i}`,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
       configs.push(config);
     }
@@ -84,7 +81,7 @@ describe('Database Query Optimization', () => {
     expect(results.length).toBe(3);
 
     // Verify structure
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result).toHaveProperty('versions');
       expect(result).toHaveProperty('auditLog');
       expect(Array.isArray(result.versions)).toBe(true);

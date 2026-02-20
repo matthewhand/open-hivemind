@@ -1,5 +1,5 @@
-import type { Request, Response } from 'express';
 import Debug from 'debug';
+import type { Request, Response } from 'express';
 import type { InteractiveActionHandlers } from './InteractiveActionHandlers';
 
 const debug = Debug('app:SlackInteractiveHandler');
@@ -45,20 +45,20 @@ export class SlackInteractiveHandler {
         await this.handlers.sendInteractiveHelpMessage(defaultChannel, payload.user.id);
       } else {
         switch (actionId) {
-        case 'see_course_info':
-          await this.handlers.sendCourseInfo(defaultChannel);
-          break;
-        case 'book_office_hours':
-          await this.handlers.sendBookingInstructions(defaultChannel);
-          break;
-        case 'get_study_resources':
-          await this.handlers.sendStudyResources(defaultChannel);
-          break;
-        case 'ask_question':
-          await this.handlers.sendAskQuestionModal(payload.trigger_id);
-          break;
-        default:
-          debug(`[Slack] Unhandled action: ${actionId}`);
+          case 'see_course_info':
+            await this.handlers.sendCourseInfo(defaultChannel);
+            break;
+          case 'book_office_hours':
+            await this.handlers.sendBookingInstructions(defaultChannel);
+            break;
+          case 'get_study_resources':
+            await this.handlers.sendStudyResources(defaultChannel);
+            break;
+          case 'ask_question':
+            await this.handlers.sendAskQuestionModal(payload.trigger_id);
+            break;
+          default:
+            debug(`[Slack] Unhandled action: ${actionId}`);
         }
       }
     } catch (error) {
@@ -77,7 +77,9 @@ export class SlackInteractiveHandler {
           debug(`[Slack] (Async) User submitted: ${userInput}`);
           const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID;
           if (!defaultChannel) {
-            debug('[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send view submission response.');
+            debug(
+              '[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send view submission response.'
+            );
             return;
           }
           // You can add additional logic here (e.g., sending a typing indicator)

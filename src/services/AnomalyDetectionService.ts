@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
+import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
 
 const debug = Debug('app:AnomalyDetectionService');
@@ -92,7 +92,12 @@ export class AnomalyDetectionService extends EventEmitter {
         // Broadcast via WebSocket
         const wsService = WebSocketService.getInstance();
         const alert: Omit<AlertEvent, 'id' | 'timestamp'> = {
-          level: anomaly.severity === 'critical' ? 'critical' : anomaly.severity === 'high' ? 'error' : 'warning',
+          level:
+            anomaly.severity === 'critical'
+              ? 'critical'
+              : anomaly.severity === 'high'
+                ? 'error'
+                : 'warning',
           title: `Anomaly Detected: ${anomaly.metric}`,
           message: anomaly.explanation,
           metadata: {
@@ -125,15 +130,20 @@ export class AnomalyDetectionService extends EventEmitter {
     value: number,
     mean: number,
     stdDev: number,
-    zScore: number,
+    zScore: number
   ): Anomaly {
     const threshold = this.config.zThreshold;
     let severity: 'low' | 'medium' | 'high' | 'critical';
 
-    if (zScore > 5) {severity = 'critical';}
-    else if (zScore > 4) {severity = 'high';}
-    else if (zScore > 3) {severity = 'medium';}
-    else {severity = 'low';}
+    if (zScore > 5) {
+      severity = 'critical';
+    } else if (zScore > 4) {
+      severity = 'high';
+    } else if (zScore > 3) {
+      severity = 'medium';
+    } else {
+      severity = 'low';
+    }
 
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 
@@ -157,7 +167,7 @@ export class AnomalyDetectionService extends EventEmitter {
   }
 
   async resolveAnomaly(id: string): Promise<boolean> {
-    const index = this.anomalies.findIndex(a => a.id === id);
+    const index = this.anomalies.findIndex((a) => a.id === id);
     if (index !== -1) {
       this.anomalies[index].resolved = true;
       this.emit('anomalyResolved', this.anomalies[index]);
@@ -172,7 +182,7 @@ export class AnomalyDetectionService extends EventEmitter {
   }
 
   getActiveAnomalies(): Anomaly[] {
-    return this.anomalies.filter(a => !a.resolved);
+    return this.anomalies.filter((a) => !a.resolved);
   }
 
   // Integration hook for MetricsCollector

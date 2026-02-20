@@ -1,12 +1,10 @@
-import type { VoiceConnection} from '@discordjs/voice';
-import { VoiceConnectionStatus } from '@discordjs/voice';
-import type { Client } from 'discord.js';
-import { VoiceChannel } from 'discord.js';
-import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
-import { VoiceCommandHandler } from './voiceCommandHandler';
-import { VoiceActivityDetection } from './voiceActivityDetection';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { VoiceChannel, type Client } from 'discord.js';
+import { VoiceConnectionStatus, type VoiceConnection } from '@discordjs/voice';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
+import { VoiceActivityDetection } from './voiceActivityDetection';
+import { VoiceCommandHandler } from './voiceCommandHandler';
 
 const debug = Debug('app:discord:voiceManager');
 
@@ -32,10 +30,10 @@ export class VoiceChannelManager {
       if (autoListen) {
         const handler = new VoiceCommandHandler(connection);
         const vad = new VoiceActivityDetection(connection);
-        
+
         this.handlers.set(channelId, handler);
         this.vadSystems.set(channelId, vad);
-        
+
         handler.startListening();
         debug(`Joined channel ${channelId} with voice command listening enabled`);
       }
@@ -61,7 +59,7 @@ export class VoiceChannelManager {
         classification.type,
         'DISCORD_VOICE_CHANNEL_MANAGER_JOIN_ERROR',
         ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error, channelId },
+        { originalError: error, channelId }
       );
     }
   }

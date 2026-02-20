@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { executeCommand, readFile } from '../../src/utils/utils';
+
 describe('Utility Functions Comprehensive Tests', () => {
   describe('Math Operations', () => {
     test('should handle basic arithmetic operations correctly', () => {
@@ -36,9 +37,12 @@ describe('Utility Functions Comprehensive Tests', () => {
       { input: undefined, expected: false, description: 'undefined' },
     ];
 
-    test.each(booleanTestCases)('should convert $description to boolean correctly', ({ input, expected }) => {
-      expect(Boolean(input)).toBe(expected);
-    });
+    test.each(booleanTestCases)(
+      'should convert $description to boolean correctly',
+      ({ input, expected }) => {
+        expect(Boolean(input)).toBe(expected);
+      }
+    );
 
     test('should handle truthy and falsy values', () => {
       // Truthy values
@@ -46,19 +50,19 @@ describe('Utility Functions Comprehensive Tests', () => {
       const truthyNumber = 42;
       const truthyArray: any[] = [];
       const truthyObject = {};
-      
+
       expect(!!truthyString).toBe(true);
       expect(!!truthyNumber).toBe(true);
       expect(!!truthyArray).toBe(true);
       expect(!!truthyObject).toBe(true);
-      
+
       // Falsy values
       const falsyString = '';
       const falsyNumber = 0;
       const falsyNull = null;
       const falsyUndefined = undefined;
       const falsyNaN = NaN;
-      
+
       expect(!!falsyString).toBe(false);
       expect(!!falsyNumber).toBe(false);
       expect(!!falsyNull).toBe(false);
@@ -89,7 +93,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       const obj1 = { a: 1 };
       const obj2 = { b: 2 };
       const arr = [obj1, obj2];
-      
+
       expect(arr.includes(obj1)).toBe(true);
       expect(arr.includes({ a: 1 })).toBe(false); // Different object reference
       expect(arr.includes(obj2)).toBe(true);
@@ -152,58 +156,58 @@ describe('Utility Functions Comprehensive Tests', () => {
       // Basic includes functionality
       expect([1, 2, 3]).toContain(3);
       expect([1, 2, 3]).not.toContain(4);
-      
+
       // Length operations
       expect([].length).toBe(0);
       expect([1, 2, 3].length).toBe(3);
-      
+
       // Filter operations
       const arr = [1, 2, 3, 4, 5];
-      expect(arr.filter(x => x > 3)).toEqual([4, 5]);
-      
-      // Map operations  
-      expect(arr.map(x => x * 2)).toEqual([2, 4, 6, 8, 10]);
-      
+      expect(arr.filter((x) => x > 3)).toEqual([4, 5]);
+
+      // Map operations
+      expect(arr.map((x) => x * 2)).toEqual([2, 4, 6, 8, 10]);
+
       // Complex operations
       expect(arr.includes(3)).toBe(true);
-      expect(arr.filter(x => x > 3)).toHaveLength(2);
+      expect(arr.filter((x) => x > 3)).toHaveLength(2);
     });
   });
 
   describe('Rate Limiter Operations Consolidated', () => {
     let rateLimiter: any;
-    
+
     beforeEach(() => {
       jest.useFakeTimers();
       // Mock the rateLimiter module
       rateLimiter = {
         messagesLastHour: [] as Date[],
         messagesLastDay: [] as Date[],
-        canSendMessage: function() {
+        canSendMessage: function () {
           const now = new Date();
           const hourAgo = new Date(now.getTime() - 3600000);
           const dayAgo = new Date(now.getTime() - 86400000);
-          
+
           const recentHour = this.messagesLastHour.filter((t: Date) => t > hourAgo);
           const recentDay = this.messagesLastDay.filter((t: Date) => t > dayAgo);
-          
+
           const hourLimit = parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '60');
           const dayLimit = parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000');
-          
+
           return recentHour.length < hourLimit && recentDay.length < dayLimit;
         },
-        addMessageTimestamp: function() {
+        addMessageTimestamp: function () {
           const now = new Date();
           const hourAgo = new Date(now.getTime() - 3600000);
           const dayAgo = new Date(now.getTime() - 86400000);
-          
+
           // Filter old messages and add new one
           this.messagesLastHour = this.messagesLastHour.filter((t: Date) => t > hourAgo);
           this.messagesLastDay = this.messagesLastDay.filter((t: Date) => t > dayAgo);
-          
+
           this.messagesLastHour.push(now);
           this.messagesLastDay.push(now);
-        }
+        },
       };
     });
 
@@ -214,38 +218,38 @@ describe('Utility Functions Comprehensive Tests', () => {
     test('should handle comprehensive rate limiting scenarios', () => {
       process.env.LLM_MESSAGE_LIMIT_PER_HOUR = '2';
       process.env.LLM_MESSAGE_LIMIT_PER_DAY = '2';
-      
+
       // Initially should allow messages
       expect(rateLimiter.canSendMessage()).toBe(true);
-      
+
       // Add timestamps and verify limits
       rateLimiter.addMessageTimestamp();
       expect(rateLimiter.messagesLastHour.length).toBe(1);
       expect(rateLimiter.messagesLastDay.length).toBe(1);
       expect(rateLimiter.canSendMessage()).toBe(true);
-      
+
       rateLimiter.addMessageTimestamp();
       expect(rateLimiter.messagesLastHour.length).toBe(2);
       expect(rateLimiter.messagesLastDay.length).toBe(2);
       expect(rateLimiter.canSendMessage()).toBe(false);
-      
+
       // Test time-based filtering
       const now = new Date();
       jest.setSystemTime(now);
       rateLimiter.addMessageTimestamp();
-      
+
       // Advance time by 2 hours to test hourly filtering
       jest.setSystemTime(new Date(now.getTime() + 2 * 3600000));
       rateLimiter.addMessageTimestamp();
-      
+
       // Should only have recent messages in hour array
       expect(rateLimiter.messagesLastHour.length).toBe(1);
       expect(rateLimiter.messagesLastDay.length).toBe(4);
-      
+
       // Advance time by 25 hours to test daily filtering
       jest.setSystemTime(new Date(now.getTime() + 25 * 3600000));
       rateLimiter.addMessageTimestamp();
-      
+
       expect(rateLimiter.messagesLastHour.length).toBe(1);
       expect(rateLimiter.messagesLastDay.length).toBe(2); // Only the last 2 messages (now+2h and now+25h) should remain
     });
@@ -280,7 +284,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       const a = true;
       const b = false;
       const c = true;
-      
+
       expect(a && b).toBe(false);
       expect(a || b).toBe(true);
       expect(a && c).toBe(true);
@@ -292,8 +296,8 @@ describe('Utility Functions Comprehensive Tests', () => {
       const numberFive = 5;
       const stringFalse = 'false';
       const numberZero = 0;
-      
-      expect(stringFive == numberFive).toBe(true);  // Loose equality with coercion
+
+      expect(stringFive == numberFive).toBe(true); // Loose equality with coercion
       expect(stringFive === numberFive).toBe(false); // Strict equality without coercion
       expect(!!stringFalse).toBe(true); // String 'false' is truthy
       expect(!!numberZero).toBe(false); // Number 0 is falsy
@@ -304,7 +308,24 @@ describe('Utility Functions Comprehensive Tests', () => {
     test('should return a valid emoji from the predefined list', () => {
       const { getEmoji } = require('../../src/common/getEmoji');
       const emoji = getEmoji();
-      expect(['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥']).toContain(emoji);
+      expect([
+        '😀',
+        '😂',
+        '😅',
+        '🤣',
+        '😊',
+        '😍',
+        '🤔',
+        '😎',
+        '😢',
+        '😡',
+        '👍',
+        '👎',
+        '👌',
+        '🙏',
+        '💪',
+        '🔥',
+      ]).toContain(emoji);
       expect(typeof emoji).toBe('string');
       expect(emoji.length).toBeGreaterThan(0);
     });
@@ -324,8 +345,25 @@ describe('Utility Functions Comprehensive Tests', () => {
       for (let i = 0; i < 100; i++) {
         results.push(getEmoji());
       }
-      results.forEach(emoji => {
-        expect(['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥']).toContain(emoji);
+      results.forEach((emoji) => {
+        expect([
+          '😀',
+          '😂',
+          '😅',
+          '🤣',
+          '😊',
+          '😍',
+          '🤔',
+          '😎',
+          '😢',
+          '😡',
+          '👍',
+          '👎',
+          '👌',
+          '🙏',
+          '💪',
+          '🔥',
+        ]).toContain(emoji);
         expect(typeof emoji).toBe('string');
       });
     });
@@ -369,11 +407,11 @@ describe('Utility Functions Comprehensive Tests', () => {
       const min = 1;
       const max = 1000;
       const results = new Set();
-      
+
       for (let i = 0; i < 50; i++) {
         results.add(getRandomDelay(min, max));
       }
-      
+
       expect(results.size).toBeGreaterThan(10);
     });
   });
@@ -396,7 +434,7 @@ describe('Utility Functions Comprehensive Tests', () => {
         action: 'TEST_ACTION',
         resource: 'test-resource',
         result: 'success',
-        details: 'Test audit event'
+        details: 'Test audit event',
       });
 
       const events = auditLogger.getAuditEvents();
@@ -414,23 +452,23 @@ describe('Utility Functions Comprehensive Tests', () => {
     test('should filter events by user', () => {
       // Clear existing events first
       const initialCount = auditLogger.getAuditEvents().length;
-      
+
       auditLogger.log({
         user: 'user1',
         action: 'ACTION1',
         resource: 'resource1',
         result: 'success',
-        details: 'Event 1'
+        details: 'Event 1',
       });
-      
+
       auditLogger.log({
         user: 'user2',
         action: 'ACTION2',
         resource: 'resource2',
         result: 'success',
-        details: 'Event 2'
+        details: 'Event 2',
       });
-      
+
       const user1Events = auditLogger.getAuditEventsByUser('user1');
       expect(user1Events.length).toBeGreaterThanOrEqual(1);
       expect(user1Events[user1Events.length - 1].user).toBe('user1');
@@ -439,14 +477,17 @@ describe('Utility Functions Comprehensive Tests', () => {
 
   describe('Channel Routing Consolidated', () => {
     test('should parse channel bonuses and priorities correctly', () => {
-      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
-      
+      const {
+        getBonusForChannel,
+        getPriorityForChannel,
+      } = require('../../src/message/routing/ChannelRouter');
+
       // Test with actual config values instead of mocking
       const c1Bonus = getBonusForChannel('C1');
       const c2Bonus = getBonusForChannel('C2');
       const c1Priority = getPriorityForChannel('C1');
       const c2Priority = getPriorityForChannel('C2');
-      
+
       // These should return valid numbers (defaults if not configured)
       expect(typeof c1Bonus).toBe('number');
       expect(typeof c2Bonus).toBe('number');
@@ -457,11 +498,14 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should handle missing channels with defaults', () => {
-      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
-      
+      const {
+        getBonusForChannel,
+        getPriorityForChannel,
+      } = require('../../src/message/routing/ChannelRouter');
+
       const unknownBonus = getBonusForChannel('UNKNOWN');
       const unknownPriority = getPriorityForChannel('UNKNOWN');
-      
+
       // Should return default values for unknown channels
       expect(typeof unknownBonus).toBe('number');
       expect(typeof unknownPriority).toBe('number');
@@ -506,7 +550,9 @@ describe('Utility Functions Comprehensive Tests', () => {
       jest.resetModules();
       const freshOpenWebUIConfig = require('../../src/config/openWebUIConfig').default;
 
-      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_API_URL')).toBe('http://host.docker.internal:3000/api/');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_API_URL')).toBe(
+        'http://host.docker.internal:3000/api/'
+      );
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_USERNAME')).toBe('admin');
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_PASSWORD')).toBe('password123');
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_KNOWLEDGE_FILE')).toBe('');
@@ -559,7 +605,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     test('should handle configuration validation with complex data structures', () => {
       const { AuditLogger } = require('../../src/common/auditLogger');
       const auditLogger = AuditLogger.getInstance();
-      
+
       // Test with complex nested data structures
       const complexEvent = {
         user: 'admin-user',
@@ -571,21 +617,21 @@ describe('Utility Functions Comprehensive Tests', () => {
           timestamp: new Date().toISOString(),
           changes: {
             oldConfig: { token: 'old-token', channels: ['general', 'support'] },
-            newConfig: { token: 'new-token', channels: ['general', 'support', 'announcements'] }
+            newConfig: { token: 'new-token', channels: ['general', 'support', 'announcements'] },
           },
           validation: {
             schema: 'v2.0',
             errors: [],
-            warnings: ['channel_limit_approaching']
-          }
-        }
+            warnings: ['channel_limit_approaching'],
+          },
+        },
       };
-      
+
       auditLogger.log(complexEvent);
-      
+
       const events = auditLogger.getAuditEvents();
       const foundEvent = events.find((event: any) => event.action === 'CONFIG_UPDATE');
-      
+
       expect(foundEvent).toBeDefined();
       expect(foundEvent.user).toBe('admin-user');
       expect(foundEvent.resource).toBe('bots/complex-bot');
@@ -597,31 +643,36 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should handle concurrent configuration operations with race conditions', async () => {
-      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
-      
+      const {
+        getBonusForChannel,
+        getPriorityForChannel,
+      } = require('../../src/message/routing/ChannelRouter');
+
       // Test concurrent access without mocking - just verify the functions work under load
-      const concurrentOperations = Array(50).fill(null).map(async (_, index) => {
-        const channelId = `channel-${index % 5}`; // Use fewer channels for more realistic testing
-        
-        // Get configuration values concurrently
-        const bonus = getBonusForChannel(channelId);
-        const priority = getPriorityForChannel(channelId);
-        
-        return { channelId, bonus, priority, timestamp: Date.now() };
-      });
-      
+      const concurrentOperations = Array(50)
+        .fill(null)
+        .map(async (_, index) => {
+          const channelId = `channel-${index % 5}`; // Use fewer channels for more realistic testing
+
+          // Get configuration values concurrently
+          const bonus = getBonusForChannel(channelId);
+          const priority = getPriorityForChannel(channelId);
+
+          return { channelId, bonus, priority, timestamp: Date.now() };
+        });
+
       const results = await Promise.all(concurrentOperations);
-      
+
       // Verify all operations completed successfully
       expect(results).toHaveLength(50);
-      
+
       // Verify data consistency - each channel should have consistent values
       const channelGroups = results.reduce((acc: any, result) => {
         if (!acc[result.channelId]) acc[result.channelId] = [];
         acc[result.channelId].push(result);
         return acc;
       }, {});
-      
+
       // Each channel should have consistent bonus and priority values
       Object.values(channelGroups).forEach((channelResults: any) => {
         const firstResult = channelResults[0];
@@ -634,9 +685,9 @@ describe('Utility Functions Comprehensive Tests', () => {
           expect(result.priority).toBeGreaterThanOrEqual(0);
         });
       });
-      
+
       // Verify operations completed quickly (performance test)
-      const timestamps = results.map(r => r.timestamp);
+      const timestamps = results.map((r) => r.timestamp);
       const timeRange = Math.max(...timestamps) - Math.min(...timestamps);
       expect(timeRange).toBeLessThan(1000); // Should complete within 1 second
     });

@@ -170,7 +170,7 @@ describe('DiscordService', () => {
 
     MockBCM.getInstance.mockReturnValue({
       getDiscordBotConfigs: mockGetDiscordBotConfigs, // Reuse the mock var from outer scope?
-      // Wait, mockGetDiscordBotConfigs is from beforeEach closure? 
+      // Wait, mockGetDiscordBotConfigs is from beforeEach closure?
       // No, it's defined in describe scope.
       // It holds the value set in beforeEach.
       getSlackBotConfigs: jest.fn().mockReturnValue([]),
@@ -233,7 +233,7 @@ describe('DiscordService', () => {
   // TODO: Fix mock issues - singleton reset not working properly between tests
   it.each([
     ['empty', { token: '' }],
-    ['missing', {}]
+    ['missing', {}],
   ])('handles %s token validation during initialization', async (type, discordConfig) => {
     mockGetDiscordBotConfigs.mockReturnValue([
       {
@@ -337,14 +337,25 @@ describe('DiscordService', () => {
       {
         botUserId: '555555555555555555',
         botUserName: 'SomeInternalLabel',
-        client: { user: { username: 'seneca', globalName: 'Seneca' }, destroy: jest.fn().mockResolvedValue(undefined) },
-        config: { BOT_ID: '555555555555555555', discord: { clientId: '555555555555555555' }, name: 'NotSeneca' }
-      }
+        client: {
+          user: { username: 'seneca', globalName: 'Seneca' },
+          destroy: jest.fn().mockResolvedValue(undefined),
+        },
+        config: {
+          BOT_ID: '555555555555555555',
+          discord: { clientId: '555555555555555555' },
+          name: 'NotSeneca',
+        },
+      },
     ];
 
     const ctx = service.resolveAgentContext({
-      botConfig: { BOT_ID: '555555555555555555', name: 'NotSeneca', discord: { clientId: '555555555555555555' } },
-      agentDisplayName: 'Madgwick AI'
+      botConfig: {
+        BOT_ID: '555555555555555555',
+        name: 'NotSeneca',
+        discord: { clientId: '555555555555555555' },
+      },
+      agentDisplayName: 'Madgwick AI',
     });
 
     expect(ctx).toBeTruthy();
@@ -392,12 +403,14 @@ describe('DiscordService', () => {
 
     // Reset mocks and test adding bot successfully
     jest.clearAllMocks();
-    mockGetDiscordBotConfigs.mockReturnValue([{
-      name: 'TestBot1',
-      messageProvider: 'discord',
-      discord: { token: 'test_token_1' },
-      llmProvider: 'flowise',
-    }]);
+    mockGetDiscordBotConfigs.mockReturnValue([
+      {
+        name: 'TestBot1',
+        messageProvider: 'discord',
+        discord: { token: 'test_token_1' },
+        llmProvider: 'flowise',
+      },
+    ]);
     jest.resetModules();
 
     // Re-configure mocks after resetModules
@@ -432,7 +445,7 @@ describe('DiscordService', () => {
     await service.addBot({
       name: 'NewBot',
       discord: { token: 'new_token' },
-      llmProvider: 'openai'
+      llmProvider: 'openai',
     });
 
     expect(service.getAllBots()).toHaveLength(initialBotCount + 1);
@@ -443,13 +456,15 @@ describe('DiscordService', () => {
 
   it.each([
     ['without token', {}],
-    ['with empty token', { token: '' }]
+    ['with empty token', { token: '' }],
   ])('throws error when adding bot %s', async (desc, discord) => {
     await service.initialize();
 
-    await expect(service.addBot({
-      name: 'NewBot',
-      discord
-    })).rejects.toThrow('Discord addBot requires a token');
+    await expect(
+      service.addBot({
+        name: 'NewBot',
+        discord,
+      })
+    ).rejects.toThrow('Discord addBot requires a token');
   });
 });

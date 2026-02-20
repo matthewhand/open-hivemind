@@ -1,15 +1,14 @@
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { ConfigurationValidator } from './ConfigurationValidator';
-import { ConfigurationTemplateService } from './ConfigurationTemplateService';
-import { ConfigurationVersionService } from './ConfigurationVersionService';
-import { SecureConfigManager } from '../../config/SecureConfigManager';
-import Debug from 'debug';
-import { promises as fs } from 'fs';
-import { join, basename } from 'path';
-import { createReadStream, createWriteStream } from 'fs';
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+import { createReadStream, createWriteStream, promises as fs } from 'fs';
+import { basename, join } from 'path';
 import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+import Debug from 'debug';
+import { SecureConfigManager } from '../../config/SecureConfigManager';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { ConfigurationTemplateService } from './ConfigurationTemplateService';
+import { ConfigurationValidator } from './ConfigurationValidator';
+import { ConfigurationVersionService } from './ConfigurationVersionService';
 
 const debug = Debug('app:ConfigurationImportExportService');
 
@@ -109,7 +108,7 @@ export class ConfigurationImportExportService {
     configIds: number[],
     options: ExportOptions,
     fileName?: string,
-    createdBy?: string,
+    createdBy?: string
   ): Promise<ExportResult> {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -182,18 +181,18 @@ export class ConfigurationImportExportService {
       // Convert to requested format
       let data: string | Buffer;
       switch (options.format) {
-      case 'json':
-        data = JSON.stringify(exportData, null, 2);
-        break;
-      case 'yaml':
-        // Simple YAML conversion (in production, use a proper YAML library)
-        data = this.convertToYAML(exportData);
-        break;
-      case 'csv':
-        data = this.convertToCSV(exportData);
-        break;
-      default:
-        throw new Error(`Unsupported export format: ${options.format}`);
+        case 'json':
+          data = JSON.stringify(exportData, null, 2);
+          break;
+        case 'yaml':
+          // Simple YAML conversion (in production, use a proper YAML library)
+          data = this.convertToYAML(exportData);
+          break;
+        case 'csv':
+          data = this.convertToCSV(exportData);
+          break;
+        default:
+          throw new Error(`Unsupported export format: ${options.format}`);
       }
 
       // Encrypt if requested
@@ -218,7 +217,7 @@ export class ConfigurationImportExportService {
       const checksum = this.calculateChecksum(data);
 
       debug(`Exported ${configs.length} configurations to ${filePath}`);
-      
+
       return {
         success: true,
         filePath,
@@ -233,7 +232,7 @@ export class ConfigurationImportExportService {
       };
     }
   }
-  
+
   /**
    * Export main configuration file (default.json, development.json, etc.)
    */
@@ -241,24 +240,24 @@ export class ConfigurationImportExportService {
     env: string,
     options: ExportOptions,
     fileName?: string,
-    createdBy?: string,
+    createdBy?: string
   ): Promise<ExportResult> {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
       let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
-      
+
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
       const config = secureManager.getDecryptedMainConfig(env);
-      
+
       if (!config) {
         return {
           success: false,
           error: `Main configuration for environment ${env} not found`,
         };
       }
-      
+
       // Prepare export data
       const exportData: any = {
         metadata: {
@@ -273,23 +272,23 @@ export class ConfigurationImportExportService {
         },
         config,
       };
-      
+
       // Convert to requested format
       let data: string | Buffer;
       switch (options.format) {
-      case 'json':
-        data = JSON.stringify(exportData, null, 2);
-        break;
-      case 'yaml':
-        data = this.convertToYAML(exportData);
-        break;
-      case 'csv':
-        data = this.convertToCSV(exportData);
-        break;
-      default:
-        throw new Error(`Unsupported export format: ${options.format}`);
+        case 'json':
+          data = JSON.stringify(exportData, null, 2);
+          break;
+        case 'yaml':
+          data = this.convertToYAML(exportData);
+          break;
+        case 'csv':
+          data = this.convertToCSV(exportData);
+          break;
+        default:
+          throw new Error(`Unsupported export format: ${options.format}`);
       }
-      
+
       // Encrypt if requested
       if (options.encrypt) {
         if (!options.encryptionKey) {
@@ -298,21 +297,21 @@ export class ConfigurationImportExportService {
         data = await this.encryptData(data, options.encryptionKey);
         filePath += '.enc';
       }
-      
+
       // Compress if requested
       if (options.compress) {
         data = await this.compressData(data);
         filePath += '.gz';
       }
-      
+
       // Write to file
       await fs.writeFile(filePath, data);
-      
+
       // Calculate checksum
       const checksum = this.calculateChecksum(data);
-      
+
       debug(`Exported main configuration for ${env} to ${filePath}`);
-      
+
       return {
         success: true,
         filePath,
@@ -327,29 +326,29 @@ export class ConfigurationImportExportService {
       };
     }
   }
-  
+
   /**
    * Import main configuration file (default.json, development.json, etc.)
    */
   async importMainConfig(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string,
+    importedBy?: string
   ): Promise<ImportResult> {
     try {
       // Read file
       let data: Buffer | string = await fs.readFile(filePath);
-      
+
       // Determine environment from filename
       const fileName = basename(filePath);
       const envMatch = fileName.match(/(default|development|production|test)/);
       const env = envMatch ? envMatch[1] : 'default';
-      
+
       // Decompress if needed
       if (filePath.endsWith('.gz')) {
         data = await this.decompressData(data);
       }
-      
+
       // Decrypt if needed
       if (filePath.endsWith('.enc')) {
         const strData = data.toString('utf8');
@@ -360,13 +359,13 @@ export class ConfigurationImportExportService {
             const secureManager = SecureConfigManager.getInstance();
             const decryptedStr = secureManager.decrypt(strData);
             const importData = JSON.parse(decryptedStr);
-            
+
             // Extract the config and save it using SecureConfigManager
             const configToSave = importData.config || importData;
             const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
             const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
             await fs.writeFile(configPath, encryptedConfig);
-            
+
             return {
               success: true,
               importedCount: 1,
@@ -376,42 +375,42 @@ export class ConfigurationImportExportService {
         } catch (parseError) {
           // Not Secure format, fall back to own decryption
         }
-        
+
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }
         data = await this.decryptData(data, options.decryptionKey as string);
       }
-      
+
       // Parse data based on format
       let importData: any;
       const format = this.detectFormat(filePath);
-      
+
       switch (format) {
-      case 'json':
-        importData = JSON.parse(data.toString());
-        break;
-      case 'yaml':
-        importData = this.parseYAML(data.toString());
-        break;
-      case 'csv':
-        importData = this.parseCSV(data.toString());
-        break;
-      default:
-        throw new Error(`Unsupported import format: ${format}`);
+        case 'json':
+          importData = JSON.parse(data.toString());
+          break;
+        case 'yaml':
+          importData = this.parseYAML(data.toString());
+          break;
+        case 'csv':
+          importData = this.parseCSV(data.toString());
+          break;
+        default:
+          throw new Error(`Unsupported import format: ${format}`);
       }
-      
+
       // Validate import data structure
       const configToSave = importData.config || importData;
-      
+
       // Save using SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
       const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
       const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
       await fs.writeFile(configPath, encryptedConfig);
-      
+
       debug(`Imported main configuration for ${env} from ${filePath}`);
-      
+
       return {
         success: true,
         importedCount: 1,
@@ -432,7 +431,7 @@ export class ConfigurationImportExportService {
   async importConfigurations(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string,
+    importedBy?: string
   ): Promise<ImportResult> {
     try {
       // Read file
@@ -454,19 +453,19 @@ export class ConfigurationImportExportService {
       // Parse data based on format
       let importData: any;
       const format = this.detectFormat(filePath);
-      
+
       switch (format) {
-      case 'json':
-        importData = JSON.parse(data.toString());
-        break;
-      case 'yaml':
-        importData = this.parseYAML(data.toString());
-        break;
-      case 'csv':
-        importData = this.parseCSV(data.toString());
-        break;
-      default:
-        throw new Error(`Unsupported import format: ${format}`);
+        case 'json':
+          importData = JSON.parse(data.toString());
+          break;
+        case 'yaml':
+          importData = this.parseYAML(data.toString());
+          break;
+        case 'csv':
+          importData = this.parseCSV(data.toString());
+          break;
+        default:
+          throw new Error(`Unsupported import format: ${format}`);
       }
 
       // Validate import data structure
@@ -491,11 +490,15 @@ export class ConfigurationImportExportService {
             const validationResult = this.configValidator.validateBotConfig(config);
             if (!validationResult.isValid) {
               if (options.validateOnly) {
-                result.errors?.push(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
+                result.errors?.push(
+                  `Configuration validation failed: ${validationResult.errors.join(', ')}`
+                );
                 result.errorCount = (result.errorCount || 0) + 1;
                 continue;
               } else {
-                result.warnings?.push(`Configuration validation warnings: ${validationResult.errors.join(', ')}`);
+                result.warnings?.push(
+                  `Configuration validation warnings: ${validationResult.errors.join(', ')}`
+                );
               }
             }
           }
@@ -505,8 +508,10 @@ export class ConfigurationImportExportService {
           }
 
           // Check if configuration exists
-          const existingConfig = config.id ? await this.dbManager.getBotConfiguration(config.id) : null;
-          
+          const existingConfig = config.id
+            ? await this.dbManager.getBotConfiguration(config.id)
+            : null;
+
           if (existingConfig && !options.overwrite) {
             result.skippedCount = (result.skippedCount || 0) + 1;
             result.warnings?.push(`Configuration ${config.name} already exists, skipping`);
@@ -525,7 +530,9 @@ export class ConfigurationImportExportService {
 
           result.importedCount = (result.importedCount || 0) + 1;
         } catch (error) {
-          result.errors?.push(`Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`);
+          result.errors?.push(
+            `Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`
+          );
           result.errorCount = (result.errorCount || 0) + 1;
         }
       }
@@ -585,12 +592,12 @@ export class ConfigurationImportExportService {
     name: string,
     description?: string,
     createdBy?: string,
-    options: Partial<ExportOptions> = {},
+    options: Partial<ExportOptions> = {}
   ): Promise<ExportResult> {
     try {
       // Get all configuration IDs
       const configs = await this.dbManager.getAllBotConfigurations();
-      const configIds = configs.map(config => config.id).filter(Boolean) as number[];
+      const configIds = configs.map((config) => config.id).filter(Boolean) as number[];
 
       const exportOptions: ExportOptions = {
         format: 'json',
@@ -606,7 +613,7 @@ export class ConfigurationImportExportService {
         configIds,
         exportOptions,
         `backup-${name}`,
-        createdBy,
+        createdBy
       );
 
       if (result.success && result.filePath) {
@@ -656,7 +663,7 @@ export class ConfigurationImportExportService {
   async restoreFromBackup(
     backupPath: string,
     options: Partial<ImportOptions> = {},
-    restoredBy?: string,
+    restoredBy?: string
   ): Promise<ImportResult> {
     try {
       const importOptions: ImportOptions = {
@@ -691,10 +698,10 @@ export class ConfigurationImportExportService {
             const metadataPath = join(this.backupsDir, file);
             const data = await fs.readFile(metadataPath, 'utf-8');
             const metadata = JSON.parse(data);
-            
+
             // Convert date strings back to Date objects
             metadata.createdAt = new Date(metadata.createdAt);
-            
+
             backups.push(metadata);
           } catch (error) {
             debug('Error reading backup metadata:', file, error);
@@ -715,8 +722,8 @@ export class ConfigurationImportExportService {
   async deleteBackup(backupId: string): Promise<boolean> {
     try {
       const backups = await this.listBackups();
-      const backup = backups.find(b => b.id === backupId);
-      
+      const backup = backups.find((b) => b.id === backupId);
+
       if (!backup) {
         return false;
       }
@@ -756,15 +763,15 @@ export class ConfigurationImportExportService {
   private detectFormat(filePath: string): 'json' | 'yaml' | 'csv' {
     const ext = filePath.toLowerCase().split('.').pop();
     switch (ext) {
-    case 'json':
-      return 'json';
-    case 'yaml':
-    case 'yml':
-      return 'yaml';
-    case 'csv':
-      return 'csv';
-    default:
-      return 'json'; // Default to JSON
+      case 'json':
+        return 'json';
+      case 'yaml':
+      case 'yml':
+        return 'yaml';
+      case 'csv':
+        return 'csv';
+      default:
+        return 'json'; // Default to JSON
     }
   }
 
@@ -823,7 +830,7 @@ export class ConfigurationImportExportService {
 
     // Add data rows
     for (const config of configs) {
-      const row = headers.map(header => {
+      const row = headers.map((header) => {
         const value = config[header];
         // Escape quotes and wrap in quotes if contains comma or quote
         if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
@@ -889,19 +896,16 @@ export class ConfigurationImportExportService {
     const algorithm = 'aes-256-gcm';
     const salt = randomBytes(16);
     const iv = randomBytes(16);
-    
+
     // Derive key from password
     const derivedKey = scryptSync(key, salt, 32);
-    
+
     const cipher = createCipheriv(algorithm, derivedKey, iv);
-    
-    const encrypted = Buffer.concat([
-      cipher.update(data),
-      cipher.final(),
-    ]);
-    
+
+    const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
+
     const authTag = cipher.getAuthTag();
-    
+
     // Combine salt, iv, auth tag, and encrypted data
     return Buffer.concat([salt, iv, authTag, encrypted]);
   }
@@ -911,24 +915,21 @@ export class ConfigurationImportExportService {
    */
   private async decryptData(encryptedData: Buffer, key: string): Promise<string> {
     const algorithm = 'aes-256-gcm';
-    
+
     // Extract components
     const salt = encryptedData.subarray(0, 16);
     const iv = encryptedData.subarray(16, 32);
     const authTag = encryptedData.subarray(32, 48);
     const data = encryptedData.subarray(48);
-    
+
     // Derive key from password
     const derivedKey = scryptSync(key, salt, 32);
-    
+
     const decipher = createDecipheriv(algorithm, derivedKey, iv);
     decipher.setAuthTag(authTag);
-    
-    const decrypted = Buffer.concat([
-      decipher.update(data),
-      decipher.final(),
-    ]);
-    
+
+    const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+
     return decrypted.toString();
   }
 
@@ -939,11 +940,11 @@ export class ConfigurationImportExportService {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       const gzip = createGzip();
-      
+
       gzip.on('data', (chunk) => chunks.push(chunk));
       gzip.on('end', () => resolve(Buffer.concat(chunks)));
       gzip.on('error', reject);
-      
+
       gzip.end(data);
     });
   }
@@ -955,11 +956,11 @@ export class ConfigurationImportExportService {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       const gunzip = createGunzip();
-      
+
       gunzip.on('data', (chunk) => chunks.push(chunk));
       gunzip.on('end', () => resolve(Buffer.concat(chunks)));
       gunzip.on('error', reject);
-      
+
       gunzip.end(compressedData);
     });
   }

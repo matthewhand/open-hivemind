@@ -1,11 +1,10 @@
-import type { Request, Response, NextFunction } from 'express';
-import { Router } from 'express';
-import ApiMonitorService from '../../services/ApiMonitorService';
-import { MetricsCollector } from '../../monitoring/MetricsCollector';
-import { ErrorLogger } from '../../utils/errorLogger';
-import { globalRecoveryManager } from '../../utils/errorRecovery';
 import os from 'os';
 import process from 'process';
+import { Router, type NextFunction, type Request, type Response } from 'express';
+import { MetricsCollector } from '../../monitoring/MetricsCollector';
+import ApiMonitorService from '../../services/ApiMonitorService';
+import { ErrorLogger } from '../../utils/errorLogger';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
 
 const router = Router();
 
@@ -39,7 +38,10 @@ router.get('/detailed', (req, res) => {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
       usage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100), // %
-      percentage: (Math.round(memoryUsage.heapUsed / 1024 / 1024) / Math.round(memoryUsage.heapTotal / 1024 / 1024)) * 100, // % based on rounded values
+      percentage:
+        (Math.round(memoryUsage.heapUsed / 1024 / 1024) /
+          Math.round(memoryUsage.heapTotal / 1024 / 1024)) *
+        100, // % based on rounded values
     },
     cpu: {
       user: Math.round(cpuUsage.user / 1000), // microseconds to milliseconds
@@ -62,14 +64,18 @@ router.get('/detailed', (req, res) => {
     },
     recovery: {
       circuitBreakers: Object.keys(recoveryStats).length,
-      activeFallbacks: Object.values(recoveryStats).reduce((sum, stats) => sum + stats.fallbacks, 0),
+      activeFallbacks: Object.values(recoveryStats).reduce(
+        (sum, stats) => sum + stats.fallbacks,
+        0
+      ),
       stats: recoveryStats,
     },
     performance: {
       messagesProcessed: metrics.messagesProcessed,
-      averageResponseTime: metrics.responseTime.length > 0
-        ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
-        : 0,
+      averageResponseTime:
+        metrics.responseTime.length > 0
+          ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
+          : 0,
       llmUsage: metrics.llmTokenUsage,
     },
   };
@@ -101,7 +107,7 @@ router.get('/metrics', (req, res) => {
     },
     requests: {
       total: 0, // Would need to implement request counter
-      rate: 0,  // Would need to implement rate calculation
+      rate: 0, // Would need to implement rate calculation
     },
   };
 
@@ -497,8 +503,15 @@ router.get('/errors/patterns', (req, res) => {
       errorTypes: Object.entries(errorStats)
         .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
-          const totalCount = Object.values(errorStats).reduce((sum: number, val: any) => sum + (val as number), 0);
-          return { type, count: count as number, percentage: ((count as number) / (totalCount as number)) * 100 };
+          const totalCount = Object.values(errorStats).reduce(
+            (sum: number, val: any) => sum + (val as number),
+            0
+          );
+          return {
+            type,
+            count: count as number,
+            percentage: ((count as number) / (totalCount as number)) * 100,
+          };
         }),
       spikes: detectErrorSpikes(errorStats),
       correlations: detectErrorCorrelations(errorStats),
@@ -511,7 +524,11 @@ router.get('/errors/patterns', (req, res) => {
 });
 
 // Helper functions for health calculations
-function calculateHealthStatus(memoryUsage: NodeJS.MemoryUsage, recentErrors: number, metrics: any) {
+function calculateHealthStatus(
+  memoryUsage: NodeJS.MemoryUsage,
+  recentErrors: number,
+  metrics: any
+) {
   const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
   const errorRate = calculateErrorRate(recentErrors, 60);
 
@@ -537,7 +554,8 @@ function calculateHealthStatus(memoryUsage: NodeJS.MemoryUsage, recentErrors: nu
   }
 
   // Check uptime
-  if (metrics.uptime < 60000) { // Less than 1 minute
+  if (metrics.uptime < 60000) {
+    // Less than 1 minute
     status = status === 'healthy' ? 'degraded' : status;
   }
 
@@ -549,17 +567,28 @@ function calculateErrorRate(errorCount: number, timeWindowSeconds: number): numb
 }
 
 function getErrorHealthStatus(recentErrors: number): 'good' | 'fair' | 'poor' | 'critical' {
-  if (recentErrors === 0) { return 'good'; }
-  if (recentErrors <= 2) { return 'fair'; }
-  if (recentErrors <= 5) { return 'poor'; }
+  if (recentErrors === 0) {
+    return 'good';
+  }
+  if (recentErrors <= 2) {
+    return 'fair';
+  }
+  if (recentErrors <= 5) {
+    return 'poor';
+  }
   return 'critical';
 }
 
-function getErrorRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
+function getErrorRecommendations(
+  errorStats: Record<string, number>,
+  recentErrors: number
+): string[] {
   const recommendations: string[] = [];
 
   if (recentErrors > 5) {
-    recommendations.push('High error rate detected. Check system logs and consider scaling resources.');
+    recommendations.push(
+      'High error rate detected. Check system logs and consider scaling resources.'
+    );
   }
 
   const networkErrors = errorStats['network'] || 0;
@@ -574,18 +603,28 @@ function getErrorRecommendations(errorStats: Record<string, number>, recentError
 
   const authErrors = (errorStats['authentication'] || 0) + (errorStats['authorization'] || 0);
   if (authErrors > 2) {
-    recommendations.push('Authentication/authorization errors detected. Check user credentials and permissions.');
+    recommendations.push(
+      'Authentication/authorization errors detected. Check user credentials and permissions.'
+    );
   }
 
   return recommendations;
 }
 
-function getRecoveryHealthStatus(recoveryStats: Record<string, any>): 'healthy' | 'degraded' | 'unhealthy' {
+function getRecoveryHealthStatus(
+  recoveryStats: Record<string, any>
+): 'healthy' | 'degraded' | 'unhealthy' {
   const circuitBreakers = Object.values(recoveryStats);
-  const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open').length;
+  const openCircuitBreakers = circuitBreakers.filter(
+    (cb) => cb.circuitBreaker.state === 'open'
+  ).length;
 
-  if (openCircuitBreakers > 0) { return 'unhealthy'; }
-  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) { return 'degraded'; }
+  if (openCircuitBreakers > 0) {
+    return 'unhealthy';
+  }
+  if (circuitBreakers.some((cb) => cb.circuitBreaker.failureCount > 3)) {
+    return 'degraded';
+  }
   return 'healthy';
 }
 
@@ -593,19 +632,23 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
   const recommendations: string[] = [];
   const circuitBreakers = Object.values(recoveryStats);
 
-  const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open');
+  const openCircuitBreakers = circuitBreakers.filter((cb) => cb.circuitBreaker.state === 'open');
   if (openCircuitBreakers.length > 0) {
-    recommendations.push(`${openCircuitBreakers.length} circuit breaker(s) are open. Check underlying services.`);
+    recommendations.push(
+      `${openCircuitBreakers.length} circuit breaker(s) are open. Check underlying services.`
+    );
   }
 
-  const highFailureCircuits = circuitBreakers.filter(cb => cb.circuitBreaker.failureCount > 3);
+  const highFailureCircuits = circuitBreakers.filter((cb) => cb.circuitBreaker.failureCount > 3);
   if (highFailureCircuits.length > 0) {
-    recommendations.push(`${highFailureCircuits.length} circuit breaker(s) have high failure rates.`);
+    recommendations.push(
+      `${highFailureCircuits.length} circuit breaker(s) have high failure rates.`
+    );
   }
 
-  const operationsWithoutFallbacks = Object.entries(recoveryStats)
-    .filter(([, stats]) => stats.fallbacks === 0)
-    .length;
+  const operationsWithoutFallbacks = Object.entries(recoveryStats).filter(
+    ([, stats]) => stats.fallbacks === 0
+  ).length;
 
   if (operationsWithoutFallbacks > 0) {
     recommendations.push(`${operationsWithoutFallbacks} operation(s) lack fallback mechanisms.`);
@@ -614,7 +657,9 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
   return recommendations;
 }
 
-function detectErrorSpikes(errorStats: Record<string, number>): Array<{ type: string, count: number, severity: 'low' | 'medium' | 'high' }> {
+function detectErrorSpikes(
+  errorStats: Record<string, number>
+): Array<{ type: string; count: number; severity: 'low' | 'medium' | 'high' }> {
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
   const threshold = totalErrors * 0.3; // 30% threshold for spikes
 
@@ -627,8 +672,10 @@ function detectErrorSpikes(errorStats: Record<string, number>): Array<{ type: st
     }));
 }
 
-function detectErrorCorrelations(errorStats: Record<string, number>): Array<{ pattern: string, description: string }> {
-  const correlations: Array<{ pattern: string, description: string }> = [];
+function detectErrorCorrelations(
+  errorStats: Record<string, number>
+): Array<{ pattern: string; description: string }> {
+  const correlations: Array<{ pattern: string; description: string }> = [];
 
   // Check for network + timeout correlation
   if ((errorStats['network'] || 0) > 0 && (errorStats['timeout'] || 0) > 0) {
@@ -649,8 +696,11 @@ function detectErrorCorrelations(errorStats: Record<string, number>): Array<{ pa
   return correlations;
 }
 
-function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, number>): Array<{ type: string, anomaly: string }> {
-  const anomalies: Array<{ type: string, anomaly: string }> = [];
+function detectErrorAnomalies(
+  recentErrors: number,
+  errorStats: Record<string, number>
+): Array<{ type: string; anomaly: string }> {
+  const anomalies: Array<{ type: string; anomaly: string }> = [];
 
   // Check for unusual error types
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
@@ -677,16 +727,23 @@ function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, n
   return anomalies;
 }
 
-function generatePatternRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
+function generatePatternRecommendations(
+  errorStats: Record<string, number>,
+  recentErrors: number
+): string[] {
   const recommendations: string[] = [];
 
   if (recentErrors > 10) {
-    recommendations.push('Implement rate limiting and circuit breakers to prevent cascading failures.');
+    recommendations.push(
+      'Implement rate limiting and circuit breakers to prevent cascading failures.'
+    );
   }
 
   const validationErrors = errorStats['validation'] || 0;
   if (validationErrors > 3) {
-    recommendations.push('Review input validation logic and provide better error messages to users.');
+    recommendations.push(
+      'Review input validation logic and provide better error messages to users.'
+    );
   }
 
   const configErrors = errorStats['configuration'] || 0;

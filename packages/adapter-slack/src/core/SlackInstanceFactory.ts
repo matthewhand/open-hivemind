@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { SlackBotManager } from '../SlackBotManager';
 import { SlackSignatureVerifier } from '../SlackSignatureVerifier';
-import { SlackConfigurationLoader, SlackBotInstance } from './SlackConfigurationLoader';
+import { SlackBotInstance, SlackConfigurationLoader } from './SlackConfigurationLoader';
 
 const debug = Debug('app:SlackService:InstanceFactory');
 
@@ -17,14 +17,16 @@ export class SlackInstanceFactory {
     debug(`Creating bot manager for: ${botConfig.name}`);
 
     // Extract the necessary configuration for the bot manager
-    const botInstances = [{
-      token: botConfig.slack.botToken,
-      signingSecret: botConfig.slack.signingSecret,
-      name: botConfig.name,
-      appToken: botConfig.slack.appToken,
-      defaultChannelId: botConfig.slack.defaultChannelId,
-      joinChannels: botConfig.slack.joinChannels,
-    }];
+    const botInstances = [
+      {
+        token: botConfig.slack.botToken,
+        signingSecret: botConfig.slack.signingSecret,
+        name: botConfig.name,
+        appToken: botConfig.slack.appToken,
+        defaultChannelId: botConfig.slack.defaultChannelId,
+        joinChannels: botConfig.slack.joinChannels,
+      },
+    ];
 
     // Determine mode (socket vs rtm)
     const mode = botConfig.slack.appToken ? 'socket' : 'rtm';
@@ -35,7 +37,10 @@ export class SlackInstanceFactory {
   /**
    * Create a SlackSignatureVerifier instance
    */
-  public static createSignatureVerifier(signingSecret: string, botName?: string): SlackSignatureVerifier {
+  public static createSignatureVerifier(
+    signingSecret: string,
+    botName?: string
+  ): SlackSignatureVerifier {
     debug(`Creating signature verifier for: ${botName || 'unknown'}`);
     return new SlackSignatureVerifier(signingSecret);
   }
@@ -63,14 +68,16 @@ export class SlackInstanceFactory {
   /**
    * Create multiple signature verifiers from configurations
    */
-  public static createMultipleSignatureVerifiers(botConfigs: any[]): Map<string, SlackSignatureVerifier> {
+  public static createMultipleSignatureVerifiers(
+    botConfigs: any[]
+  ): Map<string, SlackSignatureVerifier> {
     const verifiers = new Map<string, SlackSignatureVerifier>();
 
     for (const botConfig of botConfigs) {
       try {
         const verifier = this.createSignatureVerifier(
           botConfig.slack.signingSecret,
-          botConfig.name,
+          botConfig.name
         );
         verifiers.set(botConfig.name, verifier);
         debug(`Successfully created signature verifier: ${botConfig.name}`);
@@ -86,7 +93,7 @@ export class SlackInstanceFactory {
   /**
    * Validate bot configuration before creating instances
    */
-  public static validateBotConfig(botConfig: any): { valid: boolean, errors: string[] } {
+  public static validateBotConfig(botConfig: any): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!botConfig.name) {

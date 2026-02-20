@@ -1,17 +1,17 @@
 /**
  * TDD Test Suite for WebUI Configuration API Endpoints
- * 
+ *
  * Complete tests for all configuration management endpoints
- * 
+ *
  * @file webui-config-api.test.ts
  * @author Open-Hivemind TDD Test Suite
  * @since 2025-09-27
  */
 
-import request from 'supertest';
 import express from 'express';
-import configRouter from '../../src/webui/routes/config';
+import request from 'supertest';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
+import configRouter from '../../src/webui/routes/config';
 
 describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
   let app: express.Application;
@@ -28,9 +28,7 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('GET /webui/api/config - CONFIGURATION RETRIEVAL', () => {
     it('should return complete configuration with all required sections', async () => {
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config').expect(200);
 
       expect(response.body).toHaveProperty('bots');
       expect(response.body).toHaveProperty('llmProviders');
@@ -40,12 +38,10 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     });
 
     it('should sanitize sensitive information from bot configurations', async () => {
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config').expect(200);
 
       const configString = JSON.stringify(response.body);
-      
+
       // Should not contain sensitive data
       expect(configString).not.toMatch(/password/i);
       expect(configString).not.toMatch(/secret/i);
@@ -62,21 +58,19 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     });
 
     it('should return valid bot configurations', async () => {
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config').expect(200);
 
       response.body.bots.forEach((bot: any) => {
         expect(bot).toHaveProperty('name');
         expect(bot).toHaveProperty('provider');
         expect(bot).toHaveProperty('llmProvider');
         expect(bot).toHaveProperty('enabled');
-        
+
         expect(typeof bot.name).toBe('string');
         expect(typeof bot.provider).toBe('string');
         expect(typeof bot.llmProvider).toBe('string');
         expect(typeof bot.enabled).toBe('boolean');
-        
+
         // Validate provider values
         expect(['discord', 'slack', 'telegram', 'mattermost']).toContain(bot.provider);
         expect(['openai', 'flowise', 'openwebui']).toContain(bot.llmProvider);
@@ -85,12 +79,10 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
     it('should handle empty configuration gracefully', async () => {
       jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
-        getAllBots: jest.fn().mockReturnValue([])
+        getAllBots: jest.fn().mockReturnValue([]),
       } as any);
 
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config').expect(200);
 
       expect(response.body.bots).toEqual([]);
       expect(response.body).toHaveProperty('system');
@@ -99,9 +91,7 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('GET /webui/api/config/sources - CONFIGURATION SOURCES', () => {
     it('should return all configuration sources', async () => {
-      const response = await request(app)
-        .get('/webui/api/config/sources')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config/sources').expect(200);
 
       expect(response.body).toHaveProperty('sources');
       expect(Array.isArray(response.body.sources)).toBe(true);
@@ -109,21 +99,19 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     });
 
     it('should validate configuration source structure', async () => {
-      const response = await request(app)
-        .get('/webui/api/config/sources')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config/sources').expect(200);
 
       response.body.sources.forEach((source: any) => {
         expect(source).toHaveProperty('name');
         expect(source).toHaveProperty('type');
         expect(source).toHaveProperty('priority');
         expect(source).toHaveProperty('loaded');
-        
+
         expect(typeof source.name).toBe('string');
         expect(typeof source.type).toBe('string');
         expect(typeof source.priority).toBe('number');
         expect(typeof source.loaded).toBe('boolean');
-        
+
         expect(['file', 'env', 'database', 'remote', 'db']).toContain(source.type);
       });
     });
@@ -131,9 +119,7 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('POST /webui/api/config/reload - CONFIGURATION RELOAD', () => {
     it('should successfully reload configuration', async () => {
-      const response = await request(app)
-        .post('/webui/api/config/reload')
-        .expect(200);
+      const response = await request(app).post('/webui/api/config/reload').expect(200);
 
       expect(response.body).toHaveProperty('success');
       expect(response.body).toHaveProperty('message');
@@ -146,12 +132,10 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
       jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         reloadConfiguration: jest.fn().mockImplementation(() => {
           throw new Error('Reload failed');
-        })
+        }),
       } as any);
 
-      const response = await request(app)
-        .post('/webui/api/config/reload')
-        .expect(200);
+      const response = await request(app).post('/webui/api/config/reload').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
     });
@@ -168,9 +152,7 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('GET /webui/api/config/validate - CONFIGURATION VALIDATION', () => {
     it('should validate current configuration', async () => {
-      const response = await request(app)
-        .get('/webui/api/config/validate')
-        .expect(500);
+      const response = await request(app).get('/webui/api/config/validate').expect(500);
 
       expect(response.body).toHaveProperty('error');
     });
@@ -181,22 +163,18 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
         getAllBots: jest.fn().mockReturnValue([
           { name: '', provider: 'invalid', llmProvider: 'unknown' }, // Invalid bot
           { name: 'duplicate', provider: 'discord' }, // Missing llmProvider
-          { name: 'duplicate', provider: 'slack' } // Duplicate name
-        ])
+          { name: 'duplicate', provider: 'slack' }, // Duplicate name
+        ]),
       } as any);
 
-      const response = await request(app)
-        .get('/webui/api/config/validate')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config/validate').expect(200);
 
       expect(response.body.valid).toBe(false);
       expect(response.body.errors.length).toBeGreaterThan(0);
     });
 
     it('should provide detailed error descriptions', async () => {
-      const response = await request(app)
-        .get('/webui/api/config/validate')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config/validate').expect(200);
 
       response.body.errors.forEach((error: any) => {
         expect(error).toHaveProperty('field');
@@ -211,9 +189,7 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('POST /webui/api/config/backup - CONFIGURATION BACKUP', () => {
     it('should create configuration backup', async () => {
-      const response = await request(app)
-        .post('/webui/api/config/backup')
-        .expect(200);
+      const response = await request(app).post('/webui/api/config/backup').expect(200);
 
       expect(response.body).toHaveProperty('backupId');
       expect(response.body).toHaveProperty('timestamp');
@@ -280,13 +256,13 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle concurrent configuration requests', async () => {
-      const requests = Array(10).fill(null).map(() =>
-        request(app).get('/webui/api/config')
-      );
+      const requests = Array(10)
+        .fill(null)
+        .map(() => request(app).get('/webui/api/config'));
 
       const responses = await Promise.all(requests);
-      
-      responses.forEach(response => {
+
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty('bots');
       });
@@ -294,20 +270,20 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
     it('should handle large configuration files', async () => {
       // Mock large configuration
-      const largeBots = Array(1000).fill(null).map((_, i) => ({
-        name: `bot-${i}`,
-        provider: 'discord',
-        llmProvider: 'openai',
-        enabled: true
-      }));
+      const largeBots = Array(1000)
+        .fill(null)
+        .map((_, i) => ({
+          name: `bot-${i}`,
+          provider: 'discord',
+          llmProvider: 'openai',
+          enabled: true,
+        }));
 
       jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
-        getAllBots: jest.fn().mockReturnValue(largeBots)
+        getAllBots: jest.fn().mockReturnValue(largeBots),
       } as any);
 
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config').expect(200);
 
       expect(response.body.bots).toHaveLength(1000);
     });
@@ -316,12 +292,10 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
       jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         getAllBots: jest.fn().mockImplementation(() => {
           throw new Error('Configuration corrupted');
-        })
+        }),
       } as any);
 
-      const response = await request(app)
-        .get('/webui/api/config')
-        .expect(500);
+      const response = await request(app).get('/webui/api/config').expect(500);
 
       expect(response.body).toHaveProperty('error');
     });
@@ -330,22 +304,18 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
   describe('PERFORMANCE TESTS', () => {
     it('should respond to config requests within reasonable time', async () => {
       const start = Date.now();
-      
-      await request(app)
-        .get('/webui/api/config')
-        .expect(500);
-      
+
+      await request(app).get('/webui/api/config').expect(500);
+
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(2000);
     });
 
     it('should handle configuration validation efficiently', async () => {
       const start = Date.now();
-      
-      await request(app)
-        .get('/webui/api/config/validate')
-        .expect(500);
-      
+
+      await request(app).get('/webui/api/config/validate').expect(500);
+
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(1000);
     });
@@ -353,12 +323,10 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
   describe('SECURITY TESTS', () => {
     it('should not expose file system paths', async () => {
-      const response = await request(app)
-        .get('/webui/api/config/sources')
-        .expect(200);
+      const response = await request(app).get('/webui/api/config/sources').expect(200);
 
       const responseString = JSON.stringify(response.body);
-      
+
       // Should not contain sensitive paths
       expect(responseString).not.toMatch(/\/etc\//);
       expect(responseString).not.toMatch(/\/root\//);
@@ -371,13 +339,14 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
         '../../../etc/passwd',
         '..\\..\\..\\windows\\system32',
         '%2e%2e%2f%2e%2e%2f%2e%2e%2f',
-        '....//....//....//etc/passwd'
+        '....//....//....//etc/passwd',
       ];
 
       for (const path of maliciousPaths) {
-        const response = await request(app)
-          .get(`/webui/api/config?path=${encodeURIComponent(path)}`);
-        
+        const response = await request(app).get(
+          `/webui/api/config?path=${encodeURIComponent(path)}`
+        );
+
         expect([200, 400, 403, 404, 500]).toContain(response.status);
       }
     });
@@ -385,9 +354,9 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     it('should sanitize backup/restore operations', async () => {
       const response = await request(app)
         .post('/webui/api/config/restore')
-        .send({ 
+        .send({
           backupId: '../../../etc/passwd',
-          includeSensitive: true 
+          includeSensitive: true,
         })
         .expect(200);
 

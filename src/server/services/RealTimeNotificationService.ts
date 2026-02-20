@@ -48,7 +48,7 @@ export class RealTimeNotificationService extends EventEmitter {
 
     // Add to internal storage
     this.notifications.unshift(notification);
-    
+
     // Trim if too many
     if (this.notifications.length > this.maxNotifications) {
       this.notifications = this.notifications.slice(0, this.maxNotifications);
@@ -60,26 +60,29 @@ export class RealTimeNotificationService extends EventEmitter {
     // Send via WebSocket to connected clients
     (this.webSocketService as any).io?.sockets?.emit('notification', notification);
 
-    debug(`Notification sent: ${notification.type}/${notification.severity} - ${notification.title}`);
-    
+    debug(
+      `Notification sent: ${notification.type}/${notification.severity} - ${notification.title}`
+    );
+
     return notification.id;
   }
 
-  public getNotifications(
-    limit: number = 50,
-    filter?: SubscriptionFilter,
-  ): NotificationEvent[] {
+  public getNotifications(limit: number = 50, filter?: SubscriptionFilter): NotificationEvent[] {
     let filtered = [...this.notifications];
 
     if (filter) {
-      filtered = filtered.filter(notification => {
+      filtered = filtered.filter((notification) => {
         if (filter.types && !filter.types.includes(notification.type)) {
           return false;
         }
         if (filter.severities && !filter.severities.includes(notification.severity)) {
           return false;
         }
-        if (filter.sources && notification.source && !filter.sources.includes(notification.source)) {
+        if (
+          filter.sources &&
+          notification.source &&
+          !filter.sources.includes(notification.source)
+        ) {
           return false;
         }
         return true;
@@ -90,7 +93,7 @@ export class RealTimeNotificationService extends EventEmitter {
   }
 
   public markAsRead(notificationId: string): boolean {
-    const notification = this.notifications.find(n => n.id === notificationId);
+    const notification = this.notifications.find((n) => n.id === notificationId);
     if (notification && notification.metadata) {
       notification.metadata.read = true;
       return true;
@@ -100,13 +103,13 @@ export class RealTimeNotificationService extends EventEmitter {
 
   public clearNotifications(filter?: SubscriptionFilter): number {
     const originalLength = this.notifications.length;
-    
+
     if (!filter) {
       this.notifications = [];
       return originalLength;
     }
 
-    this.notifications = this.notifications.filter(notification => {
+    this.notifications = this.notifications.filter((notification) => {
       // Keep notifications that don't match the filter
       if (filter.types && filter.types.includes(notification.type)) {
         return false;
@@ -125,7 +128,7 @@ export class RealTimeNotificationService extends EventEmitter {
 
   public subscribe(
     callback: (notification: NotificationEvent) => void,
-    filter?: SubscriptionFilter,
+    filter?: SubscriptionFilter
   ): () => void {
     const listener = (notification: NotificationEvent) => {
       if (!filter) {
@@ -160,7 +163,7 @@ export class RealTimeNotificationService extends EventEmitter {
     agentName: string,
     event: 'started' | 'stopped' | 'error' | 'configured',
     details?: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): string {
     const severityMap = {
       started: 'success' as const,
@@ -183,7 +186,7 @@ export class RealTimeNotificationService extends EventEmitter {
     serverName: string,
     event: 'connected' | 'disconnected' | 'error' | 'tool_executed',
     details?: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): string {
     const severityMap = {
       connected: 'success' as const,
@@ -205,7 +208,7 @@ export class RealTimeNotificationService extends EventEmitter {
   public notifySystemEvent(
     event: 'startup' | 'shutdown' | 'config_reload' | 'error',
     details: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): string {
     const severityMap = {
       startup: 'success' as const,
@@ -230,15 +233,15 @@ export class RealTimeNotificationService extends EventEmitter {
     bySeverity: Record<string, number>;
     recent: NotificationEvent[];
     unread: number;
-    } {
+  } {
     const byType: Record<string, number> = {};
     const bySeverity: Record<string, number> = {};
     let unread = 0;
 
-    this.notifications.forEach(notification => {
+    this.notifications.forEach((notification) => {
       byType[notification.type] = (byType[notification.type] || 0) + 1;
       bySeverity[notification.severity] = (bySeverity[notification.severity] || 0) + 1;
-      
+
       if (!notification.metadata?.read) {
         unread++;
       }

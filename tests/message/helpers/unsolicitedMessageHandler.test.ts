@@ -1,6 +1,6 @@
-import { shouldReplyToUnsolicitedMessage } from '../../../src/message/helpers/unsolicitedMessageHandler';
 import messageConfig from '../../../src/config/messageConfig';
 import { clearBotActivity } from '../../../src/message/helpers/processing/ChannelActivity';
+import { shouldReplyToUnsolicitedMessage } from '../../../src/message/helpers/unsolicitedMessageHandler';
 
 jest.mock('../../../src/config/messageConfig', () => ({
   __esModule: true,

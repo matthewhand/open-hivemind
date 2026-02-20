@@ -1,14 +1,13 @@
 /**
  * Error Response Utilities for Open Hivemind
- * 
+ *
  * Utility functions for creating standardized error responses with proper
  * HTTP status codes, error codes, and structured data.
  */
 
 import type { Response } from 'express';
 import { BaseHivemindError } from '../types/errorClasses';
-import type { HivemindError} from '../types/errors';
-import { ErrorUtils } from '../types/errors';
+import { ErrorUtils, type HivemindError } from '../types/errors';
 
 /**
  * Standard error response structure
@@ -165,39 +164,39 @@ export class ErrorResponseBuilder {
    */
   getStatusCode(): number {
     const error = this.response.error;
-    
+
     // Check for specific status codes
     switch (error.code) {
-    case 'VALIDATION_ERROR':
-      return HTTP_STATUS_CODES.BAD_REQUEST;
-    case 'AUTH_ERROR':
-      return HTTP_STATUS_CODES.UNAUTHORIZED;
-    case 'AUTHZ_ERROR':
-      return HTTP_STATUS_CODES.FORBIDDEN;
-    case 'NOT_FOUND':
-      return HTTP_STATUS_CODES.NOT_FOUND;
-    case 'RATE_LIMIT_ERROR':
-      return HTTP_STATUS_CODES.TOO_MANY_REQUESTS;
-    case 'TIMEOUT_ERROR':
-      return HTTP_STATUS_CODES.REQUEST_TIMEOUT;
-    case 'CONFIG_ERROR':
-      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-    case 'DATABASE_ERROR':
-      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-    case 'NETWORK_ERROR':
-      // Check if it's a client or server error
-      if (error.details && typeof error.details === 'object' && 'response' in error.details) {
-        const response = (error.details as any).response;
-        if (response && typeof response === 'object' && 'status' in response) {
-          const status = Number(response.status);
-          if (status >= 400 && status < 600) {
-            return status;
+      case 'VALIDATION_ERROR':
+        return HTTP_STATUS_CODES.BAD_REQUEST;
+      case 'AUTH_ERROR':
+        return HTTP_STATUS_CODES.UNAUTHORIZED;
+      case 'AUTHZ_ERROR':
+        return HTTP_STATUS_CODES.FORBIDDEN;
+      case 'NOT_FOUND':
+        return HTTP_STATUS_CODES.NOT_FOUND;
+      case 'RATE_LIMIT_ERROR':
+        return HTTP_STATUS_CODES.TOO_MANY_REQUESTS;
+      case 'TIMEOUT_ERROR':
+        return HTTP_STATUS_CODES.REQUEST_TIMEOUT;
+      case 'CONFIG_ERROR':
+        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+      case 'DATABASE_ERROR':
+        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+      case 'NETWORK_ERROR':
+        // Check if it's a client or server error
+        if (error.details && typeof error.details === 'object' && 'response' in error.details) {
+          const response = (error.details as any).response;
+          if (response && typeof response === 'object' && 'status' in response) {
+            const status = Number(response.status);
+            if (status >= 400 && status < 600) {
+              return status;
+            }
           }
         }
-      }
-      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-    default:
-      return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+      default:
+        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
     }
   }
 
@@ -253,7 +252,7 @@ export class SuccessResponseBuilder<T = any> {
  */
 export function createErrorResponse(
   error: HivemindError,
-  correlationId?: string,
+  correlationId?: string
 ): ErrorResponseBuilder {
   return new ErrorResponseBuilder(error, correlationId);
 }
@@ -263,7 +262,7 @@ export function createErrorResponse(
  */
 export function createSuccessResponse<T>(
   data: T,
-  correlationId?: string,
+  correlationId?: string
 ): SuccessResponseBuilder<T> {
   return new SuccessResponseBuilder(data, correlationId);
 }
@@ -275,10 +274,10 @@ export function sendErrorResponse(
   res: Response,
   error: HivemindError,
   correlationId?: string,
-  requestInfo?: { path?: string; method?: string },
+  requestInfo?: { path?: string; method?: string }
 ): Response {
   const builder = createErrorResponse(error, correlationId);
-  
+
   if (requestInfo) {
     builder.withRequest(requestInfo.path, requestInfo.method, correlationId);
   }
@@ -301,10 +300,10 @@ export function sendSuccessResponse<T>(
   res: Response,
   data: T,
   correlationId?: string,
-  meta?: Partial<StandardSuccessResponse<T>['meta']>,
+  meta?: Partial<StandardSuccessResponse<T>['meta']>
 ): Response {
   const builder = createSuccessResponse(data, correlationId);
-  
+
   if (meta) {
     builder.withMeta(meta);
   }
@@ -438,7 +437,12 @@ export const ErrorResponses = {
   /**
    * Validation error (400)
    */
-  validation(field: string, value: any, expected: any, suggestions?: string[]): ErrorResponseBuilder {
+  validation(
+    field: string,
+    value: any,
+    expected: any,
+    suggestions?: string[]
+  ): ErrorResponseBuilder {
     const error = {
       code: 'VALIDATION_ERROR',
       message: `Validation failed for field: ${field}`,
@@ -451,7 +455,11 @@ export const ErrorResponses = {
   /**
    * Configuration error (500)
    */
-  configuration(configKey: string, expectedType: string, providedType: string): ErrorResponseBuilder {
+  configuration(
+    configKey: string,
+    expectedType: string,
+    providedType: string
+  ): ErrorResponseBuilder {
     const error = {
       code: 'CONFIG_ERROR',
       message: `Configuration error for ${configKey}`,
@@ -514,59 +522,54 @@ export const ResponseUtils = {
     page: number,
     limit: number,
     total: number,
-    correlationId?: string,
+    correlationId?: string
   ): Response {
     const totalPages = Math.ceil(total / limit);
-    
-    return sendSuccessResponse(res, {
-      items: data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
+
+    return sendSuccessResponse(
+      res,
+      {
+        items: data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
       },
-    }, correlationId);
+      correlationId
+    );
   },
 
   /**
    * Send a created response (201)
    */
-  created<T>(
-    res: Response,
-    data: T,
-    correlationId?: string,
-    location?: string,
-  ): Response {
+  created<T>(res: Response, data: T, correlationId?: string, location?: string): Response {
     const response = createSuccessResponse(data, correlationId).build();
-    
+
     if (location) {
       res.setHeader('Location', location);
     }
-    
+
     if (correlationId && !res.getHeader('X-Correlation-ID')) {
       res.setHeader('X-Correlation-ID', correlationId);
     }
-    
+
     return res.status(HTTP_STATUS_CODES.CREATED).json(response);
   },
 
   /**
    * Send an accepted response (202)
    */
-  accepted<T>(
-    res: Response,
-    data: T,
-    correlationId?: string,
-  ): Response {
+  accepted<T>(res: Response, data: T, correlationId?: string): Response {
     const response = createSuccessResponse(data, correlationId).build();
-    
+
     if (correlationId && !res.getHeader('X-Correlation-ID')) {
       res.setHeader('X-Correlation-ID', correlationId);
     }
-    
+
     return res.status(HTTP_STATUS_CODES.ACCEPTED).json(response);
   },
 
@@ -577,7 +580,7 @@ export const ResponseUtils = {
     if (correlationId && !res.getHeader('X-Correlation-ID')) {
       res.setHeader('X-Correlation-ID', correlationId);
     }
-    
+
     return res.status(HTTP_STATUS_CODES.NO_CONTENT).send();
   },
 };

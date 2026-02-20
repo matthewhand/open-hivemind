@@ -1,10 +1,12 @@
-import type { ChatInputCommandInteraction } from 'discord.js';
 import Debug from 'debug';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import { SpeckitSpecificationGenerator } from '@src/services/speckit/SpeckitSpecificationGenerator';
 
 const log = Debug('app:discord:handlers:speckit:specify');
 
-export async function handleSpeckitSpecify(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function handleSpeckitSpecify(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
   log('Handling /speckit specify command');
 
   try {
@@ -20,7 +22,6 @@ export async function handleSpeckitSpecify(interaction: ChatInputCommandInteract
       content: specification,
       ephemeral: false,
     });
-
   } catch (error: unknown) {
     console.error('Discord speckit specify error:', error);
 

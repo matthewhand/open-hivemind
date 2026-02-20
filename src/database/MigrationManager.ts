@@ -35,12 +35,22 @@ export class MigrationManager {
           await db.exec('ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT');
 
           // Add indexes for tenantId
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)'
+          );
           await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)'
+          );
         },
       },
       {
@@ -51,8 +61,12 @@ export class MigrationManager {
           await db.exec('ALTER TABLE roles ADD COLUMN description TEXT');
           await db.exec('ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0');
           await db.exec('ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1');
-          await db.exec('ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP');
-          await db.exec('ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP');
+          await db.exec(
+            'ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP'
+          );
+          await db.exec(
+            'ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP'
+          );
 
           // Add indexes for role enhancements
           await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)');
@@ -94,11 +108,21 @@ export class MigrationManager {
           `);
 
           // Add indexes for anomaly detection
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_timestamp ON anomaly_detection(timestamp DESC)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_metric ON anomaly_detection(metric)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_severity ON anomaly_detection(severity)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_resolved ON anomaly_detection(resolved)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_timestamp ON anomaly_detection(timestamp DESC)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_metric ON anomaly_detection(metric)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_severity ON anomaly_detection(severity)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_resolved ON anomaly_detection(resolved)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)'
+          );
         },
       },
       {
@@ -132,11 +156,21 @@ export class MigrationManager {
           `);
 
           // Add indexes for monitoring
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_component ON health_checks(component)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_status ON health_checks(status)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_timestamp ON health_checks(timestamp)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metricName)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_health_checks_component ON health_checks(component)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_health_checks_status ON health_checks(status)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_health_checks_timestamp ON health_checks(timestamp)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metricName)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)'
+          );
         },
       },
       {
@@ -147,8 +181,8 @@ export class MigrationManager {
           await db.exec('ALTER TABLE audits ADD COLUMN resourceId TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN ipAddress TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN userAgent TEXT');
-          await db.exec('ALTER TABLE audits ADD COLUMN severity TEXT DEFAULT \'info\'');
-          await db.exec('ALTER TABLE audits ADD COLUMN status TEXT DEFAULT \'success\'');
+          await db.exec("ALTER TABLE audits ADD COLUMN severity TEXT DEFAULT 'info'");
+          await db.exec("ALTER TABLE audits ADD COLUMN status TEXT DEFAULT 'success'");
           await db.exec('ALTER TABLE audits ADD COLUMN details TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN metadata TEXT');
 
@@ -180,9 +214,15 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications(tenantId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)'
+          );
         },
       },
       {
@@ -251,9 +291,15 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_type ON event_stream(eventType)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_tenant ON event_stream(tenantId)');
-          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)');
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_event_stream_type ON event_stream(eventType)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_event_stream_tenant ON event_stream(tenantId)'
+          );
+          await db.exec(
+            'CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)'
+          );
         },
       },
     ];
@@ -282,7 +328,7 @@ export class MigrationManager {
       this.executedMigrations = new Set(await this.getExecutedMigrations());
 
       const pendingMigrations = this.migrations
-        .filter(migration => !this.executedMigrations.has(migration.id))
+        .filter((migration) => !this.executedMigrations.has(migration.id))
         .sort((a, b) => a.version - b.version);
 
       for (const migration of pendingMigrations) {
@@ -307,10 +353,11 @@ export class MigrationManager {
       await migration.up(this.db);
 
       // Record migration in migrations table
-      await this.db.run(
-        'INSERT INTO migrations (id, name, version) VALUES (?, ?, ?)',
-        [migration.id, migration.name, migration.version],
-      );
+      await this.db.run('INSERT INTO migrations (id, name, version) VALUES (?, ?, ?)', [
+        migration.id,
+        migration.name,
+        migration.version,
+      ]);
 
       // Commit transaction
       await this.db.exec('COMMIT');
@@ -331,7 +378,7 @@ export class MigrationManager {
 
   async rollbackToVersion(version: number): Promise<void> {
     const migrationsToRollback = this.migrations
-      .filter(m => m.version > version)
+      .filter((m) => m.version > version)
       .sort((a, b) => b.version - a.version); // Reverse order
 
     for (const migration of migrationsToRollback) {
@@ -372,9 +419,9 @@ export class MigrationManager {
   }
 
   getMigrationsStatus(): { executed: Migration[]; pending: Migration[] } {
-    const executed = this.migrations.filter(m => this.executedMigrations.has(m.id));
-    const pending = this.migrations.filter(m => !this.executedMigrations.has(m.id));
-    
+    const executed = this.migrations.filter((m) => this.executedMigrations.has(m.id));
+    const pending = this.migrations.filter((m) => !this.executedMigrations.has(m.id));
+
     return { executed, pending };
   }
 }

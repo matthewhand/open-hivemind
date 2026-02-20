@@ -1,5 +1,5 @@
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import convict from 'convict';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 export interface ValidationResult {
@@ -20,58 +20,74 @@ export interface BotConfig {
   messageProvider: string;
   llmProvider: string;
   llmProfile?: string;
-  discord?: {
-    token: string;
-    clientId?: string;
-    guildId?: string;
-    channelId?: string;
-    voiceChannelId?: string;
-  } | string;
-  slack?: {
-    botToken: string;
-    appToken?: string;
-    signingSecret: string;
-    joinChannels?: string;
-    defaultChannelId?: string;
-    mode?: 'socket' | 'rtm';
-  } | string;
-  mattermost?: {
-    serverUrl: string;
-    token: string;
-    teamId?: string;
-    channelId?: string;
-  } | string;
-  openai?: {
-    apiKey: string;
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-  } | string;
-  flowise?: {
-    apiKey: string;
-    endpoint: string;
-    chatflowId?: string;
-  } | string;
-  openwebui?: {
-    apiKey: string;
-    endpoint: string;
-    model?: string;
-  } | string;
-  openswarm?: {
-    apiKey: string;
-    endpoint: string;
-    agentId?: string;
-  } | string;
+  discord?:
+    | {
+        token: string;
+        clientId?: string;
+        guildId?: string;
+        channelId?: string;
+        voiceChannelId?: string;
+      }
+    | string;
+  slack?:
+    | {
+        botToken: string;
+        appToken?: string;
+        signingSecret: string;
+        joinChannels?: string;
+        defaultChannelId?: string;
+        mode?: 'socket' | 'rtm';
+      }
+    | string;
+  mattermost?:
+    | {
+        serverUrl: string;
+        token: string;
+        teamId?: string;
+        channelId?: string;
+      }
+    | string;
+  openai?:
+    | {
+        apiKey: string;
+        model?: string;
+        temperature?: number;
+        maxTokens?: number;
+      }
+    | string;
+  flowise?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        chatflowId?: string;
+      }
+    | string;
+  openwebui?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        model?: string;
+      }
+    | string;
+  openswarm?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        agentId?: string;
+      }
+    | string;
   persona?: string;
   mcpGuardProfile?: string;
   responseProfile?: string;
   systemInstruction?: string;
   mcpServers?: string | string[] | { name: string; serverUrl?: string }[];
-  mcpGuard?: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds?: string[];
-  } | string;
+  mcpGuard?:
+    | {
+        enabled: boolean;
+        type: 'owner' | 'custom';
+        allowedUserIds?: string[];
+      }
+    | string;
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
@@ -237,7 +253,8 @@ export class ConfigurationValidator {
       }
     }
 
-    const normalizedLlmProvider = typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
+    const normalizedLlmProvider =
+      typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
     const llmDefaults = getLlmDefaultStatus();
     const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider };
 
@@ -273,49 +290,49 @@ export class ConfigurationValidator {
     config: BotConfig,
     errors: string[],
     warnings: string[],
-    suggestions: string[],
+    suggestions: string[]
   ): void {
     switch (config.messageProvider) {
-    case 'discord': {
-      const discord = typeof config.discord === 'string' ? undefined : config.discord;
-      if (!discord?.token) {
-        errors.push('Discord bot token is required');
-      } else if (!discord.token.startsWith('M') && !discord.token.startsWith('Bot ')) {
-        warnings.push('Discord token should start with "Bot " prefix or be a valid bot token');
-      }
-      break;
-    }
-
-    case 'slack': {
-      const slack = typeof config.slack === 'string' ? undefined : config.slack;
-      if (!slack?.botToken) {
-        errors.push('Slack bot token is required');
-      }
-      if (!slack?.signingSecret) {
-        errors.push('Slack signing secret is required');
-      }
-      if (slack?.mode === 'socket' && !slack?.appToken) {
-        warnings.push('Slack app token is recommended when using socket mode');
-      }
-      break;
-    }
-
-    case 'mattermost': {
-      const mattermost = typeof config.mattermost === 'string' ? undefined : config.mattermost;
-      if (!mattermost?.serverUrl) {
-        errors.push('Mattermost server URL is required');
-      } else {
-        try {
-          new URL(mattermost.serverUrl);
-        } catch {
-          errors.push('Mattermost server URL must be a valid URL');
+      case 'discord': {
+        const discord = typeof config.discord === 'string' ? undefined : config.discord;
+        if (!discord?.token) {
+          errors.push('Discord bot token is required');
+        } else if (!discord.token.startsWith('M') && !discord.token.startsWith('Bot ')) {
+          warnings.push('Discord token should start with "Bot " prefix or be a valid bot token');
         }
+        break;
       }
-      if (!mattermost?.token) {
-        errors.push('Mattermost token is required');
+
+      case 'slack': {
+        const slack = typeof config.slack === 'string' ? undefined : config.slack;
+        if (!slack?.botToken) {
+          errors.push('Slack bot token is required');
+        }
+        if (!slack?.signingSecret) {
+          errors.push('Slack signing secret is required');
+        }
+        if (slack?.mode === 'socket' && !slack?.appToken) {
+          warnings.push('Slack app token is recommended when using socket mode');
+        }
+        break;
       }
-      break;
-    }
+
+      case 'mattermost': {
+        const mattermost = typeof config.mattermost === 'string' ? undefined : config.mattermost;
+        if (!mattermost?.serverUrl) {
+          errors.push('Mattermost server URL is required');
+        } else {
+          try {
+            new URL(mattermost.serverUrl);
+          } catch {
+            errors.push('Mattermost server URL must be a valid URL');
+          }
+        }
+        if (!mattermost?.token) {
+          errors.push('Mattermost token is required');
+        }
+        break;
+      }
     }
   }
 
@@ -326,7 +343,7 @@ export class ConfigurationValidator {
     config: BotConfig,
     errors: string[],
     warnings: string[],
-    suggestions: string[],
+    suggestions: string[]
   ): void {
     const provider = typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
     if (!provider) {
@@ -334,69 +351,69 @@ export class ConfigurationValidator {
     }
 
     switch (provider) {
-    case 'openai': {
-      const openai = typeof config.openai === 'string' ? undefined : config.openai;
-      if (!openai?.apiKey) {
-        errors.push('OpenAI API key is required');
-      } else if (!openai.apiKey.startsWith('sk-')) {
-        warnings.push('OpenAI API key should start with "sk-" prefix');
-      }
-      if (!openai?.model) {
-        suggestions.push('Consider specifying an OpenAI model (e.g., gpt-3.5-turbo, gpt-4)');
-      }
-      break;
-    }
-
-    case 'flowise': {
-      const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
-      if (!flowise?.apiKey) {
-        errors.push('Flowise API key is required');
-      }
-      if (!flowise?.endpoint) {
-        errors.push('Flowise endpoint is required');
-      } else {
-        try {
-          new URL(flowise.endpoint);
-        } catch {
-          errors.push('Flowise endpoint must be a valid URL');
+      case 'openai': {
+        const openai = typeof config.openai === 'string' ? undefined : config.openai;
+        if (!openai?.apiKey) {
+          errors.push('OpenAI API key is required');
+        } else if (!openai.apiKey.startsWith('sk-')) {
+          warnings.push('OpenAI API key should start with "sk-" prefix');
         }
-      }
-      break;
-    }
-
-    case 'openwebui': {
-      const openwebui = typeof config.openwebui === 'string' ? undefined : config.openwebui;
-      if (!openwebui?.apiKey) {
-        errors.push('OpenWebUI API key is required');
-      }
-      if (!openwebui?.endpoint) {
-        errors.push('OpenWebUI endpoint is required');
-      } else {
-        try {
-          new URL(openwebui.endpoint);
-        } catch {
-          errors.push('OpenWebUI endpoint must be a valid URL');
+        if (!openai?.model) {
+          suggestions.push('Consider specifying an OpenAI model (e.g., gpt-3.5-turbo, gpt-4)');
         }
+        break;
       }
-      break;
-    }
 
-    case 'openswarm': {
-      const openswarm = typeof config.openswarm === 'string' ? undefined : config.openswarm;
-      if (!openswarm?.apiKey) {
-        errors.push('OpenSwarm API key is required');
-      }
-      if (!openswarm?.endpoint) {
-        errors.push('OpenSwarm endpoint is required');
-      } else {
-        try {
-          new URL(openswarm.endpoint);
-        } catch {
-          errors.push('OpenSwarm endpoint must be a valid URL');
+      case 'flowise': {
+        const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
+        if (!flowise?.apiKey) {
+          errors.push('Flowise API key is required');
         }
+        if (!flowise?.endpoint) {
+          errors.push('Flowise endpoint is required');
+        } else {
+          try {
+            new URL(flowise.endpoint);
+          } catch {
+            errors.push('Flowise endpoint must be a valid URL');
+          }
+        }
+        break;
       }
-      break;
-    }
+
+      case 'openwebui': {
+        const openwebui = typeof config.openwebui === 'string' ? undefined : config.openwebui;
+        if (!openwebui?.apiKey) {
+          errors.push('OpenWebUI API key is required');
+        }
+        if (!openwebui?.endpoint) {
+          errors.push('OpenWebUI endpoint is required');
+        } else {
+          try {
+            new URL(openwebui.endpoint);
+          } catch {
+            errors.push('OpenWebUI endpoint must be a valid URL');
+          }
+        }
+        break;
+      }
+
+      case 'openswarm': {
+        const openswarm = typeof config.openswarm === 'string' ? undefined : config.openswarm;
+        if (!openswarm?.apiKey) {
+          errors.push('OpenSwarm API key is required');
+        }
+        if (!openswarm?.endpoint) {
+          errors.push('OpenSwarm endpoint is required');
+        } else {
+          try {
+            new URL(openswarm.endpoint);
+          } catch {
+            errors.push('OpenSwarm endpoint must be a valid URL');
+          }
+        }
+        break;
+      }
     }
   }
 
@@ -407,7 +424,7 @@ export class ConfigurationValidator {
     config: BotConfig,
     errors: string[],
     warnings: string[],
-    suggestions: string[],
+    suggestions: string[]
   ): void {
     // System instruction validation
     if (config.systemInstruction) {
@@ -415,7 +432,9 @@ export class ConfigurationValidator {
         warnings.push('System instruction is very long and may affect response times');
       }
       if (config.systemInstruction.length < 10) {
-        suggestions.push('System instruction is very short. Consider adding more detailed instructions');
+        suggestions.push(
+          'System instruction is very short. Consider adding more detailed instructions'
+        );
       }
     }
 
@@ -527,16 +546,18 @@ export class ConfigurationValidator {
     const envPrefix = `BOTS_${config.name.toUpperCase().replace(/[^A_Z0-9]/g, '_')}_`;
 
     const envMappings = {
-      'MESSAGE_PROVIDER': 'messageProvider',
-      'LLM_PROVIDER': 'llmProvider',
-      'PERSONA': 'persona',
-      'SYSTEM_INSTRUCTION': 'systemInstruction',
+      MESSAGE_PROVIDER: 'messageProvider',
+      LLM_PROVIDER: 'llmProvider',
+      PERSONA: 'persona',
+      SYSTEM_INSTRUCTION: 'systemInstruction',
     };
 
     Object.entries(envMappings).forEach(([envKey, configKey]) => {
       const envVar = `${envPrefix}${envKey}`;
       if (process.env[envVar]) {
-        warnings.push(`Configuration field '${configKey}' will be overridden by environment variable ${envVar}`);
+        warnings.push(
+          `Configuration field '${configKey}' will be overridden by environment variable ${envVar}`
+        );
       }
     });
 

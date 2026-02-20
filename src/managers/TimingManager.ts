@@ -2,11 +2,17 @@
  * TimingManager handles message timing delays.
  */
 class TimingManager {
-  config: { minDelay: number; maxDelay: number; decayRate: number; };
+  config: { minDelay: number; maxDelay: number; decayRate: number };
   channelsTimingInfo: { [channelId: string]: { lastIncomingMessageTime: number } };
   channelTimers: { [channelId: string]: NodeJS.Timeout };
 
-  constructor(config: { minDelay: number; maxDelay: number; decayRate: number; } = { minDelay: 1000, maxDelay: 10000, decayRate: -0.5 }) {
+  constructor(
+    config: { minDelay: number; maxDelay: number; decayRate: number } = {
+      minDelay: 1000,
+      maxDelay: 10000,
+      decayRate: -0.5,
+    }
+  ) {
     if (config.minDelay > config.maxDelay) {
       throw new Error('minDelay cannot be greater than maxDelay');
     }
@@ -14,11 +20,11 @@ class TimingManager {
     this.channelsTimingInfo = {};
     this.channelTimers = {};
   }
-  
+
   get minDelay(): number {
     return this.config.minDelay;
   }
-  
+
   get maxDelay(): number {
     return this.config.maxDelay;
   }
@@ -42,9 +48,11 @@ class TimingManager {
 
     // Adaptive delay based on time since last message
     let adaptiveDelay = baseDelay;
-    if (timeSinceLastMessage < 1000) { // Very recent activity
+    if (timeSinceLastMessage < 1000) {
+      // Very recent activity
       adaptiveDelay = this.config.minDelay;
-    } else if (timeSinceLastMessage > 30000) { // Old activity
+    } else if (timeSinceLastMessage > 30000) {
+      // Old activity
       adaptiveDelay = this.config.maxDelay;
     }
 
@@ -59,7 +67,12 @@ class TimingManager {
     return adaptiveDelay;
   }
 
-  scheduleMessage(channelId: string, messageContent: string, processingTime: number, sendFunction: (text: string) => void): void {
+  scheduleMessage(
+    channelId: string,
+    messageContent: string,
+    processingTime: number,
+    sendFunction: (text: string) => void
+  ): void {
     // Clear any existing timer for this channel
     if (this.channelTimers[channelId]) {
       clearTimeout(this.channelTimers[channelId]);

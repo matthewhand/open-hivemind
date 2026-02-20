@@ -1,17 +1,17 @@
 import { EventEmitter } from 'events';
-import { GreetingStateManager } from './GreetingStateManager';
-import messageConfig from '@config/messageConfig';
-import Logger from '@common/logger';
 import { Message } from '@src/types/messages';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import Logger from '@common/logger';
+import { GreetingStateManager } from './GreetingStateManager';
 
 const appLogger = Logger.withContext('StartupGreetingService');
 
 interface GreetingConfig {
-    disabled: boolean;
-    message: string;
-    use_llm?: boolean;
+  disabled: boolean;
+  message: string;
+  use_llm?: boolean;
 }
 
 class StartupGreetingService extends EventEmitter {
@@ -38,14 +38,14 @@ class StartupGreetingService extends EventEmitter {
   }
 
   /**
-     * Strip surrounding quotes from a string if both leading and trailing quotes exist
-     */
+   * Strip surrounding quotes from a string if both leading and trailing quotes exist
+   */
   private stripSurroundingQuotes(text: string): string {
     // Check if text starts and ends with the same quote character
     if (text.length >= 2) {
       const first = text[0];
       const last = text[text.length - 1];
-      if ((first === '"' && last === '"') || (first === '\'' && last === '\'')) {
+      if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
         return text.slice(1, -1);
       }
     }
@@ -53,11 +53,11 @@ class StartupGreetingService extends EventEmitter {
   }
 
   /**
-     * Generate a fun welcome message using LLM
-     */
+   * Generate a fun welcome message using LLM
+   */
   private async generateLlmGreeting(): Promise<string> {
     try {
-      const providers = getLlmProvider();
+      const providers = await getLlmProvider();
       if (providers.length === 0) {
         appLogger.warn('No LLM providers available for greeting generation');
         return 'Hello! I am online and ready to assist.';
@@ -106,7 +106,9 @@ IMPORTANT: Do not wrap any part of your response in quotation marks. Just output
 
       const defaultChannel = service.getDefaultChannel();
       if (!defaultChannel) {
-        appLogger.warn('No default channel configured for greeting message', { provider: serviceName });
+        appLogger.warn('No default channel configured for greeting message', {
+          provider: serviceName,
+        });
         return;
       }
 
@@ -126,14 +128,25 @@ IMPORTANT: Do not wrap any part of your response in quotation marks. Just output
       }
 
       // Send the greeting
-      appLogger.info('Sending greeting message', { provider: serviceName, channel: defaultChannel, message: greetingMessage });
+      appLogger.info('Sending greeting message', {
+        provider: serviceName,
+        channel: defaultChannel,
+        message: greetingMessage,
+      });
       await service.sendMessageToChannel(defaultChannel, greetingMessage);
       await this.greetingStateManager.markGreetingAsSent(serviceId, defaultChannel);
-      appLogger.info('✅ Greeting message sent successfully', { provider: serviceName, channel: defaultChannel });
+      appLogger.info('✅ Greeting message sent successfully', {
+        provider: serviceName,
+        channel: defaultChannel,
+      });
     } catch (error) {
       const serviceName = service.constructor.name || 'UnknownService';
       const defaultChannel = service.getDefaultChannel() || 'unknown';
-      appLogger.error('Failed to send greeting message', { provider: serviceName, channel: defaultChannel, error });
+      appLogger.error('Failed to send greeting message', {
+        provider: serviceName,
+        channel: defaultChannel,
+        error,
+      });
     }
   }
 }

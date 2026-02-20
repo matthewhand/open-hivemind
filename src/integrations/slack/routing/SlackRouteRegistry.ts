@@ -1,9 +1,8 @@
-import type { Application } from 'express';
-import express from 'express';
 import Debug from 'debug';
-import type { SlackSignatureVerifier } from '../SlackSignatureVerifier';
+import express, { type Application } from 'express';
 import type { SlackEventProcessor } from '../SlackEventProcessor';
 import type { SlackInteractiveHandler } from '../SlackInteractiveHandler';
+import type { SlackSignatureVerifier } from '../SlackSignatureVerifier';
 
 const debug = Debug('app:SlackService:RouteRegistry');
 
@@ -24,7 +23,7 @@ export class SlackRouteRegistry {
     botName: string,
     signatureVerifier: SlackSignatureVerifier,
     eventProcessor: SlackEventProcessor,
-    interactiveHandler: SlackInteractiveHandler,
+    interactiveHandler: SlackInteractiveHandler
   ): void {
     debug(`Registering routes for bot: ${botName}`);
 
@@ -33,7 +32,7 @@ export class SlackRouteRegistry {
       `/slack/${botName}/action-endpoint`,
       express.urlencoded({ extended: true }),
       signatureVerifier.verify.bind(signatureVerifier),
-      eventProcessor.handleActionRequest.bind(eventProcessor),
+      eventProcessor.handleActionRequest.bind(eventProcessor)
     );
 
     // Interactive endpoint with URL-encoded middleware
@@ -41,7 +40,7 @@ export class SlackRouteRegistry {
       `/slack/${botName}/interactive-endpoint`,
       express.urlencoded({ extended: true }),
       signatureVerifier.verify.bind(signatureVerifier),
-      interactiveHandler.handleRequest.bind(interactiveHandler),
+      interactiveHandler.handleRequest.bind(interactiveHandler)
     );
 
     // Help endpoint for slash commands
@@ -49,7 +48,7 @@ export class SlackRouteRegistry {
       `/slack/${botName}/help`,
       express.urlencoded({ extended: true }),
       signatureVerifier.verify.bind(signatureVerifier),
-      eventProcessor.handleHelpRequest.bind(eventProcessor),
+      eventProcessor.handleHelpRequest.bind(eventProcessor)
     );
 
     debug(`Routes registered for bot: ${botName}`);
@@ -59,18 +58,21 @@ export class SlackRouteRegistry {
    * Register routes for multiple bots
    */
   public registerMultipleBotRoutes(
-    botConfigs: Map<string, {
-      signatureVerifier: SlackSignatureVerifier;
-      eventProcessor: SlackEventProcessor;
-      interactiveHandler: SlackInteractiveHandler;
-    }>,
+    botConfigs: Map<
+      string,
+      {
+        signatureVerifier: SlackSignatureVerifier;
+        eventProcessor: SlackEventProcessor;
+        interactiveHandler: SlackInteractiveHandler;
+      }
+    >
   ): void {
     for (const [botName, components] of botConfigs) {
       this.registerBotRoutes(
         botName,
         components.signatureVerifier,
         components.eventProcessor,
-        components.interactiveHandler,
+        components.interactiveHandler
       );
     }
   }

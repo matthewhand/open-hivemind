@@ -293,12 +293,27 @@ class ApiService {
     const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
+      const token = localStorage.getItem('auth_tokens');
+      const authHeaders: Record<string, string> = {};
+
+      if (token) {
+        try {
+          const tokens = JSON.parse(token);
+          if (tokens.accessToken) {
+            authHeaders['Authorization'] = `Bearer ${tokens.accessToken}`;
+          }
+        } catch (e) {
+          console.error('Failed to parse auth token', e);
+        }
+      }
+
       const response = await fetch(url, {
+        ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
           ...options?.headers,
         },
-        ...options,
         signal: controller.signal,
       });
       clearTimeout(id);
@@ -339,6 +354,10 @@ class ApiService {
 
   async getConfigSources(): Promise<ConfigSourcesResponse> {
     return this.request<ConfigSourcesResponse>('/api/config/sources');
+  }
+
+  async getLlmProfiles(): Promise<any> {
+    return this.request<any>('/api/config/llm-profiles');
   }
 
   async reloadConfig(): Promise<{ success: boolean; message: string; timestamp: string }> {

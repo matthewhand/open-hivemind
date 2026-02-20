@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-
 import type { Response } from 'node-fetch';
 
 const debug = Debug('app:ApiMonitorService');
@@ -228,7 +227,6 @@ export class ApiMonitorService extends EventEmitter {
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       status.responseTime = responseTime;
@@ -299,7 +297,7 @@ export class ApiMonitorService extends EventEmitter {
       offline: number;
       error: number;
     };
-    } {
+  } {
     const statuses = Array.from(this.statuses.values());
     const stats = {
       total: statuses.length,
@@ -309,20 +307,20 @@ export class ApiMonitorService extends EventEmitter {
       error: 0,
     };
 
-    statuses.forEach(status => {
+    statuses.forEach((status) => {
       switch (status.status) {
-      case 'online':
-        stats.online++;
-        break;
-      case 'slow':
-        stats.slow++;
-        break;
-      case 'offline':
-        stats.offline++;
-        break;
-      case 'error':
-        stats.error++;
-        break;
+        case 'online':
+          stats.online++;
+          break;
+        case 'slow':
+          stats.slow++;
+          break;
+        case 'offline':
+          stats.offline++;
+          break;
+        case 'error':
+          stats.error++;
+          break;
       }
     });
 

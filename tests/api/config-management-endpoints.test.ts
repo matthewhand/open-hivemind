@@ -1,7 +1,8 @@
-process.env.NODE_ENV = 'test';
-
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import configRouter from '../../src/server/routes/config';
+
+process.env.NODE_ENV = 'test';
 
 // Mock BotConfigurationManager
 const mockBotConfigurationManager = {
@@ -16,26 +17,26 @@ const mockBotConfigurationManager = {
       discord: {
         token: 'test-discord-token',
         clientId: '123456789',
-        guildId: '987654321'
+        guildId: '987654321',
       },
       openai: {
         apiKey: 'test-openai-key',
-        baseUrl: 'https://api.openai.com/v1'
+        baseUrl: 'https://api.openai.com/v1',
       },
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+      updatedAt: new Date().toISOString(),
+    },
   ]),
   getWarnings: jest.fn().mockReturnValue([]),
   isLegacyMode: jest.fn().mockReturnValue(false),
   reload: jest.fn(),
-  getBot: jest.fn().mockImplementation(botId => {
+  getBot: jest.fn().mockImplementation((botId) => {
     if (botId === 'test-bot-id') {
       return mockBotConfigurationManager.getAllBots()[0];
     }
     return undefined;
   }),
-  getBotConfig: jest.fn().mockImplementation(botId => {
+  getBotConfig: jest.fn().mockImplementation((botId) => {
     if (botId === 'test-bot-id') {
       return mockBotConfigurationManager.getAllBots()[0];
     }
@@ -50,7 +51,7 @@ const mockBotConfigurationManager = {
 jest.mock('../../src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
     getInstance: () => mockBotConfigurationManager,
-  }
+  },
 }));
 
 // Mock UserConfigStore
@@ -64,18 +65,21 @@ jest.mock('../../src/config/UserConfigStore', () => {
   return {
     UserConfigStore: {
       getInstance: () => mockUserConfigStore,
-    }
+    },
   };
 });
 
 // Mock redactSensitiveInfo
 jest.mock('../../src/common/redactSensitiveInfo', () => ({
   redactSensitiveInfo: jest.fn((key, value) => {
-    if (typeof value === 'string' && (key.toLowerCase().includes('token') || key.toLowerCase().includes('key'))) {
+    if (
+      typeof value === 'string' &&
+      (key.toLowerCase().includes('token') || key.toLowerCase().includes('key'))
+    ) {
       return 'test**********key';
     }
     return value;
-  })
+  }),
 }));
 
 // Mock audit middleware
@@ -96,15 +100,15 @@ jest.mock('../../src/types/errors', () => {
         message: error?.message || 'Unknown error',
         statusCode: 500,
         code: 'TEST_ERROR',
-        stack: error?.stack
+        stack: error?.stack,
       })),
       classifyError: jest.fn(() => ({
         type: 'test',
         retryable: false,
         severity: 'low',
         userMessage: undefined,
-        logLevel: 'error'
-      }))
+        logLevel: 'error',
+      })),
     },
   };
 });
@@ -144,17 +148,20 @@ const createMockConfigRouter = () => {
       });
       const warnings = mockBotManager.getWarnings();
       const legacyMode = mockBotManager.isLegacyMode();
-      
+
       res.json({
         bots,
         warnings,
         legacyMode,
-        environment: 'test'
+        environment: 'test',
       });
     } catch (error) {
       // Redact any file system paths from the error message
       const errorMessage = (error as Error).message || 'An unexpected error occurred';
-      const redactedMessage = errorMessage.replace(/\/[^\/\s]*\/[^\/\s]*\/[^\/\s]*\.[^\/\s]*/g, '[REDACTED]');
+      const redactedMessage = errorMessage.replace(
+        /\/[^\/\s]*\/[^\/\s]*\/[^\/\s]*\.[^\/\s]*/g,
+        '[REDACTED]'
+      );
       res.status(500).json({ error: redactedMessage });
     }
   });
@@ -163,7 +170,7 @@ const createMockConfigRouter = () => {
     res.json({
       environmentVariables: {},
       configFiles: [],
-      overrides: []
+      overrides: [],
     });
   });
 
@@ -171,7 +178,11 @@ const createMockConfigRouter = () => {
     try {
       mockBotManager.reload();
       mockLogFn();
-      res.json({ success: true, message: 'Configuration reloaded successfully', timestamp: new Date().toISOString() });
+      res.json({
+        success: true,
+        message: 'Configuration reloaded successfully',
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       res.status(500).json({ error: 'An unexpected error occurred' });
     }
@@ -180,7 +191,11 @@ const createMockConfigRouter = () => {
   mockRouter.post('/api/cache/clear', (req: any, res: any) => {
     try {
       mockBotManager.reload();
-      res.json({ success: true, message: 'Cache cleared successfully', timestamp: new Date().toISOString() });
+      res.json({
+        success: true,
+        message: 'Cache cleared successfully',
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -200,18 +215,21 @@ const createMockConfigRouter = () => {
       });
       const warnings = mockBotManager.getWarnings();
       const legacyMode = mockBotManager.isLegacyMode();
-      
+
       const exportData = {
         exportTimestamp: new Date().toISOString(),
         environment: 'test',
         version: '1.0.0',
         bots,
         warnings,
-        legacyMode
+        legacyMode,
       };
-      
+
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="config-export-${Date.now()}.json"`
+      );
       res.send(JSON.stringify(exportData, null, 2));
     } catch (error) {
       res.status(500).json({ error: 'Configuration export failed' });
@@ -224,27 +242,25 @@ const createMockConfigRouter = () => {
     setMocks: (botManager: any, logFn: any) => {
       mockBotManager = botManager;
       mockLogFn = logFn;
-    }
+    },
   };
 };
 
 // Mock the config router
 jest.mock('../../src/server/routes/config', () => createMockConfigRouter());
 
-import configRouter from '../../src/server/routes/config';
-
 describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up the mocks for the router
     const mockModule = require('../../src/server/routes/config');
     if (mockModule.setMocks) {
       mockModule.setMocks(mockBotConfigurationManager, mockLogConfigChange);
     }
-    
+
     app = express();
     app.use(express.json());
     app.use(configRouter);
@@ -338,7 +354,7 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
     });
     await request(app).get('/api/config/export').expect(500);
   });
-  
+
   it('should handle malformed JSON in POST requests', async () => {
     await request(app)
       .post('/api/config/reload')
@@ -348,23 +364,21 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   });
 
   it('should handle concurrent configuration requests', async () => {
-    const requests = Array(5).fill(null).map(() => request(app).get('/api/config'));
+    const requests = Array(5)
+      .fill(null)
+      .map(() => request(app).get('/api/config'));
     const responses = await Promise.all(requests);
-    responses.forEach(response => expect(response.status).toBe(200));
+    responses.forEach((response) => expect(response.status).toBe(200));
   });
 
   it('should handle extremely long input strings', async () => {
     const longString = 'a'.repeat(10000);
-    const response = await request(app)
-      .post('/api/config/reload')
-      .send({ data: longString });
+    const response = await request(app).post('/api/config/reload').send({ data: longString });
     expect(response.status).toBeLessThan(500);
   });
 
   it('should handle missing required fields gracefully', async () => {
-    const response = await request(app)
-      .post('/api/config/reload')
-      .send({});
+    const response = await request(app).post('/api/config/reload').send({});
     expect(response.status).toBeLessThan(500);
   });
 
@@ -381,7 +395,7 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
 
   it('should not expose file system paths in error messages', async () => {
     mockBotConfigurationManager.getAllBots.mockImplementationOnce(() => {
-      throw new Error('ENOENT: no such file or directory, open \'/app/config/bots.json\'');
+      throw new Error("ENOENT: no such file or directory, open '/app/config/bots.json'");
     });
     const response = await request(app).get('/api/config');
     expect(response.status).toBe(500);

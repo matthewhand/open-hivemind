@@ -24,15 +24,19 @@ function getDefaultChannelId(): string {
     // Try Discord config first
     const discordConfig = require('@config/discordConfig').default;
     const discordChannel = discordConfig?.get?.('DISCORD_DEFAULT_CHANNEL_ID');
-    if (discordChannel) {return discordChannel;}
-  } catch { }
+    if (discordChannel) {
+      return discordChannel;
+    }
+  } catch {}
 
   try {
     // Try Slack config
     const slackConfig = require('@config/slackConfig').default;
     const slackChannel = slackConfig?.get?.('SLACK_DEFAULT_CHANNEL_ID');
-    if (slackChannel) {return slackChannel;}
-  } catch { }
+    if (slackChannel) {
+      return slackChannel;
+    }
+  } catch {}
 
   return '';
 }

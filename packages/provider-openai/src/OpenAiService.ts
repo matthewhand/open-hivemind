@@ -5,36 +5,38 @@
  * configuration sources like 'openaiConfig' and 'llmConfig'.
  */
 import Debug from 'debug';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import type { ClientOptions } from 'openai';
-import { OpenAI } from 'openai';
+import { OpenAI, type ClientOptions } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import openaiConfig from '@config/openaiConfig';
-import llmConfig from '@config/llmConfig';
-import { listModels } from './operations/listModels';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-import type {
-  OpenAIModelsListResponse,
-  OpenHivemindChatResponse} from '@src/types/openai';
+import { ConfigurationError, type BaseHivemindError } from '@src/types/errorClasses';
+import { ErrorUtils, type HivemindError } from '@src/types/errors';
 import {
   OpenAIChatCompletionResponse,
   OpenAIError,
+  type OpenAIModelsListResponse,
+  type OpenHivemindChatResponse,
 } from '@src/types/openai';
-import type { BaseHivemindError } from '@src/types/errorClasses';
-import { ConfigurationError } from '@src/types/errorClasses';
-import type { HivemindError } from '@src/types/errors';
-import { ErrorUtils } from '@src/types/errors';
+import llmConfig from '@config/llmConfig';
+import openaiConfig from '@config/openaiConfig';
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import { listModels } from './operations/listModels';
 
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
-  throw new ConfigurationError('Invalid OpenAI configuration: expected an object with a get method.', 'OPENAI_CONFIG_VALIDATION_ERROR');
+  throw new ConfigurationError(
+    'Invalid OpenAI configuration: expected an object with a get method.',
+    'OPENAI_CONFIG_VALIDATION_ERROR'
+  );
 }
 
 // Guard: Validate llmConfig object
 if (!llmConfig || typeof llmConfig.get !== 'function') {
-  throw new ConfigurationError('Invalid LLM configuration: expected an object with a get method.', 'LLM_CONFIG_VALIDATION_ERROR');
+  throw new ConfigurationError(
+    'Invalid LLM configuration: expected an object with a get method.',
+    'LLM_CONFIG_VALIDATION_ERROR'
+  );
 }
 
 export class OpenAiService {
@@ -135,7 +137,7 @@ export class OpenAiService {
     historyMessages: IMessage[],
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7),
+    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
   ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatCompletion called');
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
@@ -268,7 +270,10 @@ export class OpenAiService {
         });
       });
 
-      debug('[DEBUG] OpenAI API response received:', redactSensitiveInfo('response', JSON.stringify(response)));
+      debug(
+        '[DEBUG] OpenAI API response received:',
+        redactSensitiveInfo('response', JSON.stringify(response))
+      );
 
       const choice = response.choices && response.choices[0];
       debug('[DEBUG] Raw first choice:', JSON.stringify(choice));
@@ -276,12 +281,21 @@ export class OpenAiService {
       let content = choice?.message?.content || '';
       debug('[DEBUG] Extracted content from choices:', content);
 
-      if (!content && (response as any).full_response && Array.isArray((response as any).full_response.messages)) {
+      if (
+        !content &&
+        (response as any).full_response &&
+        Array.isArray((response as any).full_response.messages)
+      ) {
         const messages = (response as any).full_response.messages;
-        debug('[DEBUG] Iterating through full_response.messages for assistant content. Total messages:', messages.length);
+        debug(
+          '[DEBUG] Iterating through full_response.messages for assistant content. Total messages:',
+          messages.length
+        );
         for (let i = messages.length - 1; i >= 0; i--) {
           const msg = messages[i];
-          debug(`[DEBUG] Checking message at index ${i}: role=${msg.role}, content="${msg.content}"`);
+          debug(
+            `[DEBUG] Checking message at index ${i}: role=${msg.role}, content="${msg.content}"`
+          );
           if (msg.role !== 'assistant') {
             debug(`[DEBUG] Encountered non-assistant message at index ${i}; stopping iteration.`);
             break;
@@ -298,7 +312,11 @@ export class OpenAiService {
 
       // --- Attach agent metadata ---
       let activeAgentName: string | undefined;
-      if ((response as any).full_response && (response as any).full_response.agent && (response as any).full_response.agent.name) {
+      if (
+        (response as any).full_response &&
+        (response as any).full_response.agent &&
+        (response as any).full_response.agent.name
+      ) {
         activeAgentName = (response as any).full_response.agent.name;
       }
 
@@ -308,7 +326,11 @@ export class OpenAiService {
       };
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: ErrorUtils.getMessage(hivemindError) });
+      debug('[DEBUG] Error generating chat completion:', {
+        message,
+        historyMessages,
+        error: ErrorUtils.getMessage(hivemindError),
+      });
       throw hivemindError;
     }
   }
@@ -321,10 +343,16 @@ export class OpenAiService {
     historyMessages: IMessage[],
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7),
+    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
   ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatResponse called');
-    return this.generateChatCompletion(message, historyMessages, systemMessageContent, maxTokens, temperature);
+    return this.generateChatCompletion(
+      message,
+      historyMessages,
+      systemMessageContent,
+      maxTokens,
+      temperature
+    );
   }
 
   /**
@@ -353,15 +381,15 @@ export class OpenAiService {
       } catch (error: unknown) {
         const hivemindError = ErrorUtils.toHivemindError(error);
         const errorType = this.classifyError(hivemindError);
-        
+
         if (errorType === 'fatal' || attempt === this.maxRetries) {
           throw hivemindError;
         }
-        
+
         if (errorType === 'rate-limit' || errorType === 'transient') {
           const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
           debug(`[DEBUG] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         } else {
           throw hivemindError;
         }
@@ -373,13 +401,21 @@ export class OpenAiService {
   /**
    * Classify errors as rate-limit, transient, or fatal
    */
-  private classifyError(error: HivemindError | BaseHivemindError): 'rate-limit' | 'transient' | 'fatal' {
+  private classifyError(
+    error: HivemindError | BaseHivemindError
+  ): 'rate-limit' | 'transient' | 'fatal' {
     const statusCode = ErrorUtils.getStatusCode(error);
     const errorCode = ErrorUtils.getCode(error);
 
-    if (statusCode === 429) {return 'rate-limit';}
-    if (statusCode && statusCode >= 500 && statusCode < 600) {return 'transient';}
-    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') {return 'transient';}
+    if (statusCode === 429) {
+      return 'rate-limit';
+    }
+    if (statusCode && statusCode >= 500 && statusCode < 600) {
+      return 'transient';
+    }
+    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') {
+      return 'transient';
+    }
     return 'fatal';
   }
 

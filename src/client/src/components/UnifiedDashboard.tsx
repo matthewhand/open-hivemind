@@ -6,7 +6,7 @@ import {
   Button,
   Card,
   DataTable,
-  ModalForm,
+  Modal,
   ProgressBar,
   StatsCards,
   ToastNotification,
@@ -14,6 +14,7 @@ import {
 } from './DaisyUI';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
+import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity } from 'lucide-react';
 
 type DashboardTab = 'overview' | 'performance';
@@ -110,17 +111,20 @@ const buildLastActivityLabel = (
 const UnifiedDashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
+  const [defaultLlmConfigured, setDefaultLlmConfigured] = useState(false);
   const [environment, setEnvironment] = useState<string>('development');
   const [systemVersion, setSystemVersion] = useState<string>('1.0.0');
   const [warnings, setWarnings] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [selectedBots, setSelectedBots] = useState<BotTableRow[]>([]);
-  
+
   // Memoized callback to prevent infinite re-renders in DataTable
   const handleBotSelectionChange = useCallback((rows: BotTableRow[]) => {
     setSelectedBots(rows);
   }, []);
-  
+
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,13 +136,18 @@ const UnifiedDashboard: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [configData, statusData] = await Promise.all([
+      const [configData, statusData, personasData, profilesData] = await Promise.all([
         apiService.getConfig(),
         apiService.getStatus(),
+        apiService.getPersonas(),
+        apiService.getLlmProfiles(),
       ]);
 
       setBots(configData.bots || []);
       setStatus(statusData);
+      setPersonas(personasData || []);
+      setLlmProfiles(profilesData.profiles?.llm || []);
+      setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
       setWarnings(configData.warnings || []);
       setEnvironment(configData.environment ?? (configData as any).system?.environment ?? 'development');
       setSystemVersion((configData as any).system?.version ?? '1.0.0');
@@ -724,9 +733,9 @@ const UnifiedDashboard: React.FC = () => {
 
                     <div className="flex flex-col items-center gap-2">
                       {/* Memory: Green at low, Red at high */}
-                      <div 
-                        className={`radial-progress ${performanceMetrics.memoryUsage > 80 ? 'text-error' : performanceMetrics.memoryUsage > 50 ? 'text-warning' : 'text-success'}`} 
-                        style={{ '--value': performanceMetrics.memoryUsage, '--size': '6rem' } as React.CSSProperties} 
+                      <div
+                        className={`radial-progress ${performanceMetrics.memoryUsage > 80 ? 'text-error' : performanceMetrics.memoryUsage > 50 ? 'text-warning' : 'text-success'}`}
+                        style={{ '--value': performanceMetrics.memoryUsage, '--size': '6rem' } as React.CSSProperties}
                         role="progressbar"
                       >
                         {Math.round(performanceMetrics.memoryUsage)}%
@@ -743,9 +752,9 @@ const UnifiedDashboard: React.FC = () => {
 
                     <div className="flex flex-col items-center gap-2">
                       {/* Stability: Green at 100, Red at 0 */}
-                      <div 
-                        className={`radial-progress ${performanceMetrics.stabilityScore >= 95 ? 'text-success' : performanceMetrics.stabilityScore >= 70 ? 'text-warning' : 'text-error'}`} 
-                        style={{ '--value': performanceMetrics.stabilityScore, '--size': '6rem' } as React.CSSProperties} 
+                      <div
+                        className={`radial-progress ${performanceMetrics.stabilityScore >= 95 ? 'text-success' : performanceMetrics.stabilityScore >= 70 ? 'text-warning' : 'text-error'}`}
+                        style={{ '--value': performanceMetrics.stabilityScore, '--size': '6rem' } as React.CSSProperties}
                         role="progressbar"
                       >
                         {Math.round(performanceMetrics.stabilityScore)}%
@@ -800,23 +809,24 @@ const UnifiedDashboard: React.FC = () => {
         </>
       )}
 
-      <ModalForm
+      <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Create New Bot"
-        fields={createBotFields}
-        steps={createBotSteps}
-        onSubmit={handleCreateBot}
-        submitText="Create Bot"
-        cancelText="Cancel"
-        loading={isCreatingBot}
         size="lg"
-        initialData={{
-          messageProvider: MESSAGE_PROVIDER_OPTIONS[0].value,
-          llmProvider: LLM_PROVIDER_OPTIONS[0].value,
-          autoJoin: true,
-        }}
-      />
+      >
+        <CreateBotWizard
+          onCancel={() => setIsCreateModalOpen(false)}
+          onSuccess={async () => {
+            setIsCreateModalOpen(false);
+            successToast('Bot created', 'New agent joined the swarm.');
+            await fetchData();
+          }}
+          personas={personas}
+          llmProfiles={llmProfiles}
+          defaultLlmConfigured={defaultLlmConfigured}
+        />
+      </Modal>
     </div>
   );
 };

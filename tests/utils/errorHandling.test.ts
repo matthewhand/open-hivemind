@@ -1,8 +1,19 @@
-import { BaseHivemindError, NetworkError, ValidationError, ConfigurationError, DatabaseError, AuthenticationError, AuthorizationError, RateLimitError, TimeoutError, ApiError } from '../../src/types/errorClasses';
+import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
+import {
+  ApiError,
+  AuthenticationError,
+  AuthorizationError,
+  BaseHivemindError,
+  ConfigurationError,
+  DatabaseError,
+  NetworkError,
+  RateLimitError,
+  TimeoutError,
+  ValidationError,
+} from '../../src/types/errorClasses';
 import { errorLogger } from '../../src/utils/errorLogger';
 import { errorRecovery } from '../../src/utils/errorRecovery';
 import { createErrorResponse, createSuccessResponse } from '../../src/utils/errorResponse';
-import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
 
 // Mock Express request and response objects
 const createMockRequest = (overrides = {}) => ({
@@ -32,7 +43,7 @@ const createMockRequest = (overrides = {}) => ({
   fresh: false,
   stale: true,
   xhr: false,
-  ...overrides
+  ...overrides,
 });
 
 const createMockResponse = () => {
@@ -158,7 +169,7 @@ describe('Error Handling System', () => {
         correlationId: 'test-correlation-123',
         userId: '123',
         path: '/test',
-        method: 'POST'
+        method: 'POST',
       };
 
       const statsBefore = logger.getErrorStats();
@@ -177,7 +188,7 @@ describe('Error Handling System', () => {
       const context = {
         correlationId: 'test-correlation-456',
         path: '/test',
-        method: 'GET'
+        method: 'GET',
       };
 
       const statsBefore = logger.getErrorStats();
@@ -195,12 +206,12 @@ describe('Error Handling System', () => {
       const context = {
         correlationId,
         path: '/test',
-        method: 'POST'
+        method: 'POST',
       };
 
       logger.logError(testError, context);
       const recent = logger.getRecentErrors(5);
-      expect(recent.some(entry => entry.context.correlationId === correlationId)).toBe(true);
+      expect(recent.some((entry) => entry.context.correlationId === correlationId)).toBe(true);
     });
 
     test('should get error statistics', () => {
@@ -276,7 +287,7 @@ describe('Error Handling System', () => {
         try {
           await errorRecovery.withCircuitBreaker(failingFn, {
             failureThreshold: 3,
-            resetTimeout: 100
+            resetTimeout: 100,
           });
         } catch (e) {
           // Expected to fail
@@ -284,15 +295,17 @@ describe('Error Handling System', () => {
       }
 
       // Now try again - should fail immediately due to open circuit
-      await expect(errorRecovery.withCircuitBreaker(failingFn, {
-        failureThreshold: 3,
-        resetTimeout: 100
-      })).rejects.toThrow('Circuit breaker is OPEN');
+      await expect(
+        errorRecovery.withCircuitBreaker(failingFn, {
+          failureThreshold: 3,
+          resetTimeout: 100,
+        })
+      ).rejects.toThrow('Circuit breaker is OPEN');
     });
 
     test('should execute function with timeout', async () => {
       const slowFn = jest.fn(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         return 'slow result';
       });
 
@@ -304,7 +317,7 @@ describe('Error Handling System', () => {
 
     test('should execute function with timeout successfully', async () => {
       const fastFn = jest.fn(async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return 'fast result';
       });
 
@@ -332,18 +345,15 @@ describe('Error Handling System', () => {
             field: 'name',
             expected: undefined,
             suggestions: undefined,
-            value: undefined
+            value: undefined,
           },
           recovery: {
             canRecover: false,
             maxRetries: undefined,
             retryDelay: undefined,
-            steps: [
-              "Check input data format",
-              "Validate required fields"
-            ]
-          }
-        }
+            steps: ['Check input data format', 'Validate required fields'],
+          },
+        },
       });
     });
 
@@ -364,8 +374,8 @@ describe('Error Handling System', () => {
         data: { message: 'Success' },
         meta: {
           correlationId: undefined,
-          timestamp: expect.any(String)
-        }
+          timestamp: expect.any(String),
+        },
       });
     });
 
@@ -390,20 +400,22 @@ describe('Error Handling System', () => {
       await errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'ValidationError',
-        code: 'VALIDATION_ERROR',
-        message: 'Validation failed',
-        correlationId: 'unknown',
-        timestamp: expect.any(String),
-        details: {
-          field: 'email',
-        },
-        recovery: expect.objectContaining({
-          canRecover: false,
-          steps: ['Check input data format', 'Validate required fields']
-        }),
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'ValidationError',
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          correlationId: 'unknown',
+          timestamp: expect.any(String),
+          details: {
+            field: 'email',
+          },
+          recovery: expect.objectContaining({
+            canRecover: false,
+            steps: ['Check input data format', 'Validate required fields'],
+          }),
+        })
+      );
     });
 
     test('should handle generic error', async () => {
@@ -414,26 +426,28 @@ describe('Error Handling System', () => {
       await errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'ApiError',
-        code: 'API_ERROR',
-        message: 'Generic error',
-        correlationId: 'unknown',
-        timestamp: expect.any(String),
-        details: expect.objectContaining({
-          service: 'unknown',
-        }),
-        recovery: expect.objectContaining({
-          canRecover: true,
-          retryDelay: 2000,
-          maxRetries: 3,
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'ApiError',
+          code: 'API_ERROR',
+          message: 'Generic error',
+          correlationId: 'unknown',
+          timestamp: expect.any(String),
+          details: expect.objectContaining({
+            service: 'unknown',
+          }),
+          recovery: expect.objectContaining({
+            canRecover: true,
+            retryDelay: 2000,
+            maxRetries: 3,
+          }),
         })
-      }));
+      );
     });
 
     test('should handle error with correlation ID from request', async () => {
       const req = createMockRequest({
-        headers: { 'x-correlation-id': 'request-correlation-id' }
+        headers: { 'x-correlation-id': 'request-correlation-id' },
       }) as any;
       // Set correlation ID on request as correlationMiddleware would
       req.correlationId = 'request-correlation-id';

@@ -93,10 +93,7 @@ function buildSpec(baseUrl: string) {
         },
       },
     },
-    tags: [
-      { name: 'Configuration' },
-      { name: 'Monitoring' },
-    ],
+    tags: [{ name: 'Configuration' }, { name: 'Monitoring' }],
   };
 }
 
@@ -118,7 +115,7 @@ function toYaml(value: unknown, indent = 0): string {
       return '[]';
     }
     return value
-      .map(item => {
+      .map((item) => {
         const rendered = toYaml(item, indent + 1);
         if (typeof item === 'object' && item !== null) {
           const trimmed = rendered.trimStart();
@@ -147,7 +144,7 @@ function toYaml(value: unknown, indent = 0): string {
 
   if (typeof value === 'string') {
     if (value.includes(':') || value.includes('\n') || value.includes('#')) {
-      return `'${value.replace(/'/g, '\'\'')}'`;
+      return `'${value.replace(/'/g, "''")}'`;
     }
     return value;
   }

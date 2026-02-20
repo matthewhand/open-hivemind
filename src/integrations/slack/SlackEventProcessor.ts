@@ -1,11 +1,11 @@
-import type { Request, Response } from 'express';
 import Debug from 'debug';
-import slackConfig from '@src/config/slackConfig';
-import type { SlackService } from './SlackService';
-import SlackMessage from './SlackMessage';
+import type { Request, Response } from 'express';
 import type { KnownBlock } from '@slack/web-api';
+import slackConfig from '@src/config/slackConfig';
 import { ConfigurationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
+import SlackMessage from './SlackMessage';
+import type { SlackService } from './SlackService';
 
 const debug = Debug('app:SlackEventProcessor');
 
@@ -17,21 +17,25 @@ export class SlackEventProcessor {
   constructor(slackService: SlackService) {
     if (!slackService) {
       debug('Error: SlackService instance required');
-      throw new ConfigurationError(
-        'SlackService instance required',
-        'SLACK_SERVICE_REQUIRED',
-      );
+      throw new ConfigurationError('SlackService instance required', 'SLACK_SERVICE_REQUIRED');
     }
     this.slackService = slackService;
     debug('SlackEventProcessor initialized');
   }
 
   public async handleActionRequest(req: Request, res: Response): Promise<void> {
-    debug('Entering handleActionRequest', { method: req.method, body: req.body ? JSON.stringify(req.body).substring(0, 100) + '...' : 'empty' });
+    debug('Entering handleActionRequest', {
+      method: req.method,
+      body: req.body ? JSON.stringify(req.body).substring(0, 100) + '...' : 'empty',
+    });
     try {
       let body = req.body || {};
-      if (typeof body === 'string') {body = JSON.parse(body);}
-      debug(`Parsed body: type=${body.type}, event=${body.event ? JSON.stringify(body.event).substring(0, 50) + '...' : 'none'}`);
+      if (typeof body === 'string') {
+        body = JSON.parse(body);
+      }
+      debug(
+        `Parsed body: type=${body.type}, event=${body.event ? JSON.stringify(body.event).substring(0, 50) + '...' : 'none'}`
+      );
 
       if (body.type === 'url_verification' && body.challenge) {
         debug(`URL verification request, challenge: ${body.challenge}`);
@@ -43,7 +47,12 @@ export class SlackEventProcessor {
       if (body.payload) {
         const payload = typeof body.payload === 'string' ? JSON.parse(body.payload) : body.payload;
         debug(`Payload received: ${JSON.stringify(payload).substring(0, 100)}...`);
-        if (!payload || !payload.actions || !Array.isArray(payload.actions) || payload.actions.length === 0) {
+        if (
+          !payload ||
+          !payload.actions ||
+          !Array.isArray(payload.actions) ||
+          payload.actions.length === 0
+        ) {
           debug('Invalid payload: missing or malformed actions');
           res.status(400).send('Bad Request');
           return;
@@ -58,7 +67,7 @@ export class SlackEventProcessor {
             await botManagers.handleMessage(
               new SlackMessage(payload.text || '', payload.channel?.id || '', payload),
               [],
-              botConfig,
+              botConfig
             );
           }
         }
@@ -68,7 +77,9 @@ export class SlackEventProcessor {
 
       if (body.type === 'event_callback') {
         const event = body.event;
-        debug(`Event callback: type=${event.type}, subtype=${event.subtype || 'none'}, ts=${event.event_ts}`);
+        debug(
+          `Event callback: type=${event.type}, subtype=${event.subtype || 'none'}, ts=${event.event_ts}`
+        );
 
         if (event.subtype === 'bot_message') {
           debug('Ignoring bot_message event');
@@ -77,12 +88,16 @@ export class SlackEventProcessor {
         }
         if (event.subtype === 'message_deleted' && event.previous_message?.ts) {
           this.deletedMessages.add(event.previous_message.ts);
-          debug(`Marked message as deleted: ts=${event.previous_message.ts}, total deleted=${this.deletedMessages.size}`);
+          debug(
+            `Marked message as deleted: ts=${event.previous_message.ts}, total deleted=${this.deletedMessages.size}`
+          );
           res.status(200).send();
           return;
         }
         if (event.event_ts && this.lastEventTs === event.event_ts) {
-          debug(`Duplicate event detected: event_ts=${event.event_ts}, lastEventTs=${this.lastEventTs}`);
+          debug(
+            `Duplicate event detected: event_ts=${event.event_ts}, lastEventTs=${this.lastEventTs}`
+          );
           res.status(200).send();
           return;
         }
@@ -101,7 +116,7 @@ export class SlackEventProcessor {
               await botManager.handleMessage(
                 new SlackMessage(event.text || '', event.channel, event),
                 [],
-                botInfo.config,
+                botInfo.config
               );
             }
           }
@@ -126,12 +141,17 @@ export class SlackEventProcessor {
   }
 
   public async handleHelpRequest(req: Request, res: Response): Promise<void> {
-    debug('Entering handleHelpRequest', { token: req.body.token ? 'provided' : 'missing', user_id: req.body.user_id });
+    debug('Entering handleHelpRequest', {
+      token: req.body.token ? 'provided' : 'missing',
+      user_id: req.body.user_id,
+    });
     const token = req.body.token;
     const expectedToken = slackConfig.get<any>('SLACK_HELP_COMMAND_TOKEN') as string;
 
     if (!token || token !== expectedToken) {
-      debug(`Unauthorized request: received token=${token}, expected=${expectedToken ? 'set' : 'unset'}`);
+      debug(
+        `Unauthorized request: received token=${token}, expected=${expectedToken ? 'set' : 'unset'}`
+      );
       res.status(401).send('Unauthorized');
       return;
     }
@@ -162,10 +182,30 @@ export class SlackEventProcessor {
           {
             type: 'actions',
             elements: [
-              { type: 'button', text: { type: 'plain_text', text: 'Learning Objectives' }, action_id: `learn_objectives_${userId}`, value: 'learn_objectives' },
-              { type: 'button', text: { type: 'plain_text', text: 'How-To' }, action_id: `how_to_${userId}`, value: 'how_to' },
-              { type: 'button', text: { type: 'plain_text', text: 'Contact Support' }, action_id: `contact_support_${userId}`, value: 'contact_support' },
-              { type: 'button', text: { type: 'plain_text', text: 'Report Issue' }, action_id: `report_issue_${userId}`, value: 'report_issue' },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: 'Learning Objectives' },
+                action_id: `learn_objectives_${userId}`,
+                value: 'learn_objectives',
+              },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: 'How-To' },
+                action_id: `how_to_${userId}`,
+                value: 'how_to',
+              },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: 'Contact Support' },
+                action_id: `contact_support_${userId}`,
+                value: 'contact_support',
+              },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: 'Report Issue' },
+                action_id: `report_issue_${userId}`,
+                value: 'report_issue',
+              },
             ],
           },
         ];
@@ -227,9 +267,13 @@ export class SlackEventProcessor {
         });
       }
       try {
-        const channelsResponse = await botInfo.webClient.conversations.list({ types: 'public_channel,private_channel' });
+        const channelsResponse = await botInfo.webClient.conversations.list({
+          types: 'public_channel,private_channel',
+        });
         if (channelsResponse.ok) {
-          debug(`Bot ${botId} channel list retrieved; total channels: ${channelsResponse.channels?.length || 0}`);
+          debug(
+            `Bot ${botId} channel list retrieved; total channels: ${channelsResponse.channels?.length || 0}`
+          );
         } else {
           debug(`Bot ${botId} failed to retrieve channels list: ${channelsResponse.error}`);
         }

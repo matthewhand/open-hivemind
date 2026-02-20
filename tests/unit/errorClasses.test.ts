@@ -1,4 +1,15 @@
-import { BaseHivemindError, NetworkError, ValidationError, ConfigurationError, DatabaseError, AuthenticationError, AuthorizationError, RateLimitError, TimeoutError, ApiError } from '../../src/types/errorClasses';
+import {
+  ApiError,
+  AuthenticationError,
+  AuthorizationError,
+  BaseHivemindError,
+  ConfigurationError,
+  DatabaseError,
+  NetworkError,
+  RateLimitError,
+  TimeoutError,
+  ValidationError,
+} from '../../src/types/errorClasses';
 
 describe('Error Classes', () => {
   test('should create BaseHivemindError with proper properties', () => {

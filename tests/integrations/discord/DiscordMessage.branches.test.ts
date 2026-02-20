@@ -91,7 +91,9 @@ describe('DiscordMessage - branches and edge cases', () => {
     expect(dm2.getChannelTopic()).toBeNull();
 
     // channel without topic property -> null
-    const noTopicProp = baseMessage({ channel: { id: 'c', members: undefined, messages: { fetch: jest.fn() } } });
+    const noTopicProp = baseMessage({
+      channel: { id: 'c', members: undefined, messages: { fetch: jest.fn() } },
+    });
     const dm3 = new DiscordMessage(noTopicProp as any);
     expect(dm3.getChannelTopic()).toBeNull();
 
@@ -111,7 +113,9 @@ describe('DiscordMessage - branches and edge cases', () => {
     expect(dm.getAuthorId()).toBe('user-1');
     expect(dm.getAuthorName()).toBe('TestUser');
 
-    const dmUnknown = new DiscordMessage(baseMessage({ author: baseAuthor({ username: '' }) }) as any);
+    const dmUnknown = new DiscordMessage(
+      baseMessage({ author: baseAuthor({ username: '' }) }) as any
+    );
     expect(dmUnknown.getAuthorName()).toBe('Unknown Author');
   });
 

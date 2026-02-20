@@ -27,13 +27,15 @@ class MessageDelayScheduler {
     userId: string,
     sendFn: (text: string, threadId?: string) => Promise<string>,
     useThread: boolean,
-    botConfig?: Record<string, any>,
+    botConfig?: Record<string, any>
   ): Promise<void> {
     const minDelayRaw = getMessageSetting('MESSAGE_MIN_DELAY', botConfig) || 1000;
     const delayScaleRaw = getMessageSetting('MESSAGE_DELAY_MULTIPLIER', botConfig);
-    const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
-    const minDelay = (typeof minDelayRaw === 'number' ? minDelayRaw : Number(minDelayRaw) || 1000) * delayScale;
-    await new Promise(resolve => setTimeout(resolve, minDelay));
+    const delayScale =
+      typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
+    const minDelay =
+      (typeof minDelayRaw === 'number' ? minDelayRaw : Number(minDelayRaw) || 1000) * delayScale;
+    await new Promise((resolve) => setTimeout(resolve, minDelay));
     await sendFn(text);
     debug(`Scheduled message in channel ${channelId} for user ${userId}: ${text}`);
   }

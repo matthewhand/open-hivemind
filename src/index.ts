@@ -1,3 +1,38 @@
+// Import Express types for TypeScript
+import fs from 'fs';
+import { createServer } from 'http';
+import path from 'path';
+import type { NextFunction, Request, Response } from 'express';
+import swarmRouter from '@src/admin/swarmRoutes';
+import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { authenticateToken } from '@src/server/middleware/auth';
+import { ipWhitelist } from '@src/server/middleware/security';
+import adminApiRouter from '@src/server/routes/admin';
+import authRouter from '@src/server/routes/auth';
+import botConfigRouter from '@src/server/routes/botConfig';
+import botsRouter from '@src/server/routes/bots';
+import ciRouter from '@src/server/routes/ci';
+import webuiConfigRouter from '@src/server/routes/config';
+import dashboardRouter from '@src/server/routes/dashboard';
+import enterpriseRouter from '@src/server/routes/enterprise';
+import hotReloadRouter from '@src/server/routes/hotReload';
+import importExportRouter from '@src/server/routes/importExport';
+import integrationsRouter from '@src/server/routes/integrations';
+import openapiRouter from '@src/server/routes/openapi';
+import personasRouter from '@src/server/routes/personas';
+import secureConfigRouter from '@src/server/routes/secureConfig';
+import sitemapRouter from '@src/server/routes/sitemap';
+import specsRouter from '@src/server/routes/specs';
+import validationRouter from '@src/server/routes/validation';
+import WebSocketService from '@src/server/services/WebSocketService';
+import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import StartupGreetingService from '@src/services/StartupGreetingService';
+import { getLlmProvider } from '@llm/getLlmProvider';
+import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import Logger from '@common/logger';
+import { Message } from './types/messages';
+import startupDiagnostics from './utils/startupDiagnostics';
+
 require('dotenv/config');
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
 // In development (ts-node) we instead leverage tsconfig "paths" via tsconfig-paths/register
@@ -8,9 +43,7 @@ if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
   require('module-alias/register');
 }
 const express = require('express');
-// Import Express types for TypeScript
-import type { Request, Response, NextFunction } from 'express';
-import Logger from '@common/logger';
+
 const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
@@ -19,36 +52,6 @@ const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./server/routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
-import swarmRouter from '@src/admin/swarmRoutes';
-import dashboardRouter from '@src/server/routes/dashboard';
-import webuiConfigRouter from '@src/server/routes/config';
-import botsRouter from '@src/server/routes/bots';
-import botConfigRouter from '@src/server/routes/botConfig';
-import validationRouter from '@src/server/routes/validation';
-import hotReloadRouter from '@src/server/routes/hotReload';
-import ciRouter from '@src/server/routes/ci';
-import enterpriseRouter from '@src/server/routes/enterprise';
-import secureConfigRouter from '@src/server/routes/secureConfig';
-import authRouter from '@src/server/routes/auth';
-import adminApiRouter from '@src/server/routes/admin';
-import integrationsRouter from '@src/server/routes/integrations';
-import personasRouter from '@src/server/routes/personas';
-import { authenticateToken } from '@src/server/middleware/auth';
-import { applyRateLimiting } from '@src/middleware/rateLimiter';
-import { ipWhitelist } from '@src/server/middleware/security';
-import openapiRouter from '@src/server/routes/openapi';
-import sitemapRouter from '@src/server/routes/sitemap';
-import WebSocketService from '@src/server/services/WebSocketService';
-import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
-import path from 'path';
-import fs from 'fs';
-import { createServer } from 'http';
-import { getLlmProvider } from '@llm/getLlmProvider';
-import { IdleResponseManager } from '@message/management/IdleResponseManager';
-import startupDiagnostics from './utils/startupDiagnostics';
-import StartupGreetingService from '@src/services/StartupGreetingService';
-
-import { Message } from './types/messages';
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -117,7 +120,8 @@ app.use(applyRateLimiting);
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
-  const isLocalhost = origin?.includes('localhost') ||
+  const isLocalhost =
+    origin?.includes('localhost') ||
     origin?.includes('127.0.0.1') ||
     req.hostname === 'localhost' ||
     req.hostname === '127.0.0.1';
@@ -126,7 +130,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token'
+    );
 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
@@ -153,7 +160,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader(
     'Content-Security-Policy',
-    'default-src \'self\'; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com; img-src \'self\' data: https:; connect-src \'self\' ws: wss:; font-src \'self\' data: https://fonts.gstatic.com; object-src \'none\'; frame-ancestors \'none\';',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
   );
 
   next();
@@ -207,12 +214,15 @@ if (process.env.NODE_ENV !== 'development') {
       const url = req.originalUrl;
       let template = fs.readFileSync(path.join(process.cwd(), 'src/client/index.html'), 'utf-8');
       template = await viteServer.transformIndexHtml(url, template);
-      res.status(200).set({
-        'Content-Type': 'text/html',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      }).end(template);
+      res
+        .status(200)
+        .set({
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        })
+        .end(template);
     } catch (e: any) {
       viteServer.ssrFixStacktrace(e);
       appLogger.error('Vite SSR Error', e);
@@ -231,7 +241,9 @@ if (process.env.NODE_ENV !== 'development') {
 // ─────────────────────────────────────────────────────────────────────────────
 const allowAllIPs = process.env.HTTP_ALLOW_ALL_IPS === 'true';
 if (!allowAllIPs) {
-  appLogger.info('🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)');
+  appLogger.info(
+    '🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)'
+  );
   app.use('/api', ipWhitelist);
 } else {
   appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
@@ -252,10 +264,12 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/openapi', openapiRouter);
+app.use('/api/specs', authenticateToken, specsRouter);
+app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
-app.use('/api/health', healthRoute);  // Health API endpoints
-app.use('/health', healthRoute);       // Root health endpoint (for frontend polling)
-app.use(sitemapRouter);                // Sitemap routes at root level
+app.use('/api/health', healthRoute); // Health API endpoints
+app.use('/health', healthRoute); // Root health endpoint (for frontend polling)
+app.use(sitemapRouter); // Sitemap routes at root level
 
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
@@ -287,7 +301,8 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 async function startBot(messengerService: any) {
-  const providerType = messengerService.providerName || messengerService.constructor?.name || 'Unknown';
+  const providerType =
+    messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
   try {
     debugEnvVarsModule.debugEnvVars();
@@ -301,10 +316,10 @@ async function startBot(messengerService: any) {
 
     // Initialize idle response manager
     const idleResponseManager = IdleResponseManager.getInstance();
-    idleResponseManager.initialize();
+    await idleResponseManager.initialize();
 
     messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
-      messageHandlerModule.handleMessage(message, historyMessages, botConfig),
+      messageHandlerModule.handleMessage(message, historyMessages, botConfig)
     );
     indexLog('[DEBUG] Message handler set up successfully.');
 
@@ -314,17 +329,32 @@ async function startBot(messengerService: any) {
     try {
       const mode = String(process.env.STARTUP_LOG_SYSTEM_PROMPT || 'preview').toLowerCase();
       const maxPreview = Number(process.env.STARTUP_LOG_SYSTEM_PROMPT_PREVIEW_CHARS || 280);
-      const summaries = typeof messengerService.getAgentStartupSummaries === 'function'
-        ? messengerService.getAgentStartupSummaries()
-        : [];
+      const summaries =
+        typeof messengerService.getAgentStartupSummaries === 'function'
+          ? messengerService.getAgentStartupSummaries()
+          : [];
 
       const renderPrompt = (p: string | undefined) => {
         const text = String(p || '').trim();
-        if (!text) { return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: 0 }; }
-        if (mode === 'off') { return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: text.length }; }
-        if (mode === 'full') { return { systemPromptMode: 'full', systemPrompt: text, systemPromptLength: text.length }; }
+        if (!text) {
+          return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: 0 };
+        }
+        if (mode === 'off') {
+          return {
+            systemPromptMode: 'off',
+            systemPromptPreview: '',
+            systemPromptLength: text.length,
+          };
+        }
+        if (mode === 'full') {
+          return { systemPromptMode: 'full', systemPrompt: text, systemPromptLength: text.length };
+        }
         const preview = text.length > maxPreview ? `${text.slice(0, maxPreview)}…` : text;
-        return { systemPromptMode: 'preview', systemPromptPreview: preview, systemPromptLength: text.length };
+        return {
+          systemPromptMode: 'preview',
+          systemPromptPreview: preview,
+          systemPromptLength: text.length,
+        };
       };
 
       for (const s of summaries) {
@@ -341,7 +371,9 @@ async function startBot(messengerService: any) {
         });
       }
     } catch (e) {
-      appLogger.warn('Failed to log bot startup summaries', { error: e instanceof Error ? e.message : String(e) });
+      appLogger.warn('Failed to log bot startup summaries', {
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
 
     // Log successful provider initialization
@@ -354,9 +386,13 @@ async function startBot(messengerService: any) {
     // Send Welcome Message if enabled
     const enableWelcome = process.env.ENABLE_WELCOME_MESSAGE === 'true';
     if (enableWelcome) {
-      const defaultChannel = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
+      const defaultChannel = messengerService.getDefaultChannel
+        ? messengerService.getDefaultChannel()
+        : null;
       if (defaultChannel) {
-        const welcomeText = process.env.WELCOME_MESSAGE_TEXT || '🤖 System Online: I am now connected and ready to assist.';
+        const welcomeText =
+          process.env.WELCOME_MESSAGE_TEXT ||
+          '🤖 System Online: I am now connected and ready to assist.';
         appLogger.info('Sending welcome message', { channel: defaultChannel, text: welcomeText });
 
         try {
@@ -385,15 +421,16 @@ async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 
-
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
 
-  const llmProviders = getLlmProvider();
-  appLogger.info('🤖 Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
+  const llmProviders = await getLlmProvider();
+  appLogger.info('🤖 Resolved LLM providers', {
+    providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+  });
 
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
@@ -403,14 +440,16 @@ async function main() {
   } else {
     appLogger.info('📡 Initializing messenger services');
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
-    const messageProviders = (typeof rawMessageProviders === 'string'
-      ? rawMessageProviders.split(',').map((v: string) => v.trim())
-      : Array.isArray(rawMessageProviders)
-        ? rawMessageProviders
-        : ['slack']) as string[];
+    const messageProviders = (
+      typeof rawMessageProviders === 'string'
+        ? rawMessageProviders.split(',').map((v: string) => v.trim())
+        : Array.isArray(rawMessageProviders)
+          ? rawMessageProviders
+          : ['slack']
+    ) as string[];
     appLogger.info('📡 Message providers configured', { providers: messageProviders });
 
-    messengerServices = messengerProviderModule.getMessengerProvider();
+    messengerServices = await messengerProviderModule.getMessengerProvider();
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
     const filteredMessengers = messengerServices.filter((service: any) => {
       // If providerName is not defined, assume 'slack' by default.
@@ -427,16 +466,22 @@ async function main() {
       appLogger.info('🤖 Starting messenger bots', {
         services: filteredMessengers.map((s: any) => s.providerName).join(', '),
       });
-      await Promise.all(filteredMessengers.map(async (service) => {
-        await startBot(service);
-        appLogger.info('✅ Bot started', { provider: service.providerName });
-      }));
+      await Promise.all(
+        filteredMessengers.map(async (service) => {
+          await startBot(service);
+          appLogger.info('✅ Bot started', { provider: service.providerName });
+        })
+      );
     } else {
-      appLogger.info('🤖 No specific messenger service configured - starting all available services');
-      await Promise.all(messengerServices.map(async (service) => {
-        await startBot(service);
-        appLogger.info('✅ Bot started', { provider: service.providerName });
-      }));
+      appLogger.info(
+        '🤖 No specific messenger service configured - starting all available services'
+      );
+      await Promise.all(
+        messengerServices.map(async (service) => {
+          await startBot(service);
+          appLogger.info('✅ Bot started', { provider: service.providerName });
+        })
+      );
     }
   }
 
@@ -498,10 +543,15 @@ async function main() {
   if (isWebhookEnabled) {
     appLogger.info('🪝 Webhook service enabled - registering routes');
     for (const messengerService of messengerServices) {
-      const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
+      const channelId = messengerService.getDefaultChannel
+        ? messengerService.getDefaultChannel()
+        : null;
       if (channelId) {
         await webhookServiceModule.webhookService.start(app, messengerService, channelId);
-        appLogger.info('✅ Webhook route registered', { provider: messengerService.providerName, channelId });
+        appLogger.info('✅ Webhook route registered', {
+          provider: messengerService.providerName,
+          channelId,
+        });
       }
     }
   } else {

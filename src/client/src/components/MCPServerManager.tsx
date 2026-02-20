@@ -21,6 +21,18 @@ interface MCPTool {
   inputSchema: unknown;
 }
 
+const getAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const stored = localStorage.getItem('auth_tokens');
+    if (stored) {
+      const parsed = JSON.parse(stored) as { accessToken?: string };
+      if (parsed.accessToken) headers['Authorization'] = `Bearer ${parsed.accessToken}`;
+    }
+  } catch { /* ignore */ }
+  return headers;
+};
+
 const MCPServerManager: React.FC = () => {
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +50,8 @@ const MCPServerManager: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/admin/mcp-servers');
-      if (!response.ok) {throw new Error('Failed to fetch MCP servers');}
+      const response = await fetch('/api/admin/mcp-servers', { headers: getAuthHeaders() });
+      if (!response.ok) { throw new Error('Failed to fetch MCP servers'); }
       const data = await response.json();
 
       const serverList: MCPServer[] = [];
@@ -71,10 +83,10 @@ const MCPServerManager: React.FC = () => {
     try {
       const response = await fetch('/api/admin/mcp-servers/connect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(formData),
       });
-      if (!response.ok) {throw new Error('Failed to connect to MCP server');}
+      if (!response.ok) { throw new Error('Failed to connect to MCP server'); }
       setToastMessage('MCP server connected successfully');
       setToastType('success');
       setConnectDialogOpen(false);
@@ -87,14 +99,14 @@ const MCPServerManager: React.FC = () => {
   };
 
   const handleDisconnectServer = async (serverName: string) => {
-    if (!confirm(`Disconnect from "${serverName}"?`)) {return;}
+    if (!confirm(`Disconnect from "${serverName}"?`)) { return; }
     try {
       const response = await fetch('/api/admin/mcp-servers/disconnect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ name: serverName }),
       });
-      if (!response.ok) {throw new Error('Failed to disconnect');}
+      if (!response.ok) { throw new Error('Failed to disconnect'); }
       setToastMessage('MCP server disconnected');
       setToastType('success');
       fetchServers();
@@ -107,8 +119,8 @@ const MCPServerManager: React.FC = () => {
   const handleViewTools = async (server: MCPServer) => {
     setSelectedServer(server);
     try {
-      const response = await fetch(`/api/admin/mcp-servers/${server.name}/tools`);
-      if (!response.ok) {throw new Error('Failed to fetch tools');}
+      const response = await fetch(`/api/admin/mcp-servers/${server.name}/tools`, { headers: getAuthHeaders() });
+      if (!response.ok) { throw new Error('Failed to fetch tools'); }
       const data = await response.json();
       setServerTools(data.tools || []);
       setToolsDialogOpen(true);

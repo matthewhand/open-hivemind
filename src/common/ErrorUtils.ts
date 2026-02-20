@@ -11,7 +11,7 @@ export enum ErrorClassification {
   SYSTEM_ERROR = 'system_error',
   NETWORK_ERROR = 'network_error',
   VALIDATION_ERROR = 'validation_error',
-  UNKNOWN_ERROR = 'unknown_error'
+  UNKNOWN_ERROR = 'unknown_error',
 }
 
 export class ErrorUtils {
@@ -51,13 +51,20 @@ export class ErrorUtils {
    * @param error - The HivemindError to classify.
    * @returns An object containing the classification and suggested log level.
    */
-  public static classifyError(error: HivemindError): { classification: ErrorClassification; logLevel: 'error' | 'warn' | 'info' } {
+  public static classifyError(error: HivemindError): {
+    classification: ErrorClassification;
+    logLevel: 'error' | 'warn' | 'info';
+  } {
     // Check for specific error codes or messages
     if (error.code === 'VALIDATION_ERROR' || error.message.toLowerCase().includes('validation')) {
       return { classification: ErrorClassification.VALIDATION_ERROR, logLevel: 'warn' };
     }
 
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.message.toLowerCase().includes('network')) {
+    if (
+      error.code === 'ECONNREFUSED' ||
+      error.code === 'ENOTFOUND' ||
+      error.message.toLowerCase().includes('network')
+    ) {
       return { classification: ErrorClassification.NETWORK_ERROR, logLevel: 'error' };
     }
 
@@ -82,8 +89,10 @@ export class ErrorUtils {
   public static getMessage(error: HivemindError): string {
     // For user errors, return the original message
     const classification = this.classifyError(error);
-    if (classification.classification === ErrorClassification.USER_ERROR ||
-        classification.classification === ErrorClassification.VALIDATION_ERROR) {
+    if (
+      classification.classification === ErrorClassification.USER_ERROR ||
+      classification.classification === ErrorClassification.VALIDATION_ERROR
+    ) {
       return error.message;
     }
 

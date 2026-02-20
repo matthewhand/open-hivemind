@@ -1,9 +1,8 @@
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const DiscordMgr = require('@hivemind/adapter-discord');
 const SlackMgr = require('../../integrations/slack/SlackService');
 const MattermostMgr = (() => {
   try {
@@ -27,11 +26,10 @@ const MattermostMgr = (() => {
  */
 // Ensure CommonJS require compatibility for tests using jest.mock()
 function __require(modulePath: string): any {
-
   return require(modulePath);
 }
 
-export function getMessengerProvider() {
+export async function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
 
   let messengersConfig: any = {};
@@ -48,11 +46,15 @@ export function getMessengerProvider() {
   // Derive MESSAGE_PROVIDER filter similar to src/index.ts bootstrap
   // Supports string or array-like values via environment (primary) or config fallback
   const rawProviders = process.env.MESSAGE_PROVIDER || messengersConfig.MESSAGE_PROVIDER;
-  const providerFilter: string[] = typeof rawProviders === 'string'
-    ? rawProviders.split(',').map((v: string) => v.trim().toLowerCase()).filter(Boolean)
-    : Array.isArray(rawProviders)
-      ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
-      : [];
+  const providerFilter: string[] =
+    typeof rawProviders === 'string'
+      ? rawProviders
+          .split(',')
+          .map((v: string) => v.trim().toLowerCase())
+          .filter(Boolean)
+      : Array.isArray(rawProviders)
+        ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
+        : [];
 
   const wantProvider = (name: string) => {
     return providerFilter.length === 0 || providerFilter.includes(name.toLowerCase());
@@ -74,10 +76,10 @@ export function getMessengerProvider() {
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (hasDiscord && wantProvider('discord')) {
     try {
-      const svc =
-        DiscordMgr?.DiscordService?.getInstance
-          ? DiscordMgr.DiscordService.getInstance()
-          : undefined;
+      const DiscordMgr = await import('@hivemind/adapter-discord');
+      const svc = DiscordMgr?.DiscordService?.getInstance
+        ? DiscordMgr.DiscordService.getInstance()
+        : undefined;
       if (svc) {
         // Ensure provider identity is exposed for tests
         if (typeof (svc as any).provider === 'undefined') {
@@ -85,7 +87,9 @@ export function getMessengerProvider() {
         }
         messengerServices.push(svc);
         gmpDebug('Initialized Discord provider');
-        gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(
+          `Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`
+        );
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Discord provider: ${e?.message || String(e)}`);
@@ -113,7 +117,9 @@ export function getMessengerProvider() {
         }
         messengerServices.push(svc);
         gmpDebug('Initialized Slack provider');
-        gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(
+          `Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`
+        );
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Slack provider: ${e?.message || String(e)}`);
@@ -137,14 +143,17 @@ export function getMessengerProvider() {
         gmpDebug('Mattermost provider module present but no getInstance found; skipping');
       }
     } catch (e: any) {
-      const errMsg = (e && typeof e === 'object' && 'message' in e) ? (e as Error).message : String(e);
+      const errMsg =
+        e && typeof e === 'object' && 'message' in e ? (e as Error).message : String(e);
       gmpDebug(`Failed to initialize Mattermost provider: ${errMsg}`);
     }
   }
 
   // If filter is set but nothing matched, do not silently default; log and keep empty to surface config issues
   if (providerFilter.length > 0 && messengerServices.length === 0) {
-    gmpDebug(`MESSAGE_PROVIDER filter set (${providerFilter.join(', ')}), but no configured instances found in messengers.json`);
+    gmpDebug(
+      `MESSAGE_PROVIDER filter set (${providerFilter.join(', ')}), but no configured instances found in messengers.json`
+    );
   }
 
   if (messengerServices.length === 0) {
@@ -172,14 +181,16 @@ export function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
-          sendMessageToChannel: () => { },
+          sendMessageToChannel: () => {},
           getClientId: () => 'SLACK_CLIENT_ID',
         });
       }
     }
   }
 
-  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p: any) => p?.provider).join(',')}`);
+  gmpDebug(
+    `Returning ${messengerServices.length} provider(s): ${messengerServices.map((p: any) => p?.provider).join(',')}`
+  );
   return messengerServices;
 }
 

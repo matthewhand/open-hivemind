@@ -1,5 +1,4 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
 
 export const installer = new SwarmInstaller();
@@ -10,7 +9,7 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
   try {
     const pythonAvailable = await installer.checkPython();
     const swarmInstalled = await installer.checkSwarmInstalled();
-    
+
     res.json({
       ok: true,
       pythonAvailable,

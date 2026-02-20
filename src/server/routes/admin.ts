@@ -1,17 +1,16 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
-import { authenticate, requireAdmin } from '../../auth/middleware';
-import { csrfProtection } from '../middleware/csrf';
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
+import { Router, type Request, type Response } from 'express';
+import { authenticate, requireAdmin } from '../../auth/middleware';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import { webUIStorage } from '../../storage/webUIStorage';
-import { getRelevantEnvVars, checkBotEnvOverrides } from '../../utils/envUtils';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import Debug from 'debug';
+import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
+import activityRouter from './activity';
 import agentsRouter from './agents';
 import mcpRouter from './mcp';
-import activityRouter from './activity';
+
 const router = Router();
 const debug = Debug('app:webui:admin');
 
@@ -27,11 +26,11 @@ const rateLimit = require('express-rate-limit').default;
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many configuration attempts, please try again later.',
-    standardHeaders: true,
-  });
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      message: 'Too many configuration attempts, please try again later.',
+      standardHeaders: true,
+    });
 
 // Apply rate limiting to sensitive configuration operations
 router.use('/api/admin', configRateLimit);
@@ -86,7 +85,7 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
 });
 
 // POST /api/admin/tool-usage-guards - Create a new tool usage guard
-router.post('/api/admin/tool-usage-guards', csrfProtection, configRateLimit, (req: Request, res: Response) => {
+router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
 
@@ -133,7 +132,7 @@ router.post('/api/admin/tool-usage-guards', csrfProtection, configRateLimit, (re
 });
 
 // PUT /api/admin/tool-usage-guards/:id - Update an existing tool usage guard
-router.put('/api/admin/tool-usage-guards/:id', csrfProtection, configRateLimit, (req: Request, res: Response) => {
+router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
@@ -181,47 +180,55 @@ router.put('/api/admin/tool-usage-guards/:id', csrfProtection, configRateLimit, 
 });
 
 // DELETE /api/admin/tool-usage-guards/:id - Delete a tool usage guard
-router.delete('/api/admin/tool-usage-guards/:id', csrfProtection, configRateLimit, (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+router.delete(
+  '/api/admin/tool-usage-guards/:id',
+  configRateLimit,
+  (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
 
-    // In a real implementation, this would delete from database
-    // For now, just return success
+      // In a real implementation, this would delete from database
+      // For now, just return success
 
-    res.json({
-      success: true,
-      message: 'Tool usage guard deleted successfully',
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      error: 'Failed to delete tool usage guard',
-      message: error.message || 'An error occurred while deleting tool usage guard',
-    });
+      res.json({
+        success: true,
+        message: 'Tool usage guard deleted successfully',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to delete tool usage guard',
+        message: error.message || 'An error occurred while deleting tool usage guard',
+      });
+    }
   }
-});
+);
 
 // POST /api/admin/tool-usage-guards/:id/toggle - Toggle tool usage guard active status
-router.post('/api/admin/tool-usage-guards/:id/toggle', csrfProtection, configRateLimit, (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { isActive } = req.body;
+router.post(
+  '/api/admin/tool-usage-guards/:id/toggle',
+  configRateLimit,
+  (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
 
-    // In a real implementation, this would update in database
-    // For now, just return success
+      // In a real implementation, this would update in database
+      // For now, just return success
 
-    res.json({
-      success: true,
-      message: 'Tool usage guard status updated successfully',
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      error: 'Failed to update guard status',
-      message: error.message || 'An error occurred while updating guard status',
-    });
+      res.json({
+        success: true,
+        message: 'Tool usage guard status updated successfully',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to update guard status',
+        message: error.message || 'An error occurred while updating guard status',
+      });
+    }
   }
-});
+);
 // POST /api/admin/llm-providers - Create a new LLM provider
-router.post('/api/admin/llm-providers', csrfProtection, configRateLimit, (req: Request, res: Response) => {
+router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -267,7 +274,7 @@ router.post('/api/admin/llm-providers', csrfProtection, configRateLimit, (req: R
 });
 
 // PUT /api/admin/llm-providers/:id - Update an existing LLM provider
-router.put('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res: Response) => {
+router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -309,7 +316,7 @@ router.put('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res: R
 });
 
 // DELETE /api/admin/llm-providers/:id - Delete an LLM provider
-router.delete('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res: Response) => {
+router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -329,7 +336,7 @@ router.delete('/api/admin/llm-providers/:id', csrfProtection, (req: Request, res
 });
 
 // POST /api/admin/llm-providers/:id/toggle - Toggle LLM provider active status
-router.post('/api/admin/llm-providers/:id/toggle', csrfProtection, (req: Request, res: Response) => {
+router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -360,7 +367,7 @@ router.post('/api/admin/llm-providers/:id/toggle', csrfProtection, (req: Request
 });
 
 // POST /api/admin/messenger-providers - Create a new messenger provider
-router.post('/api/admin/messenger-providers', csrfProtection, (req: Request, res: Response) => {
+router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -409,7 +416,7 @@ router.post('/api/admin/messenger-providers', csrfProtection, (req: Request, res
 });
 
 // PUT /api/admin/messenger-providers/:id - Update an existing messenger provider
-router.put('/api/admin/messenger-providers/:id', csrfProtection, (req: Request, res: Response) => {
+router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -463,7 +470,7 @@ router.put('/api/admin/messenger-providers/:id', csrfProtection, (req: Request, 
 });
 
 // DELETE /api/admin/messenger-providers/:id - Delete a messenger provider
-router.delete('/api/admin/messenger-providers/:id', csrfProtection, (req: Request, res: Response) => {
+router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -483,7 +490,7 @@ router.delete('/api/admin/messenger-providers/:id', csrfProtection, (req: Reques
 });
 
 // POST /api/admin/messenger-providers/:id/toggle - Toggle messenger provider active status
-router.post('/api/admin/messenger-providers/:id/toggle', csrfProtection, (req: Request, res: Response) => {
+router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -512,7 +519,6 @@ router.post('/api/admin/messenger-providers/:id/toggle', csrfProtection, (req: R
     });
   }
 });
-
 
 // Get available LLM providers
 router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
@@ -594,7 +600,7 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
 });
 
 // Save a new persona
-router.post('/api/admin/personas', csrfProtection, (req: Request, res: Response) => {
+router.post('/api/admin/personas', (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
 
@@ -629,7 +635,7 @@ router.post('/api/admin/personas', csrfProtection, (req: Request, res: Response)
 });
 
 // Update an existing persona
-router.put('/api/admin/personas/:key', csrfProtection, (req: Request, res: Response) => {
+router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -658,7 +664,7 @@ router.put('/api/admin/personas/:key', csrfProtection, (req: Request, res: Respo
 });
 
 // Delete a persona
-router.delete('/api/admin/personas/:key', csrfProtection, (req: Request, res: Response) => {
+router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
 
@@ -678,52 +684,56 @@ router.delete('/api/admin/personas/:key', csrfProtection, (req: Request, res: Re
 });
 
 // Connect to an MCP server
-router.post('/api/admin/mcp-servers/connect', csrfProtection, configRateLimit, async (req: Request, res: Response) => {
-  try {
-    const { serverUrl, apiKey, name } = req.body;
-
-    // Validation
-    if (!serverUrl || !name) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Server URL and name are required',
-      });
-    }
-
-    // Validate URL format
+router.post(
+  '/api/admin/mcp-servers/connect',
+  configRateLimit,
+  async (req: Request, res: Response) => {
     try {
-      new URL(serverUrl);
-    } catch {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Server URL must be a valid URL',
+      const { serverUrl, apiKey, name } = req.body;
+
+      // Validation
+      if (!serverUrl || !name) {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'Server URL and name are required',
+        });
+      }
+
+      // Validate URL format
+      try {
+        new URL(serverUrl);
+      } catch {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'Server URL must be a valid URL',
+        });
+      }
+
+      // Sanitize API key for storage
+      const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
+
+      const mcpService = MCPService.getInstance();
+      const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
+
+      // Save to persistent storage with sanitized API key
+      webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
+
+      res.json({
+        success: true,
+        data: { tools },
+        message: `Successfully connected to MCP server: ${name}`,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to connect to MCP server',
+        message: error.message || 'An error occurred while connecting to MCP server',
       });
     }
-
-    // Sanitize API key for storage
-    const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
-
-    const mcpService = MCPService.getInstance();
-    const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
-
-    // Save to persistent storage with sanitized API key
-    webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
-
-    res.json({
-      success: true,
-      data: { tools },
-      message: `Successfully connected to MCP server: ${name}`,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      error: 'Failed to connect to MCP server',
-      message: error.message || 'An error occurred while connecting to MCP server',
-    });
   }
-});
+);
 
 // Disconnect from an MCP server
-router.post('/api/admin/mcp-servers/disconnect', csrfProtection, async (req: Request, res: Response) => {
+router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
 
@@ -880,14 +890,16 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
       /^AGENT_/,
     ];
 
-    Object.keys(process.env).forEach(key => {
-      if (envVarPatterns.some(pattern => pattern.test(key))) {
+    Object.keys(process.env).forEach((key) => {
+      if (envVarPatterns.some((pattern) => pattern.test(key))) {
         const value = process.env[key];
         if (value) {
           // Redact sensitive values
-          if (key.toLowerCase().includes('token') ||
+          if (
+            key.toLowerCase().includes('token') ||
             key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret')) {
+            key.toLowerCase().includes('secret')
+          ) {
             envOverrides[key] = `***${value.slice(-4)}`;
           } else if (value.length > 20) {
             envOverrides[key] = `${value.slice(0, 10)}...${value.slice(-4)}`;

@@ -24,6 +24,8 @@ import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
 
 const API_BASE = '/api';
 
@@ -39,6 +41,7 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -402,365 +405,118 @@ const BotsPage: React.FC = () => {
           ) : (
             <div className="flex flex-col gap-2">
               {bots.map((bot) => (
-                <div key={bot.id} className="collapse collapse-arrow bg-base-100 border border-base-300 hover:shadow-md transition-shadow">
-                  <input type="radio" name="bots-accordion" className="peer" />
-                  <div className="collapse-title flex items-center justify-between pr-12 py-4">
-                    <div className="flex items-center gap-4">
-                      <BotAvatar bot={bot} />
-                      <div className="flex flex-col">
+                <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
+                  <div className="flex items-center gap-4">
+                    <BotAvatar bot={bot} />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
                         <span className="font-bold text-lg">{bot.name}</span>
-                        <div className="flex items-center gap-2 text-sm text-base-content/60">
-                          <span className="font-mono text-xs opacity-50">{bot.id}</span>
+                        <div className="bg-base-200 px-2 py-0.5 rounded text-[10px] font-mono opacity-50 group-hover:opacity-100 transition-opacity">
+                          {bot.id}
                         </div>
                       </div>
-                    </div>
-                    {/* Status Toggle and Badge on the right */}
-                    <div className="flex items-center gap-3 z-10" onClick={(e) => e.stopPropagation()}>
-                      <div className="text-right">
-                        {getStatusBadge(bot.status, bot.connected)}
+
+                      <div className="flex items-center gap-4 text-xs text-base-content/60 mt-1">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3 opacity-70" />
+                          {(bot as any).messageProvider || bot.provider || 'No Msg'}
+                        </span>
+                        <span className="flex items-center gap-1 border-l border-base-content/20 pl-4">
+                          <Cpu className="w-3 h-3 opacity-70" />
+                          {bot.llmProvider ? (
+                            llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
+                          ) : 'Default LLM'}
+                        </span>
+                        {bot.messageCount > 0 && (
+                          <span className="flex items-center gap-1 border-l border-base-content/20 pl-4" title="Messages Processed">
+                            <Activity className="w-3 h-3 opacity-70" /> {bot.messageCount}
+                          </span>
+                        )}
                       </div>
-                      <input
-                        type="checkbox"
-                        className={`toggle toggle-sm ${bot.status === 'active' ? 'toggle-success' : ''}`}
-                        checked={bot.status === 'active'}
-                        onChange={() => handleToggleStatus(bot)}
-                        disabled={actionLoading === bot.id}
-                      />
                     </div>
                   </div>
 
-                  <div className="collapse-content">
-                    <div className="divider my-0"></div>
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pt-4 pb-2">
-                      {/* Column 1: Integrations */}
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
-                          Integrations
-                          <div className="tooltip tooltip-right" data-tip="Configure external services this bot connects to.">
-                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
-                          </div>
-                        </h4>
-
-                        {/* Message Provider */}
-                        <div className="form-control w-full">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
-                              <MessageSquare className="w-3 h-3" /> Messenger
-                              <div className="tooltip tooltip-top" data-tip="The platform where this bot sends and receives messages (e.g., Discord, Slack).">
-                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
-                              </div>
-                            </span>
-                          </div>
-                          <div className="dropdown w-full">
-                            <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {(bot as any).messageProvider || bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
-                            </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
-                              {getIntegrationOptions('message').map(opt => (
-                                <li key={opt}>
-                                  <a onClick={() => { handleUpdateConfig(bot, 'messageProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.provider === opt ? 'active' : ''}>
-                                    {opt}
-                                  </a>
-                                </li>
-                              ))}
-                              <div className="divider my-1"></div>
-                              <li>
-                                <a href="/admin/integrations/message" target="_blank" className="flex gap-2 items-center text-primary">
-                                  <Plus className="w-3 h-3" /> New Messenger
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* LLM Provider / Profile */}
-                        <div className="form-control w-full" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
-                              <Cpu className="w-3 h-3" /> LLM Profile
-                              <div className="tooltip tooltip-top" data-tip="Select an LLM Profile for this bot.">
-                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
-                              </div>
-                            </span>
-                          </div>
-                          <div className="dropdown w-full">
-                            <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.llmProvider || <span className="opacity-50 italic">System Default</span>} <Edit2 className="w-3 h-3 opacity-50" />
-                            </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
-                              {/* System Default Option */}
-                              <li>
-                                <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', ''); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.llmProvider ? 'active' : ''}>
-                                  <span className="italic opacity-75">System Default</span>
-                                </a>
-                              </li>
-
-                              <div className="divider my-1"></div>
-
-                              {/* Custom Profiles */}
-                              {llmProfiles.map(profile => (
-                                <li key={profile.key}>
-                                  <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
-                                    <div className="flex flex-col gap-0.5">
-                                      <span>{profile.name}</span>
-                                      <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
-                                    </div>
-                                  </a>
-                                </li>
-                              ))}
-
-                              <div className="divider my-1"></div>
-                              <li>
-                                <a href="/admin/integrations/llm" target="_blank" className="flex gap-2 items-center text-primary">
-                                  <Plus className="w-3 h-3" /> New Profile
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Column 2: Settings (Persona & Guards) */}
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
-                          Settings
-                          <div className="tooltip tooltip-right" data-tip="Configure behavior and safety rules.">
-                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
-                          </div>
-                        </h4>
-
-                        {/* Persona Selector */}
-                        <div className="form-control w-full">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
-                              <User className="w-3 h-3" /> Persona
-                              <div className="tooltip tooltip-top" data-tip="Defines the bot's personality and system instructions.">
-                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
-                              </div>
-                            </span>
-                          </div>
-                          <div className="dropdown w-full">
-                            <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.persona || 'default'} <Edit2 className="w-3 h-3 opacity-50" />
-                            </div>
-                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
-                              {Array.from(new Set(['default', ...bots.map(b => b.persona).filter(Boolean) as string[]])).map(p => (
-                                <li key={p}>
-                                  <a onClick={() => { handleUpdatePersona(bot, p); (document.activeElement as HTMLElement)?.blur(); }} className={bot.persona === p ? 'active' : ''}>
-                                    {p}
-                                  </a>
-                                </li>
-                              ))}
-                              <div className="divider my-1"></div>
-                              <li>
-                                <a onClick={() => {
-                                  const newP = prompt('Enter new persona name:');
-                                  if (newP) { handleUpdatePersona(bot, newP); }
-                                }}>
-                                  <Plus className="w-3 h-3" /> New Persona
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* Guards */}
-                        <div className="collapse collapse-arrow border border-base-200 bg-base-100 rounded-lg">
-                          <input type="checkbox" className="min-h-0 h-8" />
-                          <div className="collapse-title min-h-0 h-8 p-2 flex items-center gap-2 text-sm font-medium">
-                            <Shield className="w-3 h-3" /> Guards
-                          </div>
-                          <div className="collapse-content text-xs space-y-2 pt-2">
-                            <label className="flex items-center justify-between cursor-pointer">
-                              <span className="flex items-center gap-1">
-                                Access Control
-                                <div className="tooltip tooltip-right" data-tip="Limit who can interact with this bot.">
-                                  <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
-                                </div>
-                              </span>
-                              <input type="checkbox" className="toggle toggle-xs toggle-success" disabled checked={!!bot.config?.mcpGuard?.enabled} />
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer opacity-50">
-                              <span>Rate Limiter</span>
-                              <input type="checkbox" className="toggle toggle-xs" disabled />
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer opacity-50">
-                              <span>Content Filter</span>
-                              <input type="checkbox" className="toggle toggle-xs" disabled />
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Column 3: Management */}
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
-                          Management
-                          <div className="tooltip tooltip-right" data-tip="Administrative actions for this bot.">
-                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
-                          </div>
-                        </h4>
-                        <div className="grid grid-cols-1 gap-2">
-                          <button
-                            className="btn btn-sm btn-ghost border border-base-300 w-full justify-start gap-2"
-                            onClick={() => setPreviewBot(bot)}
-                          >
-                            <Eye className="w-4 h-4" /> View Details & Logs
-                          </button>
-                          <button
-                            className="btn btn-sm btn-ghost border border-base-300 w-full justify-start gap-2"
-                            onClick={() => handleClone(bot)}
-                            disabled={actionLoading === bot.id}
-                          >
-                            <Copy className="w-4 h-4" /> Clone Configuration
-                          </button>
-                          <div className={bot.envOverrides && Object.keys(bot.envOverrides).length > 0 ? 'tooltip tooltip-left w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
-                            <button
-                              className="btn btn-sm btn-ghost border border-red-200 text-error hover:bg-error/10 w-full justify-start gap-2"
-                              onClick={() => setDeleteModal({ isOpen: true, bot })}
-                              disabled={!!(bot.envOverrides && Object.keys(bot.envOverrides).length > 0)}
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete Bot
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end mr-4">
+                      {getStatusBadge(bot.status, bot.connected)}
                     </div>
+
+                    {/* Toggle Status */}
+                    <input
+                      type="checkbox"
+                      className={`toggle toggle-sm ${bot.status === 'active' ? 'toggle-success' : ''}`}
+                      checked={bot.status === 'active'}
+                      onChange={() => handleToggleStatus(bot)}
+                      disabled={actionLoading === bot.id}
+                      title="Toggle Bot Status"
+                    />
+
+                    <div className="divider divider-horizontal mx-1 h-8"></div>
+
+                    {/* Settings Button (Opens Modal) */}
+                    <button
+                      className="btn btn-sm btn-square btn-ghost"
+                      onClick={() => setSelectedBotForConfig(bot)}
+                      title="Bot Settings"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Create Bot Modal */}
-      <Modal
+      {/* Bot Settings Modal */}
+      {selectedBotForConfig && (
+        <BotSettingsModal
+          isOpen={!!selectedBotForConfig}
+          onClose={() => setSelectedBotForConfig(null)}
+          bot={selectedBotForConfig}
+          personas={personas}
+          llmProfiles={llmProfiles}
+          integrationOptions={{ message: getIntegrationOptions('message') }}
+          onUpdateConfig={async (bot: any, key: string, value: any) => {
+            // Wrap update to refresh selected bot state if needed
+            await handleUpdateConfig(bot, key as any, value);
+            // We might need to fetch the updated bot from the list to keep modal in sync?
+            // Since handleUpdateConfig updates state, the 'bot' prop from the list *should* update if we keyed it correctly.
+            // But 'selectedBotForConfig' is a separate state piece. We need to update it too.
+            setSelectedBotForConfig(prev => prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null);
+          }}
+          onUpdatePersona={async (bot: any, pid: string) => {
+            await handleUpdatePersona(bot, pid);
+            setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
+          }}
+          onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
+          onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
+        />
+      )}
+
+      {/* Create Bot Wizard Modal */}
+      < Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Bot"
         size="lg"
       >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Bot Name</span></label>
-              <input
-                type="text"
-                placeholder="my-bot"
-                className="input input-bordered w-full"
-                value={newBotName}
-                onChange={(e) => setNewBotName(e.target.value)}
-              />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Description</span></label>
-              <input
-                type="text"
-                placeholder="What does this bot do?"
-                className="input input-bordered w-full"
-                value={newBotDesc}
-                onChange={(e) => setNewBotDesc(e.target.value)}
-              />
-            </div>
-
-            <div className="form-control md:col-span-2">
-              <label className="label"><span className="label-text">Initial Persona</span></label>
-              <select
-                className="select select-bordered w-full"
-                value={newBotPersona}
-                onChange={(e) => setNewBotPersona(e.target.value)}
-              >
-                <option value="default">Default (Helpful Assistant)</option>
-                {personas.filter(p => p.id !== 'default').map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} {p.isBuiltIn ? '(Built-in)' : ''}
-                  </option>
-                ))}
-              </select>
-              <label className="label">
-                <span className="label-text-alt text-base-content/60">
-                  {personas.find(p => p.id === newBotPersona || p.name === newBotPersona)?.systemPrompt?.substring(0, 100)}...
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="divider">Integrations</div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Message Provider <span className="text-error">*</span></span></label>
-              <div className="flex gap-2">
-                <select
-                  className={`select select-bordered w-full ${!newBotMessageProvider ? 'select-error' : ''}`}
-                  value={newBotMessageProvider}
-                  onChange={(e) => setNewBotMessageProvider(e.target.value)}
-                >
-                  <option value="">Select Provider</option>
-                  <option value="discord">Discord</option>
-                  <option value="slack">Slack</option>
-                </select>
-                <button
-                  type="button"
-                  className="btn btn-square btn-outline"
-                  onClick={() => window.location.href = '/admin/integrations/message'}
-                  title="Create New Message Provider"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-              <label className="label">
-                <span className="label-text-alt text-base-content/60">Multiple message providers can be added after creation.</span>
-              </label>
-            </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span></label>
-              <select
-                className={`select select-bordered w-full ${(!newBotLlmProvider && !defaultLlmConfigured) ? 'select-error' : ''}`}
-                value={newBotLlmProvider}
-                onChange={(e) => setNewBotLlmProvider(e.target.value)}
-              >
-                <option value="">
-                  {defaultLlmConfigured ? 'Use System Default' : 'Select Profile'}
-                </option>
-                {llmProfiles.map(p => (
-                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
-                ))}
-              </select>
-              {!defaultLlmConfigured && (
-                <div className="alert alert-warning mt-2">
-                  <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
-                  <a
-                    className="btn btn-xs btn-outline ml-auto"
-                    href="/admin/integrations/llm"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Configure LLM
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
-            <button
-              className="btn btn-primary"
-              onClick={handleCreateBot}
-              disabled={actionLoading === 'create' || !canCreateBot}
-            >
-              {actionLoading === 'create' ? <span className="loading loading-spinner loading-xs" /> : 'Create Bot'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+        <CreateBotWizard
+          onCancel={() => setShowCreateModal(false)}
+          onSuccess={async () => {
+            setShowCreateModal(false);
+            await fetchData();
+          }}
+          personas={personas}
+          llmProfiles={llmProfiles}
+          defaultLlmConfigured={defaultLlmConfigured}
+        />
+      </Modal >
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      < Modal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, bot: null })}
         title="Delete Bot"
@@ -780,10 +536,10 @@ const BotsPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </Modal>
+      </Modal >
 
       {/* Preview Modal */}
-      <Modal
+      < Modal
         isOpen={!!previewBot}
         onClose={() => setPreviewBot(null)}
         title={previewBot?.name || 'Bot Details'}
@@ -924,7 +680,7 @@ const BotsPage: React.FC = () => {
             </div>
           </div>
         )}
-      </Modal>
+      </Modal >
     </div >
   );
 };

@@ -32,7 +32,7 @@ describe('AuthManager', () => {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123',
-        role: 'user' as UserRole
+        role: 'user' as UserRole,
       };
 
       const user = await authManager.register(registerData);
@@ -49,13 +49,13 @@ describe('AuthManager', () => {
       const registerData1 = {
         username: 'testuser',
         email: 'test1@example.com',
-        password: 'password123'
+        password: 'password123',
       };
 
       const registerData2 = {
         username: 'testuser',
         email: 'test2@example.com',
-        password: 'password456'
+        password: 'password456',
       };
 
       await authManager.register(registerData1);
@@ -67,13 +67,13 @@ describe('AuthManager', () => {
       const registerData1 = {
         username: 'testuser1',
         email: 'test@example.com',
-        password: 'password123'
+        password: 'password123',
       };
 
       const registerData2 = {
         username: 'testuser2',
         email: 'test@example.com',
-        password: 'password456'
+        password: 'password456',
       };
 
       await authManager.register(registerData1);
@@ -85,7 +85,7 @@ describe('AuthManager', () => {
       const registerData = {
         username: 'testuser',
         email: 'test@example.com',
-        password: '123' // Too short
+        password: '123', // Too short
       };
 
       await expect(authManager.register(registerData)).rejects.toThrow();
@@ -97,7 +97,7 @@ describe('AuthManager', () => {
       const registerData = {
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123'
+        password: 'password123',
       };
       await authManager.register(registerData);
     });
@@ -107,7 +107,7 @@ describe('AuthManager', () => {
         desc: 'should authenticate user with correct credentials',
         data: {
           username: 'testuser',
-          password: 'password123'
+          password: 'password123',
         },
         isSuccess: true,
         assertions: (result: any) => {
@@ -117,36 +117,39 @@ describe('AuthManager', () => {
           expect(result).toHaveProperty('expiresIn');
           expect(result.user.username).toBe('testuser');
           expect(result.expiresIn).toBe(3600);
-        }
+        },
       },
       {
         desc: 'should reject authentication with wrong password',
         data: {
           username: 'testuser',
-          password: 'wrongpassword'
+          password: 'wrongpassword',
         },
         isSuccess: false,
-        expectedError: 'Invalid credentials'
+        expectedError: 'Invalid credentials',
       },
       {
         desc: 'should reject authentication with non-existent user',
         data: {
           username: 'nonexistent',
-          password: 'password123'
+          password: 'password123',
         },
         isSuccess: false,
-        expectedError: 'Invalid credentials'
-      }
+        expectedError: 'Invalid credentials',
+      },
     ];
 
-    it.each(authenticationCases)('$desc', async ({ data, isSuccess, assertions, expectedError }) => {
-      if (isSuccess && assertions) {
-        const result = await authManager.login(data);
-        assertions(result);
-      } else if (!isSuccess) {
-        await expect(authManager.login(data)).rejects.toThrow(expectedError);
+    it.each(authenticationCases)(
+      '$desc',
+      async ({ data, isSuccess, assertions, expectedError }) => {
+        if (isSuccess && assertions) {
+          const result = await authManager.login(data);
+          assertions(result);
+        } else if (!isSuccess) {
+          await expect(authManager.login(data)).rejects.toThrow(expectedError);
+        }
       }
-    });
+    );
   });
 
   describe('Token Management', () => {
@@ -157,13 +160,13 @@ describe('AuthManager', () => {
       const registerData = {
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123'
+        password: 'password123',
       };
       await authManager.register(registerData);
 
       const loginData = {
         username: 'testuser',
-        password: 'password123'
+        password: 'password123',
       };
 
       const result = await authManager.login(loginData);
@@ -196,7 +199,9 @@ describe('AuthManager', () => {
     });
 
     it('should reject refresh with invalid token', async () => {
-      await expect(authManager.refreshToken('invalid-token')).rejects.toThrow('Invalid refresh token');
+      await expect(authManager.refreshToken('invalid-token')).rejects.toThrow(
+        'Invalid refresh token'
+      );
     });
 
     it('should logout and invalidate refresh token', async () => {
@@ -253,7 +258,7 @@ describe('AuthManager', () => {
       const registerData = {
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123'
+        password: 'password123',
       };
       const user = await authManager.register(registerData);
       userId = user.id;
@@ -315,7 +320,7 @@ describe('AuthManager', () => {
       // Verify new password works
       const loginResult = await authManager.login({
         username: 'testuser',
-        password: 'newpassword123'
+        password: 'newpassword123',
       });
 
       expect(loginResult).toHaveProperty('accessToken');
@@ -330,7 +335,7 @@ describe('AuthManager', () => {
   describe('Default Admin User', () => {
     it('should have default admin user initialized', () => {
       const users = authManager.getAllUsers();
-      const adminUser = users.find(u => u.username === 'admin');
+      const adminUser = users.find((u) => u.username === 'admin');
 
       expect(adminUser).toBeDefined();
       expect(adminUser?.role).toBe('admin');
@@ -340,7 +345,7 @@ describe('AuthManager', () => {
     it('should authenticate default admin user', async () => {
       const result = await authManager.login({
         username: 'admin',
-        password: 'admin123!'
+        password: 'admin123!',
       });
 
       expect(result).toHaveProperty('accessToken');

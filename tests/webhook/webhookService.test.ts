@@ -1,7 +1,7 @@
 import express from 'express';
-import { webhookService } from '@webhook/webhookService';
-import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+import { webhookService } from '@webhook/webhookService';
 
 // Mock dependencies
 jest.mock('@webhook/routes/webhookRoutes', () => ({
@@ -17,10 +17,16 @@ jest.mock('express', () => {
     get: jest.fn(),
     listen: jest.fn(),
   };
-  return Object.assign(jest.fn(() => mockApp), actualExpress, { mockApp });
+  return Object.assign(
+    jest.fn(() => mockApp),
+    actualExpress,
+    { mockApp }
+  );
 });
 
-const mockConfigureWebhookRoutes = configureWebhookRoutes as jest.MockedFunction<typeof configureWebhookRoutes>;
+const mockConfigureWebhookRoutes = configureWebhookRoutes as jest.MockedFunction<
+  typeof configureWebhookRoutes
+>;
 const mockExpress = express as jest.MockedFunction<typeof express> & { mockApp: any };
 
 describe('webhookService', () => {
@@ -29,7 +35,7 @@ describe('webhookService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     messageService = {
       sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
       sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
@@ -47,7 +53,7 @@ describe('webhookService', () => {
       get: jest.fn(),
       listen: jest.fn(),
     };
-    
+
     mockExpress.mockReturnValue(mockApp);
   });
 
@@ -57,8 +63,9 @@ describe('webhookService', () => {
 
       expect(mockExpress).toHaveBeenCalledTimes(1);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
-      
-      const [createdApp, passedMessageService, passedChannel] = mockConfigureWebhookRoutes.mock.calls[0];
+
+      const [createdApp, passedMessageService, passedChannel] =
+        mockConfigureWebhookRoutes.mock.calls[0];
       expect(createdApp).toBe(mockApp);
       expect(passedMessageService).toBe(messageService);
       expect(passedChannel).toBe('test-channel');
@@ -66,11 +73,12 @@ describe('webhookService', () => {
 
     it('should reuse provided Express app', () => {
       const existingApp = express();
-      
+
       webhookService.start(existingApp, messageService, 'channel-123');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
-      const [passedApp, passedMessageService, passedChannel] = mockConfigureWebhookRoutes.mock.calls[0];
+      const [passedApp, passedMessageService, passedChannel] =
+        mockConfigureWebhookRoutes.mock.calls[0];
       expect(passedApp).toBe(existingApp);
       expect(passedMessageService).toBe(messageService);
       expect(passedChannel).toBe('channel-123');
@@ -87,7 +95,7 @@ describe('webhookService', () => {
   describe('service configuration', () => {
     it('should pass correct parameters to route configuration', () => {
       const testChannel = 'webhook-channel-456';
-      
+
       webhookService.start(null, messageService, testChannel);
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
@@ -99,11 +107,11 @@ describe('webhookService', () => {
 
     it('should handle different channel configurations', () => {
       const channels = ['general', 'webhooks', 'notifications', ''];
-      
-      channels.forEach(channel => {
+
+      channels.forEach((channel) => {
         jest.clearAllMocks();
         webhookService.start(null, messageService, channel);
-        
+
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
           expect.any(Object),
@@ -119,7 +127,7 @@ describe('webhookService', () => {
         sendPublicAnnouncement: jest.fn().mockResolvedValue('alt-response'),
         getClientId: jest.fn().mockReturnValue('alt-client'),
       } as any;
-      
+
       webhookService.start(null, alternativeService, 'test-channel');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
@@ -155,7 +163,7 @@ describe('webhookService', () => {
       expect(() => {
         webhookService.start(null, null as any, 'test-channel');
       }).not.toThrow();
-      
+
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
         null,
@@ -192,7 +200,7 @@ describe('webhookService', () => {
     it('should maintain service isolation between calls', () => {
       const service1 = { ...messageService, getClientId: () => 'client-1' } as any;
       const service2 = { ...messageService, getClientId: () => 'client-2' } as any;
-      
+
       webhookService.start(null, service1, 'channel-1');
       webhookService.start(null, service2, 'channel-2');
 
@@ -213,10 +221,14 @@ describe('webhookService', () => {
       const app = express();
       app.use(express.json());
       app.use('/api', express.Router());
-      
+
       webhookService.start(app, messageService, 'integration-channel');
 
-      expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(app, messageService, 'integration-channel');
+      expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
+        app,
+        messageService,
+        'integration-channel'
+      );
     });
 
     it('should handle complex messenger service configurations', () => {
@@ -229,7 +241,7 @@ describe('webhookService', () => {
         getClientId: jest.fn().mockReturnValue('complex-client-id'),
         customMethod: jest.fn().mockReturnValue('custom-result'),
       } as any;
-      
+
       webhookService.start(null, complexService, 'complex-channel');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
@@ -241,7 +253,7 @@ describe('webhookService', () => {
 
     it('should validate app object structure', () => {
       const app = express();
-      
+
       webhookService.start(app, messageService, 'validation-channel');
 
       const [passedApp] = mockConfigureWebhookRoutes.mock.calls[0];

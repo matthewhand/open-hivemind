@@ -35,8 +35,8 @@ jest.mock('../../../src/client/src/services/api', () => {
       removeApiEndpoint: jest.fn(),
       startApiMonitoring: jest.fn(),
       stopApiMonitoring: jest.fn(),
-      getSystemHealth: jest.fn()
-    }
+      getSystemHealth: jest.fn(),
+    },
   };
 });
 
@@ -60,12 +60,12 @@ describe('API Service URL Handling', () => {
     bodyUsed: false,
     arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
     blob: jest.fn().mockResolvedValue(new Blob()),
-    formData: jest.fn().mockResolvedValue(new FormData())
+    formData: jest.fn().mockResolvedValue(new FormData()),
   });
 
   it('should mock API service methods properly', async () => {
     const { apiService } = require('../../../src/client/src/services/api');
-    
+
     const mockData = { bots: [] };
     apiService.getConfig.mockResolvedValue(mockData);
 
@@ -76,7 +76,7 @@ describe('API Service URL Handling', () => {
 
   it('should handle fetch errors gracefully', async () => {
     const { apiService } = require('../../../src/client/src/services/api');
-    
+
     apiService.getConfig.mockRejectedValue(new Error('API request failed: Network Error'));
 
     await expect(apiService.getConfig()).rejects.toThrow('API request failed: Network Error');
@@ -85,7 +85,7 @@ describe('API Service URL Handling', () => {
 
   it('should handle API response errors', async () => {
     const { apiService } = require('../../../src/client/src/services/api');
-    
+
     apiService.getConfig.mockRejectedValue(new Error('API request failed: Not Found'));
 
     await expect(apiService.getConfig()).rejects.toThrow('API request failed: Not Found');

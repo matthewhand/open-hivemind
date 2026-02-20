@@ -73,7 +73,7 @@ export function generateUser(overrides: Partial<User> = {}): User {
   const lastName = generateRandomLastName();
   const username = generateRandomUsername(firstName, lastName);
   const email = generateRandomEmail(firstName, lastName);
-  
+
   return {
     id,
     username,
@@ -112,7 +112,7 @@ export function generateModeratorUser(overrides: Partial<User> = {}): User {
  */
 export function generateBot(overrides: Partial<Bot> = {}): Bot {
   const platforms: Array<'discord' | 'slack' | 'mattermost'> = ['discord', 'slack', 'mattermost'];
-  
+
   return {
     id: generateId(),
     name: generateRandomBotName(),
@@ -147,14 +147,22 @@ export function generateMessage(overrides: Partial<Message> = {}): Message {
  */
 export function generateMCPServer(overrides: Partial<MCPServer> = {}): MCPServer {
   const toolNames = [
-    'file-system', 'database', 'web-search', 'email', 'calendar',
-    'weather', 'calculator', 'text-processor', 'image-generator', 'code-executor'
+    'file-system',
+    'database',
+    'web-search',
+    'email',
+    'calendar',
+    'weather',
+    'calculator',
+    'text-processor',
+    'image-generator',
+    'code-executor',
   ];
-  
+
   const selectedTools = toolNames
     .sort(() => Math.random() - 0.5)
     .slice(0, Math.floor(Math.random() * 5) + 1);
-  
+
   return {
     id: generateId(),
     name: generateRandomServerName(),
@@ -173,27 +181,27 @@ export function generateMCPServer(overrides: Partial<MCPServer> = {}): MCPServer
 export function generateGuard(overrides: Partial<Guard> = {}): Guard {
   const guardTypes: Array<'owner' | 'user_list' | 'ip_list'> = ['owner', 'user_list', 'ip_list'];
   const type = guardTypes[Math.floor(Math.random() * guardTypes.length)];
-  
+
   let config: Record<string, any> = {};
-  
+
   switch (type) {
     case 'owner':
       config = { ownerId: generateId() };
       break;
     case 'user_list':
-      config = { 
+      config = {
         allowedUsers: [generateId(), generateId(), generateId()],
-        allowOwner: true
+        allowOwner: true,
       };
       break;
     case 'ip_list':
-      config = { 
+      config = {
         allowedIPs: [generateRandomIP(), generateRandomIP()],
-        allowLocalhost: true
+        allowLocalhost: true,
       };
       break;
   }
-  
+
   return {
     id: generateId(),
     name: generateRandomGuardName(),
@@ -213,28 +221,31 @@ export function generatePersona(overrides: Partial<Persona> = {}): Persona {
     {
       name: 'Developer Assistant',
       description: 'Helps with coding tasks and technical questions',
-      systemPrompt: 'You are a helpful developer assistant with expertise in multiple programming languages and frameworks.',
+      systemPrompt:
+        'You are a helpful developer assistant with expertise in multiple programming languages and frameworks.',
       temperature: 0.3,
       maxTokens: 2000,
     },
     {
       name: 'Support Agent',
       description: 'Provides customer support and answers questions',
-      systemPrompt: 'You are a friendly and professional customer support agent dedicated to helping users resolve their issues.',
+      systemPrompt:
+        'You are a friendly and professional customer support agent dedicated to helping users resolve their issues.',
       temperature: 0.7,
       maxTokens: 1500,
     },
     {
       name: 'Teacher',
       description: 'Educational assistant for learning and explanations',
-      systemPrompt: 'You are a patient and knowledgeable teacher who explains concepts clearly and provides helpful examples.',
+      systemPrompt:
+        'You are a patient and knowledgeable teacher who explains concepts clearly and provides helpful examples.',
       temperature: 0.5,
       maxTokens: 2500,
     },
   ];
-  
+
   const basePersona = personas[Math.floor(Math.random() * personas.length)];
-  
+
   return {
     id: generateId(),
     isActive: true,
@@ -312,10 +323,38 @@ function generateRandomString(length: number = 10): string {
  */
 function generateRandomFirstName(): string {
   const firstNames = [
-    'James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda',
-    'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica',
-    'Thomas', 'Sarah', 'Charles', 'Karen', 'Christopher', 'Nancy', 'Daniel', 'Lisa',
-    'Matthew', 'Betty', 'Anthony', 'Helen', 'Mark', 'Sandra', 'Donald', 'Ashley'
+    'James',
+    'Mary',
+    'John',
+    'Patricia',
+    'Robert',
+    'Jennifer',
+    'Michael',
+    'Linda',
+    'William',
+    'Elizabeth',
+    'David',
+    'Barbara',
+    'Richard',
+    'Susan',
+    'Joseph',
+    'Jessica',
+    'Thomas',
+    'Sarah',
+    'Charles',
+    'Karen',
+    'Christopher',
+    'Nancy',
+    'Daniel',
+    'Lisa',
+    'Matthew',
+    'Betty',
+    'Anthony',
+    'Helen',
+    'Mark',
+    'Sandra',
+    'Donald',
+    'Ashley',
   ];
   return firstNames[Math.floor(Math.random() * firstNames.length)];
 }
@@ -325,10 +364,38 @@ function generateRandomFirstName(): string {
  */
 function generateRandomLastName(): string {
   const lastNames = [
-    'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-    'Rodriguez', 'Martinez', 'Wilson', 'Anderson', 'Taylor', 'Thomas', 'Moore', 'Jackson',
-    'Martin', 'Lee', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Robinson',
-    'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Green', 'Baker'
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Wilson',
+    'Anderson',
+    'Taylor',
+    'Thomas',
+    'Moore',
+    'Jackson',
+    'Martin',
+    'Lee',
+    'Thompson',
+    'White',
+    'Harris',
+    'Clark',
+    'Lewis',
+    'Robinson',
+    'Walker',
+    'Young',
+    'Allen',
+    'King',
+    'Wright',
+    'Scott',
+    'Green',
+    'Baker',
   ];
   return lastNames[Math.floor(Math.random() * lastNames.length)];
 }
@@ -340,7 +407,7 @@ function generateRandomUsername(firstName: string, lastName: string): string {
   const separators = ['.', '_', '-', ''];
   const separator = separators[Math.floor(Math.random() * separators.length)];
   const number = Math.random() > 0.5 ? Math.floor(Math.random() * 999) : '';
-  
+
   return `${firstName.toLowerCase()}${separator}${lastName.toLowerCase()}${number}`;
 }
 
@@ -352,7 +419,7 @@ function generateRandomEmail(firstName: string, lastName: string): string {
   const domain = domains[Math.floor(Math.random() * domains.length)];
   const separators = ['.', '_', '-'];
   const separator = separators[Math.floor(Math.random() * separators.length)];
-  
+
   return `${firstName.toLowerCase()}${separator}${lastName.toLowerCase()}@${domain}`;
 }
 
@@ -363,7 +430,7 @@ function generateRandomBotName(): string {
   const prefixes = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Omega', 'Sigma', 'Theta', 'Lambda'];
   const suffixes = ['Bot', 'Assistant', 'Helper', 'Agent', 'Worker', 'Runner', 'Parser', 'Monitor'];
   const numbers = Math.random() > 0.5 ? Math.floor(Math.random() * 999) : '';
-  
+
   return `${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}${numbers}`;
 }
 
@@ -379,7 +446,7 @@ function generateRandomDescription(): string {
     'Data processing and analysis tool',
     'Content moderation and management',
     'API integration and synchronization',
-    'Workflow automation assistant'
+    'Workflow automation assistant',
   ];
   return descriptions[Math.floor(Math.random() * descriptions.length)];
 }
@@ -405,7 +472,7 @@ function generateRandomMessageContent(): string {
     'Everything is working as expected.',
     'I found an issue that needs attention.',
     'The system is running smoothly.',
-    'Can you check the status for me?'
+    'Can you check the status for me?',
   ];
   return messages[Math.floor(Math.random() * messages.length)];
 }
@@ -415,9 +482,18 @@ function generateRandomMessageContent(): string {
  */
 function generateRandomServerName(): string {
   const names = [
-    'Production Server', 'Development Server', 'Test Server', 'Staging Server',
-    'API Server', 'Database Server', 'Cache Server', 'File Server',
-    'Email Server', 'Notification Server', 'Authentication Server', 'Monitoring Server'
+    'Production Server',
+    'Development Server',
+    'Test Server',
+    'Staging Server',
+    'API Server',
+    'Database Server',
+    'Cache Server',
+    'File Server',
+    'Email Server',
+    'Notification Server',
+    'Authentication Server',
+    'Monitoring Server',
   ];
   return names[Math.floor(Math.random() * names.length)];
 }
@@ -430,12 +506,12 @@ function generateRandomUrl(): string {
   const domains = ['localhost', 'example.com', 'test.local', 'api.example.org'];
   const ports = ['', ':3000', ':8080', ':9000', ':5000'];
   const paths = ['', '/api', '/v1', '/webhook', '/endpoint'];
-  
+
   const protocol = protocols[Math.floor(Math.random() * protocols.length)];
   const domain = domains[Math.floor(Math.random() * domains.length)];
   const port = ports[Math.floor(Math.random() * ports.length)];
   const path = paths[Math.floor(Math.random() * paths.length)];
-  
+
   return `${protocol}://${domain}${port}${path}`;
 }
 
@@ -444,9 +520,15 @@ function generateRandomUrl(): string {
  */
 function generateRandomGuardName(): string {
   const names = [
-    'Admin Access Guard', 'User Permission Guard', 'IP Restriction Guard',
-    'Tool Access Guard', 'API Access Guard', 'Resource Guard',
-    'Security Guard', 'Permission Guard', 'Access Control Guard'
+    'Admin Access Guard',
+    'User Permission Guard',
+    'IP Restriction Guard',
+    'Tool Access Guard',
+    'API Access Guard',
+    'Resource Guard',
+    'Security Guard',
+    'Permission Guard',
+    'Access Control Guard',
   ];
   return names[Math.floor(Math.random() * names.length)];
 }
@@ -477,10 +559,10 @@ export const TEST_DATA_SETS = {
   servers: {
     active: generateMCPServer({ name: 'Active MCP Server', isActive: true }),
     inactive: generateMCPServer({ name: 'Inactive MCP Server', isActive: false }),
-    minimal: generateMCPServer({ 
-      name: 'Minimal Server', 
+    minimal: generateMCPServer({
+      name: 'Minimal Server',
       tools: ['file-system'],
-      description: 'Basic server with minimal tools'
+      description: 'Basic server with minimal tools',
     }),
   },
   guards: {

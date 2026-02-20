@@ -1,9 +1,8 @@
-import express from 'express';
-import { Request, Response, NextFunction } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 
 /**
  * Body Parser Configuration
- * 
+ *
  * Provides standardized body parser limits across all entry points.
  * Configurable via environment variables.
  */
@@ -66,7 +65,7 @@ export function bodyParserErrorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   if (err instanceof SyntaxError && 'body' in err) {
     res.status(400).json({

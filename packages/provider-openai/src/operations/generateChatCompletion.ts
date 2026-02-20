@@ -1,8 +1,8 @@
-import type { IMessage } from '@src/message/interfaces/IMessage';
-import Debug from 'debug';
 import axios from 'axios';
+import Debug from 'debug';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 import openaiConfig from '@config/openaiConfig';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:OpenAiService');
 
@@ -30,7 +30,7 @@ export async function generateChatCompletion(
     finishReasonRetry: string;
     isBusy: () => boolean;
     setBusy: (status: boolean) => void;
-  },
+  }
 ): Promise<string | null> {
   try {
     debug('message:', message);
@@ -57,7 +57,11 @@ export async function generateChatCompletion(
     const chatParams = [
       { role: 'system', content: systemMessageContent },
       { role: 'user', content: message },
-      ...historyMessages.map((msg) => ({ role: msg.role, content: msg.content, name: msg.getAuthorId() || 'unknown' })),
+      ...historyMessages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        name: msg.getAuthorId() || 'unknown',
+      })),
     ];
 
     // API request details
@@ -74,7 +78,7 @@ export async function generateChatCompletion(
           Authorization: `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
           'Content-Type': 'application/json',
         },
-      },
+      }
     );
     options.setBusy(false);
 
@@ -82,28 +86,28 @@ export async function generateChatCompletion(
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const classification = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error:', ErrorUtils.getMessage(hivemindError));
-    
+
     // Log with appropriate level based on classification
     switch (classification.logLevel) {
-    case 'error':
-      console.error('OpenAI chat completion error:', hivemindError);
-      break;
-    case 'warn':
-      console.warn('OpenAI chat completion warning:', hivemindError);
-      break;
-    default:
-      debug('OpenAI chat completion info:', hivemindError);
+      case 'error':
+        console.error('OpenAI chat completion error:', hivemindError);
+        break;
+      case 'warn':
+        console.warn('OpenAI chat completion warning:', hivemindError);
+        break;
+      default:
+        debug('OpenAI chat completion info:', hivemindError);
     }
-    
+
     options.setBusy(false);
     throw ErrorUtils.createError(
       `OpenAI chat completion failed: ${ErrorUtils.getMessage(hivemindError)}`,
       classification.type,
       'OPENAI_COMPLETION_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error },
+      { originalError: error }
     );
   }
 }

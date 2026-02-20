@@ -1,12 +1,12 @@
 /**
  * Error Recovery System for Open Hivemind
- * 
+ *
  * Implements retry logic and fallback mechanisms for recoverable errors
  * with exponential backoff, circuit breakers, and adaptive strategies.
  */
 
-import { BaseHivemindError, TimeoutError } from '../types/errorClasses';
 import Debug from 'debug';
+import { BaseHivemindError, TimeoutError } from '../types/errorClasses';
 
 const debug = Debug('app:error:recovery');
 
@@ -51,7 +51,7 @@ export interface RecoveryResult<T = any> {
 enum CircuitState {
   CLOSED = 'closed',
   OPEN = 'open',
-  HALF_OPEN = 'half_open'
+  HALF_OPEN = 'half_open',
 }
 
 /**
@@ -94,7 +94,7 @@ export class CircuitBreaker {
   private onSuccess(): void {
     this.failureCount = 0;
     this.successCount++;
-    
+
     if (this.state === CircuitState.HALF_OPEN) {
       this.state = CircuitState.CLOSED;
       debug('Circuit breaker transitioning to CLOSED');
@@ -164,7 +164,7 @@ export class RetryHandler {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ): Promise<RecoveryResult<T>> {
     void context;
     const startTime = Date.now();
@@ -173,9 +173,9 @@ export class RetryHandler {
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
       try {
         debug(`Executing operation, attempt ${attempt + 1}/${this.config.maxRetries + 1}`);
-        
+
         const result = await operation();
-        
+
         if (attempt > 0) {
           debug(`Operation succeeded on attempt ${attempt + 1}`);
         }
@@ -189,7 +189,7 @@ export class RetryHandler {
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         debug(`Operation failed on attempt ${attempt + 1}:`, lastError.message);
 
         // Check if error is retryable
@@ -247,7 +247,7 @@ export class RetryHandler {
       'rate limit',
     ];
 
-    return retryablePatterns.some(pattern => message.includes(pattern));
+    return retryablePatterns.some((pattern) => message.includes(pattern));
   }
 
   /**
@@ -272,16 +272,16 @@ export class RetryHandler {
    */
   private calculateDelay(attempt: number): number {
     let delay = this.config.baseDelay * Math.pow(this.config.backoffMultiplier, attempt);
-    
+
     // Apply maximum delay limit
     delay = Math.min(delay, this.config.maxDelay);
-    
+
     // Add jitter if enabled
     if (this.config.jitter) {
       const jitterRange = delay * 0.1;
       delay += Math.random() * jitterRange - jitterRange / 2;
     }
-    
+
     return Math.max(0, Math.floor(delay));
   }
 
@@ -289,7 +289,7 @@ export class RetryHandler {
    * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -315,12 +315,12 @@ export class FallbackManager {
   async executeWithFallback<T>(
     operationKey: string,
     primaryOperation: () => Promise<T>,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ): Promise<RecoveryResult<T>> {
     void context;
     const startTime = Date.now();
     const fallbacks = this.fallbacks.get(operationKey) || [];
-    
+
     // Try primary operation first
     try {
       const result = await primaryOperation();
@@ -340,7 +340,7 @@ export class FallbackManager {
         try {
           debug(`Attempting fallback ${i + 1}/${fallbacks.length}`);
           const result = await fallbacks[i]();
-          
+
           debug(`Fallback ${i + 1} succeeded`);
           return {
             success: true,
@@ -350,7 +350,8 @@ export class FallbackManager {
             strategy: `fallback_${i + 1}`,
           };
         } catch (fallbackError) {
-          const fallbackErr = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
+          const fallbackErr =
+            fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
           debug(`Fallback ${i + 1} failed: ${fallbackErr.message}`);
         }
       }
@@ -398,7 +399,7 @@ export class AdaptiveRecoveryManager {
 
   constructor(
     private defaultRetryConfig: RetryConfig,
-    private defaultCircuitBreakerConfig: CircuitBreakerConfig,
+    private defaultCircuitBreakerConfig: CircuitBreakerConfig
   ) {}
 
   /**
@@ -414,7 +415,7 @@ export class AdaptiveRecoveryManager {
       retryConfig?: Partial<RetryConfig>;
       circuitBreakerConfig?: Partial<CircuitBreakerConfig>;
       context?: Record<string, unknown>;
-    } = {},
+    } = {}
   ): Promise<RecoveryResult<T>> {
     const {
       enableRetry = true,
@@ -465,9 +466,9 @@ export class AdaptiveRecoveryManager {
       const fallbackResult = await fallbackManager.executeWithFallback(
         operationKey,
         operation,
-        context,
+        context
       );
-      
+
       if (fallbackResult.success) {
         return fallbackResult;
       }
@@ -497,7 +498,10 @@ export class AdaptiveRecoveryManager {
   /**
    * Get or create circuit breaker
    */
-  public getCircuitBreaker(operationKey: string, config: Partial<CircuitBreakerConfig> = {}): CircuitBreaker {
+  public getCircuitBreaker(
+    operationKey: string,
+    config: Partial<CircuitBreakerConfig> = {}
+  ): CircuitBreaker {
     if (!this.circuitBreakers.has(operationKey)) {
       const mergedConfig = { ...this.defaultCircuitBreakerConfig, ...config };
       this.circuitBreakers.set(operationKey, new CircuitBreaker(mergedConfig));
@@ -545,14 +549,14 @@ export class AdaptiveRecoveryManager {
    */
   getAllStats() {
     const stats: Record<string, any> = {};
-    
+
     for (const [key, circuitBreaker] of this.circuitBreakers.entries()) {
       stats[key] = {
         circuitBreaker: circuitBreaker.getStats(),
         fallbacks: this.fallbackManagers.get(key)?.getFallbacks(key).length || 0,
       };
     }
-    
+
     return stats;
   }
 }
@@ -582,7 +586,7 @@ export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
  */
 export const globalRecoveryManager = new AdaptiveRecoveryManager(
   DEFAULT_RETRY_CONFIG,
-  DEFAULT_CIRCUIT_BREAKER_CONFIG,
+  DEFAULT_CIRCUIT_BREAKER_CONFIG
 );
 
 /**
@@ -604,7 +608,7 @@ export const errorRecovery = {
       const result = await Promise.race([
         fn(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new TimeoutError('Operation timed out', timeoutMs)), timeoutMs),
+          setTimeout(() => reject(new TimeoutError('Operation timed out', timeoutMs)), timeoutMs)
         ),
       ]);
       return {
@@ -639,7 +643,7 @@ export async function executeWithRecovery<T>(
     retryConfig?: Partial<RetryConfig>;
     circuitBreakerConfig?: Partial<CircuitBreakerConfig>;
     context?: Record<string, unknown>;
-  },
+  }
 ): Promise<RecoveryResult<T>> {
   return globalRecoveryManager.execute(operationKey, operation, options);
 }

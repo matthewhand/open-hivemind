@@ -1,7 +1,7 @@
 import Debug from 'debug';
-import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { REST } from '@discordjs/rest';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:registerSlashCommands');
 
@@ -11,7 +11,11 @@ const debug = Debug('app:registerSlashCommands');
  * @param {string} guildId - The ID of the guild where commands will be registered.
  * @param {object[]} commands - The commands to be registered.
  */
-export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
+export async function registerSlashCommands(
+  token: string,
+  guildId: string,
+  commands: object[]
+): Promise<void> {
   const clientId = process.env.CLIENT_ID;
   if (!clientId) {
     debug('Client ID is not defined. Cannot register slash commands.');

@@ -1,8 +1,8 @@
-import Debug from 'debug';
 import { EventEmitter } from 'events';
-import * as os from 'os';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import Debug from 'debug';
 
 const debug = Debug('app:AdvancedMonitor');
 
@@ -236,7 +236,6 @@ export class AdvancedMonitor extends EventEmitter {
 
       // Check for alerts
       this.checkSystemAlerts(metrics);
-
     } catch (error) {
       debug('Error collecting system metrics:', error);
     }
@@ -283,7 +282,6 @@ export class AdvancedMonitor extends EventEmitter {
       }
 
       this.emit('application-metrics', metrics);
-
     } catch (error) {
       debug('Error collecting application metrics:', error);
     }
@@ -293,7 +291,7 @@ export class AdvancedMonitor extends EventEmitter {
     const healthStatus: HealthStatus = {
       overall: 'healthy',
       services: {},
-      alerts: this.alerts.filter(a => !a.resolved),
+      alerts: this.alerts.filter((a) => !a.resolved),
     };
 
     // Check system health
@@ -337,11 +335,11 @@ export class AdvancedMonitor extends EventEmitter {
     // For example: database connectivity, external API availability, etc.
 
     healthStatus.services = {
-      'system': {
+      system: {
         status: healthStatus.overall === 'healthy' ? 'up' : 'degraded',
         lastCheck: Date.now(),
       },
-      'monitoring': {
+      monitoring: {
         status: 'up',
         lastCheck: Date.now(),
       },
@@ -380,24 +378,33 @@ export class AdvancedMonitor extends EventEmitter {
       const stats = fs.statSync('.');
       const diskUsage = this.getDiskUsage(process.cwd());
 
-      return [{
-        used: diskUsage.used,
-        total: diskUsage.total,
-        free: diskUsage.free,
-        usagePercent: diskUsage.usagePercent,
-      }];
+      return [
+        {
+          used: diskUsage.used,
+          total: diskUsage.total,
+          free: diskUsage.free,
+          usagePercent: diskUsage.usagePercent,
+        },
+      ];
     } catch (error) {
       debug('Error getting disk metrics:', error);
-      return [{
-        used: 0,
-        total: 0,
-        free: 0,
-        usagePercent: 0,
-      }];
+      return [
+        {
+          used: 0,
+          total: 0,
+          free: 0,
+          usagePercent: 0,
+        },
+      ];
     }
   }
 
-  private getDiskUsage(path: string): { used: number; total: number; free: number; usagePercent: number } {
+  private getDiskUsage(path: string): {
+    used: number;
+    total: number;
+    free: number;
+    usagePercent: number;
+  } {
     try {
       const stats = fs.statSync(path);
       // This is a simplified implementation
@@ -442,37 +449,35 @@ export class AdvancedMonitor extends EventEmitter {
     // High memory usage alone (without errors) should be a warning, not critical failure
     const overall: 'healthy' | 'degraded' | 'unhealthy' =
       latestSystemMetrics &&
-        (latestSystemMetrics.memory.usagePercent > 95 || latestSystemMetrics.cpu.usage > 95)
+      (latestSystemMetrics.memory.usagePercent > 95 || latestSystemMetrics.cpu.usage > 95)
         ? 'unhealthy'
         : latestSystemMetrics &&
-          (latestSystemMetrics.memory.usagePercent > 85 || latestSystemMetrics.cpu.usage > 85)
+            (latestSystemMetrics.memory.usagePercent > 85 || latestSystemMetrics.cpu.usage > 85)
           ? 'degraded'
           : 'healthy';
 
     return {
       overall,
       services: {
-        'system': {
+        system: {
           status: overall === 'healthy' ? 'up' : 'degraded',
           lastCheck: Date.now(),
         },
-        'monitoring': {
+        monitoring: {
           status: 'up',
           lastCheck: Date.now(),
         },
       },
-      alerts: this.alerts.filter(a => !a.resolved),
+      alerts: this.alerts.filter((a) => !a.resolved),
     };
   }
 
   public getAlerts(activeOnly = true): Alert[] {
-    return activeOnly
-      ? this.alerts.filter(a => !a.resolved)
-      : this.alerts;
+    return activeOnly ? this.alerts.filter((a) => !a.resolved) : this.alerts;
   }
 
   public resolveAlert(alertId: string): boolean {
-    const alert = this.alerts.find(a => a.id === alertId);
+    const alert = this.alerts.find((a) => a.id === alertId);
     if (alert && !alert.resolved) {
       alert.resolved = true;
       alert.resolvedAt = Date.now();
@@ -491,16 +496,20 @@ export class AdvancedMonitor extends EventEmitter {
     const latestApplication = this.applicationMetrics[this.applicationMetrics.length - 1];
 
     return {
-      system: latestSystem ? {
-        timestamp: latestSystem.timestamp,
-        cpu: latestSystem.cpu,
-        memory: latestSystem.memory,
-      } : {},
-      application: latestApplication ? {
-        timestamp: latestApplication.timestamp,
-        activeConnections: latestApplication.activeConnections,
-        botMetrics: latestApplication.botMetrics,
-      } : {},
+      system: latestSystem
+        ? {
+            timestamp: latestSystem.timestamp,
+            cpu: latestSystem.cpu,
+            memory: latestSystem.memory,
+          }
+        : {},
+      application: latestApplication
+        ? {
+            timestamp: latestApplication.timestamp,
+            activeConnections: latestApplication.activeConnections,
+            botMetrics: latestApplication.botMetrics,
+          }
+        : {},
       health: this.getHealthStatus(),
     };
   }
@@ -509,11 +518,13 @@ export class AdvancedMonitor extends EventEmitter {
     // Clean up old metrics
     const cutoffTime = Date.now() - this.METRICS_RETENTION_PERIOD;
 
-    this.systemMetrics = this.systemMetrics.filter(m => m.timestamp > cutoffTime);
-    this.applicationMetrics = this.applicationMetrics.filter(m => m.timestamp > cutoffTime);
+    this.systemMetrics = this.systemMetrics.filter((m) => m.timestamp > cutoffTime);
+    this.applicationMetrics = this.applicationMetrics.filter((m) => m.timestamp > cutoffTime);
 
     // Clean up old resolved alerts
-    this.alerts = this.alerts.filter(a => !a.resolved || (a.resolvedAt && a.resolvedAt > cutoffTime));
+    this.alerts = this.alerts.filter(
+      (a) => !a.resolved || (a.resolvedAt && a.resolvedAt > cutoffTime)
+    );
 
     debug('Monitoring data cleanup completed');
   }

@@ -207,7 +207,7 @@ describe('LLMResponse', () => {
   describe('Different message roles and content types', () => {
     it('should handle different message roles', () => {
       const roles = ['assistant', 'user', 'system', 'function'];
-      
+
       roles.forEach((role, index) => {
         const response = new LLMResponse(
           `role-test-${index}`,
@@ -234,7 +234,7 @@ describe('LLMResponse', () => {
 
     it('should handle different finish reasons', () => {
       const finishReasons = ['stop', 'length', 'function_call', 'content_filter'];
-      
+
       finishReasons.forEach((reason, index) => {
         const response = new LLMResponse(
           `finish-test-${index}`,
@@ -260,7 +260,7 @@ describe('LLMResponse', () => {
 
     it('should handle empty and special content', () => {
       const contentTypes = ['', '   ', '\n\t', '🚀 Emoji content', 'Multi\nline\ncontent'];
-      
+
       contentTypes.forEach((content, index) => {
         const response = new LLMResponse(
           `content-test-${index}`,
@@ -316,7 +316,7 @@ describe('LLMResponse', () => {
 
     it('should handle missing or invalid usage properties', () => {
       const invalidUsage = {} as any;
-      
+
       expect(() => {
         new LLMResponse(
           'invalid-usage-test',
@@ -398,7 +398,13 @@ describe('LLMResponse', () => {
         'chat.completion',
         Date.now(),
         specialChars,
-        [{ index: 0, message: { role: 'assistant', content: specialChars }, finish_reason: 'stop' }],
+        [
+          {
+            index: 0,
+            message: { role: 'assistant', content: specialChars },
+            finish_reason: 'stop',
+          },
+        ],
         { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
         specialChars,
         'completed',
@@ -430,7 +436,11 @@ describe('LLMResponse', () => {
       );
 
       const choices = response.getChoices();
-      choices.push({ index: 1, message: { role: 'user', content: 'modified' }, finish_reason: 'stop' } as any);
+      choices.push({
+        index: 1,
+        message: { role: 'user', content: 'modified' },
+        finish_reason: 'stop',
+      } as any);
 
       // Original response should remain unchanged
       expect(response.getChoices()).toHaveLength(1);
@@ -463,7 +473,13 @@ describe('LLMResponse', () => {
         'chat.completion',
         1672531199,
         'gpt-4',
-        [{ index: 0, message: { role: 'assistant', content: 'consistent' }, finish_reason: 'stop' }],
+        [
+          {
+            index: 0,
+            message: { role: 'assistant', content: 'consistent' },
+            finish_reason: 'stop',
+          },
+        ],
         { prompt_tokens: 15, completion_tokens: 25, total_tokens: 40 },
         'consistent',
         'completed',
@@ -507,11 +523,13 @@ describe('LLMResponse', () => {
     });
 
     it('should be memory efficient with large datasets', () => {
-      const largeChoices = Array(1000).fill(null).map((_, index) => ({
-        index,
-        message: { role: 'assistant', content: `Response ${index}` },
-        finish_reason: 'stop',
-      }));
+      const largeChoices = Array(1000)
+        .fill(null)
+        .map((_, index) => ({
+          index,
+          message: { role: 'assistant', content: `Response ${index}` },
+          finish_reason: 'stop',
+        }));
 
       const response = new LLMResponse(
         'large-dataset-test',

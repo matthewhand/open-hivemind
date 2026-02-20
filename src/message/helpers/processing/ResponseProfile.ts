@@ -1,11 +1,15 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
-import type { RESPONSE_PROFILE_OVERRIDE_KEYS } from '@config/responseProfiles';
-import { isResponseProfileOverrideKey } from '@config/responseProfiles';
+import {
+  isResponseProfileOverrideKey,
+  type RESPONSE_PROFILE_OVERRIDE_KEYS,
+} from '@config/responseProfiles';
 
 const debug = Debug('app:responseProfile');
 
-export type ResponseProfileOverrides = Partial<Record<(typeof RESPONSE_PROFILE_OVERRIDE_KEYS)[number], number | boolean>>;
+export type ResponseProfileOverrides = Partial<
+  Record<(typeof RESPONSE_PROFILE_OVERRIDE_KEYS)[number], number | boolean>
+>;
 
 function normalizeProfileName(name: string): string {
   return name.trim().toLowerCase();
@@ -13,9 +17,7 @@ function normalizeProfileName(name: string): string {
 
 export function getResponseProfileName(botConfig?: Record<string, any>): string | undefined {
   const raw =
-    botConfig?.responseProfile ??
-    botConfig?.RESPONSE_PROFILE ??
-    botConfig?.response_profile;
+    botConfig?.responseProfile ?? botConfig?.RESPONSE_PROFILE ?? botConfig?.response_profile;
 
   if (typeof raw !== 'string') {
     return undefined;
@@ -25,9 +27,13 @@ export function getResponseProfileName(botConfig?: Record<string, any>): string 
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-export function getResponseProfileOverrides(botConfig?: Record<string, any>): ResponseProfileOverrides | undefined {
+export function getResponseProfileOverrides(
+  botConfig?: Record<string, any>
+): ResponseProfileOverrides | undefined {
   const profileName = getResponseProfileName(botConfig);
-  if (!profileName) {return undefined;}
+  if (!profileName) {
+    return undefined;
+  }
 
   const profilesRaw = messageConfig.get('MESSAGE_RESPONSE_PROFILES');
   if (!profilesRaw || typeof profilesRaw !== 'object') {
@@ -47,7 +53,9 @@ export function getResponseProfileOverrides(botConfig?: Record<string, any>): Re
 
     const filtered: ResponseProfileOverrides = {};
     for (const [key, value] of Object.entries(overrides as Record<string, unknown>)) {
-      if (!isResponseProfileOverrideKey(key)) {continue;}
+      if (!isResponseProfileOverrideKey(key)) {
+        continue;
+      }
       if (typeof value === 'number' || typeof value === 'boolean') {
         filtered[key] = value;
       }

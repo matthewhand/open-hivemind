@@ -3,9 +3,9 @@
  */
 
 import {
-  DatabaseManager,
   ApprovalRequest,
-  BotConfiguration
+  BotConfiguration,
+  DatabaseManager,
 } from '../../src/database/DatabaseManager';
 
 describe('Approval Workflow', () => {
@@ -16,7 +16,7 @@ describe('Approval Workflow', () => {
     // Initialize database
     dbManager = DatabaseManager.getInstance({
       type: 'sqlite',
-      path: ':memory:'
+      path: ':memory:',
     });
 
     await dbManager.connect();
@@ -33,7 +33,7 @@ describe('Approval Workflow', () => {
       openai: { apiKey: 'test-key' },
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     testBotConfigId = await dbManager.createBotConfiguration(testConfig);
@@ -52,9 +52,9 @@ describe('Approval Workflow', () => {
         requestedBy: 'test-user',
         diff: JSON.stringify({
           old: { persona: 'old-persona' },
-          new: { persona: 'new-persona' }
+          new: { persona: 'new-persona' },
         }),
-        status: 'pending'
+        status: 'pending',
       };
 
       const requestId = await dbManager.createApprovalRequest(approvalRequest);
@@ -68,7 +68,7 @@ describe('Approval Workflow', () => {
         resourceId: testBotConfigId,
         changeType: 'CREATE',
         requestedBy: 'test-user',
-        status: 'pending'
+        status: 'pending',
       };
 
       const requestId = await dbManager.createApprovalRequest(minimalRequest);
@@ -88,7 +88,7 @@ describe('Approval Workflow', () => {
         changeType: 'UPDATE',
         requestedBy: 'test-user',
         diff: JSON.stringify({ test: 'data' }),
-        status: 'pending'
+        status: 'pending',
       };
       createdRequestId = await dbManager.createApprovalRequest(request);
     });
@@ -118,26 +118,33 @@ describe('Approval Workflow', () => {
 
     test('should filter approval requests by resource type', async () => {
       const requests = await dbManager.getApprovalRequests('BotConfiguration');
-      expect(requests.every(req => req.resourceType === 'BotConfiguration')).toBe(true);
+      expect(requests.every((req) => req.resourceType === 'BotConfiguration')).toBe(true);
     });
 
     test('should filter approval requests by resource ID', async () => {
       const requests = await dbManager.getApprovalRequests(undefined, testBotConfigId);
-      expect(requests.every(req => req.resourceId === testBotConfigId)).toBe(true);
+      expect(requests.every((req) => req.resourceId === testBotConfigId)).toBe(true);
     });
 
     test('should filter approval requests by status', async () => {
       const requests = await dbManager.getApprovalRequests(undefined, undefined, 'pending');
-      expect(requests.every(req => req.status === 'pending')).toBe(true);
+      expect(requests.every((req) => req.status === 'pending')).toBe(true);
     });
 
     test('should apply multiple filters simultaneously', async () => {
-      const requests = await dbManager.getApprovalRequests('BotConfiguration', testBotConfigId, 'pending');
-      expect(requests.every(req =>
-        req.resourceType === 'BotConfiguration' &&
-        req.resourceId === testBotConfigId &&
-        req.status === 'pending'
-      )).toBe(true);
+      const requests = await dbManager.getApprovalRequests(
+        'BotConfiguration',
+        testBotConfigId,
+        'pending'
+      );
+      expect(
+        requests.every(
+          (req) =>
+            req.resourceType === 'BotConfiguration' &&
+            req.resourceId === testBotConfigId &&
+            req.status === 'pending'
+        )
+      ).toBe(true);
     });
   });
 
@@ -151,14 +158,14 @@ describe('Approval Workflow', () => {
         resourceId: testBotConfigId,
         changeType: 'UPDATE',
         requestedBy: 'test-user',
-        status: 'pending'
+        status: 'pending',
       };
       requestId = await dbManager.createApprovalRequest(request);
     });
 
     test('should update approval request status', async () => {
       const updated = await dbManager.updateApprovalRequest(requestId, {
-        status: 'approved'
+        status: 'approved',
       });
       expect(updated).toBe(true);
 
@@ -171,7 +178,7 @@ describe('Approval Workflow', () => {
         status: 'approved' as const,
         reviewedBy: 'admin-user',
         reviewedAt: new Date(),
-        reviewComments: 'Looks good, approved'
+        reviewComments: 'Looks good, approved',
       };
 
       const updated = await dbManager.updateApprovalRequest(requestId, updates);
@@ -182,7 +189,10 @@ describe('Approval Workflow', () => {
       expect(request!.reviewedBy).toBe('admin-user');
       // Compare ISO strings to avoid millisecond precision issues between JS and SQLite
       expect(request!.reviewedAt).toBeTruthy();
-      expect(new Date(request!.reviewedAt!).getTime()).toBeCloseTo(new Date(updates.reviewedAt!).getTime(), -2);
+      expect(new Date(request!.reviewedAt!).getTime()).toBeCloseTo(
+        new Date(updates.reviewedAt!).getTime(),
+        -2
+      );
       expect(request!.reviewComments).toBe('Looks good, approved');
     });
 
@@ -193,7 +203,7 @@ describe('Approval Workflow', () => {
 
     test('should return false for non-existent approval request update', async () => {
       const updated = await dbManager.updateApprovalRequest(99999, {
-        status: 'approved'
+        status: 'approved',
       });
       expect(updated).toBe(false);
     });
@@ -209,7 +219,7 @@ describe('Approval Workflow', () => {
         resourceId: testBotConfigId,
         changeType: 'UPDATE',
         requestedBy: 'test-user',
-        status: 'pending'
+        status: 'pending',
       };
       requestId = await dbManager.createApprovalRequest(request);
     });
@@ -238,9 +248,9 @@ describe('Approval Workflow', () => {
         requestedBy: 'requester-user',
         diff: JSON.stringify({
           old: { persona: 'old-persona' },
-          new: { persona: 'approved-persona' }
+          new: { persona: 'approved-persona' },
         }),
-        status: 'pending'
+        status: 'pending',
       };
 
       const requestId = await dbManager.createApprovalRequest(approvalRequest);
@@ -255,7 +265,7 @@ describe('Approval Workflow', () => {
         status: 'approved' as const,
         reviewedBy: 'approver-user',
         reviewedAt: new Date(),
-        reviewComments: 'Configuration changes approved'
+        reviewComments: 'Configuration changes approved',
       };
 
       const updated = await dbManager.updateApprovalRequest(requestId, approveUpdates);
@@ -281,9 +291,9 @@ describe('Approval Workflow', () => {
         requestedBy: 'requester-user',
         diff: JSON.stringify({
           old: { persona: 'old-persona' },
-          new: { persona: 'rejected-persona' }
+          new: { persona: 'rejected-persona' },
         }),
-        status: 'pending'
+        status: 'pending',
       };
 
       const requestId = await dbManager.createApprovalRequest(approvalRequest);
@@ -293,7 +303,7 @@ describe('Approval Workflow', () => {
         status: 'rejected' as const,
         reviewedBy: 'approver-user',
         reviewedAt: new Date(),
-        reviewComments: 'Configuration changes not allowed'
+        reviewComments: 'Configuration changes not allowed',
       };
 
       const updated = await dbManager.updateApprovalRequest(requestId, rejectUpdates);
@@ -311,13 +321,15 @@ describe('Approval Workflow', () => {
     test('should handle database disconnection gracefully', async () => {
       const disconnectedDb = new DatabaseManager();
 
-      await expect(disconnectedDb.createApprovalRequest({
-        resourceType: 'BotConfiguration',
-        resourceId: testBotConfigId,
-        changeType: 'UPDATE',
-        requestedBy: 'test-user',
-        status: 'pending'
-      })).rejects.toThrow('Database is not configured');
+      await expect(
+        disconnectedDb.createApprovalRequest({
+          resourceType: 'BotConfiguration',
+          resourceId: testBotConfigId,
+          changeType: 'UPDATE',
+          requestedBy: 'test-user',
+          status: 'pending',
+        })
+      ).rejects.toThrow('Database is not configured');
     });
 
     test('should validate required fields', async () => {
@@ -330,7 +342,7 @@ describe('Approval Workflow', () => {
           resourceId: testBotConfigId,
           changeType: 'UPDATE',
           requestedBy: 'test-user',
-          status: 'pending'
+          status: 'pending',
         });
         // If it doesn't throw, verify it returned something
         expect(typeof result).toBe('number');

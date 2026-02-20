@@ -7,8 +7,14 @@ export class OutgoingMessageRateLimiter {
   private byChannel: Map<string, number[]> = new Map();
 
   // Bounded cache configuration
-  private readonly MAX_CHANNELS = parseInt(process.env.OUTGOING_RATE_LIMITER_MAX_CHANNELS || '5000', 10);
-  private readonly MAX_TIMESTAMPS_PER_CHANNEL = parseInt(process.env.OUTGOING_RATE_LIMITER_MAX_TIMESTAMPS || '100', 10);
+  private readonly MAX_CHANNELS = parseInt(
+    process.env.OUTGOING_RATE_LIMITER_MAX_CHANNELS || '5000',
+    10
+  );
+  private readonly MAX_TIMESTAMPS_PER_CHANNEL = parseInt(
+    process.env.OUTGOING_RATE_LIMITER_MAX_TIMESTAMPS || '100',
+    10
+  );
 
   public static getInstance(): OutgoingMessageRateLimiter {
     if (!OutgoingMessageRateLimiter.instance) {
@@ -64,7 +70,9 @@ export class OutgoingMessageRateLimiter {
     const now = Date.now();
     const valid = this.pruneTimestamps(channelId, windowMs);
 
-    if (valid.length < maxPerWindow) {return 0;}
+    if (valid.length < maxPerWindow) {
+      return 0;
+    }
 
     const oldest = Math.min(...valid);
     const waitMs = windowMs - (now - oldest) + 250; // buffer
@@ -114,4 +122,3 @@ export class OutgoingMessageRateLimiter {
 }
 
 export default OutgoingMessageRateLimiter;
-

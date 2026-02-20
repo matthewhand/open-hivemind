@@ -4,7 +4,7 @@ import type { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
  * ChatHistory - Tracks messages sent by the bot for timing and activity purposes.
- * 
+ *
  * This class allows the bot to store, query, and manage its own messages, providing features such as:
  * - Tracking recent messages with timestamps and channels.
  * - Querying messages within a specific timeframe.
@@ -46,9 +46,12 @@ export class ChatHistory {
     }
     const currentTime = Date.now();
     const recentMessages = this.history.filter(
-      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe,
+      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
     );
-    console.debug('[ChatHistory] Recent messages retrieved:', recentMessages.map(m => m.getMessageId()));
+    console.debug(
+      '[ChatHistory] Recent messages retrieved:',
+      recentMessages.map((m) => m.getMessageId())
+    );
     return recentMessages;
   }
 
@@ -61,6 +64,8 @@ export class ChatHistory {
     const initialLength = this.history.length;
     this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
     const clearedMessages = initialLength - this.history.length;
-    console.debug(`[ChatHistory] Cleared ${clearedMessages} old messages. Current history size: ${this.history.length}`);
+    console.debug(
+      `[ChatHistory] Cleared ${clearedMessages} old messages. Current history size: ${this.history.length}`
+    );
   }
 }

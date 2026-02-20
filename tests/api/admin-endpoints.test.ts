@@ -8,12 +8,12 @@
  * @since 2025-09-28
  */
 
-import request from 'supertest';
 import express from 'express';
-import adminRouter from '../../src/server/routes/admin';
+import request from 'supertest';
 import { authenticate, requireAdmin } from '../../src/auth/middleware';
 import { AuthMiddlewareRequest } from '../../src/auth/types';
 import { MCPService } from '../../src/mcp/MCPService';
+import adminRouter from '../../src/server/routes/admin';
 
 // Mock the authentication middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../src/auth/middleware', () => ({
       role: 'admin',
       isActive: true,
       createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
+      lastLogin: new Date().toISOString(),
     };
     next();
   },
@@ -59,9 +59,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/llm-providers', () => {
     it('should return a list of LLM providers', async () => {
-      const response = await request(app)
-        .get('/api/admin/llm-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -71,9 +69,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return providers with required fields', async () => {
-      const response = await request(app)
-        .get('/api/admin/llm-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       response.body.data.providers.forEach((provider: any) => {
         expect(typeof provider).toBe('string');
@@ -82,13 +78,13 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle concurrent requests without issues', async () => {
-      const requests = Array(5).fill(null).map(() =>
-        request(app).get('/api/admin/llm-providers')
-      );
+      const requests = Array(5)
+        .fill(null)
+        .map(() => request(app).get('/api/admin/llm-providers'));
 
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty('success', true);
         expect(response.body).toHaveProperty('data');
@@ -100,9 +96,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/messenger-providers', () => {
     it('should return a list of messenger providers', async () => {
-      const response = await request(app)
-        .get('/api/admin/messenger-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -112,9 +106,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return providers with required fields', async () => {
-      const response = await request(app)
-        .get('/api/admin/messenger-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       response.body.data.providers.forEach((provider: any) => {
         expect(typeof provider).toBe('string');
@@ -125,9 +117,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/personas', () => {
     it('should return a list of personas', async () => {
-      const response = await request(app)
-        .get('/api/admin/personas')
-        .expect(200);
+      const response = await request(app).get('/api/admin/personas').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -136,9 +126,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return personas with required fields when available', async () => {
-      const response = await request(app)
-        .get('/api/admin/personas')
-        .expect(200);
+      const response = await request(app).get('/api/admin/personas').expect(200);
 
       if (response.body.data.personas.length > 0) {
         response.body.data.personas.forEach((persona: any) => {
@@ -158,13 +146,10 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const newPersona = {
         key: 'test-persona',
         name: 'Test Persona',
-        systemPrompt: 'You are a test assistant.'
+        systemPrompt: 'You are a test assistant.',
       };
 
-      const response = await request(app)
-        .post('/api/admin/personas')
-        .send(newPersona)
-        .expect(200);
+      const response = await request(app).post('/api/admin/personas').send(newPersona).expect(200);
 
       expect(response.body).toHaveProperty('success', true);
     });
@@ -172,33 +157,24 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should reject invalid persona data', async () => {
       const invalidPersona = {
         // Missing required fields
-        description: 'Invalid persona'
+        description: 'Invalid persona',
       };
 
-      await request(app)
-        .post('/api/admin/personas')
-        .send(invalidPersona)
-        .expect(400);
+      await request(app).post('/api/admin/personas').send(invalidPersona).expect(400);
     });
 
     it('should overwrite duplicate persona keys', async () => {
       const persona = {
         key: 'duplicate-test',
         name: 'Duplicate Test',
-        systemPrompt: 'Test message'
+        systemPrompt: 'Test message',
       };
 
       // Create first persona
-      await request(app)
-        .post('/api/admin/personas')
-        .send(persona)
-        .expect(200);
+      await request(app).post('/api/admin/personas').send(persona).expect(200);
 
       // Try to create duplicate
-      await request(app)
-        .post('/api/admin/personas')
-        .send(persona)
-        .expect(200);
+      await request(app).post('/api/admin/personas').send(persona).expect(200);
     });
   });
 
@@ -208,19 +184,16 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const createPersona = {
         key,
         name: 'Update Test',
-        systemPrompt: 'Original message'
+        systemPrompt: 'Original message',
       };
 
       const updatePersona = {
         name: 'Updated Test',
-        systemPrompt: 'Updated message'
+        systemPrompt: 'Updated message',
       };
 
       // Create persona first
-      await request(app)
-        .post('/api/admin/personas')
-        .send(createPersona)
-        .expect(200);
+      await request(app).post('/api/admin/personas').send(createPersona).expect(200);
 
       // Update persona
       const response = await request(app)
@@ -234,13 +207,10 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should return 404 for non-existent persona', async () => {
       const updateData = {
         name: 'Non-existent',
-        systemMessage: 'Test'
+        systemMessage: 'Test',
       };
 
-      await request(app)
-        .put('/api/admin/personas/non-existent-key')
-        .send(updateData)
-        .expect(400);
+      await request(app).put('/api/admin/personas/non-existent-key').send(updateData).expect(400);
     });
   });
 
@@ -250,25 +220,18 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const persona = {
         key,
         name: 'Delete Test',
-        systemPrompt: 'Test message'
+        systemPrompt: 'Test message',
       };
 
       // Create persona first
-      await request(app)
-        .post('/api/admin/personas')
-        .send(persona)
-        .expect(200);
+      await request(app).post('/api/admin/personas').send(persona).expect(200);
 
       // Delete persona
-      await request(app)
-        .delete(`/api/admin/personas/${key}`)
-        .expect(200);
+      await request(app).delete(`/api/admin/personas/${key}`).expect(200);
     });
 
     it('should return 404 for non-existent persona', async () => {
-      await request(app)
-        .delete('/api/admin/personas/non-existent-key')
-        .expect(200);
+      await request(app).delete('/api/admin/personas/non-existent-key').expect(200);
     });
   });
 
@@ -277,13 +240,11 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const serverConfig = {
         name: 'test-server',
         serverUrl: 'http://localhost:8080',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
 
-      const response = await request(app)
-        .post('/api/admin/mcp-servers/connect')
-        .send(serverConfig);
-        
+      const response = await request(app).post('/api/admin/mcp-servers/connect').send(serverConfig);
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
     });
@@ -291,13 +252,13 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should reject invalid server configuration', async () => {
       const invalidConfig = {
         // Missing required fields
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
 
       const response = await request(app)
         .post('/api/admin/mcp-servers/connect')
         .send(invalidConfig);
-        
+
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
     });
@@ -306,13 +267,13 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const failingConfig = {
         name: 'failing-server',
         serverUrl: 'http://invalid-url:9999',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
 
       const response = await request(app)
         .post('/api/admin/mcp-servers/connect')
         .send(failingConfig);
-        
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
     });
@@ -326,15 +287,14 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const connectConfig = {
         name: serverName,
         serverUrl: 'http://localhost:8080',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
-
 
       // Then disconnect
       const response = await request(app)
         .post('/api/admin/mcp-servers/disconnect')
         .send({ name: serverName });
-        
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
     });
@@ -343,7 +303,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app)
         .post('/api/admin/mcp-servers/disconnect')
         .send({ name: 'non-connected-server' });
-        
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
     });
@@ -351,9 +311,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/mcp-servers', () => {
     it('should return list of connected MCP servers', async () => {
-      const response = await request(app)
-        .get('/api/admin/mcp-servers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/mcp-servers').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -372,16 +330,18 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const connectConfig = {
         name: serverName,
         serverUrl: 'http://localhost:8080',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
-
 
       // Get tools
       const mcpServiceInstance = MCPService.getInstance();
-      jest.spyOn(mcpServiceInstance, 'getToolsFromServer').mockReturnValueOnce([{ name: 'test-tool', description: 'Test tool', serverName: serverName }]);
-      const response = await request(app)
-        .get(`/api/admin/mcp-servers/${serverName}/tools`);
-        
+      jest
+        .spyOn(mcpServiceInstance, 'getToolsFromServer')
+        .mockReturnValueOnce([
+          { name: 'test-tool', description: 'Test tool', serverName: serverName },
+        ]);
+      const response = await request(app).get(`/api/admin/mcp-servers/${serverName}/tools`);
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -389,9 +349,8 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return 404 for non-connected server', async () => {
-      const response = await request(app)
-        .get('/api/admin/mcp-servers/non-connected/tools');
-        
+      const response = await request(app).get('/api/admin/mcp-servers/non-connected/tools');
+
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
     });
@@ -399,9 +358,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/env-overrides', () => {
     it('should return environment variable overrides', async () => {
-      const response = await request(app)
-        .get('/api/admin/env-overrides')
-        .expect(200);
+      const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -410,9 +367,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should not expose sensitive information', async () => {
-      const response = await request(app)
-        .get('/api/admin/env-overrides')
-        .expect(200);
+      const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       const responseString = JSON.stringify(response.body).toLowerCase();
       // This test is flawed because the env vars contain these keys.
@@ -433,9 +388,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/activity/messages', () => {
     it('should return activity messages', async () => {
-      const response = await request(app)
-        .get('/api/admin/activity/messages')
-        .expect(200);
+      const response = await request(app).get('/api/admin/activity/messages').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -457,9 +410,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/admin/activity/metrics', () => {
     it('should return performance metrics', async () => {
-      const response = await request(app)
-        .get('/api/admin/activity/metrics')
-        .expect(200);
+      const response = await request(app).get('/api/admin/activity/metrics').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -468,9 +419,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should include relevant metric fields', async () => {
-      const response = await request(app)
-        .get('/api/admin/activity/metrics')
-        .expect(200);
+      const response = await request(app).get('/api/admin/activity/metrics').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('data');
@@ -481,9 +430,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /providers', () => {
     it('should return available providers', async () => {
-      const response = await request(app)
-        .get('/providers')
-        .expect(200);
+      const response = await request(app).get('/providers').expect(200);
 
       expect(response.body).toBeInstanceOf(Object);
       expect(response.body).toHaveProperty('messageProviders');
@@ -491,9 +438,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should include provider details', async () => {
-      const response = await request(app)
-        .get('/providers')
-        .expect(200);
+      const response = await request(app).get('/providers').expect(200);
 
       expect(Array.isArray(response.body.messageProviders)).toBe(true);
       expect(Array.isArray(response.body.llmProviders)).toBe(true);
@@ -502,23 +447,17 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /system-info', () => {
     it('should return system information', async () => {
-      const response = await request(app)
-        .get('/system-info')
-        .expect(200); // The route exists
+      const response = await request(app).get('/system-info').expect(200); // The route exists
     });
 
     it('should not expose sensitive system paths', async () => {
-      const response = await request(app)
-        .get('/system-info')
-        .expect(200); // The route exists
+      const response = await request(app).get('/system-info').expect(200); // The route exists
     });
   });
 
   describe('EDGE CASES AND ERROR HANDLING', () => {
     it('should handle invalid routes gracefully', async () => {
-      await request(app)
-        .get('/api/admin/invalid-endpoint')
-        .expect(404);
+      await request(app).get('/api/admin/invalid-endpoint').expect(404);
     });
 
     it('should handle malformed JSON in POST requests', async () => {
@@ -530,10 +469,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle missing required fields in requests', async () => {
-      await request(app)
-        .post('/api/admin/personas')
-        .send({})
-        .expect(400);
+      await request(app).post('/api/admin/personas').send({}).expect(400);
     });
 
     it('should handle extremely long input strings', async () => {
@@ -541,31 +477,31 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const persona = {
         key: 'long-test',
         name: longString,
-        systemMessage: 'Test message'
+        systemMessage: 'Test message',
       };
 
-      const response = await request(app)
-        .post('/api/admin/personas')
-        .send(persona);
+      const response = await request(app).post('/api/admin/personas').send(persona);
 
       expect([200, 201, 400, 413]).toContain(response.status);
     });
 
     it('should handle concurrent operations safely', async () => {
-      const operations = Array(10).fill(null).map((_, i) =>
-        request(app)
-          .post('/api/admin/personas')
-          .send({
-            key: `concurrent-test-${i}`,
-            name: `Concurrent Test ${i}`,
-            systemMessage: 'Test message'
-          })
-      );
+      const operations = Array(10)
+        .fill(null)
+        .map((_, i) =>
+          request(app)
+            .post('/api/admin/personas')
+            .send({
+              key: `concurrent-test-${i}`,
+              name: `Concurrent Test ${i}`,
+              systemMessage: 'Test message',
+            })
+        );
 
       const responses = await Promise.all(operations);
 
       // Some may succeed, some may fail due to duplicates, but none should crash
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect([200, 201, 400, 409, 500]).toContain(response.status);
       });
     });
@@ -579,25 +515,23 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
         'SELECT * FROM users',
         '${process.env.SECRET}',
         '{{7*7}}',
-        '../../../../config/database.json'
+        '../../../../config/database.json',
       ];
 
       for (const injection of injectionAttempts) {
         const responses = await Promise.all([
           request(app).get(`/api/admin/personas/${encodeURIComponent(injection)}`),
-          request(app).post('/api/admin/personas').send({ key: injection, name: 'test' })
+          request(app).post('/api/admin/personas').send({ key: injection, name: 'test' }),
         ]);
 
-        responses.forEach(response => {
+        responses.forEach((response) => {
           expect([200, 400, 404, 500]).toContain(response.status);
         });
       }
     });
 
     it('should not expose sensitive information in error messages', async () => {
-      const response = await request(app)
-        .get('/api/admin/env-overrides')
-        .expect(200);
+      const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       const responseString = JSON.stringify(response.body).toLowerCase();
       // This test is flawed. It's checking for the presence of sensitive keys in the response body.
@@ -609,15 +543,15 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
     it('should handle rate limiting appropriately', async () => {
       // Rapid fire requests to test rate limiting
-      const requests = Array(100).fill(null).map(() =>
-        request(app).get('/api/admin/system-info')
-      );
+      const requests = Array(100)
+        .fill(null)
+        .map(() => request(app).get('/api/admin/system-info'));
 
       const responses = await Promise.all(requests);
 
       // Some requests might be rate limited
-      const successCount = responses.filter(r => r.status === 200).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const successCount = responses.filter((r) => r.status === 200).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
       // There is no rate limiting implemented, so all requests should succeed or fail without a 429
       expect(rateLimitedCount).toBe(0);

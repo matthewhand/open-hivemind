@@ -1,16 +1,16 @@
 import Debug from 'debug';
-import type { TextChannel, NewsChannel } from 'discord.js';
+import type { NewsChannel, TextChannel } from 'discord.js';
 
 const debug = Debug('app:sustainedTyping');
 
 /**
  * Sustained Typing Indicator
- * 
+ *
  * For longer messages, this utility sends typing indicators periodically
  * to maintain the "typing..." indicator visible while the bot "reads" and
  * prepares its response. Discord's typing indicator lasts ~10 seconds, so
  * we resend every 8 seconds for sustained effect.
- * 
+ *
  * Usage:
  *   const typing = new SustainedTypingIndicator(channel);
  *   await typing.start(15000); // 15 second delay with sustained typing
@@ -27,10 +27,10 @@ export class SustainedTypingIndicator {
   }
 
   /**
-     * Start sustained typing for a specified duration
-     * @param durationMs - How long to show typing indicator (e.g., 15000 for 15 seconds)
-     * @returns Promise that resolves after the duration
-     */
+   * Start sustained typing for a specified duration
+   * @param durationMs - How long to show typing indicator (e.g., 15000 for 15 seconds)
+   * @returns Promise that resolves after the duration
+   */
   async start(durationMs: number): Promise<void> {
     debug(`Starting sustained typing for ${durationMs}ms in channel ${this.channel.id}`);
 
@@ -54,15 +54,15 @@ export class SustainedTypingIndicator {
     }
 
     // Wait for the specified duration
-    await new Promise(resolve => setTimeout(resolve, durationMs));
+    await new Promise((resolve) => setTimeout(resolve, durationMs));
 
     // Clean up
     this.stop();
   }
 
   /**
-     * Stop the sustained typing indicator
-     */
+   * Stop the sustained typing indicator
+   */
   stop(): void {
     if (this.interval) {
       clearInterval(this.interval);
@@ -75,7 +75,7 @@ export class SustainedTypingIndicator {
 /**
  * Calculate delay based on message length
  * Longer messages = longer "reading and thinking" delay
- * 
+ *
  * @param messageLength - Length of the incoming message
  * @param responseLength - Length of the response (if known)
  * @returns Delay in milliseconds

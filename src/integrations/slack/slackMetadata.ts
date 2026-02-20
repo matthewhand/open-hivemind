@@ -14,7 +14,7 @@ export function extractSlackMetadata(event: any): Record<string, any> {
       slackTeam: undefined,
     };
   }
-  
+
   const ts = event.ts ?? event.event_ts ?? event.message_ts ?? event.message?.ts;
   const user = event.user ?? event.message?.user ?? event.bot_id;
   const thread = event.thread_ts ?? event.message?.thread_ts;

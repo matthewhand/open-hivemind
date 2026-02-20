@@ -9,7 +9,9 @@ convict.addFormat({
     }
   },
   coerce: (val: string | string[]) => {
-    if (Array.isArray(val)) {return val.map(v => v.trim());}
+    if (Array.isArray(val)) {
+      return val.map((v) => v.trim());
+    }
     return val.split(',').map((v: string) => v.trim());
   },
 });

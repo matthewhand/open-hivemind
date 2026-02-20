@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { getLlmProvider } from '@llm/getLlmProvider';
 
 // Mock the modules
 jest.mock('@llm/getLlmProvider');
@@ -6,15 +7,13 @@ jest.mock('@hivemind/adapter-discord');
 jest.mock('@integrations/slack/SlackService');
 jest.mock('@integrations/mattermost/MattermostService');
 
-import { getLlmProvider } from '@llm/getLlmProvider';
-
 // Test suite enabled
 const describeOrSkip = describe;
 
 /**
  * Comprehensive system integration tests that verify end-to-end functionality
  * across different messaging providers and LLM services.
- * 
+ *
  * These tests require actual service credentials and should only be run
  * when RUN_SYSTEM_TESTS=true is set in the environment.
  */
@@ -79,7 +78,6 @@ describe('System Integration Tests', () => {
       };
       llmProviders = [mockLlmProvider];
       console.log(`🧠 Found ${llmProviders.length} LLM provider(s)`);
-
     } catch (error) {
       console.error('❌ Failed to initialize services:', error);
       throw error;
@@ -123,7 +121,9 @@ describe('System Integration Tests', () => {
       const channelId = messengerService.getDefaultChannel();
 
       if (!channelId) {
-        throw new Error('No default channel configured. Please set the appropriate channel ID environment variable.');
+        throw new Error(
+          'No default channel configured. Please set the appropriate channel ID environment variable.'
+        );
       }
 
       const testMessage = `🧪 System test message sent at ${new Date().toISOString()}`;
@@ -175,38 +175,36 @@ describe('System Integration Tests', () => {
 
       console.log(`🤔 Testing LLM with prompt: "${testPrompt}"`);
 
-      const response = await primaryProvider.generateChatCompletion(
-        testPrompt,
-        [],
-        { channelId: messengerService.getDefaultChannel() }
-      );
+      const response = await primaryProvider.generateChatCompletion(testPrompt, [], {
+        channelId: messengerService.getDefaultChannel(),
+      });
 
       expect(response).toBeTruthy();
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
 
       // Check that it's not an error response
-      const isErrorResponse = response.includes("There was an error communicating with the AI service");
+      const isErrorResponse = response.includes(
+        'There was an error communicating with the AI service'
+      );
       expect(isErrorResponse).toBe(false);
 
-      console.log(`🎯 LLM Response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`);
+      console.log(
+        `🎯 LLM Response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`
+      );
     });
 
     it('should handle invalid prompts gracefully', async () => {
       const primaryProvider = llmProviders[0];
 
       // Test with empty prompt
-      await expect(
-        primaryProvider.generateChatCompletion('', [], {})
-      ).resolves.toBeTruthy(); // Should not throw, but return some response
+      await expect(primaryProvider.generateChatCompletion('', [], {})).resolves.toBeTruthy(); // Should not throw, but return some response
 
       // Test with very long prompt
       const longPrompt = 'test '.repeat(1000);
-      const response = await primaryProvider.generateChatCompletion(
-        longPrompt,
-        [],
-        { channelId: messengerService.getDefaultChannel() }
-      );
+      const response = await primaryProvider.generateChatCompletion(longPrompt, [], {
+        channelId: messengerService.getDefaultChannel(),
+      });
 
       expect(typeof response).toBe('string');
     });
@@ -215,7 +213,7 @@ describe('System Integration Tests', () => {
       const primaryProvider = llmProviders[0];
       const conversationHistory = [
         { role: 'user', content: 'Hello' },
-        { role: 'assistant', content: 'Hi there!' }
+        { role: 'assistant', content: 'Hi there!' },
       ];
 
       const response = await primaryProvider.generateChatCompletion(
@@ -226,7 +224,9 @@ describe('System Integration Tests', () => {
 
       expect(response).toBeTruthy();
       expect(typeof response).toBe('string');
-      console.log(`💬 Conversation response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`);
+      console.log(
+        `💬 Conversation response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`
+      );
     });
   });
 
@@ -238,7 +238,7 @@ describe('System Integration Tests', () => {
       // Generate LLM response
       console.log('🔄 Starting end-to-end integration test...');
       const llmResponse = await primaryProvider.generateChatCompletion(
-        "Write a haiku about software testing. Keep it under 100 characters.",
+        'Write a haiku about software testing. Keep it under 100 characters.',
         [],
         { channelId: channelId }
       );
@@ -248,7 +248,9 @@ describe('System Integration Tests', () => {
       expect(typeof llmResponse).toBe('string');
       expect(llmResponse.length).toBeGreaterThan(0);
 
-      const isErrorResponse = llmResponse.includes("There was an error communicating with the AI service");
+      const isErrorResponse = llmResponse.includes(
+        'There was an error communicating with the AI service'
+      );
       expect(isErrorResponse).toBe(false);
 
       // Send the response to the channel
@@ -271,17 +273,17 @@ describe('System Integration Tests', () => {
       console.log('🔀 Testing concurrent operations...');
 
       // Create multiple concurrent operations
-      const operations = Array(3).fill(null).map(async (_, index) => {
-        const prompt = `Say "Test ${index + 1}" and nothing else.`;
-        const response = await primaryProvider.generateChatCompletion(
-          prompt,
-          [],
-          { channelId: channelId }
-        );
+      const operations = Array(3)
+        .fill(null)
+        .map(async (_, index) => {
+          const prompt = `Say "Test ${index + 1}" and nothing else.`;
+          const response = await primaryProvider.generateChatCompletion(prompt, [], {
+            channelId: channelId,
+          });
 
-        const message = `🔢 Concurrent test ${index + 1}: ${response}`;
-        return await messengerService.sendMessageToChannel(channelId, message);
-      });
+          const message = `🔢 Concurrent test ${index + 1}: ${response}`;
+          return await messengerService.sendMessageToChannel(channelId, message);
+        });
 
       // Wait for all operations to complete
       const results = await Promise.all(operations);
@@ -314,7 +316,7 @@ describe('System Integration Tests', () => {
         }
 
         // Small delay between attempts
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // At least one attempt should succeed
@@ -357,14 +359,14 @@ describe('System Integration Tests', () => {
         promises.push(messengerService.sendMessageToChannel(channelId, message));
 
         // Small delay to respect rate limits
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
       const results = await Promise.all(promises);
       const duration = Date.now() - startTime;
 
       // Verify all messages were sent
-      results.forEach(messageId => {
+      results.forEach((messageId) => {
         expect(messageId).toBeTruthy();
       });
 

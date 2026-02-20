@@ -1,5 +1,5 @@
-import { stripBotId } from '@message/helpers/processing/stripBotId';
 import messageConfig from '@config/messageConfig';
+import { stripBotId } from '@message/helpers/processing/stripBotId';
 
 // Mock the messageConfig dependency
 jest.mock('@config/messageConfig', () => ({

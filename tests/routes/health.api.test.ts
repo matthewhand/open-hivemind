@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { runRoute } from '../helpers/expressRunner';
 import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
+import { runRoute } from '../helpers/expressRunner';
 
 describe('Health Routes - API Monitoring', () => {
   let app: express.Application;
@@ -43,7 +43,7 @@ describe('Health Routes - API Monitoring', () => {
     apiMonitor.stopAllMonitoring();
 
     // Clear all endpoints
-    apiMonitor.getAllEndpoints().forEach(endpoint => {
+    apiMonitor.getAllEndpoints().forEach((endpoint) => {
       apiMonitor.removeEndpoint(endpoint.id);
     });
   });
@@ -154,9 +154,7 @@ describe('Health Routes - API Monitoring', () => {
         retryDelay: 1000,
       };
 
-      const response = await request(app)
-        .post('/health/api-endpoints')
-        .send(endpointData);
+      const response = await request(app).post('/health/api-endpoints').send(endpointData);
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('message');
@@ -166,9 +164,7 @@ describe('Health Routes - API Monitoring', () => {
     });
 
     it('should return 400 for missing required fields', async () => {
-      const response = await request(app)
-        .post('/health/api-endpoints')
-        .send({ name: 'Test' }); // Missing id and url
+      const response = await request(app).post('/health/api-endpoints').send({ name: 'Test' }); // Missing id and url
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
@@ -182,9 +178,7 @@ describe('Health Routes - API Monitoring', () => {
         url: 'https://httpbin.org/get',
       };
 
-      const response = await request(app)
-        .post('/health/api-endpoints')
-        .send(minimalEndpoint);
+      const response = await request(app).post('/health/api-endpoints').send(minimalEndpoint);
 
       expect(response.status).toBe(201);
       const endpoint = apiMonitor.getEndpoint('minimal-endpoint');
@@ -368,14 +362,12 @@ describe('Health Routes - API Monitoring', () => {
 
     it('should handle large request bodies gracefully', async () => {
       const largeBody = 'x'.repeat(10000);
-      const response = await request(app)
-        .post('/health/api-endpoints')
-        .send({
-          id: 'large-endpoint',
-          name: 'Large API',
-          url: 'https://httpbin.org/post',
-          body: largeBody,
-        });
+      const response = await request(app).post('/health/api-endpoints').send({
+        id: 'large-endpoint',
+        name: 'Large API',
+        url: 'https://httpbin.org/post',
+        body: largeBody,
+      });
 
       expect(response.status).toBe(201);
     });

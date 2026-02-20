@@ -5,7 +5,11 @@ import type { IMessage } from '@src/message/interfaces/IMessage';
  * @param message - The IMessage object to convert.
  * @returns An object compatible with OpenAI chat API.
  */
-export function convertIMessageToChatParam(message: IMessage): { role: string; content: string; name?: string } {
+export function convertIMessageToChatParam(message: IMessage): {
+  role: string;
+  content: string;
+  name?: string;
+} {
   return {
     role: message.role,
     content: message.content,

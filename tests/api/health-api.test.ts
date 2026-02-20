@@ -1,15 +1,15 @@
 /**
  * TDD Test Suite for Health API Endpoints
- * 
+ *
  * Comprehensive tests for all health check endpoints with edge cases
- * 
+ *
  * @file health-api.test.ts
  * @author Open-Hivemind TDD Test Suite
  * @since 2025-09-27
  */
 
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import healthRouter from '../../src/server/routes/health';
 
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
@@ -28,9 +28,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health - BASIC HEALTH CHECK', () => {
     it('should return healthy status with all required fields', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
@@ -41,9 +39,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     it('should respond quickly for health checks', async () => {
       const start = Date.now();
 
-      await request(app)
-        .get('/health')
-        .expect(200);
+      await request(app).get('/health').expect(200);
 
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(100); // Should be very fast
@@ -53,10 +49,10 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       const responses = await Promise.all([
         request(app).get('/health'),
         request(app).get('/health'),
-        request(app).get('/health')
+        request(app).get('/health'),
       ]);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.body.status).toBe('healthy');
       });
@@ -65,9 +61,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/detailed - DETAILED HEALTH CHECK', () => {
     it('should return comprehensive system health information', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/health/detailed').expect(200);
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
@@ -94,9 +88,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should calculate memory percentage correctly', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/health/detailed').expect(200);
 
       const { memory } = response.body;
       const expectedPercentage = (memory.used / memory.total) * 100;
@@ -107,9 +99,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return valid system information', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/health/detailed').expect(200);
 
       const { system } = response.body;
 
@@ -121,9 +111,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/metrics - PERFORMANCE METRICS', () => {
     it('should return performance metrics with required fields', async () => {
-      const response = await request(app)
-        .get('/health/metrics')
-        .expect(200);
+      const response = await request(app).get('/health/metrics').expect(200);
 
       expect(response.body).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('uptime');
@@ -141,9 +129,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return reasonable performance values', async () => {
-      const response = await request(app)
-        .get('/health/metrics')
-        .expect(200);
+      const response = await request(app).get('/health/metrics').expect(200);
 
       expect(response.body.uptime).toBeGreaterThan(0);
       expect(response.body.memory.used).toBeGreaterThan(0);
@@ -153,9 +139,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/alerts - SYSTEM ALERTS', () => {
     it('should return system alerts array', async () => {
-      const response = await request(app)
-        .get('/health/alerts')
-        .expect(200);
+      const response = await request(app).get('/health/alerts').expect(200);
 
       expect(response.body).toHaveProperty('alerts');
       expect(Array.isArray(response.body.alerts)).toBe(true);
@@ -163,9 +147,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should validate alert structure when alerts exist', async () => {
-      const response = await request(app)
-        .get('/health/alerts')
-        .expect(200);
+      const response = await request(app).get('/health/alerts').expect(200);
 
       response.body.alerts.forEach((alert: any) => {
         expect(alert).toHaveProperty('level');
@@ -180,9 +162,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       // Force high memory usage scenario
       const largeArray = new Array(1000000).fill('test');
 
-      const response = await request(app)
-        .get('/health/alerts')
-        .expect(200);
+      const response = await request(app).get('/health/alerts').expect(200);
 
       // Check if memory alert is generated when usage is high
       const memoryAlerts = response.body.alerts.filter((alert: any) =>
@@ -196,9 +176,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/ready - READINESS PROBE', () => {
     it('should return readiness status', async () => {
-      const response = await request(app)
-        .get('/health/ready')
-        .expect(200);
+      const response = await request(app).get('/health/ready').expect(200);
 
       expect(response.body).toHaveProperty('ready');
       expect(response.body).toHaveProperty('timestamp');
@@ -206,9 +184,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should be ready when all dependencies are available', async () => {
-      const response = await request(app)
-        .get('/health/ready')
-        .expect(200);
+      const response = await request(app).get('/health/ready').expect(200);
 
       expect(response.body.ready).toBe(true);
     });
@@ -216,9 +192,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/live - LIVENESS PROBE', () => {
     it('should return liveness status', async () => {
-      const response = await request(app)
-        .get('/health/live')
-        .expect(200);
+      const response = await request(app).get('/health/live').expect(200);
 
       expect(response.body).toHaveProperty('alive');
       expect(response.body).toHaveProperty('timestamp');
@@ -228,9 +202,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     it('should respond very quickly for liveness checks', async () => {
       const start = Date.now();
 
-      await request(app)
-        .get('/health/live')
-        .expect(200);
+      await request(app).get('/health/live').expect(200);
 
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(50); // Should be extremely fast
@@ -239,9 +211,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/metrics/prometheus - PROMETHEUS METRICS', () => {
     it('should return Prometheus format metrics', async () => {
-      const response = await request(app)
-        .get('/health/metrics/prometheus')
-        .expect(200);
+      const response = await request(app).get('/health/metrics/prometheus').expect(200);
 
       expect(response.headers['content-type']).toMatch(/text\/plain/);
       expect(response.text).toMatch(/# HELP/);
@@ -249,9 +219,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should include standard Prometheus metrics', async () => {
-      const response = await request(app)
-        .get('/health/metrics/prometheus')
-        .expect(200);
+      const response = await request(app).get('/health/metrics/prometheus').expect(200);
 
       const metrics = response.text;
 
@@ -264,26 +232,21 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('EDGE CASES AND ERROR HANDLING', () => {
     it('should handle invalid routes gracefully', async () => {
-      await request(app)
-        .get('/health/invalid-endpoint')
-        .expect(404);
+      await request(app).get('/health/invalid-endpoint').expect(404);
     });
 
     it('should handle malformed requests', async () => {
-      await request(app)
-        .get('/health/detailed')
-        .set('Content-Type', 'invalid/type')
-        .expect(200); // Should still work despite invalid content-type
+      await request(app).get('/health/detailed').set('Content-Type', 'invalid/type').expect(200); // Should still work despite invalid content-type
     });
 
     it('should handle concurrent health checks without issues', async () => {
-      const requests = Array(20).fill(null).map(() =>
-        request(app).get('/health')
-      );
+      const requests = Array(20)
+        .fill(null)
+        .map(() => request(app).get('/health'));
 
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.body.status).toBe('healthy');
       });
@@ -291,13 +254,13 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
     it('should not crash on resource exhaustion simulation', async () => {
       // Test multiple concurrent detailed health checks
-      const heavyRequests = Array(10).fill(null).map(() =>
-        request(app).get('/health/detailed')
-      );
+      const heavyRequests = Array(10)
+        .fill(null)
+        .map(() => request(app).get('/health/detailed'));
 
       const responses = await Promise.all(heavyRequests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect([200, 500, 503]).toContain(response.status);
       });
     });
@@ -305,9 +268,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('SECURITY TESTS', () => {
     it('should not expose sensitive system information', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/health/detailed').expect(200);
 
       const responseString = JSON.stringify(response.body);
 
@@ -325,12 +286,11 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
         '<script>alert("xss")</script>',
         'SELECT * FROM users',
         '${process.env.SECRET}',
-        '{{7*7}}'
+        '{{7*7}}',
       ];
 
       for (const injection of injectionAttempts) {
-        const response = await request(app)
-          .get(`/health?test=${encodeURIComponent(injection)}`);
+        const response = await request(app).get(`/health?test=${encodeURIComponent(injection)}`);
 
         expect([200, 400, 404]).toContain(response.status);
       }

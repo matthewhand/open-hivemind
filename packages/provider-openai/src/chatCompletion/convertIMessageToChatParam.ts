@@ -1,22 +1,20 @@
-import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { OpenAI } from 'openai';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
  * Converts an `IMessage` object to OpenAI's `ChatCompletionMessageParam` format.
- * 
+ *
  * Key Features:
  * - **Type Mapping**: Converts `IMessage` to `ChatCompletionMessageParam`.
  *   - Expected OpenAI type `ChatCompletionMessageParam`:
  *     - `role: 'system' | 'user' | 'assistant' | 'function'`
  *     - `content: string | ChatCompletionContentPart[]`
  *     - `name?: string`
- * 
+ *
  * @param msg - The `IMessage` object to be converted.
  * @returns The converted `ChatCompletionMessageParam` object.
  */
-export function convertIMessageToChatParam(
-  msg: IMessage,
-): OpenAI.Chat.ChatCompletionMessageParam {
+export function convertIMessageToChatParam(msg: IMessage): OpenAI.Chat.ChatCompletionMessageParam {
   // Ensure the role is valid
   if (!['system', 'user', 'assistant', 'function'].includes(msg.role)) {
     throw new Error(`Invalid role: ${msg.role}`);

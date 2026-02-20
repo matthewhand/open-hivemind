@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { KnownBlock } from '@slack/web-api';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import messageConfig from '@config/messageConfig';
+import type { IMessage } from '@message/interfaces/IMessage';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import type SlackMessage from '../SlackMessage';
-import type { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackService:MessageHandler');
 
@@ -34,7 +34,7 @@ export class SlackMessageHandler {
     historyMessages: IMessage[],
     enrichedMessage: SlackMessage,
     channelId: string,
-    threadTs: string,
+    threadTs: string
   ): Promise<string> {
     const { botName, botConfig, joinTs, lastSentEventTs } = this.context;
 
@@ -64,17 +64,12 @@ export class SlackMessageHandler {
       enrichedMessage,
       historyMessages,
       botConfig,
-      botName,
+      botName
     );
 
     if (response) {
       // Send response and update tracking
-      const sentTs = await this.sendResponse(
-        channelId,
-        response.text,
-        threadTs,
-        response.blocks,
-      );
+      const sentTs = await this.sendResponse(channelId, response.text, threadTs, response.blocks);
 
       if (sentTs) {
         lastSentEventTs.set(botName, eventTs || '');
@@ -94,7 +89,7 @@ export class SlackMessageHandler {
     enrichedMessage: SlackMessage,
     historyMessages: IMessage[],
     botConfig: any,
-    botName: string,
+    botName: string
   ): Promise<{ text: string; blocks?: KnownBlock[] } | null> {
     try {
       const userMessage = enrichedMessage.getText() || '';
@@ -104,17 +99,9 @@ export class SlackMessageHandler {
 
       // Check for OpenWebUI configuration
       if (this.shouldUseOpenWebUI(botConfig)) {
-        llmResponse = await this.callOpenWebUI(
-          userMessage,
-          formattedHistory,
-          botConfig,
-        );
+        llmResponse = await this.callOpenWebUI(userMessage, formattedHistory, botConfig);
       } else {
-        llmResponse = await this.callStandardLLM(
-          userMessage,
-          formattedHistory,
-          botConfig,
-        );
+        llmResponse = await this.callStandardLLM(userMessage, formattedHistory, botConfig);
       }
 
       debug(`[${botName}] LLM Response:`, llmResponse);
@@ -147,7 +134,7 @@ export class SlackMessageHandler {
   private async callOpenWebUI(
     userMessage: string,
     historyMessages: IMessage[],
-    botConfig: any,
+    botConfig: any
   ): Promise<string> {
     const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');
 
@@ -159,7 +146,7 @@ export class SlackMessageHandler {
       },
       userMessage,
       historyMessages,
-      (botConfig.llm.systemPrompt || ''),
+      botConfig.llm.systemPrompt || ''
     );
   }
 
@@ -169,20 +156,16 @@ export class SlackMessageHandler {
   private async callStandardLLM(
     userMessage: string,
     historyMessages: IMessage[],
-    botConfig: any,
+    botConfig: any
   ): Promise<string> {
-    const llmProviders = getLlmProvider();
+    const llmProviders = await getLlmProvider();
     if (!llmProviders.length) {
       debug('No LLM providers available');
-      return 'Sorry, I\'m having trouble processing your request right now.';
+      return "Sorry, I'm having trouble processing your request right now.";
     }
 
     try {
-      return await llmProviders[0].generateChatCompletion(
-        userMessage,
-        historyMessages,
-        botConfig,
-      );
+      return await llmProviders[0].generateChatCompletion(userMessage, historyMessages, botConfig);
     } catch (e) {
       debug(`LLM call failed, falling back: ${e}`);
       // Fallback to another provider if available
@@ -190,7 +173,7 @@ export class SlackMessageHandler {
         return await llmProviders[1].generateChatCompletion(
           userMessage,
           historyMessages,
-          botConfig,
+          botConfig
         );
       }
       throw e;
@@ -200,7 +183,9 @@ export class SlackMessageHandler {
   /**
    * Process LLM response (placeholder - would delegate to message processor)
    */
-  private async processResponse(llmResponse: string): Promise<{ text: string; blocks?: KnownBlock[] }> {
+  private async processResponse(
+    llmResponse: string
+  ): Promise<{ text: string; blocks?: KnownBlock[] }> {
     // This would normally delegate to SlackMessageProcessor
     // For now, return the raw response
     return { text: llmResponse };
@@ -213,14 +198,14 @@ export class SlackMessageHandler {
     channelId: string,
     text: string,
     threadId: string,
-    blocks?: KnownBlock[],
+    blocks?: KnownBlock[]
   ): Promise<string> {
     return this.context.messageIO.sendMessageToChannel(
       channelId,
       text,
       this.context.botName,
       threadId,
-      blocks,
+      blocks
     );
   }
 
