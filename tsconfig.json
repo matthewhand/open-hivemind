@@ -71,7 +71,9 @@
       "@hivemind/adapter-discord/*": [
         "packages/adapter-discord/src/*"
       ]
-    }
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*",

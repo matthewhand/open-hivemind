@@ -1,8 +1,11 @@
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 import convict from 'convict';
 import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
+import { IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -72,27 +75,38 @@ const schema = convict({
 /**
  * ConfigurationManager Class - Singleton configuration manager
  *
+ * Now supports dependency injection via tsyringe while maintaining
+ * backward compatibility with the singleton pattern.
+ *
  * @class
+ * @implements {IConfigurationManager}
  * @description Centralized configuration management system that handles:
  * - Environment configuration validation
  * - Runtime configuration storage
  * - Session ID management across integrations
  *
  * @example
+ * // Using singleton pattern (backward compatible)
  * const configManager = ConfigurationManager.getInstance();
  * const envConfig = configManager.getConfig('environment');
+ *
+ * @example
+ * // Using dependency injection (recommended for new code)
+ * import { container, TOKENS } from '../di';
+ * const configManager = container.resolve<IConfigurationManager>(TOKENS.ConfigurationManager);
  */
-export class ConfigurationManager {
+@singleton()
+@injectable()
+export class ConfigurationManager implements IConfigurationManager {
   private static instance: ConfigurationManager | null = null;
   private configs: Record<string, convict.Config<any>> = {};
   private sessionStore: Record<string, Record<string, string>> = {};
 
   /**
-     * Private constructor for singleton pattern
-     * @private
+     * Constructor for ConfigurationManager
      * @throws {Error} If schema validation fails
      */
-  private constructor() {
+  constructor() {
     // Validate schema before loading files - use 'warn' to allow extra params from config files
     schema.validate({ allowed: 'warn' });
 
@@ -116,19 +130,19 @@ export class ConfigurationManager {
   }
 
   /**
-     * Gets the singleton instance
+     * Gets the singleton instance (backward compatible)
      * @static
      * @returns {ConfigurationManager} The singleton instance
+     * @deprecated Prefer using dependency injection via container.resolve()
      * @example
      * const configManager = ConfigurationManager.getInstance();
      */
   public static getInstance(): ConfigurationManager {
     if (!ConfigurationManager.instance) {
       ConfigurationManager.instance = new ConfigurationManager();
-      ConfigurationManager.instance = new ConfigurationManager();
       debug('ConfigurationManager instance created');
     }
-    return ConfigurationManager.instance!; // Non-null assertion here
+    return ConfigurationManager.instance!;
   }
 
   /**
