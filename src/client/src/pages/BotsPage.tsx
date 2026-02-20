@@ -25,6 +25,7 @@ import { useLlmStatus } from '../hooks/useLlmStatus';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
 
 const API_BASE = '/api';
 
@@ -40,6 +41,7 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -402,64 +404,65 @@ const BotsPage: React.FC = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
-                <div className="flex items-center gap-4">
-                  <BotAvatar bot={bot} />
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg">{bot.name}</span>
-                      <div className="bg-base-200 px-2 py-0.5 rounded text-[10px] font-mono opacity-50 group-hover:opacity-100 transition-opacity">
-                        {bot.id}
+              {bots.map((bot) => (
+                <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
+                  <div className="flex items-center gap-4">
+                    <BotAvatar bot={bot} />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg">{bot.name}</span>
+                        <div className="bg-base-200 px-2 py-0.5 rounded text-[10px] font-mono opacity-50 group-hover:opacity-100 transition-opacity">
+                          {bot.id}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs text-base-content/60 mt-1">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3 opacity-70" />
+                          {(bot as any).messageProvider || bot.provider || 'No Msg'}
+                        </span>
+                        <span className="flex items-center gap-1 border-l border-base-content/20 pl-4">
+                          <Cpu className="w-3 h-3 opacity-70" />
+                          {bot.llmProvider ? (
+                            llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
+                          ) : 'Default LLM'}
+                        </span>
+                        {bot.messageCount > 0 && (
+                          <span className="flex items-center gap-1 border-l border-base-content/20 pl-4" title="Messages Processed">
+                            <Activity className="w-3 h-3 opacity-70" /> {bot.messageCount}
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex items-center gap-4 text-xs text-base-content/60 mt-1">
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3 opacity-70" />
-                        {(bot as any).messageProvider || bot.provider || 'No Msg'}
-                      </span>
-                      <span className="flex items-center gap-1 border-l border-base-content/20 pl-4">
-                        <Cpu className="w-3 h-3 opacity-70" />
-                        {bot.llmProvider ? (
-                          llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
-                        ) : 'Default LLM'}
-                      </span>
-                      {bot.messageCount > 0 && (
-                        <span className="flex items-center gap-1 border-l border-base-content/20 pl-4" title="Messages Processed">
-                          <Activity className="w-3 h-3 opacity-70" /> {bot.messageCount}
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end mr-4">
+                      {getStatusBadge(bot.status, bot.connected)}
                     </div>
+
+                    {/* Toggle Status */}
+                    <input
+                      type="checkbox"
+                      className={`toggle toggle-sm ${bot.status === 'active' ? 'toggle-success' : ''}`}
+                      checked={bot.status === 'active'}
+                      onChange={() => handleToggleStatus(bot)}
+                      disabled={actionLoading === bot.id}
+                      title="Toggle Bot Status"
+                    />
+
+                    <div className="divider divider-horizontal mx-1 h-8"></div>
+
+                    {/* Settings Button (Opens Modal) */}
+                    <button
+                      className="btn btn-sm btn-square btn-ghost"
+                      onClick={() => setSelectedBotForConfig(bot)}
+                      title="Bot Settings"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end mr-4">
-                    {getStatusBadge(bot.status, bot.connected)}
-                  </div>
-
-                  {/* Toggle Status */}
-                  <input
-                    type="checkbox"
-                    className={`toggle toggle-sm ${bot.status === 'active' ? 'toggle-success' : ''}`}
-                    checked={bot.status === 'active'}
-                    onChange={() => handleToggleStatus(bot)}
-                    disabled={actionLoading === bot.id}
-                    title="Toggle Bot Status"
-                  />
-
-                  <div className="divider divider-horizontal mx-1 h-8"></div>
-
-                  {/* Settings Button (Opens Modal) */}
-                  <button
-                    className="btn btn-sm btn-square btn-ghost"
-                    onClick={() => setSelectedBotForConfig(bot)}
-                    title="Bot Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
               ))}
             </div>
           )}
@@ -475,213 +478,208 @@ const BotsPage: React.FC = () => {
           personas={personas}
           llmProfiles={llmProfiles}
           integrationOptions={{ message: getIntegrationOptions('message') }}
-          onUpdateConfig={async (bot, key, value) => {
+          onUpdateConfig={async (bot: any, key: string, value: any) => {
             // Wrap update to refresh selected bot state if needed
-            await handleUpdateConfig(bot, key, value);
+            await handleUpdateConfig(bot, key as any, value);
             // We might need to fetch the updated bot from the list to keep modal in sync?
             // Since handleUpdateConfig updates state, the 'bot' prop from the list *should* update if we keyed it correctly.
             // But 'selectedBotForConfig' is a separate state piece. We need to update it too.
             setSelectedBotForConfig(prev => prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null);
           }}
-          onUpdatePersona={async (bot, pid) => {
+          onUpdatePersona={async (bot: any, pid: string) => {
             await handleUpdatePersona(bot, pid);
             setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
           }}
-          onClone={(b) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
-          onViewDetails={(b) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
+          onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
+          onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
         />
       )}
-    </div>
-  )
-}
-        </div >
-      </div >
 
-  {/* Create Bot Wizard Modal */ }
-  < Modal
-isOpen = { showCreateModal }
-onClose = {() => setShowCreateModal(false)}
-title = "Create New Bot"
-size = "lg"
-  >
-  <CreateBotWizard
-    onCancel={() => setShowCreateModal(false)}
-    onSuccess={async () => {
-      setShowCreateModal(false);
-      await fetchData();
-    }}
-    personas={personas}
-    llmProfiles={llmProfiles}
-    defaultLlmConfigured={defaultLlmConfigured}
-  />
-      </Modal >
-
-  {/* Delete Confirmation Modal */ }
-  < Modal
-isOpen = { deleteModal.isOpen }
-onClose = {() => setDeleteModal({ isOpen: false, bot: null })}
-title = "Delete Bot"
-size = "sm"
-  >
-  <div className="space-y-4">
-    <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
-    <p className="text-sm text-base-content/60">This action cannot be undone.</p>
-    <div className="flex justify-end gap-2 mt-6">
-      <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
-      <button
-        className="btn btn-error"
-        onClick={handleDelete}
-        disabled={actionLoading === deleteModal.bot?.id}
+      {/* Create Bot Wizard Modal */}
+      < Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Bot"
+        size="lg"
       >
-        {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
-      </button>
-    </div>
-  </div>
+        <CreateBotWizard
+          onCancel={() => setShowCreateModal(false)}
+          onSuccess={async () => {
+            setShowCreateModal(false);
+            await fetchData();
+          }}
+          personas={personas}
+          llmProfiles={llmProfiles}
+          defaultLlmConfigured={defaultLlmConfigured}
+        />
       </Modal >
 
-  {/* Preview Modal */ }
-  < Modal
-isOpen = {!!previewBot}
-onClose = {() => setPreviewBot(null)}
-title = { previewBot?.name || 'Bot Details'}
-size = "lg"
-  >
-  { previewBot && (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="avatar placeholder">
-          <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
-            <Bot className="w-8 h-8" />
+      {/* Delete Confirmation Modal */}
+      < Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, bot: null })}
+        title="Delete Bot"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
+          <p className="text-sm text-base-content/60">This action cannot be undone.</p>
+          <div className="flex justify-end gap-2 mt-6">
+            <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
+            <button
+              className="btn btn-error"
+              onClick={handleDelete}
+              disabled={actionLoading === deleteModal.bot?.id}
+            >
+              {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
+            </button>
           </div>
         </div>
-        <div>
-          <h3 className="text-xl font-bold">{previewBot.name}</h3>
-          <p className="text-base-content/60">ID: {previewBot.id}</p>
-          <div className="mt-2">{getStatusBadge(previewBot.status, previewBot.connected)}</div>
-        </div>
-      </div>
+      </Modal >
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="card bg-base-200">
-          <div className="card-body p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" /> Message Provider
+      {/* Preview Modal */}
+      < Modal
+        isOpen={!!previewBot}
+        onClose={() => setPreviewBot(null)}
+        title={previewBot?.name || 'Bot Details'}
+        size="lg"
+      >
+        {previewBot && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="avatar placeholder">
+                <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
+                  <Bot className="w-8 h-8" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">{previewBot.name}</h3>
+                <p className="text-base-content/60">ID: {previewBot.id}</p>
+                <div className="mt-2">{getStatusBadge(previewBot.status, previewBot.connected)}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="card bg-base-200">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" /> Message Provider
+                    </h4>
+                    <button
+                      className="btn btn-xs btn-ghost gap-1"
+                      onClick={() => window.location.href = '/admin/integrations/message'}
+                      title="Configure Message Provider"
+                    >
+                      <Settings className="w-3 h-3" /> Config
+                    </button>
+                  </div>
+                  <p className="text-lg font-bold mb-1">{previewBot.messageProvider || previewBot.provider || 'None'}</p>
+                  {/* Display redacted config details if available */}
+                  {previewBot.config && previewBot.config[previewBot.provider] && (
+                    <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
+                      {Object.entries(previewBot.config[previewBot.provider]).map(([key, val]) => (
+                        <div key={key} className="flex justify-between">
+                          <span>{key}:</span>
+                          <span>{redact(String(val))}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="card bg-base-200">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Cpu className="w-4 h-4" /> LLM Provider
+                    </h4>
+                    <button
+                      className="btn btn-xs btn-ghost gap-1"
+                      onClick={() => window.location.href = '/admin/integrations/llm'}
+                      title="Configure LLM Provider"
+                    >
+                      <Settings className="w-3 h-3" /> Config
+                    </button>
+                  </div>
+                  <p className="text-lg font-bold mb-1">{previewBot.llmProvider || 'None'}</p>
+                  {/* Display redacted config details if available */}
+                  {previewBot.config && previewBot.config.llm && (
+                    <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
+                      {Object.entries(previewBot.config.llm).map(([key, val]) => (
+                        <div key={key} className="flex justify-between">
+                          <span>{key}:</span>
+                          <span>{redact(String(val))}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="stats bg-base-200 w-full shadow-sm">
+              <div className="stat">
+                <div className="stat-title">Messages</div>
+                <div className="stat-value text-primary">{previewBot.messageCount || 0}</div>
+              </div>
+              <div className="stat">
+                <div className="stat-title">Errors</div>
+                <div className="stat-value text-error">{previewBot.errorCount || 0}</div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4" /> Recent Activity
               </h4>
-              <button
-                className="btn btn-xs btn-ghost gap-1"
-                onClick={() => window.location.href = '/admin/integrations/message'}
-                title="Configure Message Provider"
-              >
-                <Settings className="w-3 h-3" /> Config
+              <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
+                {activityLogs.length > 0 ? (
+                  activityLogs.map((log) => (
+                    <div key={log.id} className="mb-1 border-b border-base-content/5 pb-1 last:border-0">
+                      <span className="opacity-50 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                      <span className={
+                        log.metadata?.type === 'RUNTIME' ? 'text-info' :
+                          log.action?.includes('ERROR') || log.result === 'failure' ? 'text-error' :
+                            'text-base-content'
+                      }>
+                        <span className="font-bold mr-1">[{log.action}]</span>
+                        {log.details}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center opacity-50 py-12 flex flex-col items-center">
+                    <Activity className="w-8 h-8 mb-2 opacity-20" />
+                    <span>No recent activity found</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" /> Chat History
+              </h4>
+              <div className="bg-base-300 rounded-lg">
+                <BotChatBubbles
+                  messages={chatHistory}
+                  botName={previewBot.name}
+                  loading={chatLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>Close</button>
+              <button className="btn btn-primary" onClick={() => window.location.href = '/admin/integrations/llm'}>
+                <Settings className="w-4 h-4 mr-2" />
+                Configure Providers
               </button>
             </div>
-            <p className="text-lg font-bold mb-1">{previewBot.messageProvider || previewBot.provider || 'None'}</p>
-            {/* Display redacted config details if available */}
-            {previewBot.config && previewBot.config[previewBot.provider] && (
-              <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
-                {Object.entries(previewBot.config[previewBot.provider]).map(([key, val]) => (
-                  <div key={key} className="flex justify-between">
-                    <span>{key}:</span>
-                    <span>{redact(String(val))}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
-        <div className="card bg-base-200">
-          <div className="card-body p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Cpu className="w-4 h-4" /> LLM Provider
-              </h4>
-              <button
-                className="btn btn-xs btn-ghost gap-1"
-                onClick={() => window.location.href = '/admin/integrations/llm'}
-                title="Configure LLM Provider"
-              >
-                <Settings className="w-3 h-3" /> Config
-              </button>
-            </div>
-            <p className="text-lg font-bold mb-1">{previewBot.llmProvider || 'None'}</p>
-            {/* Display redacted config details if available */}
-            {previewBot.config && previewBot.config.llm && (
-              <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
-                {Object.entries(previewBot.config.llm).map(([key, val]) => (
-                  <div key={key} className="flex justify-between">
-                    <span>{key}:</span>
-                    <span>{redact(String(val))}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="stats bg-base-200 w-full shadow-sm">
-        <div className="stat">
-          <div className="stat-title">Messages</div>
-          <div className="stat-value text-primary">{previewBot.messageCount || 0}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Errors</div>
-          <div className="stat-value text-error">{previewBot.errorCount || 0}</div>
-        </div>
-      </div>
-
-      <div>
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <Activity className="w-4 h-4" /> Recent Activity
-        </h4>
-        <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
-          {activityLogs.length > 0 ? (
-            activityLogs.map((log) => (
-              <div key={log.id} className="mb-1 border-b border-base-content/5 pb-1 last:border-0">
-                <span className="opacity-50 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                <span className={
-                  log.metadata?.type === 'RUNTIME' ? 'text-info' :
-                    log.action?.includes('ERROR') || log.result === 'failure' ? 'text-error' :
-                      'text-base-content'
-                }>
-                  <span className="font-bold mr-1">[{log.action}]</span>
-                  {log.details}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="text-center opacity-50 py-12 flex flex-col items-center">
-              <Activity className="w-8 h-8 mb-2 opacity-20" />
-              <span>No recent activity found</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h4 className="font-semibold mb-3 flex items-center gap-2">
-          <MessageSquare className="w-4 h-4" /> Chat History
-        </h4>
-        <div className="bg-base-300 rounded-lg">
-          <BotChatBubbles
-            messages={chatHistory}
-            botName={previewBot.name}
-            loading={chatLoading}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>Close</button>
-        <button className="btn btn-primary" onClick={() => window.location.href = '/admin/integrations/llm'}>
-          <Settings className="w-4 h-4 mr-2" />
-          Configure Providers
-        </button>
-      </div>
-    </div>
-  )}
+        )}
       </Modal >
     </div >
   );

@@ -5,7 +5,7 @@ export async function summarizeText(
   opts?: { maxWords?: number; maxTokensOverride?: number },
 ): Promise<string> {
   const maxWords = Math.max(10, Number(opts?.maxWords ?? 80));
-  const { provider, metadata } = getTaskLlm('summary', {
+  const { provider, metadata } = await getTaskLlm('summary', {
     baseMetadata: { maxTokensOverride: opts?.maxTokensOverride ?? 200 },
   });
 

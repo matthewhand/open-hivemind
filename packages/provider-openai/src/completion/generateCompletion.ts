@@ -14,7 +14,7 @@ const debug = Debug('app:generateCompletion');
 export async function generateCompletion(prompt: string, messages: IMessage[], metadata: Record<string, any>): Promise<string> {
   try {
     debug('Starting completion generation for prompt:', prompt);
-    const llmProvider = getLlmProvider();
+    const llmProvider = await getLlmProvider();
     if (!llmProvider.length) {
       throw new Error('No LLM providers available');
     }

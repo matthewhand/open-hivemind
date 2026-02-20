@@ -393,7 +393,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
     for (const [botName, botManager] of this.botManagers) {
       const messageProcessor = this.messageProcessors.get(botName);
-      if (!messageProcessor) {continue;}
+      if (!messageProcessor) { continue; }
 
       botManager.setMessageHandler(async (message, _history, _botConfig) => {
         // Emit WebSocket monitoring event for incoming message
@@ -452,7 +452,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
           // Cast to IMessage[] to satisfy typing for LLM provider history input.
           const formattedHistory: IMessage[] = historyMessages as unknown as IMessage[];
           const metadataWithMessages = { ...payload.metadata, messages: payload.messages };
-          const llmProviders = getLlmProvider();
+          const llmProviders = await getLlmProvider();
 
           if (!llmProviders.length) {
             debug(`[${botName}] No LLM providers available`);
@@ -723,10 +723,10 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const firstBot = Array.from(this.botManagers.keys())[0];
       const botManager = this.botManagers.get(firstBot);
       const botInfo = botManager?.getAllBots?.()[0];
-      if (!botInfo?.webClient) {return null;}
+      if (!botInfo?.webClient) { return null; }
 
       const info = await botInfo.webClient.conversations.info({ channel: channelId });
-      if (!info?.ok) {return null;}
+      if (!info?.ok) { return null; }
 
       const topic = info.channel?.topic?.value;
       const purpose = info.channel?.purpose?.value;
@@ -778,7 +778,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     };
 
     const names = this.getBotNames ? this.getBotNames() : [];
-    if (!names || names.length === 0) {return [];}
+    if (!names || names.length === 0) { return []; }
 
     return names.map((name) => {
       const cfg = this.getBotConfig ? this.getBotConfig(name) : {};
@@ -860,11 +860,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
       const botName = senderKey || Array.from(this.botManagers.keys())[0];
       const last = this.lastModelActivity.get(botName);
-      if (last === modelId) {return;}
+      if (last === modelId) { return; }
 
       const botManager = this.getBotManager(botName);
       const botInfo = botManager?.getAllBots?.()[0];
-      if (!botInfo?.webClient) {return;}
+      if (!botInfo?.webClient) { return; }
 
       // This may require user token scopes; if unsupported, Slack will reject.
       await botInfo.webClient.users.profile.set({
@@ -973,7 +973,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
         // Prefer constructing via mocked SlackBotManager if available
         // @ts-ignore constructor signature is mocked in tests
         const mgr = new (SlackBotManager as any)([{ token: 'xoxb-test', signingSecret: '', name: 'MockBot' }], 'socket');
-        if (mgr) {return mgr;}
+        if (mgr) { return mgr; }
       } catch {
         // Fallback: literal stub with getAllBots()
         try {
@@ -1025,7 +1025,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
    */
   public async removeBot(botName: string): Promise<boolean> {
     const mgr = this.botManagers.get(botName);
-    if (!mgr) {return false;}
+    if (!mgr) { return false; }
     try {
       const bots = (mgr as any).getAllBots?.() || [];
       for (const b of bots) {
@@ -1048,7 +1048,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
   /** Send a quick test message using a named bot. */
   public async sendTestMessage(botName: string, channelId: string, text: string): Promise<string> {
-    if (!channelId) {throw new Error('channelId required');}
+    if (!channelId) { throw new Error('channelId required'); }
     const name = botName || Array.from(this.botManagers.keys())[0];
     return this.sendMessageToChannel(channelId, text, name);
   }

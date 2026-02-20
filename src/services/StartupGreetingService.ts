@@ -9,9 +9,9 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 const appLogger = Logger.withContext('StartupGreetingService');
 
 interface GreetingConfig {
-    disabled: boolean;
-    message: string;
-    use_llm?: boolean;
+  disabled: boolean;
+  message: string;
+  use_llm?: boolean;
 }
 
 class StartupGreetingService extends EventEmitter {
@@ -57,7 +57,7 @@ class StartupGreetingService extends EventEmitter {
      */
   private async generateLlmGreeting(): Promise<string> {
     try {
-      const providers = getLlmProvider();
+      const providers = await getLlmProvider();
       if (providers.length === 0) {
         appLogger.warn('No LLM providers available for greeting generation');
         return 'Hello! I am online and ready to assist.';

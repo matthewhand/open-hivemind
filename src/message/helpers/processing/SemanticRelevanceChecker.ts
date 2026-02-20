@@ -48,7 +48,7 @@ export async function isOnTopic(
   }
 
   try {
-    const { provider, metadata } = getTaskLlm('semantic', {
+    const { provider, metadata } = await getTaskLlm('semantic', {
       baseMetadata: { maxTokensOverride: 5 },
     });
 
@@ -70,9 +70,9 @@ export async function isOnTopic(
     // User wants pivoted = penalty. So result=true means "Good/Bonus" (Continuing).
 
     let result = false;
-    if (isOnTopic) {result = true;}
-    else if (isPivoted) {result = false;}
-    else {result = false;} // Default failure case
+    if (isOnTopic) { result = true; }
+    else if (isPivoted) { result = false; }
+    else { result = false; } // Default failure case
 
     debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'CONTINUING' : 'PIVOTED'} (raw: "${answer}")`);
 
@@ -107,15 +107,15 @@ export default {
  */
 export async function isNonsense(message: string): Promise<boolean> {
   // Skip short messages (e.g. "ok", "hi") - hard to judge as nonsense without context
-  if (!message || message.length < 5) {return false;}
+  if (!message || message.length < 5) { return false; }
 
   const enabled = Boolean(messageConfig.get('MESSAGE_SEMANTIC_RELEVANCE_ENABLED'));
   // We reuse the semantic enabled flag or could add a specific one. 
   // If semantic checks are off, likely this expensive check should be off too.
-  if (!enabled) {return false;}
+  if (!enabled) { return false; }
 
   try {
-    const { provider, metadata } = getTaskLlm('semantic', {
+    const { provider, metadata } = await getTaskLlm('semantic', {
       baseMetadata: { maxTokensOverride: 5 },
     });
 

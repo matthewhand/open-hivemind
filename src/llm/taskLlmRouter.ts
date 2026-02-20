@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { OpenAiProvider } from '@hivemind/provider-openai';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ProviderInstance } from '@src/config/ProviderConfigManager';
@@ -79,7 +78,7 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-function createProviderFromInstance(instance: ProviderInstance, modelOverride?: string): ILlmProvider | null {
+async function createProviderFromInstance(instance: ProviderInstance, modelOverride?: string): Promise<ILlmProvider | null> {
   try {
     const type = String(instance.type || '').toLowerCase();
     const baseConfig = instance.config || {};
@@ -88,6 +87,7 @@ function createProviderFromInstance(instance: ProviderInstance, modelOverride?: 
     let provider: ILlmProvider | undefined;
     switch (type) {
       case 'openai':
+        const { OpenAiProvider } = await import('@hivemind/provider-openai');
         provider = new OpenAiProvider(cfg);
         break;
       case 'flowise':
@@ -126,7 +126,7 @@ function pickProviderInstance(ref: string, candidates: ProviderInstance[]): Prov
   return null;
 }
 
-export function getTaskLlm(task: LlmTask, opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }): TaskLlmSelection {
+export async function getTaskLlm(task: LlmTask, opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }): Promise<TaskLlmSelection> {
   const overrides = readOverride(task);
   const providerRef = overrides.providerRef;
   const modelRef = overrides.modelRef;
@@ -139,7 +139,7 @@ export function getTaskLlm(task: LlmTask, opts?: { fallbackProviders?: ILlmProvi
 
   const fallbackProviders = (opts?.fallbackProviders && opts.fallbackProviders.length > 0)
     ? opts.fallbackProviders
-    : getLlmProvider();
+    : await getLlmProvider();
 
   if (!providerRef) {
     return {
@@ -158,7 +158,7 @@ export function getTaskLlm(task: LlmTask, opts?: { fallbackProviders?: ILlmProvi
     return { provider: fallbackProviders[0], metadata, source: 'default' };
   }
 
-  const instanceProvider = createProviderFromInstance(picked, modelRef);
+  const instanceProvider = await createProviderFromInstance(picked, modelRef);
   if (!instanceProvider) {
     debug(`Task ${task}: provider instance "${picked.id}" failed to initialize; falling back to default providers`);
     return { provider: fallbackProviders[0], metadata, source: 'default' };

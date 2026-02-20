@@ -21,7 +21,7 @@ export async function sendFollowUpRequest(
   messageProvider: IMessageProvider,
   senderKey?: string,
 ): Promise<void> {
-  const { provider, metadata } = getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
+  const { provider, metadata } = await getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
   if (!provider.supportsChatCompletion()) {
     debug(`LLM provider does not support chat completions for channel: ${channelId}`);
     return;

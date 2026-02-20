@@ -1,4 +1,4 @@
-import type { VoiceConnection} from '@discordjs/voice';
+import type { VoiceConnection } from '@discordjs/voice';
 import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import { transcribeAudio } from './speechToText';
 import { convertOpusToWav } from '../media/convertOpusToWav';
@@ -21,15 +21,15 @@ export class VoiceCommandHandler {
   }
 
   async processVoiceInput(opusBuffer: Buffer): Promise<void> {
-    if (!this.isListening) {return;}
+    if (!this.isListening) { return; }
 
     try {
       const tempDir = './temp';
-      if (!fs.existsSync(tempDir)) {fs.mkdirSync(tempDir, { recursive: true });}
+      if (!fs.existsSync(tempDir)) { fs.mkdirSync(tempDir, { recursive: true }); }
 
       const wavPath = await convertOpusToWav(opusBuffer, tempDir);
       const transcription = await transcribeAudio(wavPath);
-      
+
       if (transcription.trim()) {
         const response = await this.generateResponse(transcription);
         await this.speakResponse(response);
@@ -50,8 +50,8 @@ export class VoiceCommandHandler {
   }
 
   private async generateResponse(text: string): Promise<string> {
-    const llmProviders = getLlmProvider();
-    if (llmProviders.length === 0) {return 'I\'m having trouble processing that.';}
+    const llmProviders = await getLlmProvider();
+    if (llmProviders.length === 0) { return 'I\'m having trouble processing that.'; }
 
     try {
       return await llmProviders[0].generateChatCompletion(text, [], {});
@@ -66,7 +66,7 @@ export class VoiceCommandHandler {
     });
 
     const tempPath = path.join('./temp', `response_${Date.now()}.mp3`);
-    
+
     try {
       const response = await openai.audio.speech.create({
         model: 'tts-1',
@@ -92,7 +92,7 @@ export class VoiceCommandHandler {
           debug(`Failed to delete temporary file: ${ErrorUtils.getMessage(hivemindError)}`);
         }
       });
-      
+
       // Also handle error cases
       player.on('error', () => {
         try {
@@ -114,7 +114,7 @@ export class VoiceCommandHandler {
         const hivemindCleanupError = ErrorUtils.toHivemindError(cleanupError);
         debug(`Failed to delete temporary file during cleanup: ${ErrorUtils.getMessage(hivemindCleanupError)}`);
       }
-      
+
       const hivemindError = ErrorUtils.toHivemindError(error);
       const classification = ErrorUtils.classifyError(hivemindError);
 

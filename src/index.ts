@@ -305,7 +305,7 @@ async function startBot(messengerService: any) {
 
     // Initialize idle response manager
     const idleResponseManager = IdleResponseManager.getInstance();
-    idleResponseManager.initialize();
+    await idleResponseManager.initialize();
 
     messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
       messageHandlerModule.handleMessage(message, historyMessages, botConfig),
@@ -396,7 +396,7 @@ async function main() {
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
 
-  const llmProviders = getLlmProvider();
+  const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
 
   // Prepare messenger services collection for optional webhook registration later
@@ -414,7 +414,7 @@ async function main() {
         : ['slack']) as string[];
     appLogger.info('📡 Message providers configured', { providers: messageProviders });
 
-    messengerServices = messengerProviderModule.getMessengerProvider();
+    messengerServices = await messengerProviderModule.getMessengerProvider();
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
     const filteredMessengers = messengerServices.filter((service: any) => {
       // If providerName is not defined, assume 'slack' by default.

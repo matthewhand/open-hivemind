@@ -17,7 +17,7 @@ export class SpeckitSpecificationGenerator {
     log.info('Generating specification for topic:', trimmedTopic);
 
     try {
-      const llmProviders = getLlmProvider();
+      const llmProviders = await getLlmProvider();
 
       if (!llmProviders || llmProviders.length === 0) {
         throw new Error('No LLM providers configured');

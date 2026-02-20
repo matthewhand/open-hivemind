@@ -171,7 +171,7 @@ export class SlackMessageHandler {
     historyMessages: IMessage[],
     botConfig: any,
   ): Promise<string> {
-    const llmProviders = getLlmProvider();
+    const llmProviders = await getLlmProvider();
     if (!llmProviders.length) {
       debug('No LLM providers available');
       return 'Sorry, I\'m having trouble processing your request right now.';

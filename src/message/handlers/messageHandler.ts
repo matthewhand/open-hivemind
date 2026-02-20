@@ -130,8 +130,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       }
 
       // Get providers safely
-      const messageProviders = getMessengerProvider();
-      const llmProviders = getLlmProvider();
+      const messageProviders = await getMessengerProvider();
+      const llmProviders = await getLlmProvider();
 
       if (messageProviders.length === 0) {
         logger('No message provider available');
@@ -173,14 +173,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           if (!allowedUsers.includes(userId)) {
             logger('User not authorized:', userId);
             await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', providerSenderKey);
-            if (resolvedBotId) {recordBotActivity(message.getChannelId(), resolvedBotId);}
+            if (resolvedBotId) { recordBotActivity(message.getChannelId(), resolvedBotId); }
             return;
           }
           await messageProvider.sendMessageToChannel(message.getChannelId(), result, providerSenderKey);
-          if (resolvedBotId) {recordBotActivity(message.getChannelId(), resolvedBotId);}
+          if (resolvedBotId) { recordBotActivity(message.getChannelId(), resolvedBotId); }
           commandProcessed = true;
         });
-        if (commandProcessed) {return null;}
+        if (commandProcessed) { return null; }
       }
 
       // Reply eligibility
@@ -225,7 +225,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         try {
           // Try to get channel name from the original message if Discord
           const orig = (message as any).getOriginalMessage?.();
-          if (orig?.channel?.name) {return `#${orig.channel.name}`;}
+          if (orig?.channel?.name) { return `#${orig.channel.name}`; }
           return `ch:${channelId.slice(-6)}`; // Truncated ID fallback
         } catch { return `ch:${channelId.slice(-6)}`; }
       })();
@@ -472,13 +472,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const typingLeadMs = outgoingBackoffMs > 10000 ? Math.min(2000, typingLeadBaseMs) : typingLeadBaseMs;
 
       const scheduleNextTypingPulse = (): void => {
-        if (stopTyping || !typingStarted || !messageProvider.sendTyping) {return;}
+        if (stopTyping || !typingStarted || !messageProvider.sendTyping) { return; }
 
         // Keep typing alive consistently - refresh every 5-7s (Discord typing lasts ~10s).
         const nextDelayMs = randInt(5000, 7000);
 
         typingTimeout = setTimeout(async () => {
-          if (stopTyping) {return;}
+          if (stopTyping) { return; }
           try {
             await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => { });
           } finally {
@@ -490,7 +490,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // Wait in short increments so new messages can extend delay
       while (true) {
         const remaining = channelDelayManager.getRemainingDelayMs(delayKey);
-        if (remaining <= 0) {break;}
+        if (remaining <= 0) { break; }
 
         if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingEligibleAt) {
           // Don't start typing too early if we still have a long delay remaining.
@@ -525,18 +525,18 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         const startWait = Date.now();
         let waitTime = 100; // Start with 100ms
         const maxWaitTime = 2000; // Max 2 seconds between checks
-        
+
         while (processingLocks.isLocked(channelId, botId) && (Date.now() - startWait) < 60000) {
           // Exponential backoff with jitter to avoid thundering herd
           const jitter = Math.random() * 50;
           const currentWait = Math.min(waitTime + jitter, maxWaitTime);
-          
+
           await new Promise(resolve => setTimeout(resolve, currentWait));
-          
+
           // Double the wait time for next iteration (exponential backoff)
           waitTime = Math.min(waitTime * 2, maxWaitTime);
         }
-        
+
         if (processingLocks.isLocked(channelId, botId)) {
           logger(`Timed out waiting for processing lock on ${channelId}:${botId} after 60 seconds`);
           return null;
@@ -721,7 +721,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           llmResponse = await llmProvider.generateChatCompletion(prompt, historyForLlm, metadata);
         } finally {
           // Stop typing indicator after inference completes
-          if (inferenceTypingInterval) {clearInterval(inferenceTypingInterval);}
+          if (inferenceTypingInterval) { clearInterval(inferenceTypingInterval); }
         }
         logger(`LLM response: ${llmResponse}`);
 
@@ -934,7 +934,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
             outgoingRateLimiter.recordSend(message.getChannelId());
 
             // Record bot activity to keep conversation alive (removes silence penalty)
-            if (resolvedBotId) {recordBotActivity(message.getChannelId(), resolvedBotId);}
+            if (resolvedBotId) { recordBotActivity(message.getChannelId(), resolvedBotId); }
 
             // Log sent response
             AuditLogger.getInstance().logBotAction(
@@ -1009,18 +1009,18 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
 function stripSystemPromptLeak(response: string, ...promptTexts: string[]): string {
   let out = String(response ?? '');
-  if (!out) {return out;}
+  if (!out) { return out; }
 
   const prompts = (promptTexts || [])
     .map((p) => String(p || ''))
     .map((p) => p.trim())
     .filter(Boolean);
 
-  if (prompts.length === 0) {return out;}
+  if (prompts.length === 0) { return out; }
 
   for (const p of prompts) {
-    if (!p) {continue;}
-    if (!out.includes(p)) {continue;}
+    if (!p) { continue; }
+    if (!out.includes(p)) { continue; }
     out = out.split(p).join('');
   }
 
@@ -1034,7 +1034,7 @@ function buildSystemPromptWithBotName(baseSystemPrompt: unknown, botName: string
     ? `You are ${name}. Your display name in chat is "${name}".`
     : 'You are an assistant operating inside a multi-user chat.';
 
-  if (!base) {return hint;}
+  if (!base) { return hint; }
   // Put the hint first so models see it early.
   return `${hint}\n\n${base}`;
 }

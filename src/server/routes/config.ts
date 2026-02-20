@@ -43,7 +43,7 @@ import {
 } from '../../config/mcpServerProfiles';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
-import { testDiscordConnection } from '@hivemind/adapter-discord/DiscordConnectionTest';
+// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
 import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
 
@@ -1339,6 +1339,7 @@ router.post('/message-provider/test', async (req, res) => {
         (config as any).DISCORD_BOT_TOKEN || (config as any).token || '',
       );
       const token = rawToken.split(',')[0]?.trim() || '';
+      const { testDiscordConnection } = await import('@hivemind/adapter-discord/DiscordConnectionTest');
       const result = await testDiscordConnection(token);
       return res.json(result);
     }

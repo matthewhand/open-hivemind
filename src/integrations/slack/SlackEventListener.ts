@@ -24,7 +24,7 @@ export class SlackEventListener {
     try {
       if (event && event.type === 'message' && !event.bot_id) {
         const metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
-        const llmProvider = getLlmProvider();
+        const llmProvider = await getLlmProvider();
         if (!llmProvider.length) {
           throw ErrorUtils.createError(
             'No LLM providers available',
@@ -34,7 +34,7 @@ export class SlackEventListener {
           );
         }
         const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);
-        
+
         // Use the first available bot for backward compatibility
         const botName = this.slackService.getBotNames()[0];
         if (botName) {
@@ -53,7 +53,7 @@ export class SlackEventListener {
         const botName = this.slackService.getBotNames()[0];
         const botManager = this.slackService.getBotManager(botName);
         const welcomeHandler = this.slackService.getWelcomeHandler(botName);
-        
+
         if (botManager && welcomeHandler) {
           const bots = botManager.getAllBots();
           if (bots.length > 0) {

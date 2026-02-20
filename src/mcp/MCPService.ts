@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider';
-import { DiscordMessageProvider } from '@hivemind/adapter-discord/providers/DiscordMessageProvider';
+// DiscordMessageProvider imported dynamically to avoid ESM require error
 
 const debug = Debug('app:mcp');
 
@@ -237,6 +237,7 @@ export class MCPService {
       }
 
       if (normalized === 'discord') {
+        const { DiscordMessageProvider } = await import('@hivemind/adapter-discord/providers/DiscordMessageProvider');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }

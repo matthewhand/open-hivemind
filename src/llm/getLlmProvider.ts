@@ -1,7 +1,6 @@
 import Debug from 'debug';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { OpenAiProvider } from '@hivemind/provider-openai';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import llmConfig from '@config/llmConfig';
@@ -54,7 +53,7 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-export function getLlmProvider(): ILlmProvider[] {
+export async function getLlmProvider(): Promise<ILlmProvider[]> {
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter(p => p.enabled);
 
@@ -62,11 +61,12 @@ export function getLlmProvider(): ILlmProvider[] {
 
   if (configuredProviders.length > 0) {
     // New System: Use configured instances
-    configuredProviders.forEach(config => {
+    for (const config of configuredProviders) {
       try {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
+            const { OpenAiProvider } = await import('@hivemind/provider-openai');
             instance = new OpenAiProvider(config.config);
             debug(`Initialized OpenAI provider instance: ${config.name}`);
             break;
@@ -90,7 +90,7 @@ export function getLlmProvider(): ILlmProvider[] {
       } catch (error) {
         debug(`Failed to initialize provider ${config.name}: ${error}`);
       }
-    });
+    }
   }
 
   if (llmProviders.length === 0) {
@@ -103,21 +103,25 @@ export function getLlmProvider(): ILlmProvider[] {
 
     if (legacyTypes.length > 0 && legacyTypes[0] !== '') {
       debug(`Fallback to legacy LLM_PROVIDER env var: ${legacyTypes.join(',')}`);
-      legacyTypes.forEach(type => {
+      for (const type of legacyTypes) {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
-          case 'openai': instance = new OpenAiProvider(); break;
+          case 'openai':
+            const { OpenAiProvider } = await import('@hivemind/provider-openai');
+            instance = new OpenAiProvider();
+            break;
           case 'flowise': instance = new FlowiseProvider(); break;
           case 'openwebui': instance = openWebUI; break;
         }
         if (instance) { llmProviders.push(withTokenCounting(instance, 'legacy')); }
-      });
+      }
     }
   }
 
   if (llmProviders.length === 0) {
     // If still empty, default to OpenAI (legacy default)
     debug('No providers configured, defaulting to OpenAI (Legacy default)');
+    const { OpenAiProvider } = await import('@hivemind/provider-openai');
     llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
   }
 
