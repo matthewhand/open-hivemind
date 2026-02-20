@@ -65,7 +65,7 @@ export class HealthChecker {
         memory: this.getMemoryUsage(),
         database: await this.checkDatabase(),
         services: await this.checkServices(),
-        metrics: await this.collectMetrics()
+        metrics: await this.collectMetrics(),
       };
 
       // Determine overall status
@@ -92,7 +92,7 @@ export class HealthChecker {
     return {
       used: Math.round(used / 1024 / 1024), // MB
       total: Math.round(total / 1024 / 1024), // MB
-      percentage
+      percentage,
     };
   }
 
@@ -106,11 +106,11 @@ export class HealthChecker {
 
       return {
         status: 'connected',
-        responseTime: Math.round(responseTime)
+        responseTime: Math.round(responseTime),
       };
     } catch (error) {
       return {
-        status: 'error'
+        status: 'error',
       };
     }
   }
@@ -127,12 +127,12 @@ export class HealthChecker {
 
       services.websocket = {
         status: 'up',
-        responseTime: Math.round(responseTime)
+        responseTime: Math.round(responseTime),
       };
     } catch (error) {
       services.websocket = {
         status: 'down',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
 
@@ -145,12 +145,12 @@ export class HealthChecker {
 
       services.llm = {
         status: 'up',
-        responseTime: Math.round(responseTime)
+        responseTime: Math.round(responseTime),
       };
     } catch (error) {
       services.llm = {
         status: 'down',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
 
@@ -163,12 +163,12 @@ export class HealthChecker {
 
       services.integrations = {
         status: 'up',
-        responseTime: Math.round(responseTime)
+        responseTime: Math.round(responseTime),
       };
     } catch (error) {
       services.integrations = {
         status: 'down',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
 
@@ -208,13 +208,13 @@ export class HealthChecker {
       return {
         used: Math.round(used),
         total: Math.round(total),
-        percentage: Math.round((used / total) * 100)
+        percentage: Math.round((used / total) * 100),
       };
     } catch (error) {
       return {
         used: 0,
         total: 100,
-        percentage: 0
+        percentage: 0,
       };
     }
   }
@@ -238,7 +238,7 @@ export class HealthChecker {
 
     // Check response times
     const slowResponses = Object.values(healthCheck.services).filter(s =>
-      s.responseTime && s.responseTime > 1000
+      s.responseTime && s.responseTime > 1000,
     );
     if (slowResponses.length > 0) {
       return 'degraded';
@@ -255,7 +255,7 @@ export class HealthChecker {
       memory: { used: 0, total: 0, percentage: 0 },
       database: { status: 'disconnected' },
       services: {},
-      metrics: {}
+      metrics: {},
     };
   }
 
@@ -269,10 +269,10 @@ export class HealthChecker {
       services: {
         healthChecker: {
           status: 'down',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        }
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
       },
-      metrics: {}
+      metrics: {},
     };
   }
 
@@ -289,13 +289,13 @@ export class HealthChecker {
       degraded: number;
       unhealthy: number;
     };
-  } {
+    } {
     if (this.healthHistory.length === 0) {
       return {
         uptime: 0,
         averageResponseTime: 0,
         errorRate: 0,
-        statusDistribution: { healthy: 0, degraded: 0, unhealthy: 0 }
+        statusDistribution: { healthy: 0, degraded: 0, unhealthy: 0 },
       };
     }
 
@@ -306,7 +306,7 @@ export class HealthChecker {
     }, { healthy: 0, degraded: 0, unhealthy: 0 });
 
     const responseTimes = this.healthHistory.flatMap(check =>
-      Object.values(check.services).map(s => s.responseTime || 0).filter(t => t > 0)
+      Object.values(check.services).map(s => s.responseTime || 0).filter(t => t > 0),
     );
 
     const averageResponseTime = responseTimes.length > 0
@@ -320,8 +320,8 @@ export class HealthChecker {
       statusDistribution: {
         healthy: Math.round((statusCounts.healthy / totalChecks) * 100),
         degraded: Math.round((statusCounts.degraded / totalChecks) * 100),
-        unhealthy: Math.round((statusCounts.unhealthy / totalChecks) * 100)
-      }
+        unhealthy: Math.round((statusCounts.unhealthy / totalChecks) * 100),
+      },
     };
   }
 
@@ -330,7 +330,7 @@ export class HealthChecker {
       timestamp: new Date().toISOString(),
       uptime: performance.now() - this.startTime,
       history: this.healthHistory,
-      trends: this.getHealthTrends()
+      trends: this.getHealthTrends(),
     };
 
     return JSON.stringify(healthData, null, 2);
@@ -339,5 +339,15 @@ export class HealthChecker {
   public async saveHealthReport(filePath: string): Promise<void> {
     const healthData = await this.exportHealthData();
     await fs.writeFile(filePath, healthData, 'utf-8');
+  }
+
+  /**
+   * Gracefully shutdown the HealthChecker.
+   * Clears health history and releases resources.
+   */
+  public shutdown(): void {
+    this.healthHistory = [];
+    this.lastCheckTime = 0;
+    console.log('💓 HealthChecker shutdown complete');
   }
 }

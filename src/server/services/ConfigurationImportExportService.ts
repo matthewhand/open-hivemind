@@ -109,7 +109,7 @@ export class ConfigurationImportExportService {
     configIds: number[],
     options: ExportOptions,
     fileName?: string,
-    createdBy?: string
+    createdBy?: string,
   ): Promise<ExportResult> {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -128,7 +128,7 @@ export class ConfigurationImportExportService {
       if (configs.length === 0) {
         return {
           success: false,
-          error: 'No configurations found to export'
+          error: 'No configurations found to export',
         };
       }
 
@@ -142,9 +142,9 @@ export class ConfigurationImportExportService {
           configCount: configs.length,
           format: options.format,
           encrypted: !!options.encrypt,
-          compressed: !!options.compress
+          compressed: !!options.compress,
         },
-        configurations: configs
+        configurations: configs,
       };
 
       // Include versions if requested
@@ -182,18 +182,18 @@ export class ConfigurationImportExportService {
       // Convert to requested format
       let data: string | Buffer;
       switch (options.format) {
-        case 'json':
-          data = JSON.stringify(exportData, null, 2);
-          break;
-        case 'yaml':
-          // Simple YAML conversion (in production, use a proper YAML library)
-          data = this.convertToYAML(exportData);
-          break;
-        case 'csv':
-          data = this.convertToCSV(exportData);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${options.format}`);
+      case 'json':
+        data = JSON.stringify(exportData, null, 2);
+        break;
+      case 'yaml':
+        // Simple YAML conversion (in production, use a proper YAML library)
+        data = this.convertToYAML(exportData);
+        break;
+      case 'csv':
+        data = this.convertToCSV(exportData);
+        break;
+      default:
+        throw new Error(`Unsupported export format: ${options.format}`);
       }
 
       // Encrypt if requested
@@ -223,13 +223,13 @@ export class ConfigurationImportExportService {
         success: true,
         filePath,
         size: data.length,
-        checksum
+        checksum,
       };
     } catch (error) {
       debug('Error exporting configurations:', error);
       return {
         success: false,
-        error: (error as any).message
+        error: (error as any).message,
       };
     }
   }
@@ -241,8 +241,8 @@ export class ConfigurationImportExportService {
     env: string,
     options: ExportOptions,
     fileName?: string,
-    createdBy?: string
- ): Promise<ExportResult> {
+    createdBy?: string,
+  ): Promise<ExportResult> {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
@@ -255,7 +255,7 @@ export class ConfigurationImportExportService {
       if (!config) {
         return {
           success: false,
-          error: `Main configuration for environment ${env} not found`
+          error: `Main configuration for environment ${env} not found`,
         };
       }
       
@@ -269,25 +269,25 @@ export class ConfigurationImportExportService {
           format: options.format,
           encrypted: !!options.encrypt,
           compressed: !!options.compress,
-          env
+          env,
         },
-        config
+        config,
       };
       
       // Convert to requested format
       let data: string | Buffer;
       switch (options.format) {
-        case 'json':
-          data = JSON.stringify(exportData, null, 2);
-          break;
-        case 'yaml':
-          data = this.convertToYAML(exportData);
-          break;
-        case 'csv':
-          data = this.convertToCSV(exportData);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${options.format}`);
+      case 'json':
+        data = JSON.stringify(exportData, null, 2);
+        break;
+      case 'yaml':
+        data = this.convertToYAML(exportData);
+        break;
+      case 'csv':
+        data = this.convertToCSV(exportData);
+        break;
+      default:
+        throw new Error(`Unsupported export format: ${options.format}`);
       }
       
       // Encrypt if requested
@@ -317,24 +317,24 @@ export class ConfigurationImportExportService {
         success: true,
         filePath,
         size: Buffer.byteLength(data),
-        checksum
+        checksum,
       };
     } catch (error) {
       debug('Error exporting main configuration:', error);
       return {
         success: false,
-        error: (error as any).message
+        error: (error as any).message,
       };
     }
   }
   
- /**
+  /**
    * Import main configuration file (default.json, development.json, etc.)
    */
   async importMainConfig(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string
+    importedBy?: string,
   ): Promise<ImportResult> {
     try {
       // Read file
@@ -370,7 +370,7 @@ export class ConfigurationImportExportService {
             return {
               success: true,
               importedCount: 1,
-              warnings: [`Main configuration for ${env} imported and encrypted`]
+              warnings: [`Main configuration for ${env} imported and encrypted`],
             };
           }
         } catch (parseError) {
@@ -388,17 +388,17 @@ export class ConfigurationImportExportService {
       const format = this.detectFormat(filePath);
       
       switch (format) {
-        case 'json':
-          importData = JSON.parse(data.toString());
-          break;
-        case 'yaml':
-          importData = this.parseYAML(data.toString());
-          break;
-        case 'csv':
-          importData = this.parseCSV(data.toString());
-          break;
-        default:
-          throw new Error(`Unsupported import format: ${format}`);
+      case 'json':
+        importData = JSON.parse(data.toString());
+        break;
+      case 'yaml':
+        importData = this.parseYAML(data.toString());
+        break;
+      case 'csv':
+        importData = this.parseCSV(data.toString());
+        break;
+      default:
+        throw new Error(`Unsupported import format: ${format}`);
       }
       
       // Validate import data structure
@@ -415,13 +415,13 @@ export class ConfigurationImportExportService {
       return {
         success: true,
         importedCount: 1,
-        warnings: [`Main configuration for ${env} imported and encrypted`]
+        warnings: [`Main configuration for ${env} imported and encrypted`],
       };
     } catch (error) {
       debug('Error importing main configuration:', error);
       return {
         success: false,
-        errors: [(error as any).message]
+        errors: [(error as any).message],
       };
     }
   }
@@ -432,7 +432,7 @@ export class ConfigurationImportExportService {
   async importConfigurations(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string
+    importedBy?: string,
   ): Promise<ImportResult> {
     try {
       // Read file
@@ -456,17 +456,17 @@ export class ConfigurationImportExportService {
       const format = this.detectFormat(filePath);
       
       switch (format) {
-        case 'json':
-          importData = JSON.parse(data.toString());
-          break;
-        case 'yaml':
-          importData = this.parseYAML(data.toString());
-          break;
-        case 'csv':
-          importData = this.parseCSV(data.toString());
-          break;
-        default:
-          throw new Error(`Unsupported import format: ${format}`);
+      case 'json':
+        importData = JSON.parse(data.toString());
+        break;
+      case 'yaml':
+        importData = this.parseYAML(data.toString());
+        break;
+      case 'csv':
+        importData = this.parseCSV(data.toString());
+        break;
+      default:
+        throw new Error(`Unsupported import format: ${format}`);
       }
 
       // Validate import data structure
@@ -480,7 +480,7 @@ export class ConfigurationImportExportService {
         skippedCount: 0,
         errorCount: 0,
         errors: [],
-        warnings: []
+        warnings: [],
       };
 
       // Process configurations
@@ -558,7 +558,7 @@ export class ConfigurationImportExportService {
                 category: template.category,
                 tags: template.tags,
                 config: template.config,
-                createdBy: importedBy
+                createdBy: importedBy,
               });
             }
           } catch (error) {
@@ -573,7 +573,7 @@ export class ConfigurationImportExportService {
       debug('Error importing configurations:', error);
       return {
         success: false,
-        errors: [(error as any).message]
+        errors: [(error as any).message],
       };
     }
   }
@@ -585,7 +585,7 @@ export class ConfigurationImportExportService {
     name: string,
     description?: string,
     createdBy?: string,
-    options: Partial<ExportOptions> = {}
+    options: Partial<ExportOptions> = {},
   ): Promise<ExportResult> {
     try {
       // Get all configuration IDs
@@ -599,14 +599,14 @@ export class ConfigurationImportExportService {
         includeTemplates: true,
         compress: true,
         encrypt: false,
-        ...options
+        ...options,
       };
 
       const result = await this.exportConfigurations(
         configIds,
         exportOptions,
         `backup-${name}`,
-        createdBy
+        createdBy,
       );
 
       if (result.success && result.filePath) {
@@ -628,7 +628,7 @@ export class ConfigurationImportExportService {
           size: result.size || 0,
           checksum: result.checksum || '',
           encrypted: !!exportOptions.encrypt,
-          compressed: !!exportOptions.compress
+          compressed: !!exportOptions.compress,
         };
 
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
@@ -636,7 +636,7 @@ export class ConfigurationImportExportService {
 
         return {
           ...result,
-          filePath: backupPath
+          filePath: backupPath,
         };
       }
 
@@ -645,7 +645,7 @@ export class ConfigurationImportExportService {
       debug('Error creating backup:', error);
       return {
         success: false,
-        error: (error as any).message
+        error: (error as any).message,
       };
     }
   }
@@ -656,7 +656,7 @@ export class ConfigurationImportExportService {
   async restoreFromBackup(
     backupPath: string,
     options: Partial<ImportOptions> = {},
-    restoredBy?: string
+    restoredBy?: string,
   ): Promise<ImportResult> {
     try {
       const importOptions: ImportOptions = {
@@ -664,7 +664,7 @@ export class ConfigurationImportExportService {
         overwrite: true,
         validateOnly: false,
         skipValidation: false,
-        ...options
+        ...options,
       };
 
       return this.importConfigurations(backupPath, importOptions, restoredBy);
@@ -672,7 +672,7 @@ export class ConfigurationImportExportService {
       debug('Error restoring from backup:', error);
       return {
         success: false,
-        errors: [(error as any).message]
+        errors: [(error as any).message],
       };
     }
   }
@@ -756,15 +756,15 @@ export class ConfigurationImportExportService {
   private detectFormat(filePath: string): 'json' | 'yaml' | 'csv' {
     const ext = filePath.toLowerCase().split('.').pop();
     switch (ext) {
-      case 'json':
-        return 'json';
-      case 'yaml':
-      case 'yml':
-        return 'yaml';
-      case 'csv':
-        return 'csv';
-      default:
-        return 'json'; // Default to JSON
+    case 'json':
+      return 'json';
+    case 'yaml':
+    case 'yml':
+      return 'yaml';
+    case 'csv':
+      return 'csv';
+    default:
+      return 'json'; // Default to JSON
     }
   }
 
@@ -897,7 +897,7 @@ export class ConfigurationImportExportService {
     
     const encrypted = Buffer.concat([
       cipher.update(data),
-      cipher.final()
+      cipher.final(),
     ]);
     
     const authTag = cipher.getAuthTag();
@@ -926,7 +926,7 @@ export class ConfigurationImportExportService {
     
     const decrypted = Buffer.concat([
       decipher.update(data),
-      decipher.final()
+      decipher.final(),
     ]);
     
     return decrypted.toString();

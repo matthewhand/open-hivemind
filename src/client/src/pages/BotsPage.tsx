@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface BotData {
   id: string;
   name: string;
   provider: string; // Message Provider Name
+  messageProvider?: string; // Alternative field from API
   llmProvider: string; // LLM Provider Name
   persona?: string; // Bot Persona
   status: string;
@@ -19,53 +21,66 @@ interface BotData {
 }
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { BotAvatar } from '../components/BotAvatar';
+import BotChatBubbles from '../components/BotChatBubbles';
 
 const API_BASE = '/api';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotData[]>([]);
   const [personas, setPersonas] = useState<any[]>([]); // added personas state
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]); // added profiles state
   const [globalConfig, setGlobalConfig] = useState<any>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  // Modals
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, bot: BotData | null }>({ isOpen: false, bot: null });
   const [previewBot, setPreviewBot] = useState<BotData | null>(null);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
 
-  // Create Form
+  // Create Bot State
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBotName, setNewBotName] = useState('');
   const [newBotDesc, setNewBotDesc] = useState('');
-  const [newBotPersona, setNewBotPersona] = useState('default');
-  const [newBotMessageProvider, setNewBotMessageProvider] = useState('');
+  const [newBotMessageProvider, setNewBotMessageProvider] = useState('discord');
   const [newBotLlmProvider, setNewBotLlmProvider] = useState('');
+  const [newBotPersona, setNewBotPersona] = useState('');
 
-  // Validation for Create Bot form
-  const canCreateBot = newBotName.trim() && newBotPersona && newBotMessageProvider && newBotLlmProvider;
+  const canCreateBot = newBotName.trim().length > 0 && newBotMessageProvider;
 
-  // Preview Data
-  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  // Get LLM status to check if system default is configured
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [configResponse, globalResponse, personasResponse] = await Promise.all([
+      const [configResponse, globalResponse, personasResponse, profilesResponse] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/config/global`),
-        fetch(`${API_BASE}/personas`)
+        fetch(`${API_BASE}/personas`),
+        fetch(`${API_BASE}/config/llm-profiles`),
       ]);
 
-      if (!configResponse.ok) throw new Error('Failed to fetch bot config');
+      if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
       const configData = await configResponse.json();
       setBots(configData.bots || []);
 
       if (personasResponse.ok) {
         const personasData = await personasResponse.json();
         setPersonas(personasData);
+      }
+
+      if (profilesResponse.ok) {
+        const profilesData = await profilesResponse.json();
+        setLlmProfiles(profilesData.profiles?.llm || []);
       }
 
       if (globalResponse.ok) {
@@ -89,15 +104,49 @@ const BotsPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Fetch logs when previewing a bot
+  // Fetch logs and chat history when previewing a bot
   useEffect(() => {
     if (previewBot) {
-      // Mock logs for now or fetch if endpoint exists
-      setActivityLogs([
-        { id: 1, timestamp: new Date().toISOString(), details: 'Bot started', metadata: { type: 'SYSTEM' } },
-        { id: 2, timestamp: new Date(Date.now() - 1000 * 60).toISOString(), details: 'Message received from user', metadata: { type: 'MESSAGE_RECEIVED' } },
-        { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } }
-      ]);
+      // Fetch activity logs
+      const fetchActivity = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/activity?limit=20`);
+          if (res.ok) {
+            const json = await res.json();
+            setActivityLogs(json.data?.activity || []);
+          } else {
+            setActivityLogs([]);
+          }
+        } catch (err) {
+          console.error('Failed to fetch activity logs:', err);
+          setActivityLogs([]);
+        }
+      };
+
+      fetchActivity();
+
+      // Fetch chat history
+      const fetchChatHistory = async () => {
+        setChatLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/history?limit=20`);
+          if (res.ok) {
+            const json = await res.json();
+            setChatHistory(json.data?.history || []);
+          } else {
+            setChatHistory([]);
+          }
+        } catch (err) {
+          console.error('Failed to fetch chat history:', err);
+          setChatHistory([]);
+        } finally {
+          setChatLoading(false);
+        }
+      };
+      fetchChatHistory();
+    } else {
+      setActivityLogs([]);
+      setChatHistory([]);
     }
   }, [previewBot]);
 
@@ -120,16 +169,16 @@ const BotsPage: React.FC = () => {
       // API expects { provider: ..., llmProvider: ... }
 
       const payload: any = {};
-      if (field === 'messageProvider') payload.provider = value;
-      if (field === 'llmProvider') payload.llmProvider = value;
+      if (field === 'messageProvider') { payload.provider = value; }
+      if (field === 'llmProvider') { payload.llmProvider = value; }
 
       const res = await fetch(`${API_BASE}/bots/${bot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Failed to update bot configuration');
+      if (!res.ok) { throw new Error('Failed to update bot configuration'); }
 
       await fetchData();
     } catch (err: any) {
@@ -141,7 +190,7 @@ const BotsPage: React.FC = () => {
 
 
   const handleCreateBot = async () => {
-    if (!canCreateBot) return;
+    if (!canCreateBot) { return; }
 
     try {
       setActionLoading('create');
@@ -152,9 +201,9 @@ const BotsPage: React.FC = () => {
           name: newBotName,
           description: newBotDesc,
           messageProvider: newBotMessageProvider,
-          llmProvider: newBotLlmProvider,
-          persona: newBotPersona
-        })
+          ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
+          persona: newBotPersona,
+        }),
       });
 
       if (!response.ok) {
@@ -183,7 +232,7 @@ const BotsPage: React.FC = () => {
     try {
       setActionLoading(bot.id);
       const response = await fetch(`${API_BASE}/bots/${bot.id}/${action}`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -200,12 +249,12 @@ const BotsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteModal.bot) return;
+    if (!deleteModal.bot) { return; }
 
     try {
       setActionLoading(deleteModal.bot.id);
       const response = await fetch(`${API_BASE}/bots/${deleteModal.bot.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (!response.ok) {
@@ -228,7 +277,7 @@ const BotsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/bots/${bot.id}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newName: `${bot.name} (Clone)` })
+        body: JSON.stringify({ newName: `${bot.name} (Clone)` }),
       });
 
       if (!response.ok) {
@@ -250,7 +299,7 @@ const BotsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/bots/${bot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona })
+        body: JSON.stringify({ persona }),
       });
 
       if (!response.ok) {
@@ -277,8 +326,8 @@ const BotsPage: React.FC = () => {
   };
 
   const redact = (str: string) => {
-    if (!str) return '';
-    if (str.length <= 4) return '****';
+    if (!str) { return ''; }
+    if (str.length <= 4) { return '****'; }
     return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
   };
 
@@ -343,9 +392,9 @@ const BotsPage: React.FC = () => {
             </div>
           ) : bots.length === 0 ? (
             <div className="text-center py-12">
-              <Bot className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-500">No bots configured</h3>
-              <p className="text-gray-400 mb-4">Create a bot configuration to get started</p>
+              <Bot className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-lg font-medium text-base-content/60">No bots configured</h3>
+              <p className="text-base-content/50 mb-4">Create a bot configuration to get started</p>
               <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Bot
               </button>
@@ -357,11 +406,7 @@ const BotsPage: React.FC = () => {
                   <input type="radio" name="bots-accordion" className="peer" />
                   <div className="collapse-title flex items-center justify-between pr-12 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content w-10 rounded-full">
-                          <Bot className="w-6 h-6" />
-                        </div>
-                      </div>
+                      <BotAvatar bot={bot} />
                       <div className="flex flex-col">
                         <span className="font-bold text-lg">{bot.name}</span>
                         <div className="flex items-center gap-2 text-sm text-base-content/60">
@@ -408,12 +453,12 @@ const BotsPage: React.FC = () => {
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
+                              {(bot as any).messageProvider || bot.provider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
+                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {getIntegrationOptions('message').map(opt => (
                                 <li key={opt}>
-                                  <a onClick={() => handleUpdateConfig(bot, 'messageProvider', opt)} className={bot.provider === opt ? 'active' : ''}>
+                                  <a onClick={() => { handleUpdateConfig(bot, 'messageProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.provider === opt ? 'active' : ''}>
                                     {opt}
                                   </a>
                                 </li>
@@ -428,32 +473,46 @@ const BotsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* LLM Provider */}
+                        {/* LLM Provider / Profile */}
                         <div className="form-control w-full" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-medium flex items-center gap-1 opacity-70">
-                              <Cpu className="w-3 h-3" /> LLM
-                              <div className="tooltip tooltip-top" data-tip="The AI model provider used to generate responses (e.g., OpenAI, Ollama).">
+                              <Cpu className="w-3 h-3" /> LLM Profile
+                              <div className="tooltip tooltip-top" data-tip="Select an LLM Profile for this bot.">
                                 <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
                               </div>
                             </span>
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
-                              {bot.llmProvider || 'Select...'} <Edit2 className="w-3 h-3 opacity-50" />
+                              {bot.llmProvider || <span className="opacity-50 italic">System Default</span>} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
-                              {getIntegrationOptions('llm').map(opt => (
-                                <li key={opt}>
-                                  <a onClick={() => handleUpdateConfig(bot, 'llmProvider', opt)} className={bot.llmProvider === opt ? 'active' : ''}>
-                                    {opt}
+                            <ul tabIndex={0} className="dropdown-content z-[2] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
+                              {/* System Default Option */}
+                              <li>
+                                <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', ''); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.llmProvider ? 'active' : ''}>
+                                  <span className="italic opacity-75">System Default</span>
+                                </a>
+                              </li>
+
+                              <div className="divider my-1"></div>
+
+                              {/* Custom Profiles */}
+                              {llmProfiles.map(profile => (
+                                <li key={profile.key}>
+                                  <a onClick={() => { handleUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
+                                    <div className="flex flex-col gap-0.5">
+                                      <span>{profile.name}</span>
+                                      <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
+                                    </div>
                                   </a>
                                 </li>
                               ))}
+
                               <div className="divider my-1"></div>
                               <li>
                                 <a href="/admin/integrations/llm" target="_blank" className="flex gap-2 items-center text-primary">
-                                  <Plus className="w-3 h-3" /> New LLM
+                                  <Plus className="w-3 h-3" /> New Profile
                                 </a>
                               </li>
                             </ul>
@@ -484,10 +543,10 @@ const BotsPage: React.FC = () => {
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
                               {bot.persona || 'default'} <Edit2 className="w-3 h-3 opacity-50" />
                             </div>
-                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-full text-sm border border-base-200">
+                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-neutral text-neutral-content rounded-box w-full text-sm border border-base-300">
                               {Array.from(new Set(['default', ...bots.map(b => b.persona).filter(Boolean) as string[]])).map(p => (
                                 <li key={p}>
-                                  <a onClick={() => handleUpdatePersona(bot, p)} className={bot.persona === p ? 'active' : ''}>
+                                  <a onClick={() => { handleUpdatePersona(bot, p); (document.activeElement as HTMLElement)?.blur(); }} className={bot.persona === p ? 'active' : ''}>
                                     {p}
                                   </a>
                                 </li>
@@ -496,7 +555,7 @@ const BotsPage: React.FC = () => {
                               <li>
                                 <a onClick={() => {
                                   const newP = prompt('Enter new persona name:');
-                                  if (newP) handleUpdatePersona(bot, newP);
+                                  if (newP) { handleUpdatePersona(bot, newP); }
                                 }}>
                                   <Plus className="w-3 h-3" /> New Persona
                                 </a>
@@ -555,7 +614,7 @@ const BotsPage: React.FC = () => {
                           >
                             <Copy className="w-4 h-4" /> Clone Configuration
                           </button>
-                          <div className={bot.envOverrides && Object.keys(bot.envOverrides).length > 0 ? "tooltip tooltip-left w-full" : "w-full"} data-tip="Cannot delete: Defined by environment variables">
+                          <div className={bot.envOverrides && Object.keys(bot.envOverrides).length > 0 ? 'tooltip tooltip-left w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
                             <button
                               className="btn btn-sm btn-ghost border border-red-200 text-error hover:bg-error/10 w-full justify-start gap-2"
                               onClick={() => setDeleteModal({ isOpen: true, bot })}
@@ -658,20 +717,32 @@ const BotsPage: React.FC = () => {
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">LLM Provider <span className="text-error">*</span></span></label>
+              <label className="label"><span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span></label>
               <select
-                className={`select select-bordered w-full ${!newBotLlmProvider ? 'select-error' : ''}`}
+                className={`select select-bordered w-full ${(!newBotLlmProvider && !defaultLlmConfigured) ? 'select-error' : ''}`}
                 value={newBotLlmProvider}
                 onChange={(e) => setNewBotLlmProvider(e.target.value)}
               >
-                <option value="">Select Provider</option>
-                <option value="openai">OpenAI</option>
-                <option value="flowise">Flowise</option>
-                <option value="ollama">Ollama</option>
+                <option value="">
+                  {defaultLlmConfigured ? 'Use System Default' : 'Select Profile'}
+                </option>
+                {llmProfiles.map(p => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
               </select>
-              <label className="label">
-                <span className="label-text-alt text-warning">Only one LLM provider allowed per bot.</span>
-              </label>
+              {!defaultLlmConfigured && (
+                <div className="alert alert-warning mt-2">
+                  <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+                  <a
+                    className="btn btn-xs btn-outline ml-auto"
+                    href="/admin/integrations/llm"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Configure LLM
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
@@ -697,7 +768,7 @@ const BotsPage: React.FC = () => {
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
-          <p className="text-sm text-gray-500">This action cannot be undone.</p>
+          <p className="text-sm text-base-content/60">This action cannot be undone.</p>
           <div className="flex justify-end gap-2 mt-6">
             <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
             <button
@@ -722,13 +793,13 @@ const BotsPage: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content w-16 rounded-full">
+                <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
                   <Bot className="w-8 h-8" />
                 </div>
               </div>
               <div>
                 <h3 className="text-xl font-bold">{previewBot.name}</h3>
-                <p className="text-gray-500">ID: {previewBot.id}</p>
+                <p className="text-base-content/60">ID: {previewBot.id}</p>
                 <div className="mt-2">{getStatusBadge(previewBot.status, previewBot.connected)}</div>
               </div>
             </div>
@@ -742,13 +813,13 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = `/admin/integrations/message`}
+                      onClick={() => window.location.href = '/admin/integrations/message'}
                       title="Configure Message Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
                     </button>
                   </div>
-                  <p className="text-lg font-bold mb-1">{previewBot.provider || 'None'}</p>
+                  <p className="text-lg font-bold mb-1">{previewBot.messageProvider || previewBot.provider || 'None'}</p>
                   {/* Display redacted config details if available */}
                   {previewBot.config && previewBot.config[previewBot.provider] && (
                     <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
@@ -770,7 +841,7 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = `/admin/integrations/llm`}
+                      onClick={() => window.location.href = '/admin/integrations/llm'}
                       title="Configure LLM Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
@@ -812,7 +883,12 @@ const BotsPage: React.FC = () => {
                   activityLogs.map((log) => (
                     <div key={log.id} className="mb-1 border-b border-base-content/5 pb-1 last:border-0">
                       <span className="opacity-50 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                      <span className={log.metadata?.type === 'MESSAGE_RECEIVED' ? 'text-success' : log.metadata?.type === 'RESPONSE_SENT' ? 'text-info' : 'text-base-content'}>
+                      <span className={
+                        log.metadata?.type === 'RUNTIME' ? 'text-info' :
+                          log.action?.includes('ERROR') || log.result === 'failure' ? 'text-error' :
+                            'text-base-content'
+                      }>
+                        <span className="font-bold mr-1">[{log.action}]</span>
                         {log.details}
                       </span>
                     </div>
@@ -826,9 +902,22 @@ const BotsPage: React.FC = () => {
               </div>
             </div>
 
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" /> Chat History
+              </h4>
+              <div className="bg-base-300 rounded-lg">
+                <BotChatBubbles
+                  messages={chatHistory}
+                  botName={previewBot.name}
+                  loading={chatLoading}
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end gap-2">
               <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => window.location.href = `/admin/integrations/llm`}>
+              <button className="btn btn-primary" onClick={() => window.location.href = '/admin/integrations/llm'}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configure Providers
               </button>

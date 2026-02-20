@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
 import {
@@ -46,7 +47,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'Basic Configuration',
         message: 'Bot name is required',
         field: 'name',
-        suggestion: 'Provide a unique name for the bot'
+        suggestion: 'Provide a unique name for the bot',
       });
     }
 
@@ -56,7 +57,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'Basic Configuration',
         message: 'Message provider is required',
         field: 'messageProvider',
-        suggestion: 'Select a message provider (Discord, Slack, or Mattermost)'
+        suggestion: 'Select a message provider (Discord, Slack, or Mattermost)',
       });
     }
 
@@ -66,7 +67,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'Basic Configuration',
         message: 'LLM provider is required',
         field: 'llmProvider',
-        suggestion: 'Select an LLM provider (OpenAI, Flowise, etc.)'
+        suggestion: 'Select an LLM provider (OpenAI, Flowise, etc.)',
       });
     }
 
@@ -77,7 +78,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'Discord Configuration',
         message: 'Discord bot token not configured',
         field: 'discord.token',
-        suggestion: 'Set DISCORD_BOT_TOKEN environment variable or configure in bot settings'
+        suggestion: 'Set DISCORD_BOT_TOKEN environment variable or configure in bot settings',
       });
     }
 
@@ -87,7 +88,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'Slack Configuration',
         message: 'Slack tokens not fully configured',
         field: 'slack',
-        suggestion: 'Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables'
+        suggestion: 'Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN environment variables',
       });
     }
 
@@ -97,7 +98,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         category: 'OpenAI Configuration',
         message: 'OpenAI API key not configured',
         field: 'openai.apiKey',
-        suggestion: 'Set OPENAI_API_KEY environment variable'
+        suggestion: 'Set OPENAI_API_KEY environment variable',
       });
     }
 
@@ -109,7 +110,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
           category: 'System Instruction',
           message: 'System instruction is very long',
           field: 'systemInstruction',
-          suggestion: 'Consider shortening the system instruction to improve response times'
+          suggestion: 'Consider shortening the system instruction to improve response times',
         });
       }
 
@@ -119,7 +120,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
           category: 'System Instruction',
           message: 'System instruction is very short',
           field: 'systemInstruction',
-          suggestion: 'Consider adding more detailed instructions for better bot behavior'
+          suggestion: 'Consider adding more detailed instructions for better bot behavior',
         });
       }
     }
@@ -130,7 +131,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         type: 'success',
         category: 'Overall Validation',
         message: 'Configuration appears to be valid',
-        suggestion: 'No issues detected in the current configuration'
+        suggestion: 'No issues detected in the current configuration',
       });
     }
 
@@ -139,18 +140,18 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
   };
 
   const getValidationIcon = (type: string) => {
-    const className = "w-5 h-5";
+    const className = 'w-5 h-5';
     switch (type) {
-      case 'success':
-        return <CheckCircleIcon className={`${className} text-success`} />;
-      case 'error':
-        return <XCircleIcon className={`${className} text-error`} />;
-      case 'warning':
-        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
-      case 'info':
-        return <InformationCircleIcon className={`${className} text-info`} />;
-      default:
-        return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+    case 'success':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'error':
+      return <XCircleIcon className={`${className} text-error`} />;
+    case 'warning':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    case 'info':
+      return <InformationCircleIcon className={`${className} text-info`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -159,9 +160,9 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
   };
 
   const getOverallStatus = () => {
-    if (getSeverityCount('error') > 0) return 'error';
-    if (getSeverityCount('warning') > 0) return 'warning';
-    if (getSeverityCount('success') > 0) return 'success';
+    if (getSeverityCount('error') > 0) {return 'error';}
+    if (getSeverityCount('warning') > 0) {return 'warning';}
+    if (getSeverityCount('success') > 0) {return 'success';}
     return 'info';
   };
 
@@ -187,32 +188,32 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
     {
       property: 'Bot Name',
       value: bot.name || 'Not set',
-      status: bot.name ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />
+      status: bot.name ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
     },
     {
       property: 'Message Provider',
       value: bot.messageProvider || 'Not set',
-      status: bot.messageProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />
+      status: bot.messageProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
     },
     {
       property: 'LLM Provider',
       value: bot.llmProvider || 'Not set',
-      status: bot.llmProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />
+      status: bot.llmProvider ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <XCircleIcon className="w-5 h-5 text-error" />,
     },
     {
       property: 'Persona',
       value: bot.persona || 'None',
-      status: <CheckCircleIcon className="w-5 h-5 text-success" />
+      status: <CheckCircleIcon className="w-5 h-5 text-success" />,
     },
     {
       property: 'System Instruction',
       value: bot.systemInstruction ? `${bot.systemInstruction.substring(0, 50)}...` : 'Not set',
-      status: bot.systemInstruction ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <ExclamationTriangleIcon className="w-5 h-5 text-warning" />
+      status: bot.systemInstruction ? <CheckCircleIcon className="w-5 h-5 text-success" /> : <ExclamationTriangleIcon className="w-5 h-5 text-warning" />,
     },
     {
       property: 'MCP Servers',
       value: `${bot.mcpServers ? (Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1) : 0} configured`,
-      status: <CheckCircleIcon className="w-5 h-5 text-success" />
+      status: <CheckCircleIcon className="w-5 h-5 text-success" />,
     },
   ];
 
@@ -229,7 +230,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
           disabled={loading}
           className="flex items-center gap-2"
         >
-          {loading ? <Loading size="sm" /> : <ArrowPathIcon className="w-4 h-4" />}
+          {loading ? <span className="loading loading-spinner loading-sm"></span> : <ArrowPathIcon className="w-4 h-4" />}
           Re-validate
         </Button>
       </div>

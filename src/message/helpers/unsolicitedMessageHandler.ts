@@ -46,10 +46,10 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
 export function looksLikeOpportunity(text: string): boolean {
   const t = text.trim().toLowerCase();
-  if (!t) return false;
+  if (!t) {return false;}
 
   // Questions are the most reliable signal.
-  if (t.endsWith('?') || t.includes('?')) return true;
+  if (t.endsWith('?') || t.includes('?')) {return true;}
 
   // Common help/request patterns (kept intentionally narrow).
   const patterns = [

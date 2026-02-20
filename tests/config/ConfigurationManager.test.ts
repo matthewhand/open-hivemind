@@ -404,7 +404,7 @@ describe('ConfigurationManager', () => {
         expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('https://test.example.com');
       });
 
-      it.skip('should fallback to defaults when environment variables are empty strings', () => {
+      it('should fallback to defaults when environment variables are empty strings', () => {
         process.env.VITE_API_BASE_URL = '';
         process.env.PLAYWRIGHT_BASE_URL = '';
 
@@ -417,7 +417,7 @@ describe('ConfigurationManager', () => {
         expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:3000');
       });
 
-      it.skip('should throw validation error for invalid URL formats', () => {
+      it('should throw validation error for invalid URL formats', () => {
         process.env.VITE_API_BASE_URL = 'invalid-url';
         process.env.PLAYWRIGHT_BASE_URL = 'also-invalid';
 
@@ -428,7 +428,7 @@ describe('ConfigurationManager', () => {
         expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "also-invalid"');
       });
 
-      it.skip('should handle partial invalid configurations by validating all', () => {
+      it('should handle partial invalid configurations by validating all', () => {
         process.env.VITE_API_BASE_URL = 'https://valid.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'invalid';
 
@@ -438,7 +438,7 @@ describe('ConfigurationManager', () => {
         expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "invalid"');
       });
 
-      it.skip('should load correctly in test environment', () => {
+      it('should load correctly in test environment', () => {
         process.env.NODE_ENV = 'test';
         process.env.VITE_API_BASE_URL = 'https://test-api.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:8080';
@@ -454,7 +454,7 @@ describe('ConfigurationManager', () => {
         expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:8080');
       });
 
-      it.skip('should validate URL parsing with protocol variations', () => {
+      it('should validate URL parsing with protocol variations', () => {
         process.env.VITE_API_BASE_URL = 'https://api.example.com/path';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:3001';
 

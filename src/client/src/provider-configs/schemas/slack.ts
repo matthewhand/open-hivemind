@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const slackProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -8,7 +8,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
   icon: '🔷',
   color: '#4A154B',
   defaultConfig: {
-    socketMode: true
+    socketMode: true,
   },
   fields: [
     {
@@ -18,7 +18,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Slack bot token starting with xoxb-',
       placeholder: 'xoxb-[your-bot-token-here]',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'appToken',
@@ -27,7 +27,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Slack app token starting with xapp-',
       placeholder: 'xapp-[your-app-token-here]',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'signingSecret',
@@ -36,7 +36,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Slack app signing secret',
       placeholder: '[your-signing-secret-here]',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'socketMode',
@@ -45,7 +45,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Use Socket Mode for real-time communication',
       defaultValue: true,
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'teamId',
@@ -54,7 +54,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Specific Slack workspace to connect to (leave empty for all workspaces)',
       placeholder: 'T[workspace-id]',
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'channelId',
@@ -63,7 +63,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Default channel for bot messages',
       placeholder: 'C[channel-id]',
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'allowedChannels',
@@ -72,7 +72,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of channel IDs the bot can respond in (leave empty for all)',
       placeholder: 'C[channel-id], D[channel-id]',
-      group: 'Permissions'
+      group: 'Permissions',
     },
     {
       name: 'blockedUsers',
@@ -81,7 +81,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of user IDs the bot cannot respond to',
       placeholder: 'U[user-id], U[user-id]',
-      group: 'Permissions'
-    }
-  ]
+      group: 'Permissions',
+    },
+  ],
 };

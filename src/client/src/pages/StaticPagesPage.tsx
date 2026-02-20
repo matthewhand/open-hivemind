@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Card, Button, Breadcrumbs } from '../components/DaisyUI';
 import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
@@ -11,22 +12,22 @@ const StaticPagesPage: React.FC = () => {
       description: 'Beautiful landing page with enhanced UI and animations',
       icon: <HomeIcon className="w-10 h-10" />,
       url: '/enhanced-homepage.html',
-      color: 'primary'
+      color: 'primary',
     },
     {
       title: 'Loading Page',
       description: 'Elegant loading screen with progress indicators',
       icon: <ClockIcon className="w-10 h-10" />,
       url: '/loading.html',
-      color: 'secondary'
+      color: 'secondary',
     },
     {
       title: 'Screensaver',
       description: 'Interactive screensaver display for idle states',
       icon: <ComputerDesktopIcon className="w-10 h-10" />,
       url: '/screensaver.html',
-      color: 'info'
-    }
+      color: 'info',
+    },
   ];
 
   const handleOpenPage = (url: string) => {
@@ -43,8 +44,8 @@ const StaticPagesPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {staticPages.map((page, index) => (
-          <Card key={index} className="flex flex-col h-full">
+        {staticPages.map((page) => (
+          <Card key={page.url} className="flex flex-col h-full">
             <div className="flex-grow text-center p-6">
               <div className={`text-${page.color} mb-4 flex justify-center`}>
                 {page.icon}

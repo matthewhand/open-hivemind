@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import Debug from 'debug';
-import { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
+import type { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 
@@ -23,18 +23,18 @@ export class AuthManager {
       'bots:read', 'bots:write', 'bots:delete', 'bots:manage',
       'users:read', 'users:write', 'users:delete',
       'system:read', 'system:write', 'system:admin',
-      'backup:read', 'backup:write', 'backup:delete'
+      'backup:read', 'backup:write', 'backup:delete',
     ],
     user: [
       'config:read',
       'bots:read', 'bots:write',
-      'system:read'
+      'system:read',
     ],
     viewer: [
       'config:read',
       'bots:read',
-      'system:read'
-    ]
+      'system:read',
+    ],
   };
 
   private constructor() {
@@ -69,7 +69,7 @@ export class AuthManager {
         name: `${prefix} Secret`,
         type: 'auth',
         data: { secret },
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       } as any).catch(err => {
         debug(`Failed to store ${prefix} secret securely:`, err);
       });
@@ -91,7 +91,7 @@ export class AuthManager {
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      passwordHash: process.env.NODE_ENV === 'test' ? 'test-admin-hash' : bcrypt.hashSync('admin123!', this.bcryptRounds)
+      passwordHash: process.env.NODE_ENV === 'test' ? 'test-admin-hash' : bcrypt.hashSync('admin123!', this.bcryptRounds),
     };
 
     this.users.set('admin', defaultAdmin);
@@ -158,7 +158,7 @@ export class AuthManager {
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      passwordHash: await this.hashPassword(data.password)
+      passwordHash: await this.hashPassword(data.password),
     };
 
     this.users.set(user.id, user);
@@ -172,7 +172,7 @@ export class AuthManager {
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
     const user = Array.from(this.users.values()).find(
-      u => u.username === credentials.username && u.isActive
+      u => u.username === credentials.username && u.isActive,
     );
 
     if (!user) {
@@ -201,7 +201,7 @@ export class AuthManager {
       accessToken,
       refreshToken,
       user: { ...user, passwordHash: undefined },
-      expiresIn: 3600 // 1 hour
+      expiresIn: 3600, // 1 hour
     };
   }
 
@@ -233,7 +233,7 @@ export class AuthManager {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
         user: { ...user, passwordHash: undefined },
-        expiresIn: 3600
+        expiresIn: 3600,
       };
     } catch {
       this.refreshTokens.delete(refreshToken);
@@ -258,10 +258,10 @@ export class AuthManager {
         userId: user.id,
         username: user.username,
         role: user.role,
-        permissions: this.getUserPermissions(user.role)
+        permissions: this.getUserPermissions(user.role),
       },
       this.jwtSecret,
-      { expiresIn: '1h' }
+      { expiresIn: '1h' },
     );
   }
 
@@ -272,7 +272,7 @@ export class AuthManager {
     return jwt.sign(
       { userId: user.id },
       this.jwtRefreshSecret,
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
   }
 
@@ -319,7 +319,7 @@ export class AuthManager {
   public getAllUsers(): User[] {
     return Array.from(this.users.values()).map(user => ({
       ...user,
-      passwordHash: undefined
+      passwordHash: undefined,
     }));
   }
 
@@ -328,7 +328,7 @@ export class AuthManager {
    */
   public updateUser(userId: string, updates: Partial<User>): User | null {
     const user = this.users.get(userId);
-    if (!user) return null;
+    if (!user) {return null;}
 
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
@@ -348,7 +348,7 @@ export class AuthManager {
    */
   public async changePassword(userId: string, newPassword: string): Promise<boolean> {
     const user = this.users.get(userId);
-    if (!user) return false;
+    if (!user) {return false;}
 
     user.passwordHash = await this.hashPassword(newPassword);
     this.users.set(userId, user);

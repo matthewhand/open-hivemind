@@ -1,4 +1,4 @@
-import { convertOpusToWav } from '@src/integrations/discord/media/convertOpusToWav';
+import { convertOpusToWav } from '@hivemind/adapter-discord/media/convertOpusToWav';
 import { exec } from 'child_process';
 import fs from 'fs';
 
@@ -20,7 +20,7 @@ describe('convertOpusToWav', () => {
   it('should convert opus to wav successfully', async () => {
     const opusBuffer = Buffer.from('opus data');
     const outputDir = '/temp';
-    
+
     mockExec.mockImplementation((cmd, callback: any) => {
       callback(null, { stdout: '', stderr: '' });
       return {} as any;
@@ -35,7 +35,7 @@ describe('convertOpusToWav', () => {
 
   it('should handle ffmpeg errors', async () => {
     const opusBuffer = Buffer.from('opus data');
-    
+
     mockExec.mockImplementation((cmd, callback: any) => {
       callback(new Error('ffmpeg not found'), null);
       return {} as any;
@@ -47,7 +47,7 @@ describe('convertOpusToWav', () => {
 
   it('should handle file write errors', async () => {
     const opusBuffer = Buffer.from('opus data');
-    
+
     mockFs.promises.writeFile = jest.fn().mockRejectedValue(new Error('Permission denied'));
 
     await expect(convertOpusToWav(opusBuffer, '/temp'))

@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 /**
  * MCP (Model Context Protocol) Provider Configuration Schema
@@ -24,8 +24,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       validation: {
         minLength: 2,
         maxLength: 50,
-        pattern: '^[a-zA-Z0-9\\s\\-_]+$'
-      }
+        pattern: '^[a-zA-Z0-9\\s\\-_]+$',
+      },
     },
     {
       name: 'type',
@@ -35,9 +35,9 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       description: 'Desktop MCP servers typically run locally, Cloud MCP servers require remote configuration',
       options: [
         { value: 'desktop', label: 'Desktop - Local MCP server', description: 'Runs locally on the same machine' },
-        { value: 'cloud', label: 'Cloud - Remote MCP server', description: 'Connects to remote MCP service' }
+        { value: 'cloud', label: 'Cloud - Remote MCP server', description: 'Connects to remote MCP service' },
       ],
-      defaultValue: 'desktop'
+      defaultValue: 'desktop',
     },
     {
       name: 'description',
@@ -47,8 +47,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       description: 'Optional description of what this MCP provider does',
       placeholder: 'e.g., Provides file system access for reading and writing files',
       validation: {
-        maxLength: 500
-      }
+        maxLength: 500,
+      },
     },
     {
       name: 'command',
@@ -59,8 +59,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       placeholder: 'e.g., npx, python, node, /usr/local/bin/mcp-server',
       validation: {
         minLength: 1,
-        maxLength: 200
-      }
+        maxLength: 200,
+      },
     },
     {
       name: 'args',
@@ -70,8 +70,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       description: 'Command line arguments (space-separated or as JSON array)',
       placeholder: 'e.g., --port 3000 --allow-file-system or ["--port", "3000", "--allow-file-system"]',
       validation: {
-        maxLength: 1000
-      }
+        maxLength: 1000,
+      },
     },
     {
       name: 'envVars',
@@ -81,8 +81,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       description: 'Environment variables for the MCP process (key=value pairs, one per line)',
       placeholder: 'API_KEY=your_api_key_here\nDATABASE_URL=postgresql://localhost/mydb',
       validation: {
-        maxItems: 20
-      }
+        maxItems: 20,
+      },
     },
     {
       name: 'timeout',
@@ -93,9 +93,9 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       placeholder: '30',
       validation: {
         min: 5,
-        max: 300
+        max: 300,
       },
-      defaultValue: 30
+      defaultValue: 30,
     },
     {
       name: 'autoRestart',
@@ -103,7 +103,7 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       type: 'checkbox',
       required: false,
       description: 'Automatically restart the MCP server if it crashes',
-      defaultValue: true
+      defaultValue: true,
     },
     {
       name: 'healthCheckEnabled',
@@ -111,7 +111,7 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       type: 'checkbox',
       required: false,
       description: 'Periodically check if the MCP server is still running',
-      defaultValue: true
+      defaultValue: true,
     },
     {
       name: 'healthCheckInterval',
@@ -122,13 +122,13 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       placeholder: '60',
       validation: {
         min: 10,
-        max: 3600
+        max: 3600,
       },
       defaultValue: 60,
       dependsOn: {
         field: 'healthCheckEnabled',
-        value: true
-      }
+        value: true,
+      },
     },
     {
       name: 'enabled',
@@ -136,8 +136,8 @@ export const mcpProviderSchema: ProviderConfigSchema = {
       type: 'checkbox',
       required: false,
       description: 'Enable this MCP provider for use with bots',
-      defaultValue: true
-    }
+      defaultValue: true,
+    },
   ],
   defaultConfig: {
     name: 'MCP Server',
@@ -148,6 +148,6 @@ export const mcpProviderSchema: ProviderConfigSchema = {
     autoRestart: true,
     healthCheckEnabled: true,
     healthCheckInterval: 60,
-    enabled: true
-  }
+    enabled: true,
+  },
 };

@@ -1,5 +1,5 @@
 import messageConfig from '@config/messageConfig';
-import { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.
@@ -24,14 +24,14 @@ function getDefaultChannelId(): string {
     // Try Discord config first
     const discordConfig = require('@config/discordConfig').default;
     const discordChannel = discordConfig?.get?.('DISCORD_DEFAULT_CHANNEL_ID');
-    if (discordChannel) return discordChannel;
+    if (discordChannel) {return discordChannel;}
   } catch { }
 
   try {
     // Try Slack config
     const slackConfig = require('@config/slackConfig').default;
     const slackChannel = slackConfig?.get?.('SLACK_DEFAULT_CHANNEL_ID');
-    if (slackChannel) return slackChannel;
+    if (slackChannel) {return slackChannel;}
   } catch { }
 
   return '';

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -10,9 +11,10 @@ import {
   PageHeader,
   StatsCards,
   LoadingSpinner,
-  EmptyState
+  EmptyState,
 } from '../components/DaisyUI';
-import { apiService, Persona as ApiPersona, Bot } from '../services/api';
+import type { Persona as ApiPersona, Bot } from '../services/api';
+import { apiService } from '../services/api';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -29,6 +31,8 @@ const PersonasPage: React.FC = () => {
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
 
   // Form State
@@ -45,7 +49,7 @@ const PersonasPage: React.FC = () => {
 
       const [configResponse, personasResponse] = await Promise.all([
         apiService.getConfig(),
-        apiService.getPersonas()
+        apiService.getPersonas(),
       ]);
 
       const botList = configResponse.bots || [];
@@ -65,7 +69,7 @@ const PersonasPage: React.FC = () => {
 
       const filledBots = botList.map((b: any) => ({
         ...b,
-        id: b.id || b.name // Fallback to name if ID missing (shouldn't happen for active bots)
+        id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
       }));
       setBots(filledBots);
 
@@ -73,12 +77,12 @@ const PersonasPage: React.FC = () => {
         // Find assigned bots
         // Match by persona ID stored in bot.persona OR matches persona name (legacy)
         const assigned = filledBots.filter((b: any) =>
-          b.persona === p.id || b.persona === p.name
+          b.persona === p.id || b.persona === p.name,
         );
         return {
           ...p,
           assignedBotNames: assigned.map((b: any) => b.name),
-          assignedBotIds: assigned.map((b: any) => b.id)
+          assignedBotIds: assigned.map((b: any) => b.id),
         };
       });
 
@@ -96,7 +100,7 @@ const PersonasPage: React.FC = () => {
   }, [fetchData]);
 
   const handleSavePersona = async () => {
-    if (!personaName.trim()) return;
+    if (!personaName.trim()) { return; }
 
     setLoading(true);
     try {
@@ -107,7 +111,7 @@ const PersonasPage: React.FC = () => {
         description: personaDescription || 'Custom Persona',
         category: personaCategory,
         systemPrompt: personaPrompt,
-        traits: [] // Traits not yet exposed in simple UI
+        traits: [], // Traits not yet exposed in simple UI
       };
 
       if (editingPersona) {
@@ -127,7 +131,7 @@ const PersonasPage: React.FC = () => {
         if (bot && bot.persona !== newPersonaId) {
           updates.push(apiService.updateBot(botId, {
             persona: newPersonaId,
-            systemInstruction: personaPrompt // Ensure prompt sync
+            systemInstruction: personaPrompt, // Ensure prompt sync
           }));
         }
       }
@@ -140,7 +144,7 @@ const PersonasPage: React.FC = () => {
         for (const botId of toUnassign) {
           updates.push(apiService.updateBot(botId, {
             persona: 'default', // Revert to default
-            systemInstruction: 'You are a helpful assistant.' // Default prompt
+            systemInstruction: 'You are a helpful assistant.', // Default prompt
           }));
         }
       }
@@ -171,7 +175,7 @@ const PersonasPage: React.FC = () => {
 
   const openEditModal = (persona: Persona) => {
     if (persona.isBuiltIn) {
-      alert("Cannot edit built-in personas directly. Clone them instead (Not implemented yet).");
+      alert('Cannot edit built-in personas directly. Clone them instead (Not implemented yet).');
       return;
     }
     setPersonaName(persona.name);
@@ -183,34 +187,44 @@ const PersonasPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDeletePersona = async (personaId: string) => {
+  const handleDeletePersona = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);
-    if (!persona) return;
+    if (!persona) { return; }
+    if (persona.isBuiltIn) {
+      setError('Cannot delete built-in personas');
+      return;
+    }
+    setDeletingPersona(persona);
+    setShowDeleteModal(true);
+  };
 
-    if (window.confirm(`Delete persona "${persona.name}"? This will revert ${persona.assignedBotNames.length} bots to default.`)) {
-      setLoading(true);
-      try {
-        // 1. Revert bots
-        const updates = persona.assignedBotIds.map(botId =>
-          apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
-        );
-        await Promise.all(updates);
+  const confirmDelete = async () => {
+    if (!deletingPersona) { return; }
+    setLoading(true);
+    try {
+      // 1. Revert bots
+      const updates = deletingPersona.assignedBotIds.map(botId =>
+        apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
+      );
+      await Promise.all(updates);
 
-        // 2. Delete persona
-        await apiService.deletePersona(personaId);
+      // 2. Delete persona
+      await apiService.deletePersona(deletingPersona.id);
 
-        await fetchData();
-      } catch (err) {
-        setError('Failed to delete persona');
-        setLoading(false);
-      }
+      await fetchData();
+      setShowDeleteModal(false);
+      setDeletingPersona(null);
+    } catch (err) {
+      setError('Failed to delete persona');
+    } finally {
+      setLoading(false);
     }
   };
 
   const stats = [
     { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
     { id: 'active', title: 'Assigned Bots', value: personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0), icon: '🤖', color: 'secondary' as const },
-    { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const }
+    { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
   ];
 
   return (
@@ -360,7 +374,7 @@ const PersonasPage: React.FC = () => {
       <Modal
         isOpen={showCreateModal || showEditModal}
         onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
-        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : "Create New Persona"}
+        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : 'Create New Persona'}
         size="lg"
       >
         <div className="space-y-4">
@@ -447,8 +461,8 @@ const PersonasPage: React.FC = () => {
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={selectedBotIds.includes(bot.id)}
                       onChange={(e) => {
-                        if (e.target.checked) setSelectedBotIds([...selectedBotIds, bot.id]);
-                        else setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id));
+                        if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
+                        else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
                       }}
                     />
                     <div className="flex flex-col">
@@ -468,6 +482,51 @@ const PersonasPage: React.FC = () => {
             <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
             <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
               {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : 'Create Persona')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+        title="Delete Persona"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-error/10 rounded-lg">
+            <AlertTriangle className="w-8 h-8 text-error" />
+            <div>
+              <h3 className="font-bold">Are you sure?</h3>
+              <p className="text-sm text-base-content/70">
+                Delete <strong>"{deletingPersona?.name}"</strong>?
+              </p>
+            </div>
+          </div>
+          {deletingPersona && deletingPersona.assignedBotNames.length > 0 && (
+            <div className="alert alert-warning">
+              <Info className="w-4 h-4" />
+              <span>
+                {deletingPersona.assignedBotNames.length} bot(s) will be reverted to default:
+                <strong className="ml-1">{deletingPersona.assignedBotNames.join(', ')}</strong>
+              </span>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="btn-error"
+              onClick={confirmDelete}
+              disabled={loading}
+            >
+              {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
             </Button>
           </div>
         </div>

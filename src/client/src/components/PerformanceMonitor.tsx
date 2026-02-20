@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Alert, Card, Loading, Button } from './DaisyUI';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -16,8 +17,8 @@ const defaultMetrics = {
 };
 
 const toErrorMessage = (error: unknown): string => {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
+  if (!error) {return 'Unknown error';}
+  if (typeof error === 'string') {return error;}
 
   const baseQueryError = error as FetchBaseQueryError;
   if (typeof baseQueryError?.status !== 'undefined') {
@@ -76,7 +77,7 @@ const PerformanceMonitor: React.FC = () => {
           </p>
         </div>
         <Button
-          variant="outline"
+          variant="secondary" className="btn-outline"
           onClick={() => refetch()}
           disabled={isFetching}
           className="flex items-center gap-2"
@@ -134,7 +135,7 @@ const PerformanceMonitor: React.FC = () => {
 
       {isFetching && (
         <div className="flex items-center gap-3 mt-6">
-          <Loading size="sm" />
+          <span className="loading loading-spinner loading-sm"></span>
           <p className="text-sm text-base-content/70">
             Updating metrics...
           </p>

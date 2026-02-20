@@ -6,6 +6,10 @@
   "bin": {
     "hivemind": "dist/src/cli/HivemindCLI.js"
   },
+  "workspaces": [
+    "src/client",
+    "packages/*"
+  ],
   "scripts": {
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "check-types": "tsc --noEmit || true",
@@ -59,7 +63,9 @@
     "@integrations": "dist/src/integrations",
     "@types": "dist/src/types",
     "@client": "dist/src/client",
-    "@server": "dist/src/server"
+    "@server": "dist/src/server",
+    "@hivemind/provider-openai": "dist/packages/provider-openai/src",
+    "@hivemind/adapter-discord": "dist/packages/adapter-discord/src"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
@@ -162,6 +168,7 @@
     "@netlify/functions": "^5.1.0",
     "@playwright/test": "^1.56.0",
     "@rollup/plugin-inject": "^5.0.5",
+    "@tailwindcss/vite": "^4.2.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.1",
@@ -195,7 +202,7 @@
     "@types/uuidv4": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
-    "@vercel/node": "^2.15.10",
+    "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^5.0.0",
     "babel-jest": "^29.7.0",
     "baseline-browser-mapping": "^2.9.6",

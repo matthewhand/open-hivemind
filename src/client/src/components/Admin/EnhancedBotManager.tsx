@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   PlusIcon,
@@ -10,29 +11,25 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   EyeIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import {
-  Card,
   Button,
-  Input,
-  Select,
-  Textarea,
   Badge,
   Modal,
-  Checkbox,
-  Loading,
   Alert,
-  ToastNotification
 } from '../DaisyUI';
-import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
-import ProviderConfig from '../ProviderConfig';
+import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
+import { botDataProvider } from '../../services/botDataProvider';
+import { useLlmStatus } from '../../hooks/useLlmStatus';
 
 interface EnhancedBotManagerProps {
   onBotSelect?: (bot: Bot) => void;
 }
 
 const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) => {
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
   const [bots, setBots] = useState<Bot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +61,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
     mcpGuard: {
       enabled: false,
       type: 'owner',
-      allowedUserIds: []
+      allowedUserIds: [],
     },
     isActive: true,
     discord: {},
@@ -95,7 +92,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       const result = await botDataProvider.getList({
         pagination: { page: page + 1, perPage: rowsPerPage },
         sort: { field: orderBy, order: order.toUpperCase() as 'ASC' | 'DESC' },
-        filter: filterText ? { name: filterText } : undefined
+        filter: filterText ? { name: filterText } : undefined,
       });
       setBots(result.data);
     } catch (err) {
@@ -110,7 +107,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       const [providersData, personasData, mcpData] = await Promise.all([
         botDataProvider.getProviders(),
         botDataProvider.getPersonas(),
-        botDataProvider.getMCPServers()
+        botDataProvider.getMCPServers(),
       ]);
       setProviders(providersData);
       setPersonas(personasData);
@@ -143,7 +140,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleEditBot = async () => {
-    if (!editingBot) return;
+    if (!editingBot) { return; }
 
     try {
       setLoading(true);
@@ -161,7 +158,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const handleDeleteBot = async () => {
-    if (!deletingBot) return;
+    if (!deletingBot) { return; }
 
     try {
       setLoading(true);
@@ -216,7 +213,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       mcpGuard: {
         enabled: false,
         type: 'owner',
-        allowedUserIds: []
+        allowedUserIds: [],
       },
       isActive: true,
       discord: {},
@@ -263,7 +260,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
   const getBotStatus = (bot: Bot) => {
     const hasMessageProvider = bot.messageProvider;
-    const hasLlmProvider = bot.llmProvider;
+    const hasLlmProvider = bot.llmProvider || defaultLlmConfigured;
     const hasOverrides = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     if (!hasMessageProvider || !hasLlmProvider) {
@@ -275,13 +272,13 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
     if (bot.isActive) {
       return { status: 'active', color: 'success', icon: <CheckCircleIcon className="w-5 h-5" /> };
     }
-    return { status: 'inactive', color: 'ghost', icon: <XCircleIcon className="w-5 h-5" /> };
+    return { status: 'inactive', color: 'neutral', icon: <XCircleIcon className="w-5 h-5" /> };
   };
 
   const filteredBots = bots.filter(bot =>
     bot.name.toLowerCase().includes(filterText.toLowerCase()) ||
     bot.messageProvider.toLowerCase().includes(filterText.toLowerCase()) ||
-    bot.llmProvider.toLowerCase().includes(filterText.toLowerCase())
+    (bot.llmProvider || '').toLowerCase().includes(filterText.toLowerCase()),
   );
 
   const handleToggleExpanded = (botId: string) => {
@@ -295,7 +292,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const isFormValid = () => {
-    return botForm.name && botForm.messageProvider && botForm.llmProvider;
+    return botForm.name && botForm.messageProvider && (defaultLlmConfigured || botForm.llmProvider);
   };
 
   const renderBotForm = (isEdit = false) => (
@@ -334,19 +331,35 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
         <div className="form-control w-full">
           <label className="label">
-            <span className="label-text">LLM Provider *</span>
+            <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
           </label>
           <select
             className="select select-bordered w-full"
             value={botForm.llmProvider}
             onChange={(e) => setBotForm({ ...botForm, llmProvider: e.target.value })}
-            required
           >
-            <option value="">Select LLM provider</option>
+            {defaultLlmConfigured ? (
+              <option value="">Use default LLM</option>
+            ) : (
+              <option value="">Select LLM provider</option>
+            )}
             {providers.llmProviders.map((provider) => (
               <option key={provider.id} value={provider.id}>{provider.name}</option>
             ))}
           </select>
+          {!defaultLlmConfigured && (
+            <div className="alert alert-warning mt-2">
+              <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+              <a
+                className="btn btn-xs btn-outline ml-auto"
+                href="/admin/integrations/llm"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Configure LLM
+              </a>
+            </div>
+          )}
         </div>
 
         <div className="form-control w-full">
@@ -391,7 +404,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             checked={botForm.mcpGuard?.enabled || false}
             onChange={(e) => setBotForm({
               ...botForm,
-              mcpGuard: { ...botForm.mcpGuard!, enabled: e.target.checked }
+              mcpGuard: { ...botForm.mcpGuard!, enabled: e.target.checked },
             })}
           />
         </label>
@@ -498,18 +511,18 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                       </div>
                     </td>
                     <td>
-                      <Badge color="primary">{bot.messageProvider}</Badge>
+                      <Badge variant="primary">{bot.messageProvider}</Badge>
                     </td>
                     <td>
-                      <Badge color="secondary">{bot.llmProvider}</Badge>
+                      <Badge variant="secondary">{bot.llmProvider}</Badge>
                     </td>
                     <td>
-                      <Badge color={status.color}>{status.status}</Badge>
+                      <Badge variant={status.color as any}>{status.status}</Badge>
                     </td>
                     <td>{bot.persona || 'default'}</td>
                     <td>
                       {bot.mcpServers.length > 0 ? (
-                        <Badge color="info">{bot.mcpServers.length} servers</Badge>
+                        <Badge variant="primary">{bot.mcpServers.length} servers</Badge>
                       ) : (
                         <span className="text-base-content/50">None</span>
                       )}
@@ -572,15 +585,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           )}
                           {bot.envOverrides && Object.keys(bot.envOverrides).length > 0 && (
                             <div className="md:col-span-2">
-                              <Alert type="warning">
-                                <ExclamationTriangleIcon className="w-5 h-5" />
-                                <div>
-                                  <div className="font-bold">Environment overrides active</div>
-                                  <div className="text-sm">
-                                    {Object.keys(bot.envOverrides).join(', ')}
-                                  </div>
-                                </div>
-                              </Alert>
+                              <Alert status="warning" message={`Environment overrides active: ${Object.keys(bot.envOverrides).join(', ')}`} />
                             </div>
                           )}
                         </div>
@@ -650,7 +655,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             onClick={openEditDialog ? handleEditBot : handleCreateBot}
             disabled={loading || !isFormValid()}
           >
-            {loading ? <Loading /> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
+            {loading ? <span className="loading loading-spinner loading-sm"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
           </Button>
         </div>
       </Modal>
@@ -672,31 +677,33 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
           <Button variant="ghost" onClick={() => setOpenDeleteDialog(false)}>
             Cancel
           </Button>
-          <Button
-            variant="error"
+          <button
+            className="btn btn-error"
             onClick={handleDeleteBot}
             disabled={loading}
           >
-            {loading ? <Loading /> : 'Delete'}
-          </Button>
+            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Delete'}
+          </button>
         </div>
       </Modal>
 
       {/* Toast Notifications */}
       {success && (
-        <ToastNotification
-          message={success}
-          type="success"
-          onClose={() => setSuccess(null)}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-success">
+            <span>{success}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setSuccess(null)}>✕</button>
+          </div>
+        </div>
       )}
 
       {error && (
-        <ToastNotification
-          message={error}
-          type="error"
-          onClose={() => setError(null)}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-error">
+            <span>{error}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );

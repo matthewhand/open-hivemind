@@ -1,79 +1,38 @@
 import { test, expect } from '@playwright/test';
+import {
+    setupTestWithErrorDetection,
+    assertNoErrors,
+    navigateAndWaitReady
+} from './test-utils';
 
+/**
+ * Bot Config E2E Tests with Strict Error Detection
+ * Tests FAIL on console errors
+ */
 test.describe('Bot Configuration', () => {
-    test.beforeEach(async ({ page }) => {
-        test.setTimeout(90000);
+    test.setTimeout(90000);
 
-        // Inject fake auth to bypass login
-        const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
-        const fakeUser = JSON.stringify({ id: 'admin', username: 'admin', email: 'admin@open-hivemind.com', role: 'owner', permissions: ['*'] });
+    test('displays bot config page without errors', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
 
-        await page.addInitScript(({ token, user }) => {
-            localStorage.setItem('auth_tokens', JSON.stringify({
-                accessToken: token,
-                refreshToken: token,
-                expiresIn: 3600
-            }));
-            localStorage.setItem('auth_user', user);
-        }, { token: fakeToken, user: fakeUser });
+        expect(page.url()).toContain('/admin/bots');
+        await page.screenshot({ path: 'test-results/bot-config-01-page.png', fullPage: true });
 
-        page.on('console', msg => {
-            // Only log errors for visibility
-            if (msg.type() === 'error') {
-                console.log(`PAGE ERROR: ${msg.text()}`);
-            }
-        });
-        page.on('pageerror', exception => {
-            console.log(`PAGE EXCEPTION: ${exception}`);
-        });
-
-        // Navigate directly to bots page
-        await page.goto('/admin/bots');
-        await page.waitForLoadState('networkidle');
+        await assertNoErrors(errors, 'Bot config page load');
     });
 
-    test('should display bot management page and create bot form', async ({ page }) => {
-        // Verify page load
-        expect(page.url()).toContain('/bots');
-        await page.screenshot({ path: 'test-results/01-bots-page-loaded.png', fullPage: true });
+    test('can view bot details without errors', async ({ page }) => {
+        const errors = await setupTestWithErrorDetection(page);
+        await navigateAndWaitReady(page, '/admin/bots');
 
-        // Try to open create modal
-        const createButton = page.locator('button').filter({ hasText: /create|new|add/i }).first();
-        if (await createButton.count() > 0) {
-            await createButton.click();
-            await page.waitForTimeout(1000);
-        }
-
-        await page.screenshot({ path: 'test-results/02-create-bot-form.png', fullPage: true });
-    });
-
-    test('should add a message provider to a bot', async ({ page }) => {
-        await page.screenshot({ path: 'test-results/05-bots-page.png', fullPage: true });
-
-        // Look for any bot card and try to interact
-        const botCard = page.locator('[class*="card"]').first();
-        if (await botCard.count() > 0) {
-            await botCard.click();
+        const cards = page.locator('[class*="card"]');
+        if (await cards.count() > 0) {
+            await cards.first().click();
             await page.waitForTimeout(500);
         }
+        await page.screenshot({ path: 'test-results/bot-config-02-details.png', fullPage: true });
 
-        await page.screenshot({ path: 'test-results/06-bot-interaction.png', fullPage: true });
-    });
-
-    test('should verify navigation sidebar has key links', async ({ page }) => {
-        const sidebar = page.locator('nav, aside, [class*="sidebar"], [class*="drawer"]').first();
-
-        if (await sidebar.count() > 0) {
-            await expect(sidebar).toBeVisible();
-        }
-
-        await page.screenshot({ path: 'test-results/08-sidebar-visible.png', fullPage: true });
-
-        const pageHeading = page.locator('h1').first();
-        if (await pageHeading.count() > 0) {
-            await expect(pageHeading).toBeVisible();
-        }
-
-        await page.screenshot({ path: 'test-results/09-page-heading.png', fullPage: true });
+        await assertNoErrors(errors, 'Bot details view');
     });
 });

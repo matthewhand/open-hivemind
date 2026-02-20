@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Badge, Button, Modal, Input, Select, Alert, Loading, Checkbox, Tooltip } from './DaisyUI';
 import {
@@ -20,6 +21,7 @@ import {
   useCloneBotMutation,
   useDeleteBotMutation,
 } from '../store/slices/apiSlice';
+import { useLlmStatus } from '../hooks/useLlmStatus';
 
 interface UIBot {
   name: string;
@@ -63,7 +65,7 @@ const BotManager: React.FC = () => {
 
   const [botName, setBotName] = useState('');
   const [messageProvider, setMessageProvider] = useState('discord');
-  const [llmProvider, setLlmProvider] = useState('openai');
+  const [llmProvider, setLlmProvider] = useState('');
   const [discordToken, setDiscordToken] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [newBotName, setNewBotName] = useState('');
@@ -75,6 +77,8 @@ const BotManager: React.FC = () => {
   const [filterLlmProvider, setFilterLlmProvider] = useState<string>('all');
   const [toast, setToast] = useState<Toast | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
 
   const mutationInFlight = isCreating || isCloning || isDeleting;
   const selectedBot = useMemo(() => rawBots.find(bot => bot.name === selectedBotName) ?? null, [rawBots, selectedBotName]);
@@ -87,7 +91,7 @@ const BotManager: React.FC = () => {
   const resetForm = () => {
     setBotName('');
     setMessageProvider('discord');
-    setLlmProvider('openai');
+    setLlmProvider('');
     setDiscordToken('');
     setOpenaiApiKey('');
     setNewBotName('');
@@ -97,7 +101,7 @@ const BotManager: React.FC = () => {
   const toggleSelection = (name: string) => {
     setSelectedBots(prev => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
+      if (next.has(name)) {next.delete(name);} else {next.add(name);}
       return next;
     });
   };
@@ -111,7 +115,7 @@ const BotManager: React.FC = () => {
         searchQuery.trim() === '' ||
         bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bot.messageProvider?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bot.llmProvider?.toLowerCase().includes(searchQuery.toLowerCase())
+        bot.llmProvider?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
       .filter(bot => filterStatus === 'all' || bot.status === filterStatus)
       .filter(bot => filterMessageProvider === 'all' || bot.messageProvider === filterMessageProvider)
@@ -125,9 +129,9 @@ const BotManager: React.FC = () => {
     }
     try {
       const config: Record<string, unknown> = {};
-      if (messageProvider === 'discord' && discordToken.trim()) config.discord = { token: discordToken.trim() };
-      if (llmProvider === 'openai' && openaiApiKey.trim()) config.openai = { apiKey: openaiApiKey.trim() };
-      await createBot({ name: botName.trim(), messageProvider, llmProvider, config }).unwrap();
+      if (messageProvider === 'discord' && discordToken.trim()) {config.discord = { token: discordToken.trim() };}
+      if (llmProvider === 'openai' && openaiApiKey.trim()) {config.openai = { apiKey: openaiApiKey.trim() };}
+      await createBot({ name: botName.trim(), messageProvider, ...(llmProvider ? { llmProvider } : {}), config }).unwrap();
       showToast(`Bot '${botName}' created`, 'success');
       setCreateDialogOpen(false);
       resetForm();
@@ -154,7 +158,7 @@ const BotManager: React.FC = () => {
   };
 
   const handleDeleteBot = async () => {
-    if (!selectedBot) return;
+    if (!selectedBot) {return;}
     try {
       await deleteBot(selectedBot.name).unwrap();
       showToast(`Bot '${selectedBot.name}' deleted`, 'success');
@@ -167,7 +171,7 @@ const BotManager: React.FC = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedBots.size === 0) return;
+    if (selectedBots.size === 0) {return;}
     let successCount = 0;
     for (const name of selectedBots) {
       try {
@@ -184,11 +188,11 @@ const BotManager: React.FC = () => {
   };
 
   const handleBulkClone = async () => {
-    if (selectedBots.size === 0) return;
+    if (selectedBots.size === 0) {return;}
     let successCount = 0;
     for (const name of selectedBots) {
       const newNameComputed = `${bulkClonePrefix}${name}${bulkCloneSuffix}`.trim();
-      if (!newNameComputed || newNameComputed === name) continue;
+      if (!newNameComputed || newNameComputed === name) {continue;}
       try {
         await cloneBot({ name, newName: newNameComputed }).unwrap();
         successCount++;
@@ -221,7 +225,7 @@ const BotManager: React.FC = () => {
         e.preventDefault();
         selectAll();
       }
-      if (e.key === 'Escape') clearSelection();
+      if (e.key === 'Escape') {clearSelection();}
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -241,7 +245,7 @@ const BotManager: React.FC = () => {
   if (isLoading && rawBots.length === 0) {
     return (
       <div className="flex justify-center items-center py-16">
-        <Loading size="lg" />
+        <span className="loading loading-spinner loading-lg"></span>
         <p className="ml-4">Loading bots...</p>
       </div>
     );
@@ -254,7 +258,7 @@ const BotManager: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl font-bold">Bot Instance Manager</h1>
           <div className="flex flex-wrap gap-2">
-            {(isFetching || (isLoading && rawBots.length > 0)) && <Loading size="sm" />}
+            {(isFetching || (isLoading && rawBots.length > 0)) && <span className="loading loading-spinner loading-sm"></span>}
             <Button variant="secondary" buttonStyle="outline" onClick={() => { refetch(); showToast('Configuration refreshed', 'info'); }}>
               <ArrowPathIcon className="w-4 h-4 mr-2" />
               Refresh
@@ -369,7 +373,29 @@ const BotManager: React.FC = () => {
         <div className="space-y-4 py-4">
           <div className="form-control"><label className="label"><span className="label-text">Bot Name *</span></label><Input value={botName} onChange={(e) => setBotName(e.target.value)} /></div>
           <div className="form-control"><label className="label"><span className="label-text">Message Provider</span></label><Select value={messageProvider} onChange={(e) => setMessageProvider(e.target.value)} options={[{ value: 'discord', label: 'Discord' }, { value: 'slack', label: 'Slack' }, { value: 'mattermost', label: 'Mattermost' }]} /></div>
-          <div className="form-control"><label className="label"><span className="label-text">LLM Provider</span></label><Select value={llmProvider} onChange={(e) => setLlmProvider(e.target.value)} options={[{ value: 'openai', label: 'OpenAI' }, { value: 'flowise', label: 'Flowise' }, { value: 'openwebui', label: 'OpenWebUI' }]} /></div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
+            </label>
+            <Select
+              value={llmProvider}
+              onChange={(e) => setLlmProvider(e.target.value)}
+              options={[
+                ...(defaultLlmConfigured ? [{ value: '', label: 'Use default LLM' }] : []),
+                { value: 'openai', label: 'OpenAI' },
+                { value: 'flowise', label: 'Flowise' },
+                { value: 'openwebui', label: 'OpenWebUI' },
+              ]}
+            />
+            {!defaultLlmConfigured && (
+              <div className="alert alert-warning mt-3">
+                <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+                <a className="btn btn-xs btn-outline ml-auto" href="/admin/integrations/llm" target="_blank" rel="noreferrer">
+                  Configure LLM
+                </a>
+              </div>
+            )}
+          </div>
           {messageProvider === 'discord' && <div className="form-control"><label className="label"><span className="label-text">Discord Bot Token</span></label><Input type="password" value={discordToken} onChange={(e) => setDiscordToken(e.target.value)} /></div>}
           {llmProvider === 'openai' && <div className="form-control"><label className="label"><span className="label-text">OpenAI API Key</span></label><Input type="password" value={openaiApiKey} onChange={(e) => setOpenaiApiKey(e.target.value)} /></div>}
         </div>

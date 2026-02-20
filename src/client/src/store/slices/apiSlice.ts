@@ -77,7 +77,7 @@ export const apiSlice = createApi({
     createBot: builder.mutation<{ success: boolean; message: string; bot: Bot }, {
       name: string;
       messageProvider: string;
-      llmProvider: string;
+      llmProvider?: string;
       config?: Record<string, unknown>;
     }>({
       query: (botData) => ({
@@ -199,7 +199,7 @@ export const apiSlice = createApi({
         const searchParams = new URLSearchParams();
         if (params) {
           Object.entries(params).forEach(([key, value]) => {
-            if (value) searchParams.append(key, value);
+            if (value) {searchParams.append(key, value);}
           });
         }
         const queryString = searchParams.toString();

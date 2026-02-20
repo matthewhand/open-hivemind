@@ -48,7 +48,7 @@ export class AdaptiveHistoryTuner {
   public getDesiredLimit(key: string, baseLimit: number): number {
     const base = Math.max(1, Number(baseLimit) || 10);
     const s = this.state.get(key);
-    if (!this.isEnabled()) return base;
+    if (!this.isEnabled()) {return base;}
     if (!s) {
       const initial = Math.min(this.getMax(), Math.max(this.getMin(), base));
       this.state.set(key, { desiredLimit: initial, lastSeenCount: 0, lastUtilization: 0 });
@@ -64,7 +64,7 @@ export class AdaptiveHistoryTuner {
     estimatedTotalTokens: number;
     inputBudgetTokens: number;
   }): void {
-    if (!this.isEnabled()) return;
+    if (!this.isEnabled()) {return;}
 
     const step = this.getStep();
     const min = this.getMin();
@@ -94,7 +94,7 @@ export class AdaptiveHistoryTuner {
     this.state.set(key, {
       desiredLimit: next,
       lastSeenCount: info.receivedCount,
-      lastUtilization: utilization
+      lastUtilization: utilization,
     });
 
     debug(`historyTune key=${key} requested=${info.requestedLimit} received=${info.receivedCount} kept=${info.keptCount} util=${utilization.toFixed(2)} next=${next}`);

@@ -1,4 +1,5 @@
-import { Bot, CreateBotRequest } from '../types/bot';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import type { Bot, CreateBotRequest } from '../types/bot';
 
 // Mock data for development
 const mockBots: Bot[] = [];
@@ -15,7 +16,7 @@ export const botDataProvider = {
     if (params?.filter) {
       Object.entries(params.filter).forEach(([key, value]) => {
         filteredBots = filteredBots.filter(bot =>
-          (bot as any)[key]?.toLowerCase().includes(value.toLowerCase())
+          (bot as any)[key]?.toLowerCase().includes(value.toLowerCase()),
         );
       });
     }
@@ -43,7 +44,7 @@ export const botDataProvider = {
 
   getOne: async (id: string): Promise<Bot> => {
     const bot = mockBots.find(b => b.id === id);
-    if (!bot) throw new Error('Bot not found');
+    if (!bot) {throw new Error('Bot not found');}
     return bot;
   },
 
@@ -52,7 +53,7 @@ export const botDataProvider = {
       id: `bot-${Date.now()}`,
       ...data,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     mockBots.push(newBot);
     return newBot;
@@ -60,18 +61,18 @@ export const botDataProvider = {
 
   update: async (id: string, data: CreateBotRequest): Promise<Bot> => {
     const index = mockBots.findIndex(b => b.id === id);
-    if (index === -1) throw new Error('Bot not found');
+    if (index === -1) {throw new Error('Bot not found');}
     mockBots[index] = {
       ...mockBots[index],
       ...data,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     return mockBots[index];
   },
 
   delete: async (id: string): Promise<void> => {
     const index = mockBots.findIndex(b => b.id === id);
-    if (index === -1) throw new Error('Bot not found');
+    if (index === -1) {throw new Error('Bot not found');}
     mockBots.splice(index, 1);
   },
 
@@ -80,14 +81,14 @@ export const botDataProvider = {
       messageProviders: [
         { id: 'discord', name: 'Discord' },
         { id: 'slack', name: 'Slack' },
-        { id: 'mattermost', name: 'Mattermost' }
+        { id: 'mattermost', name: 'Mattermost' },
       ],
       llmProviders: [
         { id: 'openai', name: 'OpenAI' },
         { id: 'flowise', name: 'Flowise' },
         { id: 'openwebui', name: 'OpenWebUI' },
-        { id: 'openswarm', name: 'OpenSwarm' }
-      ]
+        { id: 'openswarm', name: 'OpenSwarm' },
+      ],
     };
   },
 
@@ -96,7 +97,7 @@ export const botDataProvider = {
       { key: 'default', name: 'Default' },
       { key: 'helpful-assistant', name: 'Helpful Assistant' },
       { key: 'technical-support', name: 'Technical Support' },
-      { key: 'customer-service', name: 'Customer Service' }
+      { key: 'customer-service', name: 'Customer Service' },
     ];
   },
 
@@ -104,16 +105,16 @@ export const botDataProvider = {
     return [
       { name: 'filesystem', serverUrl: 'http://localhost:3001' },
       { name: 'database', serverUrl: 'http://localhost:3002' },
-      { name: 'weather', serverUrl: 'http://localhost:3003' }
+      { name: 'weather', serverUrl: 'http://localhost:3003' },
     ];
   },
 
   validate: async (data: CreateBotRequest) => {
     const errors: string[] = [];
     
-    if (!data.name) errors.push('Bot name is required');
-    if (!data.messageProvider) errors.push('Message provider is required');
-    if (!data.llmProvider) errors.push('LLM provider is required');
+    if (!data.name) {errors.push('Bot name is required');}
+    if (!data.messageProvider) {errors.push('Message provider is required');}
+    // Allow missing LLM provider if a default LLM is configured elsewhere
     
     // Provider-specific validation
     if (data.messageProvider === 'discord' && !data.discord?.token) {
@@ -128,9 +129,9 @@ export const botDataProvider = {
     
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
-  }
+  },
 };
 
 // Re-export types for compatibility

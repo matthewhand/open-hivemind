@@ -175,7 +175,7 @@ export const selectRecentErrors = (limit: number = 10) => (state: { error: Error
 
 export const selectErrorsByTimeRange = (startTime: string, endTime: string) => (state: { error: ErrorState }) =>
   state.error.errors.filter(err => 
-    err.timestamp >= startTime && err.timestamp <= endTime
+    err.timestamp >= startTime && err.timestamp <= endTime,
   );
 
 export const selectErrorStats = (state: { error: ErrorState }) => {

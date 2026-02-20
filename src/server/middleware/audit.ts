@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import { Request } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 
 const debug = Debug('app:auditMiddleware');
@@ -61,7 +62,7 @@ export const logConfigChange = (
     oldValue?: any;
     newValue?: any;
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logConfigChange(
@@ -73,8 +74,8 @@ export const logConfigChange = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 
@@ -91,7 +92,7 @@ export const logBotAction = (
     oldValue?: any;
     newValue?: any;
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logBotAction(
@@ -103,8 +104,8 @@ export const logBotAction = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 
@@ -119,7 +120,7 @@ export const logAdminAction = (
   details: string,
   options: {
     metadata?: Record<string, any>;
-  } = {}
+  } = {},
 ) => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logAdminAction(
@@ -131,8 +132,8 @@ export const logAdminAction = (
     {
       ipAddress: req.auditIp,
       userAgent: req.auditUserAgent,
-      ...options
-    }
+      ...options,
+    },
   );
 };
 

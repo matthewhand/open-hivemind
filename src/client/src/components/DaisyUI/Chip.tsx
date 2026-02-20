@@ -11,7 +11,7 @@ const Chip: React.FC<ChipProps> = ({
   children,
   variant = 'primary',
   size = 'md',
-  className = ''
+  className = '',
 }) => {
   const getVariantClass = () => {
     const variants = {
@@ -22,7 +22,7 @@ const Chip: React.FC<ChipProps> = ({
       success: 'badge-success',
       warning: 'badge-warning',
       error: 'badge-error',
-      ghost: 'badge-ghost'
+      ghost: 'badge-ghost',
     };
     return variants[variant] || variants.primary;
   };
@@ -32,7 +32,7 @@ const Chip: React.FC<ChipProps> = ({
       xs: 'badge-xs',
       sm: 'badge-sm',
       md: 'badge-md',
-      lg: 'badge-lg'
+      lg: 'badge-lg',
     };
     return sizes[size] || sizes.md;
   };

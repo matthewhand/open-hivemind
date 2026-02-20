@@ -40,11 +40,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onRetryMessage,
   currentUserId = 'current-user',
   isLoading = false,
-  placeholder = "Type your message...",
+  placeholder = 'Type your message...',
   className = '',
   showTypingIndicator = false,
   typingUsers = [],
-  maxHeight = '600px'
+  maxHeight = '600px',
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,7 +77,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     }).format(date);
   };
 
@@ -110,7 +110,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {message.sender.avatar ? (
                 <img alt={message.sender.name} src={message.sender.avatar} />
               ) : (
-                <div className={`avatar placeholder`}>
+                <div className={'avatar placeholder'}>
                   <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
                     <span className="text-xs">
                       {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
@@ -141,7 +141,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -316,8 +316,8 @@ export const ChatQuickActions: React.FC<QuickActionsProps> = ({
     { label: 'Status', command: '/status', icon: '📊' },
     { label: 'Help', command: '/help', icon: '❓' },
     { label: 'Restart', command: '/restart', icon: '🔄' },
-    { label: 'Settings', command: '/settings', icon: '⚙️' }
-  ]
+    { label: 'Settings', command: '/settings', icon: '⚙️' },
+  ],
 }) => {
   return (
     <div className="flex gap-2 p-2 bg-base-200 rounded-lg">
@@ -347,7 +347,7 @@ export const ChatStats: React.FC<ChatStatsProps> = ({
   totalMessages,
   activeUsers,
   uptime,
-  responseTime
+  responseTime,
 }) => {
   return (
     <div className="stats stats-vertical lg:stats-horizontal shadow">

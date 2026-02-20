@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
+import type {
   ProviderModalState,
+  ProviderTypeConfig,
+  FieldConfig,
+} from '../../types/bot';
+import {
   MessageProviderType,
   LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
-  ProviderTypeConfig,
-  FieldConfig
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
@@ -20,10 +23,10 @@ interface ProviderConfigModalProps {
 const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
   onClose,
-  onSubmit
+  onSubmit,
 }) => {
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI
+    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,7 +39,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         setSelectedType(modalState.provider.type as MessageProviderType | LLMProviderType);
         setFormData({
           name: modalState.provider.name,
-          ...modalState.provider.config
+          ...modalState.provider.config,
         });
       } else {
         // Add mode: start with empty form
@@ -64,7 +67,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
         const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm');
         setFormData({
-          name: defaultName
+          name: defaultName,
         });
         setErrors({});
       }
@@ -160,7 +163,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       name: formData.name,
       type: selectedType,
       config: providerConfig,
-      ...(modalState.isEdit && { id: modalState.provider?.id })
+      ...(modalState.isEdit && { id: modalState.provider?.id }),
     };
 
     onSubmit(providerData);
@@ -191,122 +194,122 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     `;
 
     switch (field.type) {
-      case 'password':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
+    case 'password':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <input
+            type="password"
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'number':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <input
+            type="number"
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step={field.name === 'temperature' ? '0.1' : '1'}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'select':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <select
+            className={`${fieldClasses} select`}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          >
+            <option value="">Select {field.label.toLowerCase()}</option>
+            {field.options?.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'textarea':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <textarea
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            rows={4}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'checkbox':
+      return (
+        <div key={field.name} className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text font-medium">{field.label}</span>
             <input
-              type="password"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={!!value}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
             />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
+          </label>
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
 
-      case 'number':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="number"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              step={field.name === 'temperature' ? '0.1' : '1'}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <select
-              className={`${fieldClasses} select`}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            >
-              <option value="">Select {field.label.toLowerCase()}</option>
-              {field.options?.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <textarea
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              rows={4}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={field.name} className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text font-medium">{field.label}</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={!!value}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              />
-            </label>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      default:
-        // text and others
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="text"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
+    default:
+      // text and others
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <input
+            type="text"
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
     }
   };
 
-  if (!modalState.isOpen) return null;
+  if (!modalState.isOpen) {return null;}
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;

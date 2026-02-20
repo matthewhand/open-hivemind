@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
 
@@ -26,6 +27,10 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [jsonState, setJsonState] = useState<Record<string, string>>({});
+  const [testStatus, setTestStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const isMessageProviderSection = ['discord', 'slack', 'mattermost'].includes(section);
 
   useEffect(() => {
     fetchConfig();
@@ -35,7 +40,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     try {
       setLoading(true);
       const res = await fetch('/api/config/global');
-      if (!res.ok) throw new Error('Failed to fetch configuration');
+      if (!res.ok) {throw new Error('Failed to fetch configuration');}
       const data = await res.json();
       if (data && data[section]) {
         setConfig(data[section]);
@@ -56,21 +61,21 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     setSuccess(null);
     setError(null);
 
-     // Merge any valid JSON state back into values before saving
-     const valuesToSave = { ...values };
-     Object.entries(jsonState).forEach(([key, jsonStr]) => {
-         try {
-           valuesToSave[key] = JSON.parse(jsonStr);
-         } catch (e) {
-           console.warn(`Skipping invalid JSON for ${section}.${key}`);
-         }
-     });
+    // Merge any valid JSON state back into values before saving
+    const valuesToSave = { ...values };
+    Object.entries(jsonState).forEach(([key, jsonStr]) => {
+      try {
+        valuesToSave[key] = JSON.parse(jsonStr);
+      } catch (e) {
+        console.warn(`Skipping invalid JSON for ${section}.${key}`);
+      }
+    });
 
     try {
       const res = await fetch('/api/config/global', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: section, updates: valuesToSave })
+        body: JSON.stringify({ configName: section, updates: valuesToSave }),
       });
 
       if (!res.ok) {
@@ -89,21 +94,52 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     }
   };
 
+  const handleTestConnection = async () => {
+    if (!config) {return;}
+    setTesting(true);
+    setTestStatus(null);
+    try {
+      const stored = localStorage.getItem('auth_tokens');
+      const accessToken = stored ? (JSON.parse(stored) as { accessToken?: string })?.accessToken : undefined;
+      const res = await fetch('/api/config/message-provider/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          provider: section,
+          config: config.values,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || data.error || 'Connection test failed');
+      }
+      setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
+    } catch (err: any) {
+      setTestStatus({ type: 'error', message: err.message || 'Connection test failed' });
+    } finally {
+      setTesting(false);
+      setTimeout(() => setTestStatus(null), 4000);
+    }
+  };
+
   const renderField = (key: string, value: any, schema: ConfigSchema) => {
     const handleChange = (newValue: any) => {
-      if (!config) return;
+      if (!config) {return;}
       setConfig({
-          ...config,
-          values: { ...config.values, [key]: newValue }
+        ...config,
+        values: { ...config.values, [key]: newValue },
       });
     };
 
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
 
     let type = 'text';
-    if (typeof value === 'boolean' || schema.format === 'Boolean') type = 'boolean';
-    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') type = 'number';
-    else if (Array.isArray(value) || schema.format === 'Array') type = 'array';
+    if (typeof value === 'boolean' || schema.format === 'Boolean') {type = 'boolean';}
+    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') {type = 'number';}
+    else if (Array.isArray(value) || schema.format === 'Array') {type = 'array';}
 
 
     if (type === 'boolean') {
@@ -120,21 +156,21 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     }
 
     if (Array.isArray(schema.format)) {
-        return (
-          <div className="form-control w-full" key={key}>
-            <label className="label">
-              <span className="label-text font-semibold">{key}</span>
-              {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
-            </label>
-            <Select
-              value={value}
-              onChange={(e) => handleChange(e.target.value)}
-              options={schema.format.map((opt: string) => ({ value: opt, label: opt }))}
-            />
-            {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
-          </div>
-        );
-      }
+      return (
+        <div className="form-control w-full" key={key}>
+          <label className="label">
+            <span className="label-text font-semibold">{key}</span>
+            {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
+          </label>
+          <Select
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            options={schema.format.map((opt: string) => ({ value: opt, label: opt }))}
+          />
+          {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
+        </div>
+      );
+    }
 
     return (
       <div className="form-control w-full" key={key}>
@@ -153,66 +189,83 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     );
   };
 
-  if (loading) return (
-     <div className="flex flex-col items-center justify-center p-12 gap-4">
-        <span className="loading loading-infinity loading-lg text-primary" />
-        <span className="text-base-content/50">Loading settings...</span>
+  if (loading) {return (
+    <div className="flex flex-col items-center justify-center p-12 gap-4">
+      <span className="loading loading-infinity loading-lg text-primary" />
+      <span className="text-base-content/50">Loading settings...</span>
     </div>
-  );
+  );}
   
-  if (error) return <Alert status="error" message={error} />;
-  if (!config) return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>;
+  if (error) {return <Alert status="error" message={error} />;}
+  if (!config) {return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>;}
 
   return (
     <Card className="bg-base-100 shadow-xl border border-base-200">
       <div className="card-body">
-         <div className="flex justify-between items-center mb-6">
-            <div>
-                <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
-                <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
-            </div>
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+          <div>
+            <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
+            <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {isMessageProviderSection && (
+              <Button
+                variant="secondary" className="btn-outline"
+                onClick={handleTestConnection}
+                loading={testing}
+                disabled={testing}
+              >
+                  Test Connection
+              </Button>
+            )}
             <Button 
-                variant="primary" 
-                onClick={() => handleSave(config.values)}
-                loading={saving}
-                disabled={saving}
+              variant="primary" 
+              onClick={() => handleSave(config.values)}
+              loading={saving}
+              disabled={saving}
             >
-                Save Changes
+                  Save Changes
             </Button>
-         </div>
+          </div>
+        </div>
 
-         {success && <div className="mb-4"><Alert status="success" message={success} /></div>}
+        {success && <div className="mb-4"><Alert status="success" message={success} /></div>}
+        {testStatus && (
+          <div className="mb-4">
+            <Alert status={testStatus.type} message={testStatus.message} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {Object.entries(config.values).map(([key, value]) => {
-              // Handle objects
-              if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                 const currentValue = jsonState[key] !== undefined ? jsonState[key] : JSON.stringify(value, null, 2);
-                 let isValid = true;
-                 try { JSON.parse(currentValue); } catch { isValid = false; }
+            // Handle objects
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+              const currentValue = jsonState[key] !== undefined ? jsonState[key] : JSON.stringify(value, null, 2);
+              let isValid = true;
+              try { JSON.parse(currentValue); } catch { isValid = false; }
                  
-                 return (
-                    <div className="form-control w-full col-span-2" key={key}>
-                      <label className="label">
-                        <span className="label-text font-semibold">{key}</span>
-                        {config.schema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{config.schema[key].env}</span>}
-                      </label>
-                      <Textarea
-                        className="h-32 font-mono text-sm"
-                        value={currentValue}
-                        onChange={(e) => setJsonState(prev => ({ ...prev, [key]: e.target.value }))}
-                        variant={!isValid ? 'error' : undefined}
-                        bordered
-                      />
-                      <label className="label">
-                         <span className="label-text-alt text-base-content/70">{config.schema[key]?.doc || 'JSON Configuration Object'}</span>
-                         {!isValid && <span className="label-text-alt text-error">Invalid JSON</span>}
-                      </label>
-                    </div>
-                 );
-              }
+              return (
+                <div className="form-control w-full col-span-2" key={key}>
+                  <label className="label">
+                    <span className="label-text font-semibold">{key}</span>
+                    {config.schema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{config.schema[key].env}</span>}
+                  </label>
+                  <Textarea
+                    className="h-32 font-mono text-sm"
+                    value={currentValue}
+                    onChange={(e) => setJsonState(prev => ({ ...prev, [key]: e.target.value }))}
+                    variant={!isValid ? 'error' : undefined}
+                    bordered
+                  />
+                  <label className="label">
+                    <span className="label-text-alt text-base-content/70">{config.schema[key]?.doc || 'JSON Configuration Object'}</span>
+                    {!isValid && <span className="label-text-alt text-error">Invalid JSON</span>}
+                  </label>
+                </div>
+              );
+            }
               
-              return renderField(key, value, config.schema[key] || {});
+            return renderField(key, value, config.schema[key] || {});
           })}
         </div>
       </div>

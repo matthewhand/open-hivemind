@@ -27,7 +27,7 @@ export class TypingMonitor extends EventEmitter {
       userId,
       channelId,
       startedAt: now,
-      expiresAt: now + this.TYPING_TTL_MS
+      expiresAt: now + this.TYPING_TTL_MS,
     });
 
     // Clean up expired entries periodically or on access

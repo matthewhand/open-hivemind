@@ -9,7 +9,7 @@ interface HamburgerMenuProps {
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ 
   onClick, 
   isOpen = false, 
-  className = '' 
+  className = '', 
 }) => {
   return (
     <button

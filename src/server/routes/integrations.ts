@@ -40,11 +40,11 @@ router.get('/', (req, res) => {
  * Get single provider instance
  */
 router.get('/:id', (req, res) => {
-    const provider = providerManager.getProvider(req.params.id);
-    if (!provider) {
-        return res.status(404).json({ error: 'Provider not found' });
-    }
-    res.json(provider);
+  const provider = providerManager.getProvider(req.params.id);
+  if (!provider) {
+    return res.status(404).json({ error: 'Provider not found' });
+  }
+  res.json(provider);
 });
 
 /**
@@ -56,15 +56,15 @@ router.post('/', (req, res) => {
     const { type, category, name, config, enabled } = req.body;
     
     if (!type || !name || !category) {
-        return res.status(400).json({ error: 'Missing required fields: type, category, name' });
+      return res.status(400).json({ error: 'Missing required fields: type, category, name' });
     }
 
     const newInstance = providerManager.createProvider({
-        type,
-        category,
-        name,
-        config: config || {},
-        enabled: enabled !== false // Default true
+      type,
+      category,
+      name,
+      config: config || {},
+      enabled: enabled !== false, // Default true
     });
 
     log(`Created new ${category} provider: ${name} (${type})`);
@@ -80,24 +80,24 @@ router.post('/', (req, res) => {
  * Update provider instance
  */
 router.put('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
+  try {
+    const { id } = req.params;
+    const updates = req.body;
         
-        // Prevent changing ID
-        delete updates.id;
+    // Prevent changing ID
+    delete updates.id;
 
-        const updated = providerManager.updateProvider(id, updates);
-        if (!updated) {
-            return res.status(404).json({ error: 'Provider not found' });
-        }
-
-        log(`Updated provider: ${updated.name}`);
-        res.json(updated);
-    } catch (err: any) {
-        log('Error updating integration:', err);
-        res.status(500).json({ error: 'Failed to update integration' });
+    const updated = providerManager.updateProvider(id, updates);
+    if (!updated) {
+      return res.status(404).json({ error: 'Provider not found' });
     }
+
+    log(`Updated provider: ${updated.name}`);
+    res.json(updated);
+  } catch (err: any) {
+    log('Error updating integration:', err);
+    res.status(500).json({ error: 'Failed to update integration' });
+  }
 });
 
 /**
@@ -105,17 +105,17 @@ router.put('/:id', (req, res) => {
  * Delete provider instance
  */
 router.delete('/:id', (req, res) => {
-    try {
-        const success = providerManager.deleteProvider(req.params.id);
-        if (!success) {
-            return res.status(404).json({ error: 'Provider not found' });
-        }
-        log(`Deleted provider: ${req.params.id}`);
-        res.json({ success: true });
-    } catch (err: any) {
-        log('Error deleting integration:', err);
-        res.status(500).json({ error: 'Failed to delete integration' });
+  try {
+    const success = providerManager.deleteProvider(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: 'Provider not found' });
     }
+    log(`Deleted provider: ${req.params.id}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    log('Error deleting integration:', err);
+    res.status(500).json({ error: 'Failed to delete integration' });
+  }
 });
 
 export default router;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Modal, Input, Alert, Loading, Toggle, Tooltip } from './DaisyUI';
 import {
@@ -98,7 +99,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleDeleteConfig = async (configId: string) => {
     const config = configs.find(c => c.id === configId);
-    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) return;
+    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
     try {
       setConfigs(configs.filter(c => c.id !== configId));
       showToast(`Configuration "${config.name}" deleted successfully`, 'success');
@@ -141,7 +142,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     return (
       <Card>
         <div className="flex justify-center items-center py-8">
-          <Loading size="lg" />
+          <span className="loading loading-spinner loading-lg"></span>
           <p className="ml-4">Loading secure configurations...</p>
         </div>
       </Card>

@@ -5,7 +5,7 @@ import {
   MessageCircle as MessageIcon,
   Brain as LLMIcon,
   Settings as ConfigIcon,
-  ArrowRight as ArrowIcon
+  ArrowRight as ArrowIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
 
@@ -13,7 +13,7 @@ const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers', isActive: true }
+    { label: 'Providers', href: '/uber/providers', isActive: true },
   ];
 
   const providerCategories = [
@@ -28,8 +28,8 @@ const ProvidersPage: React.FC = () => {
         'Real-time messaging integration',
         'Multi-platform support',
         'Webhook customization',
-        'Channel management'
-      ]
+        'Channel management',
+      ],
     },
     {
       title: 'LLM Providers',
@@ -42,9 +42,9 @@ const ProvidersPage: React.FC = () => {
         'Multiple AI model support',
         'Fallback configuration',
         'Custom model integration',
-        'API key management'
-      ]
-    }
+        'API key management',
+      ],
+    },
   ];
 
   return (
@@ -60,8 +60,8 @@ const ProvidersPage: React.FC = () => {
 
       {/* Provider Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {providerCategories.map((category, index) => (
-          <Card key={index} className="bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
+        {providerCategories.map((category) => (
+          <Card key={category.title} className="bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
             <div className="card-body">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -74,7 +74,7 @@ const ProvidersPage: React.FC = () => {
                     <p className="text-base-content/60 mt-1">{category.description}</p>
                   </div>
                 </div>
-                <Badge color={category.color} size="sm">
+                <Badge variant={category.color} size="sm">
                   {category.providers.length} types
                 </Badge>
               </div>
@@ -83,8 +83,8 @@ const ProvidersPage: React.FC = () => {
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-base-content/80 mb-3">Available Providers</h3>
                 <div className="flex flex-wrap gap-2">
-                  {category.providers.map((provider, providerIndex) => (
-                    <Badge key={providerIndex} color="neutral" variant="outline" className="text-xs">
+                  {category.providers.map((provider) => (
+                    <Badge key={provider} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
                       {provider}
                     </Badge>
                   ))}
@@ -95,8 +95,8 @@ const ProvidersPage: React.FC = () => {
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-base-content/80 mb-3">Features</h3>
                 <ul className="space-y-2">
-                  {category.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-2 text-sm text-base-content/70">
+                  {category.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-sm text-base-content/70">
                       <div className="w-1.5 h-1.5 rounded-full bg-success"></div>
                       {feature}
                     </li>

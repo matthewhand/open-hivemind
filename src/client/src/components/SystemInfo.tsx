@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * @fileoverview System Information Component
  *
@@ -15,7 +16,7 @@ import {
   Button,
   Loading,
   Tooltip,
-  ConfirmModal
+  ConfirmModal,
 } from './DaisyUI';
 import {
   ArrowDownTrayIcon,
@@ -62,13 +63,23 @@ const SystemInfo: React.FC = () => {
   const handleSystemAction = async (action: 'restart' | 'shutdown') => {
     setIsLoading(true);
     try {
-      // TODO: Implement API call for system action
-      console.log(`Performing system ${action}...`);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated`]);
+      // Call the system action API
+      const response = await fetch(`/api/system/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `Failed to ${action} system`);
+      }
+
+      const data = await response.json();
+      console.log(`System ${action} initiated:`, data);
+      setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
       console.error(`Failed to ${action} system:`, error);
+      setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);
       setConfirmDialog({ open: false, action: null, message: '' });
@@ -167,7 +178,7 @@ const SystemInfo: React.FC = () => {
             </div>
             {isLoading && (
               <div className="flex items-center gap-2 mt-4 text-base-content/70">
-                <Loading size="sm" />
+                <span className="loading loading-spinner loading-sm"></span>
                 <span className="text-sm">Processing system action...</span>
               </div>
             )}

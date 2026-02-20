@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, ToggleLeft, AlertTriangle, Check, RefreshCw, AlertCircle, Save } from 'lucide-react';
 
@@ -28,7 +29,7 @@ const GuardsPage: React.FC = () => {
   const [accessConfig, setAccessConfig] = useState<GuardsConfig>({
     type: 'users',
     users: [],
-    ips: []
+    ips: [],
   });
   const [newUser, setNewUser] = useState('');
   const [newIp, setNewIp] = useState('');
@@ -46,7 +47,7 @@ const GuardsPage: React.FC = () => {
           description: 'User and IP-based access restrictions',
           type: 'access',
           enabled: true,
-          config: {}
+          config: {},
         },
         {
           id: 'rate-limiter',
@@ -54,7 +55,7 @@ const GuardsPage: React.FC = () => {
           description: 'Prevents spam and excessive requests',
           type: 'rate',
           enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 }
+          config: { maxRequests: 100, windowMs: 60000 },
         },
         {
           id: 'content-filter',
@@ -62,8 +63,8 @@ const GuardsPage: React.FC = () => {
           description: 'Filters inappropriate content',
           type: 'content',
           enabled: false,
-          config: {}
-        }
+          config: {},
+        },
       ];
 
       setGuards(guards);
@@ -87,7 +88,7 @@ const GuardsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/guards`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(accessConfig)
+        body: JSON.stringify(accessConfig),
       });
 
       if (!response.ok) {
@@ -108,10 +109,10 @@ const GuardsPage: React.FC = () => {
   };
 
   const addUser = () => {
-    if (!newUser.trim()) return;
+    if (!newUser.trim()) { return; }
     setAccessConfig({
       ...accessConfig,
-      users: [...accessConfig.users, newUser.trim()]
+      users: [...accessConfig.users, newUser.trim()],
     });
     setNewUser('');
   };
@@ -119,15 +120,15 @@ const GuardsPage: React.FC = () => {
   const removeUser = (user: string) => {
     setAccessConfig({
       ...accessConfig,
-      users: accessConfig.users.filter(u => u !== user)
+      users: accessConfig.users.filter(u => u !== user),
     });
   };
 
   const addIp = () => {
-    if (!newIp.trim()) return;
+    if (!newIp.trim()) { return; }
     setAccessConfig({
       ...accessConfig,
-      ips: [...accessConfig.ips, newIp.trim()]
+      ips: [...accessConfig.ips, newIp.trim()],
     });
     setNewIp('');
   };
@@ -135,7 +136,7 @@ const GuardsPage: React.FC = () => {
   const removeIp = (ip: string) => {
     setAccessConfig({
       ...accessConfig,
-      ips: accessConfig.ips.filter(i => i !== ip)
+      ips: accessConfig.ips.filter(i => i !== ip),
     });
   };
 
@@ -177,7 +178,7 @@ const GuardsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Guards</h1>
-            <p className="text-gray-500">Security and access control settings</p>
+            <p className="text-base-content/60">Security and access control settings</p>
           </div>
         </div>
         <button onClick={fetchGuards} className="btn btn-ghost gap-2" disabled={loading}>
@@ -229,7 +230,7 @@ const GuardsPage: React.FC = () => {
                           <h3 className="font-semibold">{guard.name}</h3>
                           <span className={`badge badge-sm ${getTypeColor(guard.type)}`}>{guard.type}</span>
                         </div>
-                        <p className="text-sm text-gray-500">{guard.description}</p>
+                        <p className="text-sm text-base-content/60">{guard.description}</p>
                       </div>
                     </div>
                   </div>
@@ -280,7 +281,7 @@ const GuardsPage: React.FC = () => {
                     </span>
                   ))}
                   {accessConfig.users.length === 0 && (
-                    <span className="text-sm text-gray-400">No users added</span>
+                    <span className="text-sm text-base-content/60 italic">No users added (this will allow anyone)</span>
                   )}
                 </div>
               </div>
@@ -309,7 +310,7 @@ const GuardsPage: React.FC = () => {
                     </span>
                   ))}
                   {accessConfig.ips.length === 0 && (
-                    <span className="text-sm text-gray-400">No IPs added</span>
+                    <span className="text-sm text-base-content/50">No IPs added</span>
                   )}
                 </div>
               </div>

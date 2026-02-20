@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import errorsRouter from '../../src/routes/errors';
+import errorsRouter from '../../src/server/routes/errors';
 import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
 
 // Create a test express app

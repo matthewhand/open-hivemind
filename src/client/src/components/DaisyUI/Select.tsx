@@ -1,4 +1,5 @@
-import React, { SelectHTMLAttributes, forwardRef } from 'react';
+import type { SelectHTMLAttributes} from 'react';
+import React, { forwardRef } from 'react';
 import classNames from 'classnames';
 
 export type SelectOption = {
@@ -38,7 +39,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       renderOption,
       ...props
     },
-    ref
+    ref,
   ) => {
     const selectClasses = classNames(
       'select',
@@ -57,7 +58,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         'cursor-not-allowed opacity-60': props.disabled,
         'animate-pulse': loading,
       },
-      className
+      className,
     );
 
     const renderSingleOption = (option: SelectOption) => {
@@ -87,7 +88,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = 'Select';

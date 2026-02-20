@@ -1,17 +1,20 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
-import { spawn, ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
-import {
+import type {
   MCPProviderConfig,
   MCPProviderStatus,
   MCPProviderTestResult,
   MCPProviderTemplate,
   MCPProviderValidationResult,
   MCPProviderManager as IMCPProviderManager,
+  MCPProviderStats,
+} from '../types/mcp';
+import {
   MCPProviderEvent,
-  MCPProviderStats
 } from '../types/mcp';
 
 const debug = Debug('app:MCPProviderManager');
@@ -44,7 +47,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         'validation',
         'MCP_PROVIDER_CONFIG_INVALID',
         undefined,
-        { validationErrors: validation.errors }
+        { validationErrors: validation.errors },
       );
     }
 
@@ -58,7 +61,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     this.statuses.set(providerId, {
       id: providerId,
       status: 'stopped',
-      lastCheck: new Date()
+      lastCheck: new Date(),
     });
 
     this.emit('provider_added', { type: 'provider_added', providerId, timestamp: new Date() });
@@ -100,7 +103,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         'validation',
         'MCP_PROVIDER_CONFIG_INVALID',
         undefined,
-        { validationErrors: validation.errors, providerId: id }
+        { validationErrors: validation.errors, providerId: id },
       );
     }
 
@@ -111,7 +114,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       type: 'provider_updated',
       providerId: id,
       timestamp: new Date(),
-      data: { oldProvider: existingProvider, newProvider: updatedProvider }
+      data: { oldProvider: existingProvider, newProvider: updatedProvider },
     });
     debug(`MCP provider updated: ${updatedProvider.name} (${id})`);
   }
@@ -147,7 +150,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         'configuration',
         'MCP_PROVIDER_NOT_FOUND',
         undefined,
-        { providerId: id }
+        { providerId: id },
       );
     }
 
@@ -165,14 +168,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         error: result.error,
         output: result.output,
         version: result.version,
-        capabilities: result.capabilities
+        capabilities: result.capabilities,
       };
 
       this.emit('provider_test_completed', {
         type: 'provider_test_completed',
         providerId: id,
         timestamp: new Date(),
-        data: testResult
+        data: testResult,
       });
 
       debug(`MCP provider test completed: ${provider.name} (${id}) - ${testResult.success ? 'SUCCESS' : 'FAILED'}`);
@@ -187,7 +190,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         startTime,
         endTime,
         duration: endTime.getTime() - startTime.getTime(),
-        error: hivemindError.message
+        error: hivemindError.message,
       };
 
       debug(`MCP provider test failed: ${provider.name} (${id}) -`, {
@@ -195,7 +198,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        providerId: id
+        providerId: id,
       });
       return testResult;
     }
@@ -212,7 +215,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         'configuration',
         'MCP_PROVIDER_NOT_FOUND',
         undefined,
-        { providerId: id }
+        { providerId: id },
       );
     }
 
@@ -231,7 +234,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         status: 'running',
         lastCheck: new Date(),
         uptime: 0,
-        processId: process.pid
+        processId: process.pid,
       });
 
       // Start health check if enabled
@@ -249,7 +252,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         id,
         status: 'error',
         lastCheck: new Date(),
-        error: hivemindError.message
+        error: hivemindError.message,
       });
 
       debug(`Failed to start MCP provider: ${provider.name} (${id}) -`, {
@@ -257,14 +260,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        providerId: id
+        providerId: id,
       });
 
       this.emit('provider_error', {
         type: 'provider_error',
         providerId: id,
         timestamp: new Date(),
-        data: { error: hivemindError }
+        data: { error: hivemindError },
       });
 
       throw hivemindError;
@@ -281,7 +284,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         'configuration',
         'MCP_PROVIDER_NOT_FOUND',
         undefined,
-        { providerId: id }
+        { providerId: id },
       );
     }
 
@@ -308,7 +311,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     this.statuses.set(id, {
       id,
       status: 'stopped',
-      lastCheck: new Date()
+      lastCheck: new Date(),
     });
 
     this.emit('provider_stopped', { type: 'provider_stopped', providerId: id, timestamp: new Date() });
@@ -350,7 +353,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         /^\/[a-zA-Z0-9\-_\/.]+$/,
         /^[a-zA-Z]:\\[a-zA-Z0-9\-_\/.\\]+$/,
         /^npx [a-zA-Z0-9\-@/.]+$/,
-        /^npm run [a-zA-Z0-9\-_]+$/
+        /^npm run [a-zA-Z0-9\-_]+$/,
       ];
 
       const isValidCommand = validCommandPatterns.some(pattern => pattern.test(command));
@@ -379,7 +382,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         key.toLowerCase().includes('url') ||
         key.toLowerCase().includes('endpoint') ||
         key.toLowerCase().includes('key') ||
-        key.toLowerCase().includes('token')
+        key.toLowerCase().includes('token'),
       );
 
       if (!hasConnectionConfig) {
@@ -407,7 +410,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       isValid: errors.length === 0,
       errors,
       warnings,
-      suggestions
+      suggestions,
     };
   }
 
@@ -435,14 +438,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
         `Failed to import MCP providers: ${hivemindError.message}`,
         'configuration',
         'MCP_PROVIDERS_IMPORT_FAILED',
         undefined,
-        { originalError: hivemindError }
+        { originalError: hivemindError },
       );
     }
   }
@@ -463,11 +466,11 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
             name: 'FILESYSTEM_ROOT',
             description: 'Root directory for file system access',
             required: true,
-            defaultValue: '/tmp/mcp-files'
-          }
+            defaultValue: '/tmp/mcp-files',
+          },
         ],
         enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem'
+        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
       },
       {
         id: 'web-scraper-mcp',
@@ -479,7 +482,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         args: ['@modelcontextprotocol/server-web-scraper'],
         envVars: [],
         enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/web-scraper'
+        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/web-scraper',
       },
       {
         id: 'github-mcp',
@@ -493,11 +496,11 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
           {
             name: 'GITHUB_TOKEN',
             description: 'GitHub personal access token',
-            required: true
-          }
+            required: true,
+          },
         ],
         enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github'
+        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github',
       },
       {
         id: 'postgres-mcp',
@@ -511,11 +514,11 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
           {
             name: 'POSTGRES_CONNECTION_STRING',
             description: 'PostgreSQL connection string',
-            required: true
-          }
+            required: true,
+          },
         ],
         enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres'
+        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres',
       },
       {
         id: 'slack-mcp',
@@ -529,26 +532,26 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
           {
             name: 'SLACK_TOKEN',
             description: 'Slack bot token',
-            required: true
-          }
+            required: true,
+          },
         ],
         enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/slack'
-      }
+        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/slack',
+      },
     ];
   }
 
   createFromTemplate(templateId: string, overrides: Partial<MCPProviderConfig>): MCPProviderConfig {
     const template = this.getTemplates().find(t => t.id === templateId);
     if (!template) {
-     throw ErrorUtils.createError(
-       `Template not found: ${templateId}`,
-       'configuration',
-       'MCP_TEMPLATE_NOT_FOUND',
-       undefined,
-       { templateId }
-     );
-   }
+      throw ErrorUtils.createError(
+        `Template not found: ${templateId}`,
+        'configuration',
+        'MCP_TEMPLATE_NOT_FOUND',
+        undefined,
+        { templateId },
+      );
+    }
 
     const envVars: Record<string, string> = {};
     template.envVars.forEach(envVar => {
@@ -570,8 +573,8 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         enabled: true,
         interval: 60,
         timeout: 10,
-        retries: 3
-      }
+        retries: 3,
+      },
     };
 
     return { ...baseConfig, ...overrides };
@@ -591,7 +594,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       errorProviders,
       averageUptime: this.calculateAverageUptime(),
       totalMemoryUsage: this.calculateTotalMemoryUsage(),
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
   }
 
@@ -610,7 +613,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       const mcpProcess = spawn(provider.command, args, {
         env: { ...process.env, ...provider.env },
         stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: timeout * 1000
+        timeout: timeout * 1000,
       });
 
       let output = '';
@@ -634,12 +637,12 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
             success: true,
             output: output.trim(),
             version,
-            capabilities
+            capabilities,
           });
         } else {
           resolve({
             success: false,
-            error: `Process exited with code ${code}${errorOutput ? ': ' + errorOutput.trim() : ''}`
+            error: `Process exited with code ${code}${errorOutput ? ': ' + errorOutput.trim() : ''}`,
           });
         }
       });
@@ -647,7 +650,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       mcpProcess.on('configuration', (error: any) => {
         resolve({
           success: false,
-          error: error.message
+          error: error.message,
         });
       });
 
@@ -657,7 +660,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
           mcpProcess.kill();
           resolve({
             success: false,
-            error: `Process timed out after ${timeout} seconds`
+            error: `Process timed out after ${timeout} seconds`,
           });
         }
       }, timeout * 1000);
@@ -670,7 +673,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     const providerProcess = spawn(provider.command, args, {
       env: { ...process.env, ...provider.env },
       stdio: ['pipe', 'pipe', 'pipe'],
-      detached: false
+      detached: false,
     });
 
     return new Promise((resolve, reject) => {
@@ -723,7 +726,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     const versionPatterns = [
       /version[:\s]+(\d+\.\d+\.\d+)/i,
       /v(\d+\.\d+\.\d+)/,
-      /(\d+\.\d+\.\d+)/
+      /(\d+\.\d+\.\d+)/,
     ];
 
     for (const pattern of versionPatterns) {
@@ -744,7 +747,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     const capabilityPatterns = [
       /tools?:\s*([^\n]+)/i,
       /resources?:\s*([^\n]+)/i,
-      /prompts?:\s*([^\n]+)/i
+      /prompts?:\s*([^\n]+)/i,
     ];
 
     for (const pattern of capabilityPatterns) {
@@ -799,7 +802,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
           type: 'provider_error',
           providerId,
           timestamp: new Date(),
-          data: { error: 'Process was killed' }
+          data: { error: 'Process was killed' },
         });
 
         // Auto-restart if enabled
@@ -823,7 +826,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        providerId
+        providerId,
       });
       status.status = 'error';
       status.error = hivemindError.message;

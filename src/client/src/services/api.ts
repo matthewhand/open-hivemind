@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
@@ -7,8 +8,9 @@ const buildUrl = (endpoint: string): string => {
     return endpoint;
   }
 
-  // In production or when API_BASE_URL is set, use the full URL
-  const baseUrl = API_BASE_URL || (import.meta.env.DEV ? '' : 'https://open-hivemind.fly.dev');
+  // Use the env var if set, otherwise default to empty string (relative path)
+  // This allows the Netlify redirect to handle the proxying to the backend
+  const baseUrl = API_BASE_URL || '';
   return `${baseUrl}${endpoint}`;
 };
 
@@ -24,10 +26,13 @@ export interface FieldMetadata {
 export interface BotMetadata {
   messageProvider?: FieldMetadata;
   llmProvider?: FieldMetadata;
+  llmProfile?: FieldMetadata;
+  responseProfile?: FieldMetadata;
   persona?: FieldMetadata;
   systemInstruction?: FieldMetadata;
   mcpServers?: FieldMetadata;
   mcpGuard?: FieldMetadata;
+  mcpGuardProfile?: FieldMetadata;
 }
 
 // Provider-specific configuration interfaces
@@ -126,6 +131,9 @@ export interface Bot {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  mcpGuardProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
@@ -254,8 +262,35 @@ export interface ActivityResponse {
 }
 
 class ApiService {
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  public async get<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  }
+
+  public async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  public async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
+  private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const url = buildUrl(endpoint);
+
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
       const response = await fetch(url, {
@@ -264,14 +299,30 @@ class ApiService {
           ...options?.headers,
         },
         ...options,
+        signal: controller.signal,
       });
+      clearTimeout(id);
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorText = await response.text().catch(() => response.statusText);
+        throw new Error(`API request failed (${response.status}): ${errorText.slice(0, 200)}`);
       }
 
-      return response.json();
-    } catch (error) {
+      // Try to parse JSON, with graceful handling for non-JSON responses
+      const text = await response.text();
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        // If response starts with HTML (common when API returns index.html fallback)
+        if (text.trim().startsWith('<!') || text.trim().startsWith('<html')) {
+          throw new Error('Service temporarily unavailable. The server may still be starting up.');
+        }
+        throw new Error(`Invalid JSON response from server: ${text.slice(0, 100)}...`);
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
+      }
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`API request failed for ${endpoint}:`, errorMessage);
       throw error;
@@ -297,12 +348,16 @@ class ApiService {
   async createBot(botData: {
     name: string;
     messageProvider: string;
-    llmProvider: string;
+    llmProvider?: string;
     config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
+    const payload = {
+      ...botData,
+      ...(botData.llmProvider ? {} : { llmProvider: undefined }),
+    };
     return this.request('/api/bots', {
       method: 'POST',
-      body: JSON.stringify(botData)
+      body: JSON.stringify(payload),
     });
   }
 
@@ -316,14 +371,14 @@ class ApiService {
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/api/bots/${botId}`, {
       method: 'PUT',
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     });
   }
 
   async cloneBot(name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/api/bots/${name}/clone`, {
       method: 'POST',
-      body: JSON.stringify({ newName })
+      body: JSON.stringify({ newName }),
     });
   }
 
@@ -343,20 +398,20 @@ class ApiService {
   async createPersona(data: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>): Promise<Persona> {
     return this.request<Persona>('/api/personas', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 
   async updatePersona(id: string, data: Partial<Persona>): Promise<Persona> {
     return this.request<Persona>(`/api/personas/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 
   async deletePersona(id: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/api/personas/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
 
@@ -372,7 +427,7 @@ class ApiService {
   async saveSecureConfig(name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
     return this.request('/api/secure-configs', {
       method: 'POST',
-      body: JSON.stringify({ name, data, encryptSensitive })
+      body: JSON.stringify({ name, data, encryptSensitive }),
     });
   }
 
@@ -387,7 +442,7 @@ class ApiService {
   async restoreSecureConfigs(backupFile: string): Promise<{ success: boolean; message: string }> {
     return this.request('/api/secure-configs/restore', {
       method: 'POST',
-      body: JSON.stringify({ backupFile })
+      body: JSON.stringify({ backupFile }),
     });
   }
 
@@ -409,7 +464,7 @@ class ApiService {
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) query.append(key, value);
+      if (value) { query.append(key, value); }
     });
     const search = query.toString();
     const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
@@ -523,7 +578,7 @@ class ApiService {
   }> {
     return this.request('/health/api-endpoints', {
       method: 'POST',
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
     });
   }
 
@@ -560,7 +615,7 @@ class ApiService {
   }> {
     return this.request(`/health/api-endpoints/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
     });
   }
 
@@ -622,6 +677,50 @@ class ApiService {
     };
   }> {
     return this.request('/health/detailed');
+  }
+  async getGlobalConfig(): Promise<Record<string, any>> {
+    return this.request('/api/config/global');
+  }
+
+  async updateGlobalConfig(updates: Record<string, any>): Promise<{ success: boolean; message: string }> {
+    return this.request('/api/config/global', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  // Import/Export Backup Methods
+  async listSystemBackups(): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>('/api/import-export/backups');
+    return res.data || [];
+  }
+
+  async createSystemBackup(options: {
+    name: string;
+    description?: string;
+    encrypt?: boolean;
+    encryptionKey?: string;
+  }): Promise<{ success: boolean; message: string; data: any }> {
+    return this.request('/api/import-export/backup', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async restoreSystemBackup(backupId: string, options: {
+    overwrite?: boolean;
+    decryptionKey?: string;
+  } = {}): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/import-export/backups/${backupId}/restore`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    });
+  }
+
+  async deleteSystemBackup(backupId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/import-export/backups/${backupId}`, {
+      method: 'DELETE',
+    });
   }
 }
 

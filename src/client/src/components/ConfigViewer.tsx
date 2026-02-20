@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Alert, Loading, Badge, Input, Accordion } from './DaisyUI';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
@@ -31,7 +32,7 @@ const ConfigViewer: React.FC = () => {
   }, []);
 
   const filterConfig = (data: any, term: string): any => {
-    if (!term) return data;
+    if (!term) {return data;}
 
     const filterObject = (obj: any): any => {
       if (typeof obj === 'string') {
@@ -58,7 +59,7 @@ const ConfigViewer: React.FC = () => {
   };
 
   const renderConfigTree = (data: any, path = ''): React.ReactNode => {
-    if (data === null) return null;
+    if (data === null) {return null;}
 
     if (typeof data === 'object' && !Array.isArray(data)) {
       return (
@@ -99,7 +100,7 @@ const ConfigViewer: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <Loading size="lg" />
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }

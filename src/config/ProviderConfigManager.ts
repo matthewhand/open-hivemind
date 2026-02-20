@@ -119,7 +119,7 @@ class ProviderConfigManager {
             category: 'message',
             name: idx === 0 ? 'Default Discord Bot' : `Discord Bot ${idx + 2}`,
             enabled: true,
-            config: { token: token.trim() }
+            config: { token: token.trim() },
           });
           changed = true;
         }
@@ -137,8 +137,8 @@ class ProviderConfigManager {
         enabled: true,
         config: {
           apiKey: openAiKey,
-          model: process.env.OPENAI_MODEL || 'gpt-4'
-        }
+          model: process.env.OPENAI_MODEL || 'gpt-4',
+        },
       });
       changed = true;
     }
@@ -154,8 +154,8 @@ class ProviderConfigManager {
         enabled: true,
         config: {
           baseUrl: ollamaUrl,
-          model: process.env.OLLAMA_MODEL || 'llama2'
-        }
+          model: process.env.OLLAMA_MODEL || 'llama2',
+        },
       });
       changed = true;
     }
@@ -182,7 +182,7 @@ class ProviderConfigManager {
   public createProvider(data: Omit<ProviderInstance, 'id'>): ProviderInstance {
     const newInstance: ProviderInstance = {
       ...data,
-      id: uuidv4() // Generate ID
+      id: uuidv4(), // Generate ID
     };
 
     if (newInstance.category === 'message') {
@@ -202,7 +202,7 @@ class ProviderConfigManager {
       target = this.store.llm.find(p => p.id === id);
     }
 
-    if (!target) return null;
+    if (!target) {return null;}
 
     // Merge updates
     Object.assign(target, updates);

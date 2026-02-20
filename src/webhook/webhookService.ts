@@ -14,7 +14,7 @@
 import express from 'express';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import Debug from 'debug';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 const log = Debug('app:webhookService');
 
@@ -44,5 +44,5 @@ export const webhookService = {
     }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
-  }
+  },
 };

@@ -3,6 +3,6 @@
  * @returns A random emoji as a string.
  */
 export function getEmoji(): string {
-    const emojis = ['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥'];
-    return emojis[Math.floor(Math.random() * emojis.length)];
+  const emojis = ['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥'];
+  return emojis[Math.floor(Math.random() * emojis.length)];
 }

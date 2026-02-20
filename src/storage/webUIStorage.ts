@@ -54,7 +54,7 @@ class WebUIStorage {
       llmProviders: [],
       messengerProviders: [],
       personas: [],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   }
 
@@ -183,7 +183,7 @@ class WebUIStorage {
    */
   public saveLlmProvider(provider: any): void {
     const config = this.loadConfig();
-    if (!config.llmProviders) config.llmProviders = [];
+    if (!config.llmProviders) {config.llmProviders = [];}
 
     const existingIndex = config.llmProviders.findIndex((p: any) => p.id === provider.id);
 
@@ -201,7 +201,7 @@ class WebUIStorage {
    */
   public deleteLlmProvider(providerId: string): void {
     const config = this.loadConfig();
-    if (!config.llmProviders) return;
+    if (!config.llmProviders) {return;}
 
     config.llmProviders = config.llmProviders.filter((p: any) => p.id !== providerId);
     this.saveConfig(config);
@@ -220,7 +220,7 @@ class WebUIStorage {
    */
   public saveMessengerProvider(provider: any): void {
     const config = this.loadConfig();
-    if (!config.messengerProviders) config.messengerProviders = [];
+    if (!config.messengerProviders) {config.messengerProviders = [];}
 
     const existingIndex = config.messengerProviders.findIndex((p: any) => p.id === provider.id);
 
@@ -238,7 +238,7 @@ class WebUIStorage {
    */
   public deleteMessengerProvider(providerId: string): void {
     const config = this.loadConfig();
-    if (!config.messengerProviders) return;
+    if (!config.messengerProviders) {return;}
 
     config.messengerProviders = config.messengerProviders.filter((p: any) => p.id !== providerId);
     this.saveConfig(config);

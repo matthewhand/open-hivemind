@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Badge, Button, Card, Toggle } from '../DaisyUI';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
@@ -21,7 +22,7 @@ const SettingsIntegrations: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/global');
-      if (!response.ok) throw new Error('Failed to fetch integrations');
+      if (!response.ok) {throw new Error('Failed to fetch integrations');}
       const data = await response.json();
       
       const config = data.config || {};
@@ -35,7 +36,7 @@ const SettingsIntegrations: React.FC = () => {
           category: 'messaging',
           enabled: !!config.discord?.botToken?.value,
           configured: !!config.discord?.botToken?.value,
-          status: config.discord?.botToken?.value ? 'connected' : 'disconnected'
+          status: config.discord?.botToken?.value ? 'connected' : 'disconnected',
         },
         {
           id: 'slack',
@@ -44,7 +45,7 @@ const SettingsIntegrations: React.FC = () => {
           category: 'messaging',
           enabled: !!config.slack?.botToken?.value,
           configured: !!config.slack?.botToken?.value,
-          status: config.slack?.botToken?.value ? 'connected' : 'disconnected'
+          status: config.slack?.botToken?.value ? 'connected' : 'disconnected',
         },
         {
           id: 'mattermost',
@@ -53,7 +54,7 @@ const SettingsIntegrations: React.FC = () => {
           category: 'messaging',
           enabled: !!config.mattermost?.url?.value,
           configured: !!config.mattermost?.url?.value,
-          status: config.mattermost?.url?.value ? 'connected' : 'disconnected'
+          status: config.mattermost?.url?.value ? 'connected' : 'disconnected',
         },
         {
           id: 'openai',
@@ -62,7 +63,7 @@ const SettingsIntegrations: React.FC = () => {
           category: 'ai',
           enabled: !!config.openai?.apiKey?.value,
           configured: !!config.openai?.apiKey?.value,
-          status: config.openai?.apiKey?.value ? 'connected' : 'disconnected'
+          status: config.openai?.apiKey?.value ? 'connected' : 'disconnected',
         },
         {
           id: 'flowise',
@@ -71,8 +72,8 @@ const SettingsIntegrations: React.FC = () => {
           category: 'ai',
           enabled: !!config.flowise?.baseUrl?.value,
           configured: !!config.flowise?.baseUrl?.value,
-          status: config.flowise?.baseUrl?.value ? 'connected' : 'disconnected'
-        }
+          status: config.flowise?.baseUrl?.value ? 'connected' : 'disconnected',
+        },
       ];
       
       setIntegrations(builtIntegrations);
@@ -89,26 +90,26 @@ const SettingsIntegrations: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'connected': return <CheckCircle className="w-4 h-4 text-success" />;
-      case 'error': return <AlertTriangle className="w-4 h-4 text-error" />;
-      default: return <XCircle className="w-4 h-4 text-base-content/50" />;
+    case 'connected': return <CheckCircle className="w-4 h-4 text-success" />;
+    case 'error': return <AlertTriangle className="w-4 h-4 text-error" />;
+    default: return <XCircle className="w-4 h-4 text-base-content/50" />;
     }
   };
 
   const getStatusVariant = (status: string): 'success' | 'neutral' | 'error' => {
     switch (status) {
-      case 'connected': return 'success';
-      case 'error': return 'error';
-      default: return 'neutral';
+    case 'connected': return 'success';
+    case 'error': return 'error';
+    default: return 'neutral';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'messaging': return 'bg-primary';
-      case 'ai': return 'bg-secondary';
-      case 'monitoring': return 'bg-warning';
-      default: return 'bg-accent';
+    case 'messaging': return 'bg-primary';
+    case 'ai': return 'bg-secondary';
+    case 'monitoring': return 'bg-warning';
+    default: return 'bg-accent';
     }
   };
 

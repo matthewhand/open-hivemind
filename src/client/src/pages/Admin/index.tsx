@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import EnhancedBotManager from '../../components/Admin/EnhancedBotManager';
 import PersonaManager from '../../components/PersonaManager';
@@ -10,7 +11,7 @@ import {
   CommandLineIcon,
   CpuChipIcon,
   ChartBarIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
 const AdminPage: React.FC = () => {

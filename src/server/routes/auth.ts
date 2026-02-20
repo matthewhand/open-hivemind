@@ -1,7 +1,9 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
+import type { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
+import { csrfProtection, csrfTokenHandler } from '../middleware/csrf';
 import Debug from 'debug';
 import { validateRequest } from '../../validation/validateRequest';
 import {
@@ -11,12 +13,19 @@ import {
   LogoutSchema,
   ChangePasswordSchema,
   UpdateUserSchema,
-  UserIdParamSchema
+  UserIdParamSchema,
 } from '../../validation/schemas/authSchema';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
 const authManager = AuthManager.getInstance();
+
+/**
+ * GET /webui/api/auth/csrf-token
+ * Get CSRF token for state-changing requests
+ * This endpoint returns a CSRF token that must be included in POST/PUT/DELETE requests
+ */
+router.get('/csrf-token', csrfTokenHandler);
 
 /**
  * POST /webui/api/auth/login
@@ -39,7 +48,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
         if (credentials.username === 'admin' && credentials.password === adminPassword) {
           const adminUser = await authManager.login({
             username: 'admin',
-            password: adminPassword
+            password: adminPassword,
           }).catch(async () => {
             // Create admin user if it doesn't exist
             try {
@@ -47,7 +56,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
                 username: 'admin',
                 email: 'admin@localhost',
                 password: adminPassword,
-                role: 'admin'
+                role: 'admin',
               });
             } catch (regError: any) {
               debug('Failed to create admin user:', regError.message);
@@ -57,7 +66,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
 
           const authResult = await authManager.login({
             username: 'admin',
-            password: adminPassword
+            password: adminPassword,
           });
 
           return res.json({
@@ -67,8 +76,8 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
             bypassInfo: {
               isLocalBypass: true,
               adminPasswordSet: true,
-              note: 'Access granted via localhost with ADMIN_PASSWORD'
-            }
+              note: 'Access granted via localhost with ADMIN_PASSWORD',
+            },
           });
         }
       } else {
@@ -76,7 +85,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
         if (credentials.username === 'admin') {
           const adminUser = await authManager.login({
             username: 'admin',
-            password: credentials.password
+            password: credentials.password,
           }).catch(async () => {
             // Create admin user if it doesn't exist with provided password
             try {
@@ -84,7 +93,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
                 username: 'admin',
                 email: 'admin@localhost',
                 password: credentials.password,
-                role: 'admin'
+                role: 'admin',
               });
             } catch (regError: any) {
               debug('Failed to create admin user:', regError.message);
@@ -94,7 +103,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
 
           const authResult = await authManager.login({
             username: 'admin',
-            password: credentials.password
+            password: credentials.password,
           });
 
           return res.json({
@@ -104,8 +113,8 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
             bypassInfo: {
               isLocalBypass: true,
               adminPasswordSet: false,
-              note: 'Access granted via localhost bypass'
-            }
+              note: 'Access granted via localhost bypass',
+            },
           });
         }
       }
@@ -118,13 +127,13 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
     res.json({
       success: true,
       data: authResult,
-      message: 'Login successful'
+      message: 'Login successful',
     });
   } catch (error: any) {
     debug('Login error:', error.message);
     res.status(401).json({
       error: 'Authentication failed',
-      message: error.message || 'Invalid credentials'
+      message: error.message || 'Invalid credentials',
     });
   }
 });
@@ -133,7 +142,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
  * POST /webui/api/auth/register
  * User registration endpoint (admin only)
  */
-router.post('/register', authenticate, requireAdmin, validateRequest(RegisterSchema), async (req: Request, res: Response) => {
+router.post('/register', csrfProtection, authenticate, requireAdmin, validateRequest(RegisterSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const registerData: RegisterData = req.body;
@@ -144,13 +153,13 @@ router.post('/register', authenticate, requireAdmin, validateRequest(RegisterSch
     res.status(201).json({
       success: true,
       data: { user },
-      message: 'User registered successfully'
+      message: 'User registered successfully',
     });
   } catch (error: any) {
     debug('Registration error:', error.message);
     res.status(400).json({
       error: 'Registration failed',
-      message: error.message || 'Failed to register user'
+      message: error.message || 'Failed to register user',
     });
   }
 });
@@ -169,13 +178,13 @@ router.post('/refresh', validateRequest(RefreshTokenSchema), async (req: Request
     res.json({
       success: true,
       data: authResult,
-      message: 'Token refreshed successfully'
+      message: 'Token refreshed successfully',
     });
   } catch (error: any) {
     debug('Token refresh error:', error.message);
     res.status(401).json({
       error: 'Token refresh failed',
-      message: error.message || 'Invalid refresh token'
+      message: error.message || 'Invalid refresh token',
     });
   }
 });
@@ -184,7 +193,7 @@ router.post('/refresh', validateRequest(RefreshTokenSchema), async (req: Request
  * POST /webui/api/auth/logout
  * User logout endpoint
  */
-router.post('/logout', authenticate, validateRequest(LogoutSchema), async (req: Request, res: Response) => {
+router.post('/logout', csrfProtection, authenticate, validateRequest(LogoutSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { refreshToken } = req.body;
@@ -195,13 +204,13 @@ router.post('/logout', authenticate, validateRequest(LogoutSchema), async (req: 
 
     res.json({
       success: true,
-      message: 'Logout successful'
+      message: 'Logout successful',
     });
   } catch (error: any) {
     debug('Logout error:', error.message);
     res.status(500).json({
       error: 'Logout failed',
-      message: 'An error occurred during logout'
+      message: 'An error occurred during logout',
     });
   }
 });
@@ -214,7 +223,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   res.json({
     success: true,
-    data: { user: authReq.user }
+    data: { user: authReq.user },
   });
 });
 
@@ -222,7 +231,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
  * PUT /webui/api/auth/password
  * Change user password
  */
-router.put('/password', authenticate, validateRequest(ChangePasswordSchema), async (req: Request, res: Response) => {
+router.put('/password', csrfProtection, authenticate, validateRequest(ChangePasswordSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { currentPassword, newPassword } = req.body;
@@ -230,27 +239,27 @@ router.put('/password', authenticate, validateRequest(ChangePasswordSchema), asy
     if (!req.user) {
       return res.status(401).json({
         error: 'Authentication required',
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
     }
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Current password and new password are required'
+        message: 'Current password and new password are required',
       });
     }
 
     // Verify current password
     const isValidCurrentPassword = await authManager.verifyPassword(
       currentPassword,
-      req.user.passwordHash || ''
+      req.user.passwordHash || '',
     );
 
     if (!isValidCurrentPassword) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Current password is incorrect'
+        message: 'Current password is incorrect',
       });
     }
 
@@ -258,7 +267,7 @@ router.put('/password', authenticate, validateRequest(ChangePasswordSchema), asy
     if (newPassword.length < 8) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'New password must be at least 8 characters long'
+        message: 'New password must be at least 8 characters long',
       });
     }
 
@@ -267,19 +276,19 @@ router.put('/password', authenticate, validateRequest(ChangePasswordSchema), asy
     if (success) {
       res.json({
         success: true,
-        message: 'Password changed successfully'
+        message: 'Password changed successfully',
       });
     } else {
       res.status(500).json({
         error: 'Password change failed',
-        message: 'Failed to update password'
+        message: 'Failed to update password',
       });
     }
   } catch (error: any) {
     debug('Password change error:', error.message);
     res.status(500).json({
       error: 'Password change failed',
-      message: 'An error occurred while changing password'
+      message: 'An error occurred while changing password',
     });
   }
 });
@@ -296,13 +305,13 @@ router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) =
     res.json({
       success: true,
       data: { users },
-      total: users.length
+      total: users.length,
     });
   } catch (error: any) {
     debug('Get users error:', error.message);
     res.status(500).json({
       error: 'Failed to get users',
-      message: 'An error occurred while retrieving users'
+      message: 'An error occurred while retrieving users',
     });
   }
 });
@@ -320,19 +329,19 @@ router.get('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
     if (!user) {
       return res.status(404).json({
         error: 'User not found',
-        message: `User with ID ${userId} not found`
+        message: `User with ID ${userId} not found`,
       });
     }
 
     res.json({
       success: true,
-      data: { user }
+      data: { user },
     });
   } catch (error: any) {
     debug('Get user error:', error.message);
     res.status(500).json({
       error: 'Failed to get user',
-      message: 'An error occurred while retrieving user'
+      message: 'An error occurred while retrieving user',
     });
   }
 });
@@ -341,7 +350,7 @@ router.get('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
  * PUT /webui/api/auth/users/:userId
  * Update user (admin only)
  */
-router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema.merge(UpdateUserSchema)), async (req: Request, res: Response) => {
+router.put('/users/:userId', csrfProtection, authenticate, requireAdmin, validateRequest(UserIdParamSchema.merge(UpdateUserSchema)), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
@@ -356,20 +365,20 @@ router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
     if (!updatedUser) {
       return res.status(404).json({
         error: 'User not found',
-        message: `User with ID ${userId} not found`
+        message: `User with ID ${userId} not found`,
       });
     }
 
     res.json({
       success: true,
       data: { user: updatedUser },
-      message: 'User updated successfully'
+      message: 'User updated successfully',
     });
   } catch (error: any) {
     debug('Update user error:', error.message);
     res.status(500).json({
       error: 'Failed to update user',
-      message: 'An error occurred while updating user'
+      message: 'An error occurred while updating user',
     });
   }
 });
@@ -378,7 +387,7 @@ router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdP
  * DELETE /webui/api/auth/users/:userId
  * Delete user (admin only)
  */
-router.delete('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
+router.delete('/users/:userId', csrfProtection, authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
@@ -387,7 +396,7 @@ router.delete('/users/:userId', authenticate, requireAdmin, validateRequest(User
     if (authReq.user && authReq.user.id === userId) {
       return res.status(400).json({
         error: 'Invalid operation',
-        message: 'Cannot delete your own account'
+        message: 'Cannot delete your own account',
       });
     }
 
@@ -396,19 +405,19 @@ router.delete('/users/:userId', authenticate, requireAdmin, validateRequest(User
     if (!deleted) {
       return res.status(404).json({
         error: 'User not found',
-        message: `User with ID ${userId} not found`
+        message: `User with ID ${userId} not found`,
       });
     }
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deleted successfully',
     });
   } catch (error: any) {
     debug('Delete user error:', error.message);
     res.status(500).json({
       error: 'Failed to delete user',
-      message: 'An error occurred while deleting user'
+      message: 'An error occurred while deleting user',
     });
   }
 });
@@ -422,7 +431,7 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
   if (!authReq.user) {
     return res.status(401).json({
       error: 'Authentication required',
-      message: 'User not authenticated'
+      message: 'User not authenticated',
     });
   }
 
@@ -433,8 +442,8 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
     data: {
       role: authReq.user.role,
       permissions,
-      user: authReq.user
-    }
+      user: authReq.user,
+    },
   });
 });
 

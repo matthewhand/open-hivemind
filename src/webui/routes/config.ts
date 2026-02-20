@@ -39,8 +39,8 @@ router.get('/api/config', (_req, res) => {
       messageProviders: {},
       system: {
         environment: process.env.NODE_ENV || 'development',
-        version: process.env.npm_package_version || '1.0.0'
-      }
+        version: process.env.npm_package_version || '1.0.0',
+      },
     };
     res.json(config);
   } catch {
@@ -54,11 +54,11 @@ router.get('/api/config/sources', (_req, res) => {
     const sources = [
       { name: 'environment', type: 'env', priority: 1, loaded: true },
       { name: 'config-manager', type: 'file', priority: 2, loaded: true },
-      { name: 'database', type: 'db', priority: 3, loaded: false }
+      { name: 'database', type: 'db', priority: 3, loaded: false },
     ];
     const active = {
       source: 'config-manager',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
     res.json({ sources, active });
   } catch {
@@ -98,7 +98,7 @@ router.get('/api/config/validate', (_req, res) => {
     res.json({
       valid: errors.length === 0,
       errors,
-      warnings: []
+      warnings: [],
     });
   } catch {
     res.status(500).json({ error: 'Failed to validate configuration' });
@@ -117,8 +117,8 @@ router.post('/api/config/backup', (_req, res) => {
       size: 1024,
       metadata: {
         version: process.env.npm_package_version || '1.0.0',
-        botCount: BotConfigurationManager.getInstance().getAllBots().length
-      }
+        botCount: BotConfigurationManager.getInstance().getAllBots().length,
+      },
     });
   } catch {
     res.status(500).json({ error: 'Failed to create configuration backup' });
@@ -138,7 +138,7 @@ router.post('/api/config/restore', (req, res) => {
     res.json({
       success: true,
       restored: backupId,
-      message: 'Configuration restored successfully'
+      message: 'Configuration restored successfully',
     });
   } catch {
     res.status(500).json({ error: 'Failed to restore configuration' });
@@ -150,7 +150,7 @@ router.get('/api/health', (_req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'webui'
+    service: 'webui',
   });
 });
 
@@ -162,18 +162,18 @@ router.get('/api/openapi', (_req, res) => {
       info: {
         title: 'Open-Hivemind WebUI API',
         version: '1.0.0',
-        description: 'API for managing Open-Hivemind configuration'
+        description: 'API for managing Open-Hivemind configuration',
       },
       paths: {
         '/api/config': {
           get: {
             summary: 'Get configuration',
             responses: {
-              200: { description: 'Configuration retrieved successfully' }
-            }
-          }
-        }
-      }
+              200: { description: 'Configuration retrieved successfully' },
+            },
+          },
+        },
+      },
     });
   } catch {
     res.status(500).json({ error: 'Failed to retrieve OpenAPI specification' });

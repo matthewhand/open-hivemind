@@ -299,7 +299,7 @@ export class ApiMonitorService extends EventEmitter {
       offline: number;
       error: number;
     };
-  } {
+    } {
     const statuses = Array.from(this.statuses.values());
     const stats = {
       total: statuses.length,
@@ -311,18 +311,18 @@ export class ApiMonitorService extends EventEmitter {
 
     statuses.forEach(status => {
       switch (status.status) {
-        case 'online':
-          stats.online++;
-          break;
-        case 'slow':
-          stats.slow++;
-          break;
-        case 'offline':
-          stats.offline++;
-          break;
-        case 'error':
-          stats.error++;
-          break;
+      case 'online':
+        stats.online++;
+        break;
+      case 'slow':
+        stats.slow++;
+        break;
+      case 'offline':
+        stats.offline++;
+        break;
+      case 'error':
+        stats.error++;
+        break;
       }
     });
 

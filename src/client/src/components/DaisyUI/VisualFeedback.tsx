@@ -12,8 +12,8 @@ interface VisualFeedbackProps {
 }
 
 const getProgressColor = (value: number) => {
-  if (value > 90) return 'text-error';
-  if (value > 70) return 'text-warning';
+  if (value > 90) {return 'text-error';}
+  if (value > 70) {return 'text-warning';}
   return 'text-success';
 };
 

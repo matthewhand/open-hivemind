@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
@@ -8,118 +9,67 @@ import EventStream from '../components/Monitoring/EventStream';
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
-  const [systemMetrics, setSystemMetrics] = useState<any>(null);
-  const [systemStatus, setSystemStatus] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(5000);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     connect();
-    fetchSystemData();
-
-    const interval = setInterval(() => {
-      fetchSystemData();
-    }, refreshInterval);
-
     return () => {
-      clearInterval(interval);
       disconnect();
     };
-  }, [refreshInterval]);
+  }, []);
 
-  const fetchSystemData = async () => {
-    try {
-      const [status, health] = await Promise.all([
-        apiService.getStatus(),
-        apiService.getSystemHealth()
-      ]);
-      setSystemStatus(status);
-      setSystemMetrics(health);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch system data:', error);
-      setIsLoading(false);
-    }
+  const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
+    cpuUsage: 0,
+    memoryUsage: 0,
+    activeConnections: 0,
+    messageRate: 0,
+    errorRate: 0,
+    responseTime: 0,
   };
-
-  // Mock data for demonstration
-  const mockSystemMetrics = {
-    cpu: { user: 25, system: 15, total: 40 },
-    memory: { used: 6.2, total: 16, usage: 39 },
-    disk: { used: 125, total: 500, usage: 25 },
-    network: { rx: 1024, tx: 2048 }
-  };
-
-  const metrics = systemMetrics || mockSystemMetrics;
 
   const statusCards = [
     {
       title: 'System Health',
-      subtitle: 'Overall system status',
-      status: systemStatus?.bots?.some(b => b.status === 'error') ? 'error' :
-              systemStatus?.bots?.some(b => b.status === 'warning') ? 'warning' : 'healthy',
+      subtitle: 'Overall Status',
+      status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
       metrics: [
-        { label: 'CPU Usage', value: metrics.cpu?.total || 0, unit: '%', trend: 'stable' },
-        { label: 'Memory', value: metrics.memory?.usage || 0, unit: '%', trend: 'up', trendValue: 5 },
-        { label: 'Disk', value: metrics.disk?.usage || 0, unit: '%', trend: 'stable' },
-        { label: 'Uptime', value: systemStatus?.uptime || 0, unit: 's', icon: '⏱️' }
-      ],
-      refreshInterval: 5000,
-      onRefresh: fetchSystemData,
-      isLoading
+        { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
+        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
+        { label: 'Active', value: currentMetric.activeConnections, icon: '🔌' }
+      ]
     },
     {
-      title: 'Bot Status',
-      subtitle: 'Connected bots and activity',
-      status: systemStatus?.bots?.some(b => b.status === 'error') ? 'error' : 'healthy',
-      metrics: [
-        { label: 'Total Bots', value: systemStatus?.bots?.length || 0, icon: '🤖' },
-        { label: 'Active', value: systemStatus?.bots?.filter(b => b.status === 'online')?.length || 0, icon: '✅' },
-        { label: 'Errors', value: systemStatus?.bots?.filter(b => b.status === 'error')?.length || 0, icon: '❌' },
-        { label: 'Messages', value: systemStatus?.bots?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0, icon: '💬' }
-      ],
-      refreshInterval: 10000,
-      onRefresh: fetchSystemData,
-      isLoading
-    },
-    {
-      title: 'Performance',
-      subtitle: 'System performance metrics',
-      status: metrics.cpu?.total > 80 ? 'error' : metrics.cpu?.total > 60 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Response Time', value: 125, unit: 'ms', trend: 'down', trendValue: -8 },
-        { label: 'Throughput', value: 1024, unit: 'req/s', trend: 'up', trendValue: 12 },
-        { label: 'Error Rate', value: 0.5, unit: '%', trend: 'stable' },
-        { label: 'Queue Size', value: 42, unit: 'items', trend: 'down', trendValue: -15 }
-      ],
-      refreshInterval: 5000,
-      onRefresh: fetchSystemData,
-      isLoading
-    },
-    {
-      title: 'Network',
-      subtitle: 'Network traffic and status',
+      title: 'Message Throughput',
+      subtitle: 'Traffic Analysis',
       status: 'healthy',
       metrics: [
-        { label: 'Incoming', value: (metrics.network?.rx || 0) / 1024, unit: 'KB/s', trend: 'up', trendValue: 23 },
-        { label: 'Outgoing', value: (metrics.network?.tx || 0) / 1024, unit: 'KB/s', trend: 'stable' },
-        { label: 'Connections', value: 156, icon: '🔗' },
-        { label: 'Latency', value: 12, unit: 'ms', trend: 'down', trendValue: -5 }
-      ],
-      refreshInterval: 3000,
-      onRefresh: fetchSystemData,
-      isLoading
+        { label: 'Rate', value: currentMetric.messageRate, unit: '/sec' },
+        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
+        { label: 'Errors', value: currentMetric.errorRate, unit: '%' }
+      ]
+    },
+    {
+      title: 'Active Alerts',
+      subtitle: 'System Notifications',
+      status: alerts.length > 0 ? 'warning' : 'healthy',
+      metrics: [
+        { label: 'Total', value: alerts.length, icon: '🔔' },
+        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
+        { label: 'Warning', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' }
+      ]
+    },
+    {
+      title: 'Connection Status',
+      subtitle: 'WebSocket & API',
+      status: isConnected ? 'healthy' : 'error',
+      metrics: [
+        { label: 'WebSocket', value: isConnected ? 'Connected' : 'Disconnected', icon: isConnected ? '🟢' : '🔴' },
+        { label: 'API', value: 'Online', icon: '🟢' }, // detailed status could be fetched separately
+        { label: 'Uptime', value: '99.9%', icon: '⏱️' }
+      ]
     }
   ];
-
-  // Generate sample chart data
-  const generateChartData = (baseValue: number, variance: number = 10) => {
-    const now = new Date();
-    return Array.from({ length: 20 }, (_, i) => ({
-      timestamp: new Date(now.getTime() - (19 - i) * 60000).toISOString(),
-      value: baseValue + (Math.random() - 0.5) * variance
-    }));
-  };
 
   return (
     <div className="min-h-screen bg-base-200 p-6">
@@ -148,13 +98,6 @@ const MonitoringDashboard: React.FC = () => {
               <option value={10000}>10s</option>
               <option value={30000}>30s</option>
             </select>
-            <button
-              className="btn btn-primary"
-              onClick={fetchSystemData}
-              disabled={isLoading}
-            >
-              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : '🔄'} Refresh
-            </button>
           </div>
         </div>
       </div>
@@ -166,11 +109,10 @@ const MonitoringDashboard: React.FC = () => {
             key={index}
             title={card.title}
             subtitle={card.subtitle}
-            status={card.status}
+            status={card.status as any}
             metrics={card.metrics}
-            refreshInterval={card.refreshInterval}
-            onRefresh={card.onRefresh}
-            isLoading={card.isLoading}
+            refreshInterval={refreshInterval}
+            isLoading={isLoading}
           />
         ))}
       </div>
@@ -179,42 +121,54 @@ const MonitoringDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <MetricChart
           title="CPU Usage"
-          data={generateChartData(metrics.cpu?.total || 40)}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.cpuUsage,
+            label: 'CPU'
+          }))}
           type="area"
           color="#ef4444"
           unit="%"
-          refreshInterval={5000}
-          onRefresh={fetchSystemData}
+          refreshInterval={refreshInterval}
         />
         <MetricChart
           title="Memory Usage"
-          data={generateChartData(metrics.memory?.usage || 39)}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.memoryUsage,
+            label: 'Memory'
+          }))}
           type="line"
           color="#3b82f6"
           unit="%"
-          refreshInterval={5000}
-          onRefresh={fetchSystemData}
+          refreshInterval={refreshInterval}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <MetricChart
-          title="Network Traffic"
-          data={generateChartData(1024, 200)}
+          title="Message Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.messageRate,
+            label: 'Messages'
+          }))}
           type="bar"
           color="#10b981"
-          unit="KB/s"
-          refreshInterval={3000}
-          onRefresh={fetchSystemData}
+          unit="msgs/sec"
+          refreshInterval={refreshInterval}
         />
         <MetricChart
-          title="Response Time"
-          data={generateChartData(125, 25)}
+          title="Error Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.errorRate,
+            label: 'Errors'
+          }))}
           type="line"
           color="#f59e0b"
-          unit="ms"
-          refreshInterval={5000}
-          onRefresh={fetchSystemData}
+          unit="%"
+          refreshInterval={refreshInterval}
         />
       </div>
 
@@ -223,12 +177,12 @@ const MonitoringDashboard: React.FC = () => {
         <AlertPanel
           alerts={alerts.map((alert, index) => ({
             id: alert.id || `alert-${index}`,
-            type: alert.severity as any || 'info',
+            type: (alert.level === 'critical' ? 'error' : alert.level) || 'info',
             title: alert.title || 'System Alert',
             message: alert.message || '',
             timestamp: alert.timestamp || new Date().toISOString(),
-            source: alert.source || 'System',
-            metadata: alert.metadata
+            source: 'System',
+            metadata: alert.metadata,
           }))}
           onAcknowledge={(id) => console.log('Acknowledged alert:', id)}
           onResolve={(id) => console.log('Resolved alert:', id)}

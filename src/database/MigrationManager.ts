@@ -27,47 +27,47 @@ export class MigrationManager {
         version: 1,
         up: async (db: any) => {
           // Add tenantId columns to existing tables
-          await db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
-          await db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
-          await db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
-          await db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
-          await db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
-          await db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
+          await db.exec('ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT');
+          await db.exec('ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT');
+          await db.exec('ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT');
+          await db.exec('ALTER TABLE messages ADD COLUMN tenantId TEXT');
+          await db.exec('ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT');
+          await db.exec('ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT');
 
           // Add indexes for tenantId
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)');
+        },
       },
       {
         id: '002_add_rbac_enhancements',
         name: 'Add RBAC enhancements to roles table',
         version: 2,
         up: async (db: any) => {
-          await db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
-          await db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
-          await db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-          await db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-          await db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+          await db.exec('ALTER TABLE roles ADD COLUMN description TEXT');
+          await db.exec('ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0');
+          await db.exec('ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1');
+          await db.exec('ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP');
+          await db.exec('ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP');
 
           // Add indexes for role enhancements
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)');
+        },
       },
       {
         id: '003_add_user_indexes',
         name: 'Add user indexes',
         version: 3,
         up: async (db: any) => {
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)');
+        },
       },
       {
         id: '004_add_anomaly_tracking',
@@ -94,12 +94,12 @@ export class MigrationManager {
           `);
 
           // Add indexes for anomaly detection
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomaly_detection_timestamp ON anomaly_detection(timestamp DESC)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomaly_detection_metric ON anomaly_detection(metric)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomaly_detection_severity ON anomaly_detection(severity)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomaly_detection_resolved ON anomaly_detection(resolved)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_timestamp ON anomaly_detection(timestamp DESC)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_metric ON anomaly_detection(metric)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_severity ON anomaly_detection(severity)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_resolved ON anomaly_detection(resolved)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)');
+        },
       },
       {
         id: '005_add_monitoring_support',
@@ -132,32 +132,32 @@ export class MigrationManager {
           `);
 
           // Add indexes for monitoring
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_health_checks_component ON health_checks(component)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_health_checks_status ON health_checks(status)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_health_checks_timestamp ON health_checks(timestamp)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metricName)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_component ON health_checks(component)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_status ON health_checks(status)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_health_checks_timestamp ON health_checks(timestamp)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metricName)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)');
+        },
       },
       {
         id: '006_add_audit_enhancements',
         name: 'Add audit log enhancements',
         version: 6,
         up: async (db: any) => {
-          await db.exec(`ALTER TABLE audits ADD COLUMN resourceId TEXT`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN ipAddress TEXT`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN userAgent TEXT`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN severity TEXT DEFAULT 'info'`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN status TEXT DEFAULT 'success'`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN details TEXT`);
-          await db.exec(`ALTER TABLE audits ADD COLUMN metadata TEXT`);
+          await db.exec('ALTER TABLE audits ADD COLUMN resourceId TEXT');
+          await db.exec('ALTER TABLE audits ADD COLUMN ipAddress TEXT');
+          await db.exec('ALTER TABLE audits ADD COLUMN userAgent TEXT');
+          await db.exec('ALTER TABLE audits ADD COLUMN severity TEXT DEFAULT \'info\'');
+          await db.exec('ALTER TABLE audits ADD COLUMN status TEXT DEFAULT \'success\'');
+          await db.exec('ALTER TABLE audits ADD COLUMN details TEXT');
+          await db.exec('ALTER TABLE audits ADD COLUMN metadata TEXT');
 
           // Add indexes for audit enhancements
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_action ON audits(action)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_resource ON audits(resource)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_severity ON audits(severity)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_status ON audits(status)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_action ON audits(action)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_resource ON audits(resource)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_severity ON audits(severity)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_status ON audits(status)');
+        },
       },
       {
         id: '007_add_notifications',
@@ -180,10 +180,10 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)');
+        },
       },
       {
         id: '008_add_caching_support',
@@ -201,9 +201,9 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expiresAt)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_cache_tenant ON cache_entries(tenantId)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expiresAt)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_tenant ON cache_entries(tenantId)');
+        },
       },
       {
         id: '009_add_job_queue',
@@ -228,11 +228,11 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_job_queue_status ON job_queue(status)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_job_queue_priority ON job_queue(priority)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_job_queue_tenant ON job_queue(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_job_queue_created ON job_queue(createdAt)`);
-        }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_status ON job_queue(status)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_priority ON job_queue(priority)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_tenant ON job_queue(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_created ON job_queue(createdAt)');
+        },
       },
       {
         id: '010_add_event_streaming',
@@ -251,11 +251,11 @@ export class MigrationManager {
             )
           `);
 
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_event_stream_type ON event_stream(eventType)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_event_stream_tenant ON event_stream(tenantId)`);
-          await db.exec(`CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)`);
-        }
-      }
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_type ON event_stream(eventType)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_tenant ON event_stream(tenantId)');
+          await db.exec('CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)');
+        },
+      },
     ];
   }
 
@@ -309,7 +309,7 @@ export class MigrationManager {
       // Record migration in migrations table
       await this.db.run(
         'INSERT INTO migrations (id, name, version) VALUES (?, ?, ?)',
-        [migration.id, migration.name, migration.version]
+        [migration.id, migration.name, migration.version],
       );
 
       // Commit transaction

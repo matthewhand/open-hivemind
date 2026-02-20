@@ -78,7 +78,7 @@ export class AuditLogger {
       const auditEvent: AuditEvent = {
         id: this.generateId(),
         timestamp: new Date().toISOString(),
-        ...event
+        ...event,
       };
 
       const logEntry = JSON.stringify(auditEvent) + '\n';
@@ -89,7 +89,7 @@ export class AuditLogger {
         id: auditEvent.id,
         action: auditEvent.action,
         user: auditEvent.user,
-        result: auditEvent.result
+        result: auditEvent.result,
       });
     } catch (error) {
       debug('Failed to log audit event:', error);
@@ -110,7 +110,7 @@ export class AuditLogger {
       oldValue?: any;
       newValue?: any;
       metadata?: Record<string, any>;
-    } = {}
+    } = {},
   ): void {
     this.log({
       user,
@@ -118,7 +118,7 @@ export class AuditLogger {
       resource,
       result,
       details,
-      ...options
+      ...options,
     });
   }
 
@@ -134,7 +134,7 @@ export class AuditLogger {
       oldValue?: any;
       newValue?: any;
       metadata?: Record<string, any>;
-    } = {}
+    } = {},
   ): void {
     this.log({
       user,
@@ -142,7 +142,7 @@ export class AuditLogger {
       resource: `bots/${botName}`,
       result,
       details,
-      ...options
+      ...options,
     });
   }
 
@@ -156,7 +156,7 @@ export class AuditLogger {
       ipAddress?: string;
       userAgent?: string;
       metadata?: Record<string, any>;
-    } = {}
+    } = {},
   ): void {
     this.log({
       user,
@@ -164,7 +164,7 @@ export class AuditLogger {
       resource,
       result,
       details,
-      ...options
+      ...options,
     });
   }
 

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '../hooks/useModal';
-import { useBotProviders } from '../hooks/useBotProviders';
-import { Card, Button, Badge } from '../components/DaisyUI';
+import { Card, Button, Badge, Alert } from '../components/DaisyUI';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -11,255 +11,284 @@ import {
   AlertCircle as WarningIcon,
   Zap as ZapIcon,
   Shield as ShieldIcon,
-  Cpu as CpuIcon
+  Cpu as CpuIcon,
+  Trash2 as DeleteIcon,
+  Edit as EditIcon,
+  ChevronDown as ExpandIcon,
+  ChevronRight as CollapseIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
-import { LLMProviderType, LLM_PROVIDER_CONFIGS } from '../types/bot';
+import type { LLMProviderType } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
+import { apiService } from '../services/api';
 
 const LLMProvidersPage: React.FC = () => {
-  const { modalState, openAddModal, closeModal } = useModal();
-  const [globalProviders, setGlobalProviders] = useState<any[]>([]);
+  const { modalState, openAddModal, openEditModal, closeModal } = useModal();
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [defaultStatus, setDefaultStatus] = useState<any>(null);
+  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [libraryStatus, setLibraryStatus] = useState<Record<string, { installed: boolean; package: string }>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const breadcrumbItems = [
     { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers' },
-    { label: 'LLM Providers', href: '/uber/providers/llm', isActive: true }
+    { label: 'Configuration', href: '/uber' },
+    { label: 'LLM Providers', href: '/admin/integrations/llm', isActive: true },
   ];
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'available':
-        return <CheckIcon className="w-4 h-4 text-success" />;
-      case 'error':
-        return <XIcon className="w-4 h-4 text-error" />;
-      case 'testing':
-        return <WarningIcon className="w-4 h-4 text-warning" />;
-      default:
-        return <XIcon className="w-4 h-4 text-base-content/40" />;
-    }
-  };
+  const fetchProfiles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [profilesRes, statusRes] = await Promise.all([
+        apiService.get('/api/config/llm-profiles'),
+        apiService.get('/api/config/llm-status'),
+      ]);
 
-  const getProviderFeatures = (type: LLMProviderType) => {
-    switch (type) {
-      case 'openai':
-        return [
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'GPT-4 & GPT-3.5' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Enterprise Security' },
-          { icon: <CpuIcon className="w-3 h-3" />, text: 'High Performance' }
-        ];
-      case 'anthropic':
-        return [
-          { icon: <BrainIcon className="w-3 h-3" />, text: 'Claude 3 Models' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Constitutional AI' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Long Context' }
-        ];
-      case 'ollama':
-        return [
-          { icon: <CpuIcon className="w-3 h-3" />, text: 'Local Deployment' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Privacy First' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Open Source' }
-        ];
-      case 'custom':
-        return [
-          { icon: <ConfigIcon className="w-3 h-3" />, text: 'Full Customization' },
-          { icon: <ZapIcon className="w-3 h-3" />, text: 'Any API' },
-          { icon: <ShieldIcon className="w-3 h-3" />, text: 'Self-Hosted' }
-        ];
-      default:
-        return [];
-    }
-  };
+      setProfiles((profilesRes as any).profiles?.llm || []);
+      setDefaultStatus(statusRes);
 
-  const handleAddProvider = (providerType: LLMProviderType) => {
+      // Store library status deeply
+      if ((statusRes as any).libraryStatus) {
+        setLibraryStatus((statusRes as any).libraryStatus);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch LLM profiles:', err);
+      setError(err.message || 'Failed to load configuration');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  const handleAddProfile = () => {
     openAddModal('global', 'llm');
   };
 
-  const handleProviderSubmit = (providerData: any) => {
-    // For global provider management, we would store these globally
-    console.log('Adding global provider:', providerData);
-    closeModal();
+  const handleEditProfile = (profile: any) => {
+    openEditModal('global', 'llm', {
+      id: profile.key,
+      name: profile.name,
+      type: profile.provider,
+      config: profile.config,
+      enabled: true,
+    } as any);
   };
 
-  const providerTypes = Object.keys(LLM_PROVIDER_CONFIGS) as LLMProviderType[];
+  const handleDeleteProfile = async (key: string) => {
+    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
+
+    try {
+      await apiService.delete(`/api/config/llm-profiles/${key}`);
+      fetchProfiles();
+    } catch (err: any) {
+      alert(`Failed to delete profile: ${err.message}`);
+    }
+  };
+
+  const handleProviderSubmit = async (providerData: any) => {
+    try {
+      const payload = {
+        key: providerData.name.toLowerCase().replace(/\s+/g, '-'), // Generate key from name
+        name: providerData.name,
+        provider: providerData.type,
+        config: providerData.config,
+      };
+
+      if (modalState.isEdit) {
+        // Updating isn't directly supported by PUT /llm-profiles (it replaces ALL). 
+        // Real implementation should probably have a PATCH /llm-profiles/:key or we manipulate array locally and PUT all.
+        // For now, let's assume we re-fetch after simplified atomic operations if they existed, 
+        // BUT the backend only has bulk PUT or single POST.
+
+        // Strategy: We can't easily "edit" key if it changes.
+        // Let's rely on deleting old and creating new if key changed, or just updating list.
+        // Actually, backend has DELETE /:key and POST / (create). 
+        // To update, we might need to DELETE then POST if no specific update endpoint exists.
+        // Wait, review backend... found DELETE /:key and POST /. No specific single Item PUT.
+        // So we will delete old key and create new 
+
+        if (modalState.provider?.id) {
+          await apiService.delete(`/api/config/llm-profiles/${modalState.provider.id}`);
+        }
+        await apiService.post('/api/config/llm-profiles', payload);
+
+      } else {
+        await apiService.post('/api/config/llm-profiles', payload);
+      }
+
+      closeModal();
+      fetchProfiles();
+    } catch (err: any) {
+      alert(`Failed to save profile: ${err.message}`);
+    }
+  };
+
+  const getProviderIcon = (type: string) => {
+    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
+    return config?.icon || <BrainIcon className="w-5 h-5" />;
+  };
+
+  const toggleExpand = (key: string) => {
+    setExpandedProfile(expandedProfile === key ? null : key);
+  };
+
+  // Render library warning if missing
+  const renderLibraryCheck = (type: string) => {
+    const status = libraryStatus[type];
+    if (!status) return null; // Unknown provider or no check needed
+
+    if (!status.installed) {
+      return (
+        <div className="tooltip tooltip-bottom" data-tip={`Missing required library: ${status.package}`}>
+          <Badge variant="error" size="small" className="gap-1 cursor-help">
+            <XIcon className="w-3 h-3" /> Lib Missing
+          </Badge>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-4 mb-8">
-        <h1 className="text-4xl font-bold mb-2">LLM Providers</h1>
-        <p className="text-base-content/70">
-          Configure AI model providers for intelligent bot responses and reasoning
-        </p>
-      </div>
-
-      {/* Fallback Strategy Explanation */}
-      <Card className="bg-secondary/5 border border-secondary/20 mb-8">
-        <div className="card-body">
-          <h2 className="card-title text-xl mb-4">
-            <ShieldIcon className="w-6 h-6 mr-2" />
-            Fallback Strategy
-          </h2>
-          <p className="text-base-content/70 mb-4">
-            Bots use LLM providers in a failover chain - the first available provider is used,
-            and if it becomes unavailable or errors, the next provider in the chain takes over automatically.
+      <div className="mt-4 mb-8 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+            <BrainIcon className="w-8 h-8 text-primary" />
+            LLM Providers
+          </h1>
+          <p className="text-base-content/70">
+            Configure reusable AI personalities and connection templates.
           </p>
-          <div className="flex items-center gap-4">
-            <Badge color="secondary">Primary</Badge>
-            <span className="text-sm text-base-content/60">→</span>
-            <Badge color="neutral">Fallback 1</Badge>
-            <span className="text-sm text-base-content/60">→</span>
-            <Badge color="neutral">Fallback 2</Badge>
-          </div>
         </div>
-      </Card>
-
-      {/* Provider Types Grid */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Available Provider Types</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {providerTypes.map((type) => {
-            const config = LLM_PROVIDER_CONFIGS[type];
-            const features = getProviderFeatures(type);
-
-            return (
-              <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
-                <div className="card-body">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">{config.icon}</div>
-                      <div>
-                        <h3 className="card-title text-lg">{config.name}</h3>
-                        <p className="text-sm text-base-content/60">{type}</p>
-                      </div>
-                    </div>
-                    <Badge color="secondary" size="sm">
-                      {config.requiredFields.length} required
-                    </Badge>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-base-content/70 mb-4">
-                    {config.description}
-                  </p>
-
-                  {/* Features */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Key Features</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-1 text-xs text-base-content/60">
-                          {feature.icon}
-                          <span>{feature.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Required Fields */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {config.requiredFields.map((field) => (
-                        <Badge key={field.key} color="neutral" variant="outline" className="text-xs">
-                          {field.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Optional Fields */}
-                  {config.optionalFields.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {config.optionalFields.map((field) => (
-                          <Badge key={field.key} color="ghost" variant="outline" className="text-xs">
-                            {field.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="card-actions justify-end">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleAddProvider(type)}
-                      className="w-full"
-                    >
-                      <AddIcon className="w-4 h-4 mr-2" />
-                      Configure {config.name}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <Button variant="primary" onClick={handleAddProfile}>
+          <AddIcon className="w-4 h-4 mr-2" />
+          Create Profile
+        </Button>
       </div>
 
-      {/* Configuration Guide */}
-      <Card className="bg-secondary/5 border border-secondary/20">
-        <div className="card-body">
-          <h2 className="card-title text-xl mb-4">
-            <ConfigIcon className="w-6 h-6 mr-2" />
-            Configuration Guide
-          </h2>
+      {loading ? (
+        <div className="skeleton h-64 w-full"></div>
+      ) : error ? (
+        <Alert status="error" icon={<XIcon />} message={error} />
+      ) : (
+        <div className="space-y-8">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3 text-secondary">🤖 OpenAI Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Get API Key from OpenAI Platform</li>
-                <li>• Set Organization ID (if applicable)</li>
-                <li>• Choose model (gpt-4, gpt-3.5-turbo)</li>
-                <li>• Configure rate limits and usage</li>
-              </ul>
+          {/* Default / System Profile Check */}
+          <div className="collapse collapse-arrow bg-base-200 border border-base-300">
+            <input type="checkbox" defaultChecked />
+            <div className="collapse-title text-xl font-medium flex items-center gap-3">
+              <ConfigIcon className="w-5 h-5" />
+              System Default Configuration
+              {defaultStatus?.configured && <Badge variant="success" size="small">Active</Badge>}
+              {!defaultStatus?.configured && <Badge variant="warning" size="small">Not Configured</Badge>}
             </div>
+            <div className="collapse-content">
+              <p className="text-sm opacity-70 mb-4">
+                This configuration is loaded from your environment variables (`.env`) and serves as the fallback
+                when no specific profile is assigned.
+              </p>
 
-            <div>
-              <h3 className="font-semibold mb-3 text-secondary">🧠 Anthropic Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Get API Key from Anthropic Console</li>
-                <li>• Choose Claude model (claude-3-opus, sonnet)</li>
-                <li>• Set max tokens and temperature</li>
-                <li>• Configure safety settings</li>
-              </ul>
-            </div>
+              {defaultStatus?.defaultProviders?.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg mb-2">
+                  <div className="flex items-center gap-3">
+                    {getProviderIcon(p.type)}
+                    <div>
+                      <div className="font-bold">{p.name}</div>
+                      <div className="text-xs opacity-50 uppercase">{p.type}</div>
+                    </div>
+                  </div>
+                  <Badge variant="neutral">Read-Only (.env)</Badge>
+                </div>
+              ))}
 
-            <div>
-              <h3 className="font-semibold mb-3 text-secondary">🦙 Ollama Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Install Ollama locally or on server</li>
-                <li>• Pull desired models (llama2, mistral)</li>
-                <li>• Configure Ollama API endpoint</li>
-                <li>• Set model parameters</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-3 text-secondary">⚙️ Custom API Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Set custom API endpoint URL</li>
-                <li>• Configure authentication headers</li>
-                <li>• Define request/response format</li>
-                <li>• Set up model-specific parameters</li>
-              </ul>
+              {(!defaultStatus?.defaultProviders || defaultStatus.defaultProviders.length === 0) && (
+                <div className="alert alert-warning text-sm">
+                  <WarningIcon className="w-4 h-4" />
+                  <span>No default LLM provider found in environment variables. Bots without a profile will fail to reply.</span>
+                </div>
+              )}
             </div>
           </div>
+
+          <div className="divider">Custom Profiles</div>
+
+          {/* Profiles List */}
+          {profiles.length === 0 ? (
+            <div className="text-center py-10 opacity-50 border-2 border-dashed border-base-300 rounded-xl">
+              <BrainIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <h3 className="font-bold text-lg">No Profiles Created</h3>
+              <p>Create a custom profile to override system defaults for specific bots.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {profiles.map((profile) => (
+                <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200">
+                  <div className="card-body p-4">
+                    <div className="flex items-start justify-between">
+
+                      <div className="flex items-center gap-4 cursor-pointer" onClick={() => toggleExpand(profile.key)}>
+                        <div className="p-3 bg-base-200 rounded-full">
+                          {getProviderIcon(profile.provider)}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg">{profile.name} <span className="text-xs font-normal opacity-50 ml-2">({profile.key})</span></h3>
+                          <div className="flex items-center gap-2">
+                            <Badge style="outline" size="small">{profile.provider}</Badge>
+                            {renderLibraryCheck(profile.provider)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
+                          <EditIcon className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="btn-error text-white" onClick={() => handleDeleteProfile(profile.key)}>
+                          <DeleteIcon className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
+                          {expandedProfile === profile.key ? <ExpandIcon className="w-4 h-4" /> : <CollapseIcon className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {expandedProfile === profile.key && (
+                      <div className="mt-4 pt-4 border-t border-base-200">
+                        <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Configuration</h4>
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                          {Object.entries(profile.config || {}).map(([k, v]) => (
+                            <div key={k} className="bg-base-200/50 p-2 rounded text-sm">
+                              <span className="font-mono text-xs opacity-60 block">{k}</span>
+                              <span className="font-medium truncate block" title={String(v)}>
+                                {String(k).toLowerCase().includes('key') ? '••••••••' : String(v)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
         </div>
-      </Card>
+      )}
 
       {/* Provider Configuration Modal */}
       <ProviderConfigModal
         modalState={{
           ...modalState,
-          providerType: 'llm'
+          providerType: 'llm',
         }}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}

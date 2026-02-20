@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -6,15 +7,13 @@ import {
   Input,
   Textarea,
   Alert,
-  ToastNotification,
   DataTable,
-  Loading
 } from './DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  UserIcon
+  UserIcon,
 } from '@heroicons/react/24/outline';
 
 interface Persona {
@@ -84,13 +83,13 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to create persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleEditPersona = async () => {
-    if (!selectedPersona) return;
+    if (!selectedPersona) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${selectedPersona.key}`, {
@@ -117,13 +116,13 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to update persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
 
   const handleDeletePersona = async (personaKey: string) => {
-    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) return;
+    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) {return;}
 
     try {
       const response = await fetch(`/api/admin/personas/${personaKey}`, {
@@ -140,7 +139,7 @@ const PersonaManager: React.FC = () => {
       setToast({
         show: true,
         message: err instanceof Error ? err.message : 'Failed to delete persona',
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -168,12 +167,12 @@ const PersonaManager: React.FC = () => {
     setFormData({
       ...formData,
       name,
-      key: formData.key || generateKey(name)
+      key: formData.key || generateKey(name),
     });
   };
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   const columns = [
@@ -221,7 +220,7 @@ const PersonaManager: React.FC = () => {
             size="sm"
             shape="circle"
             color="error"
-            variant="outline"
+            variant="secondary" className="btn-outline"
             onClick={() => handleDeletePersona(persona.key)}
             title="Delete"
           >
@@ -246,9 +245,7 @@ const PersonaManager: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-4">
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
       <DataTable
@@ -374,11 +371,12 @@ const PersonaManager: React.FC = () => {
 
       {/* Toast Notifications */}
       {toast.show && (
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );

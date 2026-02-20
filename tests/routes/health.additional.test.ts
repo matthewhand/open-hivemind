@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import healthRouter from '../../src/routes/health';
+import healthRouter from '../../src/server/routes/health';
 
 describe('Health Route Additional Tests', () => {
   let app: express.Application;
@@ -10,7 +10,7 @@ describe('Health Route Additional Tests', () => {
     app.disable('x-powered-by');
     app.set('case sensitive routing', true);
     app.set('strict routing', true);
-    app.use('/', healthRouter);
+    app.use('/health', healthRouter);
   });
 
   describe('GET /health additional tests', () => {

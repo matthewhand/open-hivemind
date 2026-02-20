@@ -18,7 +18,7 @@ router.get('/api/compliance', (req, res) => {
         category: 'Security',
         severity: 'high',
         status: 'compliant',
-        lastChecked: '2024-01-15T10:30:00Z'
+        lastChecked: '2024-01-15T10:30:00Z',
       },
       {
         id: 'rule_2',
@@ -27,7 +27,7 @@ router.get('/api/compliance', (req, res) => {
         category: 'Security',
         severity: 'critical',
         status: 'compliant',
-        lastChecked: '2024-01-15T10:30:00Z'
+        lastChecked: '2024-01-15T10:30:00Z',
       },
       {
         id: 'rule_3',
@@ -37,20 +37,20 @@ router.get('/api/compliance', (req, res) => {
         severity: 'medium',
         status: 'non-compliant',
         lastChecked: '2024-01-15T10:30:00Z',
-        remediation: 'Enable audit logging for all admin operations'
-      }
+        remediation: 'Enable audit logging for all admin operations',
+      },
     ];
 
     res.json({
       success: true,
-      complianceRules
+      complianceRules,
     });
   } catch (error) {
     debug('Compliance API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get compliance status',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -70,8 +70,8 @@ router.get('/api/cloud-providers', (req, res) => {
         resources: [
           { type: 'EC2', count: 3, status: 'running' },
           { type: 'RDS', count: 1, status: 'running' },
-          { type: 'S3', count: 2, status: 'active' }
-        ]
+          { type: 'S3', count: 2, status: 'active' },
+        ],
       },
       {
         id: 'azure_dev',
@@ -81,21 +81,21 @@ router.get('/api/cloud-providers', (req, res) => {
         status: 'connected',
         resources: [
           { type: 'VM', count: 2, status: 'running' },
-          { type: 'Database', count: 1, status: 'running' }
-        ]
-      }
+          { type: 'Database', count: 1, status: 'running' },
+        ],
+      },
     ];
 
     res.json({
       success: true,
-      cloudProviders
+      cloudProviders,
     });
   } catch (error) {
     debug('Cloud providers API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get cloud providers',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -108,7 +108,7 @@ router.post('/api/cloud-providers', (req, res) => {
     if (!name || !type || !region) {
       return res.status(400).json({
         success: false,
-        message: 'Name, type, and region are required'
+        message: 'Name, type, and region are required',
       });
     }
 
@@ -121,19 +121,19 @@ router.post('/api/cloud-providers', (req, res) => {
       region,
       status: 'configuring',
       resources: [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     res.json({
       success: true,
-      cloudProvider
+      cloudProvider,
     });
   } catch (error) {
     debug('Add cloud provider API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to add cloud provider',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -151,7 +151,7 @@ router.get('/api/integrations', (req, res) => {
         provider: 'Slack',
         status: 'active',
         lastSync: '2024-01-15T10:30:00Z',
-        config: { webhookUrl: 'https://hooks.slack.com/...' }
+        config: { webhookUrl: 'https://hooks.slack.com/...' },
       },
       {
         id: 'int_2',
@@ -160,7 +160,7 @@ router.get('/api/integrations', (req, res) => {
         provider: 'Datadog',
         status: 'active',
         lastSync: '2024-01-15T10:25:00Z',
-        config: { apiKey: '***', appKey: '***' }
+        config: { apiKey: '***', appKey: '***' },
       },
       {
         id: 'int_3',
@@ -169,20 +169,20 @@ router.get('/api/integrations', (req, res) => {
         provider: 'PostgreSQL',
         status: 'active',
         lastSync: '2024-01-15T10:20:00Z',
-        config: { host: 'db.example.com', database: 'open_hivemind' }
-      }
+        config: { host: 'db.example.com', database: 'open_hivemind' },
+      },
     ];
 
     res.json({
       success: true,
-      integrations
+      integrations,
     });
   } catch (error) {
     debug('Integrations API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get integrations',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -195,7 +195,7 @@ router.post('/api/integrations', (req, res) => {
     if (!name || !type || !provider) {
       return res.status(400).json({
         success: false,
-        message: 'Name, type, and provider are required'
+        message: 'Name, type, and provider are required',
       });
     }
 
@@ -209,19 +209,19 @@ router.post('/api/integrations', (req, res) => {
       status: 'active',
       lastSync: new Date().toISOString(),
       config: config || {},
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     res.json({
       success: true,
-      integration
+      integration,
     });
   } catch (error) {
     debug('Add integration API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to add integration',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -245,14 +245,14 @@ router.get('/api/audit', (req, res) => {
     res.json({
       success: true,
       auditEvents,
-      total: auditEvents.length
+      total: auditEvents.length,
     });
   } catch (error) {
     debug('Audit API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get audit events',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -270,7 +270,7 @@ router.get('/api/performance', (req, res) => {
         unit: 'ms',
         trend: 'down',
         threshold: 500,
-        status: 'normal'
+        status: 'normal',
       },
       {
         id: 'metric_2',
@@ -279,7 +279,7 @@ router.get('/api/performance', (req, res) => {
         unit: '%',
         trend: 'up',
         threshold: 90,
-        status: 'warning'
+        status: 'warning',
       },
       {
         id: 'metric_3',
@@ -288,20 +288,20 @@ router.get('/api/performance', (req, res) => {
         unit: '%',
         trend: 'stable',
         threshold: 5,
-        status: 'normal'
-      }
+        status: 'normal',
+      },
     ];
 
     res.json({
       success: true,
-      performanceMetrics
+      performanceMetrics,
     });
   } catch (error) {
     debug('Performance API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get performance metrics',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -317,19 +317,19 @@ router.post('/api/compliance/check', (req, res) => {
       nonCompliantRules: 2,
       criticalIssues: 0,
       lastChecked: new Date().toISOString(),
-      nextCheck: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      nextCheck: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     };
 
     res.json({
       success: true,
-      complianceResults
+      complianceResults,
     });
   } catch (error) {
     debug('Compliance check API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to run compliance check',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -347,7 +347,7 @@ router.get('/api/security/alerts', (req, res) => {
         description: 'Multiple failed login attempts from IP 192.168.1.200',
         timestamp: '2024-01-15T09:45:00Z',
         status: 'active',
-        source: 'authentication'
+        source: 'authentication',
       },
       {
         id: 'alert_2',
@@ -356,20 +356,20 @@ router.get('/api/security/alerts', (req, res) => {
         description: 'Unauthorized configuration change detected',
         timestamp: '2024-01-15T08:30:00Z',
         status: 'resolved',
-        source: 'configuration'
-      }
+        source: 'configuration',
+      },
     ];
 
     res.json({
       success: true,
-      securityAlerts
+      securityAlerts,
     });
   } catch (error) {
     debug('Security alerts API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get security alerts',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -387,7 +387,7 @@ router.get('/api/governance/policies', (req, res) => {
         category: 'Data Governance',
         status: 'active',
         lastReviewed: '2024-01-01T00:00:00Z',
-        nextReview: '2024-04-01T00:00:00Z'
+        nextReview: '2024-04-01T00:00:00Z',
       },
       {
         id: 'policy_2',
@@ -396,20 +396,20 @@ router.get('/api/governance/policies', (req, res) => {
         category: 'Security',
         status: 'active',
         lastReviewed: '2024-01-01T00:00:00Z',
-        nextReview: '2024-04-01T00:00:00Z'
-      }
+        nextReview: '2024-04-01T00:00:00Z',
+      },
     ];
 
     res.json({
       success: true,
-      governancePolicies
+      governancePolicies,
     });
   } catch (error) {
     debug('Governance policies API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get governance policies',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -431,20 +431,20 @@ router.post('/api/performance/optimize', (req, res) => {
       recommendations: [
         'Increase memory allocation',
         'Optimize database queries',
-        'Enable caching layer'
-      ]
+        'Enable caching layer',
+      ],
     };
 
     res.json({
       success: true,
-      optimizationResults
+      optimizationResults,
     });
   } catch (error) {
     debug('Performance optimization API error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to optimize performance',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

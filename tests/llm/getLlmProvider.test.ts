@@ -15,7 +15,7 @@ jest.mock('@src/config/ProviderConfigManager', () => ({
 }));
 
 // Mock OpenAiProvider class  
-jest.mock('@integrations/openai/openAiProvider', () => ({
+jest.mock('@hivemind/provider-openai', () => ({
   __esModule: true,
   OpenAiProvider: jest.fn().mockImplementation(() => ({
     name: 'openai',

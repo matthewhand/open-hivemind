@@ -5,7 +5,7 @@ import {
   UserIcon,
   CogIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 
 export interface TimelineEvent {
@@ -24,7 +24,7 @@ const mockEvents: TimelineEvent[] = [
     type: 'success',
     title: 'Bot Configuration Updated',
     description: 'Successfully updated bot settings and reloaded configuration',
-    icon: <CheckCircleIcon className="w-5 h-5 text-success" />
+    icon: <CheckCircleIcon className="w-5 h-5 text-success" />,
   },
   {
     id: '2',
@@ -32,7 +32,7 @@ const mockEvents: TimelineEvent[] = [
     type: 'user',
     title: 'User Login',
     description: 'Administrator logged into system from secure location',
-    icon: <UserIcon className="w-5 h-5 text-primary" />
+    icon: <UserIcon className="w-5 h-5 text-primary" />,
   },
   {
     id: '3',
@@ -40,7 +40,7 @@ const mockEvents: TimelineEvent[] = [
     type: 'system',
     title: 'System Health Check',
     description: 'All systems operational, no issues detected',
-    icon: <CogIcon className="w-5 h-5 text-info" />
+    icon: <CogIcon className="w-5 h-5 text-info" />,
   },
   {
     id: '4',
@@ -48,7 +48,7 @@ const mockEvents: TimelineEvent[] = [
     type: 'error',
     title: 'API Rate Limit',
     description: 'Temporary rate limit reached for external API calls',
-    icon: <ExclamationTriangleIcon className="w-5 h-5 text-warning" />
+    icon: <ExclamationTriangleIcon className="w-5 h-5 text-warning" />,
   },
 ];
 
@@ -57,7 +57,7 @@ const ActivityTimeline: React.FC = () => {
   const [filter, setFilter] = useState<string>('all');
 
   const filteredEvents = events.filter(event =>
-    filter === 'all' || event.type === filter
+    filter === 'all' || event.type === filter,
   );
 
   const getTimelineColor = (type: string) => {
@@ -88,7 +88,7 @@ const ActivityTimeline: React.FC = () => {
   };
 
   const recentEvents = events.filter(e =>
-    e.timestamp > new Date(Date.now() - 600000)
+    e.timestamp > new Date(Date.now() - 600000),
   );
 
   return (
@@ -199,7 +199,7 @@ const ActivityTimeline: React.FC = () => {
         <div className="card-body">
           <h3 className="card-title text-lg mb-6">Recent Activity</h3>
           <Timeline>
-            {filteredEvents.slice(0, 10).map((event, index) => (
+            {filteredEvents.slice(0, 10).map((event) => (
               <Timeline.Item key={event.id}>
                 <Timeline.Point color={getTimelineColor(event.type)}>
                   {event.icon}

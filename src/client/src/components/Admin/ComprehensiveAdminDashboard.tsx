@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Squares2X2Icon,
   CpuChipIcon,
@@ -6,25 +6,71 @@ import {
   ChartBarIcon,
   UserGroupIcon,
   Cog6ToothIcon,
-  BellIcon
+  BellIcon,
+  CommandLineIcon,
+  DocumentDuplicateIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  ServerStackIcon,
 } from '@heroicons/react/24/outline';
 
 import EnhancedAgentConfigurator from './EnhancedAgentConfigurator';
-import MCPServerManager from './MCPServerManager';
+import MCPServerManager from '../MCPServerManager';
 import ActivityMonitor from './ActivityMonitor';
 import PersonaManager from './PersonaManager';
 import EnvMonitor from './EnvMonitor';
+import LlmProfileManager from './LlmProfileManager';
+import GuardrailProfileManager from './GuardrailProfileManager';
+import ResponseProfileManager from './ResponseProfileManager';
+import MCPServerProfileManager from './MCPServerProfileManager';
+import TemplateManager from './TemplateManager';
+import GlobalConfigurationManager from './GlobalConfigurationManager';
+import BotListManager from './BotListManager';
 
 const ComprehensiveAdminDashboard: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
+  const [stats, setStats] = useState({ agents: 0, mcpServers: 0, personas: 0, loading: true });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [botsRes, mcpRes, personasRes] = await Promise.all([
+          fetch('/api/config/bots').catch(() => null),
+          fetch('/api/admin/mcp-servers').catch(() => null),
+          fetch('/api/config/personas').catch(() => null),
+        ]);
+
+        const bots = botsRes?.ok ? await botsRes.json() : null;
+        const mcp = mcpRes?.ok ? await mcpRes.json() : null;
+        const personas = personasRes?.ok ? await personasRes.json() : null;
+
+        setStats({
+          agents: Array.isArray(bots?.bots) ? bots.bots.length : 0,
+          mcpServers: Array.isArray(mcp?.servers) ? mcp.servers.length : 0,
+          personas: Array.isArray(personas) ? personas.length : (personas?.count ?? 0),
+          loading: false,
+        });
+      } catch {
+        setStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+    fetchStats();
+  }, []);
 
   const tabs = [
     { label: 'Overview', icon: Squares2X2Icon },
+    { label: 'Bot Status', icon: CpuChipIcon },
     { label: 'Agents', icon: CpuChipIcon },
+    { label: 'LLM Profiles', icon: CommandLineIcon },
+    { label: 'Guardrails', icon: ShieldCheckIcon },
+    { label: 'Engagement', icon: ClockIcon },
+    { label: 'Templates', icon: DocumentDuplicateIcon },
+    { label: 'Global Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
+    { label: 'MCP Profiles', icon: ServerStackIcon },
     { label: 'Personas', icon: UserGroupIcon },
     { label: 'Activity', icon: ChartBarIcon },
-    { label: 'Environment', icon: Cog6ToothIcon },
+    { label: 'Environment', icon: CommandLineIcon },
   ];
 
   return (
@@ -47,7 +93,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Tabs */}
-        <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2">
+        <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2 overflow-x-auto">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
@@ -58,7 +104,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
                 onClick={() => setCurrentTab(index)}
               >
                 <Icon className="w-4 h-4" />
-                {tab.label}
+                <span className="whitespace-nowrap">{tab.label}</span>
               </a>
             );
           })}
@@ -71,33 +117,40 @@ const ComprehensiveAdminDashboard: React.FC = () => {
               <h2 className="text-3xl font-bold mb-4">System Overview</h2>
               <p className="text-base-content/70 mb-6">
                 Welcome to the Hivemind Admin Dashboard. Use the tabs above to manage agents,
-                MCP servers, personas, and monitor system activity.
+                LLM profiles, templates, MCP servers, personas, and monitor system activity.
               </p>
               {/* Future: Add dashboard cards with system stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">Total Agents</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.agents}</div>
                   <div className="stat-desc">Configure in Agents tab</div>
                 </div>
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">MCP Servers</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.mcpServers}</div>
                   <div className="stat-desc">Manage in MCP tab</div>
                 </div>
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">Active Personas</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.personas}</div>
                   <div className="stat-desc">View in Personas tab</div>
                 </div>
               </div>
             </div>
           )}
-          {currentTab === 1 && <EnhancedAgentConfigurator />}
-          {currentTab === 2 && <MCPServerManager />}
-          {currentTab === 3 && <PersonaManager />}
-          {currentTab === 4 && <ActivityMonitor />}
-          {currentTab === 5 && <EnvMonitor />}
+          {currentTab === 1 && <BotListManager />}
+          {currentTab === 2 && <EnhancedAgentConfigurator />}
+          {currentTab === 3 && <LlmProfileManager />}
+          {currentTab === 4 && <GuardrailProfileManager />}
+          {currentTab === 5 && <ResponseProfileManager />}
+          {currentTab === 6 && <TemplateManager />}
+          {currentTab === 7 && <GlobalConfigurationManager />}
+          {currentTab === 8 && <MCPServerManager />}
+          {currentTab === 9 && <MCPServerProfileManager />}
+          {currentTab === 10 && <PersonaManager />}
+          {currentTab === 11 && <ActivityMonitor />}
+          {currentTab === 12 && <EnvMonitor />}
         </div>
       </div>
     </div>

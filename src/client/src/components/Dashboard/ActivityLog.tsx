@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
 import { Card, Alert, Button, Loading, Select } from '../DaisyUI';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -41,7 +42,7 @@ const ActivityLog: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <Card.Title>Activity Feed</Card.Title>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+            <Button variant="secondary" className="btn-outline" onClick={() => refetch()} disabled={isFetching}>
               <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               {isFetching ? 'Refreshing…' : 'Refresh'}
             </Button>
@@ -61,7 +62,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, bot: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueAgents.map(agent => ({ value: agent, label: agent }))
+              ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
             ]}
           />
           <Select
@@ -70,7 +71,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, messageProvider: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueMessageProviders.map(provider => ({ value: provider, label: provider }))
+              ...uniqueMessageProviders.map(provider => ({ value: provider, label: provider })),
             ]}
           />
           <Select
@@ -79,7 +80,7 @@ const ActivityLog: React.FC = () => {
             onChange={(value) => setFilters(prev => ({ ...prev, llmProvider: value || undefined }))}
             options={[
               { value: '', label: 'All' },
-              ...uniqueLlmProviders.map(provider => ({ value: provider, label: provider }))
+              ...uniqueLlmProviders.map(provider => ({ value: provider, label: provider })),
             ]}
           />
           <div>
@@ -108,7 +109,7 @@ const ActivityLog: React.FC = () => {
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loading size="lg" />
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : error ? (
           <Alert variant="error">Failed to load activity log</Alert>
@@ -264,13 +265,13 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
 
 function formatTimestamp(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {return value;}
   return date.toLocaleString();
 }
 
 function formatShortTime(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {return value;}
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 

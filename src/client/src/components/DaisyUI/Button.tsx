@@ -50,10 +50,10 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'btn-xs';
-      case 'sm': return 'btn-sm';
-      case 'lg': return 'btn-lg';
-      default: return '';
+    case 'xs': return 'btn-xs';
+    case 'sm': return 'btn-sm';
+    case 'lg': return 'btn-lg';
+    default: return '';
     }
   };
 

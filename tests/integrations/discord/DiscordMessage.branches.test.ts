@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import DiscordMessage from '../../../src/integrations/discord/DiscordMessage';
+import { DiscordMessage } from '@hivemind/adapter-discord';
 
 // Silence debug and console noise
 jest.mock('debug', () => () => jest.fn());
@@ -36,7 +36,7 @@ describe('DiscordMessage - branches and edge cases', () => {
     channel: baseChannel(),
     // mentions: mimic discord.js Mentions object shape expected by DiscordMessage
     mentions: {
-      users: [ { id: 'user-2' }, { id: 'user-3' } ],
+      users: [{ id: 'user-2' }, { id: 'user-3' }],
     },
     reference: undefined,
     ...over,

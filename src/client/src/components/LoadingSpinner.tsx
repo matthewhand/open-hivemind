@@ -10,7 +10,7 @@ interface LoadingSpinnerComponentProps {
 const LoadingSpinnerComponent: React.FC<LoadingSpinnerComponentProps> = ({
   message = 'Loading...',
   size = 'md',
-  fullScreen = false
+  fullScreen = false,
 }) => {
   const content = (
     <div className="flex flex-col items-center justify-center gap-4 p-6">

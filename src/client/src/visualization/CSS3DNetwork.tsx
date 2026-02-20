@@ -39,45 +39,45 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
       let position;
 
       switch (viewMode) {
-        case 'sphere': {
-          const phi = Math.acos(-1 + (2 * Math.random()));
-          const theta = Math.random() * Math.PI * 2;
-          const radius = 150 + Math.random() * 50;
+      case 'sphere': {
+        const phi = Math.acos(-1 + (2 * Math.random()));
+        const theta = Math.random() * Math.PI * 2;
+        const radius = 150 + Math.random() * 50;
 
-          position = {
-            x: radius * Math.sin(phi) * Math.cos(theta),
-            y: radius * Math.sin(phi) * Math.sin(theta),
-            z: radius * Math.cos(phi),
-          };
-          break;
-        }
-        case 'grid': {
-          const gridSize = Math.ceil(Math.sqrt(bots.length));
-          const row = Math.floor(index / gridSize);
-          const col = index % gridSize;
+        position = {
+          x: radius * Math.sin(phi) * Math.cos(theta),
+          y: radius * Math.sin(phi) * Math.sin(theta),
+          z: radius * Math.cos(phi),
+        };
+        break;
+      }
+      case 'grid': {
+        const gridSize = Math.ceil(Math.sqrt(bots.length));
+        const row = Math.floor(index / gridSize);
+        const col = index % gridSize;
 
-          position = {
-            x: (col - gridSize / 2) * 60,
-            y: (row - gridSize / 2) * 60,
-            z: 0,
-          };
-          break;
-        }
-        case 'tree': {
-          const level = Math.floor(Math.random() * 3);
-          const angle = (index / bots.length) * Math.PI * 2;
-          const radius = level * 80 + 60;
+        position = {
+          x: (col - gridSize / 2) * 60,
+          y: (row - gridSize / 2) * 60,
+          z: 0,
+        };
+        break;
+      }
+      case 'tree': {
+        const level = Math.floor(Math.random() * 3);
+        const angle = (index / bots.length) * Math.PI * 2;
+        const radius = level * 80 + 60;
 
-          position = {
-            x: Math.cos(angle) * radius,
-            y: -level * 80,
-            z: Math.sin(angle) * radius,
-          };
-          break;
-        }
-        default: {
-          position = { x: 0, y: 0, z: 0 };
-        }
+        position = {
+          x: Math.cos(angle) * radius,
+          y: -level * 80,
+          z: Math.sin(angle) * radius,
+        };
+        break;
+      }
+      default: {
+        position = { x: 0, y: 0, z: 0 };
+      }
       }
 
       positions.set(bot.name, position);
@@ -90,7 +90,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
 
   // Auto-rotation effect
   useEffect(() => {
-    if (!autoRotate) return;
+    if (!autoRotate) {return;}
 
     const interval = setInterval(() => {
       setRotation(prev => ({
@@ -108,7 +108,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging) {return;}
 
     const deltaX = event.clientX - lastMouse.x;
     const deltaY = event.clientY - lastMouse.y;
@@ -127,25 +127,25 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
 
   const getNodeColor = (status: string) => {
     switch (status) {
-      case 'active': return '#4caf50';
-      case 'connecting': return '#ff9800';
-      case 'error': return '#f44336';
-      default: return '#757575';
+    case 'active': return '#4caf50';
+    case 'connecting': return '#ff9800';
+    case 'error': return '#f44336';
+    default: return '#757575';
     }
   };
 
   const getNodeSize = (status: string) => {
     switch (status) {
-      case 'active': return 20 * nodeScale;
-      case 'connecting': return 15 * nodeScale;
-      case 'error': return 12 * nodeScale;
-      default: return 10 * nodeScale;
+    case 'active': return 20 * nodeScale;
+    case 'connecting': return 15 * nodeScale;
+    case 'error': return 12 * nodeScale;
+    default: return 10 * nodeScale;
     }
   };
 
   const getConnectionColor = (strength: number) => {
-    if (strength > 0.7) return '#4caf50';
-    if (strength > 0.4) return '#ff9800';
+    if (strength > 0.7) {return '#4caf50';}
+    if (strength > 0.4) {return '#ff9800';}
     return '#f44336';
   };
 
@@ -292,7 +292,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
             const fromPos = positions.get(connection.from);
             const toPos = positions.get(connection.to);
 
-            if (!fromPos || !toPos) return null;
+            if (!fromPos || !toPos) {return null;}
 
             const midX = (fromPos.x + toPos.x) / 2 + width / 2;
             const midY = (fromPos.y + toPos.y) / 2 + height / 2;
@@ -301,7 +301,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
             const length = Math.sqrt(
               Math.pow(toPos.x - fromPos.x, 2) +
               Math.pow(toPos.y - fromPos.y, 2) +
-              Math.pow(toPos.z - fromPos.z, 2)
+              Math.pow(toPos.z - fromPos.z, 2),
             );
 
             const angle = Math.atan2(toPos.y - fromPos.y, toPos.x - fromPos.x) * 180 / Math.PI;
@@ -340,7 +340,7 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
         >
           {bots.map((bot) => {
             const position = positions.get(bot.name);
-            if (!position) return null;
+            if (!position) {return null;}
 
             const x = position.x + width / 2;
             const y = position.y + height / 2;

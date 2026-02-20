@@ -170,6 +170,12 @@ export interface BotConfig {
   messageProvider: MessageProvider;
   /** LLM provider type */
   llmProvider: LlmProvider;
+  /** LLM provider profile name */
+  llmProfile?: string;
+  /** Response profile name */
+  responseProfile?: string;
+  /** MCP guardrail profile name */
+  mcpGuardProfile?: string;
   /** Bot persona key */
   persona?: string;
   /** Bot system instruction/prompt */
@@ -213,6 +219,14 @@ export interface BotConfigSchema {
     doc: string;
     format: LlmProvider[];
     default: LlmProvider;
+    env: string;
+  };
+
+  /** LLM provider profile */
+  LLM_PROFILE: {
+    doc: string;
+    format: StringConstructor;
+    default: string;
     env: string;
   };
 
@@ -524,10 +538,20 @@ export interface ConfigurationValidationResult {
  * Configuration override interface
  */
 export interface BotOverride {
+  /** Whether bot is disabled */
+  disabled?: boolean;
   /** Message provider override */
   messageProvider?: MessageProvider;
   /** LLM provider override */
   llmProvider?: LlmProvider;
+  /** LLM provider profile override */
+  llmProfile?: string;
+  /** Response profile override */
+  responseProfile?: string;
+  /** MCP guardrail profile override */
+  mcpGuardProfile?: string;
+  /** MCP server profile override */
+  mcpServerProfile?: string;
   /** Persona override */
   persona?: string;
   /** System instruction override */

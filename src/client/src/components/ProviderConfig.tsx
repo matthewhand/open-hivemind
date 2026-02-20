@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Alert, Input, Select, Textarea, Tooltip } from './DaisyUI';
 import { 
@@ -8,7 +9,7 @@ import {
   Key, 
   Settings, 
   Info,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 interface ProviderConfigProps {
@@ -24,7 +25,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
   config,
   onChange,
   envOverrides = {},
-  showSecurityIndicators = true
+  showSecurityIndicators = true,
 }) => {
   const [showSensitiveData, setShowSensitiveData] = useState<Record<string, boolean>>({});
 
@@ -38,7 +39,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
   const toggleSensitiveData = (field: string) => {
     setShowSensitiveData(prev => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: !prev[field],
     }));
   };
 
@@ -50,10 +51,10 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
   const getSensitiveFieldType = (field: string) => {
     const sensitiveFields = [
       'token', 'apiKey', 'botToken', 'appToken', 'signingSecret', 
-      'accessToken', 'clientSecret', 'password', 'secret'
+      'accessToken', 'clientSecret', 'password', 'secret',
     ];
     return sensitiveFields.some(sensitive => 
-      field.toLowerCase().includes(sensitive.toLowerCase())
+      field.toLowerCase().includes(sensitive.toLowerCase()),
     );
   };
 
@@ -64,7 +65,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
     type: 'text' | 'password' | 'number' | 'select' | 'textarea' = 'text',
     options: { value: string; label: string }[] = [],
     helperText?: string,
-    placeholder?: string
+    placeholder?: string,
   ) => {
     const isSensitive = getSensitiveFieldType(key);
     const isEnvOverride = isEnvironmentOverride(key);
@@ -156,118 +157,118 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
 
   const getProviderSections = () => {
     switch (provider) {
-      case 'discord':
-        return [
-          {
-            title: 'Discord Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'token', label: 'Bot Token', type: 'password', helperText: 'Discord bot token from Developer Portal' },
-              { key: 'clientId', label: 'Client ID', helperText: 'Application ID from Discord Developer Portal' },
-              { key: 'guildId', label: 'Guild ID', helperText: 'Server ID where bot will operate' },
-              { key: 'channelId', label: 'Channel ID', helperText: 'Default text channel ID' },
-              { key: 'voiceChannelId', label: 'Voice Channel ID', helperText: 'Voice channel for audio features' },
-            ]
-          }
-        ];
+    case 'discord':
+      return [
+        {
+          title: 'Discord Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'token', label: 'Bot Token', type: 'password', helperText: 'Discord bot token from Developer Portal' },
+            { key: 'clientId', label: 'Client ID', helperText: 'Application ID from Discord Developer Portal' },
+            { key: 'guildId', label: 'Guild ID', helperText: 'Server ID where bot will operate' },
+            { key: 'channelId', label: 'Channel ID', helperText: 'Default text channel ID' },
+            { key: 'voiceChannelId', label: 'Voice Channel ID', helperText: 'Voice channel for audio features' },
+          ],
+        },
+      ];
 
-      case 'slack':
-        return [
-          {
-            title: 'Slack Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'botToken', label: 'Bot Token', type: 'password', helperText: 'Bot token from Slack App settings' },
-              { key: 'appToken', label: 'App Token', type: 'password', helperText: 'App-level token for Socket Mode' },
-              { key: 'signingSecret', label: 'Signing Secret', type: 'password', helperText: 'Required for webhook verification' },
-              { key: 'defaultChannelId', label: 'Default Channel ID', helperText: 'Default channel ID (e.g., C08BC0X4DFD)' },
-              { 
-                key: 'mode', 
-                label: 'Mode', 
-                type: 'select', 
-                options: [
-                  { value: 'socket', label: 'Socket Mode' },
-                  { value: 'rtm', label: 'RTM Mode' }
-                ],
-                helperText: 'Connection method for Slack'
-              },
-              { key: 'channels', label: 'Channels to Join', type: 'textarea', helperText: 'Comma-separated channel IDs bot should join', placeholder: 'C1234567890, C0987654321' },
-            ]
-          }
-        ];
+    case 'slack':
+      return [
+        {
+          title: 'Slack Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'botToken', label: 'Bot Token', type: 'password', helperText: 'Bot token from Slack App settings' },
+            { key: 'appToken', label: 'App Token', type: 'password', helperText: 'App-level token for Socket Mode' },
+            { key: 'signingSecret', label: 'Signing Secret', type: 'password', helperText: 'Required for webhook verification' },
+            { key: 'defaultChannelId', label: 'Default Channel ID', helperText: 'Default channel ID (e.g., C08BC0X4DFD)' },
+            { 
+              key: 'mode', 
+              label: 'Mode', 
+              type: 'select', 
+              options: [
+                { value: 'socket', label: 'Socket Mode' },
+                { value: 'rtm', label: 'RTM Mode' },
+              ],
+              helperText: 'Connection method for Slack',
+            },
+            { key: 'channels', label: 'Channels to Join', type: 'textarea', helperText: 'Comma-separated channel IDs bot should join', placeholder: 'C1234567890, C0987654321' },
+          ],
+        },
+      ];
 
-      case 'mattermost':
-        return [
-          {
-            title: 'Mattermost Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'url', label: 'Server URL', helperText: 'Your Mattermost server URL (e.g., https://mattermost.example.com)', placeholder: 'https://mattermost.example.com' },
-              { key: 'accessToken', label: 'Access Token', type: 'password', helperText: 'Personal access token from Mattermost' },
-              { key: 'teamId', label: 'Team ID', helperText: 'Team ID where bot will operate' },
-              { key: 'channel', label: 'Default Channel', helperText: 'Default channel name' },
-              { key: 'channelId', label: 'Channel ID', helperText: 'Default channel ID' },
-            ]
-          }
-        ];
+    case 'mattermost':
+      return [
+        {
+          title: 'Mattermost Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'url', label: 'Server URL', helperText: 'Your Mattermost server URL (e.g., https://mattermost.example.com)', placeholder: 'https://mattermost.example.com' },
+            { key: 'accessToken', label: 'Access Token', type: 'password', helperText: 'Personal access token from Mattermost' },
+            { key: 'teamId', label: 'Team ID', helperText: 'Team ID where bot will operate' },
+            { key: 'channel', label: 'Default Channel', helperText: 'Default channel name' },
+            { key: 'channelId', label: 'Channel ID', helperText: 'Default channel ID' },
+          ],
+        },
+      ];
 
-      case 'openai':
-        return [
-          {
-            title: 'OpenAI Configuration',
-            icon: <Key className="w-5 h-5" />,
-            fields: [
-              { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenAI API key' },
-              { key: 'model', label: 'Model', helperText: 'OpenAI model to use', placeholder: 'gpt-4' },
-              { key: 'baseUrl', label: 'Base URL', helperText: 'OpenAI API base URL', placeholder: 'https://api.openai.com/v1' },
-              { key: 'temperature', label: 'Temperature', type: 'number', helperText: 'Controls randomness (0-2)' },
-              { key: 'maxTokens', label: 'Max Tokens', type: 'number', helperText: 'Maximum tokens in response' },
-            ]
-          }
-        ];
+    case 'openai':
+      return [
+        {
+          title: 'OpenAI Configuration',
+          icon: <Key className="w-5 h-5" />,
+          fields: [
+            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenAI API key' },
+            { key: 'model', label: 'Model', helperText: 'OpenAI model to use', placeholder: 'gpt-4' },
+            { key: 'baseUrl', label: 'Base URL', helperText: 'OpenAI API base URL', placeholder: 'https://api.openai.com/v1' },
+            { key: 'temperature', label: 'Temperature', type: 'number', helperText: 'Controls randomness (0-2)' },
+            { key: 'maxTokens', label: 'Max Tokens', type: 'number', helperText: 'Maximum tokens in response' },
+          ],
+        },
+      ];
 
-      case 'flowise':
-        return [
-          {
-            title: 'Flowise Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'Flowise API key' },
-              { key: 'apiUrl', label: 'API URL', helperText: 'Flowise API base URL', placeholder: 'http://localhost:3000/api/v1' },
-              { key: 'chatflowId', label: 'Chatflow ID', helperText: 'Specific chatflow ID to use' },
-            ]
-          }
-        ];
+    case 'flowise':
+      return [
+        {
+          title: 'Flowise Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'Flowise API key' },
+            { key: 'apiUrl', label: 'API URL', helperText: 'Flowise API base URL', placeholder: 'http://localhost:3000/api/v1' },
+            { key: 'chatflowId', label: 'Chatflow ID', helperText: 'Specific chatflow ID to use' },
+          ],
+        },
+      ];
 
-      case 'openwebui':
-        return [
-          {
-            title: 'OpenWebUI Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenWebUI API key' },
-              { key: 'apiUrl', label: 'API URL', helperText: 'OpenWebUI API base URL', placeholder: 'http://localhost:3000/api' },
-              { key: 'model', label: 'Model', helperText: 'Model to use in OpenWebUI' },
-            ]
-          }
-        ];
+    case 'openwebui':
+      return [
+        {
+          title: 'OpenWebUI Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenWebUI API key' },
+            { key: 'apiUrl', label: 'API URL', helperText: 'OpenWebUI API base URL', placeholder: 'http://localhost:3000/api' },
+            { key: 'model', label: 'Model', helperText: 'Model to use in OpenWebUI' },
+          ],
+        },
+      ];
 
-      case 'openswarm':
-        return [
-          {
-            title: 'OpenSwarm Configuration',
-            icon: <Settings className="w-5 h-5" />,
-            fields: [
-              { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenSwarm API key', placeholder: 'dummy-key' },
-              { key: 'apiUrl', label: 'API URL', helperText: 'OpenSwarm API base URL', placeholder: 'http://localhost:8000/v1' },
-              { key: 'team', label: 'Team', helperText: 'Team name (used as model)', placeholder: 'default-team' },
-              { key: 'swarmId', label: 'Swarm ID', helperText: 'Swarm ID to connect to' },
-            ]
-          }
-        ];
+    case 'openswarm':
+      return [
+        {
+          title: 'OpenSwarm Configuration',
+          icon: <Settings className="w-5 h-5" />,
+          fields: [
+            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenSwarm API key', placeholder: 'dummy-key' },
+            { key: 'apiUrl', label: 'API URL', helperText: 'OpenSwarm API base URL', placeholder: 'http://localhost:8000/v1' },
+            { key: 'team', label: 'Team', helperText: 'Team name (used as model)', placeholder: 'default-team' },
+            { key: 'swarmId', label: 'Swarm ID', helperText: 'Swarm ID to connect to' },
+          ],
+        },
+      ];
 
-      default:
-        return [];
+    default:
+      return [];
     }
   };
 
@@ -303,8 +304,8 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                   field.type as any,
                   field.options,
                   field.helperText,
-                  field.placeholder
-                )
+                  field.placeholder,
+                ),
               )}
             </div>
           </div>

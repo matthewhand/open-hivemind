@@ -54,7 +54,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   startCollection(): void {
-    if (this.isCollecting) return;
+    if (this.isCollecting) {return;}
 
     this.isCollecting = true;
     this.collectionInterval = setInterval(() => {
@@ -65,7 +65,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   stopCollection(): void {
-    if (!this.isCollecting) return;
+    if (!this.isCollecting) {return;}
 
     this.isCollecting = false;
     if (this.collectionInterval) {
@@ -130,7 +130,7 @@ export class MetricsCollector extends EventEmitter {
       name,
       value,
       timestamp: new Date().toISOString(),
-      tags
+      tags,
     };
 
     this.history.push(metricData);
@@ -166,7 +166,7 @@ export class MetricsCollector extends EventEmitter {
     metrics: Metrics;
     performance: PerformanceMetrics;
     historySize: number;
-  } {
+    } {
     const avgResponseTime =
       this.metrics.responseTime.length > 0
         ? this.metrics.responseTime.reduce((a, b) => a + b, 0) / this.metrics.responseTime.length
@@ -178,14 +178,14 @@ export class MetricsCollector extends EventEmitter {
       diskUsage: Math.random() * 100, // placeholder
       networkIO: Math.random() * 1000, // placeholder
       responseTime: avgResponseTime,
-      throughput: this.metrics.messagesProcessed / ((Date.now() - this.metrics.uptime) / 1000)
+      throughput: this.metrics.messagesProcessed / ((Date.now() - this.metrics.uptime) / 1000),
     };
 
     return {
       timestamp: new Date().toISOString(),
       metrics: this.getMetrics(),
       performance,
-      historySize: this.history.length
+      historySize: this.history.length,
     };
   }
 
@@ -226,7 +226,7 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
       timestamp: new Date().toISOString(),
       current: this.getMetrics(),
       history: this.history,
-      summary: this.getMetricsSummary()
+      summary: this.getMetricsSummary(),
     };
 
     return JSON.stringify(metricsData, null, 2);
@@ -243,5 +243,16 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
     };
     this.history = [];
     console.log('📊 Metrics reset');
+  }
+
+  /**
+   * Gracefully shutdown the MetricsCollector.
+   * Stops collection and clears all data.
+   */
+  shutdown(): void {
+    this.stopCollection();
+    this.history = [];
+    this.removeAllListeners();
+    console.log('📊 MetricsCollector shutdown complete');
   }
 }

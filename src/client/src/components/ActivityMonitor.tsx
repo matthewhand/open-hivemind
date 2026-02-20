@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Progress, Table } from './DaisyUI';
+import { Card, Badge, Button, Alert, Table } from './DaisyUI';
 import {
   BoltIcon,
   ServerIcon,
   UserGroupIcon,
-  ChartBarIcon
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 export interface ActivityEvent {
@@ -23,7 +23,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'bot',
     message: 'Bot configuration updated successfully',
     severity: 'low',
-    duration: 120
+    duration: 120,
   },
   {
     id: '2',
@@ -31,7 +31,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'user',
     message: 'User login from new device',
     severity: 'medium',
-    duration: 300
+    duration: 300,
   },
   {
     id: '3',
@@ -39,7 +39,7 @@ const mockEvents: ActivityEvent[] = [
     type: 'system',
     message: 'Database backup completed',
     severity: 'low',
-    duration: 5000
+    duration: 5000,
   },
 ];
 
@@ -49,16 +49,16 @@ const ActivityMonitor: React.FC = () => {
   const [isMonitoring, setIsMonitoring] = useState(true);
 
   useEffect(() => {
-    if (!isMonitoring) return;
+    if (!isMonitoring) { return; }
 
     const interval = setInterval(() => {
       const newEvent: ActivityEvent = {
         id: Date.now().toString(),
         timestamp: new Date(),
-        type: ['bot', 'user', 'system', 'error'][Math.floor(Math.random() * 4)] as any,
+        type: (['bot', 'user', 'system', 'error'] as const)[Math.floor(Math.random() * 4)],
         message: `System activity detected at ${new Date().toLocaleTimeString()}`,
-        severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
-        duration: Math.floor(Math.random() * 1000) + 50
+        severity: (['low', 'medium', 'high', 'critical'] as const)[Math.floor(Math.random() * 4)],
+        duration: Math.floor(Math.random() * 1000) + 50,
       };
       setEvents(prev => [newEvent, ...prev].slice(0, 50));
     }, 5000);
@@ -67,7 +67,7 @@ const ActivityMonitor: React.FC = () => {
   }, [isMonitoring]);
 
   const filteredEvents = events.filter(event =>
-    filter === 'all' || event.type === filter
+    filter === 'all' || event.type === filter,
   );
 
   const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
@@ -91,7 +91,7 @@ const ActivityMonitor: React.FC = () => {
   };
 
   const recentEvents = events.filter(e =>
-    e.timestamp > new Date(Date.now() - 300000)
+    e.timestamp > new Date(Date.now() - 300000),
   );
 
   return (

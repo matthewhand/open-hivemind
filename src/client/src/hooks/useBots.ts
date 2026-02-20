@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { BotInstance, BotStatus } from '../types/bot';
+import type { BotInstance, BotStatus } from '../types/bot';
 
 const useBots = () => {
   const [bots, setBots] = useState<BotInstance[]>([]);
@@ -20,7 +20,7 @@ const useBots = () => {
       llmProviders: [],
       createdAt: new Date().toISOString(),
       lastActive: null,
-      error: null
+      error: null,
     };
 
     setBots(prev => [...prev, newBot]);
@@ -32,7 +32,7 @@ const useBots = () => {
     setBots(prev => prev.map(bot =>
       bot.id === botId
         ? { ...bot, ...updates }
-        : bot
+        : bot,
     ));
   }, []);
 
@@ -44,7 +44,7 @@ const useBots = () => {
   // Clone bot
   const cloneBot = useCallback((botId: string) => {
     const bot = bots.find(b => b.id === botId);
-    if (!bot) return null;
+    if (!bot) {return null;}
 
     const clonedBot: BotInstance = {
       ...bot,
@@ -53,7 +53,7 @@ const useBots = () => {
       status: 'stopped',
       createdAt: new Date().toISOString(),
       lastActive: null,
-      error: null
+      error: null,
     };
 
     setBots(prev => [...prev, clonedBot]);
@@ -76,7 +76,7 @@ const useBots = () => {
       updateBot(botId, {
         status: 'running',
         lastActive: new Date().toISOString(),
-        error: null
+        error: null,
       });
 
       return true;
@@ -143,7 +143,7 @@ const useBots = () => {
     stopBot,
     getBot,
     getBotsByStatus,
-    clearError
+    clearError,
   };
 };
 

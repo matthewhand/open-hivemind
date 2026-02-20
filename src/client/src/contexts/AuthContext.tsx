@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface User {
   id: string;
@@ -90,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isTokenExpired = (token: string): boolean => {
     // These tokens never expire (for dev/demo mode)
-    if (token === 'serverless-demo-token' || token === 'dev-token-auto-login') return false;
+    if (token === 'serverless-demo-token' || token === 'dev-token-auto-login') {return false;}
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.exp * 1000 < Date.now();
@@ -226,7 +228,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username: 'admin',
         email: 'admin@open-hivemind.com',
         role: 'owner',
-        permissions: ['all']
+        permissions: ['all'],
       };
     }
 

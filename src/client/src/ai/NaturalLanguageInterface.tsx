@@ -7,18 +7,61 @@ import {
   PaperAirplaneIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
-  StarIcon,
   HandThumbUpIcon,
   HandThumbDownIcon,
-  LanguageIcon,
   SpeakerWaveIcon,
   QuestionMarkCircleIcon,
   XMarkIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon,
   CpuChipIcon,
 } from '@heroicons/react/24/outline';
 import { MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
+
+// Web Speech API type declarations
+interface SpeechRecognitionResult {
+  readonly length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  readonly isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string;
+  readonly message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+  SpeechRecognition?: new () => SpeechRecognition;
+}
 
 export interface NLCommand {
   id: string;
@@ -51,9 +94,9 @@ export interface NLEntity {
 export interface NLAction {
   type: 'show-widget' | 'hide-widget' | 'update-widget' | 'filter-data' | 'change-theme' | 'export-data';
   target: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   status: 'pending' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
 }
 
 export interface NLParameter {
@@ -108,7 +151,7 @@ export interface NLContext {
   currentPage: string;
   selectedWidgets: string[];
   timeRange: { start: Date; end: Date };
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   userRole: string;
   permissions: string[];
 }
@@ -322,7 +365,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [commands, setCommands] = useState<NLCommand[]>(mockCommands);
-  const [context, setContext] = useState<NLContext>({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_context, _setContext] = useState<NLContext>({
     currentPage: 'dashboard',
     selectedWidgets: [],
     timeRange: { start: new Date(Date.now() - 24 * 60 * 60 * 1000), end: new Date() },
@@ -332,7 +376,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   });
   const [showHelp, setShowHelp] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -343,21 +387,22 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   }, []);
 
   const initializeSpeechRecognition = () => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
+    const windowWithSpeech = window as WindowWithSpeechRecognition;
+    const SpeechRecognitionConstructor = windowWithSpeech.webkitSpeechRecognition || windowWithSpeech.SpeechRecognition;
+    if (SpeechRecognitionConstructor) {
+      recognitionRef.current = new SpeechRecognitionConstructor();
       recognitionRef.current.continuous = config.voiceRecognition.continuous;
       recognitionRef.current.interimResults = config.voiceRecognition.interimResults;
       recognitionRef.current.lang = config.voiceRecognition.language;
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result: SpeechRecognitionResult) => result[0].transcript)
           .join('');
         setInputText(transcript);
       };
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
@@ -392,8 +437,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     const matchedIntent = mockIntents.find(intent =>
       intent.examples.some(example =>
         text.toLowerCase().includes(example.toLowerCase()) ||
-        example.toLowerCase().includes(text.toLowerCase())
-      )
+        example.toLowerCase().includes(text.toLowerCase()),
+      ),
     );
 
     const confidence = matchedIntent ? 0.85 : 0.3;
@@ -473,11 +518,11 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
 
   const generateResponse = (text: string, intent: NLIntent | null, confidence: number): string => {
     if (confidence < config.confidenceThreshold) {
-      return "I didn't understand that. Could you please rephrase or ask for help?";
+      return 'I didn\'t understand that. Could you please rephrase or ask for help?';
     }
 
     if (!intent) {
-      return "I'm not sure what you'd like me to do. Try asking for help to see what I can do.";
+      return 'I\'m not sure what you\'d like me to do. Try asking for help to see what I can do.';
     }
 
     switch (intent.name) {
@@ -551,7 +596,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   };
 
   const handleSubmit = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) { return; }
 
     const command = await processNaturalLanguage(inputText);
     setCommands(prev => [command, ...prev].slice(0, config.maxHistory));
@@ -577,7 +622,8 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     }
   };
 
-  const toggleFeature = (feature: keyof NLConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _toggleFeature = (feature: keyof NLConfig) => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
@@ -729,7 +775,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
           </h3>
           <div className="overflow-y-auto max-h-[400px]">
             <ul className="menu bg-base-100 w-full p-0">
-              {commands.map((command, index) => (
+              {commands.map((command) => (
                 <li key={command.id} className="border-b border-base-200 last:border-none">
                   <div className="flex flex-col gap-2 py-3 hover:bg-base-200">
                     <div className="flex items-start gap-3 w-full">
@@ -749,7 +795,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                             {command.feedback === 'positive' && <HandThumbUpIcon className="w-4 h-4 text-success" />}
                             {command.feedback === 'negative' && <HandThumbDownIcon className="w-4 h-4 text-error" />}
                             <div className={`badge badge-sm ${command.confidence > 0.8 ? 'badge-success' :
-                                command.confidence > 0.6 ? 'badge-warning' : 'badge-error'
+                              command.confidence > 0.6 ? 'badge-warning' : 'badge-error'
                               }`}>
                               {(command.confidence * 100).toFixed(0)}%
                             </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { createContext, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser, selectUserPermissions } from '../store/slices/authSlice';
@@ -112,11 +113,11 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
   const currentUserRoles = roles.filter(role => currentUser?.role === role.id);
 
   const currentUserPermissionsList = permissions.filter(permission =>
-    userPermissions.includes(permission.id) || userPermissions.includes('*')
+    userPermissions.includes(permission.id) || userPermissions.includes('*'),
   );
 
   const hasPermission = (permission: string | string[]): boolean => {
-    if (!currentUser) return false;
+    if (!currentUser) {return false;}
     if (typeof permission === 'string') {
       return userPermissions.includes(permission) || userPermissions.includes('*');
     }
@@ -124,15 +125,15 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
   };
 
   const hasRole = (role: string | string[]): boolean => {
-    if (!currentUser) return false;
-    if (typeof role === 'string') return currentUser.role === role;
+    if (!currentUser) {return false;}
+    if (typeof role === 'string') {return currentUser.role === role;}
     return role.includes(currentUser.role);
   };
 
   const hasResourceAccess = (resourceId: string, action: string): boolean => {
     const resource = resources.find(r => r.id === resourceId);
-    if (!resource) return false;
-    if (resource.isPublic) return true;
+    if (!resource) {return false;}
+    if (resource.isPublic) {return true;}
     const permissionId = `${resource.type}.${action}`;
     return hasPermission(permissionId);
   };
@@ -175,7 +176,7 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
       resource: data.resource || 'system',
       action: data.action || 'read',
       description: data.description || '',
-      category: data.category || 'Custom'
+      category: data.category || 'Custom',
     };
     setPermissions(prev => [...prev, newPerm]);
     return newPerm;
@@ -197,7 +198,7 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
       permissions: data.permissions || [],
       isActive: true,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     setUsers(prev => [...prev, newUser]);
     return newUser;
@@ -218,7 +219,7 @@ export const RBACProvider: React.FC<RBACProviderProps> = ({ children }) => {
       isPublic: data.isPublic || false,
       createdAt: new Date().toISOString(),
       ownerId: data.ownerId,
-      tenantId: data.tenantId
+      tenantId: data.tenantId,
     };
     setResources(prev => [...prev, res]);
     return res;

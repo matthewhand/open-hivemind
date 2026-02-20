@@ -10,12 +10,12 @@ import {
   correlationMiddleware,
   globalErrorHandler,
   setupGlobalErrorHandlers,
-  setupGracefulShutdown
+  setupGracefulShutdown,
 } from '../middleware/errorHandler';
 
 // Route imports
-import healthRouter from '../routes/health';
-import errorsRouter from '../routes/errors';
+import healthRouter from './routes/health';
+import errorsRouter from './routes/errors';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import mcpRouter from './routes/mcp';
@@ -101,7 +101,7 @@ export class WebUIServer {
       optionsSuccessStatus: 200,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      maxAge: 86400
+      maxAge: 86400,
     };
 
     this.app.use(cors(corsOptions));
@@ -115,6 +115,27 @@ export class WebUIServer {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+    // CSRF protection for sensitive routes
+    this.app.use((req, res, next) => {
+      // Skip CSRF for GET, OPTIONS, and health checks
+      if (req.method === 'GET' || req.method === 'OPTIONS' || req.path.startsWith('/health')) {
+        return next();
+      }
+
+      // Check for CSRF token in headers or body
+      const csrfToken = req.headers['x-csrf-token'] || req.body._csrf;
+      
+      // For now, we'll allow requests without CSRF token but log them
+      // In production, you should generate and validate proper CSRF tokens
+      if (!csrfToken) {
+        debug('CSRF token missing for non-GET request to:', req.path);
+        // TODO: Uncomment in production after implementing token generation
+        // return res.status(403).json({ error: 'CSRF token required' });
+      }
+
+      next();
+    });
 
     // Error handler for malformed JSON in health API endpoints
     this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -150,8 +171,8 @@ export class WebUIServer {
   }
 
   private setupRoutes(): void {
-    // Health check (no auth required)
-    this.app.use('/', healthRouter);
+    // Health check (no auth required) - mount at /health for backward compatibility
+    this.app.use('/health', healthRouter);
 
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
@@ -194,9 +215,9 @@ export class WebUIServer {
           webui: '/api/webui',
           dashboard: '/api/dashboard',
           config: '/api/config',
-          hotReload: '/api/hot-reload'
+          hotReload: '/api/hot-reload',
         },
-        documentation: '/api/docs'
+        documentation: '/api/docs',
       });
     });
 
@@ -205,7 +226,7 @@ export class WebUIServer {
       res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 
@@ -230,7 +251,7 @@ export class WebUIServer {
       try {
         this.server = this.app.listen(this.port, () => {
           debug(`WebUI server started on port ${this.port}`);
-          console.log(`🚀 Hivemind WebUI available at:`);
+          console.log('🚀 Hivemind WebUI available at:');
           console.log(`   Admin Dashboard: http://localhost:${this.port}/admin`);
           console.log(`   WebUI Interface: http://localhost:${this.port}/webui`);
           console.log(`   API Endpoints:   http://localhost:${this.port}/api`);

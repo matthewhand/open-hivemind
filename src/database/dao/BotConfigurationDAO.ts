@@ -1,4 +1,4 @@
-import { Database } from 'sqlite';
+import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
 
 export interface BotConfiguration {
@@ -6,6 +6,8 @@ export interface BotConfiguration {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
@@ -141,7 +143,7 @@ export class BotConfigurationDAO {
       config.createdAt.toISOString(),
       config.updatedAt.toISOString(),
       config.createdBy || null,
-      config.updatedBy || null
+      config.updatedBy || null,
     ];
 
     try {
@@ -182,11 +184,11 @@ export class BotConfigurationDAO {
     const params: any[] = [];
 
     if (tenantId) {
-      sql += ` WHERE tenantId = ? OR tenantId IS NULL`;
+      sql += ' WHERE tenantId = ? OR tenantId IS NULL';
       params.push(tenantId);
     }
 
-    sql += ` ORDER BY createdAt DESC`;
+    sql += ' ORDER BY createdAt DESC';
 
     try {
       const rows = await this.db.all(sql, params);
@@ -202,11 +204,11 @@ export class BotConfigurationDAO {
     const params: any[] = [];
 
     if (tenantId) {
-      sql += ` AND (tenantId = ? OR tenantId IS NULL)`;
+      sql += ' AND (tenantId = ? OR tenantId IS NULL)';
       params.push(tenantId);
     }
 
-    sql += ` ORDER BY createdAt DESC`;
+    sql += ' ORDER BY createdAt DESC';
 
     try {
       const rows = await this.db.all(sql, params);
@@ -246,7 +248,7 @@ export class BotConfigurationDAO {
       throw new Error('No valid fields to update');
     }
 
-    updates.push(`updatedAt = ?`);
+    updates.push('updatedAt = ?');
     params.push(new Date().toISOString());
 
     const sql = `UPDATE ${this.tableName} SET ${updates.join(', ')} WHERE id = ?`;
@@ -316,7 +318,7 @@ export class BotConfigurationDAO {
         byTenant: tenantRows.reduce((acc, row) => {
           acc[row.tenant] = row.count;
           return acc;
-        }, {} as Record<string, number>)
+        }, {} as Record<string, number>),
       };
     } catch (err) {
       Logger.error('Error getting statistics:', err);
@@ -349,7 +351,7 @@ export class BotConfigurationDAO {
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
       createdBy: row.createdBy,
-      updatedBy: row.updatedBy
+      updatedBy: row.updatedBy,
     };
   }
 }

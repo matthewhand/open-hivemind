@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Input, Select, Textarea, Toggle, InputGroup, FormLabel } from 'react-daisyui';
 import { FaPlus, FaTrash, FaEye, FaEyeSlash, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
-import { MCPProviderConfig, MCPProviderValidationResult } from '../../../types/mcp';
+import type { MCPProviderConfig, MCPProviderValidationResult } from '../../../types/mcp';
 import { ProviderField } from '../../provider-configs/types';
 
 interface MCPProviderFormProps {
@@ -29,7 +30,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
   provider,
   onSave,
   onCancel,
-  templates = []
+  templates = [],
 }) => {
   const [formData, setFormData] = useState<Partial<MCPProviderConfig>>({
     name: '',
@@ -44,10 +45,10 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
       enabled: true,
       interval: 60,
       timeout: 10,
-      retries: 3
+      retries: 3,
     },
     enabled: true,
-    ...provider
+    ...provider,
   });
 
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
@@ -55,7 +56,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
     isValid: false,
     errors: [],
     warnings: [],
-    suggestions: []
+    suggestions: [],
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState('');
@@ -67,7 +68,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
       const vars = Object.entries(formData.env).map(([key, value]) => ({
         key,
         value,
-        showValue: false
+        showValue: false,
       }));
       setEnvVars(vars.length > 0 ? vars : [{ key: '', value: '', showValue: false }]);
     } else {
@@ -100,7 +101,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
         /^npx [a-zA-Z0-9@/.\\-]+$/,
         /^npm run [a-zA-Z0-9\\-_]+$/,
         /^yarn [a-zA-Z0-9\\-_]+$/,
-        /^python(3)? -m [a-zA-Z0-9._\\-]+$/
+        /^python(3)? -m [a-zA-Z0-9._\\-]+$/,
       ];
 
       const isValidCommand = validCommandPatterns.some(pattern => pattern.test(command));
@@ -129,7 +130,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
         key.toLowerCase().includes('url') ||
         key.toLowerCase().includes('endpoint') ||
         key.toLowerCase().includes('key') ||
-        key.toLowerCase().includes('token')
+        key.toLowerCase().includes('token'),
       );
 
       if (!hasConnectionConfig) {
@@ -167,7 +168,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
       isValid: errors.length === 0,
       errors,
       warnings,
-      suggestions
+      suggestions,
     });
   };
 
@@ -236,9 +237,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             enabled: true,
             interval: 60,
             timeout: 10,
-            retries: 3
+            retries: 3,
           },
-          enabled: false
+          enabled: false,
         });
       }
     }
@@ -262,7 +263,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
       timeout: formData.timeout || 30,
       autoRestart: formData.autoRestart || false,
       healthCheck: formData.healthCheck,
-      enabled: formData.enabled || false
+      enabled: formData.enabled || false,
     };
 
     onSave(providerData);
@@ -427,7 +428,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                       type="button"
                       size="sm"
                       color="error"
-                      variant="outline"
+                      variant="secondary" className="btn-outline"
                       onClick={() => removeEnvVar(index)}
                     >
                       <FaTrash className="w-3 h-3" />
@@ -437,7 +438,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="secondary" className="btn-outline"
                   onClick={addEnvVar}
                   className="w-full"
                 >
@@ -493,7 +494,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                     checked={formData.healthCheck?.enabled || false}
                     onChange={(e) => handleInputChange('healthCheck', {
                       ...formData.healthCheck,
-                      enabled: e.target.checked
+                      enabled: e.target.checked,
                     })}
                   />
                   <span className="text-sm font-medium">Enable Health Check</span>
@@ -510,7 +511,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                         value={formData.healthCheck.interval || 60}
                         onChange={(e) => handleInputChange('healthCheck', {
                           ...formData.healthCheck,
-                          interval: parseInt(e.target.value) || 60
+                          interval: parseInt(e.target.value) || 60,
                         })}
                         min="10"
                         max="3600"
@@ -526,7 +527,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                         value={formData.healthCheck.timeout || 10}
                         onChange={(e) => handleInputChange('healthCheck', {
                           ...formData.healthCheck,
-                          timeout: parseInt(e.target.value) || 10
+                          timeout: parseInt(e.target.value) || 10,
                         })}
                         min="1"
                         max="60"
@@ -596,7 +597,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="flex justify-end gap-4 pt-6 border-t border-base-300">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary" className="btn-outline"
                 onClick={onCancel}
               >
                 Cancel

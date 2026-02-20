@@ -12,27 +12,27 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
   variant = 'spinner',
   color = 'primary',
-  className = ''
+  className = '',
 }) => {
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'loading-xs';
-      case 'sm': return 'loading-sm';
-      case 'md': return 'loading-md';
-      case 'lg': return 'loading-lg';
-      default: return 'loading-md';
+    case 'xs': return 'loading-xs';
+    case 'sm': return 'loading-sm';
+    case 'md': return 'loading-md';
+    case 'lg': return 'loading-lg';
+    default: return 'loading-md';
     }
   };
 
   const getVariantClass = () => {
     switch (variant) {
-      case 'spinner': return 'loading-spinner';
-      case 'dots': return 'loading-dots';
-      case 'ring': return 'loading-ring';
-      case 'ball': return 'loading-ball';
-      case 'bars': return 'loading-bars';
-      case 'infinity': return 'loading-infinity';
-      default: return 'loading-spinner';
+    case 'spinner': return 'loading-spinner';
+    case 'dots': return 'loading-dots';
+    case 'ring': return 'loading-ring';
+    case 'ball': return 'loading-ball';
+    case 'bars': return 'loading-bars';
+    case 'infinity': return 'loading-infinity';
+    default: return 'loading-spinner';
     }
   };
 
@@ -58,7 +58,7 @@ export const Loading: React.FC<LoadingProps> = ({
   type = 'spinner',
   size = 'md',
   color = 'primary',
-  className = ''
+  className = '',
 }) => {
   return <LoadingSpinner variant={type} size={size} color={color} className={className} />;
 };
@@ -81,17 +81,17 @@ export const Progress: React.FC<ProgressProps> = ({
   size = 'md',
   indeterminate = false,
   showValue = false,
-  className = ''
+  className = '',
 }) => {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'h-1';
-      case 'sm': return 'h-2';
-      case 'md': return 'h-3';
-      case 'lg': return 'h-4';
-      default: return 'h-3';
+    case 'xs': return 'h-1';
+    case 'sm': return 'h-2';
+    case 'md': return 'h-3';
+    case 'lg': return 'h-4';
+    default: return 'h-3';
     }
   };
 
@@ -126,14 +126,14 @@ export const SkeletonText: React.FC<SkeletonProps & {
   lines = 1, 
   width = 'full',
   animate = true,
-  className = '' 
+  className = '', 
 }) => {
   const getWidthClass = () => {
     switch (width) {
-      case '3/4': return 'w-3/4';
-      case '1/2': return 'w-1/2';
-      case '1/4': return 'w-1/4';
-      default: return 'w-full';
+    case '3/4': return 'w-3/4';
+    case '1/2': return 'w-1/2';
+    case '1/4': return 'w-1/4';
+    default: return 'w-full';
     }
   };
 
@@ -155,7 +155,7 @@ export const SkeletonText: React.FC<SkeletonProps & {
 
 export const LoadingSkeletonCard: React.FC<SkeletonProps> = ({
   animate = true,
-  className = ''
+  className = '',
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -184,16 +184,16 @@ export const SkeletonAvatar: React.FC<SkeletonProps & {
   size = 'md',
   shape = 'circle',
   animate = true,
-  className = '' 
+  className = '', 
 }) => {
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'w-6 h-6';
-      case 'sm': return 'w-8 h-8';
-      case 'md': return 'w-12 h-12';
-      case 'lg': return 'w-16 h-16';
-      case 'xl': return 'w-20 h-20';
-      default: return 'w-12 h-12';
+    case 'xs': return 'w-6 h-6';
+    case 'sm': return 'w-8 h-8';
+    case 'md': return 'w-12 h-12';
+    case 'lg': return 'w-16 h-16';
+    case 'xl': return 'w-20 h-20';
+    default: return 'w-12 h-12';
     }
   };
 
@@ -214,7 +214,7 @@ export const SkeletonTable: React.FC<SkeletonProps & {
   rows = 5,
   columns = 4,
   animate = true,
-  className = '' 
+  className = '', 
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -251,7 +251,7 @@ export const SkeletonStats: React.FC<SkeletonProps & {
 }> = ({ 
   count = 4,
   animate = true,
-  className = '' 
+  className = '', 
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -284,8 +284,8 @@ interface LoadingOverlayProps {
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   isLoading,
   children,
-  message = "Loading...",
-  className = ''
+  message = 'Loading...',
+  className = '',
 }) => {
   return (
     <div className={`relative ${className}`}>
@@ -316,7 +316,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   totalSteps,
   steps,
   variant = 'primary',
-  className = ''
+  className = '',
 }) => {
   const getVariantClass = () => `step-${variant}`;
 
@@ -329,7 +329,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
             className={`step ${index < currentStep ? getVariantClass() : ''} ${
               index === currentStep - 1 ? 'step-primary' : ''
             }`}
-            data-content={index < currentStep ? "✓" : index + 1}
+            data-content={index < currentStep ? '✓' : index + 1}
           >
             <div className="text-left">
               <div className="font-medium">{step.label}</div>
@@ -364,5 +364,5 @@ export default {
   SkeletonTable,
   SkeletonStats,
   LoadingOverlay,
-  StepProgress
+  StepProgress,
 };

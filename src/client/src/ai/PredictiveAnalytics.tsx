@@ -9,9 +9,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowDownTrayIcon,
   ArrowPathIcon,
-  AdjustmentsHorizontalIcon,
   SparklesIcon,
-  LightBulbIcon,
 } from '@heroicons/react/24/outline';
 
 export interface TimeSeriesData {
@@ -257,7 +255,7 @@ const detectAnomalies = (historicalData: TimeSeriesData[], forecast: ForecastRes
 
   historicalData.forEach(data => {
     const correspondingForecast = forecast.find(f =>
-      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000
+      Math.abs(f.timestamp.getTime() - data.timestamp.getTime()) < 60 * 60 * 1000,
     );
 
     if (correspondingForecast && correspondingForecast.anomaly) {
@@ -370,7 +368,7 @@ export const PredictiveAnalytics: React.FC = () => {
         models: prev.models.map(model =>
           model.id === modelId
             ? { ...model, lastTrained: new Date(), accuracy: Math.min(0.99, model.accuracy + 0.02) }
-            : model
+            : model,
         ),
         isTraining: false,
       }));
@@ -640,7 +638,7 @@ export const PredictiveAnalytics: React.FC = () => {
                       <td className="text-right">{(anomaly.deviation * 100).toFixed(1)}%</td>
                       <td className="text-center">
                         <div className={`badge badge-sm ${anomaly.severity === 'critical' ? 'badge-error' :
-                            anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
+                          anomaly.severity === 'high' ? 'badge-warning' : 'badge-info'
                           }`}>
                           {anomaly.severity}
                         </div>

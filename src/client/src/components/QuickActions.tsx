@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Button, Modal, Input, Loading } from './DaisyUI';
 import {
@@ -54,7 +55,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to refresh dashboard',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -70,7 +71,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to clear cache',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -98,7 +99,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'Failed to export configuration',
-        'error'
+        'error',
       );
     } finally {
       setLoading(null);
@@ -109,17 +110,17 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   const getToastIcon = () => {
     switch (toast.type) {
-      case 'success': return <CheckCircleIcon className="w-6 h-6" />;
-      case 'error': return <ExclamationCircleIcon className="w-6 h-6" />;
-      default: return <InformationCircleIcon className="w-6 h-6" />;
+    case 'success': return <CheckCircleIcon className="w-6 h-6" />;
+    case 'error': return <ExclamationCircleIcon className="w-6 h-6" />;
+    default: return <InformationCircleIcon className="w-6 h-6" />;
     }
   };
 
   const getToastClass = () => {
     switch (toast.type) {
-      case 'success': return 'alert-success';
-      case 'error': return 'alert-error';
-      default: return 'alert-info';
+    case 'success': return 'alert-success';
+    case 'error': return 'alert-error';
+    default: return 'alert-info';
     }
   };
 
@@ -134,7 +135,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('refresh') ? (
-              <Loading size="sm" />
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <ArrowPathIcon className="w-5 h-5" />
             )}
@@ -148,7 +149,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('clear') ? (
-              <Loading size="sm" />
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <XMarkIcon className="w-5 h-5" />
             )}
@@ -162,7 +163,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('export') ? (
-              <Loading size="sm" />
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <ArrowDownTrayIcon className="w-5 h-5" />
             )}
@@ -205,7 +206,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             variant="primary"
             disabled={!exportFilename.trim() || isLoading('export')}
           >
-            {isLoading('export') ? <Loading size="sm" /> : 'Export'}
+            {isLoading('export') ? <span className="loading loading-spinner loading-sm"></span> : 'Export'}
           </Button>
         </div>
       </Modal>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
@@ -21,6 +22,7 @@ const OverviewPage = lazy(() => import('../pages/OverviewPage'));
 const BotsPage = lazy(() => import('../pages/BotsPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
+const ChatPage = lazy(() => import('../pages/ChatPage'));
 const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
@@ -112,10 +114,12 @@ const AppRouter: React.FC = () => {
           <Route index element={<Navigate to="/admin/overview" replace />} />
           <Route path="overview" element={<OverviewPage />} />
 
+
           {/* Bot Management Routes */}
           <Route path="bots" element={<BotsPage />} />
           <Route path="bots/create" element={<BotCreatePage />} />
           <Route path="bots/templates" element={<BotTemplatesPage />} />
+          <Route path="chat" element={<ChatPage />} />
 
           {/* Integrations Routes */}
           <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />
@@ -197,6 +201,7 @@ const AppRouter: React.FC = () => {
           <Route path="ai/analytics" element={<PredictiveAnalytics />} />
           <Route path="ai/anomalies" element={<AnomalyDetection />} />
           <Route path="ai/chat" element={<NaturalLanguageInterface />} />
+          <Route path="ai/natural-language" element={<NaturalLanguageInterface />} />
           <Route path="ai/training" element={<BotTrainingDashboard />} />
         </Route>
 

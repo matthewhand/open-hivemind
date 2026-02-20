@@ -63,12 +63,12 @@ const initializeApp = () => {
         const parsedValue = setting.includes('Enabled') || setting.includes('Collapsed')
           ? value === 'true'
           : setting === 'refreshInterval' || setting === 'sidebarWidth'
-          ? parseInt(value, 10)
-          : value;
+            ? parseInt(value, 10)
+            : value;
 
         store.dispatch({
           type: `ui/set${setting.charAt(0).toUpperCase() + setting.slice(1)}`,
-          payload: parsedValue
+          payload: parsedValue,
         });
       } catch (e) {
         console.error(`Failed to load setting ${setting}:`, e);

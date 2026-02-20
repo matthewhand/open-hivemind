@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -55,15 +56,15 @@ const BotConfigurationPage: React.FC = () => {
       ...prev,
       [configName]: {
         ...(prev[configName] || {}),
-        [key]: value
-      }
+        [key]: value,
+      },
     }));
     setSuccess(null);
   };
 
   const saveConfig = async (configName: string) => {
     const updates = modifiedConfigs[configName];
-    if (!updates || Object.keys(updates).length === 0) return;
+    if (!updates || Object.keys(updates).length === 0) {return;}
 
     try {
       setSaving(true);
@@ -74,8 +75,8 @@ const BotConfigurationPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           configName,
-          updates
-        })
+          updates,
+        }),
       });
 
       if (!response.ok) {
@@ -159,12 +160,12 @@ const BotConfigurationPage: React.FC = () => {
 
         {schema.doc && (
           <label className="label">
-            <span className="label-text-alt text-gray-400">{schema.doc}</span>
+            <span className="label-text-alt text-base-content/50">{schema.doc}</span>
           </label>
         )}
         {schema.env && (
           <label className="label py-0">
-            <span className="label-text-alt text-gray-500 font-mono text-xs">ENV: {schema.env}</span>
+            <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {schema.env}</span>
           </label>
         )}
       </div>
@@ -191,7 +192,7 @@ const BotConfigurationPage: React.FC = () => {
       content: (
         <div className="py-2">
           {Object.entries(values).map(([key, value]) =>
-            renderConfigField(name, key, schema[key] || {}, value)
+            renderConfigField(name, key, schema[key] || {}, value),
           )}
           {changed && (
             <div className="mt-4 pt-4 border-t border-base-200">
@@ -206,7 +207,7 @@ const BotConfigurationPage: React.FC = () => {
             </div>
           )}
         </div>
-      )
+      ),
     };
   });
 
@@ -271,9 +272,9 @@ const BotConfigurationPage: React.FC = () => {
       ) : configNames.length === 0 ? (
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body text-center py-12">
-            <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-500">No configurations found</h3>
-            <p className="text-gray-400">Check that the config endpoint is working</p>
+            <Settings className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+            <h3 className="text-lg font-medium text-base-content/60">No configurations found</h3>
+            <p className="text-base-content/50">Check that the config endpoint is working</p>
           </div>
         </div>
       ) : (

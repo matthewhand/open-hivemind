@@ -56,89 +56,43 @@ personas, system instructions, and guarded access to external tools.
              └───────────────────┘
 ```
 
-### Quick start
-The backend and WebUI are served from **one port** (no CORS headaches). Default is `3028` unless `PORT` is set.
+### Quick Start (Golden Path)
+The fastest way to get running is our unified development environment.
 
-### Option A – Pinokio (Recommended)
-1. Install [Pinokio](https://pinokio.co/) and add this repository using the
-   supplied `pinokio.js` manifest.
-2. Click **Install dependencies** to run `npm install` in the managed
-   environment.
-3. Copy `.env.sample` to `.env` inside the Pinokio workspace and add your
-   platform tokens and LLM credentials.
-4. Press **Start**. Pinokio launches `npm run dev`, exposing the API and WebUI
-   at `http://localhost:3028` (or your configured `PORT`).
-5. Choose **Open WebUI** to finish configuration (personas, MCP servers, tool
-   guards) from the browser.
+1. **Install & Run**
+   ```bash
+   git clone https://github.com/matthewhand/open-hivemind.git
+   cd open-hivemind
+   npm install
+   make start-dev
+   ```
 
-### Option B – Docker (Official Image)
+2. **Access the Dashboard**
+   Open **[http://localhost:3028](http://localhost:3028)** in your browser.
+
+3. **Create Your First Bot**
+   - Go to **Bots** in the sidebar.
+   - Click **Create Bot**.
+   - Enter a name (e.g., `MyFirstBot`) and description.
+   - Click **Create**.
+
+4. **Verify It Works**
+   - Click on your new bot to see its details.
+   - (Optional) Use the **Chat Preview** if available, or configure a Discord/Slack token in **Config**.
+
+---
+
+### Other Installation Options
+For Docker, Pinokio, or Production deployment check [`docs/installation.md`](docs/installation.md).
+
+### Development & Testing
+We use `make` to manage quality gates:
+
 ```bash
-# pull the published image
-docker pull matthewhand/open-hivemind:latest
-
-# run with your environment file
-docker run --rm \
-  --env-file .env \
-  -p 3000:3000 \
-  matthewhand/open-hivemind:latest
+make lint       # Run ESLint (warnings allowed)
+make quality    # Lint + Build
+make ci         # Full CI suite
 ```
-Compose users can keep using `docker-compose.yml`; set the service image to
-`matthewhand/open-hivemind:latest` if you prefer pulling instead of building.
-
-### Option C – Manual Node.js Runtime (Git Clone)
-```bash
-git clone https://github.com/matthewhand/open-hivemind.git
-cd open-hivemind
-cp .env.sample .env
-npm install
-npm run dev   # API + WebUI on port 3028 (or $PORT)
-```
-We do not publish an npm package; cloning the repository is the supported path.
-Use `npm run build` followed by `npm start` for a production build.
-
-### Deployment modes
-**Solo**
-```env
-DISCORD_BOT_TOKEN=token1
-MESSAGE_USERNAME_OVERRIDE=OpenHivemind
-```
-
-**Swarm (multi-token)**
-```env
-DISCORD_BOT_TOKEN=token1,token2,token3
-MESSAGE_USERNAME_OVERRIDE=OpenHivemind
-```
-
-### Response policy & pacing (the knobs you actually touch)
-- **Respond only when spoken to**: `MESSAGE_ONLY_WHEN_SPOKEN_TO=true` (default). “Spoken to” includes ping/mention, reply-to-bot, wakeword prefix, or the bot name in text.
-- **Wakewords**: `MESSAGE_WAKEWORDS="!help,!ping,hey bot"` (prefix match).
-- **Bot-to-bot behavior**: `MESSAGE_IGNORE_BOTS=true` (default). If you want bots to talk to each other, set it to `false` (and consider `MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL`).
-- **Rate limiting (delay/backoff, not silence)**: `MESSAGE_RATE_LIMIT_PER_CHANNEL` (msgs/min).
-- **Human-ish delays**: `MESSAGE_DELAY_MULTIPLIER`, `MESSAGE_READING_DELAY_*`, `MESSAGE_COMPOUNDING_DELAY_*`, `MESSAGE_OTHERS_TYPING_*`.
-
-### WebUI capabilities (operators)
-- Configure LLM + messenger providers (Discord/Slack/Mattermost) with env-aware overrides.
-- Manage personas and system instructions (`config/personas/` or WebUI).
-- Connect MCP servers, discover tools, and apply per-agent tool guards.
-- Export OpenAPI specs at `/webui/api/openapi`.
-
-## For Developers
-### How it’s built
-- **Unified server**: backend serves the compiled WebUI from the same port (see `UNIFIED_SERVER.md`).
-- **Provider architecture**: messenger providers (Discord/Slack/Mattermost) + pluggable LLM providers (OpenAI, Flowise, OpenWebUI).
-- **Swarm semantics**: multiple bot instances coordinate through shared per-channel context (last ~10 messages) while keeping independent connections.
-- **Config layering**: env vars override config files; WebUI shows locked fields when owned by env.
-
-### Development & testing
-```bash
-npm run lint            # ESLint
-npm run check-types     # TypeScript type checking
-npm test                # Jest unit & integration tests
-npm run test:real       # Live Discord/Slack tests (requires live tokens)
-npm run dev:webui-only  # Run API + WebUI without messengers
-npm run dev:frontend-only # Run the WebUI in isolation (Vite)
-```
-Additional guides live in `docs/` (start at `docs/README.md`).
 
 ## Documentation & Roadmap
 - Start at [`docs/README.md`](docs/README.md) for a curated documentation hub.

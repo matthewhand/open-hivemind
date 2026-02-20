@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -11,7 +12,8 @@ import {
   ToastNotification,
   LoadingSpinner,
 } from './DaisyUI';
-import { apiService, Bot, StatusResponse } from '../services/api';
+import type { Bot, StatusResponse } from '../services/api';
+import { apiService } from '../services/api';
 import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity } from 'lucide-react';
 
 type DashboardTab = 'overview' | 'performance';
@@ -714,17 +716,17 @@ const UnifiedDashboard: React.FC = () => {
                     data-testid="performance-metrics"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <div className="radial-progress text-primary" style={{ "--value": performanceMetrics.cpuUsage, "--size": "6rem" } as React.CSSProperties} role="progressbar">
+                      <div className="radial-progress text-primary" style={{ '--value': performanceMetrics.cpuUsage, '--size': '6rem' } as React.CSSProperties} role="progressbar">
                         {Math.round(performanceMetrics.cpuUsage)}%
                       </div>
                       <span className="text-sm font-medium">CPU Usage</span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                       {/* Memory: Green at low, Red at high */}
+                      {/* Memory: Green at low, Red at high */}
                       <div 
                         className={`radial-progress ${performanceMetrics.memoryUsage > 80 ? 'text-error' : performanceMetrics.memoryUsage > 50 ? 'text-warning' : 'text-success'}`} 
-                        style={{ "--value": performanceMetrics.memoryUsage, "--size": "6rem" } as React.CSSProperties} 
+                        style={{ '--value': performanceMetrics.memoryUsage, '--size': '6rem' } as React.CSSProperties} 
                         role="progressbar"
                       >
                         {Math.round(performanceMetrics.memoryUsage)}%
@@ -733,7 +735,7 @@ const UnifiedDashboard: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                      <div className="radial-progress text-accent" style={{ "--value": performanceMetrics.throughput, "--size": "6rem" } as React.CSSProperties} role="progressbar">
+                      <div className="radial-progress text-accent" style={{ '--value': performanceMetrics.throughput, '--size': '6rem' } as React.CSSProperties} role="progressbar">
                         {Math.round(performanceMetrics.throughput)}%
                       </div>
                       <span className="text-sm font-medium">Throughput</span>
@@ -743,10 +745,10 @@ const UnifiedDashboard: React.FC = () => {
                       {/* Stability: Green at 100, Red at 0 */}
                       <div 
                         className={`radial-progress ${performanceMetrics.stabilityScore >= 95 ? 'text-success' : performanceMetrics.stabilityScore >= 70 ? 'text-warning' : 'text-error'}`} 
-                        style={{ "--value": performanceMetrics.stabilityScore, "--size": "6rem" } as React.CSSProperties} 
+                        style={{ '--value': performanceMetrics.stabilityScore, '--size': '6rem' } as React.CSSProperties} 
                         role="progressbar"
                       >
-                       {Math.round(performanceMetrics.stabilityScore)}%
+                        {Math.round(performanceMetrics.stabilityScore)}%
                       </div>
                       <span className="text-sm font-medium">Stability</span>
                     </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Badge, Button, Alert, Input, Modal, Select } from './DaisyUI';
 import {
@@ -6,7 +7,7 @@ import {
   PencilIcon,
   TrashIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 export interface EnvironmentVariable {
@@ -27,7 +28,7 @@ const mockVariables: EnvironmentVariable[] = [
     type: 'secret',
     description: 'Database connection string',
     isRequired: true,
-    category: 'database'
+    category: 'database',
   },
   {
     id: '2',
@@ -36,7 +37,7 @@ const mockVariables: EnvironmentVariable[] = [
     type: 'number',
     description: 'Maximum API requests per hour',
     isRequired: false,
-    category: 'api'
+    category: 'api',
   },
   {
     id: '3',
@@ -45,7 +46,7 @@ const mockVariables: EnvironmentVariable[] = [
     type: 'boolean',
     description: 'Enable caching system',
     isRequired: false,
-    category: 'performance'
+    category: 'performance',
   },
   {
     id: '4',
@@ -54,7 +55,7 @@ const mockVariables: EnvironmentVariable[] = [
     type: 'secret',
     description: 'JWT authentication secret',
     isRequired: true,
-    category: 'security'
+    category: 'security',
   },
 ];
 
@@ -95,12 +96,12 @@ const EnvironmentManager: React.FC = () => {
       setVariables(prev => prev.map(v =>
         v.id === editingVariable.id
           ? { ...v, ...formData }
-          : v
+          : v,
       ));
     } else {
       const newVariable: EnvironmentVariable = {
         id: Date.now().toString(),
-        ...formData
+        ...formData,
       };
       setVariables(prev => [...prev, newVariable]);
     }
@@ -140,20 +141,20 @@ const EnvironmentManager: React.FC = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'secret': return '🔒';
-      case 'boolean': return '☑️';
-      case 'number': return '🔢';
-      default: return '📝';
+    case 'secret': return '🔒';
+    case 'boolean': return '☑️';
+    case 'number': return '🔢';
+    default: return '📝';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'database': return 'info';
-      case 'api': return 'warning';
-      case 'security': return 'error';
-      case 'performance': return 'success';
-      default: return 'neutral';
+    case 'database': return 'info';
+    case 'api': return 'warning';
+    case 'security': return 'error';
+    case 'performance': return 'success';
+    default: return 'neutral';
     }
   };
 

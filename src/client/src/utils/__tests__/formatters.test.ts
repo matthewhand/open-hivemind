@@ -37,7 +37,7 @@ describe('formatters', () => {
       const result = formatDate(testDate, {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
       });
       expect(result).toBe('December 25, 2023');
     });

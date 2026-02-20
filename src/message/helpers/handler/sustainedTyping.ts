@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { TextChannel, NewsChannel } from 'discord.js';
+import type { TextChannel, NewsChannel } from 'discord.js';
 
 const debug = Debug('app:sustainedTyping');
 
@@ -18,58 +18,58 @@ const debug = Debug('app:sustainedTyping');
  *   typing.stop();
  */
 export class SustainedTypingIndicator {
-    private channel: TextChannel | NewsChannel;
-    private interval: NodeJS.Timeout | null = null;
-    private static readonly TYPING_REFRESH_MS = 8000; // Resend every 8 seconds
+  private channel: TextChannel | NewsChannel;
+  private interval: NodeJS.Timeout | null = null;
+  private static readonly TYPING_REFRESH_MS = 8000; // Resend every 8 seconds
 
-    constructor(channel: TextChannel | NewsChannel) {
-        this.channel = channel;
-    }
+  constructor(channel: TextChannel | NewsChannel) {
+    this.channel = channel;
+  }
 
-    /**
+  /**
      * Start sustained typing for a specified duration
      * @param durationMs - How long to show typing indicator (e.g., 15000 for 15 seconds)
      * @returns Promise that resolves after the duration
      */
-    async start(durationMs: number): Promise<void> {
-        debug(`Starting sustained typing for ${durationMs}ms in channel ${this.channel.id}`);
+  async start(durationMs: number): Promise<void> {
+    debug(`Starting sustained typing for ${durationMs}ms in channel ${this.channel.id}`);
 
-        // Send initial typing indicator
-        try {
-            await this.channel.sendTyping();
-        } catch (err) {
-            debug(`Failed to send initial typing: ${err}`);
-        }
-
-        // For durations longer than 8 seconds, set up interval to refresh typing
-        if (durationMs > SustainedTypingIndicator.TYPING_REFRESH_MS) {
-            this.interval = setInterval(async () => {
-                try {
-                    await this.channel.sendTyping();
-                    debug(`Refreshed typing indicator in ${this.channel.id}`);
-                } catch (err) {
-                    debug(`Failed to refresh typing: ${err}`);
-                }
-            }, SustainedTypingIndicator.TYPING_REFRESH_MS);
-        }
-
-        // Wait for the specified duration
-        await new Promise(resolve => setTimeout(resolve, durationMs));
-
-        // Clean up
-        this.stop();
+    // Send initial typing indicator
+    try {
+      await this.channel.sendTyping();
+    } catch (err) {
+      debug(`Failed to send initial typing: ${err}`);
     }
 
-    /**
+    // For durations longer than 8 seconds, set up interval to refresh typing
+    if (durationMs > SustainedTypingIndicator.TYPING_REFRESH_MS) {
+      this.interval = setInterval(async () => {
+        try {
+          await this.channel.sendTyping();
+          debug(`Refreshed typing indicator in ${this.channel.id}`);
+        } catch (err) {
+          debug(`Failed to refresh typing: ${err}`);
+        }
+      }, SustainedTypingIndicator.TYPING_REFRESH_MS);
+    }
+
+    // Wait for the specified duration
+    await new Promise(resolve => setTimeout(resolve, durationMs));
+
+    // Clean up
+    this.stop();
+  }
+
+  /**
      * Stop the sustained typing indicator
      */
-    stop(): void {
-        if (this.interval) {
-            clearInterval(this.interval);
-            this.interval = null;
-            debug(`Stopped sustained typing in ${this.channel.id}`);
-        }
+  stop(): void {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+      debug(`Stopped sustained typing in ${this.channel.id}`);
     }
+  }
 }
 
 /**
@@ -81,20 +81,20 @@ export class SustainedTypingIndicator {
  * @returns Delay in milliseconds
  */
 export function calculateTypingDelay(messageLength: number, responseLength: number = 0): number {
-    // Base delay: 3 seconds
-    const baseDelay = 3000;
+  // Base delay: 3 seconds
+  const baseDelay = 3000;
 
-    // Additional delay based on incoming message length (simulating reading)
-    // ~1 second per 100 characters
-    const readingDelay = Math.floor(messageLength / 100) * 1000;
+  // Additional delay based on incoming message length (simulating reading)
+  // ~1 second per 100 characters
+  const readingDelay = Math.floor(messageLength / 100) * 1000;
 
-    // Additional delay based on response length (simulating writing)
-    // ~0.5 seconds per 100 characters
-    const writingDelay = Math.floor(responseLength / 100) * 500;
+  // Additional delay based on response length (simulating writing)
+  // ~0.5 seconds per 100 characters
+  const writingDelay = Math.floor(responseLength / 100) * 500;
 
-    // Total delay with caps
-    const totalDelay = baseDelay + readingDelay + writingDelay;
+  // Total delay with caps
+  const totalDelay = baseDelay + readingDelay + writingDelay;
 
-    // Min 3 seconds, max 20 seconds
-    return Math.min(20000, Math.max(3000, totalDelay));
+  // Min 3 seconds, max 20 seconds
+  return Math.min(20000, Math.max(3000, totalDelay));
 }

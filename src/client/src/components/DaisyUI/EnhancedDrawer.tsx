@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Hexagon, Sun, Moon } from 'lucide-react';
@@ -26,7 +27,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
   onClose,
   navItems,
   variant = 'sidebar',
-  className = ''
+  className = '',
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const location = useLocation();
@@ -35,10 +36,10 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
   useEffect(() => {
     const findAndExpandParents = (items: NavItem[], path: string, parentIds: string[] = []): string[] => {
       for (const item of items) {
-        if (item.path === path) return parentIds;
+        if (item.path === path) {return parentIds;}
         if (item.children) {
           const result = findAndExpandParents(item.children, path, [...parentIds, item.id]);
-          if (result.length > 0) return result;
+          if (result.length > 0) {return result;}
         }
       }
       return [];
@@ -52,15 +53,15 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(itemId)) newSet.delete(itemId);
-      else newSet.add(itemId);
+      if (newSet.has(itemId)) {newSet.delete(itemId);}
+      else {newSet.add(itemId);}
       return newSet;
     });
   };
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    if (variant === 'mobile') onClose();
+    if (variant === 'mobile') {onClose();}
   };
 
   const renderNavItem = (item: NavItem, depth = 0) => {
@@ -80,7 +81,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              color: '#64748b'
+              color: '#64748b',
             }}>
               {item.label}
             </span>
@@ -96,7 +97,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (item.disabled) return;
+            if (item.disabled) {return;}
             if (item.path && item.path.length > 0) {
               handleNavigation(item.path);
             } else if (hasChildren) {
@@ -118,13 +119,13 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
             fontSize: '14px',
             fontWeight: 500,
             textAlign: 'left',
-            transition: 'background 0.15s ease'
+            transition: 'background 0.15s ease',
           }}
           onMouseEnter={(e) => {
-            if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+            if (!isActive) {e.currentTarget.style.background = 'rgba(255,255,255,0.1)';}
           }}
           onMouseLeave={(e) => {
-            if (!isActive) e.currentTarget.style.background = 'transparent';
+            if (!isActive) {e.currentTarget.style.background = 'transparent';}
           }}
         >
           <span style={{ marginRight: '12px', color: isActive ? '#ffffff' : '#94a3b8' }}>
@@ -138,7 +139,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
               fontSize: '11px',
               padding: '2px 6px',
               borderRadius: '10px',
-              marginLeft: '8px'
+              marginLeft: '8px',
             }}>
               {item.badge}
             </span>
@@ -164,7 +165,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
       display: 'flex',
       flexDirection: 'column',
       background: '#1e293b',
-      color: '#f1f5f9'
+      color: '#f1f5f9',
     }}>
       {/* Header */}
       <div style={{
@@ -172,7 +173,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
         borderBottom: '1px solid #334155',
         display: 'flex',
         alignItems: 'center',
-        gap: '12px'
+        gap: '12px',
       }}>
         <div style={{
           width: '36px',
@@ -181,7 +182,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
           borderRadius: '8px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}>
           <Hexagon size={20} color="#ffffff" />
         </div>
@@ -206,7 +207,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
         color: '#64748b',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
       }}>
         <span>v1.0.0</span>
         
@@ -229,7 +230,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
             alignItems: 'center',
             gap: '4px',
             color: '#e2e8f0',
-            transition: 'background 0.15s'
+            transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
@@ -244,13 +245,13 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          color: '#22c55e'
+          color: '#22c55e',
         }}>
           <span style={{
             width: '6px',
             height: '6px',
             background: '#22c55e',
-            borderRadius: '50%'
+            borderRadius: '50%',
           }}></span>
           Online
         </span>

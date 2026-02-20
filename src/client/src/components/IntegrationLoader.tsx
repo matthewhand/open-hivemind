@@ -1,4 +1,6 @@
-import { lazy, ComponentType, Suspense } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+import type { ComponentType} from 'react';
+import { lazy, Suspense } from 'react';
 import React from 'react';
 
 // Types for dynamic integration components
@@ -93,7 +95,7 @@ export class IntegrationLoader {
       'flowise',
       'mattermost',
       'openwebui',
-      'openswarm'
+      'openswarm',
     ];
   }
 
@@ -120,7 +122,7 @@ export class IntegrationLoader {
               component,
               enabled: manifest.enabled,
               requiredProviders: manifest.requiredProviders,
-              icon: componentInfo.icon
+              icon: componentInfo.icon,
             });
           } catch (componentError) {
             console.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
@@ -162,7 +164,7 @@ export class IntegrationLoader {
         version: '1.0.0',
         category: 'bot',
         enabled: true,
-        ui: {}
+        ui: {},
       };
 
       // For now, return default manifest
@@ -179,7 +181,7 @@ export class IntegrationLoader {
         version: '1.0.0',
         category: 'bot',
         enabled: true,
-        ui: {}
+        ui: {},
       };
 
       this.manifestCache.set(integrationId, defaultManifest);
@@ -203,7 +205,7 @@ export class IntegrationLoader {
         'Configuration',
         'Settings',
         'Dashboard',
-        'Status'
+        'Status',
       ];
 
       for (const componentPath of commonComponentPaths) {
@@ -216,7 +218,7 @@ export class IntegrationLoader {
             description: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()} component`,
             category: 'bot',
             component,
-            enabled: true
+            enabled: true,
           });
         } catch (componentError) {
           // Component doesn't exist, skip it
@@ -303,7 +305,7 @@ export function LazyIntegrationComponent({
   integrationId,
   componentPath,
   fallback = <div className="loading">Loading integration component...</div>,
-  onError = (error: Error) => <div className="error">Failed to load component: {error.message}</div>
+  onError = (error: Error) => <div className="error">Failed to load component: {error.message}</div>,
 }: {
   integrationId: string;
   componentPath: string;
@@ -317,9 +319,9 @@ export function LazyIntegrationComponent({
         console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
-          default: () => onError(error instanceof Error ? error : new Error('Unknown error'))
+          default: () => onError(error instanceof Error ? error : new Error('Unknown error')),
         };
-      })
+      }),
   );
 
   return (
@@ -383,7 +385,7 @@ export function useIntegrationComponents() {
     error,
     refresh,
     getComponentsByCategory,
-    getComponentById
+    getComponentById,
   };
 }
 

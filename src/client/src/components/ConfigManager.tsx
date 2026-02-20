@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Badge, Button, Input, Select, Modal, Alert, Toggle, Tooltip, Loading } from './DaisyUI';
 import {
@@ -191,9 +192,9 @@ const ConfigManager: React.FC = () => {
                   key={config.id}
                   onClick={() => handleEnvironmentChange(config.environment)}
                   className={`p-3 border rounded-box cursor-pointer transition-colors ${selectedEnv === config.environment
-                      ? 'bg-primary/10 border-primary'
-                      : 'bg-base-200 border-base-300 hover:bg-base-300'
-                    }`}
+                    ? 'bg-primary/10 border-primary'
+                    : 'bg-base-200 border-base-300 hover:bg-base-300'
+                  }`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-grow">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -6,16 +7,14 @@ import {
   Input,
   Select,
   Alert,
-  ToastNotification,
   Chip,
   Badge,
-  Loading
 } from './DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import ProviderConfig from './ProviderConfig';
 
@@ -120,7 +119,7 @@ const MessengerProvidersConfig: React.FC = () => {
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('Are you sure you want to delete this messenger provider?')) return;
+    if (!confirm('Are you sure you want to delete this messenger provider?')) { return; }
 
     try {
       const response = await fetch(`/api/admin/messenger-providers/${providerId}`, {
@@ -171,79 +170,103 @@ const MessengerProvidersConfig: React.FC = () => {
   };
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Messenger Providers</h2>
-        <Button
-          variant="primary"
-          startIcon={<PlusIcon className="w-5 h-5" />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add Messenger Provider
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={fetchProviders}
+            startIcon={<ChatBubbleLeftRightIcon className="w-5 h-5" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            startIcon={<PlusIcon className="w-5 h-5" />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Messenger Provider
+          </Button>
+        </div>
       </div>
 
       {error && (
-        <Alert type="error" className="mb-4">
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {providers.map((provider) => (
-          <Card key={provider.id} className="bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="card-title">{provider.name}</h3>
-                  <div className="mt-2">
-                    <Badge color="primary">{provider.type}</Badge>
+      {providers.length === 0 ? (
+        <div className="text-center py-12">
+          <ChatBubbleLeftRightIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+          <h3 className="text-lg font-semibold text-base-content/70">No Messenger Providers</h3>
+          <p className="text-base-content/50 mb-4">
+            Configure messenger providers to connect your bots to Discord, Slack, or Mattermost.
+          </p>
+          <Button
+            variant="primary"
+            startIcon={<PlusIcon className="w-5 h-5" />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Your First Provider
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {providers.map((provider) => (
+            <Card key={provider.id} className="bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="card-title">{provider.name}</h3>
+                    <div className="mt-2">
+                      <Badge variant="primary">{provider.type}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={provider.isActive ? 'success' : 'neutral'}>
+                      {provider.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      shape="circle"
+                      color="ghost"
+                      onClick={() => handleOpenDialog(provider)}
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      shape="circle"
+                      color="error"
+                      variant="secondary" className="btn-outline"
+                      onClick={() => handleDeleteProvider(provider.id)}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Badge color={provider.isActive ? 'success' : 'ghost'}>
-                    {provider.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+
+                <div className="flex items-center gap-4 mt-4">
+                  <span className="text-sm text-base-content/70">
+                    Status: {provider.isActive ? 'Active' : 'Inactive'}
+                  </span>
                   <Button
                     size="sm"
-                    shape="circle"
-                    color="ghost"
-                    onClick={() => handleOpenDialog(provider)}
+                    variant="secondary" className="btn-outline"
+                    onClick={() => handleToggleActive(provider.id, !provider.isActive)}
                   >
-                    <PencilIcon className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    shape="circle"
-                    color="error"
-                    variant="outline"
-                    onClick={() => handleDeleteProvider(provider.id)}
-                  >
-                    <TrashIcon className="w-4 h-4" />
+                    {provider.isActive ? 'Deactivate' : 'Activate'}
                   </Button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 mt-4">
-                <span className="text-sm text-base-content/70">
-                  Status: {provider.isActive ? 'Active' : 'Inactive'}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleToggleActive(provider.id, !provider.isActive)}
-                >
-                  {provider.isActive ? 'Deactivate' : 'Activate'}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <ModalForm
         open={openDialog}
@@ -284,11 +307,12 @@ const MessengerProvidersConfig: React.FC = () => {
       </ModalForm>
 
       {toast.show && (
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );

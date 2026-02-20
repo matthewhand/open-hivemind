@@ -5,7 +5,7 @@
  * @returns {number} The timestamp of the last typing event, or the current time if none is recorded.
  */
 export function getLastTypingTimestamp(typingTimestamps: Map<string, number>, channelId: string): number {
-    return typingTimestamps.get(channelId) || Date.now();
+  return typingTimestamps.get(channelId) || Date.now();
 }
 
 /**
@@ -15,7 +15,7 @@ export function getLastTypingTimestamp(typingTimestamps: Map<string, number>, ch
  * @returns {number} The timestamp of the last message event, or 0 if none is recorded.
  */
 export function getLastMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): number {
-    return messageTimestamps.get(channelId) || 0;
+  return messageTimestamps.get(channelId) || 0;
 }
 
 /**
@@ -24,5 +24,5 @@ export function getLastMessageTimestamp(messageTimestamps: Map<string, number>, 
  * @param {string} channelId - The ID of the channel where the message was sent.
  */
 export function logMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): void {
-    messageTimestamps.set(channelId, Date.now());
+  messageTimestamps.set(channelId, Date.now());
 }

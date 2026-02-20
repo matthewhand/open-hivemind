@@ -10,14 +10,14 @@ const debug = Debug('app:stripBotId');
  * @returns Message without bot ID references.
  */
 export function stripBotId(message: string, botId: string): string {
-    const botIdRegex = new RegExp(`<@${botId}>`, 'g');
-    debug(`Stripping bot ID: ${botId} from message: "${message}"`);
+  const botIdRegex = new RegExp(`<@${botId}>`, 'g');
+  debug(`Stripping bot ID: ${botId} from message: "${message}"`);
 
-    if ((messageConfig as any).get('MESSAGE_STRIP_BOT_ID')) {
-        const result = message.replace(botIdRegex, '');
-        debug(`Result after stripping: "${result}"`);
-        return result;
-    }
+  if ((messageConfig as any).get('MESSAGE_STRIP_BOT_ID')) {
+    const result = message.replace(botIdRegex, '');
+    debug(`Result after stripping: "${result}"`);
+    return result;
+  }
 
-    return message;
+  return message;
 }

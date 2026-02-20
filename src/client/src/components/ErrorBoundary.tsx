@@ -36,7 +36,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) return <>{this.props.fallback}</>;
+      if (this.props.fallback) {return <>{this.props.fallback}</>;}
 
       return (
         <div style={{
@@ -47,7 +47,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
           minHeight: '60vh',
           padding: '2rem',
           color: '#fff',
-          background: 'linear-gradient(135deg, #1f2937, #111827)'
+          background: 'linear-gradient(135deg, #1f2937, #111827)',
         }}>
           <h1 style={{ marginBottom: '0.5rem' }}>Something went wrong</h1>
           <p style={{ opacity: 0.8, marginBottom: '1rem' }}>
@@ -60,7 +60,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
               border: 'none',
               padding: '0.5rem 1rem',
               borderRadius: '0.375rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}>
               Reload
             </button>

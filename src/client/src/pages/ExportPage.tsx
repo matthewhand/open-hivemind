@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import {
   ArrowDownTrayIcon as DownloadIcon,
@@ -30,7 +31,7 @@ const ExportPage: React.FC = () => {
     } catch (error) {
       setToast({
         message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
-        type: 'error'
+        type: 'error',
       });
     }
   };
@@ -71,8 +72,8 @@ const ExportPage: React.FC = () => {
           </p>
 
           <div className="divide-y divide-base-200">
-            {exportOptions.map((option, index) => (
-              <div key={index} className="flex items-center justify-between py-4">
+            {exportOptions.map((option) => (
+              <div key={option.title} className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-base-200 rounded-lg text-primary">
                     {option.icon}

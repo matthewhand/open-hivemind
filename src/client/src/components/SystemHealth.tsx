@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -5,7 +6,7 @@ import {
   Badge,
   Alert,
   Accordion,
-  Divider
+  Divider,
 } from './DaisyUI';
 import {
   ChevronDownIcon,
@@ -57,7 +58,7 @@ interface HealthCheck {
 }
 
 const SystemHealth: React.FC<SystemHealthProps> = ({
-  refreshInterval = 30000
+  refreshInterval = 30000,
 }) => {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
@@ -144,35 +145,35 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   }, [refreshInterval]);
 
   const getStatusIcon = (status: string) => {
-    const className = "w-5 h-5";
+    const className = 'w-5 h-5';
     switch (status) {
-      case 'healthy':
-      case 'online':
-        return <CheckCircleIcon className={`${className} text-success`} />;
-      case 'warning':
-      case 'slow':
-        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
-      case 'error':
-      case 'offline':
-        return <ExclamationCircleIcon className={`${className} text-error`} />;
-      default:
-        return <InformationCircleIcon className={`${className} text-info`} />;
+    case 'healthy':
+    case 'online':
+      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'warning':
+    case 'slow':
+      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+    case 'error':
+    case 'offline':
+      return <ExclamationCircleIcon className={`${className} text-error`} />;
+    default:
+      return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy':
-      case 'online':
-        return 'success';
-      case 'warning':
-      case 'slow':
-        return 'warning';
-      case 'error':
-      case 'offline':
-        return 'error';
-      default:
-        return 'ghost';
+    case 'healthy':
+    case 'online':
+      return 'success';
+    case 'warning':
+    case 'slow':
+      return 'warning';
+    case 'error':
+    case 'offline':
+      return 'error';
+    default:
+      return 'ghost';
     }
   };
 
@@ -181,8 +182,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
 
-    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (days > 0) {return `${days}d ${hours}h ${minutes}m`;}
+    if (hours > 0) {return `${hours}h ${minutes}m`;}
     return `${minutes}m`;
   };
 
@@ -200,8 +201,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   };
 
   const formatLatency = (ms: number) => {
-    if (ms < 50) return `${ms.toFixed(0)}ms`;
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
+    if (ms < 50) {return `${ms.toFixed(0)}ms`;}
+    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
@@ -209,8 +210,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     const errorCount = healthChecks.filter(h => h.status === 'error').length;
     const warningCount = healthChecks.filter(h => h.status === 'warning').length;
 
-    if (errorCount > 0) return { status: 'error', message: `${errorCount} critical issues detected` };
-    if (warningCount > 0) return { status: 'warning', message: `${warningCount} warnings detected` };
+    if (errorCount > 0) {return { status: 'error', message: `${errorCount} critical issues detected` };}
+    if (warningCount > 0) {return { status: 'warning', message: `${warningCount} warnings detected` };}
     return { status: 'healthy', message: 'All systems operational' };
   };
 
@@ -221,7 +222,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       <Card>
         <Card.Body>
           <div className="flex justify-center items-center py-8">
-            <Loading size="lg" />
+            <span className="loading loading-spinner loading-lg"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>
@@ -251,8 +252,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <p className="text-sm">• System Uptime: {formatUptime(metrics?.uptime || 0)}</p>
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (

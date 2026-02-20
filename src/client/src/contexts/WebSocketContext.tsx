@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import type {
   MessageFlowEvent,
   PerformanceMetric,
-  AlertEvent
+  AlertEvent,
 } from '../../../src/webui/services/WebSocketService';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
@@ -33,12 +36,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
   const connect = () => {
-    if (socket?.connected) return;
+    if (socket?.connected) {return;}
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const newSocket = io(connectionTarget, {
       path: '/webui/socket.io',
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {

@@ -8,27 +8,27 @@ export interface DividerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Divider: React.FC<DividerProps> = ({
-    children,
-    vertical = false,
-    color,
-    className,
-    ...props
+  children,
+  vertical = false,
+  color,
+  className,
+  ...props
 }) => {
 
-    const classes = classNames(
-        'divider',
-        {
-            'divider-horizontal': vertical, // DaisyUI uses divider-horizontal for vertical layout (side-by-side)
-            [`divider-${color}`]: color,
-        },
-        className
-    );
+  const classes = classNames(
+    'divider',
+    {
+      'divider-horizontal': vertical, // DaisyUI uses divider-horizontal for vertical layout (side-by-side)
+      [`divider-${color}`]: color,
+    },
+    className,
+  );
 
-    return (
-        <div className={classes} {...props}>
-            {children}
-        </div>
-    );
+  return (
+    <div className={classes} {...props}>
+      {children}
+    </div>
+  );
 };
 
 export default Divider;

@@ -1,4 +1,4 @@
-import { IMessage } from './IMessage';
+import type { IMessage } from './IMessage';
 
 /**
  * Interface for low-level message transport providers.

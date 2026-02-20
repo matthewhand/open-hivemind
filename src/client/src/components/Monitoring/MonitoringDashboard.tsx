@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Alert, Button, Loading } from '../DaisyUI';
 import {
@@ -45,7 +46,7 @@ interface MonitoringDashboardProps {
 
 const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   refreshInterval = 30000,
-  onRefresh
+  onRefresh,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
         apiService.getStatus(),
-        apiService.getConfig()
+        apiService.getConfig(),
       ]);
 
       setSystemMetrics(systemData);
@@ -78,8 +79,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
           errorCount: Math.floor(Math.random() * 5),
           responseTime: Math.floor(Math.random() * 500) + 100,
           uptime: Math.floor(Math.random() * 86400),
-          lastActivity: new Date().toISOString()
-        }
+          lastActivity: new Date().toISOString(),
+        },
       }));
       setBots(botsWithStatus);
       setLastRefresh(new Date());
@@ -105,27 +106,27 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [refreshInterval]);
 
   const getOverallHealthStatus = () => {
-    if (!systemMetrics || !bots.length) return 'unknown';
+    if (!systemMetrics || !bots.length) {return 'unknown';}
 
     // Derive system health from StatusResponse data
     const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
       systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
 
     const botHealthIssues = bots.filter(bot =>
-      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning'
+      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
     ).length;
 
-    if (systemHealth === 'error' || botHealthIssues > 0) return 'error';
-    if (systemHealth === 'warning' || botHealthIssues > 0) return 'warning';
+    if (systemHealth === 'error' || botHealthIssues > 0) {return 'error';}
+    if (systemHealth === 'warning' || botHealthIssues > 0) {return 'warning';}
     return 'healthy';
   };
 
   const getHealthColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'success';
-      case 'warning': return 'warning';
-      case 'error': return 'error';
-      default: return 'ghost';
+    case 'healthy': return 'success';
+    case 'warning': return 'warning';
+    case 'error': return 'error';
+    default: return 'ghost';
     }
   };
 
@@ -155,13 +156,13 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               Last updated: {lastRefresh.toLocaleTimeString()}
             </span>
             <Button
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={handleRefresh}
               disabled={loading}
               className="flex items-center gap-2"
             >
               {loading ? (
-                <Loading size="sm" />
+                <span className="loading loading-spinner loading-sm"></span>
               ) : (
                 <ArrowPathIcon className="w-5 h-5" />
               )}

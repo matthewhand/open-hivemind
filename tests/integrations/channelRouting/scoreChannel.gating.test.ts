@@ -52,7 +52,7 @@ function mockChannelRouter(returnValue: number) {
  * - else returns 0
  */
 function mockDiscordMinimal() {
-  jest.doMock('../../../src/integrations/discord/DiscordService', () => {
+  jest.doMock('@hivemind/adapter-discord', () => {
     // defer resolution to use already-mocked modules
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('../../../src/config/messageConfig').default;
@@ -114,7 +114,7 @@ function mockMattermostMinimal() {
 }
 
 async function loadServices() {
-  const dMod: any = await import('../../../src/integrations/discord/DiscordService');
+  const dMod: any = await import('@hivemind/adapter-discord');
   const sMod: any = await import('../../../src/integrations/slack/SlackService');
   const mMod: any = await import('../../../src/integrations/mattermost/MattermostService');
 

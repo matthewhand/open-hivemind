@@ -32,7 +32,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   showPreview = true,
   compact = false,
   className = '',
-  position = 'dropdown'
+  position = 'dropdown',
 }) => {
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
@@ -54,8 +54,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#37cdbe',
         base100: '#ffffff',
         base200: '#f2f2f2',
-        base300: '#e5e6e6'
-      }
+        base300: '#e5e6e6',
+      },
     },
     {
       value: 'dark',
@@ -69,8 +69,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#1fb2a5',  
         base100: '#2a303c',
         base200: '#242933',
-        base300: '#20252e'
-      }
+        base300: '#20252e',
+      },
     },
     {
       value: 'cyberpunk',
@@ -84,8 +84,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#c7f59b',
         base100: '#0d1117',
         base200: '#161b22',
-        base300: '#21262d'
-      }
+        base300: '#21262d',
+      },
     },
     {
       value: 'synthwave',
@@ -99,8 +99,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#f3cc30',
         base100: '#1a0b2e',
         base200: '#16213e',
-        base300: '#0f3460'
-      }
+        base300: '#0f3460',
+      },
     },
     {
       value: 'dracula',
@@ -114,8 +114,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#ffb86c',
         base100: '#282a36',
         base200: '#44475a',
-        base300: '#6272a4'
-      }
+        base300: '#6272a4',
+      },
     },
     {
       value: 'forest',
@@ -129,8 +129,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#1db584',
         base100: '#171212',
         base200: '#191a19',
-        base300: '#1b1c1b'
-      }
+        base300: '#1b1c1b',
+      },
     },
     {
       value: 'corporate',
@@ -144,8 +144,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#0891b2',
         base100: '#ffffff',
         base200: '#f8fafc',
-        base300: '#e2e8f0'
-      }
+        base300: '#e2e8f0',
+      },
     },
     {
       value: 'retro',
@@ -159,8 +159,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#eab308',
         base100: '#f4f1eb',
         base200: '#ede8dd',
-        base300: '#d4c8b8'
-      }
+        base300: '#d4c8b8',
+      },
     },
     {
       value: 'cupcake',
@@ -174,8 +174,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#eeaf3a',
         base100: '#faf7f5',
         base200: '#efeae6',
-        base300: '#e7e2df'
-      }
+        base300: '#e7e2df',
+      },
     },
     {
       value: 'valentine',
@@ -189,9 +189,9 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         accent: '#3b82f6',
         base100: '#fef7f7',
         base200: '#fce7e7',
-        base300: '#f8d7da'
-      }
-    }
+        base300: '#f8d7da',
+      },
+    },
   ];
 
   const categories = [
@@ -199,7 +199,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     { value: 'light', label: 'Light Themes', emoji: '☀️' },
     { value: 'dark', label: 'Dark Themes', emoji: '🌙' },
     { value: 'colorful', label: 'Colorful Themes', emoji: '🌈' },
-    { value: 'minimal', label: 'Minimal Themes', emoji: '✨' }
+    { value: 'minimal', label: 'Minimal Themes', emoji: '✨' },
   ];
 
   // Load saved preferences

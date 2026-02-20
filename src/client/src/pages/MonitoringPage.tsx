@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, Server, Cpu, HardDrive, Wifi, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
@@ -76,9 +77,9 @@ const MonitoringPage: React.FC = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    if (days > 0) return `${days}d ${hours}h ${mins}m`;
-    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-    if (mins > 0) return `${mins}m ${secs}s`;
+    if (days > 0) { return `${days}d ${hours}h ${mins}m`; }
+    if (hours > 0) { return `${hours}h ${mins}m ${secs}s`; }
+    if (mins > 0) { return `${mins}m ${secs}s`; }
     return `${secs}s`;
   };
 
@@ -87,7 +88,7 @@ const MonitoringPage: React.FC = () => {
       case 'healthy': return 'text-green-500';
       case 'degraded': return 'text-yellow-500';
       case 'unhealthy': return 'text-red-500';
-      default: return 'text-gray-500';
+      default: return 'text-base-content/60';
     }
   };
 
@@ -96,7 +97,7 @@ const MonitoringPage: React.FC = () => {
       case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'degraded': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
       case 'unhealthy': return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default: return <Activity className="w-5 h-5 text-gray-500" />;
+      default: return <Activity className="w-5 h-5 text-base-content/60" />;
     }
   };
 
@@ -121,7 +122,7 @@ const MonitoringPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">System Monitoring</h1>
-            <p className="text-gray-500">Real-time system health and metrics</p>
+            <p className="text-base-content/60">Real-time system health and metrics</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -156,7 +157,12 @@ const MonitoringPage: React.FC = () => {
             {getStatusIcon(health.status)}
             <div>
               <h3 className="font-bold">System Status: {health.status.toUpperCase()}</h3>
-              <div className="text-xs">Last updated: {new Date(health.timestamp).toLocaleString()}</div>
+              <div className="text-xs">
+                {health.status === 'unhealthy' && memoryPercentage > 90 && (
+                  <span className="mr-2">⚠️ High memory (consider restarting)</span>
+                )}
+                Last updated: {new Date(health.timestamp).toLocaleString()}
+              </div>
             </div>
           </div>
 
@@ -166,7 +172,7 @@ const MonitoringPage: React.FC = () => {
             <div className="card bg-base-100 border border-base-300">
               <div className="card-body py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-gray-500">
+                  <div className="flex items-center gap-2 text-base-content/60">
                     <Clock className="w-5 h-5" />
                     <span className="text-sm">Uptime</span>
                   </div>
@@ -181,7 +187,7 @@ const MonitoringPage: React.FC = () => {
             <div className="card bg-base-100 border border-base-300">
               <div className="card-body py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-gray-500">
+                  <div className="flex items-center gap-2 text-base-content/60">
                     <Server className="w-5 h-5" />
                     <span className="text-sm">Memory</span>
                   </div>
@@ -194,7 +200,7 @@ const MonitoringPage: React.FC = () => {
                   value={memoryPercentage}
                   max={100}
                 />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-base-content/50 mt-1">
                   <span>{Math.round(memoryPercentage)}%</span>
                   <span>{health.memory.total}MB total</span>
                 </div>
@@ -205,7 +211,7 @@ const MonitoringPage: React.FC = () => {
             <div className="card bg-base-100 border border-base-300">
               <div className="card-body py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-gray-500">
+                  <div className="flex items-center gap-2 text-base-content/60">
                     <Cpu className="w-5 h-5" />
                     <span className="text-sm">CPU Time</span>
                   </div>
@@ -213,7 +219,7 @@ const MonitoringPage: React.FC = () => {
                 <div className="text-2xl font-bold">
                   {((health.cpu.user + health.cpu.system) / 1000).toFixed(1)}s
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-base-content/50">
                   User: {(health.cpu.user / 1000).toFixed(1)}s | System: {(health.cpu.system / 1000).toFixed(1)}s
                 </div>
               </div>
@@ -223,7 +229,7 @@ const MonitoringPage: React.FC = () => {
             <div className="card bg-base-100 border border-base-300">
               <div className="card-body py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-gray-500">
+                  <div className="flex items-center gap-2 text-base-content/60">
                     <Wifi className="w-5 h-5" />
                     <span className="text-sm">Messages</span>
                   </div>
@@ -231,7 +237,7 @@ const MonitoringPage: React.FC = () => {
                 <div className="text-2xl font-bold text-primary">
                   {health.performance.messagesProcessed}
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-base-content/50">
                   Avg: {health.performance.averageResponseTime.toFixed(0)}ms
                 </div>
               </div>
@@ -262,6 +268,7 @@ const MonitoringPage: React.FC = () => {
               <div className={`stat-value text-sm ${getStatusColor(health.errors.health)}`}>
                 {health.errors.health.toUpperCase()}
               </div>
+              <div className="stat-desc text-xs">Based on error rate</div>
             </div>
           </div>
 
@@ -279,8 +286,8 @@ const MonitoringPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {health.errors.topTypes.map((err, i) => (
-                        <tr key={i}>
+                      {health.errors.topTypes.map((err) => (
+                        <tr key={err.type}>
                           <td className="font-mono text-sm">{err.type}</td>
                           <td><span className="badge badge-error">{err.count}</span></td>
                         </tr>
@@ -295,9 +302,9 @@ const MonitoringPage: React.FC = () => {
       ) : (
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body text-center py-12">
-            <Activity className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-500">Unable to load health data</h3>
-            <p className="text-gray-400">Check that the server is running</p>
+            <Activity className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+            <h3 className="text-lg font-medium text-base-content/60">Unable to load health data</h3>
+            <p className="text-base-content/50">Check that the server is running</p>
           </div>
         </div>
       )}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -28,7 +29,7 @@ const ActivityCharts: React.FC = () => {
         cpuUsage: Math.round(metric.cpuUsage * 100), // Convert to percentage
         activeConnections: metric.activeConnections,
         messageRate: metric.messageRate,
-        errorRate: metric.errorRate
+        errorRate: metric.errorRate,
       }));
 
       setChartData(processedData);
@@ -37,13 +38,13 @@ const ActivityCharts: React.FC = () => {
 
   const getMetricLabel = (metric: string) => {
     switch (metric) {
-      case 'responseTime': return 'Response Time (ms)';
-      case 'memoryUsage': return 'Memory Usage (MB)';
-      case 'cpuUsage': return 'CPU Usage (%)';
-      case 'activeConnections': return 'Active Connections';
-      case 'messageRate': return 'Message Rate';
-      case 'errorRate': return 'Error Rate';
-      default: return metric;
+    case 'responseTime': return 'Response Time (ms)';
+    case 'memoryUsage': return 'Memory Usage (MB)';
+    case 'cpuUsage': return 'CPU Usage (%)';
+    case 'activeConnections': return 'Active Connections';
+    case 'messageRate': return 'Message Rate';
+    case 'errorRate': return 'Error Rate';
+    default: return metric;
     }
   };
 
@@ -92,7 +93,7 @@ const ActivityCharts: React.FC = () => {
                 contentStyle={{
                   backgroundColor: 'hsl(var(--b1))',
                   borderColor: 'hsl(var(--b3))',
-                  color: 'hsl(var(--bc))'
+                  color: 'hsl(var(--bc))',
                 }}
               />
               <Legend />

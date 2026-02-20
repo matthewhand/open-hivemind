@@ -1,16 +1,19 @@
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { BotConfig } from '@src/types/config';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { MCPConfig } from '../mcp/MCPService';
-import { MCPGuardConfig } from '../mcp/MCPGuard';
+import type { MCPConfig } from '../mcp/MCPService';
+import type { MCPGuardConfig } from '../mcp/MCPGuard';
 import { webUIStorage } from '../storage/webUIStorage';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 import { HivemindError, ErrorUtils, AppError } from '../types/errors';
+import { getLlmDefaultStatus } from '../config/llmDefaultStatus';
+import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 
 const debug = Debug('app:BotManager');
 
@@ -33,8 +36,8 @@ export interface BotInstance {
 export interface CreateBotRequest {
   name: string;
   messageProvider: 'discord' | 'slack' | 'mattermost';
-  llmProvider: 'openai' | 'flowise' | 'openwebui';
-  config: {
+  llmProvider?: 'openai' | 'flowise' | 'openwebui' | 'openswarm';
+  config?: {
     discord?: {
       token: string;
       voiceChannelId?: string;
@@ -154,7 +157,8 @@ export class BotManager extends EventEmitter {
       // Add configured bots
       for (const bot of configuredBots) {
         const botInstance: BotInstance = {
-          id: crypto.randomUUID(),
+          // Use bot name as stable ID - random UUIDs break getBot() lookups
+          id: bot.name,
           name: bot.name,
           messageProvider: bot.messageProvider,
           llmProvider: bot.llmProvider,
@@ -166,7 +170,7 @@ export class BotManager extends EventEmitter {
           systemInstruction: bot.systemInstruction,
           mcpServers: bot.mcpServers || [],
           mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name)
+          envOverrides: checkBotEnvOverrides(bot.name),
         };
         botInstances.push(botInstance);
       }
@@ -230,19 +234,19 @@ export class BotManager extends EventEmitter {
         id: botId,
         name: request.name,
         messageProvider: request.messageProvider,
-        llmProvider: request.llmProvider,
+        llmProvider: request.llmProvider?.trim() || '',
         isActive: false, // New bots start inactive
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
-        config: this.sanitizeConfig(request.config),
+        config: this.sanitizeConfig(request.config || {}),
         persona: request.persona,
         systemInstruction: request.systemInstruction,
         mcpServers: request.mcpServers,
-        mcpGuard: request.mcpGuard
+        mcpGuard: request.mcpGuard,
       };
 
       // Store sensitive configuration securely
-      await this.storeSecureConfig(botId, request.config);
+      await this.storeSecureConfig(botId, request.config || {});
 
       // Add to web UI storage
       webUIStorage.saveAgent(botInstance);
@@ -257,7 +261,7 @@ export class BotManager extends EventEmitter {
       debug('Error creating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -299,12 +303,12 @@ export class BotManager extends EventEmitter {
       const cloneRequest: CreateBotRequest = {
         name: newName,
         messageProvider: sourceBot.messageProvider as 'discord' | 'slack' | 'mattermost',
-        llmProvider: sourceBot.llmProvider as 'openai' | 'flowise' | 'openwebui',
+        llmProvider: (sourceBot.llmProvider || undefined) as 'openai' | 'flowise' | 'openwebui' | 'openswarm' | undefined,
         config: sourceBot.config as CreateBotRequest['config'],
         persona: sourceBot.persona,
         systemInstruction: sourceBot.systemInstruction,
         mcpServers: sourceBot.mcpServers,
-        mcpGuard: sourceBot.mcpGuard
+        mcpGuard: sourceBot.mcpGuard,
       };
 
       const clonedBot = await this.createBot(cloneRequest);
@@ -319,7 +323,7 @@ export class BotManager extends EventEmitter {
       debug('Error cloning bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to clone bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -348,7 +352,7 @@ export class BotManager extends EventEmitter {
         persona: updates.persona !== undefined ? updates.persona : existingBot.persona,
         systemInstruction: updates.systemInstruction !== undefined ? updates.systemInstruction : existingBot.systemInstruction,
         mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : existingBot.mcpServers,
-        mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard
+        mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard,
       };
 
       // Store updated secure config if provided
@@ -369,7 +373,7 @@ export class BotManager extends EventEmitter {
       debug('Error updating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to update bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -400,11 +404,13 @@ export class BotManager extends EventEmitter {
       debug('Error deleting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to delete bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
 
+  /**
+   * Start a bot instance
   /**
    * Start a bot instance
    */
@@ -415,12 +421,37 @@ export class BotManager extends EventEmitter {
         throw new Error('Bot not found');
       }
 
-      // Update bot status
+      // Persist enabled state to user config file
+      const userConfigStore = UserConfigStore.getInstance();
+      await userConfigStore.setBotDisabled(bot.name, false);
+      debug(`Persisted enabled state for bot: ${bot.name}`);
+
+      // Update bot status in memory
       const updatedBot = { ...bot, isActive: true, lastModified: new Date().toISOString() };
       this.customBots.set(botId, updatedBot);
       this.saveCustomBots();
 
       await this.startBotById(botId);
+
+      // Send Welcome Message when bot is enabled (if configured)
+      const enableWelcome = process.env.ENABLE_WELCOME_MESSAGE === 'true';
+      if (enableWelcome) {
+        try {
+          const service = await this.getMessengerService(bot.messageProvider);
+          if (service) {
+            const defaultChannel = (bot.config as any)?.slack?.defaultChannelId ||
+              (bot.config as any)?.discord?.defaultChannelId ||
+              service.getDefaultChannel?.();
+            if (defaultChannel) {
+              const welcomeText = process.env.WELCOME_MESSAGE_TEXT || '🤖 I am now online and ready to assist.';
+              await service.sendMessageToChannel(defaultChannel, welcomeText);
+              debug(`Sent welcome message for bot ${bot.name} to channel ${defaultChannel}`);
+            }
+          }
+        } catch (welcomeErr: any) {
+          debug(`Failed to send welcome message for ${bot.name}:`, welcomeErr?.message);
+        }
+      }
 
       debug(`Started bot: ${bot.name} (${botId})`);
 
@@ -432,7 +463,7 @@ export class BotManager extends EventEmitter {
       debug('Error starting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -447,12 +478,23 @@ export class BotManager extends EventEmitter {
         throw new Error('Bot not found');
       }
 
-      // Update bot status
+      // Persist disabled state to user config file
+      const userConfigStore = UserConfigStore.getInstance();
+      await userConfigStore.setBotDisabled(bot.name, true);
+      debug(`Persisted disabled state for bot: ${bot.name}`);
+
+      // Update bot status in memory
       const updatedBot = { ...bot, isActive: false, lastModified: new Date().toISOString() };
       this.customBots.set(botId, updatedBot);
       this.saveCustomBots();
 
-      // Implement actual bot shutdown logic
+      // Use integration-agnostic shutdown
+      try {
+        await this.shutdownBotProvider(bot);
+      } catch (shutdownError: any) {
+        debug(`Failed to disconnect bot ${bot.name}: ${shutdownError?.message || shutdownError}`);
+      }
+
       // Stop any active connections or services associated with this bot
       const botWithServices = bot as BotInstance & { services?: Array<{ stop?: () => Promise<void> }> };
       if (botWithServices.services && Array.isArray(botWithServices.services)) {
@@ -493,7 +535,7 @@ export class BotManager extends EventEmitter {
       debug('Error stopping bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
-        'configuration'
+        'configuration',
       );
     }
   }
@@ -510,17 +552,24 @@ export class BotManager extends EventEmitter {
       throw new Error('Valid message provider is required (discord, slack, or mattermost)');
     }
 
-    if (!request.llmProvider || !['openai', 'flowise', 'openwebui'].includes(request.llmProvider)) {
-      throw new Error('Valid LLM provider is required (openai, flowise, or openwebui)');
+    if (!request.llmProvider || request.llmProvider.trim() === '') {
+      const llmDefaults = getLlmDefaultStatus();
+      if (!llmDefaults.configured) {
+        throw new Error('LLM provider is required when no default LLM is configured');
+      }
+    } else if (!['openai', 'flowise', 'openwebui', 'openswarm'].includes(request.llmProvider)) {
+      throw new Error('Valid LLM provider is required (openai, flowise, openwebui, or openswarm)');
     }
 
-    this.validateBotConfig(request.config);
+    this.validateBotConfig(request.config || {});
   }
 
   /**
    * Validate bot configuration
    */
   private validateBotConfig(config: Record<string, unknown>): void {
+    if (!config) return;
+
     // Validate message provider specific config
     if (config.discord && typeof config.discord === 'object') {
       const discordConfig = config.discord as Record<string, unknown>;
@@ -579,7 +628,7 @@ export class BotManager extends EventEmitter {
     const secureConfigId = `bot_${botId}`;
     const secureData = {
       ...config,
-      storedAt: new Date().toISOString()
+      storedAt: new Date().toISOString(),
     };
 
     await this.secureConfigManager.storeConfig({
@@ -587,7 +636,7 @@ export class BotManager extends EventEmitter {
       name: `Bot ${botId} Configuration`,
       type: 'bot',
       data: secureData,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     } as Parameters<typeof this.secureConfigManager.storeConfig>[0]);
   }
 
@@ -661,7 +710,7 @@ export class BotManager extends EventEmitter {
   public async startAllConfiguredBots(): Promise<void> {
     try {
       debug('Starting all configured bots...');
-      
+
       const allBots = await Promise.resolve(this.getAllBots());
       const startPromises = allBots.map(async (bot: BotInstance) => {
         try {
@@ -678,12 +727,12 @@ export class BotManager extends EventEmitter {
       });
 
       await Promise.allSettled(startPromises);
-      
+
       const runningBots = this.getRunningBotsCount();
       debug(`Bot startup completed: ${runningBots}/${allBots.length} bots running`);
-      
+
       this.emit('allBotsStarted', { total: allBots.length, running: runningBots });
-      
+
     } catch (error: HivemindError) {
       debug('Error starting all bots:', ErrorUtils.getMessage(error));
       throw error;
@@ -696,7 +745,7 @@ export class BotManager extends EventEmitter {
   public async stopAllConfiguredBots(): Promise<void> {
     try {
       debug('Stopping all bots...');
-      
+
       const allBots = await this.getAllBots();
       const stopPromises = allBots.map(async (bot: BotInstance) => {
         try {
@@ -709,14 +758,53 @@ export class BotManager extends EventEmitter {
       });
 
       await Promise.allSettled(stopPromises);
-      
+
       debug('All bots stopped');
       this.emit('allBotsStopped');
-      
+
     } catch (error: HivemindError) {
       debug('Error stopping all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
+  }
+
+  /**
+   * Get chat history for a bot
+   */
+  /**
+   * Get chat history for a bot
+   */
+  public async getBotHistory(botId: string, channelId?: string, limit: number = 20): Promise<any[]> {
+    try {
+      const bot = await this.getBot(botId);
+      if (!bot) {
+        throw new Error('Bot not found');
+      }
+
+      const targetChannel = channelId || (bot.config as any)?.slack?.defaultChannelId || (bot.config as any)?.discord?.defaultChannelId;
+      if (!targetChannel) {
+        debug(`No channel specified for bot ${bot.name} history`);
+        return [];
+      }
+
+      const service = await this.getMessengerService(bot.messageProvider);
+      if (service) {
+        return await service.getMessagesFromChannel(targetChannel, limit);
+      }
+
+      return [];
+    } catch (error: any) {
+      debug(`Failed to get bot history for ${botId}:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Helper to get the messenger service instance based on provider name.
+   * Uses ProviderRegistry for integration-agnostic dynamic loading.
+   */
+  private async getMessengerService(provider: string): Promise<import('../message/interfaces/IMessengerService').IMessengerService | null> {
+    return getMessengerServiceByProvider(provider);
   }
 
   /**
@@ -725,7 +813,6 @@ export class BotManager extends EventEmitter {
   public async startBotById(botId: string): Promise<void> {
     try {
       debug(`Starting bot: ${botId}`);
-      
       const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
@@ -736,16 +823,11 @@ export class BotManager extends EventEmitter {
         return;
       }
 
-      // Initialize the bot based on its provider
       await this.initializeBotProvider(bot);
-      
-      // Mark bot as running (this would be tracked in a runtime state map)
       this.setBotRunningState(botId, true);
-      
       debug(`Bot ${bot.name} started successfully`);
       this.emit('botStarted', { botId, name: bot.name });
-      
-    } catch (error: HivemindError) {
+    } catch (error: any) {
       debug(`Failed to start bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
       throw error;
@@ -758,7 +840,6 @@ export class BotManager extends EventEmitter {
   public async stopBotById(botId: string): Promise<void> {
     try {
       debug(`Stopping bot: ${botId}`);
-      
       const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
@@ -769,16 +850,11 @@ export class BotManager extends EventEmitter {
         return;
       }
 
-      // Shutdown the bot provider
       await this.shutdownBotProvider(bot);
-      
-      // Mark bot as stopped
       this.setBotRunningState(botId, false);
-      
       debug(`Bot ${bot.name} stopped successfully`);
       this.emit('botStopped', { botId, name: bot.name });
-      
-    } catch (error: HivemindError) {
+    } catch (error: any) {
       debug(`Failed to stop bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
       throw error;
@@ -791,48 +867,42 @@ export class BotManager extends EventEmitter {
   public async restartBot(botId: string): Promise<void> {
     try {
       debug(`Restarting bot: ${botId}`);
-      
       await this.stopBotById(botId);
-      
-      // Small delay to ensure clean shutdown
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       await this.startBotById(botId);
-      
       debug(`Bot ${botId} restarted successfully`);
       this.emit('botRestarted', { botId });
-      
-    } catch (error: HivemindError) {
+    } catch (error: any) {
       debug(`Failed to restart bot ${botId}:`, ErrorUtils.getMessage(error));
       throw error;
     }
   }
 
   /**
-   * Initialize bot provider (Discord, Slack, etc.)
+   * Initialize bot provider
    */
   private async initializeBotProvider(bot: BotInstance): Promise<void> {
     try {
       // Get secure configuration
       const secureConfig = await this.secureConfigManager.getConfig(`bot_${bot.id}`);
-      
-      switch (bot.messageProvider.toLowerCase()) {
-        case 'discord':
-          await this.initializeDiscordBot(bot, secureConfig?.data || {});
-          break;
-        case 'slack':
-          await this.initializeSlackBot(bot, secureConfig?.data || {});
-          break;
-        case 'mattermost':
-          await this.initializeMattermostBot(bot, secureConfig?.data || {});
-          break;
-        case 'telegram':
-          await this.initializeTelegramBot(bot, secureConfig?.data || {});
-          break;
-        default:
-          throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
+      const mergedConfig = { ...bot.config, ...(secureConfig?.data || {}) };
+
+      const service = await this.getMessengerService(bot.messageProvider);
+
+      if (service && typeof (service as any).addBot === 'function') {
+        await (service as any).addBot({
+          ...mergedConfig,
+          name: bot.name
+        });
+        debug(`${bot.messageProvider} bot ${bot.name} initialized`);
+      } else {
+        if (['mattermost', 'telegram'].includes(bot.messageProvider)) {
+          debug(`${bot.messageProvider} not fully implemented yet`);
+          return;
+        }
+        throw new Error(`Provider ${bot.messageProvider} service unavailable or does not support addBot`);
       }
-    } catch (error: HivemindError) {
+    } catch (error: any) {
       debug(`Error initializing bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
       throw error;
     }
@@ -840,122 +910,22 @@ export class BotManager extends EventEmitter {
 
   /**
    * Shutdown bot provider
+   * Uses ProviderRegistry for integration-agnostic loading.
    */
   private async shutdownBotProvider(bot: BotInstance): Promise<void> {
     try {
-      switch (bot.messageProvider.toLowerCase()) {
-        case 'discord':
-          await this.shutdownDiscordBot(bot);
-          break;
-        case 'slack':
-          await this.shutdownSlackBot(bot);
-          break;
-        case 'mattermost':
-          await this.shutdownMattermostBot(bot);
-          break;
-        case 'telegram':
-          await this.shutdownTelegramBot(bot);
-          break;
-        default:
-          debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
+      const service = await this.getMessengerService(bot.messageProvider);
+      // Check if the service supports a disconnect/removeBot method
+      if (service && typeof (service as any).disconnectBot === 'function') {
+        await (service as any).disconnectBot(bot.name);
+      } else if (service && typeof (service as any).removeBot === 'function') {
+        await (service as any).removeBot(bot.name);
       }
-    } catch (error: HivemindError) {
+      debug(`Shutdown bot provider for ${bot.name}`);
+    } catch (error: any) {
       debug(`Error shutting down bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
       throw error;
     }
-  }
-
-  /**
-   * Initialize Discord bot
-   */
-  private async initializeDiscordBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
-    debug(`Initializing Discord bot: ${bot.name}`);
-
-    const discordConfig = secureConfig?.discord as Record<string, unknown>;
-    if (!discordConfig?.token || typeof discordConfig.token !== 'string') {
-      throw new Error('Discord token not found in secure configuration');
-    }
-
-    // Here you would initialize the Discord service with the bot's configuration
-    // This is a placeholder - actual implementation would use DiscordService
-    debug(`Discord bot ${bot.name} initialized with token: ${discordConfig.token.substring(0, 10)}...`);
-  }
-
-  /**
-   * Initialize Slack bot
-   */
-  private async initializeSlackBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
-    debug(`Initializing Slack bot: ${bot.name}`);
-
-    const slackConfig = secureConfig?.slack as Record<string, unknown>;
-    if (!slackConfig?.botToken || typeof slackConfig.botToken !== 'string') {
-      throw new Error('Slack bot token not found in secure configuration');
-    }
-
-    // Here you would initialize the Slack service with the bot's configuration
-    debug(`Slack bot ${bot.name} initialized`);
-  }
-
-  /**
-   * Initialize Mattermost bot
-   */
-  private async initializeMattermostBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
-    debug(`Initializing Mattermost bot: ${bot.name}`);
-
-    const mattermostConfig = secureConfig?.mattermost as Record<string, unknown>;
-    if (!mattermostConfig?.token || typeof mattermostConfig.token !== 'string') {
-      throw new Error('Mattermost token not found in secure configuration');
-    }
-
-    // Here you would initialize the Mattermost service
-    debug(`Mattermost bot ${bot.name} initialized`);
-  }
-
-  /**
-   * Initialize Telegram bot
-   */
-  private async initializeTelegramBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
-    debug(`Initializing Telegram bot: ${bot.name}`);
-
-    const telegramConfig = secureConfig?.telegram as Record<string, unknown>;
-    if (!telegramConfig?.token || typeof telegramConfig.token !== 'string') {
-      throw new Error('Telegram token not found in secure configuration');
-    }
-
-    // Here you would initialize the Telegram service
-    debug(`Telegram bot ${bot.name} initialized`);
-  }
-
-  /**
-   * Shutdown Discord bot
-   */
-  private async shutdownDiscordBot(bot: BotInstance): Promise<void> {
-    debug(`Shutting down Discord bot: ${bot.name}`);
-    // Implementation for Discord shutdown
-  }
-
-  /**
-   * Shutdown Slack bot
-   */
-  private async shutdownSlackBot(bot: BotInstance): Promise<void> {
-    debug(`Shutting down Slack bot: ${bot.name}`);
-    // Implementation for Slack shutdown
-  }
-
-  /**
-   * Shutdown Mattermost bot
-   */
-  private async shutdownMattermostBot(bot: BotInstance): Promise<void> {
-    debug(`Shutting down Mattermost bot: ${bot.name}`);
-    // Implementation for Mattermost shutdown
-  }
-
-  /**
-   * Shutdown Telegram bot
-   */
-  private async shutdownTelegramBot(bot: BotInstance): Promise<void> {
-    debug(`Shutting down Telegram bot: ${bot.name}`);
-    // Implementation for Telegram shutdown
   }
 
   // Runtime state management (in-memory tracking)
@@ -993,7 +963,7 @@ export class BotManager extends EventEmitter {
       name: bot.name,
       provider: bot.messageProvider,
       isRunning: this.isBotRunning(bot.id),
-      isActive: bot.isActive
+      isActive: bot.isActive,
     }));
   }
 
@@ -1009,13 +979,13 @@ export class BotManager extends EventEmitter {
   }> {
     const allBots = await this.getAllBots();
     const activeBots = allBots.filter((bot: BotInstance) => bot.isActive);
-    
+
     return {
       totalBots: allBots.length,
       runningBots: this.getRunningBotsCount(),
       activeBots: activeBots.length,
       systemUptime: process.uptime() * 1000, // milliseconds
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     };
   }
 
@@ -1039,7 +1009,7 @@ export class BotManager extends EventEmitter {
           // Perform health checks specific to the bot type
           const isHealthy = await this.checkBotHealth(bot);
           status = isHealthy ? 'healthy' : 'unhealthy';
-          
+
           if (!isHealthy) {
             issues.push('Bot health check failed');
           }
@@ -1054,7 +1024,7 @@ export class BotManager extends EventEmitter {
         name: bot.name,
         status,
         lastCheck: new Date(),
-        issues: issues.length > 0 ? issues : undefined
+        issues: issues.length > 0 ? issues : undefined,
       };
     });
 
@@ -1068,7 +1038,7 @@ export class BotManager extends EventEmitter {
     try {
       // Basic health check - can be extended per provider
       const secureConfig = await this.secureConfigManager.getConfig(`bot_${bot.id}`);
-      
+
       if (!secureConfig) {
         debug(`No secure config found for bot ${bot.name}`);
         return false;

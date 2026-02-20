@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { BotConfiguration } from '../database/DatabaseManager';
-import { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
+import type { BotConfiguration } from '../database/DatabaseManager';
+import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 
 interface ToolConfig {
   guards?: {
@@ -10,24 +10,37 @@ interface ToolConfig {
   };
 }
 
+interface BotDisabledState {
+  disabled: boolean;
+  disabledAt?: string;
+}
+
+interface GeneralSettings {
+  [key: string]: any;  // Flexible key-value store for general settings
+}
+
 export class UserConfigStore {
   private static instance: UserConfigStore;
   private config: {
     toolSettings?: Record<string, ToolConfig>;
     bots?: BotConfiguration[];
+    botDisabledStates?: Record<string, BotDisabledState>;
+    generalSettings?: GeneralSettings;
   } = {};
+  private configPath: string;
 
   private constructor() {
+    this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
     // Load config synchronously for now to avoid async issues in constructor
     try {
-      const configPath = path.join(process.cwd(), 'config', 'user-config.json');
-      const data = require('fs').readFileSync(configPath, 'utf-8');
+      const data = require('fs').readFileSync(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
     } catch (error) {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},
-        bots: []
+        bots: [],
+        botDisabledStates: {},
       };
     }
   }
@@ -41,16 +54,71 @@ export class UserConfigStore {
 
   private async loadConfig(): Promise<void> {
     try {
-      const configPath = path.join(process.cwd(), 'config', 'user-config.json');
-      const data = await fs.readFile(configPath, 'utf-8');
+      const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
     } catch (error) {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},
-        bots: []
+        bots: [],
+        botDisabledStates: {},
       };
     }
+  }
+
+  /**
+   * Save the current configuration to disk.
+   */
+  public async saveConfig(): Promise<void> {
+    try {
+      const configDir = path.dirname(this.configPath);
+      // Ensure directory exists
+      await fs.mkdir(configDir, { recursive: true });
+      await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('Failed to save user config:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a bot is disabled.
+   * @param botName The name of the bot.
+   * @returns true if bot is disabled, false otherwise.
+   */
+  public isBotDisabled(botName: string): boolean {
+    return this.config.botDisabledStates?.[botName]?.disabled ?? false;
+  }
+
+  /**
+   * Set bot disabled state and persist to config file.
+   * @param botName The name of the bot.
+   * @param disabled Whether the bot should be disabled.
+   */
+  public async setBotDisabled(botName: string, disabled: boolean): Promise<void> {
+    if (!this.config.botDisabledStates) {
+      this.config.botDisabledStates = {};
+    }
+
+    this.config.botDisabledStates[botName] = {
+      disabled,
+      disabledAt: disabled ? new Date().toISOString() : undefined,
+    };
+
+    await this.saveConfig();
+  }
+
+  /**
+   * Get all disabled bot names.
+   * @returns Array of disabled bot names.
+   */
+  public getDisabledBots(): string[] {
+    if (!this.config.botDisabledStates) {
+      return [];
+    }
+    return Object.entries(this.config.botDisabledStates)
+      .filter(([_, state]) => state.disabled)
+      .map(([name]) => name);
   }
 
   public getToolConfig(toolName: string): ToolConfig | undefined {
@@ -79,12 +147,16 @@ export class UserConfigStore {
     }
     // Map BotConfiguration to BotOverride
     return {
+      disabled: this.isBotDisabled(botName),
       messageProvider: botConfig.messageProvider as MessageProvider,
       llmProvider: botConfig.llmProvider as LlmProvider,
+      llmProfile: (botConfig as any).llmProfile as string | undefined,
+      responseProfile: botConfig.responseProfile as string | undefined,
       persona: botConfig.persona,
       systemInstruction: botConfig.systemInstruction,
       mcpServers: botConfig.mcpServers as McpServerConfig[],
       mcpGuard: botConfig.mcpGuard as McpGuardConfig,
+      mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
     };
   }
 
@@ -102,10 +174,13 @@ export class UserConfigStore {
       name: botName,
       messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
       llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
+      llmProfile: (overrides as any).llmProfile,
+      responseProfile: overrides.responseProfile,
       persona: overrides.persona,
       systemInstruction: overrides.systemInstruction,
       mcpServers: overrides.mcpServers,
       mcpGuard: overrides.mcpGuard,
+      mcpGuardProfile: (overrides as any).mcpGuardProfile,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -117,4 +192,31 @@ export class UserConfigStore {
       this.config.bots.push(botConfig);
     }
   }
+
+  /**
+   * Get general settings.
+   * @returns The general settings object.
+   */
+  public getGeneralSettings(): GeneralSettings {
+    return this.config.generalSettings || {};
+  }
+
+  /**
+   * Set general settings and persist to config file.
+   * @param settings The settings to merge/save.
+   */
+  public async setGeneralSettings(settings: GeneralSettings): Promise<void> {
+    if (!this.config.generalSettings) {
+      this.config.generalSettings = {};
+    }
+
+    // Merge new settings with existing
+    this.config.generalSettings = {
+      ...this.config.generalSettings,
+      ...settings,
+    };
+
+    await this.saveConfig();
+  }
 }
+

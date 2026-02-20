@@ -8,6 +8,7 @@ import AppRouter from './router/AppRouter';
 import { AuthProvider } from './contexts/AuthContext';
 import ToastNotification from './components/DaisyUI/ToastNotification';
 import { BotProvider } from './contexts/BotContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 
 function App() {
   return (
@@ -17,9 +18,11 @@ function App() {
           <ToastNotification position="top-right" maxToasts={5}>
             <AuthProvider>
               <BotProvider>
-                <BrowserRouter>
-                  <AppRouter />
-                </BrowserRouter>
+                <WebSocketProvider>
+                  <BrowserRouter>
+                    <AppRouter />
+                  </BrowserRouter>
+                </WebSocketProvider>
               </BotProvider>
             </AuthProvider>
           </ToastNotification>

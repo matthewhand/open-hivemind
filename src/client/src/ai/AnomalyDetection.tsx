@@ -4,19 +4,11 @@ import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   ExclamationTriangleIcon,
-  ArrowTrendingUpIcon,
-  BoltIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  FunnelIcon,
-  BellIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  InformationCircleIcon,
   ArrowPathIcon,
-  EyeIcon,
-  NoSymbolIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 export interface AnomalyConfig {
@@ -460,7 +452,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       algorithms: prev.algorithms.map(algorithm =>
         algorithm.id === algorithmId
           ? { ...algorithm, isActive: !algorithm.isActive }
-          : algorithm
+          : algorithm,
       ),
       activeAlgorithms: prev.activeAlgorithms.includes(algorithmId)
         ? prev.activeAlgorithms.filter(id => id !== algorithmId)
@@ -560,7 +552,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
         <div className="card bg-base-100 shadow">
           <div className="card-body p-6 text-center">
             <h3 className="text-3xl font-bold text-warning">
-              {state.metrics.bySeverity.high + state.metrics.bySeverity.critical}
+              {(state.metrics.bySeverity.high || 0) + (state.metrics.bySeverity.critical || 0)}
             </h3>
             <p className="text-sm text-base-content/70">High Priority</p>
             <ExclamationCircleIcon className="w-6 h-6 text-warning mx-auto mt-2" />

@@ -15,20 +15,20 @@ const router = Router();
 router.get('/status', (req, res) => {
   res.json({
     status: 'disabled',
-    message: 'Approvals functionality is currently disabled'
+    message: 'Approvals functionality is currently disabled',
   });
 });
 
 // Mock endpoints to prevent 404s
 router.get('*', (req, res) => {
   res.status(503).json({
-    error: 'Approvals functionality is disabled'
+    error: 'Approvals functionality is disabled',
   });
 });
 
 router.post('*', (req, res) => {
   res.status(503).json({
-    error: 'Approvals functionality is disabled'
+    error: 'Approvals functionality is disabled',
   });
 });
 

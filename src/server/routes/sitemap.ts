@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { Readable } from 'stream';
 
@@ -26,7 +27,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 1.0,
       lastmod: now,
       description: 'Open-Hivemind - Multi-Agent AI Platform',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber',
@@ -34,7 +35,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 1.0,
       lastmod: now,
       description: 'Main Dashboard - Uber Interface',
-      access: 'public'
+      access: 'public',
     },
     
     // Dashboard pages
@@ -44,7 +45,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.9,
       lastmod: now,
       description: 'System Overview and Status',
-      access: 'public'
+      access: 'public',
     },
     
     // Bot management
@@ -54,7 +55,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.8,
       lastmod: now,
       description: 'Bot Management Hub',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber/bots/create',
@@ -62,7 +63,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.7,
       lastmod: now,
       description: 'Create New Bot Instance',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber/bots/templates',
@@ -70,7 +71,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.7,
       lastmod: now,
       description: 'Bot Templates Gallery',
-      access: 'public'
+      access: 'public',
     },
     
     // Persona management
@@ -80,7 +81,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.8,
       lastmod: now,
       description: 'AI Persona Management',
-      access: 'public'
+      access: 'public',
     },
     
     // MCP Server management (Owner-only)
@@ -90,7 +91,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'MCP Server Management',
-      access: 'owner'
+      access: 'owner',
     },
     {
       url: '/uber/mcp/servers',
@@ -98,7 +99,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'MCP Server Configuration',
-      access: 'owner'
+      access: 'owner',
     },
     {
       url: '/uber/mcp/tools',
@@ -106,7 +107,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'MCP Tools Management',
-      access: 'owner'
+      access: 'owner',
     },
     
     // Security and guards
@@ -116,7 +117,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.5,
       lastmod: now,
       description: 'Access Control Guards',
-      access: 'owner'
+      access: 'owner',
     },
     
     // Monitoring and activity
@@ -126,7 +127,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.8,
       lastmod: now,
       description: 'System Monitoring Dashboard',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber/activity',
@@ -134,7 +135,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.7,
       lastmod: now,
       description: 'Real-time Activity Monitor',
-      access: 'public'
+      access: 'public',
     },
     
     // Settings and configuration
@@ -144,7 +145,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'System Settings and Configuration',
-      access: 'public'
+      access: 'public',
     },
     
     // Utilities
@@ -154,7 +155,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.5,
       lastmod: now,
       description: 'Data Export Tools',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber/static',
@@ -162,7 +163,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.4,
       lastmod: now,
       description: 'Static Pages and Resources',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/uber/showcase',
@@ -170,7 +171,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.3,
       lastmod: now,
       description: 'DaisyUI Component Showcase',
-      access: 'public'
+      access: 'public',
     },
     
     // Legacy interfaces
@@ -180,7 +181,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.4,
       lastmod: now,
       description: 'Legacy WebUI Interface',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/admin',
@@ -188,7 +189,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.5,
       lastmod: now,
       description: 'Admin Interface',
-      access: 'authenticated'
+      access: 'authenticated',
     },
     
     // Authentication
@@ -198,7 +199,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.3,
       lastmod: now,
       description: 'User Login',
-      access: 'public'
+      access: 'public',
     },
     
     // API documentation (if publicly accessible)
@@ -208,7 +209,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.5,
       lastmod: now,
       description: 'API Documentation',
-      access: 'public'
+      access: 'public',
     },
     
     // Health endpoints
@@ -218,7 +219,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.2,
       lastmod: now,
       description: 'Health Check Endpoint',
-      access: 'public'
+      access: 'public',
     },
     {
       url: '/health/detailed',
@@ -226,8 +227,8 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.2,
       lastmod: now,
       description: 'Detailed Health Information',
-      access: 'public'
-    }
+      access: 'public',
+    },
   ];
 };
 
@@ -254,8 +255,8 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
         url: route.url,
         changefreq: route.changefreq,
         priority: route.priority,
-        lastmod: route.lastmod
-      }))).pipe(sitemap)
+        lastmod: route.lastmod,
+      }))).pipe(sitemap),
     );
     
     res.header('Content-Type', 'application/xml');
@@ -285,8 +286,8 @@ router.get('/sitemap.json', (req: Request, res: Response) => {
       totalUrls: filteredRoutes.length,
       urls: filteredRoutes.map(route => ({
         ...route,
-        fullUrl: `${baseUrl}${route.url}`
-      }))
+        fullUrl: `${baseUrl}${route.url}`,
+      })),
     };
     
     res.json(sitemap);
@@ -354,7 +355,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
 });
 
 function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: string): string {
-  if (routes.length === 0) return '';
+  if (routes.length === 0) {return '';}
   
   return `
     <div class="section">

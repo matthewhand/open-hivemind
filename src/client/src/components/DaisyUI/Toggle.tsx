@@ -9,46 +9,46 @@ export interface ToggleProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 }
 
 const Toggle: React.FC<ToggleProps> = ({
-    label,
-    size = 'md',
-    color,
-    className,
-    checked,
-    onChange,
-    ...props
+  label,
+  size = 'md',
+  color,
+  className,
+  checked,
+  onChange,
+  ...props
 }) => {
 
-    const toggleClasses = classNames(
-        'toggle',
-        {
-            [`toggle-${size}`]: size,
-            [`toggle-${color}`]: color,
-        },
-        className
+  const toggleClasses = classNames(
+    'toggle',
+    {
+      [`toggle-${size}`]: size,
+      [`toggle-${color}`]: color,
+    },
+    className,
+  );
+
+  const toggleInput = (
+    <input
+      type="checkbox"
+      className={toggleClasses}
+      checked={checked}
+      onChange={onChange}
+      {...props}
+    />
+  );
+
+  if (label) {
+    return (
+      <div className="form-control">
+        <label className="label cursor-pointer">
+          <span className="label-text">{label}</span>
+          {toggleInput}
+        </label>
+      </div>
     );
+  }
 
-    const toggleInput = (
-        <input
-            type="checkbox"
-            className={toggleClasses}
-            checked={checked}
-            onChange={onChange}
-            {...props}
-        />
-    );
-
-    if (label) {
-        return (
-            <div className="form-control">
-                <label className="label cursor-pointer">
-                    <span className="label-text">{label}</span>
-                    {toggleInput}
-                </label>
-            </div>
-        );
-    }
-
-    return toggleInput;
+  return toggleInput;
 };
 
 export default Toggle;

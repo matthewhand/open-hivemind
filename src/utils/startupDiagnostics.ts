@@ -75,7 +75,7 @@ export class StartupDiagnostics {
 
     startupLog.info('🔐 Critical Configuration', {
       present: `${criticalPresent}/${criticalTotal}`,
-      missing: envSummary.critical.filter(v => v.status === 'missing').map(v => v.key)
+      missing: envSummary.critical.filter(v => v.status === 'missing').map(v => v.key),
     });
 
     // Log present critical variables (redacted)
@@ -90,7 +90,7 @@ export class StartupDiagnostics {
     const optionalPresent = envSummary.optional.filter(v => v.status === 'present').length;
 
     startupLog.info('🔧 Optional Configuration', {
-      present: `${optionalPresent}/${envSummary.optional.length}`
+      present: `${optionalPresent}/${envSummary.optional.length}`,
     });
 
     // Log present optional variables (redacted)
@@ -109,7 +109,7 @@ export class StartupDiagnostics {
     const criticalVars = [
       'NODE_ENV',
       'PORT',
-      'MESSAGE_PROVIDER'
+      'MESSAGE_PROVIDER',
     ];
 
     const optionalVars = [
@@ -125,7 +125,7 @@ export class StartupDiagnostics {
       'OPENWEBUI_API_KEY',
       'FLOWISE_API_KEY',
       'WEBHOOK_SECRET',
-      'SECRET'
+      'SECRET',
     ];
 
     const featureFlags = [
@@ -134,13 +134,13 @@ export class StartupDiagnostics {
       { key: 'WEBHOOK_ENABLED', description: 'Webhook service' },
       { key: 'LOW_MEMORY_MODE', description: 'Low memory optimizations' },
       { key: 'SUPPRESS_HEALTH_LOGS', description: 'Health endpoint logging' },
-      { key: 'DEBUG', description: 'Debug logging' }
+      { key: 'DEBUG', description: 'Debug logging' },
     ];
 
     const summary: EnvironmentSummary = {
       critical: [],
       optional: [],
-      featureFlags: []
+      featureFlags: [],
     };
 
     // Analyze critical variables
@@ -149,7 +149,7 @@ export class StartupDiagnostics {
       summary.critical.push({
         key,
         value: value || '',
-        status: value ? 'present' : 'missing'
+        status: value ? 'present' : 'missing',
       });
     });
 
@@ -159,7 +159,7 @@ export class StartupDiagnostics {
       summary.optional.push({
         key,
         value: value || '',
-        status: value ? 'present' : 'missing'
+        status: value ? 'present' : 'missing',
       });
     });
 
@@ -169,7 +169,7 @@ export class StartupDiagnostics {
       summary.featureFlags.push({
         key,
         value: value || 'false',
-        description
+        description,
       });
     });
 
@@ -186,7 +186,7 @@ export class StartupDiagnostics {
       'config/providers/messengers.json',
       'config/llm/providers.json',
       'config/messages.json',
-      'config/webhooks.json'
+      'config/webhooks.json',
     ];
 
     const configStatus: Array<{ path: string; exists: boolean; size?: number; error?: string }> = [];
@@ -201,19 +201,19 @@ export class StartupDiagnostics {
           configStatus.push({
             path: configPath,
             exists: true,
-            size: stats.size
+            size: stats.size,
           });
         } else {
           configStatus.push({
             path: configPath,
-            exists: false
+            exists: false,
           });
         }
       } catch (error) {
         configStatus.push({
           path: configPath,
           exists: false,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -224,7 +224,7 @@ export class StartupDiagnostics {
     startupLog.info('📁 Configuration Files', {
       loaded: existingConfigs.length,
       missing: missingConfigs.length,
-      totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0)
+      totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0),
     });
 
     existingConfigs.forEach(config => {
@@ -246,18 +246,18 @@ export class StartupDiagnostics {
       {
         type: 'discord',
         configured: !!process.env.DISCORD_BOT_TOKEN,
-        connected: false // Will be updated during actual initialization
+        connected: false, // Will be updated during actual initialization
       },
       {
         type: 'slack',
         configured: !!(process.env.SLACK_BOT_TOKEN && process.env.SLACK_SIGNING_SECRET),
-        connected: false
+        connected: false,
       },
       {
         type: 'mattermost',
         configured: !!(process.env.MATTERMOST_TOKEN && process.env.MATTERMOST_URL),
-        connected: false
-      }
+        connected: false,
+      },
     ];
 
     const configuredProviders = providers.filter(p => p.configured);
@@ -265,7 +265,7 @@ export class StartupDiagnostics {
 
     startupLog.info('🔗 Provider Configuration', {
       configured: configuredProviders.length,
-      unconfigured: unconfiguredProviders.length
+      unconfigured: unconfiguredProviders.length,
     });
 
     configuredProviders.forEach(provider => {
@@ -304,7 +304,7 @@ export class StartupDiagnostics {
       method: authStatus.method,
       securityLevel: authStatus.securityLevel,
       webuiProtected: authStatus.webuiProtected,
-      apiProtected: authStatus.apiProtected
+      apiProtected: authStatus.apiProtected,
     });
 
     if (!authStatus.enabled) {
@@ -324,7 +324,7 @@ export class StartupDiagnostics {
 
     // Check specific authentication mechanisms
     if (authStatus.jwtSecret) {
-      startupLog.debug(`   ✓ JWT authentication configured`);
+      startupLog.debug('   ✓ JWT authentication configured');
     }
 
     if (authStatus.defaultAdmin) {
@@ -348,7 +348,7 @@ export class StartupDiagnostics {
       apiProtected: false,
       jwtSecret: false,
       defaultAdmin: false,
-      secureConfigUsers: 0
+      secureConfigUsers: 0,
     };
 
     try {
@@ -410,21 +410,58 @@ export class StartupDiagnostics {
 
     const resources: SystemResources = {
       memoryUsage: process.memoryUsage(),
-      freeDiskSpace: 0, // TODO: Implement disk space check
+      freeDiskSpace: this.getFreeDiskSpace(),
       nodeVersion: process.version,
-      platform: process.platform
+      platform: process.platform,
     };
 
     const memoryMB = Math.round(resources.memoryUsage.heapUsed / 1024 / 1024);
     const memoryLimitMB = Math.round(resources.memoryUsage.heapTotal / 1024 / 1024);
+    const diskSpaceGB = resources.freeDiskSpace > 0
+      ? `${(resources.freeDiskSpace / (1024 * 1024 * 1024)).toFixed(2)}GB`
+      : 'Unknown';
 
     startupLog.info('📊 Resource Summary', {
       nodeVersion: resources.nodeVersion,
       platform: resources.platform,
       memoryUsage: `${memoryMB}MB`,
       memoryLimit: `${memoryLimitMB}MB`,
-      pid: process.pid
+      freeDiskSpace: diskSpaceGB,
+      pid: process.pid,
     });
+  }
+
+  /**
+   * Get free disk space in bytes for the current working directory
+   */
+  private getFreeDiskSpace(): number {
+    try {
+      const { execSync } = require('child_process');
+      const cwd = process.cwd();
+
+      if (process.platform === 'win32') {
+        // Windows: use wmic to get free space
+        const drive = cwd.charAt(0).toUpperCase();
+        const result = execSync(`wmic logicaldisk get size,freespace,caption`, { encoding: 'utf8' });
+        const lines = result.split('\n').filter((line: string) => line.trim());
+        for (const line of lines) {
+          if (line.startsWith(drive)) {
+            const parts = line.split(/\s+/).filter(Boolean);
+            return parseInt(parts[1], 10) || 0;
+          }
+        }
+      } else {
+        // Unix-like: use df command
+        const result = execSync(`df -k "${cwd}" | tail -1`, { encoding: 'utf8' });
+        const parts = result.split(/\s+/).filter(Boolean);
+        // df -k outputs: Filesystem, 1K-blocks, Used, Available, Use%, Mounted on
+        const availableKB = parseInt(parts[3], 10);
+        return (availableKB || 0) * 1024; // Convert KB to bytes
+      }
+    } catch (error) {
+      startupLog.debug('Failed to get disk space:', error);
+    }
+    return 0;
   }
 
   /**
@@ -438,7 +475,7 @@ export class StartupDiagnostics {
       { key: 'SKIP_MESSENGERS', default: 'false', description: 'Skip messenger initialization' },
       { key: 'WEBHOOK_ENABLED', default: 'false', description: 'Enable webhook service' },
       { key: 'LOW_MEMORY_MODE', default: 'false', description: 'Enable low memory optimizations' },
-      { key: 'SUPPRESS_HEALTH_LOGS', default: 'true', description: 'Suppress health endpoint logs' }
+      { key: 'SUPPRESS_HEALTH_LOGS', default: 'true', description: 'Suppress health endpoint logs' },
     ];
 
     flags.forEach(flag => {
@@ -455,7 +492,7 @@ export class StartupDiagnostics {
   public logProviderInitialized(providerType: string, details?: any): void {
     startupLog.info('🤖 Provider Initialized', {
       type: providerType,
-      details: details ? this.sanitizeDetails(details) : undefined
+      details: details ? this.sanitizeDetails(details) : undefined,
     });
   }
 
@@ -465,7 +502,7 @@ export class StartupDiagnostics {
   public logProviderInitializationFailed(providerType: string, error: any): void {
     startupLog.error('❌ Provider Initialization Failed', {
       type: providerType,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 

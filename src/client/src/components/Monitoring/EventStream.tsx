@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
@@ -27,7 +28,7 @@ const EventStream: React.FC<EventStreamProps> = ({
   autoScroll = true,
   refreshInterval,
   className = '',
-  onEventClick
+  onEventClick,
 }) => {
   const { messageFlow, alerts, performanceMetrics, botStats } = useWebSocket();
   const [events, setEvents] = useState<Event[]>([]);
@@ -40,7 +41,7 @@ const EventStream: React.FC<EventStreamProps> = ({
 
   // Convert WebSocket data to Event format
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused) {return;}
 
     const newEvents: Event[] = [];
 
@@ -54,7 +55,7 @@ const EventStream: React.FC<EventStreamProps> = ({
         timestamp: msg.timestamp || new Date().toISOString(),
         source: msg.source || 'System',
         metadata: msg,
-        level: 'low'
+        level: 'low',
       });
     });
 
@@ -69,7 +70,7 @@ const EventStream: React.FC<EventStreamProps> = ({
         source: alert.source || 'System',
         metadata: alert,
         level: alert.severity === 'error' ? 'critical' :
-               alert.severity === 'warning' ? 'high' : 'medium'
+          alert.severity === 'warning' ? 'high' : 'medium',
       });
     });
 
@@ -78,12 +79,12 @@ const EventStream: React.FC<EventStreamProps> = ({
       newEvents.push({
         id: `perf-${index}`,
         type: 'performance',
-        title: `Performance Update`,
+        title: 'Performance Update',
         message: `CPU: ${metric.cpu?.toFixed(1) || 0}%, Memory: ${metric.memory?.toFixed(1) || 0}%`,
         timestamp: metric.timestamp || new Date().toISOString(),
         source: 'Performance Monitor',
         metadata: metric,
-        level: 'low'
+        level: 'low',
       });
     });
 
@@ -97,7 +98,7 @@ const EventStream: React.FC<EventStreamProps> = ({
         timestamp: new Date().toISOString(),
         source: 'Bot Monitor',
         metadata: stat,
-        level: stat.errorCount > 0 ? 'medium' : 'low'
+        level: stat.errorCount > 0 ? 'medium' : 'low',
       });
     });
 
@@ -129,33 +130,33 @@ const EventStream: React.FC<EventStreamProps> = ({
 
   const getEventIcon = (type: Event['type']) => {
     switch (type) {
-      case 'message':
-        return '💬';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      case 'system':
-        return '⚙️';
-      case 'bot_status':
-        return '🤖';
-      case 'performance':
-        return '📊';
-      default:
-        return '📝';
+    case 'message':
+      return '💬';
+    case 'error':
+      return '❌';
+    case 'warning':
+      return '⚠️';
+    case 'info':
+      return 'ℹ️';
+    case 'system':
+      return '⚙️';
+    case 'bot_status':
+      return '🤖';
+    case 'performance':
+      return '📊';
+    default:
+      return '📝';
     }
   };
 
   const getEventColor = (type: Event['type']) => {
     switch (type) {
-      case 'error': return 'text-error';
-      case 'warning': return 'text-warning';
-      case 'info': return 'text-info';
-      case 'performance': return 'text-success';
-      case 'bot_status': return 'text-primary';
-      default: return 'text-neutral';
+    case 'error': return 'text-error';
+    case 'warning': return 'text-warning';
+    case 'info': return 'text-info';
+    case 'performance': return 'text-success';
+    case 'bot_status': return 'text-primary';
+    default: return 'text-neutral';
     }
   };
 
@@ -164,7 +165,7 @@ const EventStream: React.FC<EventStreamProps> = ({
       low: 'badge-success',
       medium: 'badge-warning',
       high: 'badge-warning',
-      critical: 'badge-error'
+      critical: 'badge-error',
     };
     return colors[level] || 'badge-neutral';
   };
@@ -174,10 +175,10 @@ const EventStream: React.FC<EventStreamProps> = ({
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 5000) return 'Just now';
-    if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 5000) {return 'Just now';}
+    if (diff < 60000) {return `${Math.floor(diff / 1000)}s ago`;}
+    if (diff < 3600000) {return `${Math.floor(diff / 60000)}m ago`;}
+    if (diff < 86400000) {return `${Math.floor(diff / 3600000)}h ago`;}
     return date.toLocaleDateString();
   };
 
@@ -294,7 +295,7 @@ const EventStream: React.FC<EventStreamProps> = ({
             filteredEvents.map((event) => (
               <div
                 key={event.id}
-                className={`flex items-start gap-3 p-3 rounded-lg bg-base-100 hover:bg-base-300 cursor-pointer transition-colors`}
+                className={'flex items-start gap-3 p-3 rounded-lg bg-base-100 hover:bg-base-300 cursor-pointer transition-colors'}
                 onClick={() => handleEventClick(event)}
               >
                 <div className="text-2xl flex-shrink-0">{getEventIcon(event.type)}</div>

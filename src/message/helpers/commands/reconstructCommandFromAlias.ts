@@ -22,7 +22,7 @@
  * @see {@link src/utils/reconstructCommandFromAlias.ts}
  */
 
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:reconstructCommandFromAlias');
 
@@ -64,9 +64,9 @@ export type AliasMapping = Record<string, Alias>;
  * @since 1.0.0
  */
 export function resolveAlias(alias: string, aliases: AliasMapping): string {
-    const resolvedCommand = aliases[alias]?.command || alias;
-    debug(`resolveAlias: Resolved alias '${alias}' to command '${resolvedCommand}'`);
-    return resolvedCommand;
+  const resolvedCommand = aliases[alias]?.command || alias;
+  debug(`resolveAlias: Resolved alias '${alias}' to command '${resolvedCommand}'`);
+  return resolvedCommand;
 }
 
 /**
@@ -93,10 +93,10 @@ export function resolveAlias(alias: string, aliases: AliasMapping): string {
  * @since 1.0.0
  */
 export function reconstructCommand(alias: string, args: string[], aliases: AliasMapping): string {
-    const resolvedCommand = resolveAlias(alias, aliases);
-    const reconstructedCommand = `${resolvedCommand} ${args.join(' ')}`;
-    debug(`reconstructCommand: Reconstructed command - '${reconstructedCommand}'`);
-    return reconstructedCommand;
+  const resolvedCommand = resolveAlias(alias, aliases);
+  const reconstructedCommand = `${resolvedCommand} ${args.join(' ')}`;
+  debug(`reconstructCommand: Reconstructed command - '${reconstructedCommand}'`);
+  return reconstructedCommand;
 }
 
 /**
@@ -119,9 +119,9 @@ export function reconstructCommand(alias: string, args: string[], aliases: Alias
  * @since 1.0.0
  */
 export function getAliasDescription(alias: string, aliases: AliasMapping): string {
-    const description = aliases[alias]?.description || 'No description available';
-    debug(`getAliasDescription: Description for alias '${alias}' is '${description}'`);
-    return description;
+  const description = aliases[alias]?.description || 'No description available';
+  debug(`getAliasDescription: Description for alias '${alias}' is '${description}'`);
+  return description;
 }
 
 /**
@@ -145,7 +145,7 @@ export function getAliasDescription(alias: string, aliases: AliasMapping): strin
  * @since 1.0.0
  */
 export function listAliases(aliases: AliasMapping): string[] {
-    const aliasList = Object.keys(aliases);
-    debug(`listAliases: Available aliases - ${aliasList.join(', ')}`);
-    return aliasList;
+  const aliasList = Object.keys(aliases);
+  debug(`listAliases: Available aliases - ${aliasList.join(', ')}`);
+  return aliasList;
 }

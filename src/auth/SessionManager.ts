@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { AuthManager } from './AuthManager';
 import { SessionStore } from './SessionStore';
 import Debug from 'debug';

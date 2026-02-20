@@ -29,7 +29,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({
 
   const randomizePosition = useCallback(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const width = window.innerWidth;
     const height = window.innerHeight;
     const x = Math.random() * (width - edgePadding * 2) + edgePadding;
@@ -54,7 +54,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({
     };
   }, [isIdle, enabled, moveIntervalMs, randomizePosition]);
 
-  if (!enabled || !isIdle) return null;
+  if (!enabled || !isIdle) {return null;}
 
   return (
     <div

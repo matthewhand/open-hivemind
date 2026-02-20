@@ -1,13 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components */
 import React from 'react';
-import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
+import type { HTMLMotionProps } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnimationVariantValue = Record<string, any>;
 
 export interface AnimationVariants {
-  initial?: any;
-  animate?: any;
-  exit?: any;
-  hover?: any;
-  tap?: any;
-  drag?: any;
+  initial?: AnimationVariantValue;
+  animate?: AnimationVariantValue;
+  exit?: AnimationVariantValue;
+  hover?: AnimationVariantValue;
+  tap?: AnimationVariantValue;
+  drag?: AnimationVariantValue;
 }
 
 export interface AnimationConfig {
@@ -57,7 +62,7 @@ export const bounceVariants: AnimationVariants = {
       type: 'spring',
       stiffness: 300,
       damping: 20,
-    }
+    },
   },
   exit: { y: 50, opacity: 0 },
 };
@@ -68,8 +73,8 @@ export const staggerContainerVariants: AnimationVariants = {
     transition: {
       staggerChildren: 0.1,
       delayChildren: 0.2,
-    }
-  }
+    },
+  },
 };
 
 export const staggerItemVariants: AnimationVariants = {
@@ -84,8 +89,8 @@ export const pulseVariants: AnimationVariants = {
       duration: 2,
       repeat: Infinity,
       repeatType: 'reverse' as const,
-    }
-  }
+    },
+  },
 };
 
 export const shakeVariants: AnimationVariants = {
@@ -94,8 +99,8 @@ export const shakeVariants: AnimationVariants = {
     transition: {
       duration: 0.5,
       ease: 'easeInOut',
-    }
-  }
+    },
+  },
 };
 
 export const glowVariants: AnimationVariants = {
@@ -104,14 +109,14 @@ export const glowVariants: AnimationVariants = {
     boxShadow: [
       '0 0 0 rgba(59, 130, 246, 0)',
       '0 0 20px rgba(59, 130, 246, 0.5)',
-      '0 0 0 rgba(59, 130, 246, 0)'
+      '0 0 0 rgba(59, 130, 246, 0)',
     ],
     transition: {
       duration: 2,
       repeat: Infinity,
       repeatType: 'loop' as const,
-    }
-  }
+    },
+  },
 };
 
 export const flipVariants: AnimationVariants = {
@@ -128,11 +133,11 @@ export const morphingButtonVariants: AnimationVariants = {
       duration: 2,
       repeat: Infinity,
       repeatType: 'reverse' as const,
-    }
-  }
+    },
+  },
 };
 
-interface AnimatedBoxProps extends HTMLMotionProps<"div"> {
+interface AnimatedBoxProps extends HTMLMotionProps<'div'> {
   animation?: AnimationVariants;
   config?: AnimationConfig;
   isVisible?: boolean;
@@ -171,7 +176,7 @@ export const AnimatedBox: React.FC<AnimatedBoxProps> = ({
   );
 };
 
-interface AnimatedContainerProps extends HTMLMotionProps<"div"> {
+interface AnimatedContainerProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
   containerVariants?: AnimationVariants;
   itemVariants?: AnimationVariants;
@@ -204,7 +209,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   );
 };
 
-interface LoadingAnimationProps extends HTMLMotionProps<"div"> {
+interface LoadingAnimationProps extends HTMLMotionProps<'div'> {
   size?: number;
   color?: string;
   duration?: number;
@@ -238,7 +243,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
   );
 };
 
-interface ErrorShakeAnimationProps extends HTMLMotionProps<"div"> {
+interface ErrorShakeAnimationProps extends HTMLMotionProps<'div'> {
   isError?: boolean;
   children: React.ReactNode;
 }
@@ -258,7 +263,7 @@ export const ErrorShakeAnimation: React.FC<ErrorShakeAnimationProps> = ({
   );
 };
 
-interface SuccessBounceAnimationProps extends HTMLMotionProps<"div"> {
+interface SuccessBounceAnimationProps extends HTMLMotionProps<'div'> {
   isSuccess?: boolean;
   children: React.ReactNode;
 }
@@ -284,7 +289,7 @@ export const SuccessBounceAnimation: React.FC<SuccessBounceAnimationProps> = ({
   );
 };
 
-interface PageTransitionProps extends HTMLMotionProps<"div"> {
+interface PageTransitionProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
   pageKey: string; // Renamed from 'key' to avoid conflict
   direction?: 'x' | 'y';
@@ -317,7 +322,7 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   );
 };
 
-interface HoverScaleAnimationProps extends HTMLMotionProps<"div"> {
+interface HoverScaleAnimationProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
   scale?: number;
   whileHoverScale?: number;
@@ -343,7 +348,7 @@ export const HoverScaleAnimation: React.FC<HoverScaleAnimationProps> = ({
   );
 };
 
-interface ParallaxScrollProps extends HTMLMotionProps<"div"> {
+interface ParallaxScrollProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
   offset?: number;
   direction?: 'up' | 'down' | 'left' | 'right';
@@ -373,7 +378,7 @@ export const ParallaxScroll: React.FC<ParallaxScrollProps> = ({
           type: 'spring',
           stiffness: 100,
           damping: 20,
-        }
+        },
       }}
       {...props}
     >

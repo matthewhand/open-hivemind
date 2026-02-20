@@ -89,7 +89,7 @@ const Menu: React.FC<MenuProps> = ({
   const handleItemClick = (item: MenuItem, event: React.MouseEvent) => {
     event.preventDefault();
 
-    if (item.disabled) return;
+    if (item.disabled) {return;}
 
     // Handle submenu toggle
     if (item.children && item.children.length > 0) {

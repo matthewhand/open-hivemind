@@ -259,7 +259,7 @@ export class ErrorUtils {
         retryable: true,
         severity: 'medium',
         userMessage: 'Rate limit exceeded. Please try again later.',
-        logLevel: 'warn'
+        logLevel: 'warn',
       };
     }
 
@@ -270,7 +270,7 @@ export class ErrorUtils {
         retryable: false,
         severity: 'high',
         userMessage: 'Authentication failed. Please check your credentials.',
-        logLevel: 'warn'
+        logLevel: 'warn',
       };
     }
 
@@ -281,7 +281,7 @@ export class ErrorUtils {
         retryable: false,
         severity: 'high',
         userMessage: 'Access denied. You do not have permission to perform this action.',
-        logLevel: 'warn'
+        logLevel: 'warn',
       };
     }
 
@@ -292,7 +292,7 @@ export class ErrorUtils {
         retryable: true,
         severity: 'medium',
         userMessage: 'Request timed out. Please try again.',
-        logLevel: 'warn'
+        logLevel: 'warn',
       };
     }
 
@@ -303,7 +303,7 @@ export class ErrorUtils {
         retryable: true,
         severity: 'high',
         userMessage: 'Service temporarily unavailable. Please try again later.',
-        logLevel: 'error'
+        logLevel: 'error',
       };
     }
 
@@ -314,7 +314,7 @@ export class ErrorUtils {
         retryable: false,
         severity: 'medium',
         userMessage: 'Request failed. Please check your input and try again.',
-        logLevel: 'warn'
+        logLevel: 'warn',
       };
     }
 
@@ -325,7 +325,7 @@ export class ErrorUtils {
         retryable: false,
         severity: 'low',
         userMessage: 'Invalid input. Please check your data and try again.',
-        logLevel: 'info'
+        logLevel: 'info',
       };
     }
 
@@ -336,7 +336,7 @@ export class ErrorUtils {
         retryable: false,
         severity: 'high',
         userMessage: 'Configuration error. Please contact support.',
-        logLevel: 'error'
+        logLevel: 'error',
       };
     }
 
@@ -347,7 +347,7 @@ export class ErrorUtils {
         retryable: true,
         severity: 'high',
         userMessage: 'Database error. Please try again later.',
-        logLevel: 'error'
+        logLevel: 'error',
       };
     }
 
@@ -357,7 +357,7 @@ export class ErrorUtils {
       retryable: false,
       severity: 'medium',
       userMessage: 'An unexpected error occurred. Please try again.',
-      logLevel: 'error'
+      logLevel: 'error',
     };
   }
 
@@ -388,7 +388,7 @@ export class ErrorUtils {
     type: ErrorType = 'unknown',
     code?: string,
     statusCode?: number,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ): AppError {
     const error = new Error(message) as AppError;
     error.code = code || type.toUpperCase();

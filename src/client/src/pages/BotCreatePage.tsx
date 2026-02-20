@@ -1,22 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
+import { useLlmStatus } from '../hooks/useLlmStatus';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     platform: 'discord',
     persona: 'friendly-helper',
-    llmProvider: 'openai'
+    llmProvider: '',
   });
   const [isCreating, setIsCreating] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/uber/bots' },
-    { label: 'Create Bot', href: '/uber/bots/create', isActive: true }
+    { label: 'Create Bot', href: '/uber/bots/create', isActive: true },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +33,10 @@ const BotCreatePage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          ...(formData.llmProvider ? {} : { llmProvider: undefined }),
+        }),
       });
 
       if (response.ok) {
@@ -130,18 +137,36 @@ const BotCreatePage: React.FC = () => {
 
             <div className="form-control w-full">
               <label className="label">
-                <span className="label-text">LLM Provider</span>
+                <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
               </label>
               <select
                 className="select select-bordered w-full"
                 value={formData.llmProvider}
                 onChange={(e) => handleInputChange('llmProvider', e.target.value)}
               >
+                {defaultLlmConfigured ? (
+                  <option value="">Use default LLM</option>
+                ) : (
+                  <option value="">Select Provider</option>
+                )}
                 <option value="openai">OpenAI</option>
                 <option value="anthropic">Anthropic</option>
                 <option value="openwebui">Open WebUI</option>
                 <option value="flowise">Flowise</option>
               </select>
+              {!defaultLlmConfigured && (
+                <div className="alert alert-warning mt-2">
+                  <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+                  <a
+                    className="btn btn-xs btn-outline ml-auto"
+                    href="/admin/integrations/llm"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Configure LLM
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 justify-end mt-8">

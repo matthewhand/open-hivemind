@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
 
@@ -14,13 +14,13 @@ const debug = Debug('app:loadServerPolicy');
  * @returns {string} The server policy as a string.
  */
 export default function loadServerPolicy(): string {
-    try {
-        const policyPath = path.resolve(__dirname, '../../config/serverPolicy.json');
-        const policyData = fs.readFileSync(policyPath, 'utf-8');
-        debug('[loadServerPolicy] Server policy loaded successfully.');
-        return policyData;
-    } catch (error: any) {
-        debug('[loadServerPolicy] Failed to load server policy: ' + error.message);
-        throw new Error('Unable to load server policy.');
-    }
+  try {
+    const policyPath = path.resolve(__dirname, '../../config/serverPolicy.json');
+    const policyData = fs.readFileSync(policyPath, 'utf-8');
+    debug('[loadServerPolicy] Server policy loaded successfully.');
+    return policyData;
+  } catch (error: any) {
+    debug('[loadServerPolicy] Failed to load server policy: ' + error.message);
+    throw new Error('Unable to load server policy.');
+  }
 }

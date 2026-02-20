@@ -21,7 +21,7 @@ const mockSlackService = {
   disconnect: jest.fn().mockResolvedValue(undefined),
 };
 
-jest.mock('@src/integrations/discord/DiscordService', () => ({
+jest.mock('@hivemind/adapter-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => mockDiscordService)
   }
@@ -42,7 +42,7 @@ describe('getMessengerProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...originalEnv };
-    
+
     // Default mock for fs.readFileSync
     mockFs.readFileSync.mockReturnValue(JSON.stringify({
       providers: [
@@ -50,7 +50,7 @@ describe('getMessengerProvider', () => {
         { type: 'slack', enabled: true }
       ]
     }));
-    
+
     mockFs.existsSync.mockReturnValue(true);
   });
 
@@ -62,11 +62,11 @@ describe('getMessengerProvider', () => {
     it('should return DiscordMessageProvider when MESSAGE_PROVIDER is "discord"', () => {
       process.env.MESSAGE_PROVIDER = 'discord';
       const providers = getMessengerProvider();
-      
+
       expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
-      
+
       const provider = providers[0];
       expect(provider).toBeDefined();
       expect(typeof provider.sendMessageToChannel).toBe('function');
@@ -76,11 +76,11 @@ describe('getMessengerProvider', () => {
     it('should return SlackMessageProvider when MESSAGE_PROVIDER is "slack"', () => {
       process.env.MESSAGE_PROVIDER = 'slack';
       const providers = getMessengerProvider();
-      
+
       expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
-      
+
       const provider = providers[0];
       expect(provider).toBeDefined();
       expect(typeof provider.sendMessageToChannel).toBe('function');
@@ -90,7 +90,7 @@ describe('getMessengerProvider', () => {
     it('should handle multiple providers when specified', () => {
       process.env.MESSAGE_PROVIDER = 'discord,slack';
       const providers = getMessengerProvider();
-      
+
       expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThanOrEqual(1);
@@ -98,7 +98,7 @@ describe('getMessengerProvider', () => {
 
     it('should handle unknown provider gracefully', () => {
       process.env.MESSAGE_PROVIDER = 'unknown-provider';
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
       const providers = getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
@@ -106,7 +106,7 @@ describe('getMessengerProvider', () => {
 
     it('should use default provider when MESSAGE_PROVIDER is not set', () => {
       delete process.env.MESSAGE_PROVIDER;
-      
+
       const providers = getMessengerProvider();
       expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
@@ -122,7 +122,7 @@ describe('getMessengerProvider', () => {
       // Check required methods exist
       expect(typeof provider.sendMessageToChannel).toBe('function');
       expect(typeof provider.getClientId).toBe('function');
-      
+
       // Check optional methods if they exist
       if (provider.isConnected) {
         expect(typeof provider.isConnected).toBe('function');
@@ -157,7 +157,7 @@ describe('getMessengerProvider', () => {
   describe('Configuration Loading', () => {
     it('should handle missing configuration file gracefully', () => {
       mockFs.existsSync.mockReturnValue(false);
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
       const providers = getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
@@ -165,7 +165,7 @@ describe('getMessengerProvider', () => {
 
     it('should handle malformed configuration file', () => {
       mockFs.readFileSync.mockReturnValue('invalid json');
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
       const providers = getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
@@ -173,7 +173,7 @@ describe('getMessengerProvider', () => {
 
     it('should handle empty configuration file', () => {
       mockFs.readFileSync.mockReturnValue(JSON.stringify({}));
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
       const providers = getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
@@ -186,7 +186,7 @@ describe('getMessengerProvider', () => {
           { type: 'slack', enabled: true }
         ]
       }));
-      
+
       process.env.MESSAGE_PROVIDER = 'slack';
       const providers = getMessengerProvider();
       expect(providers.length).toBeGreaterThan(0);
@@ -195,13 +195,13 @@ describe('getMessengerProvider', () => {
 
   describe('Error Handling', () => {
     it('should handle service initialization errors gracefully', () => {
-      const { DiscordService } = require('@src/integrations/discord/DiscordService');
+      const { DiscordService } = require('@hivemind/adapter-discord');
       DiscordService.getInstance.mockImplementation(() => {
         throw new Error('Service initialization failed');
       });
 
       process.env.MESSAGE_PROVIDER = 'discord';
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
     });
 
@@ -209,7 +209,7 @@ describe('getMessengerProvider', () => {
       mockFs.readFileSync.mockImplementation(() => {
         throw new Error('File read error');
       });
-      
+
       expect(() => getMessengerProvider()).not.toThrow();
       const providers = getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
@@ -219,23 +219,23 @@ describe('getMessengerProvider', () => {
   describe('Performance and Caching', () => {
     it('should return providers quickly', () => {
       process.env.MESSAGE_PROVIDER = 'discord';
-      
+
       const startTime = Date.now();
       getMessengerProvider();
       const endTime = Date.now();
-      
+
       expect(endTime - startTime).toBeLessThan(100); // Should complete quickly
     });
 
     it('should handle multiple rapid calls efficiently', () => {
       process.env.MESSAGE_PROVIDER = 'slack';
-      
+
       const startTime = Date.now();
       for (let i = 0; i < 100; i++) {
         getMessengerProvider();
       }
       const endTime = Date.now();
-      
+
       expect(endTime - startTime).toBeLessThan(500); // Should handle many calls efficiently
     });
   });

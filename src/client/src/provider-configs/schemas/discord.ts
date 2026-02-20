@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const discordProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -10,8 +10,8 @@ export const discordProviderSchema: ProviderConfigSchema = {
   defaultConfig: {
     intents: ['GUILDS', 'GUILD_MESSAGES', 'MESSAGE_CONTENT'],
     presence: {
-      status: 'online'
-    }
+      status: 'online',
+    },
   },
   fields: [
     {
@@ -21,7 +21,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Discord bot token from the Developer Portal',
       placeholder: 'MTk4NzA1MD... (Bot Token)',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'clientId',
@@ -30,7 +30,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       required: true,
       description: 'Your Discord application client ID',
       placeholder: '123456789012345678',
-      group: 'Authentication'
+      group: 'Authentication',
     },
     {
       name: 'guildId',
@@ -39,7 +39,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Specific Discord server to connect to (leave empty for all servers)',
       placeholder: '876543210987654321',
-      group: 'Connection'
+      group: 'Connection',
     },
     {
       name: 'intents',
@@ -53,10 +53,10 @@ export const discordProviderSchema: ProviderConfigSchema = {
         { label: 'Guild Messages', value: 'GUILD_MESSAGES' },
         { label: 'Message Content', value: 'MESSAGE_CONTENT' },
         { label: 'Guild Message Reactions', value: 'GUILD_MESSAGE_REACTIONS' },
-        { label: 'Direct Messages', value: 'DIRECT_MESSAGES' }
+        { label: 'Direct Messages', value: 'DIRECT_MESSAGES' },
       ],
       defaultValue: ['GUILDS', 'GUILD_MESSAGES', 'MESSAGE_CONTENT'],
-      group: 'Permissions'
+      group: 'Permissions',
     },
     {
       name: 'commandPrefix',
@@ -66,7 +66,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       description: 'Prefix for bot commands (e.g., !, /, ?)',
       placeholder: '!',
       defaultValue: '!',
-      group: 'Commands'
+      group: 'Commands',
     },
     {
       name: 'allowedChannels',
@@ -75,7 +75,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of channel IDs the bot can respond in (leave empty for all)',
       placeholder: '123456789012345678, 876543210987654321',
-      group: 'Permissions'
+      group: 'Permissions',
     },
     {
       name: 'blockedChannels',
@@ -84,7 +84,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       required: false,
       description: 'Comma-separated list of channel IDs the bot cannot respond in',
       placeholder: '123456789012345678, 876543210987654321',
-      group: 'Permissions'
-    }
-  ]
+      group: 'Permissions',
+    },
+  ],
 };

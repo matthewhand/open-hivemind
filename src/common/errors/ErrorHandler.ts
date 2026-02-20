@@ -53,7 +53,7 @@ export class ErrorHandler {
   static async withErrorHandling<T>(
     operation: () => Promise<T>,
     context: string,
-    fallback: T | null = null
+    fallback: T | null = null,
   ): Promise<T | null> {
     try {
       return await operation();
@@ -72,7 +72,7 @@ export class ErrorHandler {
    */
   static createSafeWrapper<T extends any[], R>(
     fn: (...args: T) => R | Promise<R>,
-    context: string
+    context: string,
   ): (...args: T) => Promise<R | null> {
     return async (...args: T): Promise<R | null> => {
       try {
@@ -143,7 +143,7 @@ export class PerformanceMonitor {
   static async measureAsync<T>(
     operation: () => Promise<T>,
     label: string,
-    threshold?: number
+    threshold?: number,
   ): Promise<T> {
     this.startTiming(label);
     try {
@@ -152,6 +152,8 @@ export class PerformanceMonitor {
       return result;
     } catch (error) {
       this.endTiming(label, threshold);
+      // Log the error before re-throwing
+      ErrorHandler.handle(error, `Performance measurement failed: ${label}`);
       throw error;
     }
   }

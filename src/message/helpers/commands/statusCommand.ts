@@ -23,10 +23,10 @@ export function getSystemStatus(): SystemStatus {
     memory: {
       free: freeMem,
       total: totalMem,
-      used: totalMem - freeMem
+      used: totalMem - freeMem,
     },
     loadAverage: os.loadavg(),
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 }
 
@@ -45,7 +45,7 @@ export function formatStatusResponse(status: SystemStatus, args: string[]): stri
       uptime: status.uptime,
       memory: status.memory,
       loadAverage: status.loadAverage,
-      timestamp: (status.timestamp instanceof Date ? status.timestamp.toISOString() : new Date().toISOString())
+      timestamp: (status.timestamp instanceof Date ? status.timestamp.toISOString() : new Date().toISOString()),
     }, null, 2);
   }
   

@@ -40,7 +40,7 @@ export class ChannelDelayManager {
     messageId: string,
     userId: string,
     baseDelayMs: number,
-    maxDelayMs: number
+    maxDelayMs: number,
   ): { isLeader: boolean } {
     const now = Date.now();
     const existing = this.states.get(key);
@@ -80,7 +80,7 @@ export class ChannelDelayManager {
 
   public ensureMinimumDelay(key: string, minDelayMs: number, maxDelayMs: number): void {
     const state = this.states.get(key);
-    if (!state) return;
+    if (!state) {return;}
     const now = Date.now();
     const desiredUntil = now + minDelayMs;
     const maxUntil = now + maxDelayMs;
@@ -89,17 +89,17 @@ export class ChannelDelayManager {
 
   public getRemainingDelayMs(key: string): number {
     const state = this.states.get(key);
-    if (!state) return 0;
+    if (!state) {return 0;}
     return Math.max(0, state.delayUntil - Date.now());
   }
 
   public getReplyToMessageId(key: string): string | undefined {
     const state = this.states.get(key);
-    if (!state) return undefined;
+    if (!state) {return undefined;}
 
     // User requested: only reply-to if delay was extended (i.e. compounding happened).
     // If only 1 message, it implies direct response, so no explicit reply needed.
-    if (state.pendingMessageIds.size <= 1) return undefined;
+    if (state.pendingMessageIds.size <= 1) {return undefined;}
 
     // User requested: "reply to the most recent message" if more messages came in.
     return state.latestMessageId || state.leaderMessageId;

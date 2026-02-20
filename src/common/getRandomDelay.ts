@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:getRandomDelay');
 
@@ -13,11 +13,11 @@ const debug = Debug('app:getRandomDelay');
  * @returns {number} A random delay in milliseconds.
  */
 export function getRandomDelay(min: number, max: number): number {
-    if (min > max || min < 0 || max < 0) {
-        debug('Invalid min or max values provided for delay.');
-        return 0;
-    }
-    const delay = (Math.random() * (max - min)) + min;
-    debug('Generated random delay: ' + delay + ' ms');
-    return delay;
+  if (min > max || min < 0 || max < 0) {
+    debug('Invalid min or max values provided for delay.');
+    return 0;
+  }
+  const delay = (Math.random() * (max - min)) + min;
+  debug('Generated random delay: ' + delay + ' ms');
+  return delay;
 }

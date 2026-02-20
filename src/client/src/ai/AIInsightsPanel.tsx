@@ -5,14 +5,11 @@ import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   SparklesIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   BoltIcon,
   ChartBarIcon,
-  CpuChipIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 
@@ -262,8 +259,8 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   };
 
   const filteredInsights = insights.filter(insight => {
-    if (filterType !== 'all' && insight.type !== filterType) return false;
-    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) return false;
+    if (filterType !== 'all' && insight.type !== filterType) { return false; }
+    if (filterSeverity !== 'all' && insight.severity !== filterSeverity) { return false; }
     return true;
   });
 

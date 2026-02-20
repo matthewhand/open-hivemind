@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, ToastNotification, Checkbox, Button, Card, Form } from '../DaisyUI';
+import { Modal, Checkbox, Button, Card, Form } from '../DaisyUI';
 import {
   getPersonas,
   createPersona,
   updatePersona,
   deletePersona,
-  type Persona
+  type Persona,
 } from '../../services/agentService';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  ArchiveBoxXMarkIcon
+  ArchiveBoxXMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const PersonaManager: React.FC = () => {
@@ -119,7 +119,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center p-4">Loading personas...</div>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   if (error) {
@@ -227,11 +227,12 @@ const PersonaManager: React.FC = () => {
       </Modal>
 
       {toastMessage && (
-        <ToastNotification
-          message={toastMessage}
-          type={toastType}
-          onClose={() => setToastMessage('')}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
+            <span>{toastMessage}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+          </div>
+        </div>
       )}
     </Card>
   );

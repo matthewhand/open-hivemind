@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   ShieldCheckIcon,
@@ -87,14 +88,14 @@ const EnterpriseManager: React.FC = () => {
     name: '',
     type: 'webhook' as Integration['type'],
     provider: '',
-    config: {} as Record<string, any>
+    config: {} as Record<string, any>,
   });
 
   const [cloudForm, setCloudForm] = useState({
     name: '',
     type: 'aws' as CloudProvider['type'],
     region: '',
-    credentials: {} as Record<string, any>
+    credentials: {} as Record<string, any>,
   });
 
   useEffect(() => {
@@ -115,7 +116,7 @@ const EnterpriseManager: React.FC = () => {
           category: 'Security',
           severity: 'high',
           status: 'compliant',
-          lastChecked: '2024-01-15T10:30:00Z'
+          lastChecked: '2024-01-15T10:30:00Z',
         },
         {
           id: 'rule_2',
@@ -124,7 +125,7 @@ const EnterpriseManager: React.FC = () => {
           category: 'Security',
           severity: 'critical',
           status: 'compliant',
-          lastChecked: '2024-01-15T10:30:00Z'
+          lastChecked: '2024-01-15T10:30:00Z',
         },
         {
           id: 'rule_3',
@@ -134,8 +135,8 @@ const EnterpriseManager: React.FC = () => {
           severity: 'medium',
           status: 'non-compliant',
           lastChecked: '2024-01-15T10:30:00Z',
-          remediation: 'Enable audit logging for all admin operations'
-        }
+          remediation: 'Enable audit logging for all admin operations',
+        },
       ];
 
       const mockCloudProviders: CloudProvider[] = [
@@ -148,8 +149,8 @@ const EnterpriseManager: React.FC = () => {
           resources: [
             { type: 'EC2', count: 3, status: 'running' },
             { type: 'RDS', count: 1, status: 'running' },
-            { type: 'S3', count: 2, status: 'active' }
-          ]
+            { type: 'S3', count: 2, status: 'active' },
+          ],
         },
         {
           id: 'azure_dev',
@@ -159,9 +160,9 @@ const EnterpriseManager: React.FC = () => {
           status: 'connected',
           resources: [
             { type: 'VM', count: 2, status: 'running' },
-            { type: 'Database', count: 1, status: 'running' }
-          ]
-        }
+            { type: 'Database', count: 1, status: 'running' },
+          ],
+        },
       ];
 
       const mockIntegrations: Integration[] = [
@@ -172,7 +173,7 @@ const EnterpriseManager: React.FC = () => {
           provider: 'Slack',
           status: 'active',
           lastSync: '2024-01-15T10:30:00Z',
-          config: { webhookUrl: 'https://hooks.slack.com/...' }
+          config: { webhookUrl: 'https://hooks.slack.com/...' },
         },
         {
           id: 'int_2',
@@ -181,7 +182,7 @@ const EnterpriseManager: React.FC = () => {
           provider: 'Datadog',
           status: 'active',
           lastSync: '2024-01-15T10:25:00Z',
-          config: { apiKey: '***', appKey: '***' }
+          config: { apiKey: '***', appKey: '***' },
         },
         {
           id: 'int_3',
@@ -190,8 +191,8 @@ const EnterpriseManager: React.FC = () => {
           provider: 'PostgreSQL',
           status: 'active',
           lastSync: '2024-01-15T10:20:00Z',
-          config: { host: 'db.example.com', database: 'open_hivemind' }
-        }
+          config: { host: 'db.example.com', database: 'open_hivemind' },
+        },
       ];
 
       const mockAuditEvents: AuditEvent[] = [
@@ -203,7 +204,7 @@ const EnterpriseManager: React.FC = () => {
           resource: 'bots/myBot',
           result: 'success',
           details: 'Created new bot instance',
-          ipAddress: '192.168.1.100'
+          ipAddress: '192.168.1.100',
         },
         {
           id: 'audit_2',
@@ -213,8 +214,8 @@ const EnterpriseManager: React.FC = () => {
           resource: 'config/production',
           result: 'success',
           details: 'Updated LLM provider configuration',
-          ipAddress: '192.168.1.101'
-        }
+          ipAddress: '192.168.1.101',
+        },
       ];
 
       const mockPerformanceMetrics: PerformanceMetric[] = [
@@ -225,7 +226,7 @@ const EnterpriseManager: React.FC = () => {
           unit: 'ms',
           trend: 'down',
           threshold: 500,
-          status: 'normal'
+          status: 'normal',
         },
         {
           id: 'metric_2',
@@ -234,7 +235,7 @@ const EnterpriseManager: React.FC = () => {
           unit: '%',
           trend: 'up',
           threshold: 90,
-          status: 'warning'
+          status: 'warning',
         },
         {
           id: 'metric_3',
@@ -243,8 +244,8 @@ const EnterpriseManager: React.FC = () => {
           unit: '%',
           trend: 'stable',
           threshold: 5,
-          status: 'normal'
-        }
+          status: 'normal',
+        },
       ];
 
       setComplianceRules(mockComplianceRules);
@@ -275,7 +276,7 @@ const EnterpriseManager: React.FC = () => {
         provider: integrationForm.provider,
         status: 'active',
         lastSync: new Date().toISOString(),
-        config: integrationForm.config
+        config: integrationForm.config,
       };
 
       setIntegrations(prev => [...prev, newIntegration]);
@@ -304,7 +305,7 @@ const EnterpriseManager: React.FC = () => {
         type: cloudForm.type,
         region: cloudForm.region,
         status: 'configuring',
-        resources: []
+        resources: [],
       };
 
       setCloudProviders(prev => [...prev, newProvider]);
@@ -318,8 +319,8 @@ const EnterpriseManager: React.FC = () => {
           prev.map(provider =>
             provider.id === newProvider.id
               ? { ...provider, status: 'connected' as const }
-              : provider
-          )
+              : provider,
+          ),
         );
       }, 3000);
     } catch (err) {
@@ -331,237 +332,237 @@ const EnterpriseManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-      case 'connected':
-      case 'compliant':
-        return 'badge-success';
-      case 'inactive':
-      case 'disconnected':
-      case 'non-compliant':
-        return 'badge-error';
-      case 'configuring':
-      case 'checking':
-        return 'badge-warning';
-      default:
-        return 'badge-ghost';
+    case 'active':
+    case 'connected':
+    case 'compliant':
+      return 'badge-success';
+    case 'inactive':
+    case 'disconnected':
+    case 'non-compliant':
+      return 'badge-error';
+    case 'configuring':
+    case 'checking':
+      return 'badge-warning';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return 'badge-error';
-      case 'high':
-        return 'badge-warning';
-      case 'medium':
-        return 'badge-info';
-      case 'low':
-        return 'badge-success';
-      default:
-        return 'badge-ghost';
+    case 'critical':
+      return 'badge-error';
+    case 'high':
+      return 'badge-warning';
+    case 'medium':
+      return 'badge-info';
+    case 'low':
+      return 'badge-success';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0: // Security & Compliance
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {complianceRules.map((rule) => (
-                <div key={rule.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="card-title text-base">{rule.name}</h3>
-                        <p className="text-sm text-base-content/70">{rule.category}</p>
+    case 0: // Security & Compliance
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {complianceRules.map((rule) => (
+              <div key={rule.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{rule.name}</h3>
+                      <p className="text-sm text-base-content/70">{rule.category}</p>
+                    </div>
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
+                        {rule.severity}
                       </div>
-                      <div className="flex gap-1 flex-wrap justify-end">
-                        <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
-                          {rule.severity}
-                        </div>
-                        <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
-                          {rule.status}
-                        </div>
+                      <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
+                        {rule.status}
                       </div>
                     </div>
-                    <p className="text-sm mb-2">{rule.description}</p>
-                    {rule.remediation && (
-                      <div className="alert alert-warning text-sm py-2">
-                        <ExclamationTriangleIcon className="w-4 h-4" />
-                        <span>{rule.remediation}</span>
-                      </div>
-                    )}
-                    <div className="text-xs text-base-content/50 mt-2">
+                  </div>
+                  <p className="text-sm mb-2">{rule.description}</p>
+                  {rule.remediation && (
+                    <div className="alert alert-warning text-sm py-2">
+                      <ExclamationTriangleIcon className="w-4 h-4" />
+                      <span>{rule.remediation}</span>
+                    </div>
+                  )}
+                  <div className="text-xs text-base-content/50 mt-2">
                       Last checked: {new Date(rule.lastChecked).toLocaleString()}
-                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        );
+        </div>
+      );
 
-      case 1: // Multi-Cloud
-        return (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Cloud Providers</h2>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setAddCloudProviderDialog(true)}
-                disabled={loading}
-              >
-                <PlusIcon className="w-4 h-4 mr-1" />
+    case 1: // Multi-Cloud
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Cloud Providers</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setAddCloudProviderDialog(true)}
+              disabled={loading}
+            >
+              <PlusIcon className="w-4 h-4 mr-1" />
                 Add Provider
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cloudProviders.map((provider) => (
-                <div key={provider.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="card-title text-base">{provider.name}</h3>
-                        <p className="text-sm text-base-content/70">
-                          {provider.type.toUpperCase()} • {provider.region}
-                        </p>
-                      </div>
-                      <div className={`badge ${getStatusColor(provider.status)}`}>
-                        {provider.status}
-                      </div>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {cloudProviders.map((provider) => (
+              <div key={provider.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{provider.name}</h3>
+                      <p className="text-sm text-base-content/70">
+                        {provider.type.toUpperCase()} • {provider.region}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold mb-1">Resources:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {provider.resources.map((resource, index) => (
-                        <div key={index} className="badge badge-outline badge-sm">
-                          {resource.type}: {resource.count}
-                        </div>
-                      ))}
+                    <div className={`badge ${getStatusColor(provider.status)}`}>
+                      {provider.status}
                     </div>
                   </div>
+                  <p className="text-sm font-semibold mb-1">Resources:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {provider.resources.map((resource, index) => (
+                      <div key={index} className="badge badge-outline badge-sm">
+                        {resource.type}: {resource.count}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        );
+        </div>
+      );
 
-      case 2: // Integrations
-        return (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setAddIntegrationDialog(true)}
-                disabled={loading}
-              >
-                <PlusIcon className="w-4 h-4 mr-1" />
+    case 2: // Integrations
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setAddIntegrationDialog(true)}
+              disabled={loading}
+            >
+              <PlusIcon className="w-4 h-4 mr-1" />
                 Add Integration
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {integrations.map((integration) => (
-                <div key={integration.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="card-title text-base">{integration.name}</h3>
-                        <p className="text-sm text-base-content/70">
-                          {integration.provider} • {integration.type}
-                        </p>
-                      </div>
-                      <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
-                        {integration.status}
-                      </div>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {integrations.map((integration) => (
+              <div key={integration.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="card-title text-base">{integration.name}</h3>
+                      <p className="text-sm text-base-content/70">
+                        {integration.provider} • {integration.type}
+                      </p>
                     </div>
-                    <p className="text-sm mb-2">
+                    <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
+                      {integration.status}
+                    </div>
+                  </div>
+                  <p className="text-sm mb-2">
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
-                    </p>
-                    <div className="card-actions justify-end">
-                      <button className="btn btn-xs btn-outline">Configure</button>
-                      <button className="btn btn-xs btn-outline">Test</button>
-                    </div>
+                  </p>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-xs btn-outline">Configure</button>
+                    <button className="btn btn-xs btn-outline">Test</button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        );
+        </div>
+      );
 
-      case 3: // Audit & Governance
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
-            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Resource</th>
-                    <th>Result</th>
-                    <th>IP Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditEvents.map((event) => (
-                    <tr key={event.id}>
-                      <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
-                      <td>{event.user}</td>
-                      <td>{event.action}</td>
-                      <td>{event.resource}</td>
-                      <td>
-                        <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
-                          {event.result}
-                        </div>
-                      </td>
-                      <td className="font-mono text-xs">{event.ipAddress}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-
-      case 4: // Performance Optimization
-        return (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {performanceMetrics.map((metric) => (
-                <div key={metric.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="card-title text-base">{metric.name}</h3>
-                      <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
-                        {metric.status}
+    case 3: // Audit & Governance
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
+          <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Result</th>
+                  <th>IP Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditEvents.map((event) => (
+                  <tr key={event.id}>
+                    <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
+                    <td>{event.user}</td>
+                    <td>{event.action}</td>
+                    <td>{event.resource}</td>
+                    <td>
+                      <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
+                        {event.result}
                       </div>
-                    </div>
-                    <div className="text-3xl font-bold mb-1">
-                      {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
-                    </div>
-                    <div className="flex items-center mb-2 text-sm text-base-content/70">
-                      <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
-                      {metric.trend === 'up' && <span className="text-error">↗</span>}
-                      {metric.trend === 'down' && <span className="text-success">↘</span>}
-                      {metric.trend === 'stable' && <span>→</span>}
-                    </div>
-                    <div className="card-actions justify-end">
-                      <button className="btn btn-sm btn-outline">Optimize</button>
+                    </td>
+                    <td className="font-mono text-xs">{event.ipAddress}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+
+    case 4: // Performance Optimization
+      return (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {performanceMetrics.map((metric) => (
+              <div key={metric.id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="card-title text-base">{metric.name}</h3>
+                    <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
+                      {metric.status}
                     </div>
                   </div>
+                  <div className="text-3xl font-bold mb-1">
+                    {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
+                  </div>
+                  <div className="flex items-center mb-2 text-sm text-base-content/70">
+                    <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
+                    {metric.trend === 'up' && <span className="text-error">↗</span>}
+                    {metric.trend === 'down' && <span className="text-success">↘</span>}
+                    {metric.trend === 'stable' && <span>→</span>}
+                  </div>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-sm btn-outline">Optimize</button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        );
+        </div>
+      );
 
-      default:
-        return null;
+    default:
+      return null;
     }
   };
 

@@ -2,7 +2,7 @@ import { BotConfigurationManager } from './BotConfigurationManager';
 import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
-import { BotOverride } from '@src/types/config';
+import type { BotOverride } from '@src/types/config';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
@@ -54,7 +54,7 @@ export class HotReloadManager {
     // Watch configuration files for changes
     const configPaths = [
       path.join(process.cwd(), 'config'),
-      path.join(process.cwd(), 'config', 'user')
+      path.join(process.cwd(), 'config', 'user'),
     ];
 
     configPaths.forEach(configPath => {
@@ -75,7 +75,7 @@ export class HotReloadManager {
             errorCode: (hivemindError as any).code,
             errorType: errorInfo.type,
             severity: errorInfo.severity,
-            configPath
+            configPath,
           });
         }
       }
@@ -107,13 +107,13 @@ export class HotReloadManager {
         error: hivemindError.message,
         errorCode: (hivemindError as any).code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
     }
   }
 
   public async applyConfigurationChange(
-    change: Omit<ConfigurationChange, 'id' | 'timestamp' | 'validated' | 'applied' | 'rollbackAvailable'>
+    change: Omit<ConfigurationChange, 'id' | 'timestamp' | 'validated' | 'applied' | 'rollbackAvailable'>,
   ): Promise<HotReloadResult> {
     if (this.isReloading) {
       return {
@@ -121,7 +121,7 @@ export class HotReloadManager {
         message: 'Hot reload already in progress',
         affectedBots: [],
         warnings: [],
-        errors: ['Another reload is in progress']
+        errors: ['Another reload is in progress'],
       };
     }
 
@@ -135,7 +135,7 @@ export class HotReloadManager {
         timestamp: new Date().toISOString(),
         validated: false,
         applied: false,
-        rollbackAvailable: false
+        rollbackAvailable: false,
       };
 
       // Validate the change
@@ -146,7 +146,7 @@ export class HotReloadManager {
           message: 'Configuration change validation failed',
           affectedBots: validation.affectedBots,
           warnings: validation.warnings,
-          errors: validation.errors
+          errors: validation.errors,
         };
       }
 
@@ -168,14 +168,14 @@ export class HotReloadManager {
         wsService.recordAlert({
           level: 'info',
           title: 'Configuration Updated',
-          message: `Configuration change applied successfully`,
+          message: 'Configuration change applied successfully',
           botName: change.botName,
-          metadata: { changeId, affectedBots: result.affectedBots }
+          metadata: { changeId, affectedBots: result.affectedBots },
         });
 
         return {
           ...result,
-          rollbackId: rollbackId || undefined
+          rollbackId: rollbackId || undefined,
         };
       } else {
         // Attempt rollback if application failed
@@ -192,14 +192,14 @@ export class HotReloadManager {
         error: hivemindError.message,
         errorCode: (hivemindError as any).code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return {
         success: false,
         message: 'Unexpected error during configuration change',
         affectedBots: [],
         warnings: [],
-        errors: [hivemindError.message]
+        errors: [hivemindError.message],
       };
     } finally {
       this.isReloading = false;
@@ -253,7 +253,7 @@ export class HotReloadManager {
         valid: errors.length === 0,
         affectedBots,
         warnings,
-        errors
+        errors,
       };
 
     } catch (error: unknown) {
@@ -263,7 +263,7 @@ export class HotReloadManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       errors.push(`Validation error: ${hivemindError.message}`);
       return { valid: false, affectedBots, warnings, errors };
@@ -299,7 +299,7 @@ export class HotReloadManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return null;
     }
@@ -338,7 +338,7 @@ export class HotReloadManager {
         message: errors.length === 0 ? 'Configuration changes applied successfully' : 'Some changes failed to apply',
         affectedBots,
         warnings,
-        errors
+        errors,
       };
 
     } catch (error: unknown) {
@@ -348,14 +348,14 @@ export class HotReloadManager {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
-        severity: errorInfo.severity
+        severity: errorInfo.severity,
       });
       return {
         success: false,
         message: 'Failed to apply configuration changes',
         affectedBots: [],
         warnings: [],
-        errors: [hivemindError.message]
+        errors: [hivemindError.message],
       };
     }
   }
@@ -367,6 +367,9 @@ export class HotReloadManager {
       const allowedFields: (keyof BotOverride)[] = [
         'messageProvider',
         'llmProvider',
+        'llmProfile',
+        'responseProfile',
+        'mcpGuardProfile',
         'persona',
         'systemInstruction',
         'mcpServers',
@@ -414,7 +417,7 @@ export class HotReloadManager {
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        botName
+        botName,
       });
       return false;
     }
@@ -446,7 +449,7 @@ export class HotReloadManager {
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
-        snapshotId
+        snapshotId,
       });
       return false;
     }
@@ -474,7 +477,7 @@ export class HotReloadManager {
           errorCode: hivemindError.code,
           errorType: errorInfo.type,
           severity: errorInfo.severity,
-          path
+          path,
         });
       }
     });

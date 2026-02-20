@@ -18,7 +18,7 @@ export class TypingActivity {
   }
 
   public recordTyping(channelId: string, userId: string): void {
-    if (!channelId || !userId) return;
+    if (!channelId || !userId) {return;}
     const now = Date.now();
     let byUser = this.byChannel.get(channelId);
     if (!byUser) {
@@ -32,7 +32,7 @@ export class TypingActivity {
   public getActiveTypistCount(channelId: string, windowMs: number): number {
     const now = Date.now();
     const byUser = this.byChannel.get(channelId);
-    if (!byUser) return 0;
+    if (!byUser) {return 0;}
 
     for (const [userId, ts] of byUser.entries()) {
       if (now - ts >= windowMs) {

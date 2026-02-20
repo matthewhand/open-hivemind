@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SpecDetailResponse } from '../types/spec';
+import type { SpecDetailResponse } from '../types/spec';
 
 const useSpec = (id: string) => {
   const [spec, setSpec] = useState<SpecDetailResponse | null>(null);
@@ -8,7 +8,7 @@ const useSpec = (id: string) => {
 
   useEffect(() => {
     const fetchSpec = async () => {
-      if (!id) return;
+      if (!id) {return;}
       
       setLoading(true);
       setError(null);

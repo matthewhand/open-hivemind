@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface UIState {
@@ -486,8 +487,8 @@ export const selectIsFeatureEnabled = (feature: string) => (state: { ui: UIState
   state.ui.featureFlags[feature] === true;
 
 export const selectDeviceType = (state: { ui: UIState }) => {
-  if (state.ui.isMobile) return 'mobile';
-  if (state.ui.isTablet) return 'tablet';
+  if (state.ui.isMobile) {return 'mobile';}
+  if (state.ui.isTablet) {return 'tablet';}
   return 'desktop';
 };
 

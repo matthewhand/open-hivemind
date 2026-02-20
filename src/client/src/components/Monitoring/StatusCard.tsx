@@ -31,7 +31,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
   onRefresh,
   isLoading = false,
   className = '',
-  compact = false
+  compact = false,
 }) => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
@@ -48,59 +48,59 @@ const StatusCard: React.FC<StatusCardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'text-success';
-      case 'warning': return 'text-warning';
-      case 'error': return 'text-error';
-      default: return 'text-neutral';
+    case 'healthy': return 'text-success';
+    case 'warning': return 'text-warning';
+    case 'error': return 'text-error';
+    default: return 'text-neutral';
     }
   };
 
   const getStatusBgColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'bg-success/10 border-success/20';
-      case 'warning': return 'bg-warning/10 border-warning/20';
-      case 'error': return 'bg-error/10 border-error/20';
-      default: return 'bg-neutral/10 border-neutral/20';
+    case 'healthy': return 'bg-success/10 border-success/20';
+    case 'warning': return 'bg-warning/10 border-warning/20';
+    case 'error': return 'bg-error/10 border-error/20';
+    default: return 'bg-neutral/10 border-neutral/20';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return (
-          <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'warning':
-        return (
-          <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        );
-      case 'error':
-        return (
-          <svg className="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="w-6 h-6 text-neutral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+    case 'healthy':
+      return (
+        <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'warning':
+      return (
+        <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      );
+    case 'error':
+      return (
+        <svg className="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className="w-6 h-6 text-neutral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
     }
   };
 
   const getTrendIcon = (trend?: 'up' | 'down' | 'stable') => {
     switch (trend) {
-      case 'up':
-        return <span className="text-success text-sm">↑</span>;
-      case 'down':
-        return <span className="text-error text-sm">↓</span>;
-      default:
-        return <span className="text-neutral text-sm">→</span>;
+    case 'up':
+      return <span className="text-success text-sm">↑</span>;
+    case 'down':
+      return <span className="text-error text-sm">↓</span>;
+    default:
+      return <span className="text-neutral text-sm">→</span>;
     }
   };
 
@@ -151,7 +151,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
                     {metric.trendValue !== undefined && (
                       <span className={`text-xs ${
                         metric.trend === 'up' ? 'text-success' :
-                        metric.trend === 'down' ? 'text-error' : 'text-neutral'
+                          metric.trend === 'down' ? 'text-error' : 'text-neutral'
                       }`}>
                         {metric.trendValue > 0 ? '+' : ''}{metric.trendValue}%
                       </span>

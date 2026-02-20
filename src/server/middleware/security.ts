@@ -1,14 +1,42 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { RateLimitError } from '../../types/errorClasses';
 import Debug from 'debug';
+import crypto from 'crypto';
 
 const debug = Debug('app:securityMiddleware');
 
 /**
+ * Generate a cryptographically secure nonce for CSP
+ * @returns Base64-encoded nonce string
+ */
+export function generateNonce(): string {
+  return crypto.randomBytes(16).toString('base64');
+}
+
+/**
+ * Get the CSP nonce from response locals, or generate a new one
+ * @param res Express response object
+ * @returns The CSP nonce string
+ */
+export function getCspNonce(res: Response): string {
+  if (!res.locals.cspNonce) {
+    res.locals.cspNonce = generateNonce();
+  }
+  return res.locals.cspNonce;
+}
+
+/**
  * Security middleware that adds comprehensive security headers
  * to protect against common web vulnerabilities
+ * 
+ * Implements nonce-based CSP to eliminate 'unsafe-inline' and 'unsafe-eval'
+ * directives that create XSS vulnerabilities.
  */
 export function securityHeaders(req: Request, res: Response, next: NextFunction): void {
+  // Generate nonce for this request - stored in res.locals for template access
+  const nonce = generateNonce();
+  res.locals.cspNonce = nonce;
+
   // Prevent clickjacking attacks
   res.setHeader('X-Frame-Options', 'DENY');
 
@@ -21,32 +49,86 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Content Security Policy (CSP)
+  // Content Security Policy (CSP) with nonce-based security
+  // Production CSP uses nonce instead of 'unsafe-inline'/'unsafe-eval'
   const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for WebSocket connections
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: https:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' ws: wss:", // Allow WebSocket connections
-    "media-src 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
+    'default-src \'self\'',
+    `script-src 'self' 'nonce-${nonce}' https:`,
+    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
+    'img-src \'self\' data: https:',
+    'font-src \'self\' https://fonts.gstatic.com',
+    'connect-src \'self\' ws: wss: https:', // Allow WebSocket connections
+    'media-src \'self\'',
+    'object-src \'none\'',
+    'frame-ancestors \'none\'',
+    'base-uri \'self\'',
+    'form-action \'self\'',
+    'frame-src \'none\'', // Prevent iframes
+    'worker-src \'none\'', // Prevent web workers
+    'manifest-src \'self\'',
+    'prefetch-src \'self\'',
   ];
 
+  // Development mode: allow unsafe-eval for hot module replacement
+  // WARNING: This should NEVER be enabled in production
   if (process.env.NODE_ENV === 'development') {
-    // Relax CSP for development
-    cspDirectives.push("script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*");
-    cspDirectives.push("connect-src 'self' ws: wss: http://localhost:*");
+    // In development, we need unsafe-eval for HMR and dev tools
+    // But we still use nonce for inline scripts where possible
+    const devCspDirectives = [
+      'default-src \'self\'',
+      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://localhost:*`,
+      `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com`,
+      'img-src \'self\' data: https: http://localhost:* https://localhost:*',
+      'font-src \'self\' https://fonts.gstatic.com http://localhost:*',
+      'connect-src \'self\' ws: wss: http://localhost:* https://localhost:*',
+      'media-src \'self\'',
+      'object-src \'none\'',
+      'frame-ancestors \'none\'',
+      'base-uri \'self\'',
+      'form-action \'self\'',
+      'frame-src \'none\'',
+      'worker-src \'self\' blob:', // Allow workers for dev tools
+      'manifest-src \'self\'',
+      'prefetch-src \'self\'',
+    ];
+    res.setHeader('Content-Security-Policy', devCspDirectives.join('; '));
+  } else {
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
   }
-
-  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
 
   // HSTS (HTTP Strict Transport Security) - only in production
   if (process.env.NODE_ENV === 'production' && req.secure) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // Permissions Policy (formerly Feature-Policy)
+  // Restricts access to browser features that could be abused
+  res.setHeader('Permissions-Policy', [
+    'geolocation=()',
+    'microphone=()',
+    'camera=()',
+    'payment=()',
+    'usb=()',
+    'magnetometer=()',
+    'gyroscope=()',
+    'accelerometer=()',
+  ].join(', '));
+
+  // Cross-Origin headers for additional protection
+  // Note: Cross-Origin-Embedder-Policy can break some external resources
+  // Using 'credentialless' as a less restrictive alternative to 'require-corp'
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  }
+
+  // Cache control for sensitive pages
+  // Prevents caching of authentication and admin pages
+  if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/admin')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
   }
 
   // Remove server information
@@ -56,7 +138,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('X-Application-Name', 'Open-Hivemind');
   res.setHeader('X-Application-Version', process.env.npm_package_version || '1.0.0');
 
-  debug('Security headers applied to response');
+  debug('Security headers applied to response with nonce:', nonce.substring(0, 8) + '...');
   next();
 }
 
@@ -79,8 +161,8 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
       'content-type': req.get('content-type'),
       'accept': req.get('accept'),
       'referer': req.get('referer'),
-      'origin': req.get('origin')
-    }
+      'origin': req.get('origin'),
+    },
   });
 
   // Log response
@@ -91,7 +173,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
       url: req.url,
       status: res.statusCode,
       duration: `${duration}ms`,
-      ip: clientIP
+      ip: clientIP,
     });
 
     // Alert on suspicious activity
@@ -101,7 +183,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
         url: req.url,
         status: res.statusCode,
         ip: clientIP,
-        userAgent: userAgent.substring(0, 50)
+        userAgent: userAgent.substring(0, 50),
       });
     }
 
@@ -111,7 +193,7 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
         method: req.method,
         url: req.url,
         duration: `${duration}ms`,
-        ip: clientIP
+        ip: clientIP,
       });
     }
   });
@@ -155,7 +237,7 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
       retryAfter,
       maxRequests,
       0,
-      new Date(clientData.resetTime)
+      new Date(clientData.resetTime),
     );
   }
 
@@ -190,11 +272,11 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction): 
     sanitizeObject(req.body);
   }
 
-   // Sanitize headers and cookies
-   sanitizeHeaders(req);
-   sanitizeCookies(req);
+  // Sanitize headers and cookies
+  sanitizeHeaders(req);
+  sanitizeCookies(req);
  
-   next();
+  next();
 }
 
 /**
@@ -214,8 +296,8 @@ function sanitizeObject(obj: any): void {
             '<': '<',
             '>': '>',
             '"': '"',
-            "'": '&#x27;',
-            '&': '&'
+            '\'': '&#x27;',
+            '&': '&',
           };
           return entityMap[match] || match;
         });
@@ -324,13 +406,13 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
       ip: clientIP,
       method: req.method,
       url: req.url,
-      userAgent: req.get('User-Agent')?.substring(0, 100)
+      userAgent: req.get('User-Agent')?.substring(0, 100),
     });
 
     res.status(403).json({
       error: 'Access Denied',
       message: 'Your IP address is not authorized to access this resource.',
-      ip: clientIP
+      ip: clientIP,
     });
     return;
   }
@@ -368,7 +450,7 @@ export function secureCORS(req: Request, res: Response, next: NextFunction): voi
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001'
+    'http://127.0.0.1:3001',
   ];
 
   // In production, you might want to restrict this further

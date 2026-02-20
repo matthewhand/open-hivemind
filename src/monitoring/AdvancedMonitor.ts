@@ -200,7 +200,7 @@ export class AdvancedMonitor extends EventEmitter {
         pid: process.pid,
         uptime: process.uptime(),
         memoryUsage: process.memoryUsage(),
-        cpuUsage
+        cpuUsage,
       };
 
       const metrics: SystemMetrics = {
@@ -208,21 +208,21 @@ export class AdvancedMonitor extends EventEmitter {
         cpu: {
           usage: (cpuUsage.user + cpuUsage.system) / 1000000, // Convert to seconds
           loadAverage,
-          cores: os.cpus().length
+          cores: os.cpus().length,
         },
         memory: {
           used: usedMemory,
           total: totalMemory,
           free: freeMemory,
-          usagePercent: (usedMemory / totalMemory) * 100
+          usagePercent: (usedMemory / totalMemory) * 100,
         },
         disk: diskMetrics,
         network: {
           interfaces: Object.keys(networkInterfaces),
           bytesReceived: networkStats.rx,
-          bytesTransmitted: networkStats.tx
+          bytesTransmitted: networkStats.tx,
         },
-        process: processMetrics
+        process: processMetrics,
       };
 
       this.systemMetrics.push(metrics);
@@ -258,21 +258,21 @@ export class AdvancedMonitor extends EventEmitter {
           min: 0,
           max: 0,
           p95: 0,
-          p99: 0
+          p99: 0,
         },
         botMetrics: {
           totalBots: 0, // Would be populated by BotConfigurationManager
           activeBots: 0,
           messagesProcessed: 0,
-          commandsExecuted: 0
+          commandsExecuted: 0,
         },
         llmMetrics: {
           totalRequests: 0, // Would be populated by LLM providers
           successfulRequests: 0,
           failedRequests: 0,
           averageResponseTime: 0,
-          tokensUsed: 0
-        }
+          tokensUsed: 0,
+        },
       };
 
       this.applicationMetrics.push(metrics);
@@ -293,7 +293,7 @@ export class AdvancedMonitor extends EventEmitter {
     const healthStatus: HealthStatus = {
       overall: 'healthy',
       services: {},
-      alerts: this.alerts.filter(a => !a.resolved)
+      alerts: this.alerts.filter(a => !a.resolved),
     };
 
     // Check system health
@@ -307,7 +307,7 @@ export class AdvancedMonitor extends EventEmitter {
           severity: 'high',
           message: `High memory usage: ${latestSystemMetrics.memory.usagePercent.toFixed(1)}%`,
           timestamp: Date.now(),
-          resolved: false
+          resolved: false,
         });
       } else if (latestSystemMetrics.memory.usagePercent > 80) {
         healthStatus.overall = healthStatus.overall === 'unhealthy' ? 'unhealthy' : 'degraded';
@@ -316,7 +316,7 @@ export class AdvancedMonitor extends EventEmitter {
           severity: 'medium',
           message: `Elevated memory usage: ${latestSystemMetrics.memory.usagePercent.toFixed(1)}%`,
           timestamp: Date.now(),
-          resolved: false
+          resolved: false,
         });
       }
 
@@ -328,7 +328,7 @@ export class AdvancedMonitor extends EventEmitter {
           severity: 'high',
           message: `High CPU usage: ${latestSystemMetrics.cpu.usage.toFixed(1)}%`,
           timestamp: Date.now(),
-          resolved: false
+          resolved: false,
         });
       }
     }
@@ -339,12 +339,12 @@ export class AdvancedMonitor extends EventEmitter {
     healthStatus.services = {
       'system': {
         status: healthStatus.overall === 'healthy' ? 'up' : 'degraded',
-        lastCheck: Date.now()
+        lastCheck: Date.now(),
       },
       'monitoring': {
         status: 'up',
-        lastCheck: Date.now()
-      }
+        lastCheck: Date.now(),
+      },
     };
 
     this.emit('health-check', healthStatus);
@@ -358,7 +358,7 @@ export class AdvancedMonitor extends EventEmitter {
         severity: 'critical',
         message: `Critical memory usage: ${metrics.memory.usagePercent.toFixed(1)}%`,
         timestamp: Date.now(),
-        resolved: false
+        resolved: false,
       });
     }
 
@@ -369,7 +369,7 @@ export class AdvancedMonitor extends EventEmitter {
         severity: 'critical',
         message: `Critical CPU usage: ${metrics.cpu.usage.toFixed(1)}%`,
         timestamp: Date.now(),
-        resolved: false
+        resolved: false,
       });
     }
   }
@@ -384,7 +384,7 @@ export class AdvancedMonitor extends EventEmitter {
         used: diskUsage.used,
         total: diskUsage.total,
         free: diskUsage.free,
-        usagePercent: diskUsage.usagePercent
+        usagePercent: diskUsage.usagePercent,
       }];
     } catch (error) {
       debug('Error getting disk metrics:', error);
@@ -392,7 +392,7 @@ export class AdvancedMonitor extends EventEmitter {
         used: 0,
         total: 0,
         free: 0,
-        usagePercent: 0
+        usagePercent: 0,
       }];
     }
   }
@@ -406,14 +406,14 @@ export class AdvancedMonitor extends EventEmitter {
         used: 0, // Placeholder
         total: 100 * 1024 * 1024 * 1024, // 100GB placeholder
         free: 50 * 1024 * 1024 * 1024, // 50GB placeholder
-        usagePercent: 50
+        usagePercent: 50,
       };
     } catch (error) {
       return {
         used: 0,
         total: 0,
         free: 0,
-        usagePercent: 0
+        usagePercent: 0,
       };
     }
   }
@@ -423,7 +423,7 @@ export class AdvancedMonitor extends EventEmitter {
     // In a real scenario, you'd use a library to get actual network statistics
     return {
       rx: Math.floor(Math.random() * 1000000),
-      tx: Math.floor(Math.random() * 1000000)
+      tx: Math.floor(Math.random() * 1000000),
     };
   }
 
@@ -438,28 +438,30 @@ export class AdvancedMonitor extends EventEmitter {
 
   public getHealthStatus(): HealthStatus {
     const latestSystemMetrics = this.systemMetrics[this.systemMetrics.length - 1];
+    // Adjusted thresholds: >95% memory = unhealthy, 85-95% = degraded
+    // High memory usage alone (without errors) should be a warning, not critical failure
     const overall: 'healthy' | 'degraded' | 'unhealthy' =
       latestSystemMetrics &&
-      (latestSystemMetrics.memory.usagePercent > 90 || latestSystemMetrics.cpu.usage > 90)
+        (latestSystemMetrics.memory.usagePercent > 95 || latestSystemMetrics.cpu.usage > 95)
         ? 'unhealthy'
         : latestSystemMetrics &&
-          (latestSystemMetrics.memory.usagePercent > 80 || latestSystemMetrics.cpu.usage > 80)
-        ? 'degraded'
-        : 'healthy';
+          (latestSystemMetrics.memory.usagePercent > 85 || latestSystemMetrics.cpu.usage > 85)
+          ? 'degraded'
+          : 'healthy';
 
     return {
       overall,
       services: {
         'system': {
           status: overall === 'healthy' ? 'up' : 'degraded',
-          lastCheck: Date.now()
+          lastCheck: Date.now(),
         },
         'monitoring': {
           status: 'up',
-          lastCheck: Date.now()
-        }
+          lastCheck: Date.now(),
+        },
       },
-      alerts: this.alerts.filter(a => !a.resolved)
+      alerts: this.alerts.filter(a => !a.resolved),
     };
   }
 
@@ -492,14 +494,14 @@ export class AdvancedMonitor extends EventEmitter {
       system: latestSystem ? {
         timestamp: latestSystem.timestamp,
         cpu: latestSystem.cpu,
-        memory: latestSystem.memory
+        memory: latestSystem.memory,
       } : {},
       application: latestApplication ? {
         timestamp: latestApplication.timestamp,
         activeConnections: latestApplication.activeConnections,
-        botMetrics: latestApplication.botMetrics
+        botMetrics: latestApplication.botMetrics,
       } : {},
-      health: this.getHealthStatus()
+      health: this.getHealthStatus(),
     };
   }
 

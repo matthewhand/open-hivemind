@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Select } from '../DaisyUI';
 import dayjs, { Dayjs } from 'dayjs';
@@ -156,7 +157,7 @@ const ActivityMonitor: React.FC = () => {
               onChange={(value) => handleFilterChange('agent', value || undefined)}
               options={[
                 { value: '', label: 'All Agents' },
-                ...uniqueAgents.map(agent => ({ value: agent, label: agent }))
+                ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
               ]}
             />
 
@@ -166,7 +167,7 @@ const ActivityMonitor: React.FC = () => {
               onChange={(value) => handleFilterChange('provider', value || undefined)}
               options={[
                 { value: '', label: 'All Providers' },
-                ...uniqueProviders.map(provider => ({ value: provider, label: provider }))
+                ...uniqueProviders.map(provider => ({ value: provider, label: provider })),
               ]}
             />
 
@@ -177,7 +178,7 @@ const ActivityMonitor: React.FC = () => {
               options={[
                 { value: '', label: 'All Types' },
                 { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' }
+                { value: 'outgoing', label: 'Outgoing' },
               ]}
             />
 
@@ -189,12 +190,12 @@ const ActivityMonitor: React.FC = () => {
                 { value: '', label: 'All Statuses' },
                 { value: 'success', label: 'Success' },
                 { value: 'error', label: 'Error' },
-                { value: 'timeout', label: 'Timeout' }
+                { value: 'timeout', label: 'Timeout' },
               ]}
             />
 
             <Button
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={clearFilters}
               className="self-end"
             >

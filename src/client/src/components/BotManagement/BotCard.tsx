@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import {
+import type {
   BotInstance,
   MessageProvider,
   LLMProvider,
-  BotStatus,
   Persona,
+  ProviderModalState,
+} from '../../types/bot';
+import {
+  BotStatus,
   DEFAULT_PERSONA,
-  ProviderModalState
 } from '../../types/bot';
 import { Button, Badge } from '../DaisyUI';
 import {
@@ -18,7 +21,7 @@ import {
   MoreVertical as MoreIcon,
   User as UserIcon,
   Edit as EditIcon,
-  Plus as PlusIcon
+  Plus as PlusIcon,
 } from 'lucide-react';
 import ProviderList from './ProviderList';
 import PersonaChip from './PersonaChip';
@@ -49,48 +52,48 @@ const BotCard: React.FC<BotCardProps> = ({
   onDeleteBot,
   onAddProvider,
   onRemoveProvider,
-  onPersonaChange
+  onPersonaChange,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [providerModalState, setProviderModalState] = useState<ProviderModalState>({
     isOpen: false,
     providerType: 'message',
-    mode: 'create'
+    mode: 'create',
   });
 
   const currentPersona = personas.find(p => p.id === bot.personaId) || DEFAULT_PERSONA;
 
   const getStatusColor = (status: BotStatus) => {
     switch (status) {
-      case BotStatus.ACTIVE:
-        return 'badge-success';
-      case BotStatus.INACTIVE:
-      case BotStatus.STOPPING:
-        return 'badge-ghost';
-      case BotStatus.ERROR:
-        return 'badge-error';
-      case BotStatus.STARTING:
-        return 'badge-info';
-      default:
-        return 'badge-ghost';
+    case BotStatus.ACTIVE:
+      return 'badge-success';
+    case BotStatus.INACTIVE:
+    case BotStatus.STOPPING:
+      return 'badge-ghost';
+    case BotStatus.ERROR:
+      return 'badge-error';
+    case BotStatus.STARTING:
+      return 'badge-info';
+    default:
+      return 'badge-ghost';
     }
   };
 
   const getStatusText = (status: BotStatus) => {
     switch (status) {
-      case BotStatus.ACTIVE:
-        return 'Running';
-      case BotStatus.INACTIVE:
-        return 'Stopped';
-      case BotStatus.ERROR:
-        return 'Error';
-      case BotStatus.STARTING:
-        return 'Starting';
-      case BotStatus.STOPPING:
-        return 'Stopping';
-      default:
-        return status;
+    case BotStatus.ACTIVE:
+      return 'Running';
+    case BotStatus.INACTIVE:
+      return 'Stopped';
+    case BotStatus.ERROR:
+      return 'Error';
+    case BotStatus.STARTING:
+      return 'Starting';
+    case BotStatus.STOPPING:
+      return 'Stopping';
+    default:
+      return status;
     }
   };
 
@@ -99,25 +102,25 @@ const BotCard: React.FC<BotCardProps> = ({
   const hasProviders = bot.messageProviders.length > 0 || bot.llmProviders.length > 0;
 
   const handleStartBot = () => {
-    if (onStartBot) onStartBot(bot.id);
+    if (onStartBot) {onStartBot(bot.id);}
   };
 
   const handleStopBot = () => {
-    if (onStopBot) onStopBot(bot.id);
+    if (onStopBot) {onStopBot(bot.id);}
   };
 
   const handleConfigureBot = () => {
-    if (onConfigureBot) onConfigureBot(bot.id);
+    if (onConfigureBot) {onConfigureBot(bot.id);}
     setIsDropdownOpen(false);
   };
 
   const handleCloneBot = () => {
-    if (onCloneBot) onCloneBot(bot.id);
+    if (onCloneBot) {onCloneBot(bot.id);}
     setIsDropdownOpen(false);
   };
 
   const handleDeleteBot = () => {
-    if (onDeleteBot) onDeleteBot(bot.id);
+    if (onDeleteBot) {onDeleteBot(bot.id);}
     setIsDropdownOpen(false);
   };
 
@@ -131,7 +134,7 @@ const BotCard: React.FC<BotCardProps> = ({
       isOpen: true,
       providerType: 'message',
       mode: 'create',
-      botId: bot.id
+      botId: bot.id,
     });
   };
 
@@ -145,7 +148,7 @@ const BotCard: React.FC<BotCardProps> = ({
       isOpen: true,
       providerType: 'llm',
       mode: 'create',
-      botId: bot.id
+      botId: bot.id,
     });
   };
 
@@ -156,18 +159,18 @@ const BotCard: React.FC<BotCardProps> = ({
       mode: 'edit',
       provider: provider,
       botId: bot.id,
-      isEdit: true
+      isEdit: true,
     });
   };
 
   const handleRemoveProvider = (providerId: string) => {
-    if (onRemoveProvider) onRemoveProvider(bot.id, providerId);
+    if (onRemoveProvider) {onRemoveProvider(bot.id, providerId);}
   };
 
   const handleProviderModalClose = () => {
     setProviderModalState(prev => ({
       ...prev,
-      isOpen: false
+      isOpen: false,
     }));
   };
 
@@ -221,7 +224,7 @@ const BotCard: React.FC<BotCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h2 className="card-title text-lg font-semibold">{bot.name}</h2>
-              <Badge color={getStatusColor(bot.status)} size="sm">
+              <Badge variant={getStatusColor(bot.status)} size="sm">
                 {getStatusText(bot.status)}
               </Badge>
             </div>
@@ -277,7 +280,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 Persona
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {currentPersona.isBuiltIn ? 'BUILTIN' : 'CUSTOM'}
               </Badge>
             </div>
@@ -305,7 +308,7 @@ const BotCard: React.FC<BotCardProps> = ({
                 personas={personas}
                 selectedPersonaId={bot.personaId}
                 onPersonaSelect={(personaId) => {
-                  if (onPersonaChange) onPersonaChange(bot.id, personaId);
+                  if (onPersonaChange) {onPersonaChange(bot.id, personaId);}
                   setShowPersonaSelector(false);
                 }}
                 allowCreate={true}
@@ -325,7 +328,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 Message Providers
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {bot.messageProviders.length}
               </Badge>
             </div>
@@ -356,7 +359,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 LLM Providers
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {bot.llmProviders.length}
               </Badge>
             </div>
@@ -400,11 +403,11 @@ const BotCard: React.FC<BotCardProps> = ({
             </Button>
 
             <Button
-              variant={canStart ? "success" : "error"}
+              variant={canStart ? 'success' : 'error'}
               size="sm"
               onClick={canStart ? handleStartBot : handleStopBot}
               disabled={!canStart && !canStop}
-              className={!hasProviders ? "btn-disabled" : ""}
+              className={!hasProviders ? 'btn-disabled' : ''}
             >
               {canStart ? (
                 <>

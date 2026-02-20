@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value,
     }));
-    if (error) setError(''); // Clear error on input change
+    if (error) {setError('');} // Clear error on input change
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +104,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><Loading size="sm" className="mr-2" /> Signing in...</>
+                <><span className="loading loading-spinner loading-sm mr-2"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}

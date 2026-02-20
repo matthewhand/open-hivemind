@@ -280,26 +280,26 @@ export class HivemindCLI {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required'
+        validate: (input: string) => input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
         name: 'provider',
         message: 'Message provider:',
-        choices: ['discord', 'slack', 'telegram', 'mattermost']
+        choices: ['discord', 'slack', 'telegram', 'mattermost'],
       },
       {
         type: 'list',
         name: 'llm',
         message: 'LLM provider:',
-        choices: ['openai', 'flowise', 'openwebui']
+        choices: ['openai', 'flowise', 'openwebui'],
       },
       {
         type: 'password',
         name: 'token',
         message: 'Bot token:',
-        mask: '*'
-      }
+        mask: '*',
+      },
     ]);
 
     await this.addBot(answers);
@@ -342,8 +342,8 @@ export class HivemindCLI {
           type: 'confirm',
           name: 'confirm',
           message: `Are you sure you want to remove bot '${name}'?`,
-          default: false
-        }
+          default: false,
+        },
       ]);
       
       if (!confirm) {
@@ -447,8 +447,8 @@ export class HivemindCLI {
           type: 'confirm',
           name: 'confirm',
           message: `Delete messages older than ${days} days?`,
-          default: false
-        }
+          default: false,
+        },
       ]);
       
       if (!confirm) {
@@ -525,7 +525,7 @@ export class HivemindCLI {
     const config = {
       bots: this.configManager.getAllBots(),
       exportedAt: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
     
     await fs.writeFile(path, JSON.stringify(config, null, 2));
@@ -543,8 +543,8 @@ export class HivemindCLI {
             type: 'confirm',
             name: 'confirm',
             message: `Import ${config.bots?.length || 0} bot(s) from ${path}?`,
-            default: false
-          }
+            default: false,
+          },
         ]);
         
         if (!confirm) {

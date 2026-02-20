@@ -11,6 +11,10 @@ export interface GuardState {
 export interface BotUIState {
   messageProvider: string;
   llmProvider: string;
+  llmProfile: string;
+  responseProfile: string;
+  mcpGuardProfile: string;
+  mcpServerProfile: string;
   persona: string;
   systemInstruction: string;
   mcpServers: string[];
@@ -28,6 +32,10 @@ export interface AgentConfigCardProps {
   status: StatusResponse['bots'][number] | undefined;
   pending: boolean;
   personaOptions: Array<{ value: string; label: string }>;
+  responseProfileOptions: Array<{ value: string; label: string }>;
+  guardrailProfileOptions: Array<{ value: string; label: string; description?: string }>;
+  llmProfileOptions: Array<{ value: string; label: string }>;
+  mcpServerProfileOptions: Array<{ value: string; label: string }>;
   messageProviderOptions: Array<{ value: string; label: string }>;
   llmProviderOptions: Array<{ value: string; label: string }>;
   messageProviderInfo: Record<string, ProviderInfo | undefined>;
@@ -37,6 +45,7 @@ export interface AgentConfigCardProps {
   availableMcpServers: string[];
   guardOptions: Array<{ value: GuardState['type']; label: string }>;
   guardInput: string;
+  onGuardrailProfileChange: (bot: Bot, profileKey: string) => void;
   onSelectionChange: <K extends keyof BotUIState>(bot: Bot, field: K, value: BotUIState[K], commitImmediately?: boolean) => void;
   onSystemInstructionBlur: (bot: Bot) => void;
   onGuardToggle: (bot: Bot, enabled: boolean) => void;

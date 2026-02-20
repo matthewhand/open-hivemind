@@ -1,4 +1,4 @@
-import { transcribeAudio } from '@src/integrations/discord/voice/speechToText';
+import { transcribeAudio } from '@hivemind/adapter-discord/voice/speechToText';
 import OpenAI from 'openai';
 import fs from 'fs';
 

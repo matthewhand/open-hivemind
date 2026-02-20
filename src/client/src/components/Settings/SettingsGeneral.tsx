@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Input, Select, Toggle, Button, Divider } from '../DaisyUI';
 import { Settings as SettingsIcon } from 'lucide-react';
@@ -30,7 +31,7 @@ const SettingsGeneral: React.FC = () => {
     maxConcurrentBots: 10,
     defaultResponseTimeout: 30,
     enableHealthChecks: true,
-    healthCheckInterval: 60
+    healthCheckInterval: 60,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,24 +41,25 @@ const SettingsGeneral: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/global');
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      if (!response.ok) { throw new Error('Failed to fetch settings'); }
       const data = await response.json();
-      
-      // Extract relevant settings from the config response
+
+      // Extract relevant settings from user-saved config first, then fall back to defaults
+      const userSettings = data._userSettings?.values || {};
       const config = data.config || {};
       setSettings({
-        instanceName: config.app?.name?.value || 'Open-Hivemind Instance',
-        description: config.app?.description?.value || 'Multi-agent AI coordination platform',
-        timezone: config.app?.timezone?.value || 'UTC',
-        language: config.app?.language?.value || 'en',
-        theme: config.webui?.theme?.value || 'auto',
-        enableNotifications: config.webui?.notifications?.value !== false,
-        enableLogging: config.logging?.enabled?.value !== false,
-        logLevel: config.logging?.level?.value || 'info',
-        maxConcurrentBots: config.limits?.maxBots?.value || 10,
-        defaultResponseTimeout: config.limits?.timeout?.value || 30,
-        enableHealthChecks: config.health?.enabled?.value !== false,
-        healthCheckInterval: config.health?.interval?.value || 60
+        instanceName: userSettings['app.name'] || config.app?.name?.value || 'Open-Hivemind Instance',
+        description: userSettings['app.description'] || config.app?.description?.value || 'Multi-agent AI coordination platform',
+        timezone: userSettings['app.timezone'] || config.app?.timezone?.value || 'UTC',
+        language: userSettings['app.language'] || config.app?.language?.value || 'en',
+        theme: userSettings['webui.theme'] || config.webui?.theme?.value || 'auto',
+        enableNotifications: userSettings['webui.notifications'] ?? (config.webui?.notifications?.value !== false),
+        enableLogging: userSettings['logging.enabled'] ?? (config.logging?.enabled?.value !== false),
+        logLevel: userSettings['logging.level'] || config.logging?.level?.value || 'info',
+        maxConcurrentBots: userSettings['limits.maxBots'] || config.limits?.maxBots?.value || 10,
+        defaultResponseTimeout: userSettings['limits.timeout'] || config.limits?.timeout?.value || 30,
+        enableHealthChecks: userSettings['health.enabled'] ?? (config.health?.enabled?.value !== false),
+        healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
       });
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load settings' });
@@ -84,11 +86,11 @@ const SettingsGeneral: React.FC = () => {
           'app.name': settings.instanceName,
           'app.description': settings.description,
           'logging.level': settings.logLevel,
-          'logging.enabled': settings.enableLogging
-        })
+          'logging.enabled': settings.enableLogging,
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to save settings');
+
+      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -117,8 +119,8 @@ const SettingsGeneral: React.FC = () => {
       </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
           message={alert.message}
           onClose={() => setAlert(null)}
         />
@@ -131,7 +133,7 @@ const SettingsGeneral: React.FC = () => {
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
           </h6>
-          
+
           <div className="form-control mb-4">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Instance Name</span>
@@ -179,7 +181,7 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'America/Los_Angeles', label: 'Pacific Time' },
                 { value: 'Europe/London', label: 'London' },
                 { value: 'Asia/Tokyo', label: 'Tokyo' },
-                { value: 'Australia/Sydney', label: 'Sydney' }
+                { value: 'Australia/Sydney', label: 'Sydney' },
               ]}
             />
           </div>
@@ -195,7 +197,7 @@ const SettingsGeneral: React.FC = () => {
               options={[
                 { value: 'auto', label: 'Auto (System)' },
                 { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' }
+                { value: 'dark', label: 'Dark' },
               ]}
             />
           </div>
@@ -232,7 +234,7 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'debug', label: 'Debug' },
                 { value: 'info', label: 'Info' },
                 { value: 'warn', label: 'Warning' },
-                { value: 'error', label: 'Error' }
+                { value: 'error', label: 'Error' },
               ]}
             />
           </div>
@@ -291,7 +293,7 @@ const SettingsGeneral: React.FC = () => {
               onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
               className="range range-xs"
             />
-             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>5s</span>
               <span>300s</span>
             </div>
@@ -299,7 +301,7 @@ const SettingsGeneral: React.FC = () => {
 
           {/* Health Check Interval: Range with Steps & Color (Accent) */}
           <div className="form-control">
-             <label className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Health Check Interval</span>
               <span className="badge badge-accent font-mono">{settings.healthCheckInterval}s</span>
             </label>

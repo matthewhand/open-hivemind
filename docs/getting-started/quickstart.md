@@ -14,7 +14,7 @@ local swarm online; manual Node.js and Docker options follow for advanced use.
 3. Copy `.env.sample` to `.env` in the Pinokio workspace and add your Discord,
    Slack, Mattermost, and LLM credentials.
 4. Hit **Start**. Pinokio runs `npm run dev`, serving the API + WebUI on
-   `http://localhost:5005`.
+   `http://localhost:3028`.
 5. Choose **Open WebUI** to finish configuring personas, MCP servers, and tool
    guards from the browser.
 
@@ -41,7 +41,7 @@ cp .env.sample .env
 npm install
 
 # Launch the dev server
-npm run dev  # serves API + WebUI on port 5005
+npm run dev  # serves API + WebUI on port 3028
 ```
 We do not publish an npm package; cloning the repository is the supported path.
 Use `npm run build` followed by `npm start` for production.

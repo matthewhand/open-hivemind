@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 
 // Responsive Container
@@ -44,8 +45,8 @@ export const ResponsiveButtonGroup: React.FC<{ children: React.ReactNode; orient
 
 // Responsive Table
 export const ResponsiveTable: React.FC<{ data: any[]; columns: { key: string; header: string; render?: (value: any, item: any) => React.ReactNode; sortable?: boolean; filterable?: boolean }[]; onRowClick?: (item: any) => void; loading?: boolean; emptyMessage?: string }> = ({ data, columns, onRowClick, loading = false, emptyMessage = 'No data available' }) => {
-  if (loading) return <div className="flex justify-center py-4"><span className="loading loading-spinner" /></div>;
-  if (!data.length) return <div className="text-center py-4">{emptyMessage}</div>;
+  if (loading) {return <div className="flex justify-center py-4"><span className="loading loading-spinner" /></div>;}
+  if (!data.length) {return <div className="text-center py-4">{emptyMessage}</div>;}
   return (
     <div className="overflow-x-auto">
       <table className="table w-full">

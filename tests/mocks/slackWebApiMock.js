@@ -9,10 +9,11 @@ class WebClient {
         return { ok: true };
       },
     };
-  }
-
-  async authTest() {
-    return { user_id: 'dummy-user-id', user: 'dummy-user' };
+    this.auth = {
+      test: async () => {
+        return { ok: true, user_id: 'dummy-user-id', user: 'dummy-user' };
+      }
+    };
   }
 
   get conversations() {
@@ -22,6 +23,12 @@ class WebClient {
       },
       join: async ({ channel }) => {
         return { ok: true };
+      },
+      list: async (params) => {
+        return { ok: true, channels: [{ id: 'C123', name: 'general' }] };
+      },
+      info: async (params) => {
+        return { ok: true, channel: { id: 'C123', name: 'general' } };
       }
     };
   }

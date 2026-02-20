@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -176,8 +177,8 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
   };
 
   const formatInterval = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${Math.round(ms / 1000)}s`;
+    if (ms < 1000) {return `${ms}ms`;}
+    if (ms < 60000) {return `${Math.round(ms / 1000)}s`;}
     return `${Math.round(ms / 60000)}m`;
   };
 
@@ -185,7 +186,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
     return (
       <Card>
         <div className="flex items-center gap-2">
-          <Loading size="md" />
+          <span className="loading loading-spinner loading-md"></span>
           <p>Loading endpoints...</p>
         </div>
       </Card>
@@ -224,7 +225,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       <Badge variant="neutral" size="sm" style="outline">
                         {endpoint.method}
                       </Badge>
-                      <Badge variant={endpoint.enabled ? "success" : "neutral"} size="sm">
+                      <Badge variant={endpoint.enabled ? 'success' : 'neutral'} size="sm">
                         {endpoint.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                     </div>

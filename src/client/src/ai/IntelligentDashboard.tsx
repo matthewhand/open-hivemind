@@ -8,14 +8,6 @@ import {
   HandThumbUpIcon,
   HandThumbDownIcon,
   ArrowPathIcon,
-  ClockIcon,
-  TagIcon,
-  LightBulbIcon,
-  ChartPieIcon,
-  AdjustmentsHorizontalIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 interface UserBehavior {
@@ -105,8 +97,9 @@ interface IntelligentDashboardState {
   userFeedback: Record<string, 'liked' | 'disliked'>;
 }
 
-// Mock user behaviors for demonstration
-const mockUserBehaviors: UserBehavior[] = [
+// Mock user behaviors for demonstration (prefixed to suppress lint - used for demo data)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _mockUserBehaviors: UserBehavior[] = [
   {
     userId: 'user-001',
     sessionId: 'session-123',
@@ -242,7 +235,7 @@ export const IntelligentDashboard: React.FC = () => {
 
   // Simulate AI learning and recommendation generation
   useEffect(() => {
-    if (!config.enabled) return;
+    if (!config.enabled) { return; }
 
     const interval = setInterval(() => {
       simulateLearning();
@@ -332,19 +325,19 @@ export const IntelligentDashboard: React.FC = () => {
     const segment = state.userSegments.find(segment =>
       segment.confidence > confidenceLevel &&
       segment.criteria.behaviorPatterns.some(pattern =>
-        state.behaviorPatterns.find(p => p.id === pattern && p.confidence > confidenceLevel)
-      )
+        state.behaviorPatterns.find(p => p.id === pattern && p.confidence > confidenceLevel),
+      ),
     );
 
     return segment || null;
   };
 
   const generatePersonalizedWidgets = (): string[] => {
-    if (!state.currentSegment) return [];
+    if (!state.currentSegment) { return []; }
 
     return state.currentSegment.characteristics.preferredWidgets.filter(widget => {
       const pattern = state.behaviorPatterns.find(p =>
-        p.recommendedWidgets.includes(widget) && p.confidence > confidenceLevel
+        p.recommendedWidgets.includes(widget) && p.confidence > confidenceLevel,
       );
       return pattern !== undefined;
     });
@@ -566,7 +559,7 @@ export const IntelligentDashboard: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-bold text-sm">{recommendation.title}</h4>
                       <div className={`badge badge-sm ${recommendation.impact === 'high' ? 'badge-error' :
-                          recommendation.impact === 'medium' ? 'badge-warning' : 'badge-info'
+                        recommendation.impact === 'medium' ? 'badge-warning' : 'badge-info'
                         }`}>
                         {recommendation.impact.toUpperCase()}
                       </div>
