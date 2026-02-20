@@ -38,9 +38,9 @@ export class AuthManager {
   };
 
   private constructor() {
-    // Generate secure JWT secrets
-    this.jwtSecret = this.generateSecureSecret('jwt_access');
-    this.jwtRefreshSecret = this.generateSecureSecret('jwt_refresh');
+    // Generate secure JWT secrets or use environment variable
+    this.jwtSecret = process.env.JWT_SECRET || this.generateSecureSecret('jwt_access');
+    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || this.generateSecureSecret('jwt_refresh');
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();
@@ -328,7 +328,7 @@ export class AuthManager {
    */
   public updateUser(userId: string, updates: Partial<User>): User | null {
     const user = this.users.get(userId);
-    if (!user) {return null;}
+    if (!user) { return null; }
 
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
@@ -348,7 +348,7 @@ export class AuthManager {
    */
   public async changePassword(userId: string, newPassword: string): Promise<boolean> {
     const user = this.users.get(userId);
-    if (!user) {return false;}
+    if (!user) { return false; }
 
     user.passwordHash = await this.hashPassword(newPassword);
     this.users.set(userId, user);

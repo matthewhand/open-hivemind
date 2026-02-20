@@ -53,6 +53,10 @@ export class Database {
     return;
   }
 
+  async configure(_option: string, _value: any): Promise<void> {
+    return;
+  }
+
   async run(sql: string, ...args: any[]): Promise<{ lastID: number; changes: number }> {
     // Call the mock function for tracking and get its result if mock was set up
     const mockResult = await mockRun(sql, ...args);

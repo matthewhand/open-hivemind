@@ -8,12 +8,12 @@ const useSpec = (id: string) => {
 
   useEffect(() => {
     const fetchSpec = async () => {
-      if (!id) {return;}
-      
+      if (!id) { return; }
+
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/webui/api/specs/${id}`);
+        const response = await fetch(`/api/specs/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch spec');
         }

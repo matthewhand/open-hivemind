@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -284,11 +284,8 @@ const PersonasPage: React.FC = () => {
           icon={Sparkles}
           title="No personas found"
           description="Create your first persona to get started"
-          action={
-            <Button variant="primary" onClick={openCreateModal}>
-              <Plus className="w-4 h-4" /> Create Persona
-            </Button>
-          }
+          actionLabel="Create Persona"
+          onAction={openCreateModal}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -302,7 +299,7 @@ const PersonasPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-lg">{persona.name}</h3>
-                      {persona.isBuiltIn && <Badge size="sm" variant="ghost">Built-in</Badge>}
+                      {persona.isBuiltIn && <Badge size="small" variant="neutral" style="outline">Built-in</Badge>}
                     </div>
                     <p className="text-xs text-base-content/60">{persona.category}</p>
                   </div>
@@ -333,7 +330,7 @@ const PersonasPage: React.FC = () => {
                 {persona.assignedBotNames.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {persona.assignedBotNames.map(botName => (
-                      <Badge key={botName} variant="secondary" size="sm" style="outline">
+                      <Badge key={botName} variant="secondary" size="small" style="outline">
                         {botName}
                       </Badge>
                     ))}
@@ -454,27 +451,38 @@ const PersonasPage: React.FC = () => {
             </label>
             <div className="bg-base-200 rounded-box p-2 max-h-40 overflow-y-auto">
               {bots.length === 0 ? <div className="p-2 text-sm opacity-50">No bots available</div> :
-                bots.map((bot: any) => (
-                  <label key={bot.id} className="cursor-pointer label justify-start gap-3 hover:bg-base-300 rounded-lg">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm checkbox-primary"
-                      checked={selectedBotIds.includes(bot.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
-                        else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
-                      }}
-                    />
-                    <div className="flex flex-col">
-                      <span className="label-text font-medium">{bot.name}</span>
-                      <span className="text-xs opacity-50">
-                        Current: {bot.persona ? (
-                          personas.find(p => p.id === bot.persona || p.name === bot.persona)?.name || bot.persona
-                        ) : 'default'}
-                      </span>
-                    </div>
-                  </label>
-                ))}
+                bots.map((bot: any) => {
+                  const isEnvLocked = bot.envOverrides?.persona;
+                  return (
+                    <label
+                      key={bot.id}
+                      className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
+                      title={isEnvLocked ? "Persona is locked by environment variable" : ""}
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm checkbox-primary"
+                        checked={selectedBotIds.includes(bot.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
+                          else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
+                        }}
+                        disabled={!!isEnvLocked}
+                      />
+                      <div className="flex flex-col">
+                        <span className="label-text font-medium flex items-center gap-2">
+                          {bot.name}
+                          {isEnvLocked && <Shield className="w-3 h-3 text-warning" />}
+                        </span>
+                        <span className="text-xs opacity-50">
+                          Current: {bot.persona ? (
+                            personas.find(p => p.id === bot.persona || p.name === bot.persona)?.name || bot.persona
+                          ) : 'default'}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })}
             </div>
           </div>
 

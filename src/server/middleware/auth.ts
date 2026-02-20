@@ -18,8 +18,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  const authManager = AuthManager.getInstance();
-  const payload = authManager.verifyAccessToken(token);
+  let payload;
+  try {
+    const authManager = AuthManager.getInstance();
+    payload = authManager.verifyAccessToken(token);
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
 
   if (!payload) {
     return res.status(403).json({ error: 'Invalid or expired token' });
@@ -77,10 +82,14 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token) {
-    const authManager = AuthManager.getInstance();
-    const payload = authManager.verifyAccessToken(token);
-    if (payload) {
-      req.user = payload;
+    try {
+      const authManager = AuthManager.getInstance();
+      const payload = authManager.verifyAccessToken(token);
+      if (payload) {
+        req.user = payload;
+      }
+    } catch (e) {
+      // Ignore invalid tokens in optional auth
     }
   }
 

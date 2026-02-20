@@ -26,6 +26,8 @@ import configRouter from './routes/config';
 import hotReloadRouter from './routes/hotReload';
 import sitemapRouter from './routes/sitemap';
 import personasRouter from './routes/personas';
+import specsRouter from './routes/specs';
+import importExportRouter from './routes/importExport';
 
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -125,7 +127,7 @@ export class WebUIServer {
 
       // Check for CSRF token in headers or body
       const csrfToken = req.headers['x-csrf-token'] || req.body._csrf;
-      
+
       // For now, we'll allow requests without CSRF token but log them
       // In production, you should generate and validate proper CSRF tokens
       if (!csrfToken) {
@@ -191,6 +193,8 @@ export class WebUIServer {
     this.app.use('/api/config', authenticateToken, configRouter);
     this.app.use('/api/personas', authenticateToken, personasRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
+    this.app.use('/api/specs', authenticateToken, specsRouter);
+    this.app.use('/api/import-export', authenticateToken, importExportRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {

@@ -1,31 +1,53 @@
-import { ConnectionManager } from '../../src/database/ConnectionManager';
-// Import the mock functions from the sqlite mock module  
-// Jest config maps 'sqlite' to 'tests/mocks/sqlite.ts'
-import sqliteMock from '../mocks/sqlite';
-// Import sqlite3 mock (Jest config maps 'sqlite3' to 'tests/mocks/sqlite3.ts')
-import sqlite3 from '../mocks/sqlite3';
-
-const { mockRun, mockAll, mockClose, mockConfigure, mockDb, open: mockOpen } = sqliteMock;
+import type { ConnectionManager as ConnectionManagerType } from '../../src/database/ConnectionManager';
 
 describe('ConnectionManager', () => {
-    let connectionManager: ConnectionManager;
+    let ConnectionManager: new (opts: any) => ConnectionManagerType;
+    let connectionManager: ConnectionManagerType;
     const dbPath = ':memory:';
 
-    beforeEach(() => {
-        // Clear all mock call history
-        mockRun.mockClear();
-        mockAll.mockClear();
-        mockClose.mockClear();
-        mockOpen.mockClear();
-        mockConfigure.mockClear();
+    // Spies
+    let openSpy: jest.Mock;
+    let runSpy: jest.SpyInstance;
+    let allSpy: jest.SpyInstance;
+    let closeSpy: jest.SpyInstance;
+    let configureSpy: jest.SpyInstance;
 
-        // Reset mock implementations
-        mockRun.mockResolvedValue({ lastID: 1, changes: 1 });
-        mockAll.mockResolvedValue([]);
-        mockClose.mockResolvedValue(undefined);
-        mockOpen.mockResolvedValue(mockDb);
+    beforeEach(() => {
+        jest.resetModules();
+
+        // Get the real mock implementation
+        const originalSqlite = jest.requireActual('../mocks/sqlite');
+
+        // Create spy for open
+        openSpy = jest.fn().mockImplementation(originalSqlite.open);
+
+        // Mock the 'sqlite' module
+        jest.doMock('sqlite', () => ({
+            __esModule: true,
+            ...originalSqlite,
+            open: openSpy,
+            default: {
+                ...originalSqlite.default,
+                open: openSpy
+            }
+        }));
+
+        // Spy on Database prototype methods
+        // Note: We adhere to the class definition in the original mock
+        runSpy = jest.spyOn(originalSqlite.Database.prototype, 'run');
+        allSpy = jest.spyOn(originalSqlite.Database.prototype, 'all');
+        closeSpy = jest.spyOn(originalSqlite.Database.prototype, 'close');
+        configureSpy = jest.spyOn(originalSqlite.Database.prototype, 'configure');
+
+        // Re-import ConnectionManager so it picks up the mocked 'sqlite'
+        const module = require('../../src/database/ConnectionManager');
+        ConnectionManager = module.ConnectionManager;
 
         connectionManager = new ConnectionManager({ databasePath: dbPath });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     describe('Connection Handling', () => {
@@ -34,7 +56,7 @@ describe('ConnectionManager', () => {
 
             await connectionManager.connect();
 
-            expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({
+            expect(openSpy).toHaveBeenCalledWith(expect.objectContaining({
                 filename: dbPath
             }));
             expect(connectionManager.isConnectedToDatabase()).toBe(true);
@@ -43,11 +65,11 @@ describe('ConnectionManager', () => {
 
         it('should not reconnect if already connected', async () => {
             await connectionManager.connect();
-            mockOpen.mockClear();
+            openSpy.mockClear();
 
             await connectionManager.connect();
 
-            expect(mockOpen).not.toHaveBeenCalled();
+            expect(openSpy).not.toHaveBeenCalled();
         });
 
         it('should configure timeout if provided', async () => {
@@ -58,12 +80,12 @@ describe('ConnectionManager', () => {
 
             await connectionManager.connect();
 
-            expect(mockConfigure).toHaveBeenCalledWith('busyTimeout', 5000);
+            expect(configureSpy).toHaveBeenCalledWith('busyTimeout', 5000);
         });
 
         it('should handle connection errors', async () => {
             const error = new Error('Connection failed');
-            mockOpen.mockRejectedValueOnce(error);
+            openSpy.mockRejectedValueOnce(error);
             const emitSpy = jest.spyOn(connectionManager, 'emit');
 
             await expect(connectionManager.connect()).rejects.toThrow('Connection failed');
@@ -79,20 +101,20 @@ describe('ConnectionManager', () => {
 
             await connectionManager.disconnect();
 
-            expect(mockClose).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalled();
             expect(connectionManager.isConnectedToDatabase()).toBe(false);
             expect(emitSpy).toHaveBeenCalledWith('disconnected');
         });
 
         it('should do nothing if already disconnected', async () => {
             await connectionManager.disconnect();
-            expect(mockClose).not.toHaveBeenCalled();
+            expect(closeSpy).not.toHaveBeenCalled();
         });
 
         it('should handle disconnection errors', async () => {
             await connectionManager.connect();
             const error = new Error('Close failed');
-            mockClose.mockRejectedValueOnce(error);
+            closeSpy.mockRejectedValueOnce(error);
             const emitSpy = jest.spyOn(connectionManager, 'emit');
 
             await expect(connectionManager.disconnect()).rejects.toThrow('Close failed');
@@ -106,31 +128,43 @@ describe('ConnectionManager', () => {
         });
 
         it('should execute a query without params', async () => {
-            mockRun.mockImplementation((query, callback) => {
-                callback.call({ lastID: 1, changes: 1 }, null);
+            runSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback.call({ lastID: 1, changes: 1 }, null);
+                }
+                return Promise.resolve({ lastID: 1, changes: 1 });
             });
 
             const result = await connectionManager.executeQuery('INSERT INTO test VALUES (1)');
 
-            expect(mockRun).toHaveBeenCalledWith('INSERT INTO test VALUES (1)', expect.any(Function));
+            expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (1)', expect.any(Function));
             expect(result).toEqual({ lastID: 1, changes: 1 });
         });
 
         it('should execute a query with params', async () => {
-            mockRun.mockImplementation((query, params, callback) => {
-                callback.call({ lastID: 1, changes: 1 }, null);
+            runSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback.call({ lastID: 1, changes: 1 }, null);
+                }
+                return Promise.resolve({ lastID: 1, changes: 1 });
             });
 
             const result = await connectionManager.executeQuery('INSERT INTO test VALUES (?)', [1]);
 
-            expect(mockRun).toHaveBeenCalledWith('INSERT INTO test VALUES (?)', [1], expect.any(Function));
+            expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (?)', [1], expect.any(Function));
             expect(result).toEqual({ lastID: 1, changes: 1 });
         });
 
         it('should handle query execution errors', async () => {
             const error = new Error('Query failed');
-            mockRun.mockImplementation((query, callback) => {
-                callback(error);
+            runSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback(error);
+                }
+                return Promise.resolve({} as any);
             });
 
             await expect(connectionManager.executeQuery('BAD QUERY')).rejects.toThrow('Query failed');
@@ -149,32 +183,44 @@ describe('ConnectionManager', () => {
 
         it('should execute a select query without params', async () => {
             const mockRows = [{ id: 1 }];
-            mockAll.mockImplementation((query, callback) => {
-                callback(null, mockRows);
+            allSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback(null, mockRows);
+                }
+                return Promise.resolve(mockRows);
             });
 
             const rows = await connectionManager.selectQuery('SELECT * FROM test');
 
-            expect(mockAll).toHaveBeenCalledWith('SELECT * FROM test', expect.any(Function));
+            expect(allSpy).toHaveBeenCalledWith('SELECT * FROM test', expect.any(Function));
             expect(rows).toEqual(mockRows);
         });
 
         it('should execute a select query with params', async () => {
             const mockRows = [{ id: 1 }];
-            mockAll.mockImplementation((query, params, callback) => {
-                callback(null, mockRows);
+            allSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback(null, mockRows);
+                }
+                return Promise.resolve(mockRows);
             });
 
             const rows = await connectionManager.selectQuery('SELECT * FROM test WHERE id = ?', [1]);
 
-            expect(mockAll).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [1], expect.any(Function));
+            expect(allSpy).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [1], expect.any(Function));
             expect(rows).toEqual(mockRows);
         });
 
         it('should handle select query errors', async () => {
             const error = new Error('Select failed');
-            mockAll.mockImplementation((query, callback) => {
-                callback(error);
+            allSpy.mockImplementation((query, ...args) => {
+                const callback = args[args.length - 1];
+                if (typeof callback === 'function') {
+                    callback(error);
+                }
+                return Promise.resolve([] as any);
             });
 
             await expect(connectionManager.selectQuery('BAD QUERY')).rejects.toThrow('Select failed');

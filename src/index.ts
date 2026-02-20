@@ -20,6 +20,8 @@ const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./server/routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import swarmRouter from '@src/admin/swarmRoutes';
+import specsRouter from '@src/server/routes/specs';
+import importExportRouter from '@src/server/routes/importExport';
 import dashboardRouter from '@src/server/routes/dashboard';
 import webuiConfigRouter from '@src/server/routes/config';
 import botsRouter from '@src/server/routes/bots';
@@ -252,6 +254,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/openapi', openapiRouter);
+app.use('/api/specs', authenticateToken, specsRouter);
+app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
 app.use('/api/health', healthRoute);  // Health API endpoints
 app.use('/health', healthRoute);       // Root health endpoint (for frontend polling)
