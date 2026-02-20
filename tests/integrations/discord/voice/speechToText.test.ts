@@ -1,6 +1,6 @@
-import { transcribeAudio } from '@hivemind/adapter-discord/voice/speechToText';
-import OpenAI from 'openai';
 import fs from 'fs';
+import OpenAI from 'openai';
+import { transcribeAudio } from '@hivemind/adapter-discord/voice/speechToText';
 
 jest.mock('openai');
 jest.mock('fs');
@@ -22,9 +22,9 @@ describe('speechToText', () => {
     const mockInstance = {
       audio: {
         transcriptions: {
-          create: jest.fn().mockResolvedValue(mockTranscription)
-        }
-      }
+          create: jest.fn().mockResolvedValue(mockTranscription),
+        },
+      },
     };
     mockOpenAI.mockImplementation(() => mockInstance as any);
 
@@ -35,9 +35,9 @@ describe('speechToText', () => {
     const errorInstance = {
       audio: {
         transcriptions: {
-          create: jest.fn().mockRejectedValue(new Error('API Error'))
-        }
-      }
+          create: jest.fn().mockRejectedValue(new Error('API Error')),
+        },
+      },
     };
     mockOpenAI.mockImplementation(() => errorInstance as any);
 

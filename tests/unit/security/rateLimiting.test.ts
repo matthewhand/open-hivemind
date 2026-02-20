@@ -1,6 +1,6 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
+import request from 'supertest';
 
 describe('Rate Limiting Middleware', () => {
   let app: express.Application;
@@ -17,9 +17,9 @@ describe('Rate Limiting Middleware', () => {
       handler: (req: Request, res: Response) => {
         res.status(429).json({
           error: 'Too many requests',
-          message: 'Rate limit exceeded'
+          message: 'Rate limit exceeded',
         });
-      }
+      },
     });
 
     const authRateLimiter = rateLimit({
@@ -30,9 +30,9 @@ describe('Rate Limiting Middleware', () => {
       handler: (req: Request, res: Response) => {
         res.status(429).json({
           error: 'Too many login attempts',
-          message: 'Auth rate limit exceeded'
+          message: 'Auth rate limit exceeded',
         });
-      }
+      },
     });
 
     // Apply rate limiting middleware directly (not the production-only wrapper)
@@ -54,9 +54,7 @@ describe('Rate Limiting Middleware', () => {
   });
 
   test('should allow requests within rate limit', async () => {
-    const response = await request(app)
-      .get('/test')
-      .expect(200);
+    const response = await request(app).get('/test').expect(200);
 
     expect(response.body.message).toBe('Success');
   });
@@ -68,9 +66,7 @@ describe('Rate Limiting Middleware', () => {
     await request(app).get('/test').expect(200);
 
     // This should be rate limited
-    const response = await request(app)
-      .get('/test')
-      .expect(429);
+    const response = await request(app).get('/test').expect(429);
 
     expect(response.body.error).toBe('Too many requests');
   });

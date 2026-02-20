@@ -9,14 +9,14 @@ describe('DiscordMessageExtended Integration', () => {
     author: {
       id: 'user-123',
       username: 'TestUser',
-      bot: false
+      bot: false,
     },
     channel: {
       id: 'channel-123',
       topic: 'Test topic',
       members: {
         'user-1': { user: { id: 'user-1' } },
-        'user-2': { user: { id: 'user-2' } }
+        'user-2': { user: { id: 'user-2' } },
       },
       messages: {
         fetch: jest.fn().mockResolvedValue({
@@ -27,16 +27,16 @@ describe('DiscordMessageExtended Integration', () => {
           createdAt: new Date(),
           mentions: { users: new Map() },
           attachments: new Map(),
-        })
-      }
+        }),
+      },
     },
     mentions: {
-      users: { 'user-456': { id: 'user-456' } }
+      users: { 'user-456': { id: 'user-456' } },
     },
     reference: { messageId: 'ref-msg' },
     editable: true,
     edit: jest.fn().mockResolvedValue({ content: 'Updated' }),
-    ...overrides
+    ...overrides,
   });
 
   it('should create DiscordMessage with extended properties', () => {

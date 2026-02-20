@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import type { Client } from 'discord.js';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:loginToDiscord');
 
 /**
  * Logs in the Discord client using the provided bot token.
- * 
+ *
  * @param client - The Discord client instance to log in.
  * @param token - The Discord bot token.
  * @returns A promise that resolves when the login is successful.
@@ -20,9 +20,9 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
     debug(errorMessage);
     throw ErrorUtils.createError(
       errorMessage,
-            'ValidationError' as any,
-            'DISCORD_TOKEN_NOT_PROVIDED',
-            400,
+      'ValidationError' as any,
+      'DISCORD_TOKEN_NOT_PROVIDED',
+      400
     );
   }
   try {
@@ -46,7 +46,7 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
       classification.type,
       'DISCORD_LOGIN_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error },
+      { originalError: error }
     );
   }
 }

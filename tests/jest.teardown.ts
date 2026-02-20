@@ -5,8 +5,8 @@
 
 module.exports = async () => {
   // Give a moment for async operations to complete
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   // Force close any remaining HTTP servers
   if (global && typeof global.close === 'function') {
     try {
@@ -15,7 +15,7 @@ module.exports = async () => {
       // Ignore errors during cleanup
     }
   }
-  
+
   // Force exit the process if Jest doesn't exit cleanly
   setTimeout(() => {
     process.exit(0);

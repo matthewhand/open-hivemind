@@ -16,7 +16,7 @@ export function getSystemStatus(): SystemStatus {
   const memInfo = process.memoryUsage();
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
-  
+
   return {
     operational: true,
     uptime: process.uptime(),
@@ -37,36 +37,43 @@ export function formatStatusResponse(status: SystemStatus, args: string[]): stri
   const hasMetrics = args.includes('--metrics');
   const serviceIndex = args.indexOf('--service');
   const specificService = serviceIndex >= 0 ? args[serviceIndex + 1] : null;
-  
+
   if (hasJson && !hasVerbose) {
-    return JSON.stringify({
-      operational: status.operational,
-      status: status.operational ? 'operational' : 'degraded',
-      uptime: status.uptime,
-      memory: status.memory,
-      loadAverage: status.loadAverage,
-      timestamp: (status.timestamp instanceof Date ? status.timestamp.toISOString() : new Date().toISOString()),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        operational: status.operational,
+        status: status.operational ? 'operational' : 'degraded',
+        uptime: status.uptime,
+        memory: status.memory,
+        loadAverage: status.loadAverage,
+        timestamp:
+          status.timestamp instanceof Date
+            ? status.timestamp.toISOString()
+            : new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
-  
-  let response = status.operational 
+
+  let response = status.operational
     ? 'System is operational. All services are running smoothly.'
     : 'System is experiencing issues.';
-  
+
   if (hasVerbose) {
     const uptimeHours = Math.floor(status.uptime / 3600);
     const uptimeMinutes = Math.floor((status.uptime % 3600) / 60);
     // Heuristic: tests provide MB-scale numbers; runtime uses bytes.
     const total = status.memory.total;
-    const divisor = total > 10000 ? (1024 * 1024 * 1024) : 1024;
+    const divisor = total > 10000 ? 1024 * 1024 * 1024 : 1024;
     const memoryGB = (status.memory.used / divisor).toFixed(1);
     const totalMemoryGB = (total / divisor).toFixed(1);
-    
+
     response += `\n\nUptime: ${uptimeHours}h ${uptimeMinutes}m`;
     response += `\nMemory: ${memoryGB}GB / ${totalMemoryGB}GB`;
-    response += `\nLoad Average: ${status.loadAverage.map(l => l.toFixed(2)).join(', ')}`;
+    response += `\nLoad Average: ${status.loadAverage.map((l) => l.toFixed(2)).join(', ')}`;
   }
-  
+
   if (hasHealth) {
     response += '\n\nHealth Check:';
     response += '\nServices:';
@@ -74,21 +81,21 @@ export function formatStatusResponse(status: SystemStatus, args: string[]): stri
     response += '\n  - LLM Provider: Operational';
     response += '\n  - Database: Operational';
   }
-  
+
   if (hasMetrics) {
     response += '\n\nSystem Metrics:';
     response += `\nCPU Load: ${status.loadAverage[0].toFixed(2)}`;
     response += `\nMemory Usage: ${((status.memory.used / status.memory.total) * 100).toFixed(1)}%`;
     response += `\nUptime: ${Math.floor(status.uptime / 3600)}h ${Math.floor((status.uptime % 3600) / 60)}m`;
   }
-  
+
   if (specificService) {
     response += `\n\n${specificService.charAt(0).toUpperCase() + specificService.slice(1)} Service:`;
     response += '\nStatus: Operational';
     response += '\nConnections: Active';
     response += '\nLatency: <100ms';
   }
-  
+
   return response;
 }
 

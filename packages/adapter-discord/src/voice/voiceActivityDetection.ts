@@ -1,6 +1,6 @@
-import type { VoiceConnection, VoiceReceiver } from '@discordjs/voice';
-import { User } from 'discord.js';
 import Debug from 'debug';
+import { User } from 'discord.js';
+import type { VoiceConnection, VoiceReceiver } from '@discordjs/voice';
 
 const debug = Debug('app:discord:vad');
 

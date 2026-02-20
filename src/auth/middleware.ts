@@ -1,8 +1,8 @@
-import type { Request, Response, NextFunction } from 'express';
-import { AuthManager } from './AuthManager';
-import type { AuthMiddlewareRequest, UserRole, User } from './types';
-import { AuthenticationError, AuthorizationError } from '../types/errorClasses';
 import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
+import { AuthenticationError, AuthorizationError } from '../types/errorClasses';
+import { AuthManager } from './AuthManager';
+import type { AuthMiddlewareRequest, User, UserRole } from './types';
 
 const debug = Debug('app:AuthMiddleware');
 
@@ -20,26 +20,31 @@ export class AuthMiddleware {
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const authHeader = Array.isArray(req.headers.authorization) ? req.headers.authorization[0] : req.headers.authorization;
-  
+      const authHeader = Array.isArray(req.headers.authorization)
+        ? req.headers.authorization[0]
+        : req.headers.authorization;
+
       // Check if request is from localhost - bypass authentication when no auth header provided
       const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
-  
+
       // Check for localhost IPs and common localhost hostnames
       const host = req.get('host');
       const origin = req.get('origin');
-      const isLocalhost = clientIP === '127.0.0.1' ||
-                         clientIP === '::1' ||
-                         clientIP === '::ffff:127.0.0.1' ||
-                         host === 'localhost' ||
-                         host === '127.0.0.1' ||
-                         (host && host.includes('localhost')) ||
-                         (origin && origin.includes('localhost'));
-  
+      const isLocalhost =
+        clientIP === '127.0.0.1' ||
+        clientIP === '::1' ||
+        clientIP === '::ffff:127.0.0.1' ||
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        (host && host.includes('localhost')) ||
+        (origin && origin.includes('localhost'));
+
       const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
-  
+
       if ((!authHeader || !authHeader.startsWith('Bearer ')) && isLocalhost && allowLocalBypass) {
-        debug(`Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`);
+        debug(
+          `Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`
+        );
         // Create a default admin user for localhost access
         const defaultUser: User = {
           id: 'localhost-admin',
@@ -53,32 +58,38 @@ export class AuthMiddleware {
         };
 
         (req as AuthMiddlewareRequest).user = defaultUser;
-        (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(defaultUser.role);
+        (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(
+          defaultUser.role
+        );
         next();
         return;
       }
-  
+
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new AuthenticationError('Bearer token required in Authorization header', undefined, 'missing_token');
+        throw new AuthenticationError(
+          'Bearer token required in Authorization header',
+          undefined,
+          'missing_token'
+        );
       }
-  
+
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
       const payload = this.authManager.verifyAccessToken(token);
-  
+
       // Get user from token payload
       const user = this.authManager.getUser(payload.userId);
       if (!user) {
         throw new AuthenticationError('User not found', undefined, 'invalid_credentials');
       }
-  
+
       // Merge tenant_id from payload if not in user
       const userWithTenant = user;
-  
+
       // Attach user, permissions, and tenant to request
       (req as AuthMiddlewareRequest).user = userWithTenant;
       (req as AuthMiddlewareRequest).permissions = payload.permissions;
       // req.tenant_id = payload.tenant_id;
-  
+
       debug(`Authenticated user: ${user.username} (role: ${user.role})`);
       next();
     } catch (error) {
@@ -114,16 +125,20 @@ export class AuthMiddleware {
       const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
 
       if (userRoleLevel < requiredRoleLevel) {
-        next(new AuthorizationError(
-          `Required role: ${requiredRole}, your role: ${authReq.user.role}`,
-          'role_check',
-          'access',
-          requiredRole,
-        ));
+        next(
+          new AuthorizationError(
+            `Required role: ${requiredRole}, your role: ${authReq.user.role}`,
+            'role_check',
+            'access',
+            requiredRole
+          )
+        );
         return;
       }
 
-      debug(`Role check passed: ${authReq.user.username} has max level ${userRoleLevel} >= ${requiredRoleLevel} for ${requiredRole}`);
+      debug(
+        `Role check passed: ${authReq.user.username} has max level ${userRoleLevel} >= ${requiredRoleLevel} for ${requiredRole}`
+      );
       next();
     };
   };
@@ -139,17 +154,19 @@ export class AuthMiddleware {
         next(new AuthenticationError('User not authenticated', undefined, 'missing_token'));
         return;
       }
-  
+
       if (!authReq.permissions?.includes(permission)) {
-        next(new AuthorizationError(
-          `Required permission: ${permission}`,
-          'permission_check',
-          'access',
-          permission,
-        ));
+        next(
+          new AuthorizationError(
+            `Required permission: ${permission}`,
+            'permission_check',
+            'access',
+            permission
+          )
+        );
         return;
       }
-  
+
       debug(`Permission check passed: ${authReq.user.username} has ${permission}`);
       next();
     };
@@ -170,15 +187,17 @@ export class AuthMiddleware {
     // Initialize user as undefined
     authReq.user = undefined;
     authReq.permissions = undefined;
-    
+
     try {
-      const authHeader = Array.isArray(req.headers.authorization) ? req.headers.authorization[0] : req.headers.authorization;
-  
+      const authHeader = Array.isArray(req.headers.authorization)
+        ? req.headers.authorization[0]
+        : req.headers.authorization;
+
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         const payload = this.authManager.verifyAccessToken(token);
         const user = this.authManager.getUser(payload.userId);
-  
+
         if (user) {
           authReq.user = user;
           authReq.permissions = payload.permissions;
@@ -189,13 +208,17 @@ export class AuthMiddleware {
       // Silently ignore auth errors for optional auth
       debug('Optional auth error:', error);
     }
-  
+
     next();
   };
 }
 
 // Create middleware functions that get fresh AuthManager instance
-export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const middleware = new AuthMiddleware();
   return middleware.authenticate(req, res, next);
 };
@@ -215,7 +238,11 @@ export const requireAdmin = (() => {
   return middleware.requireAdmin;
 })();
 
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const middleware = new AuthMiddleware();
   return middleware.optionalAuth(req, res, next);
 };

@@ -1,18 +1,17 @@
 /**
  * Enhanced error classes for Open Hivemind with recovery strategies
- * 
+ *
  * This file extends the base error types with concrete error classes
  * that include recovery mechanisms and correlation IDs for tracking.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { 
-  AppError, 
-  ErrorType} from './errors';
-import { 
-  ErrorClassification, 
-  HivemindError, 
-  ErrorUtils, 
+import {
+  ErrorClassification,
+  ErrorUtils,
+  HivemindError,
+  type AppError,
+  type ErrorType,
 } from './errors';
 
 /**
@@ -35,7 +34,7 @@ export abstract class BaseHivemindError extends Error implements AppError {
     code?: string,
     statusCode?: number,
     details?: Record<string, unknown>,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -50,7 +49,7 @@ export abstract class BaseHivemindError extends Error implements AppError {
     const classification = ErrorUtils.classifyError(this);
     this.retryable = classification.retryable;
     this.severity = classification.severity;
-    
+
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
@@ -128,7 +127,7 @@ export class NetworkError extends BaseHivemindError {
       method?: string;
       headers?: Record<string, string>;
     },
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     super(
       message,
@@ -136,7 +135,7 @@ export class NetworkError extends BaseHivemindError {
       'NETWORK_ERROR',
       response?.status || 503,
       { response, request },
-      context,
+      context
     );
     this.response = response;
     this.request = request;
@@ -144,7 +143,7 @@ export class NetworkError extends BaseHivemindError {
 
   getRecoveryStrategy(): ErrorRecoveryStrategy {
     const statusCode = this.response?.status;
-    
+
     // Retry on server errors and rate limits
     if (!statusCode || statusCode >= 500 || statusCode === 429) {
       return {
@@ -193,12 +192,12 @@ export class ValidationError extends BaseHivemindError {
     value?: unknown,
     expected?: unknown,
     suggestions?: string[],
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     // Handle both old signature (message, details object) and new signature
     let field: string | undefined;
     let actualDetails: Record<string, unknown> | undefined;
-    
+
     if (typeof details === 'object' && details !== null) {
       field = details.field as string;
       actualDetails = details;
@@ -212,7 +211,7 @@ export class ValidationError extends BaseHivemindError {
       'VALIDATION_ERROR',
       400,
       { field, value, expected, suggestions, ...actualDetails },
-      context,
+      context
     );
     this.field = field;
     this.value = value;
@@ -226,7 +225,7 @@ export class ValidationError extends BaseHivemindError {
       recoverySteps: [
         'Check input data format',
         'Validate required fields',
-        ...this.suggestions || [],
+        ...(this.suggestions || []),
       ],
     };
   }
@@ -246,7 +245,7 @@ export class ConfigurationError extends BaseHivemindError {
     configKey?: string,
     expectedType?: string,
     providedType?: string,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     super(
       message,
@@ -254,7 +253,7 @@ export class ConfigurationError extends BaseHivemindError {
       'CONFIG_ERROR',
       500,
       { configKey, expectedType, providedType },
-      context,
+      context
     );
     this.configKey = configKey;
     this.expectedType = expectedType;
@@ -286,16 +285,9 @@ export class DatabaseError extends BaseHivemindError {
     operation?: string,
     table?: string,
     query?: string,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      'database',
-      'DATABASE_ERROR',
-      500,
-      { operation, table, query },
-      context,
-    );
+    super(message, 'database', 'DATABASE_ERROR', 500, { operation, table, query }, context);
     this.operation = operation;
     this.table = table;
     this.query = query;
@@ -303,8 +295,10 @@ export class DatabaseError extends BaseHivemindError {
 
   getRecoveryStrategy(): ErrorRecoveryStrategy {
     // Retry on connection errors
-    if (this.message.toLowerCase().includes('connection') || 
-        this.message.toLowerCase().includes('timeout')) {
+    if (
+      this.message.toLowerCase().includes('connection') ||
+      this.message.toLowerCase().includes('timeout')
+    ) {
       return {
         canRecover: true,
         maxRetries: 3,
@@ -333,22 +327,19 @@ export class DatabaseError extends BaseHivemindError {
  */
 export class AuthenticationError extends BaseHivemindError {
   public readonly provider?: string;
-  public readonly reason?: 'invalid_credentials' | 'expired_token' | 'missing_token' | 'invalid_format';
+  public readonly reason?:
+    | 'invalid_credentials'
+    | 'expired_token'
+    | 'missing_token'
+    | 'invalid_format';
 
   constructor(
     message: string,
     provider?: string,
     reason?: 'invalid_credentials' | 'expired_token' | 'missing_token' | 'invalid_format',
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      'authentication',
-      'AUTH_ERROR',
-      401,
-      { provider, reason },
-      context,
-    );
+    super(message, 'authentication', 'AUTH_ERROR', 401, { provider, reason }, context);
     this.provider = provider;
     this.reason = reason;
   }
@@ -364,10 +355,7 @@ export class AuthenticationError extends BaseHivemindError {
           // This would be implemented by the calling code
           throw new Error('Token refresh not implemented');
         },
-        recoverySteps: [
-          'Attempt to refresh authentication token',
-          'Re-authenticate with provider',
-        ],
+        recoverySteps: ['Attempt to refresh authentication token', 'Re-authenticate with provider'],
       };
     }
 
@@ -395,7 +383,7 @@ export class AuthorizationError extends BaseHivemindError {
     resource?: string,
     action?: string,
     requiredPermission?: string,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     super(
       message,
@@ -403,7 +391,7 @@ export class AuthorizationError extends BaseHivemindError {
       'AUTHZ_ERROR',
       403,
       { resource, action, requiredPermission },
-      context,
+      context
     );
     this.resource = resource;
     this.action = action;
@@ -437,7 +425,7 @@ export class RateLimitError extends BaseHivemindError {
     limit?: number,
     remaining?: number,
     resetTime?: Date,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
     super(
       message,
@@ -445,7 +433,7 @@ export class RateLimitError extends BaseHivemindError {
       'RATE_LIMIT_ERROR',
       429,
       { retryAfter, limit, remaining, resetTime },
-      context,
+      context
     );
     this.retryAfter = retryAfter;
     this.limit = limit;
@@ -478,16 +466,9 @@ export class TimeoutError extends BaseHivemindError {
     message: string,
     timeoutMs: number,
     operation?: string,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      'timeout',
-      'TIMEOUT_ERROR',
-      408,
-      { timeoutMs, operation },
-      context,
-    );
+    super(message, 'timeout', 'TIMEOUT_ERROR', 408, { timeoutMs, operation }, context);
     this.timeoutMs = timeoutMs;
     this.operation = operation;
   }
@@ -520,16 +501,9 @@ export class ApiError extends BaseHivemindError {
     endpoint?: string,
     statusCode?: number,
     retryAfter?: number,
-    context?: Record<string, unknown>,
+    context?: Record<string, unknown>
   ) {
-    super(
-      message,
-      'api',
-      'API_ERROR',
-      statusCode,
-      { service, endpoint, retryAfter },
-      context,
-    );
+    super(message, 'api', 'API_ERROR', statusCode, { service, endpoint, retryAfter }, context);
     this.service = service;
     this.endpoint = endpoint;
     this.retryAfter = retryAfter;
@@ -568,10 +542,7 @@ export class ErrorFactory {
   /**
    * Create an appropriate error instance from a generic error
    */
-  static createError(
-    error: unknown,
-    context?: Record<string, unknown>,
-  ): BaseHivemindError {
+  static createError(error: unknown, context?: Record<string, unknown>): BaseHivemindError {
     if (error instanceof BaseHivemindError) {
       return error;
     }
@@ -580,97 +551,97 @@ export class ErrorFactory {
     const classification = ErrorUtils.classifyError(hivemindError);
 
     switch (classification.type) {
-    case 'network':
-      return new NetworkError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).response,
-        (hivemindError as any).request,
-        context,
-      );
+      case 'network':
+        return new NetworkError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).response,
+          (hivemindError as any).request,
+          context
+        );
 
-    case 'validation':
-      return new ValidationError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).field,
-        (hivemindError as any).value,
-        (hivemindError as any).expected,
-        (hivemindError as any).suggestions,
-        context,
-      );
+      case 'validation':
+        return new ValidationError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).field,
+          (hivemindError as any).value,
+          (hivemindError as any).expected,
+          (hivemindError as any).suggestions,
+          context
+        );
 
-    case 'configuration':
-      return new ConfigurationError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).configKey,
-        (hivemindError as any).expectedType,
-        (hivemindError as any).providedType,
-        context,
-      );
+      case 'configuration':
+        return new ConfigurationError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).configKey,
+          (hivemindError as any).expectedType,
+          (hivemindError as any).providedType,
+          context
+        );
 
-    case 'database':
-      return new DatabaseError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).operation,
-        (hivemindError as any).table,
-        (hivemindError as any).query,
-        context,
-      );
+      case 'database':
+        return new DatabaseError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).operation,
+          (hivemindError as any).table,
+          (hivemindError as any).query,
+          context
+        );
 
-    case 'authentication':
-      return new AuthenticationError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).provider,
-        (hivemindError as any).reason,
-        context,
-      );
+      case 'authentication':
+        return new AuthenticationError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).provider,
+          (hivemindError as any).reason,
+          context
+        );
 
-    case 'authorization':
-      return new AuthorizationError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).resource,
-        (hivemindError as any).action,
-        (hivemindError as any).requiredPermission,
-        context,
-      );
+      case 'authorization':
+        return new AuthorizationError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).resource,
+          (hivemindError as any).action,
+          (hivemindError as any).requiredPermission,
+          context
+        );
 
-    case 'rate-limit':
-      return new RateLimitError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).retryAfter || 60,
-        (hivemindError as any).limit,
-        (hivemindError as any).remaining,
-        (hivemindError as any).resetTime,
-        context,
-      );
+      case 'rate-limit':
+        return new RateLimitError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).retryAfter || 60,
+          (hivemindError as any).limit,
+          (hivemindError as any).remaining,
+          (hivemindError as any).resetTime,
+          context
+        );
 
-    case 'timeout':
-      return new TimeoutError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).timeoutMs || 30000,
-        (hivemindError as any).operation,
-        context,
-      );
+      case 'timeout':
+        return new TimeoutError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).timeoutMs || 30000,
+          (hivemindError as any).operation,
+          context
+        );
 
-    case 'api':
-      return new ApiError(
-        ErrorUtils.getMessage(hivemindError),
-        (hivemindError as any).service || 'unknown',
-        (hivemindError as any).endpoint,
-        ErrorUtils.getStatusCode(hivemindError),
-        (hivemindError as any).retryAfter,
-        context,
-      );
+      case 'api':
+        return new ApiError(
+          ErrorUtils.getMessage(hivemindError),
+          (hivemindError as any).service || 'unknown',
+          (hivemindError as any).endpoint,
+          ErrorUtils.getStatusCode(hivemindError),
+          (hivemindError as any).retryAfter,
+          context
+        );
 
-    default:
-      // Create a generic error for unknown types
-      return new ApiError(
-        ErrorUtils.getMessage(hivemindError),
-        'unknown',
-        undefined,
-        ErrorUtils.getStatusCode(hivemindError),
-        undefined,
-        context,
-      );
+      default:
+        // Create a generic error for unknown types
+        return new ApiError(
+          ErrorUtils.getMessage(hivemindError),
+          'unknown',
+          undefined,
+          ErrorUtils.getStatusCode(hivemindError),
+          undefined,
+          context
+        );
     }
   }
 }

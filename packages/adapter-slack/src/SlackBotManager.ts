@@ -1,15 +1,11 @@
-import { SocketModeClient } from '@slack/socket-mode';
-import { RTMClient } from '@slack/rtm-api';
-import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
-import SlackMessage from './SlackMessage';
-import type { IMessage } from '@message/interfaces/IMessage';
-import {
-  BaseHivemindError,
-  NetworkError,
-  ApiError,
-} from '@src/types/errorClasses';
+import { RTMClient } from '@slack/rtm-api';
+import { SocketModeClient } from '@slack/socket-mode';
+import { WebClient } from '@slack/web-api';
+import { ApiError, BaseHivemindError, NetworkError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
+import type { IMessage } from '@message/interfaces/IMessage';
+import SlackMessage from './SlackMessage';
 
 const debug = Debug('app:SlackBotManager');
 
@@ -28,7 +24,9 @@ interface SlackBotInfo {
 export class SlackBotManager {
   private slackBots: SlackBotInfo[] = [];
   private mode: 'socket' | 'rtm';
-  private messageHandler: ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) | null = null;
+  private messageHandler:
+    | ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>)
+    | null = null;
   private includeHistory: boolean = process.env.SLACK_INCLUDE_HISTORY === 'true';
   private processedEvents: Set<string> = new Set();
   private lastEventTsByChannel: Map<string, string> = new Map();
@@ -39,7 +37,13 @@ export class SlackBotManager {
     instanceConfigs.forEach((instanceConfig, index) => {
       const { token, appToken, signingSecret } = instanceConfig;
       const webClient = new WebClient(token);
-      const botInfo: SlackBotInfo = { botToken: token, appToken, signingSecret, webClient, config: instanceConfig };
+      const botInfo: SlackBotInfo = {
+        botToken: token,
+        appToken,
+        signingSecret,
+        webClient,
+        config: instanceConfig,
+      };
       if (this.mode === 'socket' && appToken) {
         debug(`Initializing SocketModeClient with appToken: ${appToken?.substring(0, 8)}...`);
         botInfo.socketClient = new SocketModeClient({ appToken });
@@ -51,7 +55,9 @@ export class SlackBotManager {
     });
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) {
+  public setMessageHandler(
+    handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+  ) {
     debug('Entering setMessageHandler');
     this.messageHandler = handler;
   }
@@ -67,11 +73,14 @@ export class SlackBotManager {
       } catch (error: unknown) {
         const hivemindError = ErrorUtils.toHivemindError(error) as any;
         const errorInfo = ErrorUtils.classifyError(hivemindError);
-        debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`, {
-          errorCode: hivemindError.code,
-          errorType: errorInfo.type,
-          severity: errorInfo.severity,
-        });
+        debug(
+          `Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`,
+          {
+            errorCode: hivemindError.code,
+            errorType: errorInfo.type,
+            severity: errorInfo.severity,
+          }
+        );
         throw hivemindError;
       }
     }
@@ -81,7 +90,7 @@ export class SlackBotManager {
   private startListening(): Promise<void> {
     debug('Entering startListening');
     const primaryBot = this.slackBots[0];
-    const allBotUserIds = this.slackBots.map(b => b.botUserId).filter(Boolean) as string[];
+    const allBotUserIds = this.slackBots.map((b) => b.botUserId).filter(Boolean) as string[];
 
     return new Promise(async (resolve, reject) => {
       if (this.mode === 'socket' && primaryBot.socketClient) {
@@ -94,13 +103,17 @@ export class SlackBotManager {
           clearTimeout(timeout);
           resolve();
         });
-            
-        primaryBot.socketClient.on('disconnected', () => debug('Socket Mode disconnected - check connectivity'));
+
+        primaryBot.socketClient.on('disconnected', () =>
+          debug('Socket Mode disconnected - check connectivity')
+        );
         primaryBot.socketClient.on('error', (error) => debug('Socket Mode error:', error));
 
         primaryBot.socketClient.on('slack_event', (event) => {
           const eventId = event.body?.event_id || event.event_ts;
-          debug(`General Slack event received: type=${event.type || event.body?.event?.type}, event_id=${eventId}`);
+          debug(
+            `General Slack event received: type=${event.type || event.body?.event?.type}, event_id=${eventId}`
+          );
           if (this.processedEvents.has(eventId)) {
             debug(`Duplicate general event skipped: event_id=${eventId}`);
             return;
@@ -116,7 +129,11 @@ export class SlackBotManager {
             return;
           }
 
-          if (!event.text || event.subtype === 'bot_message' || allBotUserIds.includes(event.user)) {
+          if (
+            !event.text ||
+            event.subtype === 'bot_message' ||
+            allBotUserIds.includes(event.user)
+          ) {
             debug('Message event filtered out: no text, bot message, or self-message');
             return;
           }
@@ -133,7 +150,9 @@ export class SlackBotManager {
           debug(`Primary bot received channel message: ${event.text}`);
           if (this.messageHandler) {
             const slackMessage = new SlackMessage(event.text, event.channel, event as any);
-            const history = this.includeHistory ? await this.fetchMessagesForBot(primaryBot, event.channel, 10) : [];
+            const history = this.includeHistory
+              ? await this.fetchMessagesForBot(primaryBot, event.channel, 10)
+              : [];
             await this.messageHandler(slackMessage, history, primaryBot.config);
           } else {
             debug('No message handler set for message event');
@@ -158,7 +177,7 @@ export class SlackBotManager {
               `Failed to start primary socket client: ${error instanceof Error ? error.message : 'Unknown error'}`,
               undefined,
               undefined,
-              { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' },
+              { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
             );
             debug('Failed to start primary socket client:', {
               error: networkError.message,
@@ -176,10 +195,14 @@ export class SlackBotManager {
           botInfo.socketClient.on('slack_event', (event) => {
             const eventId = event.body?.event_id || event.event_ts;
             if (event.type !== 'message') {
-              debug(`Skipping non-message event for DM bot ${botInfo.botUserName}: type=${event.type}`);
+              debug(
+                `Skipping non-message event for DM bot ${botInfo.botUserName}: type=${event.type}`
+              );
               return;
             }
-            debug(`General Slack event received for DM bot ${botInfo.botUserName}: ${JSON.stringify(event)}`);
+            debug(
+              `General Slack event received for DM bot ${botInfo.botUserName}: ${JSON.stringify(event)}`
+            );
             if (this.processedEvents.has(eventId)) {
               debug(`Duplicate general event skipped: event_id=${eventId}`);
               return;
@@ -195,7 +218,12 @@ export class SlackBotManager {
               return;
             }
 
-            if (event.channel_type !== 'im' || !event.text || event.subtype === 'bot_message' || event.user === botInfo.botUserId) {
+            if (
+              event.channel_type !== 'im' ||
+              !event.text ||
+              event.subtype === 'bot_message' ||
+              event.user === botInfo.botUserId
+            ) {
               debug('Message event filtered out');
               return;
             }
@@ -235,7 +263,7 @@ export class SlackBotManager {
                   `Failed to start socket client for ${botInfo.botUserName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
                   undefined,
                   undefined,
-                  { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' },
+                  { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
                 );
                 debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
                   error: networkError.message,
@@ -268,15 +296,21 @@ export class SlackBotManager {
     });
   }
 
-  private async fetchMessagesForBot(botInfo: SlackBotInfo, channel: string, limit = 10): Promise<IMessage[]> {
+  private async fetchMessagesForBot(
+    botInfo: SlackBotInfo,
+    channel: string,
+    limit = 10
+  ): Promise<IMessage[]> {
     debug('Entering fetchMessagesForBot');
     const result = await botInfo.webClient.conversations.history({ channel, limit });
-    return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg as any));
+    return (result.messages || []).map(
+      (msg) => new SlackMessage(msg.text || '', channel, msg as any)
+    );
   }
 
   public getBotByName(name: string): SlackBotInfo | undefined {
     debug('Entering getBotByName');
-    return this.slackBots.find(bot => bot.botUserName?.toLowerCase() === name.toLowerCase());
+    return this.slackBots.find((bot) => bot.botUserName?.toLowerCase() === name.toLowerCase());
   }
 
   public getAllBots(): SlackBotInfo[] {
@@ -284,7 +318,11 @@ export class SlackBotManager {
     return this.slackBots;
   }
 
-  public async handleMessage(message: IMessage, history: IMessage[] = [], botConfig: any): Promise<string> {
+  public async handleMessage(
+    message: IMessage,
+    history: IMessage[] = [],
+    botConfig: any
+  ): Promise<string> {
     debug('Entering handleMessage');
     if (this.messageHandler) {
       debug(`Handling message: "${message.getText()}"`);
@@ -299,7 +337,7 @@ export class SlackBotManager {
    */
   public async shutdown(): Promise<void> {
     debug('Entering shutdown');
-    
+
     for (const botInfo of this.slackBots) {
       try {
         // Disconnect Socket Mode client
@@ -307,7 +345,7 @@ export class SlackBotManager {
           await botInfo.socketClient.disconnect();
           debug(`Socket client disconnected for bot: ${botInfo.botUserName}`);
         }
-        
+
         // Disconnect RTM client
         if (botInfo.rtmClient) {
           await botInfo.rtmClient.disconnect();
@@ -317,13 +355,13 @@ export class SlackBotManager {
         debug(`Error disconnecting bot ${botInfo.botUserName}:`, error);
       }
     }
-    
+
     // Clear all bots
     this.slackBots = [];
     this.processedEvents.clear();
     this.lastEventTsByChannel.clear();
     this.messageHandler = null;
-    
+
     debug('SlackBotManager shutdown complete');
   }
 }

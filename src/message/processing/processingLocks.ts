@@ -9,21 +9,21 @@ class ProcessingLocks {
   }
 
   /**
-     * Creates a unique lock key from channel and optional bot ID
-     * @param channelId - The channel ID
-     * @param botId - Optional bot ID for per-bot locking
-     */
+   * Creates a unique lock key from channel and optional bot ID
+   * @param channelId - The channel ID
+   * @param botId - Optional bot ID for per-bot locking
+   */
   private getKey(channelId: string, botId?: string): string {
     return botId ? `${channelId}:${botId}` : channelId;
   }
 
   /**
-     * Checks if the channel is currently locked for this bot.
-     * 
-     * @param channelId - The ID of the channel to check.
-     * @param botId - Optional bot ID for per-bot locking.
-     * @returns True if the channel is locked, false otherwise.
-     */
+   * Checks if the channel is currently locked for this bot.
+   *
+   * @param channelId - The ID of the channel to check.
+   * @param botId - Optional bot ID for per-bot locking.
+   * @returns True if the channel is locked, false otherwise.
+   */
   isLocked(channelId: string, botId?: string): boolean {
     const key = this.getKey(channelId, botId);
     const locked = this.locks.has(key);
@@ -32,11 +32,11 @@ class ProcessingLocks {
   }
 
   /**
-     * Locks the specified channel for this bot.
-     * 
-     * @param channelId - The ID of the channel to lock.
-     * @param botId - Optional bot ID for per-bot locking.
-     */
+   * Locks the specified channel for this bot.
+   *
+   * @param channelId - The ID of the channel to lock.
+   * @param botId - Optional bot ID for per-bot locking.
+   */
   lock(channelId: string, botId?: string): void {
     const key = this.getKey(channelId, botId);
     this.locks.set(key, true);
@@ -44,11 +44,11 @@ class ProcessingLocks {
   }
 
   /**
-     * Unlocks the specified channel for this bot.
-     * 
-     * @param channelId - The ID of the channel to unlock.
-     * @param botId - Optional bot ID for per-bot locking.
-     */
+   * Unlocks the specified channel for this bot.
+   *
+   * @param channelId - The ID of the channel to unlock.
+   * @param botId - Optional bot ID for per-bot locking.
+   */
   unlock(channelId: string, botId?: string): void {
     const key = this.getKey(channelId, botId);
     this.locks.delete(key);

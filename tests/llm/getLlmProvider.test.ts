@@ -1,5 +1,5 @@
-import { getLlmProvider } from '@llm/getLlmProvider';
 import llmConfig from '@config/llmConfig';
+import { getLlmProvider } from '@llm/getLlmProvider';
 
 // Mock dependencies
 jest.mock('@config/llmConfig');
@@ -9,12 +9,12 @@ jest.mock('@src/config/ProviderConfigManager', () => ({
   __esModule: true,
   default: {
     getInstance: () => ({
-      getAllProviders: () => []
-    })
-  }
+      getAllProviders: () => [],
+    }),
+  },
 }));
 
-// Mock OpenAiProvider class  
+// Mock OpenAiProvider class
 jest.mock('@hivemind/provider-openai', () => ({
   __esModule: true,
   OpenAiProvider: jest.fn().mockImplementation(() => ({
@@ -22,8 +22,8 @@ jest.mock('@hivemind/provider-openai', () => ({
     supportsChatCompletion: () => true,
     supportsCompletion: () => true,
     generateChatCompletion: jest.fn().mockResolvedValue('test response'),
-    generateCompletion: jest.fn().mockResolvedValue('test response')
-  }))
+    generateCompletion: jest.fn().mockResolvedValue('test response'),
+  })),
 }));
 
 // Mock FlowiseProvider class
@@ -34,8 +34,8 @@ jest.mock('@integrations/flowise/flowiseProvider', () => ({
     supportsChatCompletion: () => true,
     supportsCompletion: () => true,
     generateChatCompletion: jest.fn().mockResolvedValue('test response'),
-    generateCompletion: jest.fn().mockResolvedValue('test response')
-  }))
+    generateCompletion: jest.fn().mockResolvedValue('test response'),
+  })),
 }));
 
 // Mock openWebUI
@@ -47,7 +47,6 @@ jest.mock('@integrations/openwebui/runInference', () => ({
 const mockedLlmConfig = llmConfig as jest.Mocked<typeof llmConfig>;
 
 describe('getLlmProvider', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -85,15 +84,15 @@ describe('getLlmProvider', () => {
     (mockedLlmConfig.get as jest.Mock).mockReturnValue('openai, flowise');
     const providers = getLlmProvider();
     expect(providers).toHaveLength(2);
-    expect(providers.some(p => p.name === 'openai')).toBe(true);
-    expect(providers.some(p => p.name === 'flowise')).toBe(true);
+    expect(providers.some((p) => p.name === 'openai')).toBe(true);
+    expect(providers.some((p) => p.name === 'flowise')).toBe(true);
   });
 
   it('should skip unknown providers and return valid ones', () => {
     (mockedLlmConfig.get as jest.Mock).mockReturnValue('openai, unknownprovider');
     const providers = getLlmProvider();
     expect(providers.length).toBeGreaterThanOrEqual(1);
-    expect(providers.some(p => p.name === 'openai')).toBe(true);
+    expect(providers.some((p) => p.name === 'openai')).toBe(true);
   });
 
   it('should default to OpenAI when no valid providers are configured', () => {

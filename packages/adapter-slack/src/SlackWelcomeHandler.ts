@@ -1,11 +1,11 @@
 import Debug from 'debug';
-import slackConfig from '@src/config/slackConfig';
-import { markdownToBlocks } from '@tryfabric/mack';
 import type { KnownBlock } from '@slack/web-api';
-import type { SlackBotManager } from './SlackBotManager';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { markdownToBlocks } from '@tryfabric/mack';
 import messageConfig from '@src/config/messageConfig';
+import slackConfig from '@src/config/slackConfig';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { ValidationError } from '@src/types/errorClasses';
+import type { SlackBotManager } from './SlackBotManager';
 
 const debug = Debug('app:SlackWelcomeHandler');
 
@@ -36,7 +36,7 @@ export class SlackWelcomeHandler {
   /**
    * Sends a welcome message from the bot to a specified channel.
    * Generates a thought-provoking quote about the channel using LLM and posts it.
-   * 
+   *
    * @param {string} channel - The Slack channel ID to send the welcome message to
    * @returns {Promise<void>} A promise that resolves when the message is sent
    * @throws {Error} Throws an error if channel is not provided or if message sending fails
@@ -87,7 +87,9 @@ export class SlackWelcomeHandler {
     };
 
     try {
-      const sentTs = await this.sendMessageToChannel(channel, welcomeText, undefined, undefined, [textBlock]);
+      const sentTs = await this.sendMessageToChannel(channel, welcomeText, undefined, undefined, [
+        textBlock,
+      ]);
       debug(`Sent bot welcome message to channel ${channel}, ts=${sentTs}`);
     } catch (error) {
       debug(`Failed to send bot welcome message to channel ${channel}: ${error}`);
@@ -98,7 +100,7 @@ export class SlackWelcomeHandler {
   /**
    * Sends a welcome message for a new user joining a channel.
    * Processes markdown content and creates interactive buttons for user actions.
-   * 
+   *
    * @param {string} channel - The Slack channel ID where the user joined
    * @param {string} userName - The username of the new user
    * @returns {Promise<void>} A promise that resolves when the welcome message is sent
@@ -141,14 +143,17 @@ export class SlackWelcomeHandler {
   /**
    * Processes markdown content into Slack block format.
    * Converts markdown text into structured blocks with support for interactive buttons.
-   * 
+   *
    * @param {string} markdown - The markdown content to process
    * @param {string} channel - The channel context for button actions
    * @returns {Promise<KnownBlock[]>} A promise that resolves to an array of Slack blocks
    * @throws {Error} Throws an error if markdown or channel is not provided
    */
   public async processWelcomeMessage(markdown: string, channel: string): Promise<KnownBlock[]> {
-    debug('Entering processWelcomeMessage', { channel, markdown: markdown.substring(0, 50) + '...' });
+    debug('Entering processWelcomeMessage', {
+      channel,
+      markdown: markdown.substring(0, 50) + '...',
+    });
     if (!markdown || !channel) {
       debug('Error: Markdown and channel required');
       throw new Error('Markdown and channel required');
@@ -160,9 +165,16 @@ export class SlackWelcomeHandler {
     if (content) {
       try {
         const contentBlocks = await markdownToBlocks(content, {
-          lists: { checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ' },
+          lists: {
+            checkboxPrefix: (checked: boolean) =>
+              checked ? ':white_check_mark: ' : ':ballot_box_with_check: ',
+          },
         });
-        blocks = blocks.concat(contentBlocks.filter(b => b.type !== 'actions' && b.type !== 'section' && !('elements' in b)));
+        blocks = blocks.concat(
+          contentBlocks.filter(
+            (b) => b.type !== 'actions' && b.type !== 'section' && !('elements' in b)
+          )
+        );
         debug(`Processed ${contentBlocks.length} content blocks`);
       } catch (error) {
         debug(`Error processing content blocks: ${error}`);
@@ -170,7 +182,10 @@ export class SlackWelcomeHandler {
     }
 
     if (buttonsPart) {
-      const buttonLines = buttonsPart.trim().split('\n').filter(line => line.trim().startsWith('- ['));
+      const buttonLines = buttonsPart
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim().startsWith('- ['));
       const actionsBlock: KnownBlock = { type: 'actions', elements: [] };
 
       for (const line of buttonLines) {
@@ -197,7 +212,7 @@ export class SlackWelcomeHandler {
   /**
    * Handles button click interactions from Slack messages.
    * Processes the action ID and sends appropriate responses based on predefined mappings.
-   * 
+   *
    * @param {string} channel - The channel where the button was clicked
    * @param {string} userId - The user ID who clicked the button
    * @param {string} actionId - The action identifier from the button
@@ -211,10 +226,12 @@ export class SlackWelcomeHandler {
       throw new Error('Channel, userId, and actionId required');
     }
 
-    const reportIssueUrl = process.env.REPORT_ISSUE_URL || 'https://university.example.com/report-issue';
-    const learnMoreDefault = 'Here\'s more info about this channel!';
+    const reportIssueUrl =
+      process.env.REPORT_ISSUE_URL || 'https://university.example.com/report-issue';
+    const learnMoreDefault = "Here's more info about this channel!";
     const learnMoreMessage = slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault;
-    const buttonMappingsRaw = process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
+    const buttonMappingsRaw =
+      process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
 
     let buttonMappings: { [key: string]: string };
     try {
@@ -226,9 +243,12 @@ export class SlackWelcomeHandler {
     }
 
     const buttonResponses: { [key: string]: string } = {
-      [`learn_objectives_${channel}`]: 'I\'m here to help with learning objectives! Ask me anything in this channel, and I\'ll respond in a thread to keep things organized. For private assessments, I\'ll DM you directly.',
-      [`how_to_${channel}`]: 'Here\'s how I work:\n- Ask questions in the channel, and I\'ll reply in threads for learning discussions.\n- For assessments or private help, I\'ll message you via DMs.\nTry asking "What are the learning objectives?" or "Assess my progress"!',
-      [`contact_support_${channel}`]: 'Need support? Post your question here, and I\'ll thread it for group discussion. For private issues, I\'ll reach out via DM. You can also email support@university.example.com.',
+      [`learn_objectives_${channel}`]:
+        "I'm here to help with learning objectives! Ask me anything in this channel, and I'll respond in a thread to keep things organized. For private assessments, I'll DM you directly.",
+      [`how_to_${channel}`]:
+        'Here\'s how I work:\n- Ask questions in the channel, and I\'ll reply in threads for learning discussions.\n- For assessments or private help, I\'ll message you via DMs.\nTry asking "What are the learning objectives?" or "Assess my progress"!',
+      [`contact_support_${channel}`]:
+        "Need support? Post your question here, and I'll thread it for group discussion. For private issues, I'll reach out via DM. You can also email support@university.example.com.",
       [`report_issue_${channel}`]: `Something not working? Let me know here, and I'll thread it for help. Or report it directly at: ${reportIssueUrl}`,
     };
 
@@ -241,24 +261,33 @@ export class SlackWelcomeHandler {
 
     if (responseText === 'Unknown action') {
       debug(`Unknown action ID ${actionId}`);
-      await this.sendMessageToChannel(channel, 'Sorry, I don\'t recognize that action. Try one of the welcome buttons!', undefined);
+      await this.sendMessageToChannel(
+        channel,
+        "Sorry, I don't recognize that action. Try one of the welcome buttons!",
+        undefined
+      );
     } else {
       await this.sendMessageToChannel(channel, responseText, undefined);
-      debug(`Sent button response in #${channel} for action ${actionId}: ${responseText.substring(0, 50)}...`);
+      debug(
+        `Sent button response in #${channel} for action ${actionId}: ${responseText.substring(0, 50)}...`
+      );
     }
   }
 
   /**
    * Joins configured channels for a bot and sends welcome messages.
    * Processes the SLACK_JOIN_CHANNELS configuration and attempts to join each channel.
-   * 
+   *
    * @param {any} botInfo - The bot information object containing webClient and bot details
    * @returns {Promise<void>} A promise that resolves when all channels are processed
    */
   public async joinConfiguredChannelsForBot(botInfo: any): Promise<void> {
     debug('Entering joinConfiguredChannelsForBot', { botUserId: botInfo.botUserId });
     const channelsConfig = slackConfig.get('SLACK_JOIN_CHANNELS') || '';
-    const channelList = channelsConfig.split(',').map(c => c.trim()).filter(Boolean);
+    const channelList = channelsConfig
+      .split(',')
+      .map((c) => c.trim())
+      .filter(Boolean);
 
     debug(`Joining ${channelList.length} channels: ${channelList.join(', ')}`);
 
@@ -277,7 +306,7 @@ export class SlackWelcomeHandler {
   /**
    * Sends a message to a specific channel using the bot's web client.
    * Handles text formatting, username display, and thread support.
-   * 
+   *
    * @private
    * @param {string} channelId - The Slack channel ID to send the message to
    * @param {string} text - The message text to send
@@ -292,7 +321,7 @@ export class SlackWelcomeHandler {
     text: string,
     senderName?: string,
     threadId?: string,
-    blocks?: KnownBlock[],
+    blocks?: KnownBlock[]
   ): Promise<string> {
     debug('Entering sendMessageToChannel (internal)', {
       channelId,
@@ -305,7 +334,7 @@ export class SlackWelcomeHandler {
     const decodedText = text
       .replace(/"/g, '"')
       .replace(/&#34;/g, '"')
-      .replace(/'/g, '\'')
+      .replace(/'/g, "'")
       .replace(/&/g, '&')
       .replace(/</g, '<')
       .replace(/>/g, '>');
@@ -321,7 +350,9 @@ export class SlackWelcomeHandler {
     try {
       const options: any = {
         channel: channelId,
-        text: decodedText || (blocks?.length ? 'Message with interactive content' : 'No content provided'),
+        text:
+          decodedText ||
+          (blocks?.length ? 'Message with interactive content' : 'No content provided'),
         username: displayName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
@@ -334,7 +365,7 @@ export class SlackWelcomeHandler {
       }
 
       if (blocks?.length) {
-        options.blocks = blocks.map(block => {
+        options.blocks = blocks.map((block) => {
           if (block.type === 'section' && block.text?.type === 'mrkdwn') {
             return { ...block, text: { ...block.text, verbatim: true } };
           }
@@ -342,9 +373,13 @@ export class SlackWelcomeHandler {
         });
       }
 
-      debug(`Final text to post: ${options.text.substring(0, 50)}${options.text.length > 50 ? '...' : ''}`);
+      debug(
+        `Final text to post: ${options.text.substring(0, 50)}${options.text.length > 50 ? '...' : ''}`
+      );
       const result = await botInfo.webClient.chat.postMessage(options);
-      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
+      debug(
+        `Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`
+      );
       return result.ts || '';
     } catch (error) {
       debug(`Failed to send message: ${error}`);

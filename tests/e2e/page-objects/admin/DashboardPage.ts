@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 
 /**
@@ -30,14 +30,20 @@ export class DashboardPage extends BasePage {
     // Initialize dashboard-specific locators
     // Use data-testid for reliable selection
     this.dashboardHeading = page.locator('[data-testid="dashboard-title"]');
-    this.overviewTab = page.locator('button[role="tab"]:has-text("Overview"), [data-testid="overview-tab"]');
-    this.performanceTab = page.locator('button[role="tab"]:has-text("Performance"), [data-testid="performance-tab"]');
+    this.overviewTab = page.locator(
+      'button[role="tab"]:has-text("Overview"), [data-testid="overview-tab"]'
+    );
+    this.performanceTab = page.locator(
+      'button[role="tab"]:has-text("Performance"), [data-testid="performance-tab"]'
+    );
     this.botStatusCard = page.locator('[data-testid="bot-status"], .bot-status-card');
     this.activeBotsCard = page.locator('text=Active Bots, [data-testid="active-bots"]');
     this.totalMessagesCard = page.locator('text=Total Messages, [data-testid="total-messages"]');
     this.errorRateCard = page.locator('text=Error Rate, [data-testid="error-rate"]');
     this.uptimeCard = page.locator('text=Uptime, [data-testid="uptime"]');
-    this.performanceMetrics = page.locator('text=Performance Metrics, [data-testid="performance-metrics"]');
+    this.performanceMetrics = page.locator(
+      'text=Performance Metrics, [data-testid="performance-metrics"]'
+    );
     this.refreshButton = page.locator('button:has-text("Refresh"), [data-testid="refresh-button"]');
     this.navigationMenu = page.locator('nav, [role="navigation"], .navigation');
     this.statsCards = page.locator('.stats, [data-testid="dashboard-stats"]');
@@ -113,11 +119,11 @@ export class DashboardPage extends BasePage {
       this.activeBotsCard,
       this.totalMessagesCard,
       this.errorRateCard,
-      this.uptimeCard
+      this.uptimeCard,
     ];
 
     for (const card of cards) {
-      if (!await this.isElementVisible(card)) {
+      if (!(await this.isElementVisible(card))) {
         return false;
       }
     }
@@ -155,7 +161,7 @@ export class DashboardPage extends BasePage {
    */
   async isOverviewTabActive(): Promise<boolean> {
     const ariaSelected = await this.overviewTab.getAttribute('aria-selected');
-    const hasActiveClass = await this.overviewTab.evaluate(el => el.classList.contains('active'));
+    const hasActiveClass = await this.overviewTab.evaluate((el) => el.classList.contains('active'));
     return ariaSelected === 'true' || hasActiveClass;
   }
 
@@ -164,7 +170,9 @@ export class DashboardPage extends BasePage {
    */
   async isPerformanceTabActive(): Promise<boolean> {
     const ariaSelected = await this.performanceTab.getAttribute('aria-selected');
-    const hasActiveClass = await this.performanceTab.evaluate(el => el.classList.contains('active'));
+    const hasActiveClass = await this.performanceTab.evaluate((el) =>
+      el.classList.contains('active')
+    );
     return ariaSelected === 'true' || hasActiveClass;
   }
 
@@ -264,7 +272,7 @@ export class DashboardPage extends BasePage {
    * Select the first bot row in the table
    */
   async selectFirstBotRow(): Promise<void> {
-    if (await this.dataTableCheckboxes.count() > 0) {
+    if ((await this.dataTableCheckboxes.count()) > 0) {
       const checkbox = this.dataTableCheckboxes.first();
       if (!(await checkbox.isChecked())) {
         await checkbox.check();
@@ -306,7 +314,7 @@ export class DashboardPage extends BasePage {
    * Filter bots in table using search
    */
   async searchBots(term: string): Promise<void> {
-    if (await this.dataTableSearch.count() > 0) {
+    if ((await this.dataTableSearch.count()) > 0) {
       await this.dataTableSearch.fill(term);
       await this.waitForLoadingToComplete();
     }
@@ -341,7 +349,9 @@ export class DashboardPage extends BasePage {
    * Click on navigation menu item
    */
   async clickNavigationMenuItem(itemName: string): Promise<void> {
-    const menuItem = this.navigationMenu.locator(`a:has-text("${itemName}"), button:has-text("${itemName}")`);
+    const menuItem = this.navigationMenu.locator(
+      `a:has-text("${itemName}"), button:has-text("${itemName}")`
+    );
     if (await this.isElementVisible(menuItem)) {
       await this.clickElement(menuItem, true);
     } else {
@@ -377,7 +387,7 @@ export class DashboardPage extends BasePage {
    */
   async hasDashboardData(): Promise<boolean> {
     const metrics = await this.getDashboardMetrics();
-    return Object.values(metrics).some(value => value !== null && value !== '');
+    return Object.values(metrics).some((value) => value !== null && value !== '');
   }
 
   /**
@@ -393,8 +403,8 @@ export class DashboardPage extends BasePage {
   async checkResponsiveDesign(): Promise<void> {
     const viewports = [
       { width: 1920, height: 1080 }, // Desktop
-      { width: 768, height: 1024 },  // Tablet
-      { width: 375, height: 667 }    // Mobile
+      { width: 768, height: 1024 }, // Tablet
+      { width: 375, height: 667 }, // Mobile
     ];
 
     for (const viewport of viewports) {
@@ -425,7 +435,7 @@ export class DashboardPage extends BasePage {
 
     // Check for proper tab structure
     const tablist = this.page.locator('[role="tablist"]');
-    if (await tablist.count() > 0) {
+    if ((await tablist.count()) > 0) {
       await expect(tablist.first()).toBeVisible();
 
       // Check that tabs have proper attributes
@@ -441,7 +451,7 @@ export class DashboardPage extends BasePage {
 
     // Check for proper landmark regions
     const main = this.page.locator('main, [role="main"]');
-    if (await main.count() > 0) {
+    if ((await main.count()) > 0) {
       await expect(main.first()).toBeVisible();
     }
 

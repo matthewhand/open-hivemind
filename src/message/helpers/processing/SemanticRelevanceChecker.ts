@@ -1,46 +1,67 @@
 /**
  * SemanticRelevanceChecker - Uses a cheap 1-token LLM call to check if a message is on-topic
- * 
+ *
  * When enabled and the bot has posted recently, this provides a huge bonus to reply probability
  * if the incoming message is semantically relevant to the ongoing conversation.
  */
 
 import Debug from 'debug';
-import messageConfig from '../../../config/messageConfig';
 import { getTaskLlm } from '@llm/taskLlmRouter';
+import messageConfig from '../../../config/messageConfig';
 
 const debug = Debug('app:SemanticRelevanceChecker');
 
 // Extensive list of affirmative responses to accept
 const AFFIRMATIVES = new Set([
-  'y', 'yes', 'yeah', 'yep', 'yup',
-  'sure', 'ok', 'okay', 'aye', 'yea',
-  'true', '1', 'si', 'oui',
-  'correct', 'affirmative', 'absolutely',
-  'indeed', 'definitely', 'certainly', 'right',
-  'positive', 'roger', 'uh-huh', 'yah',
-  'totally', 'exactly', 'precisely',
+  'y',
+  'yes',
+  'yeah',
+  'yep',
+  'yup',
+  'sure',
+  'ok',
+  'okay',
+  'aye',
+  'yea',
+  'true',
+  '1',
+  'si',
+  'oui',
+  'correct',
+  'affirmative',
+  'absolutely',
+  'indeed',
+  'definitely',
+  'certainly',
+  'right',
+  'positive',
+  'roger',
+  'uh-huh',
+  'yah',
+  'totally',
+  'exactly',
+  'precisely',
 ]);
 
 /**
  * Check if a response is affirmative
  */
 export function isAffirmative(response: string): boolean {
-  const cleaned = response.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleaned = response
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
   return AFFIRMATIVES.has(cleaned);
 }
 
 /**
  * Check if the incoming message is semantically relevant to the conversation
- * 
+ *
  * @param conversationContext - Recent messages for context (2-5 lines recommended)
  * @param newMessage - The incoming message to check
  * @returns true if on-topic, false otherwise
  */
-export async function isOnTopic(
-  conversationContext: string,
-  newMessage: string,
-): Promise<boolean> {
+export async function isOnTopic(conversationContext: string, newMessage: string): Promise<boolean> {
   const enabled = Boolean(messageConfig.get('MESSAGE_SEMANTIC_RELEVANCE_ENABLED'));
   if (!enabled) {
     debug('Semantic relevance check is disabled');
@@ -70,11 +91,17 @@ export async function isOnTopic(
     // User wants pivoted = penalty. So result=true means "Good/Bonus" (Continuing).
 
     let result = false;
-    if (isOnTopic) { result = true; }
-    else if (isPivoted) { result = false; }
-    else { result = false; } // Default failure case
+    if (isOnTopic) {
+      result = true;
+    } else if (isPivoted) {
+      result = false;
+    } else {
+      result = false;
+    } // Default failure case
 
-    debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'CONTINUING' : 'PIVOTED'} (raw: "${answer}")`);
+    debug(
+      `Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'CONTINUING' : 'PIVOTED'} (raw: "${answer}")`
+    );
 
     return result;
   } catch (err) {
@@ -101,18 +128,22 @@ export default {
 
 /**
  * Check if the message is nonsense, corrupted, or largely repetitive/gibberish.
- * 
+ *
  * @param message - The message text to analyze
  * @returns true if nonsense/corrupted, false if coherent
  */
 export async function isNonsense(message: string): Promise<boolean> {
   // Skip short messages (e.g. "ok", "hi") - hard to judge as nonsense without context
-  if (!message || message.length < 5) { return false; }
+  if (!message || message.length < 5) {
+    return false;
+  }
 
   const enabled = Boolean(messageConfig.get('MESSAGE_SEMANTIC_RELEVANCE_ENABLED'));
-  // We reuse the semantic enabled flag or could add a specific one. 
+  // We reuse the semantic enabled flag or could add a specific one.
   // If semantic checks are off, likely this expensive check should be off too.
-  if (!enabled) { return false; }
+  if (!enabled) {
+    return false;
+  }
 
   try {
     const { provider, metadata } = await getTaskLlm('semantic', {
@@ -123,8 +154,11 @@ export async function isNonsense(message: string): Promise<boolean> {
     const response = await provider.generateChatCompletion(prompt, [], metadata);
     const answer = typeof response === 'string' ? response.toLowerCase() : '';
 
-    const isNonsense = answer.includes('nonsense') || answer.includes('corrupt') || answer.includes('loop');
-    debug(`Nonsense check: "${message.substring(0, 30)}..." → ${isNonsense ? 'NONSENSE' : 'COHERENT'} (raw: "${answer}")`);
+    const isNonsense =
+      answer.includes('nonsense') || answer.includes('corrupt') || answer.includes('loop');
+    debug(
+      `Nonsense check: "${message.substring(0, 30)}..." → ${isNonsense ? 'NONSENSE' : 'COHERENT'} (raw: "${answer}")`
+    );
 
     return isNonsense;
   } catch (err) {

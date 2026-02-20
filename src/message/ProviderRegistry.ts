@@ -11,10 +11,10 @@
  *
  * Type Guards ensure only valid IMessengerService implementations are loaded.
  */
-import type { IMessengerService } from './interfaces/IMessengerService';
-import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
+import type { IMessengerService } from './interfaces/IMessengerService';
 
 const debug = Debug('app:ProviderRegistry');
 
@@ -30,24 +30,20 @@ let initialized = false;
  * Type guard to check if a module export is a valid IMessengerService factory.
  */
 function isValidServiceFactory(obj: any): obj is { getInstance: () => IMessengerService } {
-    return (
-        obj &&
-        typeof obj === 'function' &&
-        typeof obj.getInstance === 'function'
-    );
+  return obj && typeof obj === 'function' && typeof obj.getInstance === 'function';
 }
 
 /**
  * Type guard to check if an instance implements IMessengerService.
  */
 function isMessengerService(obj: any): obj is IMessengerService {
-    return (
-        obj &&
-        typeof obj.initialize === 'function' &&
-        typeof obj.sendMessageToChannel === 'function' &&
-        typeof obj.getMessagesFromChannel === 'function' &&
-        typeof obj.shutdown === 'function'
-    );
+  return (
+    obj &&
+    typeof obj.initialize === 'function' &&
+    typeof obj.sendMessageToChannel === 'function' &&
+    typeof obj.getMessagesFromChannel === 'function' &&
+    typeof obj.shutdown === 'function'
+  );
 }
 
 /**
@@ -55,136 +51,138 @@ function isMessengerService(obj: any): obj is IMessengerService {
  * This is called lazily on first access.
  */
 function discoverProviders(): void {
-    if (initialized) return;
-    initialized = true;
+  if (initialized) return;
+  initialized = true;
 
-    const integrationsDir = path.join(__dirname, '..', 'integrations');
+  const integrationsDir = path.join(__dirname, '..', 'integrations');
 
-    if (!fs.existsSync(integrationsDir)) {
-        debug('Integrations directory not found');
-        return;
+  if (!fs.existsSync(integrationsDir)) {
+    debug('Integrations directory not found');
+    return;
+  }
+
+  const entries = fs.readdirSync(integrationsDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    const providerName = entry.name.toLowerCase();
+    const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
+    const serviceFileName = `${pascalName}Service`;
+    const providerDir = path.join(integrationsDir, entry.name);
+
+    // Look for {Name}Service.ts or {Name}Service.js
+    const possiblePaths = [
+      path.join(providerDir, `${serviceFileName}.ts`),
+      path.join(providerDir, `${serviceFileName}.js`),
+    ];
+
+    for (const filePath of possiblePaths) {
+      if (fs.existsSync(filePath)) {
+        discoveredProviders.set(providerName, {
+          modulePath: path.relative(__dirname, filePath).replace(/\.(ts|js)$/, ''),
+          serviceExport: serviceFileName,
+        });
+        debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
+        break;
+      }
     }
+  }
 
-    const entries = fs.readdirSync(integrationsDir, { withFileTypes: true });
-
-    for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
-
-        const providerName = entry.name.toLowerCase();
-        const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
-        const serviceFileName = `${pascalName}Service`;
-        const providerDir = path.join(integrationsDir, entry.name);
-
-        // Look for {Name}Service.ts or {Name}Service.js
-        const possiblePaths = [
-            path.join(providerDir, `${serviceFileName}.ts`),
-            path.join(providerDir, `${serviceFileName}.js`),
-        ];
-
-        for (const filePath of possiblePaths) {
-            if (fs.existsSync(filePath)) {
-                discoveredProviders.set(providerName, {
-                    modulePath: path.relative(__dirname, filePath).replace(/\.(ts|js)$/, ''),
-                    serviceExport: serviceFileName,
-                });
-                debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
-                break;
-            }
-        }
-    }
-
-    debug(`Provider discovery complete: ${discoveredProviders.size} providers found`);
+  debug(`Provider discovery complete: ${discoveredProviders.size} providers found`);
 }
 
 /**
  * Dynamically load and get a messenger service by provider name.
  * Returns null if not found, disabled, or fails validation.
  */
-export async function getMessengerServiceByProvider(providerName: string): Promise<IMessengerService | null> {
-    discoverProviders();
+export async function getMessengerServiceByProvider(
+  providerName: string
+): Promise<IMessengerService | null> {
+  discoverProviders();
 
-    const normalizedName = providerName.toLowerCase();
+  const normalizedName = providerName.toLowerCase();
 
-    // Check cache first
-    if (loadedProviders.has(normalizedName)) {
-        return loadedProviders.get(normalizedName)!;
+  // Check cache first
+  if (loadedProviders.has(normalizedName)) {
+    return loadedProviders.get(normalizedName)!;
+  }
+
+  const providerMeta = discoveredProviders.get(normalizedName);
+  if (!providerMeta) {
+    debug(`Provider "${providerName}" was not discovered.`);
+    return null;
+  }
+
+  try {
+    debug(`Loading provider: ${providerName}`);
+
+    // Dynamic import
+    const module = await import(providerMeta.modulePath);
+    const ServiceClass = module[providerMeta.serviceExport];
+
+    // Validate factory pattern
+    if (!isValidServiceFactory(ServiceClass)) {
+      debug(`Provider "${providerName}" does not have a valid getInstance() factory`);
+      return null;
     }
 
-    const providerMeta = discoveredProviders.get(normalizedName);
-    if (!providerMeta) {
-        debug(`Provider "${providerName}" was not discovered.`);
-        return null;
+    const service = ServiceClass.getInstance();
+
+    // Validate IMessengerService interface
+    if (!isMessengerService(service)) {
+      debug(`Provider "${providerName}" does not implement IMessengerService correctly`);
+      return null;
     }
 
-    try {
-        debug(`Loading provider: ${providerName}`);
-
-        // Dynamic import
-        const module = await import(providerMeta.modulePath);
-        const ServiceClass = module[providerMeta.serviceExport];
-
-        // Validate factory pattern
-        if (!isValidServiceFactory(ServiceClass)) {
-            debug(`Provider "${providerName}" does not have a valid getInstance() factory`);
-            return null;
-        }
-
-        const service = ServiceClass.getInstance();
-
-        // Validate IMessengerService interface
-        if (!isMessengerService(service)) {
-            debug(`Provider "${providerName}" does not implement IMessengerService correctly`);
-            return null;
-        }
-
-        loadedProviders.set(normalizedName, service);
-        debug(`Successfully loaded provider: ${providerName}`);
-        return service;
-    } catch (error: any) {
-        debug(`Failed to load provider "${providerName}": ${error.message}`);
-        return null;
-    }
+    loadedProviders.set(normalizedName, service);
+    debug(`Successfully loaded provider: ${providerName}`);
+    return service;
+  } catch (error: any) {
+    debug(`Failed to load provider "${providerName}": ${error.message}`);
+    return null;
+  }
 }
 
 /**
  * Get list of all discovered provider names.
  */
 export function getRegisteredProviders(): string[] {
-    discoverProviders();
-    return Array.from(discoveredProviders.keys());
+  discoverProviders();
+  return Array.from(discoveredProviders.keys());
 }
 
 /**
  * Check if a provider is discovered.
  */
 export function isProviderRegistered(providerName: string): boolean {
-    discoverProviders();
-    return discoveredProviders.has(providerName.toLowerCase());
+  discoverProviders();
+  return discoveredProviders.has(providerName.toLowerCase());
 }
 
 /**
  * Get list of currently loaded (active) providers.
  */
 export function getLoadedProviders(): string[] {
-    return Array.from(loadedProviders.keys());
+  return Array.from(loadedProviders.keys());
 }
 
 /**
  * Unload a provider from cache (e.g. when disabling).
  */
 export function unloadProvider(providerName: string): void {
-    const normalizedName = providerName.toLowerCase();
-    if (loadedProviders.has(normalizedName)) {
-        loadedProviders.delete(normalizedName);
-        debug(`Unloaded provider: ${providerName}`);
-    }
+  const normalizedName = providerName.toLowerCase();
+  if (loadedProviders.has(normalizedName)) {
+    loadedProviders.delete(normalizedName);
+    debug(`Unloaded provider: ${providerName}`);
+  }
 }
 
 /**
  * Force re-discovery of providers (useful after adding new integrations).
  */
 export function refreshProviders(): void {
-    initialized = false;
-    discoveredProviders.clear();
-    discoverProviders();
+  initialized = false;
+  discoveredProviders.clear();
+  discoverProviders();
 }

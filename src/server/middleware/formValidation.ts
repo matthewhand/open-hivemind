@@ -1,11 +1,19 @@
-import type { Request, Response, NextFunction } from 'express';
-import { body, validationResult, matchedData } from 'express-validator';
 import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
+import { body, matchedData, validationResult } from 'express-validator';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 const debug = Debug('app:formValidation');
 
-const ALLOWED_LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'];
+const ALLOWED_LLM_PROVIDERS = [
+  'openai',
+  'flowise',
+  'openwebui',
+  'perplexity',
+  'replicate',
+  'n8n',
+  'openswarm',
+];
 
 /**
  * Validation middleware for bot configuration creation
@@ -30,21 +38,20 @@ export const validateBotConfigCreation = [
     .withMessage('Message provider must be one of: discord, slack, mattermost, webhook'),
 
   // LLM provider validation
-  body('llmProvider')
-    .custom((value) => {
-      const trimmed = typeof value === 'string' ? value.trim() : '';
-      const llmStatus = getLlmDefaultStatus();
-      if (!trimmed && !llmStatus.configured) {
-        throw new Error('LLM provider is required when no default LLM provider is configured');
-      }
-      if (!trimmed) {
-        return true;
-      }
-      if (!ALLOWED_LLM_PROVIDERS.includes(trimmed)) {
-        throw new Error(`LLM provider must be one of: ${ALLOWED_LLM_PROVIDERS.join(', ')}`);
-      }
+  body('llmProvider').custom((value) => {
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+    const llmStatus = getLlmDefaultStatus();
+    if (!trimmed && !llmStatus.configured) {
+      throw new Error('LLM provider is required when no default LLM provider is configured');
+    }
+    if (!trimmed) {
       return true;
-    }),
+    }
+    if (!ALLOWED_LLM_PROVIDERS.includes(trimmed)) {
+      throw new Error(`LLM provider must be one of: ${ALLOWED_LLM_PROVIDERS.join(', ')}`);
+    }
+    return true;
+  }),
 
   // LLM profile validation
   body('llmProfile')
@@ -82,34 +89,19 @@ export const validateBotConfigCreation = [
     .withMessage('System instruction must be less than 5000 characters'),
 
   // MCP servers validation
-  body('mcpServers')
-    .optional()
-    .isArray()
-    .withMessage('MCP servers must be an array'),
+  body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),
 
   // MCP guard validation
-  body('mcpGuard')
-    .optional()
-    .isObject()
-    .withMessage('MCP guard must be an object'),
+  body('mcpGuard').optional().isObject().withMessage('MCP guard must be an object'),
 
   // Discord configuration validation
-  body('discord')
-    .optional()
-    .isObject()
-    .withMessage('Discord configuration must be an object'),
+  body('discord').optional().isObject().withMessage('Discord configuration must be an object'),
   body('discord.token')
     .if(body('discord').exists())
     .notEmpty()
     .withMessage('Discord token is required when discord configuration is provided'),
-  body('discord.clientId')
-    .optional()
-    .isString()
-    .withMessage('Discord client ID must be a string'),
-  body('discord.guildId')
-    .optional()
-    .isString()
-    .withMessage('Discord guild ID must be a string'),
+  body('discord.clientId').optional().isString().withMessage('Discord client ID must be a string'),
+  body('discord.guildId').optional().isString().withMessage('Discord guild ID must be a string'),
   body('discord.channelId')
     .optional()
     .isString()
@@ -120,18 +112,12 @@ export const validateBotConfigCreation = [
     .withMessage('Discord voice channel ID must be a string'),
 
   // Slack configuration validation
-  body('slack')
-    .optional()
-    .isObject()
-    .withMessage('Slack configuration must be an object'),
+  body('slack').optional().isObject().withMessage('Slack configuration must be an object'),
   body('slack.botToken')
     .if(body('slack').exists())
     .notEmpty()
     .withMessage('Slack bot token is required when slack configuration is provided'),
-  body('slack.appToken')
-    .optional()
-    .isString()
-    .withMessage('Slack app token must be a string'),
+  body('slack.appToken').optional().isString().withMessage('Slack app token must be a string'),
   body('slack.signingSecret')
     .if(body('slack').exists())
     .notEmpty()
@@ -168,28 +154,16 @@ export const validateBotConfigCreation = [
     .withMessage('Mattermost channel must be a string'),
 
   // OpenAI configuration validation
-  body('openai')
-    .optional()
-    .isObject()
-    .withMessage('OpenAI configuration must be an object'),
+  body('openai').optional().isObject().withMessage('OpenAI configuration must be an object'),
   body('openai.apiKey')
     .if(body('openai').exists())
     .notEmpty()
     .withMessage('OpenAI API key is required when openai configuration is provided'),
-  body('openai.model')
-    .optional()
-    .isString()
-    .withMessage('OpenAI model must be a string'),
-  body('openai.baseUrl')
-    .optional()
-    .isURL()
-    .withMessage('OpenAI base URL must be a valid URL'),
+  body('openai.model').optional().isString().withMessage('OpenAI model must be a string'),
+  body('openai.baseUrl').optional().isURL().withMessage('OpenAI base URL must be a valid URL'),
 
   // Flowise configuration validation
-  body('flowise')
-    .optional()
-    .isObject()
-    .withMessage('Flowise configuration must be an object'),
+  body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
   body('flowise.apiKey')
     .if(body('flowise').exists())
     .notEmpty()
@@ -200,42 +174,24 @@ export const validateBotConfigCreation = [
     .withMessage('Flowise API base URL must be a valid URL'),
 
   // OpenWebUI configuration validation
-  body('openwebui')
-    .optional()
-    .isObject()
-    .withMessage('OpenWebUI configuration must be an object'),
+  body('openwebui').optional().isObject().withMessage('OpenWebUI configuration must be an object'),
   body('openwebui.apiKey')
     .if(body('openwebui').exists())
     .notEmpty()
     .withMessage('OpenWebUI API key is required when openwebui configuration is provided'),
-  body('openwebui.apiUrl')
-    .optional()
-    .isURL()
-    .withMessage('OpenWebUI API URL must be a valid URL'),
+  body('openwebui.apiUrl').optional().isURL().withMessage('OpenWebUI API URL must be a valid URL'),
 
   // Openswarm configuration validation
-  body('openswarm')
-    .optional()
-    .isObject()
-    .withMessage('Openswarm configuration must be an object'),
+  body('openswarm').optional().isObject().withMessage('Openswarm configuration must be an object'),
   body('openswarm.baseUrl')
     .optional()
     .isURL()
     .withMessage('Openswarm base URL must be a valid URL'),
-  body('openswarm.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Openswarm API key must be a string'),
-  body('openswarm.team')
-    .optional()
-    .isString()
-    .withMessage('Openswarm team must be a string'),
+  body('openswarm.apiKey').optional().isString().withMessage('Openswarm API key must be a string'),
+  body('openswarm.team').optional().isString().withMessage('Openswarm team must be a string'),
 
   // isActive validation
-  body('isActive')
-    .optional()
-    .isBoolean()
-    .withMessage('isActive must be a boolean'),
+  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 
   // Handle validation results
   (req: Request, res: Response, next: NextFunction) => {
@@ -329,35 +285,20 @@ export const validateBotConfigUpdate = [
     .withMessage('System instruction must be less than 5000 characters'),
 
   // MCP servers validation
-  body('mcpServers')
-    .optional()
-    .isArray()
-    .withMessage('MCP servers must be an array'),
+  body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),
 
   // MCP guard validation
-  body('mcpGuard')
-    .optional()
-    .isObject()
-    .withMessage('MCP guard must be an object'),
+  body('mcpGuard').optional().isObject().withMessage('MCP guard must be an object'),
 
   // Discord configuration validation
-  body('discord')
-    .optional()
-    .isObject()
-    .withMessage('Discord configuration must be an object'),
+  body('discord').optional().isObject().withMessage('Discord configuration must be an object'),
   body('discord.token')
     .optional()
     .if(body('discord').exists())
     .notEmpty()
     .withMessage('Discord token cannot be empty'),
-  body('discord.clientId')
-    .optional()
-    .isString()
-    .withMessage('Discord client ID must be a string'),
-  body('discord.guildId')
-    .optional()
-    .isString()
-    .withMessage('Discord guild ID must be a string'),
+  body('discord.clientId').optional().isString().withMessage('Discord client ID must be a string'),
+  body('discord.guildId').optional().isString().withMessage('Discord guild ID must be a string'),
   body('discord.channelId')
     .optional()
     .isString()
@@ -368,19 +309,13 @@ export const validateBotConfigUpdate = [
     .withMessage('Discord voice channel ID must be a string'),
 
   // Slack configuration validation
-  body('slack')
-    .optional()
-    .isObject()
-    .withMessage('Slack configuration must be an object'),
+  body('slack').optional().isObject().withMessage('Slack configuration must be an object'),
   body('slack.botToken')
     .optional()
     .if(body('slack').exists())
     .notEmpty()
     .withMessage('Slack bot token cannot be empty'),
-  body('slack.appToken')
-    .optional()
-    .isString()
-    .withMessage('Slack app token must be a string'),
+  body('slack.appToken').optional().isString().withMessage('Slack app token must be a string'),
   body('slack.signingSecret')
     .optional()
     .if(body('slack').exists())
@@ -420,29 +355,17 @@ export const validateBotConfigUpdate = [
     .withMessage('Mattermost channel must be a string'),
 
   // OpenAI configuration validation
-  body('openai')
-    .optional()
-    .isObject()
-    .withMessage('OpenAI configuration must be an object'),
+  body('openai').optional().isObject().withMessage('OpenAI configuration must be an object'),
   body('openai.apiKey')
     .optional()
     .if(body('openai').exists())
     .notEmpty()
     .withMessage('OpenAI API key cannot be empty'),
-  body('openai.model')
-    .optional()
-    .isString()
-    .withMessage('OpenAI model must be a string'),
-  body('openai.baseUrl')
-    .optional()
-    .isURL()
-    .withMessage('OpenAI base URL must be a valid URL'),
+  body('openai.model').optional().isString().withMessage('OpenAI model must be a string'),
+  body('openai.baseUrl').optional().isURL().withMessage('OpenAI base URL must be a valid URL'),
 
   // Flowise configuration validation
-  body('flowise')
-    .optional()
-    .isObject()
-    .withMessage('Flowise configuration must be an object'),
+  body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
   body('flowise.apiKey')
     .optional()
     .if(body('flowise').exists())
@@ -454,43 +377,25 @@ export const validateBotConfigUpdate = [
     .withMessage('Flowise API base URL must be a valid URL'),
 
   // OpenWebUI configuration validation
-  body('openwebui')
-    .optional()
-    .isObject()
-    .withMessage('OpenWebUI configuration must be an object'),
+  body('openwebui').optional().isObject().withMessage('OpenWebUI configuration must be an object'),
   body('openwebui.apiKey')
     .optional()
     .if(body('openwebui').exists())
     .notEmpty()
     .withMessage('OpenWebUI API key cannot be empty'),
-  body('openwebui.apiUrl')
-    .optional()
-    .isURL()
-    .withMessage('OpenWebUI API URL must be a valid URL'),
+  body('openwebui.apiUrl').optional().isURL().withMessage('OpenWebUI API URL must be a valid URL'),
 
   // Openswarm configuration validation
-  body('openswarm')
-    .optional()
-    .isObject()
-    .withMessage('Openswarm configuration must be an object'),
+  body('openswarm').optional().isObject().withMessage('Openswarm configuration must be an object'),
   body('openswarm.baseUrl')
     .optional()
     .isURL()
     .withMessage('Openswarm base URL must be a valid URL'),
-  body('openswarm.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Openswarm API key must be a string'),
-  body('openswarm.team')
-    .optional()
-    .isString()
-    .withMessage('Openswarm team must be a string'),
+  body('openswarm.apiKey').optional().isString().withMessage('Openswarm API key must be a string'),
+  body('openswarm.team').optional().isString().withMessage('Openswarm team must be a string'),
 
   // isActive validation
-  body('isActive')
-    .optional()
-    .isBoolean()
-    .withMessage('isActive must be a boolean'),
+  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 
   // Handle validation results
   (req: Request, res: Response, next: NextFunction) => {
@@ -514,78 +419,97 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
   try {
     // Get matched data from validation
     const data = matchedData(req, { locations: ['body'] });
-    
+
     // Trim string fields
-    if (typeof data.name === 'string') {data.name = data.name.trim();}
-    if (typeof data.messageProvider === 'string') {data.messageProvider = data.messageProvider.trim();}
-    if (typeof data.llmProvider === 'string') {data.llmProvider = data.llmProvider.trim();}
-    if (typeof data.llmProfile === 'string') {data.llmProfile = data.llmProfile.trim();}
-    if (typeof data.persona === 'string') {data.persona = data.persona.trim();}
-    if (typeof data.responseProfile === 'string') {data.responseProfile = data.responseProfile.trim();}
-    if (typeof data.mcpGuardProfile === 'string') {data.mcpGuardProfile = data.mcpGuardProfile.trim();}
-    if (typeof data.systemInstruction === 'string') {data.systemInstruction = data.systemInstruction.trim();}
-    
+    if (typeof data.name === 'string') {
+      data.name = data.name.trim();
+    }
+    if (typeof data.messageProvider === 'string') {
+      data.messageProvider = data.messageProvider.trim();
+    }
+    if (typeof data.llmProvider === 'string') {
+      data.llmProvider = data.llmProvider.trim();
+    }
+    if (typeof data.llmProfile === 'string') {
+      data.llmProfile = data.llmProfile.trim();
+    }
+    if (typeof data.persona === 'string') {
+      data.persona = data.persona.trim();
+    }
+    if (typeof data.responseProfile === 'string') {
+      data.responseProfile = data.responseProfile.trim();
+    }
+    if (typeof data.mcpGuardProfile === 'string') {
+      data.mcpGuardProfile = data.mcpGuardProfile.trim();
+    }
+    if (typeof data.systemInstruction === 'string') {
+      data.systemInstruction = data.systemInstruction.trim();
+    }
+
     // Sanitize nested objects
     if (data.discord) {
-      Object.keys(data.discord).forEach(key => {
+      Object.keys(data.discord).forEach((key) => {
         if (typeof data.discord[key] === 'string') {
           data.discord[key] = data.discord[key].trim();
         }
       });
     }
-    
+
     if (data.slack) {
-      Object.keys(data.slack).forEach(key => {
+      Object.keys(data.slack).forEach((key) => {
         if (typeof data.slack[key] === 'string') {
           data.slack[key] = data.slack[key].trim();
         }
       });
     }
-    
+
     if (data.mattermost) {
-      Object.keys(data.mattermost).forEach(key => {
+      Object.keys(data.mattermost).forEach((key) => {
         if (typeof data.mattermost[key] === 'string') {
           data.mattermost[key] = data.mattermost[key].trim();
         }
       });
     }
-    
+
     if (data.openai) {
-      Object.keys(data.openai).forEach(key => {
+      Object.keys(data.openai).forEach((key) => {
         if (typeof data.openai[key] === 'string') {
           data.openai[key] = data.openai[key].trim();
         }
       });
     }
-    
+
     if (data.flowise) {
-      Object.keys(data.flowise).forEach(key => {
+      Object.keys(data.flowise).forEach((key) => {
         if (typeof data.flowise[key] === 'string') {
           data.flowise[key] = data.flowise[key].trim();
         }
       });
     }
-    
+
     if (data.openwebui) {
-      Object.keys(data.openwebui).forEach(key => {
+      Object.keys(data.openwebui).forEach((key) => {
         if (typeof data.openwebui[key] === 'string') {
           data.openwebui[key] = data.openwebui[key].trim();
         }
       });
     }
-    
+
     if (data.openswarm) {
-      Object.keys(data.openswarm).forEach(key => {
+      Object.keys(data.openswarm).forEach((key) => {
         if (typeof data.openswarm[key] === 'string') {
           data.openswarm[key] = data.openswarm[key].trim();
         }
       });
     }
-    
+
     // Replace request body with sanitized data
     req.body = data;
-    
-    debug('Sanitized bot configuration data:', { name: data.name, messageProvider: data.messageProvider });
+
+    debug('Sanitized bot configuration data:', {
+      name: data.name,
+      messageProvider: data.messageProvider,
+    });
     next();
   } catch (error) {
     debug('Error sanitizing bot configuration:', error);

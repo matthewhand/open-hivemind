@@ -1,8 +1,8 @@
-import { OpenAI } from 'openai';
 import Debug from 'debug';
-import openaiConfig from '@config/openaiConfig';
+import { OpenAI } from 'openai';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:sendChatCompletion');
 
@@ -15,7 +15,7 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
   const openai = new OpenAI({ apiKey: openaiConfig.get<'OPENAI_API_KEY'>('OPENAI_API_KEY')! });
 
   // Format messages as a single prompt
-  const prompt = messages.map(msg => msg.content).join(' ');
+  const prompt = messages.map((msg) => msg.content).join(' ');
   debug(`Generated prompt: ${prompt}`);
 
   try {
@@ -35,20 +35,20 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const classification = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error generating chat completion:', ErrorUtils.getMessage(hivemindError));
-    
+
     // Log with appropriate level
     if (classification.logLevel === 'error') {
       console.error('OpenAI chat completion error:', hivemindError);
     }
-    
+
     throw ErrorUtils.createError(
       `Failed to generate chat completion: ${ErrorUtils.getMessage(hivemindError)}`,
       classification.type,
       'OPENAI_CHAT_COMPLETION_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error },
+      { originalError: error }
     );
   }
 }

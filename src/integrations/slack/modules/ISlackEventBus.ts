@@ -1,9 +1,8 @@
-import type { Application, Request, Response, NextFunction } from 'express';
-import express from 'express';
 import Debug from 'debug';
-import type { SlackSignatureVerifier } from '../SlackSignatureVerifier';
+import express, { type Application, type NextFunction, type Request, type Response } from 'express';
 import type { SlackEventProcessor } from '../SlackEventProcessor';
 import type { SlackInteractiveHandler } from '../SlackInteractiveHandler';
+import type { SlackSignatureVerifier } from '../SlackSignatureVerifier';
 
 const debug = Debug('app:SlackEventBus');
 
@@ -23,7 +22,7 @@ export class SlackEventBus implements ISlackEventBus {
     botName: string,
     signatureVerifier: SlackSignatureVerifier,
     eventProcessor: SlackEventProcessor,
-    interactiveHandler: SlackInteractiveHandler,
+    interactiveHandler: SlackInteractiveHandler
   ): void {
     debug('registerBotRoutes()', { botName });
     const basePath = `/slack/${botName}`;
@@ -62,7 +61,7 @@ export class SlackEventBus implements ISlackEventBus {
         } else {
           res.status(500).send('Bot not found');
         }
-      },
+      }
     );
 
     app.post(
@@ -86,7 +85,7 @@ export class SlackEventBus implements ISlackEventBus {
         } else {
           res.status(500).send('Bot not found');
         }
-      },
+      }
     );
 
     app.post(`${basePath}/help`, (req: Request, res: Response) => {

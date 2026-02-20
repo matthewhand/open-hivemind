@@ -1,10 +1,7 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
-import type { SecureConfig } from '@config/SecureConfigManager';
-import { SecureConfigManager } from '@config/SecureConfigManager';
 import Debug from 'debug';
-import type { AuditedRequest} from '../middleware/audit';
-import { auditMiddleware, logConfigChange } from '../middleware/audit';
+import { Router, type Request, type Response } from 'express';
+import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -88,7 +85,13 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
     const { id, name, type, data } = req.body;
 
     if (!id || !name || !type || !data) {
-      logConfigChange(req, 'CREATE', `secure-config/${id}`, 'failure', 'Missing required fields: id, name, type, data');
+      logConfigChange(
+        req,
+        'CREATE',
+        `secure-config/${id}`,
+        'failure',
+        'Missing required fields: id, name, type, data'
+      );
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: id, name, type, data',
@@ -105,7 +108,13 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
 
     await secureConfigManager.storeConfig(config);
 
-    logConfigChange(req, 'CREATE', `secure-config/${id}`, 'success', `Created secure configuration ${name} of type ${type}`);
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/${id}`,
+      'success',
+      `Created secure configuration ${name} of type ${type}`
+    );
 
     res.status(201).json({
       success: true,
@@ -114,7 +123,13 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
     });
   } catch (error: any) {
     debug('Failed to create secure config:', error);
-    logConfigChange(req, 'CREATE', `secure-config/${req.body?.id || 'unknown'}`, 'failure', `Failed to create secure configuration: ${error.message}`);
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/${req.body?.id || 'unknown'}`,
+      'failure',
+      `Failed to create secure configuration: ${error.message}`
+    );
     res.status(500).json({
       success: false,
       error: 'Failed to store configuration',
@@ -132,7 +147,13 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
     const { name, type, data } = req.body;
 
     if (!name || !type || !data) {
-      logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Missing required fields: name, type, data');
+      logConfigChange(
+        req,
+        'UPDATE',
+        `secure-config/${id}`,
+        'failure',
+        'Missing required fields: name, type, data'
+      );
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: name, type, data',
@@ -159,10 +180,17 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
 
     await secureConfigManager.storeConfig(updatedConfig);
 
-    logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'success', `Updated secure configuration ${name}`, {
-      oldValue: existingConfig,
-      newValue: updatedConfig,
-    });
+    logConfigChange(
+      req,
+      'UPDATE',
+      `secure-config/${id}`,
+      'success',
+      `Updated secure configuration ${name}`,
+      {
+        oldValue: existingConfig,
+        newValue: updatedConfig,
+      }
+    );
 
     res.json({
       success: true,
@@ -171,7 +199,13 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
     });
   } catch (error: any) {
     debug(`Failed to update secure config ${req.params.id}:`, error);
-    logConfigChange(req, 'UPDATE', `secure-config/${req.params.id}`, 'failure', `Failed to update secure configuration: ${error.message}`);
+    logConfigChange(
+      req,
+      'UPDATE',
+      `secure-config/${req.params.id}`,
+      'failure',
+      `Failed to update secure configuration: ${error.message}`
+    );
     res.status(500).json({
       success: false,
       error: 'Failed to update configuration',
@@ -200,9 +234,16 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       });
     }
 
-    logConfigChange(req, 'DELETE', `secure-config/${id}`, 'success', `Deleted secure configuration ${configToDelete?.name || id}`, {
-      oldValue: configToDelete,
-    });
+    logConfigChange(
+      req,
+      'DELETE',
+      `secure-config/${id}`,
+      'success',
+      `Deleted secure configuration ${configToDelete?.name || id}`,
+      {
+        oldValue: configToDelete,
+      }
+    );
 
     res.json({
       success: true,
@@ -210,7 +251,13 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     });
   } catch (error: any) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
-    logConfigChange(req, 'DELETE', `secure-config/${req.params.id}`, 'failure', `Failed to delete secure configuration: ${error.message}`);
+    logConfigChange(
+      req,
+      'DELETE',
+      `secure-config/${req.params.id}`,
+      'failure',
+      `Failed to delete secure configuration: ${error.message}`
+    );
     res.status(500).json({
       success: false,
       error: 'Failed to delete configuration',
@@ -226,7 +273,13 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
   try {
     const backupId = await secureConfigManager.createBackup();
 
-    logConfigChange(req, 'CREATE', `secure-config/backup/${backupId}`, 'success', 'Created backup of all secure configurations');
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/backup/${backupId}`,
+      'success',
+      'Created backup of all secure configurations'
+    );
 
     res.json({
       success: true,
@@ -235,7 +288,13 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
     });
   } catch (error: any) {
     debug('Failed to create backup:', error);
-    logConfigChange(req, 'CREATE', 'secure-config/backup', 'failure', `Failed to create backup: ${error.message}`);
+    logConfigChange(
+      req,
+      'CREATE',
+      'secure-config/backup',
+      'failure',
+      `Failed to create backup: ${error.message}`
+    );
     res.status(500).json({
       success: false,
       error: 'Failed to create backup',
@@ -274,7 +333,13 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
     const { backupId } = req.params;
     await secureConfigManager.restoreBackup(backupId);
 
-    logConfigChange(req, 'UPDATE', 'secure-config/global', 'success', `Restored secure configurations from backup ${backupId}`);
+    logConfigChange(
+      req,
+      'UPDATE',
+      'secure-config/global',
+      'success',
+      `Restored secure configurations from backup ${backupId}`
+    );
 
     res.json({
       success: true,
@@ -282,7 +347,13 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
     });
   } catch (error: any) {
     debug(`Failed to restore backup ${req.params.backupId}:`, error);
-    logConfigChange(req, 'UPDATE', 'secure-config/global', 'failure', `Failed to restore from backup ${req.params.backupId}: ${error.message}`);
+    logConfigChange(
+      req,
+      'UPDATE',
+      'secure-config/global',
+      'failure',
+      `Failed to restore from backup ${req.params.backupId}: ${error.message}`
+    );
     res.status(500).json({
       success: false,
       error: 'Failed to restore from backup',

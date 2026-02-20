@@ -70,7 +70,11 @@ export interface ILlmProvider {
    * );
    * ```
    */
-  generateChatCompletion: (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => Promise<string>;
+  generateChatCompletion: (
+    userMessage: string,
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ) => Promise<string>;
 
   /**
    * Generates a streaming chat-based completion using conversation history.
@@ -94,7 +98,12 @@ export interface ILlmProvider {
    * );
    * ```
    */
-  generateStreamingChatCompletion?: (userMessage: string, historyMessages: IMessage[], onChunk: (chunk: string) => void, metadata?: Record<string, any>) => Promise<string>;
+  generateStreamingChatCompletion?: (
+    userMessage: string,
+    historyMessages: IMessage[],
+    onChunk: (chunk: string) => void,
+    metadata?: Record<string, any>
+  ) => Promise<string>;
 
   /**
    * Generates a non-chat text completion.

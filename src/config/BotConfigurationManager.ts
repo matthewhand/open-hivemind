@@ -311,6 +311,17 @@ export class BotConfigurationManager {
     this.loadConfiguration();
   }
 
+  /**
+   * Gets the singleton instance of BotConfigurationManager.
+   * 
+   * @returns {BotConfigurationManager} The singleton instance
+   * @example
+   * ```typescript
+   * const manager = BotConfigurationManager.getInstance();
+   * const botConfig = manager.getBot('my-bot');
+   * ```
+   */
+
   public static getInstance(): BotConfigurationManager {
     if (!BotConfigurationManager.instance) {
       BotConfigurationManager.instance = new BotConfigurationManager();
@@ -893,6 +904,17 @@ export class BotConfigurationManager {
   /**
    * Get all configured bots
    */
+  /**
+   * Gets all configured bot instances.
+   * 
+   * @returns {BotConfig[]} Array of all bot configurations
+   * @example
+   * ```typescript
+   * const bots = manager.getAllBots();
+   * bots.forEach(bot => console.log(bot.name));
+   * ```
+   */
+
   public getAllBots(): BotConfig[] {
     return Array.from(this.bots.values());
   }
@@ -909,6 +931,20 @@ export class BotConfigurationManager {
   /**
    * Get a specific bot by name
    */
+  /**
+   * Gets a specific bot configuration by name.
+   * 
+   * @param {string} name - The name of the bot to retrieve
+   * @returns {BotConfig | undefined} The bot configuration or undefined if not found
+   * @example
+   * ```typescript
+   * const bot = manager.getBot('my-bot');
+   * if (bot) {
+   *   console.log(bot.get('MESSAGE_PROVIDER'));
+   * }
+   * ```
+   */
+
   public getBot(name: string): BotConfig | undefined {
     return this.bots.get(name);
   }

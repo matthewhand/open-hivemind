@@ -1,5 +1,6 @@
 import express from 'express';
 import { WebClient } from '@slack/web-api';
+import { SlackService } from '@integrations/slack/SlackService';
 
 interface SlackBotInfo {
   botToken: string;
@@ -36,23 +37,25 @@ jest.mock('@src/config/slackConfig', () => ({
 }));
 
 jest.mock('@integrations/slack/SlackBotManager', () => {
-  return jest.fn().mockImplementation((): SlackBotManagerMock => ({
-    initialize: jest.fn().mockImplementation(async function(this: SlackBotManagerMock) {
-      const botInfo = this.getAllBots()[0];
-      await botInfo.webClient.auth.test();
-    }),
-    getAllBots: jest.fn().mockReturnValue([{
-      botToken: 'xoxb-test-token',
-      botUserId: 'bot1',
-      botUserName: 'Madgwick AI',
-      webClient: new (require('@slack/web-api').WebClient)('xoxb-test-token'),
-    }]),
-    getBotByName: jest.fn(),
-    setMessageHandler: jest.fn(),
-  }));
+  return jest.fn().mockImplementation(
+    (): SlackBotManagerMock => ({
+      initialize: jest.fn().mockImplementation(async function (this: SlackBotManagerMock) {
+        const botInfo = this.getAllBots()[0];
+        await botInfo.webClient.auth.test();
+      }),
+      getAllBots: jest.fn().mockReturnValue([
+        {
+          botToken: 'xoxb-test-token',
+          botUserId: 'bot1',
+          botUserName: 'Madgwick AI',
+          webClient: new (require('@slack/web-api').WebClient)('xoxb-test-token'),
+        },
+      ]),
+      getBotByName: jest.fn(),
+      setMessageHandler: jest.fn(),
+    })
+  );
 });
-
-import { SlackService } from '@integrations/slack/SlackService';
 
 describe('SlackEventListener with Metadata', () => {
   let slackService: SlackService;
@@ -77,6 +80,11 @@ describe('SlackEventListener with Metadata', () => {
   it('includes metadata for message event', async () => {
     jest.spyOn(slackService, 'sendMessageToChannel').mockResolvedValue('msg123');
     await slackService.sendMessageToChannel('C123', 'Hello with metadata!', 'Madgwick AI', '123');
-    expect(slackService.sendMessageToChannel).toHaveBeenCalledWith('C123', 'Hello with metadata!', 'Madgwick AI', '123');
+    expect(slackService.sendMessageToChannel).toHaveBeenCalledWith(
+      'C123',
+      'Hello with metadata!',
+      'Madgwick AI',
+      '123'
+    );
   });
 });

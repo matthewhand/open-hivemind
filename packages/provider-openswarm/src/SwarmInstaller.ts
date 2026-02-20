@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
+import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
@@ -37,7 +37,7 @@ export class SwarmInstaller {
 
   async installSwarm(): Promise<{ success: boolean; message: string }> {
     try {
-      if (!await this.checkPython()) {
+      if (!(await this.checkPython())) {
         return { success: false, message: 'Python not found. Please install Python 3.10+' };
       }
 
@@ -60,14 +60,17 @@ export class SwarmInstaller {
       try {
         await execAsync('swarm-api --help');
       } catch {
-        return { success: false, message: 'OpenSwarm not installed. Run pip install open-swarm first.' };
+        return {
+          success: false,
+          message: 'OpenSwarm not installed. Run pip install open-swarm first.',
+        };
       }
 
       // Start swarm API server in background
       exec(`swarm-api --port ${port}`);
-      
+
       // Wait a moment for startup
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       return { success: true, message: `OpenSwarm API started on port ${port}` };
     } catch (error: any) {

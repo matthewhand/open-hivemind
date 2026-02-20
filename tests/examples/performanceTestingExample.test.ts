@@ -3,7 +3,11 @@
  * This demonstrates the improved performance testing approach
  */
 
-import { runPerformanceTest, runConcurrencyTest, createPerformanceTestSuite } from '../helpers/performanceTestHelper';
+import {
+  createPerformanceTestSuite,
+  runConcurrencyTest,
+  runPerformanceTest,
+} from '../helpers/performanceTestHelper';
 
 // Example 1: Basic performance test with statistical analysis
 describe('Performance Testing Examples', () => {
@@ -17,7 +21,7 @@ describe('Performance Testing Examples', () => {
       {
         iterations: 100,
         acceptableAverageMs: 10,
-        acceptableMaxMs: 50
+        acceptableMaxMs: 50,
       }
     );
 
@@ -29,7 +33,7 @@ describe('Performance Testing Examples', () => {
       max: `${result.max.toFixed(3)}ms`,
       p95: `${result.percentile95.toFixed(3)}ms`,
       p99: `${result.percentile99.toFixed(3)}ms`,
-      stdDev: result.standardDeviation.toFixed(3)
+      stdDev: result.standardDeviation.toFixed(3),
     });
 
     // The runPerformanceTest function already includes assertions
@@ -47,7 +51,7 @@ describe('Performance Testing Examples', () => {
       {
         concurrentUsers: 10,
         operationsPerUser: 50,
-        timeoutMs: 5000
+        timeoutMs: 5000,
       }
     );
 
@@ -56,7 +60,7 @@ describe('Performance Testing Examples', () => {
       totalOperations: result.totalOperations,
       totalTime: `${result.totalTime}ms`,
       opsPerSecond: result.operationsPerSecond.toFixed(2),
-      avgLatency: `${result.averageLatency.toFixed(3)}ms`
+      avgLatency: `${result.averageLatency.toFixed(3)}ms`,
     });
 
     expect(result.operationsPerSecond).toBeGreaterThan(100);
@@ -75,8 +79,8 @@ createPerformanceTestSuite('Config Operations Performance', [
     options: {
       iterations: 200,
       acceptableAverageMs: 5,
-      acceptableMaxMs: 20
-    }
+      acceptableMaxMs: 20,
+    },
   },
   {
     name: 'Discord config numeric access',
@@ -87,8 +91,8 @@ createPerformanceTestSuite('Config Operations Performance', [
     options: {
       iterations: 200,
       acceptableAverageMs: 5,
-      acceptableMaxMs: 20
-    }
+      acceptableMaxMs: 20,
+    },
   },
   {
     name: 'Discord config validation',
@@ -99,9 +103,9 @@ createPerformanceTestSuite('Config Operations Performance', [
     options: {
       iterations: 50, // Fewer iterations for heavier operations
       acceptableAverageMs: 50,
-      acceptableMaxMs: 200
-    }
-  }
+      acceptableMaxMs: 200,
+    },
+  },
 ]);
 
 // Example 3: Memory usage testing (requires --expose-gc)
@@ -121,14 +125,14 @@ describe('Memory Usage Testing', () => {
       },
       {
         iterations: 100,
-        checkForLeaks: true
+        checkForLeaks: true,
       }
     );
 
     console.log('Memory metrics:', {
       operation: result.operation,
       memoryDelta: `${result.memoryDelta} bytes`,
-      leaked: result.leaked
+      leaked: result.leaked,
     });
 
     expect(result.leaked).toBe(false);
@@ -149,34 +153,36 @@ describe('Load Testing Simulation', () => {
           `Load test operation ${i}`,
           () => {
             const config = require('../../src/config/discordConfig').default;
-            return config.get('DISCORD_BOT_TOKEN') +
-                   config.get('DISCORD_MESSAGE_HISTORY_LIMIT') +
-                   config.get('DISCORD_LOGGING_ENABLED');
+            return (
+              config.get('DISCORD_BOT_TOKEN') +
+              config.get('DISCORD_MESSAGE_HISTORY_LIMIT') +
+              config.get('DISCORD_LOGGING_ENABLED')
+            );
           },
           {
             iterations: 1, // Single iteration per test
             acceptableAverageMs: 100,
-            acceptableMaxMs: 500
+            acceptableMaxMs: 500,
           }
         )
       );
 
       // Small delay to simulate real usage patterns
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
     const results = await Promise.all(operations);
     const totalTime = Date.now() - startTime;
 
     const avgLatency = results.reduce((sum, r) => sum + r.average, 0) / results.length;
-    const maxLatency = Math.max(...results.map(r => r.max));
+    const maxLatency = Math.max(...results.map((r) => r.max));
 
     console.log('Load test results:', {
       totalOperations: operations.length,
       totalTime: `${totalTime}ms`,
       avgLatency: `${avgLatency.toFixed(3)}ms`,
       maxLatency: `${maxLatency.toFixed(3)}ms`,
-      opsPerSecond: (operations.length / (totalTime / 1000)).toFixed(2)
+      opsPerSecond: (operations.length / (totalTime / 1000)).toFixed(2),
     });
 
     expect(avgLatency).toBeLessThan(50);

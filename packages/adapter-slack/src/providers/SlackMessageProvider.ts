@@ -1,6 +1,6 @@
-import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { SlackService } from '@integrations/slack/SlackService';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 export class SlackMessageProvider implements IMessageProvider {
   private _slackService?: SlackService;
@@ -35,7 +35,11 @@ export class SlackMessageProvider implements IMessageProvider {
     }
   }
 
-  async sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string> {
+  async sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string> {
     return await this.sendMessage(channelId, message, active_agent_name);
   }
 
@@ -46,7 +50,7 @@ export class SlackMessageProvider implements IMessageProvider {
 
   async getForumOwner(forumId: string): Promise<string> {
     // For Slack, the forum owner would be the channel creator
-    // This is a simplified implementation - in a real implementation, 
+    // This is a simplified implementation - in a real implementation,
     // you would query the Slack API to get the channel creator
     try {
       // Placeholder implementation - in a real implementation, you would:

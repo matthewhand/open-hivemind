@@ -1,9 +1,5 @@
-import { test, expect } from '@playwright/test';
-import {
-  setupTestWithErrorDetection,
-  assertNoErrors,
-  navigateAndWaitReady
-} from './test-utils';
+import { expect, test } from '@playwright/test';
+import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 /**
  * Monitoring Page E2E Tests with Strict Error Detection
@@ -38,7 +34,7 @@ test.describe('Monitoring page', () => {
     await navigateAndWaitReady(page, '/admin/monitoring');
 
     const nav = page.locator('nav, [role="navigation"]');
-    if (await nav.count() > 0) {
+    if ((await nav.count()) > 0) {
       await expect(nav.first()).toBeVisible();
     }
     await page.screenshot({ path: 'test-results/monitoring-03-nav.png', fullPage: true });

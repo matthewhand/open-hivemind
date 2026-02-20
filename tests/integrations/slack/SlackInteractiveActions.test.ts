@@ -22,20 +22,20 @@ describe('SlackInteractiveActions', () => {
       botUserName: 'TestBot',
       webClient: {
         views: {
-          open: jest.fn().mockResolvedValue({ ok: true })
-        }
-      }
+          open: jest.fn().mockResolvedValue({ ok: true }),
+        },
+      },
     };
 
     // Create mock bot manager
     mockBotManager = {
-      getAllBots: jest.fn().mockReturnValue([mockBotInfo])
+      getAllBots: jest.fn().mockReturnValue([mockBotInfo]),
     };
 
     // Create mock SlackService
     mockSlackService = {
       getBotManager: jest.fn(),
-      sendMessageToChannel: jest.fn().mockResolvedValue(undefined)
+      sendMessageToChannel: jest.fn().mockResolvedValue(undefined),
     };
 
     // Create instance
@@ -45,20 +45,32 @@ describe('SlackInteractiveActions', () => {
   it('should handle constructor, messaging, and modal operations', async () => {
     // Test constructor validation
     expect(slackInteractiveActions).toBeInstanceOf(SlackInteractiveActions);
-    expect(() => new SlackInteractiveActions(null as any)).toThrow('SlackService is required for SlackInteractiveActions');
-    expect(() => new SlackInteractiveActions(undefined as any)).toThrow('SlackService is required for SlackInteractiveActions');
+    expect(() => new SlackInteractiveActions(null as any)).toThrow(
+      'SlackService is required for SlackInteractiveActions'
+    );
+    expect(() => new SlackInteractiveActions(undefined as any)).toThrow(
+      'SlackService is required for SlackInteractiveActions'
+    );
 
     // Test sendCourseInfo functionality
     mockSlackService.getBotManager.mockReturnValue(mockBotManager);
     await slackInteractiveActions.sendCourseInfo('C1234567890');
-    expect(mockSlackService.sendMessageToChannel).toHaveBeenCalledWith('C1234567890', 'Course Info: Here are the details...', 'TestBot');
+    expect(mockSlackService.sendMessageToChannel).toHaveBeenCalledWith(
+      'C1234567890',
+      'Course Info: Here are the details...',
+      'TestBot'
+    );
 
     // Test default bot name fallback
     jest.clearAllMocks();
     mockBotInfo.botUserName = undefined;
     mockSlackService.getBotManager.mockReturnValue(mockBotManager);
     await slackInteractiveActions.sendCourseInfo('C1234567890');
-    expect(mockSlackService.sendMessageToChannel).toHaveBeenCalledWith('C1234567890', 'Course Info: Here are the details...', 'Jeeves');
+    expect(mockSlackService.sendMessageToChannel).toHaveBeenCalledWith(
+      'C1234567890',
+      'Course Info: Here are the details...',
+      'Jeeves'
+    );
 
     // Test error handling - temporarily disabled due to mock setup issues
     // jest.clearAllMocks();
@@ -93,15 +105,17 @@ describe('SlackInteractiveActions', () => {
         trigger_id: '12345.67890',
         view: expect.objectContaining({
           type: 'modal',
-          callback_id: 'ask_question_callback'
-        })
+          callback_id: 'ask_question_callback',
+        }),
       })
     );
 
     // Test modal error handling
     jest.clearAllMocks();
     mockBotInfo.webClient.views.open.mockRejectedValue(new Error('API Error'));
-    await expect(slackInteractiveActions.sendAskQuestionModal('12345.67890')).rejects.toThrow('API Error');
+    await expect(slackInteractiveActions.sendAskQuestionModal('12345.67890')).rejects.toThrow(
+      'API Error'
+    );
 
     // Test sendInteractiveHelpMessage - temporarily disabled due to mock setup issues
     // jest.clearAllMocks();

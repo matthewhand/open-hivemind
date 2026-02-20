@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { setupErrorCollection, assertNoErrors, setupAuth } from './test-utils';
+import { expect, test } from '@playwright/test';
+import { assertNoErrors, setupAuth, setupErrorCollection } from './test-utils';
 
 /**
  * Login E2E Tests with Strict Error Detection
@@ -23,13 +23,15 @@ test.describe('Login', () => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    const usernameInput = page.locator('input[name="username"], input[type="email"], input[placeholder*="user" i]').first();
+    const usernameInput = page
+      .locator('input[name="username"], input[type="email"], input[placeholder*="user" i]')
+      .first();
     const passwordInput = page.locator('input[type="password"]').first();
 
-    if (await usernameInput.count() > 0) {
+    if ((await usernameInput.count()) > 0) {
       await usernameInput.fill('testuser');
     }
-    if (await passwordInput.count() > 0) {
+    if ((await passwordInput.count()) > 0) {
       await passwordInput.fill('testpass');
     }
 

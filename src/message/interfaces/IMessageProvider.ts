@@ -71,7 +71,11 @@ export interface IMessageProvider {
    * );
    * ```
    */
-  sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string>;
+  sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string>;
 
   /**
    * Gets the unique client identifier for this provider.

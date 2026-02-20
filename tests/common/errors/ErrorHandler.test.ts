@@ -49,17 +49,16 @@ describe('ErrorHandler', () => {
 
   describe('Async Error Handling', () => {
     it('should handle successful async operations', async () => {
-      const result = await ErrorHandler.withErrorHandling(
-        async () => 'success',
-        'test-context'
-      );
+      const result = await ErrorHandler.withErrorHandling(async () => 'success', 'test-context');
 
       expect(result).toBe('success');
     });
 
     it('should handle failed async operations with fallback', async () => {
       const result = await ErrorHandler.withErrorHandling(
-        async () => { throw new Error('Async error'); },
+        async () => {
+          throw new Error('Async error');
+        },
         'test-context',
         'fallback'
       );
@@ -69,10 +68,9 @@ describe('ErrorHandler', () => {
     });
 
     it('should handle failed async operations without fallback', async () => {
-      const result = await ErrorHandler.withErrorHandling(
-        async () => { throw new Error('No fallback error'); },
-        'test-context'
-      );
+      const result = await ErrorHandler.withErrorHandling(async () => {
+        throw new Error('No fallback error');
+      }, 'test-context');
 
       expect(result).toBeNull();
     });
@@ -80,20 +78,16 @@ describe('ErrorHandler', () => {
 
   describe('Safe Wrapper', () => {
     it('should wrap successful functions', async () => {
-      const wrapped = ErrorHandler.createSafeWrapper(
-        (x: number) => x * 2,
-        'test-wrapper'
-      );
+      const wrapped = ErrorHandler.createSafeWrapper((x: number) => x * 2, 'test-wrapper');
 
       const result = await wrapped(5);
       expect(result).toBe(10);
     });
 
     it('should handle sync function errors', async () => {
-      const wrapped = ErrorHandler.createSafeWrapper(
-        () => { throw new Error('Sync error'); },
-        'test-wrapper'
-      );
+      const wrapped = ErrorHandler.createSafeWrapper(() => {
+        throw new Error('Sync error');
+      }, 'test-wrapper');
 
       const result = await wrapped();
       expect(result).toBeNull();
@@ -101,10 +95,9 @@ describe('ErrorHandler', () => {
     });
 
     it('should handle async function errors', async () => {
-      const wrapped = ErrorHandler.createSafeWrapper(
-        async () => { throw new Error('Async wrapper error'); },
-        'test-wrapper'
-      );
+      const wrapped = ErrorHandler.createSafeWrapper(async () => {
+        throw new Error('Async wrapper error');
+      }, 'test-wrapper');
 
       const result = await wrapped();
       expect(result).toBeNull();
@@ -140,23 +133,19 @@ describe('PerformanceMonitor', () => {
 
   describe('Async Performance Monitoring', () => {
     it('should measure async operations successfully', async () => {
-      const result = await PerformanceMonitor.measureAsync(
-        async () => {
-          await new Promise(resolve => setTimeout(resolve, 5));
-          return 'async result';
-        },
-        'async-test'
-      );
+      const result = await PerformanceMonitor.measureAsync(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return 'async result';
+      }, 'async-test');
 
       expect(result).toBe('async result');
     });
 
     it('should handle async errors', async () => {
       await expect(
-        PerformanceMonitor.measureAsync(
-          async () => { throw new Error('Async performance error'); },
-          'failing-async'
-        )
+        PerformanceMonitor.measureAsync(async () => {
+          throw new Error('Async performance error');
+        }, 'failing-async')
       ).rejects.toThrow('Async performance error');
     });
   });

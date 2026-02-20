@@ -1,8 +1,9 @@
-import { WebClient } from '@slack/web-api';
-import { SocketModeClient } from '@slack/socket-mode';
-import { RTMClient } from '@slack/rtm-api';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { RTMClient } from '@slack/rtm-api';
+import { SocketModeClient } from '@slack/socket-mode';
+import { WebClient } from '@slack/web-api';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+
 const debug = Debug('app:SlackBot');
 
 export interface ISlackBotOptions {

@@ -74,14 +74,29 @@ export class Collection<K, V> {
     this._map = new Map(entries);
   }
 
-  has(key: K): boolean { return this._map.has(key); }
-  set(key: K, value: V): this { this._map.set(key, value); return this; }
-  get(key: K): V | undefined { return this._map.get(key); }
-  values(): IterableIterator<V> { return this._map.values(); }
-  entries(): IterableIterator<[K, V]> { return this._map.entries(); }
-  [Symbol.iterator](): IterableIterator<V> { return this._map.values(); }
+  has(key: K): boolean {
+    return this._map.has(key);
+  }
+  set(key: K, value: V): this {
+    this._map.set(key, value);
+    return this;
+  }
+  get(key: K): V | undefined {
+    return this._map.get(key);
+  }
+  values(): IterableIterator<V> {
+    return this._map.values();
+  }
+  entries(): IterableIterator<[K, V]> {
+    return this._map.entries();
+  }
+  [Symbol.iterator](): IterableIterator<V> {
+    return this._map.values();
+  }
 
-  get map(): Map<K, V> { return this._map; }
+  get map(): Map<K, V> {
+    return this._map;
+  }
 }
 
 export const ChannelType = {

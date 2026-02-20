@@ -1,6 +1,6 @@
-import Debug from 'debug';
-import util from 'util';
 import fs from 'fs';
+import util from 'util';
+import Debug from 'debug';
 
 const debug = Debug('app:utils');
 

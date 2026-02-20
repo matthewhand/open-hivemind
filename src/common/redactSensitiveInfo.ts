@@ -1,4 +1,5 @@
 import debug from 'debug';
+
 const redactDebug = debug('app:redactSensitiveInfo');
 
 /**
@@ -14,10 +15,18 @@ const redactDebug = debug('app:redactSensitiveInfo');
  * redactSensitiveInfo('username', 'admin')
  */
 export function redactSensitiveInfo(key: string, value: any): string {
-  const sensitivePatterns = ['password', 'apikey', 'api_key', 'auth_token', 'secret', 'token', 'key'];
+  const sensitivePatterns = [
+    'password',
+    'apikey',
+    'api_key',
+    'auth_token',
+    'secret',
+    'token',
+    'key',
+  ];
   try {
     const lowerKey = key.toLowerCase();
-    const isSensitive = sensitivePatterns.some(pattern => lowerKey.includes(pattern));
+    const isSensitive = sensitivePatterns.some((pattern) => lowerKey.includes(pattern));
 
     if (!isSensitive) {
       return value === undefined || value === null ? '' : String(value);

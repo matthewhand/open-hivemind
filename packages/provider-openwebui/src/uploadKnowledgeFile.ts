@@ -1,8 +1,8 @@
 import fs from 'fs';
 import axios from 'axios';
-import { getSessionKey } from './sessionManager';
-import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
+import openWebUIConfig from './openWebUIConfig';
+import { getSessionKey } from './sessionManager';
 
 const debug = Debug('app:uploadKnowledgeFile');
 let knowledgeFileId: string | null = null; // Cache the knowledge file ID in memory.

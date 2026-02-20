@@ -1,15 +1,14 @@
 /**
  * Error Logging System for Open Hivemind
- * 
+ *
  * Integrates with the existing logging system to provide structured error logging
  * with context, severity levels, and correlation IDs.
  */
 
 import Debug from 'debug';
-import { BaseHivemindError } from '../types/errorClasses';
-import type { HivemindError} from '../types/errors';
-import { ErrorUtils } from '../types/errors';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
+import { BaseHivemindError } from '../types/errorClasses';
+import { ErrorUtils, type HivemindError } from '../types/errors';
 
 /**
  * Error log entry structure
@@ -108,7 +107,7 @@ export class ErrorLogger {
 
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
-      level: process.env.LOG_LEVEL as LogLevel || 'info',
+      level: (process.env.LOG_LEVEL as LogLevel) || 'info',
       enableConsole: process.env.NODE_ENV !== 'test',
       enableFile: process.env.NODE_ENV === 'production',
       enableStructured: true,
@@ -154,10 +153,13 @@ export class ErrorLogger {
     // Check for error patterns
     this.checkErrorPatterns(error, context);
 
-    this.debug(`Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`, {
-      correlationId: context.correlationId,
-      level: logLevel,
-    });
+    this.debug(
+      `Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`,
+      {
+        correlationId: context.correlationId,
+        level: logLevel,
+      }
+    );
   }
 
   /**
@@ -165,7 +167,7 @@ export class ErrorLogger {
    */
   private createLogEntry(error: HivemindError, context: ErrorContext): ErrorLogEntry {
     const memoryUsage = process.memoryUsage();
-    
+
     return {
       timestamp: new Date().toISOString(),
       correlationId: context.correlationId,
@@ -203,12 +205,15 @@ export class ErrorLogger {
           external: memoryUsage.external,
         },
       },
-      recovery: error instanceof BaseHivemindError ? {
-        canRecover: error.getRecoveryStrategy().canRecover,
-        retryDelay: error.getRecoveryStrategy().retryDelay,
-        maxRetries: error.getRecoveryStrategy().maxRetries,
-        steps: error.getRecoveryStrategy().recoverySteps,
-      } : undefined,
+      recovery:
+        error instanceof BaseHivemindError
+          ? {
+              canRecover: error.getRecoveryStrategy().canRecover,
+              retryDelay: error.getRecoveryStrategy().retryDelay,
+              maxRetries: error.getRecoveryStrategy().maxRetries,
+              steps: error.getRecoveryStrategy().recoverySteps,
+            }
+          : undefined,
     };
   }
 
@@ -283,7 +288,9 @@ export class ErrorLogger {
    * Log to console
    */
   private logToConsole(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableConsole) {return;}
+    if (!this.config.enableConsole) {
+      return;
+    }
 
     const message = `[${logEntry.level.toUpperCase()}] ${logEntry.error.message}`;
     const meta = {
@@ -296,22 +303,22 @@ export class ErrorLogger {
     };
 
     switch (level) {
-    case 'debug':
-      console.debug(message, meta);
-      break;
-    case 'info':
-      console.info(message, meta);
-      break;
-    case 'warn':
-      console.warn(message, meta);
-      break;
-    case 'error':
-    case 'fatal':
-      console.error(message, meta);
-      if (logEntry.error.stack) {
-        console.error(logEntry.error.stack);
-      }
-      break;
+      case 'debug':
+        console.debug(message, meta);
+        break;
+      case 'info':
+        console.info(message, meta);
+        break;
+      case 'warn':
+        console.warn(message, meta);
+        break;
+      case 'error':
+      case 'fatal':
+        console.error(message, meta);
+        if (logEntry.error.stack) {
+          console.error(logEntry.error.stack);
+        }
+        break;
     }
   }
 
@@ -319,7 +326,9 @@ export class ErrorLogger {
    * Log to file (simplified implementation)
    */
   private logToFile(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableFile) {return;}
+    if (!this.config.enableFile) {
+      return;
+    }
 
     // In a real implementation, this would write to a file
     // For now, we'll use console.log with a file-like format
@@ -331,7 +340,9 @@ export class ErrorLogger {
    * Log to structured output (for monitoring systems)
    */
   private logToStructured(logEntry: ErrorLogEntry, level: LogLevel): void {
-    if (!this.config.enableStructured) {return;}
+    if (!this.config.enableStructured) {
+      return;
+    }
 
     // Emit structured log for monitoring systems
     if ((process as any).emit) {
@@ -359,8 +370,7 @@ export class ErrorLogger {
 
     // Clean up old entries (keep last 1000)
     if (this.lastErrors.size > 1000) {
-      const oldest = Array.from(this.lastErrors.entries())
-        .sort((a, b) => a[1] - b[1])[0];
+      const oldest = Array.from(this.lastErrors.entries()).sort((a, b) => a[1] - b[1])[0];
       if (oldest) {
         this.lastErrors.delete(oldest[0]);
       }
@@ -382,11 +392,11 @@ export class ErrorLogger {
     void context;
     const errorType = this.getErrorType(error);
     const count = this.errorCounts.get(errorType) || 0;
-    
+
     // Check for error spikes
     if (count > 10 && count % 10 === 0) {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
-      
+
       // Emit alert for monitoring
       if ((process as any).emit) {
         (process as any).emit('hivemind:alert', {
@@ -399,9 +409,9 @@ export class ErrorLogger {
     }
 
     // Check for repeated errors from same correlation ID
-    const recentErrors = Array.from(this.lastErrors.entries())
-      .filter(([, timestamp]) => Date.now() - timestamp < 60000) // Last minute
-      .length;
+    const recentErrors = Array.from(this.lastErrors.entries()).filter(
+      ([, timestamp]) => Date.now() - timestamp < 60000
+    ).length; // Last minute
 
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
@@ -422,8 +432,10 @@ export class ErrorLogger {
    */
   getErrorStats(): any {
     // Calculate total errors
-    const totalErrors = Array.from(this.errorCounts.values())
-      .reduce((sum, count) => sum + count, 0);
+    const totalErrors = Array.from(this.errorCounts.values()).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     // Get error types with counts
     const errorTypes = Object.fromEntries(this.errorCounts);
@@ -457,15 +469,15 @@ export class ErrorLogger {
    */
   getRecentErrorCount(timeframeMs: number = 60000): number {
     const cutoff = Date.now() - timeframeMs;
-    return Array.from(this.lastErrors.values())
-      .filter(timestamp => timestamp > cutoff)
-      .length;
+    return Array.from(this.lastErrors.values()).filter((timestamp) => timestamp > cutoff).length;
   }
 
   /**
    * Get recent errors
    */
-  getRecentErrors(limit: number = 10): Array<{ error: HivemindError; context: ErrorContext; timestamp: number }> {
+  getRecentErrors(
+    limit: number = 10
+  ): Array<{ error: HivemindError; context: ErrorContext; timestamp: number }> {
     return Array.from(this.lastErrors.entries())
       .sort((a, b) => b[1] - a[1]) // Sort by timestamp descending
       .slice(0, limit)

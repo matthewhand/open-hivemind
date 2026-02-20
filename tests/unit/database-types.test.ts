@@ -3,13 +3,13 @@
  */
 
 import {
-  DatabaseManager,
   BotConfiguration,
+  DatabaseManager,
   DiscordConfig,
-  SlackConfig,
-  OpenAIConfig,
   MCPCGuardConfig,
-  ProviderConfig
+  OpenAIConfig,
+  ProviderConfig,
+  SlackConfig,
 } from '../../src/database/DatabaseManager';
 
 describe('Database Type Safety', () => {
@@ -20,7 +20,7 @@ describe('Database Type Safety', () => {
         guildId: '987654321',
         token: 'bot-token',
         prefix: '!',
-        intents: ['GUILDS', 'GUILD_MESSAGES']
+        intents: ['GUILDS', 'GUILD_MESSAGES'],
       };
 
       expect(discordConfig.channelId).toBe('123456789');
@@ -33,7 +33,7 @@ describe('Database Type Safety', () => {
         appToken: 'xoxp-app-token',
         signingSecret: 'signing-secret',
         teamId: 'T123456789',
-        channels: ['C123456789', 'C987654321']
+        channels: ['C123456789', 'C987654321'],
       };
 
       expect(slackConfig.botToken).toBe('xoxb-bot-token');
@@ -46,7 +46,7 @@ describe('Database Type Safety', () => {
         model: 'gpt-4',
         temperature: 0.7,
         maxTokens: 1000,
-        organization: 'org-test'
+        organization: 'org-test',
       };
 
       expect(openaiConfig.apiKey).toBe('sk-test-key');
@@ -57,7 +57,7 @@ describe('Database Type Safety', () => {
       const mcpGuardConfig: MCPCuardConfig = {
         enabled: true,
         type: 'custom',
-        allowedUserIds: ['user1', 'user2', 'user3']
+        allowedUserIds: ['user1', 'user2', 'user3'],
       };
 
       expect(mcpGuardConfig.enabled).toBe(true);
@@ -75,59 +75,59 @@ describe('Database Type Safety', () => {
         systemInstruction: 'You are a helpful assistant',
         mcpServers: [
           { name: 'test-server', serverUrl: 'https://example.com' },
-          { name: 'local-server', serverUrl: 'http://localhost:3000' }
+          { name: 'local-server', serverUrl: 'http://localhost:3000' },
         ],
         mcpGuard: {
           enabled: true,
           type: 'custom',
-          allowedUserIds: ['user123']
+          allowedUserIds: ['user123'],
         },
         discord: {
           channelId: '123456789',
           guildId: '987654321',
-          token: 'bot-token'
+          token: 'bot-token',
         },
         slack: {
           botToken: 'xoxb-bot-token',
-          teamId: 'T123456789'
+          teamId: 'T123456789',
         },
         mattermost: {
           url: 'https://mattermost.example.com',
-          accessToken: 'token123'
+          accessToken: 'token123',
         },
         openai: {
           apiKey: 'sk-test-key',
-          model: 'gpt-4'
+          model: 'gpt-4',
         },
         flowise: {
           apiUrl: 'https://flowise.example.com',
-          chatflowId: 'flow-123'
+          chatflowId: 'flow-123',
         },
         openwebui: {
           apiUrl: 'https://openwebui.example.com',
-          model: 'llama-2'
+          model: 'llama-2',
         },
         openswarm: {
           apiUrl: 'https://openswarm.example.com',
-          swarmId: 'swarm-123'
+          swarmId: 'swarm-123',
         },
         perplexity: {
-          apiKey: 'pplx-test-key'
+          apiKey: 'pplx-test-key',
         },
         replicate: {
           apiKey: 'r8-test-key',
           model: 'model-name',
-          version: 'v1.0'
+          version: 'v1.0',
         },
         n8n: {
           apiUrl: 'https://n8n.example.com',
-          workflowId: 'workflow-123'
+          workflowId: 'workflow-123',
         },
         isActive: true,
         createdAt: new Date('2023-01-01T00:00:00Z'),
         updatedAt: new Date('2023-01-01T00:00:00Z'),
         createdBy: 'test-user',
-        updatedBy: 'test-user'
+        updatedBy: 'test-user',
       };
 
       expect(botConfig.name).toBe('Test Bot');
@@ -143,7 +143,7 @@ describe('Database Type Safety', () => {
         llmProvider: 'openai',
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       expect(minimalConfig.name).toBe('Minimal Bot');
@@ -159,7 +159,7 @@ describe('Database Type Safety', () => {
         mcpServers: ['server1', 'server2'],
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       expect(Array.isArray(configWithStringArray.mcpServers)).toBe(true);
@@ -172,12 +172,12 @@ describe('Database Type Safety', () => {
         messageProvider: 'discord',
         llmProvider: 'openai',
         discord: {
-          channelId: '123456789'
+          channelId: '123456789',
         },
         // Only discord is configured, others should be undefined
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       expect(configWithSomeProviders.discord?.channelId).toBe('123456789');
@@ -192,16 +192,16 @@ describe('Database Type Safety', () => {
         {
           channelId: '123456789',
           guildId: '987654321',
-          token: 'bot-token'
+          token: 'bot-token',
         },
         {
           botToken: 'xoxb-bot-token',
-          teamId: 'T123456789'
+          teamId: 'T123456789',
         },
         {
           apiKey: 'sk-test-key',
-          model: 'gpt-4'
-        }
+          model: 'gpt-4',
+        },
       ];
 
       expect(validConfigs).toHaveLength(3);
@@ -232,7 +232,7 @@ describe('Database Type Safety', () => {
     test.skip('should work with typed configurations', async () => {
       const dbManager = DatabaseManager.getInstance({
         type: 'sqlite',
-        path: ':memory:'
+        path: ':memory:',
       });
 
       await dbManager.connect();
@@ -243,15 +243,15 @@ describe('Database Type Safety', () => {
         llmProvider: 'openai',
         discord: {
           channelId: 'typed-channel',
-          token: 'typed-token'
+          token: 'typed-token',
         },
         mcpGuard: {
           enabled: true,
-          type: 'owner'
+          type: 'owner',
         },
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Should not throw with properly typed configuration
@@ -278,7 +278,7 @@ describe('Database Type Safety', () => {
       const openaiConfig: OpenAIConfig = {};
       const mcpGuardConfig: MCPCuardConfig = {
         enabled: true,
-        type: 'custom'
+        type: 'custom',
       };
 
       expect(discordConfig).toBeDefined();
@@ -291,7 +291,7 @@ describe('Database Type Safety', () => {
       const mcpGuard: MCPCuardConfig = {
         enabled: true,
         type: 'custom',
-        allowedUserIds: ['user1']
+        allowedUserIds: ['user1'],
       };
 
       // Required fields should be present

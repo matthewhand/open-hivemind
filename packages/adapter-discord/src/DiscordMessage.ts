@@ -1,19 +1,18 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
+import { Collection, TextChannel, type GuildMember, type Message, type User } from 'discord.js';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-import type { Message, User, GuildMember } from 'discord.js';
-import { Collection, TextChannel } from 'discord.js';
 import { ErrorUtils, HivemindError } from '../../../src/types/errors';
 
 const debug = Debug('app:DiscordMessage');
 
 /**
  * Discord-specific implementation of the IMessage interface.
- * 
+ *
  * This class wraps the Discord.js Message object to provide a unified interface
  * for Discord messages while maintaining compatibility with the IMessage contract.
  * It handles Discord-specific features like mentions, channel topics, and message editing.
- * 
+ *
  * @implements {IMessage}
  * @example
  * ```typescript
@@ -78,10 +77,10 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Creates a new DiscordMessage instance.
-   * 
+   *
    * @param {Message<boolean>} message - The raw message object from Discord.js
    * @param {Message<boolean> | null} [repliedMessage=null] - The message this message is replying to, if any
-   * 
+   *
    * @example
    * ```typescript
    * const message = new DiscordMessage(discordJsMessage);
@@ -97,7 +96,7 @@ export class DiscordMessage implements IMessage {
     // Role calculation:
     // If the author is THIS bot (the client user), role is 'assistant'.
     // Everyone else (humans AND other bots) is 'user'.
-    this.role = (message.author.id === message.client?.user?.id) ? 'assistant' : 'user';
+    this.role = message.author.id === message.client?.user?.id ? 'assistant' : 'user';
     this.platform = 'discord';
 
     // Populate metadata for reply detection
@@ -116,13 +115,14 @@ export class DiscordMessage implements IMessage {
 
     const author = message.author;
     const authorString = `${author.username ?? 'unknown'}#${author.discriminator ?? '0000'} (${author.id ?? 'unknown'})`;
-    debug(`DiscordMessage: [ID: ${message.id}] by ${authorString}${repliedMessage ? ` (reply to ${repliedMessage.author?.id})` : ''}`);
+    debug(
+      `DiscordMessage: [ID: ${message.id}] by ${authorString}${repliedMessage ? ` (reply to ${repliedMessage.author?.id})` : ''}`
+    );
   }
-
 
   /**
    * Gets the unique Discord message ID.
-   * 
+   *
    * @returns {string} The Discord message ID
    */
   getMessageId(): string {
@@ -133,21 +133,22 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the text content of the Discord message.
-   * 
+   *
    * @returns {string} The message text content
    */
   getText(): string {
     const text = String(this.content ?? '');
     const previewMax = 60;
     const normalized = text.replace(/\s+/g, ' ').trim();
-    const preview = normalized.length > previewMax ? `${normalized.slice(0, previewMax)}...` : normalized;
+    const preview =
+      normalized.length > previewMax ? `${normalized.slice(0, previewMax)}...` : normalized;
     debug(`Getting message text (len=${text.length}): ${preview}`);
     return this.content;
   }
 
   /**
    * Gets the timestamp when this Discord message was created.
-   * 
+   *
    * @returns {Date} The message creation timestamp
    */
   public getTimestamp(): Date {
@@ -157,22 +158,25 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Updates the text content of the Discord message.
-   * 
+   *
    * Note: This will attempt to edit the original Discord message if it's editable.
-   * 
+   *
    * @param {string} text - The new text content
    */
   public setText(text: string): Promise<void> {
     debug('Setting message text: ' + text);
     this.content = text;
     if (this.message.editable) {
-      return this.message.edit(text).then(() => {
-        // use debug to avoid noisy console during tests
-        debug(`Message ${this.message.id} edited successfully.`);
-      }).catch((error: HivemindError) => {
-        debug(`Failed to edit message ${this.message.id}: ${ErrorUtils.getMessage(error)}`);
-        throw error;
-      });
+      return this.message
+        .edit(text)
+        .then(() => {
+          // use debug to avoid noisy console during tests
+          debug(`Message ${this.message.id} edited successfully.`);
+        })
+        .catch((error: HivemindError) => {
+          debug(`Failed to edit message ${this.message.id}: ${ErrorUtils.getMessage(error)}`);
+          throw error;
+        });
     } else {
       // downgrade to debug to silence console.warn in tests
       debug(`Message ${this.message.id} is not editable.`);
@@ -182,7 +186,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the Discord channel ID.
-   * 
+   *
    * @returns {string} The Discord channel ID
    */
   getChannelId(): string {
@@ -192,7 +196,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the topic/description of the Discord channel.
-   * 
+   *
    * @returns {string | null} The channel topic, or null if not available or not a text channel
    */
   getChannelTopic(): string | null {
@@ -216,7 +220,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the Discord user ID of the message author.
-   * 
+   *
    * @returns {string} The author's Discord user ID
    */
   getAuthorId(): string {
@@ -226,7 +230,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets all user mentions in this Discord message.
-   * 
+   *
    * @returns {string[]} Array of Discord user IDs mentioned in the message
    */
   getUserMentions(): string[] {
@@ -234,7 +238,9 @@ export class DiscordMessage implements IMessage {
     try {
       const users = this.message.mentions?.users;
 
-      if (!users) { return []; }
+      if (!users) {
+        return [];
+      }
 
       if (users instanceof Collection) {
         return Array.from(users.values())
@@ -268,22 +274,29 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets all users in the Discord channel.
-   * 
+   *
    * @returns {string[]} Array of Discord user IDs in the channel
    */
   getChannelUsers(): string[] {
     debug('Fetching users from channel: ' + this.channelId);
     try {
       const channel = this.message.channel;
-      if (!channel) { return []; }
+      if (!channel) {
+        return [];
+      }
 
       // Try to get members from guild channel
       const guildChannel = channel as TextChannel & {
-        members?: Collection<string, GuildMember> | Array<GuildMember | string> | Record<string, GuildMember | string>
+        members?:
+          | Collection<string, GuildMember>
+          | Array<GuildMember | string>
+          | Record<string, GuildMember | string>;
       };
 
       const members = guildChannel.members;
-      if (!members) { return []; }
+      if (!members) {
+        return [];
+      }
 
       if (members instanceof Collection) {
         return Array.from(members.values())
@@ -304,10 +317,14 @@ export class DiscordMessage implements IMessage {
       // Plain object map for test mocks
       if (typeof membersAny === 'object' && membersAny !== null) {
         // Handle object with map function (test mocks)
-        const mockCollection = membersAny as { map?: (fn: (member: GuildMember) => string | undefined) => string[] };
+        const mockCollection = membersAny as {
+          map?: (fn: (member: GuildMember) => string | undefined) => string[];
+        };
         if (typeof mockCollection.map === 'function') {
           const mapped = mockCollection.map((m: GuildMember) => m?.user?.id);
-          return (Array.isArray(mapped) ? mapped : []).filter((id): id is string => typeof id === 'string');
+          return (Array.isArray(mapped) ? mapped : []).filter(
+            (id): id is string => typeof id === 'string'
+          );
         }
 
         // Handle plain object
@@ -325,7 +342,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the display name of the Discord message author.
-   * 
+   *
    * @returns {string} The author's Discord username
    */
   getAuthorName(): string {
@@ -336,13 +353,15 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Checks if this Discord message was sent by a bot.
-   * 
+   *
    * @returns {boolean} True if the message is from a bot user
    */
   isFromBot(): boolean {
     const isBot = this.message.author?.bot || false;
     // ASCII-ify author name for clean terminal output (strip emojis/non-ASCII)
-    const cleanName = (this.message.author?.username || 'unknown').replace(/[^\x20-\x7E]/g, '').substring(0, 20);
+    const cleanName = (this.message.author?.username || 'unknown')
+      .replace(/[^\x20-\x7E]/g, '')
+      .substring(0, 20);
     debug(`isFromBot: ${cleanName} → ${isBot}`);
     return isBot;
   }
@@ -373,7 +392,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Checks if this Discord message is a reply to a bot message.
-   * 
+   *
    * @returns {boolean} True if this message is a reply to a bot
    */
   isReplyToBot(): boolean {
@@ -388,7 +407,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Checks if this Discord message mentions a specific user.
-   * 
+   *
    * @param {string} userId - The Discord user ID to check for
    * @returns {boolean} True if the user is mentioned in this message
    */
@@ -416,7 +435,7 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Gets the underlying Discord.js Message object.
-   * 
+   *
    * @returns {Message<boolean>} The original Discord.js message
    */
   getOriginalMessage(): Message<boolean> {
@@ -425,12 +444,12 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Checks if this message was sent in a direct message (DM) context.
-   * 
+   *
    * @returns {boolean} True if the message is a DM
    */
   isDirectMessage(): boolean {
     try {
-      // In Discord.js v13/v14, ChannelType.DM is 1. 
+      // In Discord.js v13/v14, ChannelType.DM is 1.
       // We can also check if guild is null/undefined.
       if (!this.message.guildId && !this.message.guild) {
         return true;
@@ -446,13 +465,15 @@ export class DiscordMessage implements IMessage {
 
   /**
    * Retrieves the Discord message being referenced (e.g., in replies).
-   * 
+   *
    * @returns {Promise<IMessage | null>} The referenced message as an IMessage, or null if none exists
    */
   public async getReferencedMessage(): Promise<IMessage | null> {
     if (this.message.reference && this.message.reference.messageId) {
       try {
-        const referencedMsg = await this.message.channel.messages.fetch(this.message.reference.messageId);
+        const referencedMsg = await this.message.channel.messages.fetch(
+          this.message.reference.messageId
+        );
         return new DiscordMessage(referencedMsg);
       } catch (error: HivemindError) {
         // use debug instead of console.error to reduce test noise

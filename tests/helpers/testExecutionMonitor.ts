@@ -35,7 +35,7 @@ class TestExecutionMonitor {
       tests: [],
       totalDuration: 0,
       startTime: Date.now(),
-      endTime: 0
+      endTime: 0,
     };
   }
 
@@ -54,7 +54,12 @@ class TestExecutionMonitor {
   /**
    * Record a test result
    */
-  recordTest(testName: string, duration: number, status: 'passed' | 'failed' | 'skipped', filePath: string): void {
+  recordTest(
+    testName: string,
+    duration: number,
+    status: 'passed' | 'failed' | 'skipped',
+    filePath: string
+  ): void {
     if (!this.currentSuite) {
       console.warn('No active test suite. Call startSuite() first.');
       return;
@@ -66,7 +71,7 @@ class TestExecutionMonitor {
       status,
       filePath,
       startTime: Date.now() - duration,
-      endTime: Date.now()
+      endTime: Date.now(),
     };
 
     this.currentSuite.tests.push(testResult);
@@ -86,17 +91,18 @@ class TestExecutionMonitor {
     skippedTests: TestResult[];
     performanceInsights: string[];
   } {
-    const allTests = this.results.flatMap(suite => suite.tests);
+    const allTests = this.results.flatMap((suite) => suite.tests);
     const totalDuration = this.results.reduce((sum, suite) => sum + suite.totalDuration, 0);
 
-    const slowTests = allTests.filter(test => test.duration > this.slowTestThreshold);
-    const verySlowTests = allTests.filter(test => test.duration > this.verySlowTestThreshold);
-    const failedTests = allTests.filter(test => test.status === 'failed');
-    const skippedTests = allTests.filter(test => test.status === 'skipped');
+    const slowTests = allTests.filter((test) => test.duration > this.slowTestThreshold);
+    const verySlowTests = allTests.filter((test) => test.duration > this.verySlowTestThreshold);
+    const failedTests = allTests.filter((test) => test.status === 'failed');
+    const skippedTests = allTests.filter((test) => test.status === 'skipped');
 
-    const averageTestDuration = allTests.length > 0
-      ? allTests.reduce((sum, test) => sum + test.duration, 0) / allTests.length
-      : 0;
+    const averageTestDuration =
+      allTests.length > 0
+        ? allTests.reduce((sum, test) => sum + test.duration, 0) / allTests.length
+        : 0;
 
     const performanceInsights = this.generatePerformanceInsights(
       allTests,
@@ -115,7 +121,7 @@ class TestExecutionMonitor {
       verySlowTests,
       failedTests,
       skippedTests,
-      performanceInsights
+      performanceInsights,
     };
   }
 
@@ -132,16 +138,22 @@ class TestExecutionMonitor {
     const insights: string[] = [];
 
     // Overall performance assessment
-    if (totalDuration > 300000) { // 5 minutes
-      insights.push('⚠️  Total test execution time exceeds 5 minutes. Consider parallelization or test splitting.');
-    } else if (totalDuration < 60000) { // 1 minute
+    if (totalDuration > 300000) {
+      // 5 minutes
+      insights.push(
+        '⚠️  Total test execution time exceeds 5 minutes. Consider parallelization or test splitting.'
+      );
+    } else if (totalDuration < 60000) {
+      // 1 minute
       insights.push('✅ Excellent! Test suite runs in under 1 minute.');
     }
 
     // Slow test analysis
     if (verySlowTests.length > 0) {
-      insights.push(`🚨 ${verySlowTests.length} tests exceed ${this.verySlowTestThreshold}ms threshold:`);
-      verySlowTests.slice(0, 5).forEach(test => {
+      insights.push(
+        `🚨 ${verySlowTests.length} tests exceed ${this.verySlowTestThreshold}ms threshold:`
+      );
+      verySlowTests.slice(0, 5).forEach((test) => {
         insights.push(`   - ${test.testName} (${test.duration}ms) in ${test.filePath}`);
       });
       if (verySlowTests.length > 5) {
@@ -149,13 +161,18 @@ class TestExecutionMonitor {
       }
     }
 
-    if (slowTests.length > allTests.length * 0.1) { // More than 10% slow
-      insights.push(`⚠️  ${slowTests.length} tests (${((slowTests.length / allTests.length) * 100).toFixed(1)}%) are slower than ${this.slowTestThreshold}ms.`);
+    if (slowTests.length > allTests.length * 0.1) {
+      // More than 10% slow
+      insights.push(
+        `⚠️  ${slowTests.length} tests (${((slowTests.length / allTests.length) * 100).toFixed(1)}%) are slower than ${this.slowTestThreshold}ms.`
+      );
     }
 
     // Average duration analysis
     if (averageDuration > 500) {
-      insights.push(`⚠️  Average test duration (${averageDuration.toFixed(0)}ms) is high. Consider optimizing test setup/teardown.`);
+      insights.push(
+        `⚠️  Average test duration (${averageDuration.toFixed(0)}ms) is high. Consider optimizing test setup/teardown.`
+      );
     } else if (averageDuration < 100) {
       insights.push('✅ Good average test duration. Tests are running efficiently.');
     }
@@ -163,13 +180,18 @@ class TestExecutionMonitor {
     // Test distribution insights
     const testsPerSuite = allTests.length / Math.max(this.results.length, 1);
     if (testsPerSuite > 50) {
-      insights.push(`📊 High test density (${testsPerSuite.toFixed(0)} tests per suite). Consider splitting large test files.`);
+      insights.push(
+        `📊 High test density (${testsPerSuite.toFixed(0)} tests per suite). Consider splitting large test files.`
+      );
     }
 
     // Failure analysis
-    const failureRate = (allTests.filter(t => t.status === 'failed').length / allTests.length) * 100;
+    const failureRate =
+      (allTests.filter((t) => t.status === 'failed').length / allTests.length) * 100;
     if (failureRate > 5) {
-      insights.push(`❌ High failure rate (${failureRate.toFixed(1)}%). Investigate test reliability.`);
+      insights.push(
+        `❌ High failure rate (${failureRate.toFixed(1)}%). Investigate test reliability.`
+      );
     }
 
     return insights;
@@ -184,7 +206,7 @@ class TestExecutionMonitor {
   } {
     return {
       summary: this.getPerformanceSummary(),
-      detailed: this.results
+      detailed: this.results,
     };
   }
 
@@ -265,7 +287,10 @@ export class PerformanceRegressionDetector {
   /**
    * Check for performance regression
    */
-  checkRegression(testName: string, currentDuration: number): {
+  checkRegression(
+    testName: string,
+    currentDuration: number
+  ): {
     hasRegression: boolean;
     baselineDuration?: number;
     degradationPercent?: number;
@@ -284,7 +309,7 @@ export class PerformanceRegressionDetector {
         hasRegression: true,
         baselineDuration,
         degradationPercent,
-        message: `${testName} is ${degradationPercent.toFixed(1)}% slower than baseline (${baselineDuration}ms → ${currentDuration}ms)`
+        message: `${testName} is ${degradationPercent.toFixed(1)}% slower than baseline (${baselineDuration}ms → ${currentDuration}ms)`,
       };
     }
 

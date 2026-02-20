@@ -4,8 +4,8 @@ import messageConfig from '@config/messageConfig';
 jest.mock('@config/messageConfig', () => ({
   __esModule: true,
   default: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 }));
 
 const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
@@ -137,7 +137,7 @@ describe('addUserHint', () => {
       const startTime = Date.now();
       const result = addUserHintFn(largeMessage, testUserId, testBotId);
       const endTime = Date.now();
-      
+
       expect(result).toContain(`(from <@${testUserId}>)`);
       expect(endTime - startTime).toBeLessThan(100); // Should complete quickly
     });

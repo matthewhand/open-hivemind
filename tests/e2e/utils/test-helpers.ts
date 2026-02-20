@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from '../page-objects/base/BasePage';
 
 /**
@@ -23,14 +23,14 @@ export async function waitForCondition(
 ): Promise<void> {
   const { timeout = 10000, interval = 500 } = options;
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     if (await condition()) {
       return;
     }
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
-  
+
   throw new Error(`Condition not met within ${timeout}ms`);
 }
 
@@ -43,18 +43,18 @@ export async function retry<T>(
 ): Promise<T> {
   const { retries = 3, delay = 1000, backoff = 2 } = options;
   let lastError: Error;
-  
+
   for (let i = 0; i <= retries; i++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error as Error;
       if (i < retries) {
-        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(backoff, i)));
+        await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(backoff, i)));
       }
     }
   }
-  
+
   throw lastError!;
 }
 
@@ -95,14 +95,14 @@ export async function waitForNetworkIdle(page: Page, timeout: number = 10000): P
  * Take screenshot with timestamp
  */
 export async function takeScreenshotWithTimestamp(
-  page: Page, 
-  name: string, 
+  page: Page,
+  name: string,
   fullPage: boolean = true
 ): Promise<string> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = `${name}-${timestamp}.png`;
   const path = `test-results/screenshots/${filename}`;
-  
+
   await page.screenshot({ path, fullPage });
   return path;
 }
@@ -114,7 +114,7 @@ export async function elementExists(page: Page, selector: string): Promise<boole
   try {
     const element = page.locator(selector);
     await element.waitFor({ state: 'attached', timeout: 5000 });
-    return await element.count() > 0;
+    return (await element.count()) > 0;
   } catch {
     return false;
   }
@@ -124,16 +124,16 @@ export async function elementExists(page: Page, selector: string): Promise<boole
  * Wait for element to appear and disappear (loading states)
  */
 export async function waitForElementLifecycle(
-  page: Page, 
-  selector: string, 
+  page: Page,
+  selector: string,
   options: { appearTimeout?: number; disappearTimeout?: number } = {}
 ): Promise<void> {
   const { appearTimeout = 10000, disappearTimeout = 10000 } = options;
-  
+
   // Wait for element to appear
   const element = page.locator(selector);
   await element.waitFor({ state: 'visible', timeout: appearTimeout });
-  
+
   // Wait for element to disappear
   await element.waitFor({ state: 'hidden', timeout: disappearTimeout });
 }
@@ -148,11 +148,11 @@ export async function mockApiResponseWithDelay(
   delay: number = 1000
 ): Promise<void> {
   await page.route(urlPattern, async (route) => {
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(response)
+      body: JSON.stringify(response),
     });
   });
 }
@@ -170,7 +170,7 @@ export async function mockApiError(
     await route.fulfill({
       status,
       contentType: 'application/json',
-      body: JSON.stringify({ error: message })
+      body: JSON.stringify({ error: message }),
     });
   });
 }
@@ -189,19 +189,25 @@ export async function clearStorage(page: Page): Promise<void> {
  * Set item in localStorage
  */
 export async function setLocalStorage(page: Page, key: string, value: any): Promise<void> {
-  await page.evaluate(([k, v]) => {
-    localStorage.setItem(k, JSON.stringify(v));
-  }, [key, value]);
+  await page.evaluate(
+    ([k, v]) => {
+      localStorage.setItem(k, JSON.stringify(v));
+    },
+    [key, value]
+  );
 }
 
 /**
  * Get item from localStorage
  */
 export async function getLocalStorage(page: Page, key: string): Promise<any> {
-  return await page.evaluate(([k]) => {
-    const value = localStorage.getItem(k);
-    return value ? JSON.parse(value) : null;
-  }, [key]);
+  return await page.evaluate(
+    ([k]) => {
+      const value = localStorage.getItem(k);
+      return value ? JSON.parse(value) : null;
+    },
+    [key]
+  );
 }
 
 /**
@@ -210,14 +216,14 @@ export async function getLocalStorage(page: Page, key: string): Promise<any> {
 export async function checkResponsiveDesign(page: Page): Promise<void> {
   const viewports = [
     { width: 1920, height: 1080 }, // Desktop
-    { width: 768, height: 1024 },  // Tablet
-    { width: 375, height: 667 }    // Mobile
+    { width: 768, height: 1024 }, // Tablet
+    { width: 375, height: 667 }, // Mobile
   ];
-  
+
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.waitForLoadState('networkidle');
-    
+
     // Check for responsive elements
     const navigation = page.locator('nav, [role="navigation"]');
     if (await navigation.isVisible()) {
@@ -235,21 +241,21 @@ export async function performAccessibilityCheck(page: Page): Promise<void> {
   const headings = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
   for (const heading of headings) {
     const elements = page.locator(heading);
-    if (await elements.count() > 0) {
+    if ((await elements.count()) > 0) {
       await expect(elements.first()).toBeVisible();
       break; // At least one heading should exist
     }
   }
-  
+
   // Check for main landmark
   const main = page.locator('main, [role="main"]');
-  if (await main.count() > 0) {
+  if ((await main.count()) > 0) {
     await expect(main).toBeVisible();
   }
-  
+
   // Check for proper alt text on images
   const images = page.locator('img:not([alt]), img[alt=""]');
-  if (await images.count() > 0) {
+  if ((await images.count()) > 0) {
     console.warn(`Found ${await images.count()} images without alt text`);
   }
 }
@@ -262,14 +268,16 @@ export async function handleModal(
   options: { accept?: boolean; timeout?: number } = {}
 ): Promise<void> {
   const { accept = true, timeout = 10000 } = options;
-  
+
   const modal = page.locator('[role="dialog"], .modal, .dialog');
-  
+
   try {
     await modal.waitFor({ state: 'visible', timeout });
-    
+
     if (accept) {
-      const acceptButton = page.locator('button:has-text("OK"), button:has-text("Accept"), button:has-text("Confirm")');
+      const acceptButton = page.locator(
+        'button:has-text("OK"), button:has-text("Accept"), button:has-text("Confirm")'
+      );
       if (await acceptButton.isVisible()) {
         await acceptButton.click();
       }
@@ -279,7 +287,7 @@ export async function handleModal(
         await cancelButton.click();
       }
     }
-    
+
     await modal.waitFor({ state: 'hidden', timeout: 5000 });
   } catch {
     // Modal might not be present, continue
@@ -292,24 +300,24 @@ export async function handleModal(
 export async function getTableData(page: Page, tableSelector: string): Promise<string[][]> {
   const table = page.locator(tableSelector);
   await table.waitFor({ state: 'visible', timeout: 10000 });
-  
+
   const rows = table.locator('tr');
   const rowCount = await rows.count();
   const data: string[][] = [];
-  
+
   for (let i = 0; i < rowCount; i++) {
     const cells = rows.nth(i).locator('td, th');
     const cellCount = await cells.count();
     const rowData: string[] = [];
-    
+
     for (let j = 0; j < cellCount; j++) {
       const cellText = await cells.nth(j).textContent();
       rowData.push(cellText || '');
     }
-    
+
     data.push(rowData);
   }
-  
+
   return data;
 }
 
@@ -322,16 +330,16 @@ export async function fillForm(
   options: { submit?: boolean; submitSelector?: string } = {}
 ): Promise<void> {
   const { submit = true, submitSelector = 'button[type="submit"]' } = options;
-  
+
   for (const [field, value] of Object.entries(formData)) {
     const fieldSelector = `input[name="${field}"], textarea[name="${field}"], select[name="${field}"]`;
     const fieldElement = page.locator(fieldSelector);
-    
+
     if (await fieldElement.isVisible()) {
       await fieldElement.fill(value);
     }
   }
-  
+
   if (submit) {
     const submitButton = page.locator(submitSelector);
     if (await submitButton.isVisible()) {
@@ -350,7 +358,7 @@ export async function waitForFileUpload(
 ): Promise<void> {
   const fileInput = page.locator(fileInputSelector);
   await fileInput.setInputFiles(filePath);
-  
+
   // Wait for upload to complete (check for upload progress indicator to disappear)
   const uploadProgress = page.locator('[data-testid="upload-progress"], .upload-progress');
   if (await uploadProgress.isVisible()) {
@@ -382,7 +390,7 @@ export async function waitForAnimation(
 ): Promise<void> {
   const element = page.locator(selector);
   await element.waitFor({ state: 'visible', timeout });
-  
+
   // Wait for CSS animations to complete
   await page.waitForFunction(
     (el) => {

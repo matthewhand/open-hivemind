@@ -1,7 +1,7 @@
-import type { Request, Response, NextFunction } from 'express';
+import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
 import { AuthManager } from './AuthManager';
 import { SessionStore } from './SessionStore';
-import Debug from 'debug';
 
 const debug = Debug('app:SessionManager');
 

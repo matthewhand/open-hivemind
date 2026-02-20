@@ -1,13 +1,12 @@
 /**
  * Integration tests for configuration version deletion functionality
- * 
+ *
  * NOTE: This test is temporarily disabled due to configuration setup issues.
  * The test needs to be updated to work with the new BotConfiguration interface.
  */
 
-import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { BotConfiguration, DatabaseManager } from '../../src/database/DatabaseManager';
 import { ConfigurationVersionService } from '../../src/server/services/ConfigurationVersionService';
-import { BotConfiguration } from '../../src/database/DatabaseManager';
 
 describe.skip('Configuration Version Deletion', () => {
   let dbManager: DatabaseManager;
@@ -18,7 +17,7 @@ describe.skip('Configuration Version Deletion', () => {
     // Initialize database and services
     dbManager = DatabaseManager.getInstance({
       type: 'sqlite',
-      path: ':memory:'
+      path: ':memory:',
     });
 
     await dbManager.connect();
@@ -44,7 +43,7 @@ describe.skip('Configuration Version Deletion', () => {
       n8n: { apiUrl: 'test-api' },
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     testConfigId = await dbManager.createBotConfiguration(testConfig);
@@ -61,7 +60,7 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: testConfigId,
         version: '1.0.0',
         changeLog: 'Initial version',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       // Create version 1.1
@@ -69,7 +68,7 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: testConfigId,
         version: '1.1.0',
         changeLog: 'Added new features',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       // Create version 1.2
@@ -77,7 +76,7 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: testConfigId,
         version: '1.2.0',
         changeLog: 'Bug fixes',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       const history = await versionService.getVersionHistory(testConfigId);
@@ -95,7 +94,7 @@ describe.skip('Configuration Version Deletion', () => {
         llmProvider: 'openai',
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       const configId = await dbManager.createBotConfiguration(singleVersionConfig);
@@ -103,13 +102,13 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: configId,
         version: '1.0.0',
         changeLog: 'Only version',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       // Try to delete the only version
-      await expect(
-        versionService.deleteVersion(configId, '1.0.0')
-      ).rejects.toThrow('Cannot delete the only version of a configuration');
+      await expect(versionService.deleteVersion(configId, '1.0.0')).rejects.toThrow(
+        'Cannot delete the only version of a configuration'
+      );
     });
 
     test('should delete a non-active version successfully', async () => {
@@ -124,11 +123,11 @@ describe.skip('Configuration Version Deletion', () => {
       // Verify deletion
       const afterHistory = await versionService.getVersionHistory(testConfigId);
       expect(afterHistory.versions).toHaveLength(2);
-      expect(afterHistory.versions.find(v => v.version === '1.1.0')).toBeUndefined();
+      expect(afterHistory.versions.find((v) => v.version === '1.1.0')).toBeUndefined();
 
       // Verify other versions still exist
-      expect(afterHistory.versions.find(v => v.version === '1.0.0')).toBeDefined();
-      expect(afterHistory.versions.find(v => v.version === '1.2.0')).toBeDefined();
+      expect(afterHistory.versions.find((v) => v.version === '1.0.0')).toBeDefined();
+      expect(afterHistory.versions.find((v) => v.version === '1.2.0')).toBeDefined();
     });
 
     test('should not allow deletion of currently active version', async () => {
@@ -152,7 +151,7 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: testConfigId,
         version: '1.3.0',
         changeLog: 'Temporary version for testing',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       // Delete the version
@@ -160,9 +159,8 @@ describe.skip('Configuration Version Deletion', () => {
 
       // Check audit log
       const auditLog = await versionService.getAuditLog(testConfigId);
-      const deleteAuditEntry = auditLog.find(entry =>
-        entry.action === 'DELETE' &&
-        entry.oldValues?.includes('1.3.0')
+      const deleteAuditEntry = auditLog.find(
+        (entry) => entry.action === 'DELETE' && entry.oldValues?.includes('1.3.0')
       );
 
       expect(deleteAuditEntry).toBeDefined();
@@ -172,15 +170,15 @@ describe.skip('Configuration Version Deletion', () => {
 
   describe('Error Handling', () => {
     test('should handle non-existent version gracefully', async () => {
-      await expect(
-        versionService.deleteVersion(testConfigId, '999.0.0')
-      ).rejects.toThrow('Failed to delete configuration version');
+      await expect(versionService.deleteVersion(testConfigId, '999.0.0')).rejects.toThrow(
+        'Failed to delete configuration version'
+      );
     });
 
     test('should handle non-existent configuration gracefully', async () => {
-      await expect(
-        versionService.deleteVersion(99999, '1.0.0')
-      ).rejects.toThrow('Failed to delete configuration version');
+      await expect(versionService.deleteVersion(99999, '1.0.0')).rejects.toThrow(
+        'Failed to delete configuration version'
+      );
     });
   });
 
@@ -189,7 +187,7 @@ describe.skip('Configuration Version Deletion', () => {
       // Verify that deleted versions don't leave orphaned data
       const versions = await dbManager.getBotConfigurationVersions(testConfigId);
 
-      versions.forEach(version => {
+      versions.forEach((version) => {
         expect(version.botConfigurationId).toBe(testConfigId);
       });
     });
@@ -200,19 +198,19 @@ describe.skip('Configuration Version Deletion', () => {
         botConfigurationId: testConfigId,
         version: '2.0.0',
         changeLog: 'Concurrent test version',
-        createdBy: 'test-user'
+        createdBy: 'test-user',
       });
 
       // Try to delete the same version concurrently
       const deletePromises = [
         versionService.deleteVersion(testConfigId, '2.0.0'),
-        versionService.deleteVersion(testConfigId, '2.0.0')
+        versionService.deleteVersion(testConfigId, '2.0.0'),
       ];
 
       // One should succeed, one should fail
       const results = await Promise.allSettled(deletePromises);
-      const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
-      const failureCount = results.filter(r => r.status === 'rejected').length;
+      const successCount = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+      const failureCount = results.filter((r) => r.status === 'rejected').length;
 
       expect(successCount).toBe(1);
       expect(failureCount).toBe(1);

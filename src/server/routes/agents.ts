@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import Debug from 'debug';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import Debug from 'debug';
+import { Router } from 'express';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import { DatabaseManager } from '../../database/DatabaseManager';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -76,7 +76,7 @@ const saveJsonConfig = async <T>(filePath: string, data: T): Promise<void> => {
 // Get environment variable overrides
 const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValue?: string }> => {
   const overrides: Record<string, { isOverridden: boolean; redactedValue?: string }> = {};
-  
+
   // Check for common environment variables that might override config
   const envVarPatterns = [
     /^DISCORD_/,
@@ -91,15 +91,20 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
     /^AGENT_/,
   ];
 
-  Object.keys(process.env).forEach(key => {
-    if (envVarPatterns.some(pattern => pattern.test(key))) {
+  Object.keys(process.env).forEach((key) => {
+    if (envVarPatterns.some((pattern) => pattern.test(key))) {
       const value = process.env[key];
       if (value) {
         overrides[key] = {
           isOverridden: true,
-          redactedValue: key.toLowerCase().includes('token') || key.toLowerCase().includes('key') || key.toLowerCase().includes('secret')
-            ? `***${value.slice(-4)}`
-            : value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-4)}` : value,
+          redactedValue:
+            key.toLowerCase().includes('token') ||
+            key.toLowerCase().includes('key') ||
+            key.toLowerCase().includes('secret')
+              ? `***${value.slice(-4)}`
+              : value.length > 20
+                ? `${value.slice(0, 10)}...${value.slice(-4)}`
+                : value,
         };
       }
     }
@@ -115,19 +120,24 @@ router.get('/', async (req, res) => {
   try {
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
     const envOverrides = getEnvOverrides();
-    
+
     // Add environment override information to each agent
-    const agentsWithEnvInfo = agents.map(agent => ({
+    const agentsWithEnvInfo = agents.map((agent) => ({
       ...agent,
-      envOverrides: Object.keys(envOverrides).reduce((acc, key) => {
-        if (key.toLowerCase().includes(agent.messageProvider.toLowerCase()) || 
+      envOverrides: Object.keys(envOverrides).reduce(
+        (acc, key) => {
+          if (
+            key.toLowerCase().includes(agent.messageProvider.toLowerCase()) ||
             key.toLowerCase().includes(agent.llmProvider.toLowerCase()) ||
             key.toLowerCase().includes('bot') ||
-            key.toLowerCase().includes('agent')) {
-          acc[key] = envOverrides[key];
-        }
-        return acc;
-      }, {} as Record<string, { isOverridden: boolean; redactedValue?: string }>),
+            key.toLowerCase().includes('agent')
+          ) {
+            acc[key] = envOverrides[key];
+          }
+          return acc;
+        },
+        {} as Record<string, { isOverridden: boolean; redactedValue?: string }>
+      ),
     }));
 
     res.json({ agents: agentsWithEnvInfo });
@@ -154,16 +164,16 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const agentData: Omit<AgentConfig, 'id'> = req.body;
-    
+
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
     const newAgent: AgentConfig = {
       ...agentData,
       id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
-    
+
     agents.push(newAgent);
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
-    
+
     debug(`Created new agent: ${newAgent.name}`);
     res.json({ agent: newAgent });
   } catch (error: unknown) {
@@ -190,17 +200,17 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
-    
+
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
-    const agentIndex = agents.findIndex(agent => agent.id === id);
-    
+    const agentIndex = agents.findIndex((agent) => agent.id === id);
+
     if (agentIndex === -1) {
       return res.status(404).json({ error: 'Agent not found' });
     }
-    
+
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
-    
+
     debug(`Updated agent: ${agents[agentIndex].name}`);
     res.json({ agent: agents[agentIndex] });
   } catch (error: unknown) {
@@ -226,16 +236,16 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
-    const filteredAgents = agents.filter(agent => agent.id !== id);
-    
+    const filteredAgents = agents.filter((agent) => agent.id !== id);
+
     if (filteredAgents.length === agents.length) {
       return res.status(404).json({ error: 'Agent not found' });
     }
-    
+
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
-    
+
     debug(`Deleted agent: ${id}`);
     res.json({ success: true });
   } catch (error: unknown) {
@@ -264,20 +274,23 @@ router.get('/personas', async (req, res) => {
       {
         key: 'default',
         name: 'Default Assistant',
-        systemPrompt: 'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
+        systemPrompt:
+          'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
       },
       {
         key: 'friendly',
         name: 'Friendly Helper',
-        systemPrompt: 'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.',
+        systemPrompt:
+          'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.',
       },
       {
         key: 'technical',
         name: 'Technical Expert',
-        systemPrompt: 'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.',
+        systemPrompt:
+          'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.',
       },
     ]);
-    
+
     res.json({ personas });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -302,24 +315,24 @@ router.get('/personas', async (req, res) => {
 router.post('/personas', async (req, res) => {
   try {
     const { name, systemPrompt } = req.body;
-    
+
     if (!name || !systemPrompt) {
       return res.status(400).json({ error: 'Name and system prompt are required' });
     }
-    
+
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    
+
     // Check if persona already exists
-    if (personas.find(p => p.key === key)) {
+    if (personas.find((p) => p.key === key)) {
       return res.status(400).json({ error: 'Persona with this name already exists' });
     }
-    
+
     const newPersona: Persona = { key, name, systemPrompt };
     personas.push(newPersona);
-    
+
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
-    
+
     debug(`Created new persona: ${name}`);
     res.json({ persona: newPersona });
   } catch (error: unknown) {
@@ -346,17 +359,17 @@ router.put('/personas/:key', async (req, res) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
-    
+
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-    const personaIndex = personas.findIndex(p => p.key === key);
-    
+    const personaIndex = personas.findIndex((p) => p.key === key);
+
     if (personaIndex === -1) {
       return res.status(404).json({ error: 'Persona not found' });
     }
-    
+
     personas[personaIndex] = { key, name, systemPrompt };
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
-    
+
     debug(`Updated persona: ${name}`);
     res.json({ persona: personas[personaIndex] });
   } catch (error: unknown) {
@@ -382,20 +395,20 @@ router.put('/personas/:key', async (req, res) => {
 router.delete('/personas/:key', async (req, res) => {
   try {
     const { key } = req.params;
-    
+
     if (key === 'default') {
       return res.status(400).json({ error: 'Cannot delete default persona' });
     }
-    
+
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-    const filteredPersonas = personas.filter(p => p.key !== key);
-    
+    const filteredPersonas = personas.filter((p) => p.key !== key);
+
     if (filteredPersonas.length === personas.length) {
       return res.status(404).json({ error: 'Persona not found' });
     }
-    
+
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
-    
+
     debug(`Deleted persona: ${key}`);
     res.json({ success: true });
   } catch (error: unknown) {

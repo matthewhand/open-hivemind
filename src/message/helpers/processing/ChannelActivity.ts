@@ -18,7 +18,7 @@ export function recordBotActivity(channelId: string, botId: string): void {
 
   // Prune old entries
   const cutoff = now - ACTIVITY_WINDOW_MS;
-  const pruned = activities.filter(a => a.timestamp > cutoff);
+  const pruned = activities.filter((a) => a.timestamp > cutoff);
   recentChannelActivity.set(channelId, pruned);
 
   debug(`Recorded bot activity in ${channelId}:${botId}`);
@@ -32,16 +32,21 @@ export function getLastBotActivity(channelId: string, botId: string): number {
  * Get all recent bot activity in a channel since a given timestamp.
  * Used for crosstalk detection - check if ANY bot posted during wait period.
  */
-export function getRecentChannelActivity(channelId: string, since: number): Array<{ botId: string; timestamp: number }> {
+export function getRecentChannelActivity(
+  channelId: string,
+  since: number
+): Array<{ botId: string; timestamp: number }> {
   const activities = recentChannelActivity.get(channelId) || [];
-  return activities.filter(a => a.timestamp > since);
+  return activities.filter((a) => a.timestamp > since);
 }
 
 // For tests
 export function clearBotActivity(channelId?: string): void {
   if (channelId) {
     for (const key of Array.from(lastBotActivityByChannelAndBot.keys())) {
-      if (key.startsWith(`${channelId}:`)) {lastBotActivityByChannelAndBot.delete(key);}
+      if (key.startsWith(`${channelId}:`)) {
+        lastBotActivityByChannelAndBot.delete(key);
+      }
     }
     recentChannelActivity.delete(channelId);
     return;
@@ -49,4 +54,3 @@ export function clearBotActivity(channelId?: string): void {
   lastBotActivityByChannelAndBot.clear();
   recentChannelActivity.clear();
 }
-

@@ -1,21 +1,23 @@
-import type { VoiceConnection} from '@discordjs/voice';
-import { joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
-import type { VoiceChannel, Client } from 'discord.js';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import type { Client, VoiceChannel } from 'discord.js';
+import { joinVoiceChannel, VoiceConnectionStatus, type VoiceConnection } from '@discordjs/voice';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:discord:voiceConnection');
 
-export async function connectToVoiceChannel(client: Client, channelId: string): Promise<VoiceConnection> {
+export async function connectToVoiceChannel(
+  client: Client,
+  channelId: string
+): Promise<VoiceConnection> {
   try {
-    const channel = await client.channels.fetch(channelId) as VoiceChannel;
+    const channel = (await client.channels.fetch(channelId)) as VoiceChannel;
     if (!channel?.isVoiceBased()) {
       throw ErrorUtils.createError(
         `Channel ${channelId} is not a voice channel`,
         'ValidationError' as any,
         'DISCORD_INVALID_VOICE_CHANNEL',
         400,
-        { channelId },
+        { channelId }
       );
     }
 
@@ -42,7 +44,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
           'TimeoutError' as any,
           'DISCORD_VOICE_CONNECTION_TIMEOUT',
           408,
-          { channelId },
+          { channelId }
         );
         reject(timeoutError);
       }, 10000);
@@ -63,7 +65,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
       classification.type,
       'DISCORD_VOICE_CONNECTION_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error, channelId },
+      { originalError: error, channelId }
     );
   }
 }

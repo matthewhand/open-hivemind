@@ -1,19 +1,19 @@
-import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import Debug from 'debug';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:collectSlashCommands');
 
 interface CommandHandler {
-    data: {
-        toJSON: () => any;
-    };
+  data: {
+    toJSON: () => any;
+  };
 }
 
 /**
  * Collects slash commands from a specified directory.
- * 
+ *
  * @param commandsPath - The path to the directory containing command files.
  * @returns An array of command objects ready to be registered with Discord.
  */
@@ -21,7 +21,7 @@ export function collectSlashCommands(commandsPath: string): object[] {
   debug('Collecting slash commands from directory: ' + commandsPath);
   const commands: object[] = [];
   try {
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
     if (commandFiles.length === 0) {
       debug('No .js command files found in directory: ' + commandsPath);
       return commands;

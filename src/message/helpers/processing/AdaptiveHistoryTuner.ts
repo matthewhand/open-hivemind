@@ -48,7 +48,9 @@ export class AdaptiveHistoryTuner {
   public getDesiredLimit(key: string, baseLimit: number): number {
     const base = Math.max(1, Number(baseLimit) || 10);
     const s = this.state.get(key);
-    if (!this.isEnabled()) {return base;}
+    if (!this.isEnabled()) {
+      return base;
+    }
     if (!s) {
       const initial = Math.min(this.getMax(), Math.max(this.getMin(), base));
       this.state.set(key, { desiredLimit: initial, lastSeenCount: 0, lastUtilization: 0 });
@@ -57,37 +59,47 @@ export class AdaptiveHistoryTuner {
     return Math.min(this.getMax(), Math.max(this.getMin(), s.desiredLimit));
   }
 
-  public recordResult(key: string, info: {
-    requestedLimit: number;
-    receivedCount: number;
-    keptCount: number;
-    estimatedTotalTokens: number;
-    inputBudgetTokens: number;
-  }): void {
-    if (!this.isEnabled()) {return;}
+  public recordResult(
+    key: string,
+    info: {
+      requestedLimit: number;
+      receivedCount: number;
+      keptCount: number;
+      estimatedTotalTokens: number;
+      inputBudgetTokens: number;
+    }
+  ): void {
+    if (!this.isEnabled()) {
+      return;
+    }
 
     const step = this.getStep();
     const min = this.getMin();
     const max = this.getMax();
     const target = this.getTargetUtilization();
 
-    const utilization = info.inputBudgetTokens > 0 ? info.estimatedTotalTokens / info.inputBudgetTokens : 1;
+    const utilization =
+      info.inputBudgetTokens > 0 ? info.estimatedTotalTokens / info.inputBudgetTokens : 1;
     const trimmed = Math.max(0, info.receivedCount - info.keptCount);
     const saturating = info.receivedCount >= info.requestedLimit;
 
-    const prev = this.state.get(key) || { desiredLimit: info.requestedLimit, lastSeenCount: 0, lastUtilization: 0 };
+    const prev = this.state.get(key) || {
+      desiredLimit: info.requestedLimit,
+      lastSeenCount: 0,
+      lastUtilization: 0,
+    };
     let next = prev.desiredLimit;
 
     // If we trimmed anything or we're very close to budget, reduce desired limit.
     if (trimmed > 0 || utilization >= 0.95) {
       const over = Math.max(0, utilization - target);
       const scale = over >= 0.35 ? 3 : over >= 0.2 ? 2 : 1;
-      next = prev.desiredLimit - (scale * step);
+      next = prev.desiredLimit - scale * step;
     } else if (saturating && utilization <= 0.55) {
       // If we fetched a full window and are far under budget, try fetching more next time.
       const under = Math.max(0, target - utilization);
       const scale = under >= 0.35 ? 3 : under >= 0.2 ? 2 : 1;
-      next = prev.desiredLimit + (scale * step);
+      next = prev.desiredLimit + scale * step;
     }
 
     next = Math.min(max, Math.max(min, next));
@@ -97,7 +109,9 @@ export class AdaptiveHistoryTuner {
       lastUtilization: utilization,
     });
 
-    debug(`historyTune key=${key} requested=${info.requestedLimit} received=${info.receivedCount} kept=${info.keptCount} util=${utilization.toFixed(2)} next=${next}`);
+    debug(
+      `historyTune key=${key} requested=${info.requestedLimit} received=${info.receivedCount} kept=${info.keptCount} util=${utilization.toFixed(2)} next=${next}`
+    );
   }
 
   /** For tests */
@@ -107,4 +121,3 @@ export class AdaptiveHistoryTuner {
 }
 
 export default AdaptiveHistoryTuner;
-

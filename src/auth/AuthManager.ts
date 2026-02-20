@@ -1,10 +1,10 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import Debug from 'debug';
-import type { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
-import { SecureConfigManager } from '@config/SecureConfigManager';
+import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
+import { SecureConfigManager } from '@config/SecureConfigManager';
+import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
 
 const debug = Debug('app:AuthManager');
 
@@ -19,28 +19,32 @@ export class AuthManager {
   // RBAC Permissions
   private readonly rolePermissions: Record<UserRole, string[]> = {
     admin: [
-      'config:read', 'config:write', 'config:delete',
-      'bots:read', 'bots:write', 'bots:delete', 'bots:manage',
-      'users:read', 'users:write', 'users:delete',
-      'system:read', 'system:write', 'system:admin',
-      'backup:read', 'backup:write', 'backup:delete',
-    ],
-    user: [
       'config:read',
-      'bots:read', 'bots:write',
-      'system:read',
-    ],
-    viewer: [
-      'config:read',
+      'config:write',
+      'config:delete',
       'bots:read',
+      'bots:write',
+      'bots:delete',
+      'bots:manage',
+      'users:read',
+      'users:write',
+      'users:delete',
       'system:read',
+      'system:write',
+      'system:admin',
+      'backup:read',
+      'backup:write',
+      'backup:delete',
     ],
+    user: ['config:read', 'bots:read', 'bots:write', 'system:read'],
+    viewer: ['config:read', 'bots:read', 'system:read'],
   };
 
   private constructor() {
     // Generate secure JWT secrets or use environment variable
     this.jwtSecret = process.env.JWT_SECRET || this.generateSecureSecret('jwt_access');
-    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || this.generateSecureSecret('jwt_refresh');
+    this.jwtRefreshSecret =
+      process.env.JWT_REFRESH_SECRET || this.generateSecureSecret('jwt_refresh');
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();
@@ -64,15 +68,17 @@ export class AuthManager {
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
       const secureConfig = SecureConfigManager.getInstance();
-      secureConfig.storeConfig({
-        id: `${prefix}_secret`,
-        name: `${prefix} Secret`,
-        type: 'auth',
-        data: { secret },
-        createdAt: new Date().toISOString(),
-      } as any).catch(err => {
-        debug(`Failed to store ${prefix} secret securely:`, err);
-      });
+      secureConfig
+        .storeConfig({
+          id: `${prefix}_secret`,
+          name: `${prefix} Secret`,
+          type: 'auth',
+          data: { secret },
+          createdAt: new Date().toISOString(),
+        } as any)
+        .catch((err) => {
+          debug(`Failed to store ${prefix} secret securely:`, err);
+        });
     }
 
     return secret;
@@ -91,7 +97,10 @@ export class AuthManager {
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      passwordHash: process.env.NODE_ENV === 'test' ? 'test-admin-hash' : bcrypt.hashSync('admin123!', this.bcryptRounds),
+      passwordHash:
+        process.env.NODE_ENV === 'test'
+          ? 'test-admin-hash'
+          : bcrypt.hashSync('admin123!', this.bcryptRounds),
     };
 
     this.users.set('admin', defaultAdmin);
@@ -116,7 +125,12 @@ export class AuthManager {
     if (process.env.NODE_ENV === 'test') {
       // Skip bcrypt operations in test environment
       // Accept common test passwords and any password that starts with 'test-hash-for-'
-      if (password === 'password123' || password === 'admin123!' || password === 'testpass123' || password === 'newpassword123') {
+      if (
+        password === 'password123' ||
+        password === 'admin123!' ||
+        password === 'testpass123' ||
+        password === 'newpassword123'
+      ) {
         return true;
       }
       // If the hash is a test hash, verify the password matches the pattern
@@ -135,17 +149,22 @@ export class AuthManager {
   public async register(data: RegisterData): Promise<User> {
     // Validate password strength
     if (!data.password || data.password.length < 6) {
-      throw new ValidationError('Password must be at least 6 characters long', 'PASSWORD_TOO_SHORT');
+      throw new ValidationError(
+        'Password must be at least 6 characters long',
+        'PASSWORD_TOO_SHORT'
+      );
     }
 
     // Check if user already exists by username
-    const existingUserByUsername = Array.from(this.users.values()).find(u => u.username === data.username);
+    const existingUserByUsername = Array.from(this.users.values()).find(
+      (u) => u.username === data.username
+    );
     if (existingUserByUsername) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
     // Check if user already exists by email
-    const existingUserByEmail = Array.from(this.users.values()).find(u => u.email === data.email);
+    const existingUserByEmail = Array.from(this.users.values()).find((u) => u.email === data.email);
     if (existingUserByEmail) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
@@ -172,7 +191,7 @@ export class AuthManager {
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
     const user = Array.from(this.users.values()).find(
-      u => u.username === credentials.username && u.isActive,
+      (u) => u.username === credentials.username && u.isActive
     );
 
     if (!user) {
@@ -261,7 +280,7 @@ export class AuthManager {
         permissions: this.getUserPermissions(user.role),
       },
       this.jwtSecret,
-      { expiresIn: '1h' },
+      { expiresIn: '1h' }
     );
   }
 
@@ -269,11 +288,7 @@ export class AuthManager {
    * Generate JWT refresh token
    */
   private generateRefreshToken(user: User): string {
-    return jwt.sign(
-      { userId: user.id },
-      this.jwtRefreshSecret,
-      { expiresIn: '7d' },
-    );
+    return jwt.sign({ userId: user.id }, this.jwtRefreshSecret, { expiresIn: '7d' });
   }
 
   /**
@@ -317,7 +332,7 @@ export class AuthManager {
    * Get all users (admin only)
    */
   public getAllUsers(): User[] {
-    return Array.from(this.users.values()).map(user => ({
+    return Array.from(this.users.values()).map((user) => ({
       ...user,
       passwordHash: undefined,
     }));
@@ -328,7 +343,9 @@ export class AuthManager {
    */
   public updateUser(userId: string, updates: Partial<User>): User | null {
     const user = this.users.get(userId);
-    if (!user) { return null; }
+    if (!user) {
+      return null;
+    }
 
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
@@ -348,7 +365,9 @@ export class AuthManager {
    */
   public async changePassword(userId: string, newPassword: string): Promise<boolean> {
     const user = this.users.get(userId);
-    if (!user) { return false; }
+    if (!user) {
+      return false;
+    }
 
     user.passwordHash = await this.hashPassword(newPassword);
     this.users.set(userId, user);

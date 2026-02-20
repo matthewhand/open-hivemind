@@ -1,11 +1,12 @@
 import axios from 'axios';
+
 /**
  * A map that stores the association between prediction IDs and image URLs.
  */
 export const predictionImageMap = new Map<string, string>();
 /**
  * Creates a prediction via Replicate's REST API using the provided image URL.
- * 
+ *
  * @param imageUrl - The URL of the image to analyze.
  * @returns The prediction result from the API.
  */
@@ -19,30 +20,29 @@ export async function createPrediction(imageUrl: string): Promise<any> {
       },
     };
     if (!process.env.REPLICATE_WEBHOOK_URL) {
-      postData.sync = true;  // Wait synchronously for the prediction
+      postData.sync = true; // Wait synchronously for the prediction
     } else {
       postData.webhook = process.env.REPLICATE_WEBHOOK_URL;
       postData.webhook_events_filter = ['start', 'completed'];
     }
-    const response = await axios.post(
-      'https://api.replicate.com/v1/predictions',
-      postData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token ' + process.env.REPLICATE_API_TOKEN,
-        },
+    const response = await axios.post('https://api.replicate.com/v1/predictions', postData, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Token ' + process.env.REPLICATE_API_TOKEN,
       },
-    );
+    });
     return response.data;
   } catch (error: any) {
-    console.error('Failed to create prediction:', error.response ? error.response.data : error.message);
+    console.error(
+      'Failed to create prediction:',
+      error.response ? error.response.data : error.message
+    );
     throw new Error('Failed to create prediction');
   }
 }
 /**
  * Handles an image message by creating a prediction via Replicate's REST API.
- * 
+ *
  * @param message - The message object containing the image to analyze.
  * @returns A boolean indicating whether the message was processed.
  */

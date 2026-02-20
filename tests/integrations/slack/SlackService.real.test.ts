@@ -9,7 +9,9 @@ describe('Slack Real Integration', () => {
 
   beforeAll(() => {
     if (!REAL_SLACK_TOKEN || !REAL_SLACK_CHANNEL || !REAL_SLACK_SIGNING_SECRET) {
-      console.log('Skipping real Slack tests - set REAL_SLACK_TOKEN, REAL_SLACK_CHANNEL, REAL_SLACK_SIGNING_SECRET');
+      console.log(
+        'Skipping real Slack tests - set REAL_SLACK_TOKEN, REAL_SLACK_CHANNEL, REAL_SLACK_SIGNING_SECRET'
+      );
     }
   });
 
@@ -20,8 +22,8 @@ describe('Slack Real Integration', () => {
         name: 'test-bot',
         slack: {
           botToken: REAL_SLACK_TOKEN,
-          signingSecret: REAL_SLACK_SIGNING_SECRET
-        }
+          signingSecret: REAL_SLACK_SIGNING_SECRET,
+        },
       });
     }
   });
@@ -49,7 +51,7 @@ describe('Slack Real Integration', () => {
       REAL_SLACK_CHANNEL,
       `Test message ${Date.now()}`
     );
-    
+
     expect(messageId).toBeTruthy();
     expect(typeof messageId).toBe('string');
   }, 30000);
@@ -59,7 +61,7 @@ describe('Slack Real Integration', () => {
 
     await service.initialize();
     const messages = await service.fetchMessages(REAL_SLACK_CHANNEL, 5);
-    
+
     expect(Array.isArray(messages)).toBe(true);
     expect(messages.length).toBeGreaterThanOrEqual(0);
   }, 30000);

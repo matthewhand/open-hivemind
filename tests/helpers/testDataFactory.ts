@@ -28,7 +28,7 @@ export const discordConfigData: ConfigTestData = {
     DISCORD_PRIORITY_CHANNEL_BONUS: 1.1,
     DISCORD_MESSAGE_PROCESSING_DELAY_MS: 0,
     DISCORD_LOGGING_ENABLED: false,
-    DISCORD_CHANNEL_BONUSES: {}
+    DISCORD_CHANNEL_BONUSES: {},
   },
   envVars: {
     DISCORD_BOT_TOKEN: 'test-token-123',
@@ -37,7 +37,7 @@ export const discordConfigData: ConfigTestData = {
     DISCORD_WELCOME_MESSAGE: 'Hello world!',
     DISCORD_MESSAGE_HISTORY_LIMIT: '20',
     DISCORD_MAX_MESSAGE_LENGTH: '4000',
-    DISCORD_LOGGING_ENABLED: 'true'
+    DISCORD_LOGGING_ENABLED: 'true',
   },
   expectedResults: {
     DISCORD_BOT_TOKEN: 'test-token-123',
@@ -46,8 +46,8 @@ export const discordConfigData: ConfigTestData = {
     DISCORD_WELCOME_MESSAGE: 'Hello world!',
     DISCORD_MESSAGE_HISTORY_LIMIT: 20,
     DISCORD_MAX_MESSAGE_LENGTH: 4000,
-    DISCORD_LOGGING_ENABLED: true
-  }
+    DISCORD_LOGGING_ENABLED: true,
+  },
 };
 
 // Message Config Test Data
@@ -88,7 +88,7 @@ export const messageConfigData: ConfigTestData = {
     MESSAGE_SEMANTIC_RELEVANCE_BONUS: 10,
     MESSAGE_WAKEWORDS: ['!help', '!ping'],
     CHANNEL_BONUSES: {},
-    CHANNEL_PRIORITIES: {}
+    CHANNEL_PRIORITIES: {},
   },
   envVars: {
     MESSAGE_PROVIDER: 'discord',
@@ -103,7 +103,7 @@ export const messageConfigData: ConfigTestData = {
     MESSAGE_MAX_DELAY: '15000',
     MESSAGE_RATE_LIMIT_PER_CHANNEL: '10',
     MESSAGE_HISTORY_LIMIT: '50',
-    MESSAGE_DELAY_MULTIPLIER: '2.5'
+    MESSAGE_DELAY_MULTIPLIER: '2.5',
   },
   expectedResults: {
     MESSAGE_PROVIDER: 'discord',
@@ -118,8 +118,8 @@ export const messageConfigData: ConfigTestData = {
     MESSAGE_MAX_DELAY: 15000,
     MESSAGE_RATE_LIMIT_PER_CHANNEL: 10,
     MESSAGE_HISTORY_LIMIT: 50,
-    MESSAGE_DELAY_MULTIPLIER: 2.5
-  }
+    MESSAGE_DELAY_MULTIPLIER: 2.5,
+  },
 };
 
 // Slack Config Test Data
@@ -132,7 +132,7 @@ export const slackConfigData: ConfigTestData = {
     SLACK_DEFAULT_CHANNEL_ID: '',
     WELCOME_RESOURCE_URL: 'https://university.example.com/resources',
     REPORT_ISSUE_URL: 'https://university.example.com/report-issue',
-    SLACK_MODE: 'socket'
+    SLACK_MODE: 'socket',
   },
   envVars: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -142,7 +142,7 @@ export const slackConfigData: ConfigTestData = {
     SLACK_DEFAULT_CHANNEL_ID: 'C1234567890',
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
-    REPORT_ISSUE_URL: 'https://custom.example.com/report'
+    REPORT_ISSUE_URL: 'https://custom.example.com/report',
   },
   expectedResults: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -152,8 +152,8 @@ export const slackConfigData: ConfigTestData = {
     SLACK_DEFAULT_CHANNEL_ID: 'C1234567890',
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
-    REPORT_ISSUE_URL: 'https://custom.example.com/report'
-  }
+    REPORT_ISSUE_URL: 'https://custom.example.com/report',
+  },
 };
 
 // Command Parser Test Data
@@ -164,31 +164,27 @@ export const commandParserTestData = {
     { input: '!greet John Doe', expected: { command: 'greet', args: ['John', 'Doe'] } },
     { input: '!say "Hello World"', expected: { command: 'say', args: ['Hello World'] } },
     { input: "!say 'Hello World'", expected: { command: 'say', args: ['Hello World'] } },
-    { input: '!greet "John Doe" from "New York"', expected: { command: 'greet', args: ['John Doe', 'from', 'New York'] } },
+    {
+      input: '!greet "John Doe" from "New York"',
+      expected: { command: 'greet', args: ['John Doe', 'from', 'New York'] },
+    },
     { input: '!move   left   right', expected: { command: 'move', args: ['left', 'right'] } },
     { input: '!play123', expected: { command: 'play123', args: [] } },
     { input: '!get_user_info', expected: { command: 'get_user_info', args: [] } },
     { input: '!start-process', expected: { command: 'start-process', args: [] } },
-    { input: '!Hello', expected: { command: 'Hello', args: [] } }
+    { input: '!Hello', expected: { command: 'Hello', args: [] } },
   ],
-  invalidInputs: [
-    'hello',
-    '',
-    '   ',
-    '!',
-    '!   ',
-    '!cmd "unclosed quote'
-  ],
+  invalidInputs: ['hello', '', '   ', '!', '!   ', '!cmd "unclosed quote'],
   edgeCases: [
     { input: '!a b c', expected: { command: 'a', args: ['b', 'c'] } },
     { input: '!2fa enable', expected: { command: '2fa', args: ['enable'] } },
     { input: '!user.info', expected: { command: 'user.info', args: [] } },
-    { input: '!api.v2.users', expected: { command: 'api.v2.users', args: [] } }
+    { input: '!api.v2.users', expected: { command: 'api.v2.users', args: [] } },
   ],
   performanceTestData: {
     inputs: ['!cmd1', '!cmd2 arg', '!cmd3 arg1 arg2'],
-    largeInputs: Array.from({ length: 100 }, (_, i) => `!cmd${i} arg${i}`)
-  }
+    largeInputs: Array.from({ length: 100 }, (_, i) => `!cmd${i} arg${i}`),
+  },
 };
 
 /**
@@ -212,9 +208,12 @@ export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'
 /**
  * Helper to generate performance test data
  */
-export function generatePerformanceTestData(count: number, prefix = 'test'): Array<{ input: string; expected: any }> {
+export function generatePerformanceTestData(
+  count: number,
+  prefix = 'test'
+): Array<{ input: string; expected: any }> {
   return Array.from({ length: count }, (_, i) => ({
     input: `!${prefix}${i} arg${i}`,
-    expected: { command: `${prefix}${i}`, args: [`arg${i}`] }
+    expected: { command: `${prefix}${i}`, args: [`arg${i}`] },
   }));
 }

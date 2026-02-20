@@ -24,20 +24,25 @@ export const TEST_USERS = {
   invalid: {
     username: 'invalid',
     password: 'invalid',
-  }
+  },
 } as const;
 
 /**
  * Inject auth by navigating to about:blank first, setting localStorage, then navigating to target.
  */
-async function injectAuthAndNavigate(page: Page, targetPath: string, role: 'admin' | 'owner' = 'owner'): Promise<void> {
-  const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
+async function injectAuthAndNavigate(
+  page: Page,
+  targetPath: string,
+  role: 'admin' | 'owner' = 'owner'
+): Promise<void> {
+  const fakeToken =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
   const fakeUser = {
     id: 'test-admin',
     username: 'admin',
     email: 'admin@open-hivemind.com',
     role: role,
-    permissions: ['*']
+    permissions: ['*'],
   };
 
   // Navigate to app origin to be able to set localStorage for that origin
@@ -46,14 +51,20 @@ async function injectAuthAndNavigate(page: Page, targetPath: string, role: 'admi
   await page.waitForLoadState('domcontentloaded');
 
   // Set localStorage auth tokens
-  await page.evaluate(({ token, user }) => {
-    localStorage.setItem('auth_tokens', JSON.stringify({
-      accessToken: token,
-      refreshToken: token,
-      expiresIn: 3600
-    }));
-    localStorage.setItem('auth_user', JSON.stringify(user));
-  }, { token: fakeToken, user: fakeUser });
+  await page.evaluate(
+    ({ token, user }) => {
+      localStorage.setItem(
+        'auth_tokens',
+        JSON.stringify({
+          accessToken: token,
+          refreshToken: token,
+          expiresIn: 3600,
+        })
+      );
+      localStorage.setItem('auth_user', JSON.stringify(user));
+    },
+    { token: fakeToken, user: fakeUser }
+  );
 
   // Now navigate to target - auth should be recognized
   await page.goto(targetPath);

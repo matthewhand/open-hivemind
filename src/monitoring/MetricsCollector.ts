@@ -54,7 +54,9 @@ export class MetricsCollector extends EventEmitter {
   }
 
   startCollection(): void {
-    if (this.isCollecting) {return;}
+    if (this.isCollecting) {
+      return;
+    }
 
     this.isCollecting = true;
     this.collectionInterval = setInterval(() => {
@@ -65,7 +67,9 @@ export class MetricsCollector extends EventEmitter {
   }
 
   stopCollection(): void {
-    if (!this.isCollecting) {return;}
+    if (!this.isCollecting) {
+      return;
+    }
 
     this.isCollecting = false;
     if (this.collectionInterval) {
@@ -144,9 +148,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   getLatestValue(metricName: string): number | undefined {
-    const latestMetric = this.history
-      .filter(m => m.name === metricName)
-      .pop();
+    const latestMetric = this.history.filter((m) => m.name === metricName).pop();
     return latestMetric?.value;
   }
 
@@ -166,7 +168,7 @@ export class MetricsCollector extends EventEmitter {
     metrics: Metrics;
     performance: PerformanceMetrics;
     historySize: number;
-    } {
+  } {
     const avgResponseTime =
       this.metrics.responseTime.length > 0
         ? this.metrics.responseTime.reduce((a, b) => a + b, 0) / this.metrics.responseTime.length

@@ -1,8 +1,8 @@
-import OpenAI from 'openai';
 import fs from 'fs';
-import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import OpenAI from 'openai';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:discord:stt');
 
@@ -35,7 +35,7 @@ export async function transcribeAudio(audioPath: string): Promise<string> {
       classification.type,
       'DISCORD_STT_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error },
+      { originalError: error }
     );
   }
 }

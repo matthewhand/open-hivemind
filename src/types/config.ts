@@ -1,9 +1,9 @@
 /**
  * Configuration Types
- * 
+ *
  * This file contains TypeScript interfaces and types for bot configurations
  * and MCP server configs, replacing 'any' usage in configuration management.
- * 
+ *
  * Based on analysis of:
  * - src/config/BotConfigurationManager.ts
  * - src/config/SecureConfigManager.ts
@@ -21,7 +21,14 @@ export type MessageProvider = 'discord' | 'slack' | 'mattermost' | 'webhook';
 /**
  * LLM provider types
  */
-export type LlmProvider = 'openai' | 'flowise' | 'openwebui' | 'perplexity' | 'replicate' | 'n8n' | 'openswarm';
+export type LlmProvider =
+  | 'openai'
+  | 'flowise'
+  | 'openwebui'
+  | 'perplexity'
+  | 'replicate'
+  | 'n8n'
+  | 'openswarm';
 
 /**
  * Slack connection modes
@@ -721,28 +728,17 @@ export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
 /**
  * Union type for all platform configurations
  */
-export type PlatformConfig =
-  | DiscordConfig
-  | SlackConfig
-  | MattermostConfig;
+export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig;
 
 /**
  * Union type for all LLM provider configurations
  */
-export type LlmProviderConfig =
-  | OpenAIConfig
-  | FlowiseConfig
-  | OpenWebUIConfig
-  | OpenSwarmConfig;
+export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig;
 
 /**
  * Union type for all configuration types
  */
-export type AnyConfig =
-  | BotConfig
-  | SecureConfig
-  | PlatformConfig
-  | LlmProviderConfig;
+export type AnyConfig = BotConfig | SecureConfig | PlatformConfig | LlmProviderConfig;
 
 /**
  * Configuration environment type

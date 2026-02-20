@@ -1,9 +1,9 @@
 /**
  * Slack API Response Types
- * 
+ *
  * This file contains TypeScript interfaces and types for Slack API responses,
  * replacing 'any' usage in Slack integrations.
- * 
+ *
  * Based on analysis of:
  * - src/integrations/slack/SlackService.ts
  * - src/integrations/slack/SlackMessage.ts
@@ -648,18 +648,12 @@ export function isSlackUser(obj: unknown): obj is SlackUser {
 /**
  * Union type for all Slack response types
  */
-export type SlackResponse = 
-  | SlackApiResponse 
-  | SlackMessageResponse 
-  | SlackChannel 
-  | SlackUser;
+export type SlackResponse = SlackApiResponse | SlackMessageResponse | SlackChannel | SlackUser;
 
 /**
  * Union type for all Slack event types
  */
-export type SlackEventTypes = 
-  | SlackEventData 
-  | SlackEvent;
+export type SlackEventTypes = SlackEventData | SlackEvent;
 
 /**
  * Slack provider metadata structure
@@ -714,6 +708,7 @@ export const SLACK_EVENT_TYPES = {
   MEMBER_LEFT_CHANNEL: 'member_left_channel',
 } as const;
 
-export type SlackMessageSubtype = typeof SLACK_MESSAGE_SUBTYPES[keyof typeof SLACK_MESSAGE_SUBTYPES];
-export type SlackChannelType = typeof SLACK_CHANNEL_TYPES[keyof typeof SLACK_CHANNEL_TYPES];
-export type SlackEventType = typeof SLACK_EVENT_TYPES[keyof typeof SLACK_EVENT_TYPES];
+export type SlackMessageSubtype =
+  (typeof SLACK_MESSAGE_SUBTYPES)[keyof typeof SLACK_MESSAGE_SUBTYPES];
+export type SlackChannelType = (typeof SLACK_CHANNEL_TYPES)[keyof typeof SLACK_CHANNEL_TYPES];
+export type SlackEventType = (typeof SLACK_EVENT_TYPES)[keyof typeof SLACK_EVENT_TYPES];

@@ -32,37 +32,33 @@ describe('Health Route Additional Tests', () => {
     });
 
     it('should handle requests with query parameters', async () => {
-      const response = await request(app)
-        .get('/health')
-        .query({ test: 'value', another: 'param' });
+      const response = await request(app).get('/health').query({ test: 'value', another: 'param' });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
     });
 
     it('should handle requests with different Accept headers', async () => {
-      const response = await request(app)
-        .get('/health')
-        .set('Accept', 'text/plain');
+      const response = await request(app).get('/health').set('Accept', 'text/plain');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
     });
 
     it('should handle requests with different content types', async () => {
-      const response = await request(app)
-        .get('/health')
-        .set('Content-Type', 'application/json');
+      const response = await request(app).get('/health').set('Content-Type', 'application/json');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
     });
 
     it('should handle very fast successive requests', async () => {
-      const requests = Array(20).fill(null).map(() => request(app).get('/health'));
+      const requests = Array(20)
+        .fill(null)
+        .map(() => request(app).get('/health'));
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty('status');
       });
@@ -78,9 +74,7 @@ describe('Health Route Additional Tests', () => {
     });
 
     it('should handle requests with very large headers', async () => {
-      const response = await request(app)
-        .get('/health')
-        .set('X-Large-Header', 'A'.repeat(5000));
+      const response = await request(app).get('/health').set('X-Large-Header', 'A'.repeat(5000));
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');

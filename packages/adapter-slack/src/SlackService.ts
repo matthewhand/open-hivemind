@@ -1,48 +1,42 @@
-import type { Application } from 'express';
-import express from 'express';
-import Debug from 'debug';
+import { EventEmitter } from 'events';
+import * as fs from 'fs';
+import * as path from 'path';
 import retry from 'async-retry';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import type { IMessage } from '@message/interfaces/IMessage';
-import { SlackBotManager } from './SlackBotManager';
-import { SlackSignatureVerifier } from './SlackSignatureVerifier';
-import { SlackInteractiveHandler } from './SlackInteractiveHandler';
-import { SlackInteractiveActions } from './SlackInteractiveActions';
-import { SlackEventProcessor } from './SlackEventProcessor';
-import { SlackMessageProcessor } from './SlackMessageProcessor';
-import { SlackWelcomeHandler } from './SlackWelcomeHandler';
-import type SlackMessage from './SlackMessage';
+import Debug from 'debug';
+import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
-import slackConfig from '@config/slackConfig';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
+  ApiError,
   BaseHivemindError,
   ConfigurationError,
   NetworkError,
   ValidationError,
-  ApiError,
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
-import * as fs from 'fs';
-import * as path from 'path';
-import { EventEmitter } from 'events';
-
 // Routing
 import messageConfig from '@config/messageConfig';
+import slackConfig from '@config/slackConfig';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import { SlackBotFacade, type ISlackBotFacade } from './modules/ISlackBotFacade';
+import { SlackEventBus, type ISlackEventBus } from './modules/ISlackEventBus';
+// Module extractions
+import { SlackMessageIO, type ISlackMessageIO } from './modules/ISlackMessageIO';
+import { SlackBotManager } from './SlackBotManager';
+import { SlackEventProcessor } from './SlackEventProcessor';
+import { SlackInteractiveActions } from './SlackInteractiveActions';
+import { SlackInteractiveHandler } from './SlackInteractiveHandler';
+import type SlackMessage from './SlackMessage';
+import { SlackMessageProcessor } from './SlackMessageProcessor';
+import { SlackSignatureVerifier } from './SlackSignatureVerifier';
+import { SlackWelcomeHandler } from './SlackWelcomeHandler';
 
 const debug = Debug('app:SlackService:verbose');
-
-// Module extractions
-import type { ISlackMessageIO } from './modules/ISlackMessageIO';
-import { SlackMessageIO } from './modules/ISlackMessageIO';
-import type { ISlackEventBus } from './modules/ISlackEventBus';
-import { SlackEventBus } from './modules/ISlackEventBus';
-import type { ISlackBotFacade } from './modules/ISlackBotFacade';
-import { SlackBotFacade } from './modules/ISlackBotFacade';
 
 // Metrics and retry configuration
 const metrics = MetricsCollector.getInstance();
@@ -87,7 +81,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     this.messageIO = new SlackMessageIO(
       (botName?: string) => this.getBotManager(botName),
       () => Array.from(this.botManagers.keys())[0],
-      this.lastSentEventTs,
+      this.lastSentEventTs
     );
 
     // Event bus for route registration and handlers
@@ -103,9 +97,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
    */
   private initializeFromConfiguration(): void {
     const configManager = BotConfigurationManager.getInstance();
-    const slackBotConfigs = configManager.getAllBots().filter(bot =>
-      bot.messageProvider === 'slack' && bot.slack?.botToken,
-    );
+    const slackBotConfigs = configManager
+      .getAllBots()
+      .filter((bot) => bot.messageProvider === 'slack' && bot.slack?.botToken);
 
     if (slackBotConfigs.length === 0) {
       debug('No Slack bot configurations found, checking legacy configuration...');
@@ -143,10 +137,13 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
     const interactiveHandlers = {
       sendCourseInfo: async (channel: string) => interactiveActions.sendCourseInfo(channel),
-      sendBookingInstructions: async (channel: string) => interactiveActions.sendBookingInstructions(channel),
+      sendBookingInstructions: async (channel: string) =>
+        interactiveActions.sendBookingInstructions(channel),
       sendStudyResources: async (channel: string) => interactiveActions.sendStudyResources(channel),
-      sendAskQuestionModal: async (triggerId: string) => interactiveActions.sendAskQuestionModal(triggerId),
-      sendInteractiveHelpMessage: async (channel: string, userId: string) => interactiveActions.sendInteractiveHelpMessage(channel, userId),
+      sendAskQuestionModal: async (triggerId: string) =>
+        interactiveActions.sendAskQuestionModal(triggerId),
+      sendInteractiveHelpMessage: async (channel: string, userId: string) =>
+        interactiveActions.sendInteractiveHelpMessage(channel, userId),
       handleButtonClick: async (channel: string, userId: string, actionId: string) => {
         const welcomeHandler = new SlackWelcomeHandler(botManager);
         return welcomeHandler.handleButtonClick(channel, userId, actionId);
@@ -177,16 +174,19 @@ export class SlackService extends EventEmitter implements IMessengerService {
     const botName = botConfig.name;
     this.initializeBotInstance(botConfig);
     if (!this.app) {
-      throw new ConfigurationError(
-        'Express app not configured',
-        'SLACK_APP_NOT_CONFIGURED',
-      );
+      throw new ConfigurationError('Express app not configured', 'SLACK_APP_NOT_CONFIGURED');
     }
     // Register routes and start bot
     const signatureVerifier = this.signatureVerifiers.get(botName)!;
     const eventProcessor = this.eventProcessors.get(botName)!;
     const interactiveHandler = this.interactiveHandlers.get(botName)!;
-    this.eventBus.registerBotRoutes(this.app, botName, signatureVerifier, eventProcessor, interactiveHandler);
+    this.eventBus.registerBotRoutes(
+      this.app,
+      botName,
+      signatureVerifier,
+      eventProcessor,
+      interactiveHandler
+    );
 
     const botManager = this.botManagers.get(botName)!;
     const welcomeHandler = this.welcomeHandlers.get(botName);
@@ -200,7 +200,14 @@ export class SlackService extends EventEmitter implements IMessengerService {
    * Initialize legacy configuration for backward compatibility
    */
   private initializeLegacyConfiguration(): void {
-    let instances: Array<{ token: string; signingSecret: string; name: string; appToken?: string; defaultChannelId?: string; joinChannels?: string; }> = [];
+    let instances: Array<{
+      token: string;
+      signingSecret: string;
+      name: string;
+      appToken?: string;
+      defaultChannelId?: string;
+      joinChannels?: string;
+    }> = [];
     let mode: 'socket' | 'rtm' = 'socket';
 
     // Legacy configuration loading (similar to original implementation)
@@ -235,14 +242,16 @@ export class SlackService extends EventEmitter implements IMessengerService {
       }
       // Fallback to environment variables for single-bot legacy setup
       if (instances.length === 0 && process.env.SLACK_BOT_TOKEN) {
-        instances = [{
-          token: String(process.env.SLACK_BOT_TOKEN),
-          signingSecret: String(process.env.SLACK_SIGNING_SECRET || ''),
-          name: process.env.MESSAGE_USERNAME_OVERRIDE || 'SlackBot',
-          appToken: process.env.SLACK_APP_TOKEN,
-          defaultChannelId: process.env.SLACK_DEFAULT_CHANNEL_ID,
-          joinChannels: process.env.SLACK_JOIN_CHANNELS,
-        }];
+        instances = [
+          {
+            token: String(process.env.SLACK_BOT_TOKEN),
+            signingSecret: String(process.env.SLACK_SIGNING_SECRET || ''),
+            name: process.env.MESSAGE_USERNAME_OVERRIDE || 'SlackBot',
+            appToken: process.env.SLACK_APP_TOKEN,
+            defaultChannelId: process.env.SLACK_DEFAULT_CHANNEL_ID,
+            joinChannels: process.env.SLACK_JOIN_CHANNELS,
+          },
+        ];
       }
 
       if (instances.length > 0) {
@@ -272,7 +281,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
       } else {
         const configError = new ConfigurationError(
           `Failed to load legacy configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          'SLACK_LEGACY_CONFIG_ERROR',
+          'SLACK_LEGACY_CONFIG_ERROR'
         );
         debug(`Legacy configuration loading failed: ${configError.message}`);
         console.error('Slack legacy configuration loading error:', configError);
@@ -281,6 +290,18 @@ export class SlackService extends EventEmitter implements IMessengerService {
       // Do not re-throw, allow service to initialize without legacy bots if file is malformed.
     }
   }
+
+  /**
+   * Gets the singleton instance of SlackService.
+   *
+   * @returns {SlackService} The singleton instance
+   * @throws {ConfigurationError} If instance creation fails
+   * @example
+   * ```typescript
+   * const slackService = SlackService.getInstance();
+   * await slackService.sendMessageToChannel('C123456', 'Hello!');
+   * ```
+   */
 
   public static getInstance(): SlackService {
     debug('Entering getInstance');
@@ -301,7 +322,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
           'SLACK_SERVICE_INIT_ERROR',
           undefined,
           undefined,
-          { originalError: error },
+          { originalError: error }
         );
       }
     }
@@ -317,7 +338,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
         'Express app not configured',
         'configuration' as any,
         'SLACK_APP_NOT_CONFIGURED_INIT',
-        500,
+        500
       );
     }
 
@@ -332,13 +353,10 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const interactiveHandler = this.interactiveHandlers.get(botName)!;
 
       // Keep original urlencoded middleware where needed
-      this.app.post(
-        `/slack/${botName}/action-endpoint`,
-        express.urlencoded({ extended: true }),
-      );
+      this.app.post(`/slack/${botName}/action-endpoint`, express.urlencoded({ extended: true }));
       this.app.post(
         `/slack/${botName}/interactive-endpoint`,
-        express.urlencoded({ extended: true }),
+        express.urlencoded({ extended: true })
       );
 
       this.eventBus.registerBotRoutes(
@@ -346,14 +364,16 @@ export class SlackService extends EventEmitter implements IMessengerService {
         botName,
         signatureVerifier,
         eventProcessor,
-        interactiveHandler,
+        interactiveHandler
       );
 
       try {
         // Initialize bot via facade
         await this.botFacade.initialize(botName, botManager);
         this.joinTs.set(botName, Date.now() / 1000);
-        debug(`Bot manager ${botName} initialized successfully, joinTs: ${this.joinTs.get(botName)}`);
+        debug(
+          `Bot manager ${botName} initialized successfully, joinTs: ${this.joinTs.get(botName)}`
+        );
 
         // Join configured channels via facade
         const welcomeHandler = this.welcomeHandlers.get(botName);
@@ -384,7 +404,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
     this.app = app;
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
+  public setMessageHandler(
+    handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+  ): void {
     debug('Entering setMessageHandler');
     if (typeof handler !== 'function') {
       debug('Error: Invalid message handler provided');
@@ -393,12 +415,15 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
     for (const [botName, botManager] of this.botManagers) {
       const messageProcessor = this.messageProcessors.get(botName);
-      if (!messageProcessor) {continue;}
+      if (!messageProcessor) {
+        continue;
+      }
 
       botManager.setMessageHandler(async (message, _history, _botConfig) => {
         // Emit WebSocket monitoring event for incoming message
         try {
-          const ws = require('@src/server/services/WebSocketService').default as typeof import('@src/server/services/WebSocketService').default;
+          const ws = require('@src/server/services/WebSocketService')
+            .default as typeof import('@src/server/services/WebSocketService').default;
           ws.getInstance().recordMessageFlow({
             botName,
             provider: 'slack',
@@ -408,8 +433,10 @@ export class SlackService extends EventEmitter implements IMessengerService {
             contentLength: (message.getText?.() || '').length,
             status: 'success',
           });
-        } catch { }
-        debug(`[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`);
+        } catch {}
+        debug(
+          `[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`
+        );
 
         const messageTs = parseFloat(message.data.ts || '0');
         const joinTs = this.joinTs.get(botName) || 0;
@@ -439,12 +466,16 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
         const threadTs = message.data.thread_ts || message.data.ts;
         try {
-          const enrichedMessage: SlackMessage = await messageProcessor.enrichSlackMessage(message as unknown as SlackMessage);
+          const enrichedMessage: SlackMessage = await messageProcessor.enrichSlackMessage(
+            message as unknown as SlackMessage
+          );
           const channelId = enrichedMessage.getChannelId();
 
           // Fetch last 10 messages from the channel
           const historyMessages = await this.fetchMessages(channelId, 10, botName);
-          debug(`[${botName}] Fetched ${historyMessages.length} history messages for channel ${channelId}`);
+          debug(
+            `[${botName}] Fetched ${historyMessages.length} history messages for channel ${channelId}`
+          );
 
           const payload = await messageProcessor.constructPayload(enrichedMessage, historyMessages);
           const userMessage = payload.messages[payload.messages.length - 1].content;
@@ -456,7 +487,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
           if (!llmProviders.length) {
             debug(`[${botName}] No LLM providers available`);
-            return 'Sorry, I\'m having trouble processing your request right now.';
+            return "Sorry, I'm having trouble processing your request right now.";
           }
 
           let llmResponse: string | null = null;
@@ -465,7 +496,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
               llmResponse = await provider.generateChatCompletion(
                 userMessage,
                 formattedHistory,
-                metadataWithMessages,
+                metadataWithMessages
               );
               if (llmResponse) {
                 debug(`[${botName}] LLM response from ${provider.constructor.name}`);
@@ -483,8 +514,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
           }
           debug(`[${botName}] LLM Response:`, llmResponse);
 
-          const { text: fallbackText, blocks } = await messageProcessor.processResponse(llmResponse);
-          debug(`[${botName}] Sending response to channel ${channelId} with thread_ts: ${threadTs}`);
+          const { text: fallbackText, blocks } =
+            await messageProcessor.processResponse(llmResponse);
+          debug(
+            `[${botName}] Sending response to channel ${channelId} with thread_ts: ${threadTs}`
+          );
 
           const sentTs = await this.sendMessageToChannel(
             channelId,
@@ -492,12 +526,14 @@ export class SlackService extends EventEmitter implements IMessengerService {
             botName,
             threadTs,
             undefined, // replyToMessageId
-            blocks,
+            blocks
           );
 
           if (sentTs) {
             this.lastSentEventTs.set(botName, eventTs);
-            debug(`[${botName}] Response sent successfully, lastSentEventTs updated to: ${eventTs}`);
+            debug(
+              `[${botName}] Response sent successfully, lastSentEventTs updated to: ${eventTs}`
+            );
           }
 
           return fallbackText;
@@ -509,13 +545,34 @@ export class SlackService extends EventEmitter implements IMessengerService {
     }
   }
 
+  /**
+   * Sends a message to a Slack channel with retry logic.
+   *
+   * @param {string} channelId - The Slack channel ID to send the message to
+   * @param {string} text - The message text to send
+   * @param {string} [senderName] - Optional sender name override
+   * @param {string} [threadId] - Optional thread ID to reply in
+   * @param {string} [replyToMessageId] - Optional message ID to reply to
+   * @param {KnownBlock[]} [blocks] - Optional Slack blocks for rich formatting
+   * @returns {Promise<string>} The timestamp of the sent message
+   * @throws {Error} If message sending fails after all retries
+   * @example
+   * ```typescript
+   * const ts = await slackService.sendMessageToChannel(
+   *   'C123456',
+   *   'Hello, world!',
+   *   'MyBot'
+   * );
+   * ```
+   */
+
   public async sendMessageToChannel(
     channelId: string,
     text: string,
     senderName?: string,
     threadId?: string,
     replyToMessageId?: string,
-    blocks?: KnownBlock[],
+    blocks?: KnownBlock[]
   ): Promise<string> {
     debug('Entering sendMessageToChannel (delegated)', {
       channelId,
@@ -533,16 +590,25 @@ export class SlackService extends EventEmitter implements IMessengerService {
         debug(`Attempting to send message (attempt ${attempt})`);
 
         try {
-          const result = await this.messageIO.sendMessageToChannel(channelId, text, senderName, threadId, replyToMessageId, blocks);
+          const result = await this.messageIO.sendMessageToChannel(
+            channelId,
+            text,
+            senderName,
+            threadId,
+            replyToMessageId,
+            blocks
+          );
           metrics.incrementMessages();
           return result;
         } catch (error: any) {
           debug(`Send message attempt ${attempt} failed: ${error.message}`);
 
           // Don't retry on certain errors
-          if (error.message?.includes('channel_not_found') ||
+          if (
+            error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
-            error.message?.includes('missing_scope')) {
+            error.message?.includes('missing_scope')
+          ) {
             bail(error);
             return '';
           }
@@ -558,7 +624,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
-      debug(`Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`);
+      debug(
+        `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+      );
       throw error;
     }
   }
@@ -567,7 +635,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
    * Triggers a typing indicator in the channel (RTM-only).
    * Slack does not support typing indicators over the Web API or Socket Mode.
    */
-  public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
+  public async sendTyping(
+    channelId: string,
+    senderName?: string,
+    threadId?: string
+  ): Promise<void> {
     try {
       const botName = senderName || Array.from(this.botManagers.keys())[0];
       const botManager = this.getBotManager(botName);
@@ -606,7 +678,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
     return this.fetchMessages(channelId, limit, firstBot);
   }
 
-  public async fetchMessages(channelId: string, limit: number = 10, botName?: string): Promise<IMessage[]> {
+  public async fetchMessages(
+    channelId: string,
+    limit: number = 10,
+    botName?: string
+  ): Promise<IMessage[]> {
     debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
 
     const startTime = Date.now();
@@ -624,9 +700,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
           debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
 
           // Don't retry on certain errors
-          if (error.message?.includes('channel_not_found') ||
+          if (
+            error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
-            error.message?.includes('missing_scope')) {
+            error.message?.includes('missing_scope')
+          ) {
             bail(error);
             return [];
           }
@@ -642,7 +720,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
-      debug(`Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`);
+      debug(
+        `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+      );
       return []; // Return empty array on failure
     }
   }
@@ -658,7 +738,8 @@ export class SlackService extends EventEmitter implements IMessengerService {
       throw new Error('Channel ID required');
     }
 
-    const text = typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
+    const text =
+      typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
 
     // Default to first bot for backward compatibility
     const firstBot = Array.from(this.botManagers.keys())[0];
@@ -723,10 +804,14 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const firstBot = Array.from(this.botManagers.keys())[0];
       const botManager = this.botManagers.get(firstBot);
       const botInfo = botManager?.getAllBots?.()[0];
-      if (!botInfo?.webClient) {return null;}
+      if (!botInfo?.webClient) {
+        return null;
+      }
 
       const info = await botInfo.webClient.conversations.info({ channel: channelId });
-      if (!info?.ok) {return null;}
+      if (!info?.ok) {
+        return null;
+      }
 
       const topic = info.channel?.topic?.value;
       const purpose = info.channel?.purpose?.value;
@@ -749,18 +834,12 @@ export class SlackService extends EventEmitter implements IMessengerService {
       return typeof p === 'string' ? p : String(p || '');
     };
 
-    const safeLlm = (cfg: any): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
-      const llmProvider =
-        cfg?.LLM_PROVIDER ??
-        cfg?.llmProvider ??
-        cfg?.llm?.provider ??
-        undefined;
+    const safeLlm = (
+      cfg: any
+    ): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
+      const llmProvider = cfg?.LLM_PROVIDER ?? cfg?.llmProvider ?? cfg?.llm?.provider ?? undefined;
 
-      const llmModel =
-        cfg?.OPENAI_MODEL ??
-        cfg?.openai?.model ??
-        cfg?.llm?.model ??
-        undefined;
+      const llmModel = cfg?.OPENAI_MODEL ?? cfg?.openai?.model ?? cfg?.llm?.model ?? undefined;
 
       const llmEndpoint =
         cfg?.OPENAI_BASE_URL ??
@@ -778,7 +857,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
     };
 
     const names = this.getBotNames ? this.getBotNames() : [];
-    if (!names || names.length === 0) {return [];}
+    if (!names || names.length === 0) {
+      return [];
+    }
 
     return names.map((name) => {
       const cfg = this.getBotConfig ? this.getBotConfig(name) : {};
@@ -826,7 +907,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
       }
 
       const nameCandidates = Array.from(
-        new Set([agentDisplayName, agentInstanceName, botUserName].filter(Boolean)),
+        new Set([agentDisplayName, agentInstanceName, botUserName].filter(Boolean))
       );
       return { botId, senderKey, nameCandidates };
     } catch {
@@ -840,7 +921,8 @@ export class SlackService extends EventEmitter implements IMessengerService {
     const config = this.botConfigs.get(firstBot);
 
     if (config) {
-      const defaultChannel = config.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
+      const defaultChannel =
+        config.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
       debug(`Returning defaultChannel: ${defaultChannel}`);
       return defaultChannel;
     }
@@ -860,11 +942,15 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
       const botName = senderKey || Array.from(this.botManagers.keys())[0];
       const last = this.lastModelActivity.get(botName);
-      if (last === modelId) {return;}
+      if (last === modelId) {
+        return;
+      }
 
       const botManager = this.getBotManager(botName);
       const botInfo = botManager?.getAllBots?.()[0];
-      if (!botInfo?.webClient) {return;}
+      if (!botInfo?.webClient) {
+        return;
+      }
 
       // This may require user token scopes; if unsupported, Slack will reject.
       await botInfo.webClient.users.profile.set({
@@ -894,16 +980,27 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const serviceName = `slack-${name}`;
 
       const serviceWrapper: IMessengerService = {
-        initialize: async () => { /* managed by parent */ },
-        shutdown: async () => { /* managed by parent */ },
+        initialize: async () => {
+          /* managed by parent */
+        },
+        shutdown: async () => {
+          /* managed by parent */
+        },
 
-        sendMessageToChannel: async (channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string) => {
+        sendMessageToChannel: async (
+          channelId: string,
+          message: string,
+          senderName?: string,
+          threadId?: string,
+          replyToMessageId?: string
+        ) => {
           return this.sendMessageToChannel(channelId, message, name, threadId, replyToMessageId);
         },
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
 
-        sendPublicAnnouncement: async (channelId: string, announcement: any) => this.sendPublicAnnouncement(channelId, announcement),
+        sendPublicAnnouncement: async (channelId: string, announcement: any) =>
+          this.sendPublicAnnouncement(channelId, announcement),
 
         getChannelTopic: async (channelId: string) => this.getChannelTopic(channelId),
 
@@ -917,13 +1014,18 @@ export class SlackService extends EventEmitter implements IMessengerService {
           }
         },
 
-        getDefaultChannel: () => cfg.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '',
+        getDefaultChannel: () =>
+          cfg.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '',
 
-        setMessageHandler: () => { /* global handler managed by parent */ },
+        setMessageHandler: () => {
+          /* global handler managed by parent */
+        },
 
-        setModelActivity: async (modelId: string, senderKey?: string) => this.setModelActivity(modelId, senderKey || name),
+        setModelActivity: async (modelId: string, senderKey?: string) =>
+          this.setModelActivity(modelId, senderKey || name),
 
-        sendTyping: async (channelId: string, senderName?: string, threadId?: string) => this.sendTyping(channelId, senderName || name, threadId),
+        sendTyping: async (channelId: string, senderName?: string, threadId?: string) =>
+          this.sendTyping(channelId, senderName || name, threadId),
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
         scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined,
@@ -965,23 +1067,31 @@ export class SlackService extends EventEmitter implements IMessengerService {
     debug('Entering getBotManager', { botName });
     // Lazy-init from env in case constructor couldn't find configs (unit tests)
     if (this.botManagers.size === 0 && process.env.SLACK_BOT_TOKEN) {
-      try { this.initializeLegacyConfiguration(); } catch { }
+      try {
+        this.initializeLegacyConfiguration();
+      } catch {}
     }
     if (this.botManagers.size === 0) {
       // As a last resort in unit tests, return a minimal mocked manager instance
       try {
         // Prefer constructing via mocked SlackBotManager if available
         // @ts-ignore constructor signature is mocked in tests
-        const mgr = new (SlackBotManager as any)([{ token: 'xoxb-test', signingSecret: '', name: 'MockBot' }], 'socket');
-        if (mgr) {return mgr;}
+        const mgr = new (SlackBotManager as any)(
+          [{ token: 'xoxb-test', signingSecret: '', name: 'MockBot' }],
+          'socket'
+        );
+        if (mgr) {
+          return mgr;
+        }
       } catch {
         // Fallback: literal stub with getAllBots()
         try {
-
           const { WebClient } = require('@slack/web-api');
           const webClient = new WebClient('xoxb-test-token');
           return {
-            getAllBots: () => ([{ botToken: 'xoxb-test-token', botUserId: 'bot1', botUserName: 'Bot', webClient }]),
+            getAllBots: () => [
+              { botToken: 'xoxb-test-token', botUserId: 'bot1', botUserName: 'Bot', webClient },
+            ],
           } as unknown as SlackBotManager;
         } catch {
           return undefined;
@@ -1025,14 +1135,20 @@ export class SlackService extends EventEmitter implements IMessengerService {
    */
   public async removeBot(botName: string): Promise<boolean> {
     const mgr = this.botManagers.get(botName);
-    if (!mgr) {return false;}
+    if (!mgr) {
+      return false;
+    }
     try {
       const bots = (mgr as any).getAllBots?.() || [];
       for (const b of bots) {
-        try { await b.socketClient?.disconnect?.(); } catch { }
-        try { await b.rtmClient?.disconnect?.(); } catch { }
+        try {
+          await b.socketClient?.disconnect?.();
+        } catch {}
+        try {
+          await b.rtmClient?.disconnect?.();
+        } catch {}
       }
-    } catch { }
+    } catch {}
     this.botManagers.delete(botName);
     this.signatureVerifiers.delete(botName);
     this.interactiveHandlers.delete(botName);
@@ -1048,7 +1164,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
   /** Send a quick test message using a named bot. */
   public async sendTestMessage(botName: string, channelId: string, text: string): Promise<string> {
-    if (!channelId) {throw new Error('channelId required');}
+    if (!channelId) {
+      throw new Error('channelId required');
+    }
     const name = botName || Array.from(this.botManagers.keys())[0];
     return this.sendMessageToChannel(channelId, text, name);
   }
@@ -1073,7 +1191,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
       globalMetrics: metrics.getMetrics(),
     };
   }
-
 }
 
 export default SlackService;

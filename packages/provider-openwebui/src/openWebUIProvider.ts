@@ -1,8 +1,8 @@
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
-import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
 
@@ -11,7 +11,7 @@ const openWebUIClient = axios.create({
   baseURL: openWebUIConfig.get('apiUrl'),
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ollama',  // Adjust as needed
+    Authorization: 'Bearer ollama', // Adjust as needed
   },
   timeout: 15000,
 });
@@ -28,12 +28,12 @@ export const openWebUIProvider: ILlmProvider = {
 
   async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = [],
+    historyMessages: IMessage[] = []
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
     const messages = [
-      ...historyMessages.map(msg => ({ role: 'user', content: msg.getText() })),
+      ...historyMessages.map((msg) => ({ role: 'user', content: msg.getText() })),
       { role: 'user', content: userMessage },
     ];
 

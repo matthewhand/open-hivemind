@@ -1,7 +1,7 @@
 import {
   buildUrl,
-  normalizeUrl,
   ensureTrailingSlash,
+  normalizeUrl,
   removeTrailingSlash,
 } from '../../src/common/urlUtils';
 
@@ -21,8 +21,12 @@ describe('urlUtils', () => {
     it('should join paths correctly, handling leading/trailing slashes', () => {
       expect(buildUrl('https://example.com', 'users')).toBe('https://example.com/users');
       expect(buildUrl('https://example.com/', '/users/')).toBe('https://example.com/users');
-      expect(buildUrl('https://example.com/api', 'v1', 'users')).toBe('https://example.com/api/v1/users');
-      expect(buildUrl('https://example.com/api/', '/v1/', 'users/')).toBe('https://example.com/api/v1/users');
+      expect(buildUrl('https://example.com/api', 'v1', 'users')).toBe(
+        'https://example.com/api/v1/users'
+      );
+      expect(buildUrl('https://example.com/api/', '/v1/', 'users/')).toBe(
+        'https://example.com/api/v1/users'
+      );
     });
 
     it('should preserve protocol and domain', () => {

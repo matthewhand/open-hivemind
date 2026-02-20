@@ -1,7 +1,6 @@
 import Debug from 'debug';
-
-import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { Client } from 'discord.js';
+import type { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from './sendMessageToChannel';
 
 const debug = Debug('app:interaction:sendFollowUp');
@@ -17,7 +16,12 @@ const debug = Debug('app:interaction:sendFollowUp');
  * @param {string} topic - The topic of the follow-up message.
  * @returns {Promise<void>} - The function returns a promise that resolves when the follow-up is sent.
  */
-export async function sendFollowUp(client: Client, message: IMessage, channelId: string, topic: string): Promise<void> {
+export async function sendFollowUp(
+  client: Client,
+  message: IMessage,
+  channelId: string,
+  topic: string
+): Promise<void> {
   const followUpContent = 'Continuing the discussion on: ' + topic;
   debug('Sending follow-up message to channel ID: ' + channelId + '. Topic: ' + topic);
   await sendMessageToChannel(client, channelId, followUpContent);

@@ -1,15 +1,16 @@
-import messageConfig from '@config/messageConfig';
 import Debug from 'debug';
-import { shouldReplyToUnsolicitedMessage, looksLikeOpportunity } from '../unsolicitedMessageHandler';
-
-import { IncomingMessageDensity } from './IncomingMessageDensity';
+import messageConfig from '@config/messageConfig';
+import TypingMonitor from '../monitoring/TypingMonitor';
+import {
+  looksLikeOpportunity,
+  shouldReplyToUnsolicitedMessage,
+} from '../unsolicitedMessageHandler';
 import { getLastBotActivity } from './ChannelActivity';
 import { GlobalActivityTracker } from './GlobalActivityTracker';
-
+import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { isBotNameInText } from './MentionDetector';
-import { isOnTopic } from './SemanticRelevanceChecker';
-import TypingMonitor from '../monitoring/TypingMonitor';
 import { getMessageSetting } from './ResponseProfile';
+import { isOnTopic } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -26,7 +27,7 @@ export async function shouldReplyToMessage(
   botNameOrNames?: string | string[],
   historyMessages?: any[],
   defaultChannelId?: string,
-  botConfig?: Record<string, any>,
+  botConfig?: Record<string, any>
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -43,43 +44,55 @@ export async function shouldReplyToMessage(
   const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
   const wakewords = Array.isArray(wakewordsRaw)
     ? wakewordsRaw
-    : String(wakewordsRaw).split(',').map(s => s.trim());
+    : String(wakewordsRaw)
+        .split(',')
+        .map((s) => s.trim());
 
   const isDirectMention =
     (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
     (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
-    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
+    (typeof message.getUserMentions === 'function' &&
+      (message.getUserMentions() || []).includes(botId)) ||
     text.includes(`<@${botId}>`) ||
     text.includes(`<@!${botId}>`);
 
   const isReplyToBot =
     (typeof message.isReplyToBot === 'function' && Boolean(message.isReplyToBot())) ||
-    ((message as any)?.metadata?.replyTo?.userId === botId);
+    (message as any)?.metadata?.replyTo?.userId === botId;
 
   const replyToId = (message as any)?.metadata?.replyTo?.userId;
   const isReplyToOther = replyToId && replyToId !== botId;
 
-  const isWakeword = wakewords.some((word: string) => word && text.startsWith(String(word).toLowerCase()));
+  const isWakeword = wakewords.some(
+    (word: string) => word && text.startsWith(String(word).toLowerCase())
+  );
 
-  const namesRaw = Array.isArray(botNameOrNames) ? botNameOrNames : [botNameOrNames].filter(Boolean);
-  const nameCandidates = Array.from(new Set(
-    namesRaw
-      .flatMap((n) => {
-        const name = String(n || '').trim();
-        if (!name) {return [];}
-        // Filter out generic names like "Bot" or "Assistant" if we have other more specific names.
-        const genericNames = ['bot', 'assistant'];
-        if (genericNames.includes(name.toLowerCase()) && namesRaw.length > 1) {
-          return [];
-        }
-        const base = name.replace(/\s*#\d+\s*$/i, '').trim();
-        return base && base !== name ? [name, base] : [name];
-      })
-      .filter(Boolean),
-  ));
+  const namesRaw = Array.isArray(botNameOrNames)
+    ? botNameOrNames
+    : [botNameOrNames].filter(Boolean);
+  const nameCandidates = Array.from(
+    new Set(
+      namesRaw
+        .flatMap((n) => {
+          const name = String(n || '').trim();
+          if (!name) {
+            return [];
+          }
+          // Filter out generic names like "Bot" or "Assistant" if we have other more specific names.
+          const genericNames = ['bot', 'assistant'];
+          if (genericNames.includes(name.toLowerCase()) && namesRaw.length > 1) {
+            return [];
+          }
+          const base = name.replace(/\s*#\d+\s*$/i, '').trim();
+          return base && base !== name ? [name, base] : [name];
+        })
+        .filter(Boolean)
+    )
+  );
   const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
   const isDM = typeof message.isDirectMessage === 'function' && message.isDirectMessage();
-  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed || isDM;
+  const isDirectlyAddressed =
+    isDirectMention || isReplyToBot || isWakeword || isNameAddressed || isDM;
 
   const isFromBot = (() => {
     try {
@@ -95,7 +108,7 @@ export async function shouldReplyToMessage(
       debug('Message from bot itself. Not replying.');
       return { shouldReply: false, reason: 'Message from self' };
     }
-  } catch { }
+  } catch {}
 
   // 1. Global Ignore Bots
   if (isFromBot) {
@@ -103,7 +116,9 @@ export async function shouldReplyToMessage(
     if (ignoreBots) {
       return { shouldReply: false, reason: 'Bots ignored via config' };
     }
-    const limitToDefault = Boolean(messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'));
+    const limitToDefault = Boolean(
+      messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL')
+    );
     if (limitToDefault && defaultChannelId && channelId !== defaultChannelId) {
       return { shouldReply: false, reason: 'Bot replies limited to default channel' };
     }
@@ -114,14 +129,18 @@ export async function shouldReplyToMessage(
     const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
     const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
     const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
-    const timeSinceLastActivity = lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
+    const timeSinceLastActivity =
+      lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
 
     if (!(graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs)) {
       debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and not addressed, no grace; not replying.');
       return {
         shouldReply: false,
         reason: 'Not addressed (OnlyWhenSpokenTo)',
-        meta: { mods: 'none', last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never' },
+        meta: {
+          mods: 'none',
+          last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never',
+        },
       };
     }
   }
@@ -131,7 +150,8 @@ export async function shouldReplyToMessage(
     const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
     const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
     const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
-    const timeSinceLastActivity = lastActivityTime > 0 ? Math.max(0, (Date.now() - lastActivityTime)) : Infinity;
+    const timeSinceLastActivity =
+      lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
     const withinGrace = graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs;
 
     const allowUnaddressedBots = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
@@ -147,7 +167,9 @@ export async function shouldReplyToMessage(
   const authorId = (() => {
     try {
       return typeof message.getAuthorId === 'function' ? String(message.getAuthorId()) : undefined;
-    } catch { return undefined; }
+    } catch {
+      return undefined;
+    }
   })();
   let density: IncomingMessageDensity | null = null;
   try {
@@ -155,7 +177,7 @@ export async function shouldReplyToMessage(
     if (typeof (density as any).recordMessage === 'function') {
       (density as any).recordMessage(channelId, authorId, isFromBot);
     }
-  } catch { }
+  } catch {}
 
   // Analyze history for penalties
   const recentHistory = historyMessages ? historyMessages.slice(-15) : [];
@@ -177,23 +199,28 @@ export async function shouldReplyToMessage(
       } else {
         uniqueUsers.add(aid);
       }
-    } catch { }
+    } catch {}
   }
   if (authorId && authorId !== botId) {
-    if (isFromBot) {uniqueBots.add(authorId);}
-    else {uniqueUsers.add(authorId);}
+    if (isFromBot) {
+      uniqueBots.add(authorId);
+    } else {
+      uniqueUsers.add(authorId);
+    }
   }
 
-  const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * 0.10 * -1);
+  const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * 0.1 * -1);
   const tokenDensityPenalty = Math.max(0, selfTokenCount * 0.0001) * -1;
-  const userCountPenalty = uniqueUsers.size > 1 ? (Math.max(0, (uniqueUsers.size - 1) * 0.02) * -1) : 0;
+  const userCountPenalty =
+    uniqueUsers.size > 1 ? Math.max(0, (uniqueUsers.size - 1) * 0.02) * -1 : 0;
 
   // Unsolicited handler gating
   if (!isDirectlyAddressed) {
     try {
       if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
         const lastActivity = getLastBotActivity(channelId, botId);
-        const lastStr = lastActivity > 0 ? `${Math.round((Date.now() - lastActivity) / 1000)}s` : 'never';
+        const lastStr =
+          lastActivity > 0 ? `${Math.round((Date.now() - lastActivity) / 1000)}s` : 'never';
         return {
           shouldReply: false,
           reason: 'Unsolicited handler rejected (inactive channel)',
@@ -202,13 +229,19 @@ export async function shouldReplyToMessage(
       }
     } catch (err) {
       debug('Error in unsolicited message handler; not replying:', err);
-      return { shouldReply: false, reason: 'Unsolicited handler error', meta: { error: String(err) } };
+      return {
+        shouldReply: false,
+        reason: 'Unsolicited handler error',
+        meta: { error: String(err) },
+      };
     }
   }
 
   const mods: string[] = [];
   let lastPostTime = getLastBotActivity(channelId, botId);
-  const SILENCE_THRESHOLD = Number(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig)) || (5 * 60 * 1000);
+  const SILENCE_THRESHOLD =
+    Number(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig)) ||
+    5 * 60 * 1000;
 
   if (historyMessages && historyMessages.length > 0) {
     for (let i = historyMessages.length - 1; i >= 0; i--) {
@@ -216,21 +249,28 @@ export async function shouldReplyToMessage(
       if (m.authorId === botId) {
         const timestamp = (m as any).timestamp || (m as any).createdAt || 0;
         if (timestamp > 0) {
-          lastPostTime = Math.max(lastPostTime, timestamp instanceof Date ? timestamp.getTime() : timestamp);
+          lastPostTime = Math.max(
+            lastPostTime,
+            timestamp instanceof Date ? timestamp.getTime() : timestamp
+          );
           break;
         }
       }
     }
   }
 
-  const timeSinceLastActivity = lastPostTime > 0 ? Math.max(0, Date.now() - lastPostTime) : Infinity;
+  const timeSinceLastActivity =
+    lastPostTime > 0 ? Math.max(0, Date.now() - lastPostTime) : Infinity;
   const hasPostedRecently = timeSinceLastActivity < SILENCE_THRESHOLD;
   const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastActivity / 1000)}s ago` : 'never';
 
   let chance = 0.0;
   const baseChanceRaw = getMessageSetting('MESSAGE_UNSOLICITED_BASE_CHANCE', botConfig);
-  if (typeof baseChanceRaw === 'number') {chance = baseChanceRaw;}
-  else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') {chance = Number(baseChanceRaw);}
+  if (typeof baseChanceRaw === 'number') {
+    chance = baseChanceRaw;
+  } else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') {
+    chance = Number(baseChanceRaw);
+  }
 
   const baseChance = chance;
   mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
@@ -241,16 +281,19 @@ export async function shouldReplyToMessage(
     chance += recentBonus;
     mods.push(`+Recent(+${recentBonus.toFixed(2)})`);
   } else {
-    const windowRaw = getMessageSetting('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS', botConfig);
-    const windowMs = typeof windowRaw === 'number' ? windowRaw : Number(windowRaw) || (5 * 60 * 1000);
+    const windowRaw = getMessageSetting(
+      'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS',
+      botConfig
+    );
+    const windowMs = typeof windowRaw === 'number' ? windowRaw : Number(windowRaw) || 5 * 60 * 1000;
     let participants = 1;
     try {
       if (density && typeof (density as any).getUniqueParticipantCount === 'function') {
         participants = (density as any).getUniqueParticipantCount(channelId, windowMs);
       }
-    } catch { }
+    } catch {}
     participants = Math.max(1, participants);
-    const participantPenalty = Math.max(0, (participants - 2)) * 0.05 * -1;
+    const participantPenalty = Math.max(0, participants - 2) * 0.05 * -1;
     if (participantPenalty !== 0) {
       chance += participantPenalty;
       mods.push(`-Participants(${participantPenalty.toFixed(2)})`);
@@ -272,13 +315,16 @@ export async function shouldReplyToMessage(
 
   // Prevent bot-to-bot storms when the provided context contains no user messages at all.
   // Only apply when the triggering message is from a bot; do not penalize user-originated prompts.
-  const botRatioPenalty = (isFromBot && uniqueUsers.size === 0) ? -0.5 : 0;
+  const botRatioPenalty = isFromBot && uniqueUsers.size === 0 ? -0.5 : 0;
   chance += botRatioPenalty;
   mods.push(`BotRatio(${botRatioPenalty >= 0 ? '+' : ''}${botRatioPenalty.toFixed(2)})`);
 
   if (hasPostedRecently && historyMessages && historyMessages.length > 0) {
     try {
-      const recentContext = historyMessages.slice(-5).map((m: any) => `${m.getAuthorId?.() || 'unknown'}: ${m.getText?.() || ''}`).join('\n');
+      const recentContext = historyMessages
+        .slice(-5)
+        .map((m: any) => `${m.getAuthorId?.() || 'unknown'}: ${m.getText?.() || ''}`)
+        .join('\n');
       const newMessage = message.getText?.() || '';
       if (await isOnTopic(recentContext, newMessage)) {
         chance += 0.3;
@@ -287,10 +333,14 @@ export async function shouldReplyToMessage(
         chance -= 0.1;
         mods.push('-OffTopic(-0.1)');
       }
-    } catch { }
+    } catch {}
   }
 
-  const isAddressedToSomeone = (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).length > 0) || /^@\w+/.test(text) || isReplyToOther;
+  const isAddressedToSomeone =
+    (typeof message.getUserMentions === 'function' &&
+      (message.getUserMentions() || []).length > 0) ||
+    /^@\w+/.test(text) ||
+    isReplyToOther;
   if (isAddressedToSomeone && !isDirectlyAddressed) {
     chance -= 0.5;
     mods.push('AddressedToOther(-0.50)');
@@ -301,12 +351,14 @@ export async function shouldReplyToMessage(
   if (isDirectlyAddressed) {
     const myPatterns: RegExp[] = [
       new RegExp(`<@!?${botId}>`, 'i'),
-      ...nameCandidates.map(n => new RegExp(`${escapeRegExp(n)}\\b`, 'i')),
+      ...nameCandidates.map((n) => new RegExp(`${escapeRegExp(n)}\\b`, 'i')),
     ];
     let firstMatchIndex = Infinity;
     for (const pat of myPatterns) {
       const m = text.match(pat);
-      if (m && m.index !== undefined && m.index < firstMatchIndex) {firstMatchIndex = m.index;}
+      if (m && m.index !== undefined && m.index < firstMatchIndex) {
+        firstMatchIndex = m.index;
+      }
     }
     if (firstMatchIndex !== Infinity) {
       let preceding = text.substring(0, firstMatchIndex).replace(/<(@|!|#|&|a:)[^>]+>/g, '');
@@ -321,13 +373,12 @@ export async function shouldReplyToMessage(
     botId,
     platform,
     chance,
-    (isDirectMention || isWakeword || isNameAddressed || isDM),
+    isDirectMention || isWakeword || isNameAddressed || isDM,
     isLeadingAddress,
     isReplyToBot,
-    botConfig,
+    botConfig
   );
   chance = modResult.chance;
-
 
   // 5. BurstTraffic: Per-bot - only count messages AFTER this bot's last post
   try {
@@ -369,7 +420,7 @@ export async function shouldReplyToMessage(
 
     // UserActive bonus - encourage engagement when users are present
     if (userPostedRecently) {
-      chance += 0.20;
+      chance += 0.2;
       mods.push('+UserActive(+0.20)');
     }
 
@@ -377,14 +428,13 @@ export async function shouldReplyToMessage(
     if (density && typeof (density as any).getDensity === 'function') {
       const quietWindow = 300000;
       const { total: total5m } = (density as any).getDensity(channelId, quietWindow);
-      const quietBonus = 0.20 * Math.max(0, 1 - (total5m / 5));
+      const quietBonus = 0.2 * Math.max(0, 1 - total5m / 5);
       if (quietBonus > 0) {
         chance += quietBonus;
         mods.push(`+QuietChannel(+${quietBonus.toFixed(2)})`);
       }
     }
-  } catch { }
-
+  } catch {}
 
   // 6. Global Activity (Fatigue) Penalty
   const activityScore = GlobalActivityTracker.getInstance().getScore(botId);
@@ -433,7 +483,6 @@ export async function shouldReplyToMessage(
       chance *= crowdedMultiplier;
       modsObject['Crowded'] = crowdedMultiplier;
     }
-
   }
 
   chance = Math.max(0, Math.min(1, chance));
@@ -441,13 +490,22 @@ export async function shouldReplyToMessage(
   let decision = roll < chance;
 
   // Generate human-readable prose explanation
-  const prose = generateProseExplanation(modsObject, decision, isDirectlyAddressed, hasPostedRecently);
+  const prose = generateProseExplanation(
+    modsObject,
+    decision,
+    isDirectlyAddressed,
+    hasPostedRecently
+  );
 
   return {
     shouldReply: decision,
     reason: isDirectlyAddressed
-      ? (decision ? 'Directly addressed (chance roll success)' : 'Directly addressed (chance roll failure)')
-      : (decision ? 'Chance roll success' : 'Chance roll failure'),
+      ? decision
+        ? 'Directly addressed (chance roll success)'
+        : 'Directly addressed (chance roll failure)'
+      : decision
+        ? 'Chance roll success'
+        : 'Chance roll failure',
     meta: {
       probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),
@@ -462,14 +520,14 @@ export async function shouldReplyToMessage(
 const COLORS = {
   reset: '\x1b[0m',
   // Greens (bonuses) - lighter to darker
-  greenLight: '\x1b[92m',    // Bright green (slight bonus)
-  greenMed: '\x1b[32m',      // Green (moderate bonus)
-  greenDark: '\x1b[32;1m',   // Bold green (strong bonus)
+  greenLight: '\x1b[92m', // Bright green (slight bonus)
+  greenMed: '\x1b[32m', // Green (moderate bonus)
+  greenDark: '\x1b[32;1m', // Bold green (strong bonus)
   // Reds (penalties) - lighter to darker
-  redLight: '\x1b[91m',      // Bright red (slight penalty)
-  redMed: '\x1b[31m',        // Red (moderate penalty)
-  redDark: '\x1b[31;1m',     // Bold red (strong penalty)
-  gray: '\x1b[90m',          // Gray for neutral
+  redLight: '\x1b[91m', // Bright red (slight penalty)
+  redMed: '\x1b[31m', // Red (moderate penalty)
+  redDark: '\x1b[31;1m', // Bold red (strong penalty)
+  gray: '\x1b[90m', // Gray for neutral
 };
 
 /**
@@ -479,7 +537,9 @@ function generateColorizedModsSummary(mods: Record<string, number | string>): st
   const parts: string[] = [];
 
   for (const [name, value] of Object.entries(mods)) {
-    if (typeof value !== 'number') {continue;}
+    if (typeof value !== 'number') {
+      continue;
+    }
 
     const absVal = Math.abs(value);
     const isBonus = value > 0;
@@ -514,7 +574,6 @@ function generateColorizedModsSummary(mods: Record<string, number | string>): st
   return parts.join(' ');
 }
 
-
 /**
  * Generate a human-readable prose explanation of why the bot is responding/skipping
  * Uses modifier magnitudes to add adjectives (slight/moderate/strong)
@@ -523,14 +582,20 @@ function generateProseExplanation(
   mods: Record<string, number | string>,
   decided: boolean,
   wasDirectlyAddressed: boolean,
-  hasPostedRecently: boolean,
+  hasPostedRecently: boolean
 ): string {
   // Helper to get adjective based on magnitude
   const getAdjective = (value: number): string => {
     const abs = Math.abs(value);
-    if (abs <= 0.1) {return 'slightly';}
-    if (abs <= 0.3) {return '';}  // No adjective for moderate
-    if (abs <= 0.5) {return 'strongly';}
+    if (abs <= 0.1) {
+      return 'slightly';
+    }
+    if (abs <= 0.3) {
+      return '';
+    } // No adjective for moderate
+    if (abs <= 0.5) {
+      return 'strongly';
+    }
     return 'very strongly';
   };
 
@@ -593,12 +658,12 @@ function generateProseExplanation(
   if (decided) {
     if (wasDirectlyAddressed) {
       return bonuses.length > 0
-        ? `Responding to direct mention (plus ${bonuses.map(b => b.phrase).join(', ')}).`
+        ? `Responding to direct mention (plus ${bonuses.map((b) => b.phrase).join(', ')}).`
         : 'Responding to direct address.';
     }
 
     if (bonuses.length > 0) {
-      const all = bonuses.map(b => {
+      const all = bonuses.map((b) => {
         const adj = getAdjective(b.value);
         return adj ? `${adj} ${b.phrase}` : b.phrase;
       });
@@ -608,9 +673,8 @@ function generateProseExplanation(
       ? 'Responding to continue the conversation.'
       : 'Responding based on chance.';
   } else {
-
     if (penalties.length > 0) {
-      const all = penalties.map(p => {
+      const all = penalties.map((p) => {
         const adj = getAdjective(p.value);
         return adj ? `${adj} ${p.phrase}` : p.phrase;
       });
@@ -621,21 +685,24 @@ function generateProseExplanation(
 }
 
 function formatList(items: string[]): string {
-  if (items.length === 0) {return '';}
-  if (items.length === 1) {return items[0];}
-  if (items.length === 2) {return `${items[0]} and ${items[1]}`;}
+  if (items.length === 0) {
+    return '';
+  }
+  if (items.length === 1) {
+    return items[0];
+  }
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 }
 
 function extractModifierTokens(modifiers?: string): string[] {
-  if (!modifiers || modifiers === 'none') {return [];}
+  if (!modifiers || modifiers === 'none') {
+    return [];
+  }
   return modifiers.match(/[+\-×]?[\w!]+\([^)]+\)/g) || [];
 }
-
-
-
-
-
 
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -649,7 +716,7 @@ function applyModifiers(
   isDirectlyAddressed: boolean = false,
   isLeadingAddress: boolean = false,
   isReplyToBot: boolean = false,
-  botConfig?: Record<string, any>,
+  botConfig?: Record<string, any>
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
@@ -681,13 +748,18 @@ function applyModifiers(
     }
   }
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
-    const botModifier = Number(getMessageSetting('MESSAGE_BOT_RESPONSE_MODIFIER', botConfig)) || -0.1;
+    const botModifier =
+      Number(getMessageSetting('MESSAGE_BOT_RESPONSE_MODIFIER', botConfig)) || -0.1;
     chance += botModifier;
     mods.push(`${botModifier >= 0 ? '+' : ''}BotResponse(${botModifier})`);
   }
 
-  const channelBonuses: Record<string, number> = (messageConfig.get as any)('CHANNEL_BONUSES') || {};
-  const channelBonus = typeof channelBonuses?.[message.getChannelId()] === 'number' ? channelBonuses[message.getChannelId()] : 1.0;
+  const channelBonuses: Record<string, number> =
+    (messageConfig.get as any)('CHANNEL_BONUSES') || {};
+  const channelBonus =
+    typeof channelBonuses?.[message.getChannelId()] === 'number'
+      ? channelBonuses[message.getChannelId()]
+      : 1.0;
   if (channelBonus !== 1.0) {
     const additiveBonus = channelBonus - 1.0;
     chance += additiveBonus;

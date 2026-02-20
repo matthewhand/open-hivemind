@@ -157,7 +157,7 @@ export class BotConfigurationDAO {
 
   async findById(id: number): Promise<BotConfiguration | null> {
     const sql = `SELECT * FROM ${this.tableName} WHERE id = ?`;
-    
+
     try {
       const row = await this.db.get(sql, [id]);
       return row ? this.mapRow(row) : null;
@@ -169,7 +169,7 @@ export class BotConfigurationDAO {
 
   async findByName(name: string): Promise<BotConfiguration | null> {
     const sql = `SELECT * FROM ${this.tableName} WHERE name = ?`;
-    
+
     try {
       const row = await this.db.get(sql, [name]);
       return row ? this.mapRow(row) : null;
@@ -192,7 +192,7 @@ export class BotConfigurationDAO {
 
     try {
       const rows = await this.db.all(sql, params);
-      return rows.map(row => this.mapRow(row));
+      return rows.map((row) => this.mapRow(row));
     } catch (err) {
       Logger.error('Error finding all bot configurations:', err);
       throw err;
@@ -212,7 +212,7 @@ export class BotConfigurationDAO {
 
     try {
       const rows = await this.db.all(sql, params);
-      return rows.map(row => this.mapRow(row));
+      return rows.map((row) => this.mapRow(row));
     } catch (err) {
       Logger.error('Error finding active bot configurations:', err);
       throw err;
@@ -225,10 +225,20 @@ export class BotConfigurationDAO {
 
     Object.entries(config).forEach(([key, value]) => {
       if (value !== undefined && key !== 'id') {
-        if (key === 'mcpServers' || key === 'mcpGuard' || key === 'discord' || 
-            key === 'slack' || key === 'mattermost' || key === 'openai' || 
-            key === 'flowise' || key === 'openwebui' || key === 'openswarm' || 
-            key === 'perplexity' || key === 'replicate' || key === 'n8n') {
+        if (
+          key === 'mcpServers' ||
+          key === 'mcpGuard' ||
+          key === 'discord' ||
+          key === 'slack' ||
+          key === 'mattermost' ||
+          key === 'openai' ||
+          key === 'flowise' ||
+          key === 'openwebui' ||
+          key === 'openswarm' ||
+          key === 'perplexity' ||
+          key === 'replicate' ||
+          key === 'n8n'
+        ) {
           updates.push(`${key} = ?`);
           params.push(value ? JSON.stringify(value) : null);
         } else if (key === 'isActive') {
@@ -276,7 +286,7 @@ export class BotConfigurationDAO {
 
   async activate(id: number): Promise<void> {
     const sql = `UPDATE ${this.tableName} SET isActive = 1, updatedAt = ? WHERE id = ?`;
-    
+
     try {
       await this.db.run(sql, [new Date().toISOString(), id]);
     } catch (err) {
@@ -287,7 +297,7 @@ export class BotConfigurationDAO {
 
   async deactivate(id: number): Promise<void> {
     const sql = `UPDATE ${this.tableName} SET isActive = 0, updatedAt = ? WHERE id = ?`;
-    
+
     try {
       await this.db.run(sql, [new Date().toISOString(), id]);
     } catch (err) {
@@ -304,21 +314,37 @@ export class BotConfigurationDAO {
   }> {
     try {
       const totalRow = await this.db.get('SELECT COUNT(*) as total FROM ' + this.tableName);
-      const activeRow = await this.db.get('SELECT COUNT(*) as active FROM ' + this.tableName + ' WHERE isActive = 1');
-      const providerRows = await this.db.all('SELECT messageProvider, COUNT(*) as count FROM ' + this.tableName + ' GROUP BY messageProvider');
-      const tenantRows = await this.db.all('SELECT COALESCE(tenantId, "default") as tenant, COUNT(*) as count FROM ' + this.tableName + ' GROUP BY tenantId');
+      const activeRow = await this.db.get(
+        'SELECT COUNT(*) as active FROM ' + this.tableName + ' WHERE isActive = 1'
+      );
+      const providerRows = await this.db.all(
+        'SELECT messageProvider, COUNT(*) as count FROM ' +
+          this.tableName +
+          ' GROUP BY messageProvider'
+      );
+      const tenantRows = await this.db.all(
+        'SELECT COALESCE(tenantId, "default") as tenant, COUNT(*) as count FROM ' +
+          this.tableName +
+          ' GROUP BY tenantId'
+      );
 
       return {
         total: totalRow.total,
         active: activeRow.active,
-        byProvider: providerRows.reduce((acc, row) => {
-          acc[row.messageProvider] = row.count;
-          return acc;
-        }, {} as Record<string, number>),
-        byTenant: tenantRows.reduce((acc, row) => {
-          acc[row.tenant] = row.count;
-          return acc;
-        }, {} as Record<string, number>),
+        byProvider: providerRows.reduce(
+          (acc, row) => {
+            acc[row.messageProvider] = row.count;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
+        byTenant: tenantRows.reduce(
+          (acc, row) => {
+            acc[row.tenant] = row.count;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       };
     } catch (err) {
       Logger.error('Error getting statistics:', err);

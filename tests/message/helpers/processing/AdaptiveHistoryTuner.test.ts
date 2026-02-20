@@ -15,7 +15,7 @@ describe('AdaptiveHistoryTuner', () => {
       receivedCount: first,
       keptCount: Math.max(0, first - 4),
       estimatedTotalTokens: 950,
-      inputBudgetTokens: 1000
+      inputBudgetTokens: 1000,
     });
     const next = tuner.getDesiredLimit(key, base);
     expect(next).toBeLessThanOrEqual(first);
@@ -31,10 +31,9 @@ describe('AdaptiveHistoryTuner', () => {
       receivedCount: first, // saturating
       keptCount: first,
       estimatedTotalTokens: 200,
-      inputBudgetTokens: 1000
+      inputBudgetTokens: 1000,
     });
     const next = tuner.getDesiredLimit(key, base);
     expect(next).toBeGreaterThanOrEqual(first);
   });
 });
-

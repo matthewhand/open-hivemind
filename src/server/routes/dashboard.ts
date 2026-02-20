@@ -1,7 +1,6 @@
 import { Router } from 'express';
+import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import WebSocketService from '@src/server/services/WebSocketService';
-import type { MessageFlowEvent } from '@src/server/services/WebSocketService';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -21,7 +20,8 @@ function isProviderConnected(bot: any): boolean {
     }
     if (bot.messageProvider === 'discord') {
       const svc = require('@hivemind/adapter-discord') as any;
-      const instance = svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
+      const instance =
+        svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
@@ -38,7 +38,7 @@ router.get('/api/status', (req, res) => {
     const ws = WebSocketService.getInstance();
 
     // Keep status lightweight and deterministic for tests: mark configured bots as active
-    const status = bots.map(bot => ({
+    const status = bots.map((bot) => ({
       id: bot.name, // Using name as ID for now, could be improved with a real ID
       name: bot.name,
       provider: bot.messageProvider,
@@ -62,7 +62,7 @@ router.get('/api/activity', (req, res) => {
     const ws = WebSocketService.getInstance();
 
     const botList = manager.getAllBots();
-    const botMap = new Map(botList.map(bot => [bot.name, bot]));
+    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
 
     const botFilter = parseMultiParam(req.query.bot);
     const providerFilter = parseMultiParam(req.query.messageProvider);
@@ -70,14 +70,24 @@ router.get('/api/activity', (req, res) => {
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const allEvents = ws.getMessageFlow(1000).map(event => annotateEvent(event, botMap));
-    const filteredEvents = allEvents.filter(event => {
-      if (botFilter.length && !botFilter.includes(event.botName)) { return false; }
-      if (providerFilter.length && !providerFilter.includes(event.provider)) { return false; }
-      if (llmFilter.length && !llmFilter.includes(event.llmProvider)) { return false; }
+    const allEvents = ws.getMessageFlow(1000).map((event) => annotateEvent(event, botMap));
+    const filteredEvents = allEvents.filter((event) => {
+      if (botFilter.length && !botFilter.includes(event.botName)) {
+        return false;
+      }
+      if (providerFilter.length && !providerFilter.includes(event.provider)) {
+        return false;
+      }
+      if (llmFilter.length && !llmFilter.includes(event.llmProvider)) {
+        return false;
+      }
       const ts = new Date(event.timestamp).getTime();
-      if (from && ts < from.getTime()) { return false; }
-      if (to && ts > to.getTime()) { return false; }
+      if (from && ts < from.getTime()) {
+        return false;
+      }
+      if (to && ts > to.getTime()) {
+        return false;
+      }
       return true;
     });
 
@@ -87,9 +97,9 @@ router.get('/api/activity', (req, res) => {
     res.json({
       events: filteredEvents.slice(-200),
       filters: {
-        agents: Array.from(new Set(allEvents.map(event => event.botName))).sort(),
-        messageProviders: Array.from(new Set(allEvents.map(event => event.provider))).sort(),
-        llmProviders: Array.from(new Set(allEvents.map(event => event.llmProvider))).sort(),
+        agents: Array.from(new Set(allEvents.map((event) => event.botName))).sort(),
+        messageProviders: Array.from(new Set(allEvents.map((event) => event.provider))).sort(),
+        llmProviders: Array.from(new Set(allEvents.map((event) => event.llmProvider))).sort(),
       },
       timeline,
       agentMetrics,
@@ -103,26 +113,33 @@ router.get('/api/activity', (req, res) => {
 export default router;
 
 function parseMultiParam(value: unknown): string[] {
-  if (!value) { return []; }
+  if (!value) {
+    return [];
+  }
   if (Array.isArray(value)) {
     return value.flatMap(parseMultiParam).filter(Boolean);
   }
   if (typeof value === 'string') {
     return value
       .split(',')
-      .map(entry => entry.trim())
+      .map((entry) => entry.trim())
       .filter(Boolean);
   }
   return [];
 }
 
 function parseDate(value: unknown): Date | null {
-  if (!value || typeof value !== 'string') { return null; }
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function annotateEvent(event: MessageFlowEvent, botMap: Map<string, { llmProvider: string }>): AnnotatedEvent {
+function annotateEvent(
+  event: MessageFlowEvent,
+  botMap: Map<string, { llmProvider: string }>
+): AnnotatedEvent {
   const bot = botMap.get(event.botName);
   return {
     ...event,
@@ -132,11 +149,16 @@ function annotateEvent(event: MessageFlowEvent, botMap: Map<string, { llmProvide
 
 function buildTimeline(events: AnnotatedEvent[]) {
   const bucketMs = 60 * 1000; // 1 minute buckets
-  const buckets = new Map<string, { messageProviders: Record<string, number>; llmProviders: Record<string, number> }>();
+  const buckets = new Map<
+    string,
+    { messageProviders: Record<string, number>; llmProviders: Record<string, number> }
+  >();
 
-  events.forEach(event => {
+  events.forEach((event) => {
     const timestamp = new Date(event.timestamp).getTime();
-    if (Number.isNaN(timestamp)) { return; }
+    if (Number.isNaN(timestamp)) {
+      return;
+    }
     const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
     const bucketKey = new Date(bucketStart).toISOString();
 
@@ -155,20 +177,25 @@ function buildTimeline(events: AnnotatedEvent[]) {
     .map(([timestamp, data]) => ({ timestamp, ...data }));
 }
 
-function buildAgentMetrics(events: AnnotatedEvent[],
-  botStats: Record<string, { messageCount: number; errors: string[] }>) {
-  const metrics = new Map<string, {
-    botName: string;
-    messageProvider: string;
-    llmProvider: string;
-    events: number;
-    errors: number;
-    lastActivity: string;
-    totalMessages: number;
-    recentErrors: string[];
-  }>();
+function buildAgentMetrics(
+  events: AnnotatedEvent[],
+  botStats: Record<string, { messageCount: number; errors: string[] }>
+) {
+  const metrics = new Map<
+    string,
+    {
+      botName: string;
+      messageProvider: string;
+      llmProvider: string;
+      events: number;
+      errors: number;
+      lastActivity: string;
+      totalMessages: number;
+      recentErrors: string[];
+    }
+  >();
 
-  events.forEach(event => {
+  events.forEach((event) => {
     const existing = metrics.get(event.botName);
     const errorsForBot = botStats[event.botName]?.errors ?? [];
     const totalMessages = botStats[event.botName]?.messageCount ?? 0;

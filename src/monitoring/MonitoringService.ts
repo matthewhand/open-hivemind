@@ -1,8 +1,7 @@
+import type { NextFunction, Request, Response } from 'express';
+import { AlertManager, type AlertConfig, type NotificationChannel } from './AlertManager';
 import { HealthChecker } from './HealthChecker';
-import type { AlertConfig, NotificationChannel } from './AlertManager';
-import { AlertManager } from './AlertManager';
 import { MetricsCollector } from './MetricsCollector';
-import type { Request, Response, NextFunction } from 'express';
 
 export interface MonitoringConfig {
   healthCheck: {
@@ -73,18 +72,15 @@ export class MonitoringService {
     // Initialize components
     this.healthChecker = new HealthChecker(
       this.config.healthCheck.interval,
-      this.config.healthCheck.maxHistory,
+      this.config.healthCheck.maxHistory
     );
 
-    this.alertManager = new AlertManager(
-      this.healthChecker,
-      this.config.alerts.config,
-    );
+    this.alertManager = new AlertManager(this.healthChecker, this.config.alerts.config);
 
     this.metricsCollector = MetricsCollector.getInstance();
 
     // Add notification channels
-    this.config.alerts.channels.forEach(channel => {
+    this.config.alerts.channels.forEach((channel) => {
       this.alertManager.addNotificationChannel(channel);
     });
 
@@ -150,7 +146,6 @@ export class MonitoringService {
       // Perform initial health check
       const initialHealth = await this.healthChecker.performHealthCheck();
       console.log(`🔍 Initial health status: ${initialHealth.status}`);
-
     } catch (error) {
       console.error('❌ Failed to start monitoring service:', error);
       throw error;
@@ -213,8 +208,10 @@ export class MonitoringService {
       try {
         const healthCheck = await this.healthChecker.performHealthCheck();
 
-        res.status(healthCheck.status === 'healthy' ? 200 :
-          healthCheck.status === 'degraded' ? 429 : 503)
+        res
+          .status(
+            healthCheck.status === 'healthy' ? 200 : healthCheck.status === 'degraded' ? 429 : 503
+          )
           .json(healthCheck);
       } catch (error) {
         console.error('Health check endpoint error:', error);
@@ -278,18 +275,18 @@ export class MonitoringService {
 
         let result: boolean;
         switch (action) {
-        case 'acknowledge':
-          result = this.alertManager.acknowledgeAlert(alertId);
-          break;
-        case 'resolve':
-          result = this.alertManager.resolveAlert(alertId);
-          break;
-        default:
-          res.status(400).json({
-            status: 'error',
-            message: 'Invalid action. Use "acknowledge" or "resolve"',
-          });
-          return;
+          case 'acknowledge':
+            result = this.alertManager.acknowledgeAlert(alertId);
+            break;
+          case 'resolve':
+            result = this.alertManager.resolveAlert(alertId);
+            break;
+          default:
+            res.status(400).json({
+              status: 'error',
+              message: 'Invalid action. Use "acknowledge" or "resolve"',
+            });
+            return;
         }
 
         if (result) {
@@ -374,13 +371,17 @@ export class MonitoringService {
     const metricsData = await this.metricsCollector.exportMetricsData();
     const alertData = await this.alertManager.exportAlertData();
 
-    return JSON.stringify({
-      timestamp: new Date().toISOString(),
-      config: this.config,
-      health: JSON.parse(healthData),
-      metrics: JSON.parse(metricsData),
-      alerts: JSON.parse(alertData),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        timestamp: new Date().toISOString(),
+        config: this.config,
+        health: JSON.parse(healthData),
+        metrics: JSON.parse(metricsData),
+        alerts: JSON.parse(alertData),
+      },
+      null,
+      2
+    );
   }
 
   public async saveMonitoringReport(filePath: string): Promise<void> {
@@ -408,7 +409,7 @@ export class MonitoringService {
     health: any;
     alerts: any;
     metrics: any;
-    } {
+  } {
     return {
       isRunning: this.isRunning,
       config: this.config,

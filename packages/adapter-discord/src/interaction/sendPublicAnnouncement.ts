@@ -1,13 +1,16 @@
-import { EmbedBuilder, TextChannel, DMChannel, PartialGroupDMChannel } from 'discord.js';
 import Debug from 'debug';
+import { DMChannel, EmbedBuilder, PartialGroupDMChannel, TextChannel } from 'discord.js';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 import { DiscordService } from '../DiscordService';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const discordSvc = DiscordService.getInstance();
 
 const debug = Debug('app:sendPublicAnnouncement');
 
-export async function sendPublicAnnouncement(channelId: string, announcement: { title?: string; description?: string; color?: string }): Promise<void> {
+export async function sendPublicAnnouncement(
+  channelId: string,
+  announcement: { title?: string; description?: string; color?: string }
+): Promise<void> {
   const client = discordSvc.getClient();
 
   const embed = new EmbedBuilder()
@@ -24,7 +27,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
         'ValidationError' as any,
         'DISCORD_UNSUPPORTED_CHANNEL_TYPE',
         400,
-        { channelId, channelType: channel?.type },
+        { channelId, channelType: channel?.type }
       );
     }
     if (channel instanceof PartialGroupDMChannel) {
@@ -33,7 +36,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
         'ValidationError' as any,
         'DISCORD_CANNOT_SEND_TO_PARTIAL_GROUP_DM',
         400,
-        { channelId },
+        { channelId }
       );
     }
 
@@ -55,7 +58,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
       classification.type,
       'DISCORD_SEND_PUBLIC_ANNOUNCEMENT_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error, channelId },
+      { originalError: error, channelId }
     );
   }
 }

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from '../voice/voiceCommandHandler';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 export const joinVoiceCommand = new SlashCommandBuilder()
   .setName('join')
@@ -36,7 +36,9 @@ export async function handleJoinVoice(interaction: any): Promise<void> {
       console.error('Discord join voice channel error:', hivemindError);
     }
 
-    await interaction.reply(`Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`);
+    await interaction.reply(
+      `Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`
+    );
   }
 }
 

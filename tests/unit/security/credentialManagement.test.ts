@@ -1,5 +1,5 @@
-import { SecureConfigManager } from '../../../src/config/SecureConfigManager';
 import { redactSensitiveInfo } from '../../../src/common/redactSensitiveInfo';
+import { SecureConfigManager } from '../../../src/config/SecureConfigManager';
 
 describe('Credential Management and Secret Handling', () => {
   describe('Secure Config Manager', () => {
@@ -16,8 +16,8 @@ describe('Credential Management and Secret Handling', () => {
         type: 'bot' as const,
         data: {
           apiKey: 'secret_api_key_123',
-          password: 'secret_password'
-        }
+          password: 'secret_password',
+        },
       };
 
       // Store configuration
@@ -25,7 +25,7 @@ describe('Credential Management and Secret Handling', () => {
 
       // Retrieve configuration
       const retrievedConfig = await configManager.getConfig('test-config');
-      
+
       expect(retrievedConfig).not.toBeNull();
       expect(retrievedConfig?.id).toBe('test-config');
       expect(retrievedConfig?.name).toBe('Test Configuration');
@@ -43,14 +43,14 @@ describe('Credential Management and Secret Handling', () => {
         id: 'test-config-1',
         name: 'Test Configuration 1',
         type: 'bot' as const,
-        data: { apiKey: 'secret1' }
+        data: { apiKey: 'secret1' },
       };
 
       const testConfig2 = {
         id: 'test-config-2',
         name: 'Test Configuration 2',
         type: 'user' as const,
-        data: { password: 'secret2' }
+        data: { password: 'secret2' },
       };
 
       // Store configurations
@@ -59,7 +59,7 @@ describe('Credential Management and Secret Handling', () => {
 
       // List configurations
       const configIds = await configManager.listConfigs();
-      
+
       expect(configIds).toContain('test-config-1');
       expect(configIds).toContain('test-config-2');
     });
@@ -69,7 +69,7 @@ describe('Credential Management and Secret Handling', () => {
         id: 'test-config-delete',
         name: 'Test Configuration for Deletion',
         type: 'system' as const,
-        data: { secret: 'delete_me' }
+        data: { secret: 'delete_me' },
       };
 
       // Store configuration
@@ -87,7 +87,7 @@ describe('Credential Management and Secret Handling', () => {
       const deletedConfig = await configManager.getConfig('test-config-delete');
       expect(deletedConfig).toBeNull();
     });
- });
+  });
 
   describe('Sensitive Information Redaction', () => {
     test('should redact API keys from values', () => {

@@ -1,14 +1,14 @@
-import request from 'supertest';
 import express from 'express';
-import errorsRouter from '../../src/server/routes/errors';
+import request from 'supertest';
 import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
+import errorsRouter from '../../src/server/routes/errors';
 
 // Create a test express app
 const createTestApp = (addTestRoutes?: (app: express.Application) => void) => {
   const app = express();
   app.use(express.json());
   app.use('/api/errors', errorsRouter);
-  
+
   if (addTestRoutes) {
     addTestRoutes(app);
   }
@@ -39,7 +39,7 @@ describe('Error Handling Integration Tests', () => {
         url: 'https://example.com/dashboard',
         localStorage: { theme: 'dark', language: 'en' },
         sessionStorage: { sessionId: 'session-123' },
-        performance: { loadTime: 1500, firstContentfulPaint: 800 }
+        performance: { loadTime: 1500, firstContentfulPaint: 800 },
       };
 
       const response = await request(app)
@@ -50,7 +50,7 @@ describe('Error Handling Integration Tests', () => {
       expect(response.body).toEqual({
         success: true,
         correlationId: errorReport.correlationId,
-        message: 'Error report received and logged'
+        message: 'Error report received and logged',
       });
     });
 
@@ -67,7 +67,7 @@ describe('Error Handling Integration Tests', () => {
 
       expect(response.body).toEqual({
         error: 'Invalid error report: missing required fields',
-        required: ['message', 'correlationId']
+        required: ['message', 'correlationId'],
       });
     });
 
@@ -86,7 +86,7 @@ describe('Error Handling Integration Tests', () => {
       const errorReport = {
         name: 'NetworkError',
         message: 'Failed to fetch',
-        correlationId: 'frontend-correlation-123'
+        correlationId: 'frontend-correlation-123',
       };
 
       const response = await request(app)
@@ -102,20 +102,15 @@ describe('Error Handling Integration Tests', () => {
   describe('Error Statistics Endpoint', () => {
     test('should return error statistics', async () => {
       // First, log an error to ensure stats are not empty
-      await request(app)
-        .post('/api/errors/frontend')
-        .set('Content-Type', 'application/json')
-        .send({
-          name: 'TestError',
-          message: 'Stats Test',
-          correlationId: 'stats-123',
-          source: 'frontend'
-        });
+      await request(app).post('/api/errors/frontend').set('Content-Type', 'application/json').send({
+        name: 'TestError',
+        message: 'Stats Test',
+        correlationId: 'stats-123',
+        source: 'frontend',
+      });
 
-      const response = await request(app)
-        .get('/api/errors/stats')
-        .expect(200);
-      
+      const response = await request(app).get('/api/errors/stats').expect(200);
+
       expect(response.body).toHaveProperty('totalErrors');
       expect(response.body).toHaveProperty('errorTypes');
       expect(response.body.totalErrors).toBeGreaterThan(0);
@@ -126,33 +121,25 @@ describe('Error Handling Integration Tests', () => {
     test('should handle errors when getting statistics', async () => {
       // This test would need to mock the errorLogger to throw an error
       // For now, we'll just ensure the endpoint exists
-      await request(app)
-        .get('/api/errors/stats')
-        .expect(200);
+      await request(app).get('/api/errors/stats').expect(200);
     });
   });
 
   describe('Recent Errors Endpoint', () => {
     test('should return recent errors with default limit', async () => {
-      const response = await request(app)
-        .get('/api/errors/recent')
-        .expect(200);
+      const response = await request(app).get('/api/errors/recent').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
     });
 
     test('should return recent errors with custom limit', async () => {
-      const response = await request(app)
-        .get('/api/errors/recent?limit=10')
-        .expect(200);
+      const response = await request(app).get('/api/errors/recent?limit=10').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
     });
 
     test('should handle invalid limit parameter', async () => {
-      const response = await request(app)
-        .get('/api/errors/recent?limit=invalid')
-        .expect(200);
+      const response = await request(app).get('/api/errors/recent?limit=invalid').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
     });
@@ -166,9 +153,7 @@ describe('Error Handling Integration Tests', () => {
         });
       });
 
-      const response = await request(app)
-        .get('/test-error')
-        .expect(500);
+      const response = await request(app).get('/test-error').expect(500);
 
       expect(response.body.error).toBeDefined();
       expect(response.body.message).toContain('Test error for middleware');
@@ -181,9 +166,7 @@ describe('Error Handling Integration Tests', () => {
         });
       });
 
-      const response = await request(app)
-        .get('/test-async-error')
-        .expect(500);
+      const response = await request(app).get('/test-async-error').expect(500);
 
       expect(response.body.error).toBeDefined();
       expect(response.body.message).toContain('Test async error');
@@ -192,21 +175,17 @@ describe('Error Handling Integration Tests', () => {
 
   describe('CORS and Security Headers', () => {
     test('should include security headers in error responses', async () => {
-      const response = await request(app)
-        .post('/api/errors/frontend')
-        .send({
-          name: 'TestError',
-          message: 'Test message',
-          correlationId: 'test-123'
-        });
+      const response = await request(app).post('/api/errors/frontend').send({
+        name: 'TestError',
+        message: 'Test message',
+        correlationId: 'test-123',
+      });
 
       expect(response.headers).toHaveProperty('x-correlation-id');
     });
 
     test('should handle preflight OPTIONS requests', async () => {
-      await request(app)
-        .options('/api/errors/frontend')
-        .expect(204);
+      await request(app).options('/api/errors/frontend').expect(204);
     });
   });
 
@@ -215,20 +194,18 @@ describe('Error Handling Integration Tests', () => {
       const errorReport = {
         name: 'RapidError',
         message: 'Rapid test error',
-        correlationId: 'rapid-test-123'
+        correlationId: 'rapid-test-123',
       };
 
       // Send multiple requests rapidly
-      const promises = Array(5).fill(null).map(() =>
-        request(app)
-          .post('/api/errors/frontend')
-          .send(errorReport)
-      );
+      const promises = Array(5)
+        .fill(null)
+        .map(() => request(app).post('/api/errors/frontend').send(errorReport));
 
       const results = await Promise.all(promises);
-      
+
       // All should succeed (no rate limiting implemented yet, but structure is there)
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(200);
       });
     });
@@ -245,8 +222,8 @@ describe('Error Handling Integration Tests', () => {
           type: 'retry',
           attempts: 2,
           maxAttempts: 3,
-          nextRetry: Date.now() + 5000
-        }
+          nextRetry: Date.now() + 5000,
+        },
       };
 
       const response = await request(app)

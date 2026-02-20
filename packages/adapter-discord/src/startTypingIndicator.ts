@@ -40,12 +40,16 @@ export function sendTyping(channel: any, stopCondition: () => boolean): NodeJS.T
       debug('Typing indicator stopped.');
       return;
     }
-    console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+    console.debug(
+      'Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')'
+    );
     channel.sendTyping();
     debug('Typing indicator sent.');
   }, 15000);
 
-  console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+  console.debug(
+    'Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')'
+  );
   channel.sendTyping();
   debug('sendTyping: Interval started');
   return typingInterval;

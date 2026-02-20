@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { PersonaManager } from '../../managers/PersonaManager';
-import { validateRequest } from '../../validation/validateRequest';
 // Note: We'll likely need to create schemas for these, assuming minimal validation for now or generic object
 import { z } from 'zod';
+import { PersonaManager } from '../../managers/PersonaManager';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 const manager = PersonaManager.getInstance();
@@ -12,13 +12,23 @@ const CreatePersonaSchema = z.object({
   body: z.object({
     name: z.string().min(1),
     description: z.string().min(1),
-    category: z.enum(['general', 'customer_service', 'creative', 'technical', 'educational', 'entertainment', 'professional']),
-    traits: z.array(z.object({
-      name: z.string(),
-      value: z.string(),
-      weight: z.number().optional(),
-      type: z.string().optional(),
-    })),
+    category: z.enum([
+      'general',
+      'customer_service',
+      'creative',
+      'technical',
+      'educational',
+      'entertainment',
+      'professional',
+    ]),
+    traits: z.array(
+      z.object({
+        name: z.string(),
+        value: z.string(),
+        weight: z.number().optional(),
+        type: z.string().optional(),
+      })
+    ),
     systemPrompt: z.string().min(1),
   }),
 });

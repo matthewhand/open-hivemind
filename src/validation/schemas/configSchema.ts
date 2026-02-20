@@ -3,10 +3,12 @@ import { z } from 'zod';
 // Schema for updating global configuration
 // configName is optional - if omitted, updates are stored in user-config.json
 export const ConfigUpdateSchema = z.object({
-  body: z.object({
-    configName: z.string().optional(), // Now accepts any string or omitted for user config
-    updates: z.record(z.any()).optional(), // Optional - can send updates directly
-  }).passthrough(), // Allow additional properties for direct update format
+  body: z
+    .object({
+      configName: z.string().optional(), // Now accepts any string or omitted for user config
+      updates: z.record(z.any()).optional(), // Optional - can send updates directly
+    })
+    .passthrough(), // Allow additional properties for direct update format
 });
 
 // Schema for restoring configuration from backup

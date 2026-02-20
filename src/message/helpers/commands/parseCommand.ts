@@ -22,23 +22,25 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
     debug('Command content is null or undefined.');
     return null;
   }
-  
+
   const trimmedContent = commandContent.trim();
   if (!trimmedContent || !trimmedContent.startsWith('!')) {
     debug('Not a command message.');
     return null;
   }
-  
+
   debug('Attempting to parse command content: ' + trimmedContent);
-  
+
   // Define regex for command parsing: !commandName:action args
   const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
   const matches = trimmedContent.match(commandRegex);
-  
+
   if (matches) {
     const [, commandName, action = '', argsString = ''] = matches;
     const args = argsString.trim() ? argsString.trim().split(/\s+/) : [];
-    debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args.join(' '));
+    debug(
+      'Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args.join(' ')
+    );
     return { commandName: commandName.toLowerCase(), action, args };
   } else {
     debug('Command content did not match expected pattern.');

@@ -16,7 +16,11 @@ export const testSlackConnection = async (botToken: string): Promise<SlackConnec
   try {
     const response = await client.auth.test();
     if (!response.ok) {
-      return { ok: false, message: response.error || 'Slack auth.test failed', details: response as any };
+      return {
+        ok: false,
+        message: response.error || 'Slack auth.test failed',
+        details: response as any,
+      };
     }
 
     return {

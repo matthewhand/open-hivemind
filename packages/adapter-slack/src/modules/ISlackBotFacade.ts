@@ -6,7 +6,11 @@ const debug = Debug('app:SlackBotFacade');
 
 export interface ISlackBotFacade {
   initialize(botName: string, botManager: SlackBotManager): Promise<void>;
-  joinConfiguredChannels(botName: string, botManager: SlackBotManager, welcomeHandler?: SlackWelcomeHandler): Promise<void>;
+  joinConfiguredChannels(
+    botName: string,
+    botManager: SlackBotManager,
+    welcomeHandler?: SlackWelcomeHandler
+  ): Promise<void>;
   getFirstBotInfo(botManager: SlackBotManager): any | undefined;
   getAllBots(botManager: SlackBotManager): any[];
 }
@@ -23,12 +27,14 @@ export class SlackBotFacade implements ISlackBotFacade {
   async joinConfiguredChannels(
     botName: string,
     botManager: SlackBotManager,
-    welcomeHandler?: SlackWelcomeHandler,
+    welcomeHandler?: SlackWelcomeHandler
   ): Promise<void> {
     debug('joinConfiguredChannels()', { botName });
     const bots = botManager.getAllBots();
     for (const botInfo of bots) {
-      debug(`Joining channels for bot: ${botInfo.botUserName || botInfo.botToken?.substring(0, 8)}`);
+      debug(
+        `Joining channels for bot: ${botInfo.botUserName || botInfo.botToken?.substring(0, 8)}`
+      );
       if (welcomeHandler) {
         await welcomeHandler.joinConfiguredChannelsForBot(botInfo);
       }

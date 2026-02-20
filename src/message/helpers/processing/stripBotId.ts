@@ -1,5 +1,5 @@
-import messageConfig from '@config/messageConfig';
 import Debug from 'debug';
+import messageConfig from '@config/messageConfig';
 
 const debug = Debug('app:stripBotId');
 

@@ -1,4 +1,8 @@
-import { handleStatusCommand, getSystemStatus, formatStatusResponse } from '../../../../src/message/helpers/commands/statusCommand';
+import {
+  formatStatusResponse,
+  getSystemStatus,
+  handleStatusCommand,
+} from '../../../../src/message/helpers/commands/statusCommand';
 
 // Mock system dependencies
 jest.mock('os', () => ({
@@ -79,7 +83,7 @@ describe('status command functions', () => {
       uptime: 3600,
       memory: { free: 1024, total: 4096, used: 3072 },
       loadAverage: [0.5, 0.7, 0.8],
-      timestamp: new Date('2023-01-01T00:00:00Z')
+      timestamp: new Date('2023-01-01T00:00:00Z'),
     };
 
     result = formatStatusResponse(mockStatus, []);

@@ -1,7 +1,8 @@
 import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider';
+import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
+
 // DiscordMessageProvider imported dynamically to avoid ESM require error
 
 const debug = Debug('app:mcp');
@@ -24,7 +25,18 @@ export class MCPService {
   private clients: Map<string, any> = new Map();
   private tools: Map<string, MCPTool[]> = new Map();
 
-  private constructor() { }
+  private constructor() {}
+
+  /**
+   * Gets the singleton instance of MCPService.
+   *
+   * @returns {MCPService} The singleton instance
+   * @example
+   * ```typescript
+   * const mcpService = MCPService.getInstance();
+   * const tools = mcpService.getAllTools();
+   * ```
+   */
 
   public static getInstance(): MCPService {
     if (!MCPService.instance) {
@@ -36,6 +48,22 @@ export class MCPService {
   /**
    * Connect to an MCP server and discover its tools
    */
+  /**
+   * Connects to an MCP server and discovers available tools.
+   *
+   * @param {MCPConfig} config - The server configuration containing URL and API key
+   * @returns {Promise<MCPTool[]>} Array of discovered tools from the server
+   * @throws {Error} If connection fails or server is unreachable
+   * @example
+   * ```typescript
+   * const tools = await mcpService.connectToServer({
+   *   name: 'my-server',
+   *   serverUrl: 'https://api.example.com/mcp',
+   *   apiKey: 'secret-key'
+   * });
+   * ```
+   */
+
   public async connectToServer(config: MCPConfig): Promise<MCPTool[]> {
     try {
       debug(`Connecting to MCP server: ${config.name} at ${config.serverUrl}`);
@@ -75,7 +103,9 @@ export class MCPService {
       return mcpTools;
     } catch (error) {
       debug(`Error connecting to MCP server ${config.name}:`, error);
-      throw new Error(`Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -93,7 +123,9 @@ export class MCPService {
       }
     } catch (error) {
       debug(`Error disconnecting from MCP server ${serverName}:`, error);
-      throw new Error(`Failed to disconnect from MCP server ${serverName}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to disconnect from MCP server ${serverName}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -102,17 +134,17 @@ export class MCPService {
    */
   public async disconnectAll(): Promise<void> {
     debug('Disconnecting from all MCP servers...');
-    
+
     const serverNames = Array.from(this.clients.keys());
-    const disconnectPromises = serverNames.map(
-      serverName => this.disconnectFromServer(serverName)
+    const disconnectPromises = serverNames.map((serverName) =>
+      this.disconnectFromServer(serverName)
     );
-    
+
     await Promise.allSettled(disconnectPromises);
-    
+
     this.clients.clear();
     this.tools.clear();
-    
+
     debug('All MCP connections closed');
   }
 
@@ -144,6 +176,31 @@ export class MCPService {
   /**
    * Execute a tool from a connected MCP server
    */
+  /**
+   * Executes a tool on a connected MCP server.
+   *
+   * @param {string} serverName - The name of the MCP server
+   * @param {string} toolName - The name of the tool to execute
+   * @param {any} arguments_ - The arguments to pass to the tool
+   * @param {Object} [context] - Optional execution context for guard validation
+   * @param {string} [context.botName] - The bot name for guard checks
+   * @param {string} [context.messageProvider] - The message provider type
+   * @param {string} [context.forumId] - The forum/channel ID
+   * @param {string} [context.forumOwnerId] - The forum owner's user ID
+   * @param {string} [context.userId] - The user ID executing the tool
+   * @returns {Promise<any>} The result from the tool execution
+   * @throws {Error} If not connected to server or tool execution fails
+   * @example
+   * ```typescript
+   * const result = await mcpService.executeTool(
+   *   'my-server',
+   *   'search',
+   *   { query: 'hello world' },
+   *   { botName: 'assistant', userId: 'user123' }
+   * );
+   * ```
+   */
+
   public async executeTool(
     serverName: string,
     toolName: string,
@@ -154,7 +211,7 @@ export class MCPService {
       forumId?: string;
       forumOwnerId?: string;
       userId?: string;
-    },
+    }
   ): Promise<any> {
     try {
       if (context?.botName) {
@@ -176,7 +233,9 @@ export class MCPService {
       return result;
     } catch (error) {
       debug(`Error executing tool ${toolName} on server ${serverName}:`, error);
-      throw new Error(`Failed to execute tool ${toolName} on server ${serverName}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to execute tool ${toolName} on server ${serverName}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -223,7 +282,10 @@ export class MCPService {
     }
   }
 
-  private async resolveForumOwner(providerName: string | undefined, forumId: string): Promise<string | null> {
+  private async resolveForumOwner(
+    providerName: string | undefined,
+    forumId: string
+  ): Promise<string | null> {
     if (!providerName) {
       return null;
     }
@@ -237,7 +299,8 @@ export class MCPService {
       }
 
       if (normalized === 'discord') {
-        const { DiscordMessageProvider } = await import('@hivemind/adapter-discord/providers/DiscordMessageProvider');
+        const { DiscordMessageProvider } =
+          await import('@hivemind/adapter-discord/providers/DiscordMessageProvider');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }

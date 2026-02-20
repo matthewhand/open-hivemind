@@ -1,7 +1,7 @@
+import flowiseConfig from '@config/flowiseConfig';
 import flowiseProvider from '@integrations/flowise/flowiseProvider';
 import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
-import flowiseConfig from '@config/flowiseConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IMessage } from '@message/interfaces/IMessage';
 
@@ -15,17 +15,18 @@ const mockedGetFlowiseSdkResponse = getFlowiseSdkResponse as jest.Mock;
 const mockedGetLlmProvider = getLlmProvider as jest.Mock;
 const mockedFlowiseConfig = flowiseConfig as jest.Mocked<typeof flowiseConfig>;
 
-const createMockMessage = (text: string, role: 'user' | 'assistant' = 'user'): IMessage => ({
+const createMockMessage = (text: string, role: 'user' | 'assistant' = 'user'): IMessage =>
+  ({
     getText: () => text,
-    getAuthorId: () => role === 'user' ? 'user123' : 'bot456',
-    getAuthorName: () => role === 'user' ? 'TestUser' : 'FlowiseBot',
+    getAuthorId: () => (role === 'user' ? 'user123' : 'bot456'),
+    getAuthorName: () => (role === 'user' ? 'TestUser' : 'FlowiseBot'),
     getChannelId: () => 'channel123',
     getMessageId: () => `msg_${Date.now()}`,
     getTimestamp: () => new Date(),
     isFromBot: () => role === 'assistant',
     getUserMentions: () => [],
     hasAttachments: () => false,
-} as any);
+  }) as any;
 
 describe('FlowiseProvider Integration', () => {
   beforeEach(() => {
@@ -33,11 +34,11 @@ describe('FlowiseProvider Integration', () => {
     // Set default config values
     mockedFlowiseConfig.get.mockImplementation((key: string | null | undefined) => {
       const defaultConfig: Record<string, any> = {
-        'FLOWISE_USE_REST': false,
-        'FLOWISE_CONVERSATION_CHATFLOW_ID': 'test-chatflow-id',
-        'FLOWISE_BASE_URL': 'http://localhost:3000',
-        'FLOWISE_API_KEY': 'test-api-key',
-        'FLOWISE_TIMEOUT': 30000,
+        FLOWISE_USE_REST: false,
+        FLOWISE_CONVERSATION_CHATFLOW_ID: 'test-chatflow-id',
+        FLOWISE_BASE_URL: 'http://localhost:3000',
+        FLOWISE_API_KEY: 'test-api-key',
+        FLOWISE_TIMEOUT: 30000,
       };
       return defaultConfig[key as string] || '';
     });
@@ -69,7 +70,9 @@ describe('FlowiseProvider Integration', () => {
 
     it('should have consistent capability reporting', () => {
       // Capabilities should remain consistent across multiple calls
-      expect(flowiseProvider.supportsChatCompletion()).toBe(flowiseProvider.supportsChatCompletion());
+      expect(flowiseProvider.supportsChatCompletion()).toBe(
+        flowiseProvider.supportsChatCompletion()
+      );
       expect(flowiseProvider.supportsCompletion()).toBe(flowiseProvider.supportsCompletion());
     });
 
@@ -89,7 +92,9 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
       mockedGetFlowiseResponse.mockResolvedValue('rest response');
-      let result = await flowiseProvider.generateChatCompletion('test message', [], { channelId: 'test-channel' });
+      let result = await flowiseProvider.generateChatCompletion('test message', [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('rest response');
       expect(mockedGetFlowiseResponse).toHaveBeenCalledWith('test-channel', 'test message');
 
@@ -100,7 +105,9 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
       mockedGetFlowiseSdkResponse.mockResolvedValue('sdk response');
-      result = await flowiseProvider.generateChatCompletion('test message', [], { channelId: 'test-channel' });
+      result = await flowiseProvider.generateChatCompletion('test message', [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('sdk response');
       expect(mockedGetFlowiseSdkResponse).toHaveBeenCalledWith('test message', 'test-chatflow-id');
     });
@@ -113,16 +120,20 @@ describe('FlowiseProvider Integration', () => {
 
       // Empty message
       mockedGetFlowiseResponse.mockResolvedValue('empty response');
-      let result = await flowiseProvider.generateChatCompletion('', [], { channelId: 'test-channel' });
+      let result = await flowiseProvider.generateChatCompletion('', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
 
       // Message history
       const history = [
         createMockMessage('Hello', 'user'),
-        createMockMessage('Hi there!', 'assistant')
+        createMockMessage('Hi there!', 'assistant'),
       ];
       mockedGetFlowiseResponse.mockResolvedValue('history response');
-      result = await flowiseProvider.generateChatCompletion('Current message', history, { channelId: 'test-channel' });
+      result = await flowiseProvider.generateChatCompletion('Current message', history, {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('history response');
     });
 
@@ -134,13 +145,17 @@ describe('FlowiseProvider Integration', () => {
 
       // API error
       mockedGetFlowiseResponse.mockRejectedValue(new Error('API Error'));
-      let result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      let result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
       expect(result).toContain('error communicating');
 
       // Timeout error
       mockedGetFlowiseResponse.mockRejectedValue(new Error('ETIMEDOUT'));
-      result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
       expect(result).toContain('error communicating');
     });
@@ -153,7 +168,9 @@ describe('FlowiseProvider Integration', () => {
 
       // REST mode with null response
       mockedGetFlowiseResponse.mockResolvedValue(null);
-      let result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      let result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBeNull();
 
       // SDK mode with empty string response (actual behavior)
@@ -162,7 +179,9 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
       mockedGetFlowiseSdkResponse.mockResolvedValue('');
-      result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('There was an error communicating with the AI service.');
     });
 
@@ -194,17 +213,27 @@ describe('FlowiseProvider Integration', () => {
     });
 
     it('should handle null metadata gracefully', async () => {
-      const response = await flowiseProvider.generateChatCompletion('test message', [], null as any);
+      const response = await flowiseProvider.generateChatCompletion(
+        'test message',
+        [],
+        null as any
+      );
       expect(response).toContain('missing some context');
     });
 
     it('should handle undefined metadata gracefully', async () => {
-      const response = await flowiseProvider.generateChatCompletion('test message', [], undefined as any);
+      const response = await flowiseProvider.generateChatCompletion(
+        'test message',
+        [],
+        undefined as any
+      );
       expect(response).toContain('missing some context');
     });
 
     it('should handle empty channelId', async () => {
-      const response = await flowiseProvider.generateChatCompletion('test message', [], { channelId: '' });
+      const response = await flowiseProvider.generateChatCompletion('test message', [], {
+        channelId: '',
+      });
       expect(response).toContain('missing some context');
     });
 
@@ -214,12 +243,12 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
       mockedGetFlowiseResponse.mockResolvedValue('success with extra metadata');
-      
+
       const metadata = {
         channelId: 'test-channel',
         userId: 'user123',
         timestamp: new Date().toISOString(),
-        extra: 'data'
+        extra: 'data',
       };
 
       const result = await flowiseProvider.generateChatCompletion('test', [], metadata);
@@ -236,7 +265,9 @@ describe('FlowiseProvider Integration', () => {
       });
 
       // The implementation may handle missing chatflow ID gracefully
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
     });
 
@@ -247,7 +278,9 @@ describe('FlowiseProvider Integration', () => {
       });
 
       // Should handle gracefully or throw appropriate error
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
     });
 
@@ -260,8 +293,10 @@ describe('FlowiseProvider Integration', () => {
       });
 
       mockedGetFlowiseResponse.mockResolvedValue('custom config response');
-      
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('custom config response');
       expect(mockedGetFlowiseResponse).toHaveBeenCalledWith('test-channel', 'test');
     });
@@ -278,14 +313,14 @@ describe('FlowiseProvider Integration', () => {
 
     it('should handle concurrent requests', async () => {
       mockedGetFlowiseResponse.mockResolvedValue('concurrent response');
-      
-      const promises = Array.from({ length: 5 }, (_, i) => 
+
+      const promises = Array.from({ length: 5 }, (_, i) =>
         flowiseProvider.generateChatCompletion(`message ${i}`, [], { channelId: `channel-${i}` })
       );
-      
+
       const results = await Promise.all(promises);
       expect(results).toHaveLength(5);
-      results.forEach(result => expect(result).toBe('concurrent response'));
+      results.forEach((result) => expect(result).toBe('concurrent response'));
       expect(mockedGetFlowiseResponse).toHaveBeenCalledTimes(5);
     });
 
@@ -293,10 +328,10 @@ describe('FlowiseProvider Integration', () => {
       mockedGetFlowiseResponse
         .mockResolvedValueOnce('response 1')
         .mockResolvedValueOnce('response 2');
-      
+
       const promise1 = flowiseProvider.generateChatCompletion('msg1', [], { channelId: 'ch1' });
       const promise2 = flowiseProvider.generateChatCompletion('msg2', [], { channelId: 'ch2' });
-      
+
       const [result1, result2] = await Promise.all([promise1, promise2]);
       expect(result1).toBe('response 1');
       expect(result2).toBe('response 2');
@@ -305,19 +340,23 @@ describe('FlowiseProvider Integration', () => {
     it('should handle large message content', async () => {
       const largeMessage = 'x'.repeat(100000); // 100KB message
       mockedGetFlowiseResponse.mockResolvedValue('large message response');
-      
-      const result = await flowiseProvider.generateChatCompletion(largeMessage, [], { channelId: 'test-channel' });
+
+      const result = await flowiseProvider.generateChatCompletion(largeMessage, [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('large message response');
     });
 
     it('should handle large message history', async () => {
-      const largeHistory = Array.from({ length: 100 }, (_, i) => 
+      const largeHistory = Array.from({ length: 100 }, (_, i) =>
         createMockMessage(`Message ${i}`, i % 2 === 0 ? 'user' : 'assistant')
       );
-      
+
       mockedGetFlowiseResponse.mockResolvedValue('large history response');
-      
-      const result = await flowiseProvider.generateChatCompletion('current', largeHistory, { channelId: 'test-channel' });
+
+      const result = await flowiseProvider.generateChatCompletion('current', largeHistory, {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('large history response');
     });
   });
@@ -333,8 +372,12 @@ describe('FlowiseProvider Integration', () => {
 
     it('should handle null/undefined inputs gracefully', async () => {
       // The implementation may handle these gracefully rather than throwing
-      const result1 = await flowiseProvider.generateChatCompletion(null as any, [], { channelId: 'test' });
-      const result2 = await flowiseProvider.generateChatCompletion('test', null as any, { channelId: 'test' });
+      const result1 = await flowiseProvider.generateChatCompletion(null as any, [], {
+        channelId: 'test',
+      });
+      const result2 = await flowiseProvider.generateChatCompletion('test', null as any, {
+        channelId: 'test',
+      });
       expect(typeof result1).toBe('string');
       expect(typeof result2).toBe('string');
     });
@@ -342,8 +385,10 @@ describe('FlowiseProvider Integration', () => {
     it('should handle special characters in messages', async () => {
       const specialMessage = 'Test with émojis 🚀 and symbols @#$%^&*() and newlines\n\r\t';
       mockedGetFlowiseResponse.mockResolvedValue('special chars response');
-      
-      const result = await flowiseProvider.generateChatCompletion(specialMessage, [], { channelId: 'test-channel' });
+
+      const result = await flowiseProvider.generateChatCompletion(specialMessage, [], {
+        channelId: 'test-channel',
+      });
       expect(result).toBe('special chars response');
     });
 
@@ -351,9 +396,11 @@ describe('FlowiseProvider Integration', () => {
       const authError = new Error('Unauthorized');
       (authError as any).status = 401;
       mockedGetFlowiseResponse.mockRejectedValue(authError);
-      
+
       // The implementation catches errors and returns a fallback message
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
       expect(result).toContain('error communicating');
     });
@@ -362,9 +409,11 @@ describe('FlowiseProvider Integration', () => {
       const serviceError = new Error('Service Unavailable');
       (serviceError as any).status = 503;
       mockedGetFlowiseResponse.mockRejectedValue(serviceError);
-      
+
       // The implementation catches errors and returns a fallback message
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
       expect(result).toContain('error communicating');
     });
@@ -373,9 +422,11 @@ describe('FlowiseProvider Integration', () => {
       const rateLimitError = new Error('Rate limit exceeded');
       (rateLimitError as any).status = 429;
       mockedGetFlowiseResponse.mockRejectedValue(rateLimitError);
-      
+
       // The implementation catches errors and returns a fallback message
-      const result = await flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' });
+      const result = await flowiseProvider.generateChatCompletion('test', [], {
+        channelId: 'test-channel',
+      });
       expect(typeof result).toBe('string');
       expect(result).toContain('error communicating');
     });

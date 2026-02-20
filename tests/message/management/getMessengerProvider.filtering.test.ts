@@ -1,12 +1,11 @@
 import path from 'path';
 
 jest.mock('fs', () => ({
-  readFileSync: jest.fn(() => JSON.stringify({
-    providers: [
-      { type: 'discord' },
-      { type: 'slack' }
-    ]
-  }))
+  readFileSync: jest.fn(() =>
+    JSON.stringify({
+      providers: [{ type: 'discord' }, { type: 'slack' }],
+    })
+  ),
 }));
 
 jest.mock('@hivemind/adapter-discord', () => ({
@@ -14,9 +13,9 @@ jest.mock('@hivemind/adapter-discord', () => ({
     getInstance: jest.fn(() => ({
       provider: 'discord',
       sendMessageToChannel: jest.fn(),
-      getClientId: jest.fn()
-    }))
-  }
+      getClientId: jest.fn(),
+    })),
+  },
 }));
 
 jest.mock('@integrations/slack/SlackService', () => ({
@@ -24,9 +23,9 @@ jest.mock('@integrations/slack/SlackService', () => ({
     getInstance: jest.fn(() => ({
       provider: 'slack',
       sendMessageToChannel: jest.fn(),
-      getClientId: jest.fn()
-    }))
-  }
+      getClientId: jest.fn(),
+    })),
+  },
 }));
 
 describe('getMessengerProvider filtering', () => {
@@ -44,7 +43,8 @@ describe('getMessengerProvider filtering', () => {
 
   test('a) MESSAGE_PROVIDER="discord": only Discord is initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'discord';
-    const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
+    const { getMessengerProvider } =
+      await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
 
     expect(Array.isArray(providers)).toBe(true);
@@ -53,7 +53,8 @@ describe('getMessengerProvider filtering', () => {
 
   test('b) MESSAGE_PROVIDER="slack": only Slack is initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'slack';
-    const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
+    const { getMessengerProvider } =
+      await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
 
     expect(Array.isArray(providers)).toBe(true);
@@ -62,7 +63,8 @@ describe('getMessengerProvider filtering', () => {
 
   test('c) MESSAGE_PROVIDER="discord,slack": both are initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'discord,slack';
-    const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
+    const { getMessengerProvider } =
+      await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
 
     expect(Array.isArray(providers)).toBe(true);
@@ -71,7 +73,8 @@ describe('getMessengerProvider filtering', () => {
 
   test('d) MESSAGE_PROVIDER set to unavailable provider: returns empty or default', async () => {
     process.env.MESSAGE_PROVIDER = 'webhook';
-    const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
+    const { getMessengerProvider } =
+      await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
 
     expect(Array.isArray(providers)).toBe(true);
@@ -80,7 +83,8 @@ describe('getMessengerProvider filtering', () => {
 
   test('e) MESSAGE_PROVIDER unset: defaults to available providers', async () => {
     delete process.env.MESSAGE_PROVIDER;
-    const { getMessengerProvider } = await import('../../../src/message/management/getMessengerProvider');
+    const { getMessengerProvider } =
+      await import('../../../src/message/management/getMessengerProvider');
     const providers = getMessengerProvider();
 
     expect(Array.isArray(providers)).toBe(true);

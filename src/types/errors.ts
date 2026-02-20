@@ -6,13 +6,30 @@
  */
 
 // Base error types
-export type ErrorType = 'unknown' | 'network' | 'validation' | 'authentication' | 'authorization' | 'configuration' | 'api' | 'database' | 'rate-limit' | 'timeout';
+export type ErrorType =
+  | 'unknown'
+  | 'network'
+  | 'validation'
+  | 'authentication'
+  | 'authorization'
+  | 'configuration'
+  | 'api'
+  | 'database'
+  | 'rate-limit'
+  | 'timeout';
 
 /**
  * Generic error type that can be used in catch blocks to replace 'any'
  * Provides type safety while maintaining backward compatibility
  */
-export type GenericError = Error | AxiosError | ApiError | ValidationError | ConfigurationError | DatabaseError | unknown;
+export type GenericError =
+  | Error
+  | AxiosError
+  | ApiError
+  | ValidationError
+  | ConfigurationError
+  | DatabaseError
+  | unknown;
 
 /**
  * Enhanced error interface that extends the standard Error
@@ -218,14 +235,19 @@ export class ErrorUtils {
    * Check if error is an Axios error
    */
   static isAxiosError(error: HivemindError): error is AxiosError {
-    return Boolean(error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError);
+    return Boolean(
+      error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError
+    );
   }
 
   /**
    * Check if error is a network error
    */
   static isNetworkError(error: HivemindError): error is NetworkError {
-    return this.isAxiosError(error) || Boolean(error && typeof error === 'object' && 'type' in error && error.type === 'network');
+    return (
+      this.isAxiosError(error) ||
+      Boolean(error && typeof error === 'object' && 'type' in error && error.type === 'network')
+    );
   }
 
   /**
@@ -264,7 +286,11 @@ export class ErrorUtils {
     }
 
     // Authentication errors
-    if (statusCode === 401 || message.includes('unauthorized') || message.includes('invalid token')) {
+    if (
+      statusCode === 401 ||
+      message.includes('unauthorized') ||
+      message.includes('invalid token')
+    ) {
       return {
         type: 'authentication',
         retryable: false,
@@ -275,7 +301,11 @@ export class ErrorUtils {
     }
 
     // Authorization errors
-    if (statusCode === 403 || message.includes('forbidden') || message.includes('permission denied')) {
+    if (
+      statusCode === 403 ||
+      message.includes('forbidden') ||
+      message.includes('permission denied')
+    ) {
       return {
         type: 'authorization',
         retryable: false,
@@ -286,7 +316,12 @@ export class ErrorUtils {
     }
 
     // Network/timeout errors
-    if (statusCode === 408 || statusCode === 504 || message.includes('timeout') || message.includes('network')) {
+    if (
+      statusCode === 408 ||
+      statusCode === 504 ||
+      message.includes('timeout') ||
+      message.includes('network')
+    ) {
       return {
         type: 'timeout',
         retryable: true,
@@ -319,7 +354,11 @@ export class ErrorUtils {
     }
 
     // Validation errors
-    if (message.includes('validation') || message.includes('invalid') || message.includes('required')) {
+    if (
+      message.includes('validation') ||
+      message.includes('invalid') ||
+      message.includes('required')
+    ) {
       return {
         type: 'validation',
         retryable: false,
@@ -369,7 +408,13 @@ export class ErrorUtils {
       return error;
     }
 
-    if (error && typeof error === 'object' && 'message' in error && 'name' in error && Object.prototype.toString.call(error) === '[object Error]') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      'name' in error &&
+      Object.prototype.toString.call(error) === '[object Error]'
+    ) {
       return error as Error;
     }
 
@@ -377,7 +422,13 @@ export class ErrorUtils {
       return this.createError(message || error);
     }
 
-    return this.createError(message || 'Unknown error occurred', (type as ErrorType) || 'unknown', undefined, undefined, { originalError: error });
+    return this.createError(
+      message || 'Unknown error occurred',
+      (type as ErrorType) || 'unknown',
+      undefined,
+      undefined,
+      { originalError: error }
+    );
   }
 
   /**
@@ -388,7 +439,7 @@ export class ErrorUtils {
     type: ErrorType = 'unknown',
     code?: string,
     statusCode?: number,
-    details?: Record<string, unknown>,
+    details?: Record<string, unknown>
   ): AppError {
     const error = new Error(message) as AppError;
     error.code = code || type.toUpperCase();
@@ -406,14 +457,21 @@ export class ErrorUtils {
  * Type guard to check if error is a HivemindError
  */
 export function isHivemindError(error: unknown): error is HivemindError {
-  return Boolean(error instanceof Error ||
-         (error && typeof error === 'object' && ('type' in error || 'code' in error)));
+  return Boolean(
+    error instanceof Error ||
+    (error && typeof error === 'object' && ('type' in error || 'code' in error))
+  );
 }
 
 /**
  * Type guard to check if error is an AppError
  */
 export function isAppError(error: unknown): error is AppError {
-  return Boolean(error instanceof Error &&
-         error && typeof error === 'object' && 'type' in error && 'code' in error);
+  return Boolean(
+    error instanceof Error &&
+    error &&
+    typeof error === 'object' &&
+    'type' in error &&
+    'code' in error
+  );
 }

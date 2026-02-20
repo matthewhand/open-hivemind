@@ -1,7 +1,7 @@
 import axios from 'axios';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
 const debug = Debug('app:flowiseClient');
 
@@ -31,13 +31,17 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 
   if (!baseURL || !apiKey || !chatflowId) {
     debug('Missing Flowise configuration values.', { baseURL, apiKey, chatflowId });
-    throw new Error('Flowise configuration incomplete. Ensure API key, endpoint, and chatflow ID are set.');
+    throw new Error(
+      'Flowise configuration incomplete. Ensure API key, endpoint, and chatflow ID are set.'
+    );
   }
 
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
   const payload: Record<string, any> = { question }; // Send only the latest question
 
-  if (chatId) {payload.chatId = chatId;}
+  if (chatId) {
+    payload.chatId = chatId;
+  }
 
   try {
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
@@ -59,7 +63,12 @@ export async function getFlowiseResponse(channelId: string, question: string): P
     return text;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      debug('Flowise API error with status:', error.response?.status, 'response data:', error.response?.data);
+      debug(
+        'Flowise API error with status:',
+        error.response?.status,
+        'response data:',
+        error.response?.data
+      );
     } else {
       debug('Error communicating with Flowise API:', error);
     }
@@ -75,6 +84,9 @@ export async function getFlowiseResponse(channelId: string, question: string): P
  * @param {string} question - The question/message from the user.
  * @returns {Promise<string>} The Flowise response text.
  */
-export async function getFlowiseResponseFallback(channelId: string, question: string): Promise<string> {
+export async function getFlowiseResponseFallback(
+  channelId: string,
+  question: string
+): Promise<string> {
   return await getFlowiseResponse(channelId, question);
 }

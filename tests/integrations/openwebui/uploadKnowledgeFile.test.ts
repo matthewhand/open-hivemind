@@ -135,9 +135,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     });
     const { uploadKnowledgeFileOnStartup } = mod;
 
-    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow(
-      /Knowledge file does not exist/
-    );
+    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow(/Knowledge file does not exist/);
   });
 
   it('throws generic error when axios rejects', async () => {
@@ -147,9 +145,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     });
     const { uploadKnowledgeFileOnStartup } = mod;
 
-    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow(
-      'Knowledge file upload failed'
-    );
+    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow('Knowledge file upload failed');
   });
 
   it('throws when API responds without fileId', async () => {
@@ -159,9 +155,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     });
     const { uploadKnowledgeFileOnStartup } = mod;
 
-    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow(
-      'Knowledge file upload failed'
-    );
+    await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow('Knowledge file upload failed');
   });
 
   it('getKnowledgeFileId throws if called before upload', () => {

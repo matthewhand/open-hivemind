@@ -1,5 +1,5 @@
-import { getMessengerProvider } from '@src/message/management/getMessengerProvider';
 import fs from 'fs';
+import { getMessengerProvider } from '@src/message/management/getMessengerProvider';
 
 // Mock Discord Service
 const mockDiscordService = {
@@ -23,14 +23,14 @@ const mockSlackService = {
 
 jest.mock('@hivemind/adapter-discord', () => ({
   DiscordService: {
-    getInstance: jest.fn(() => mockDiscordService)
-  }
+    getInstance: jest.fn(() => mockDiscordService),
+  },
 }));
 
 jest.mock('@src/integrations/slack/SlackService', () => ({
   SlackService: {
-    getInstance: jest.fn(() => mockSlackService)
-  }
+    getInstance: jest.fn(() => mockSlackService),
+  },
 }));
 
 jest.mock('fs');
@@ -44,12 +44,14 @@ describe('getMessengerProvider', () => {
     process.env = { ...originalEnv };
 
     // Default mock for fs.readFileSync
-    mockFs.readFileSync.mockReturnValue(JSON.stringify({
-      providers: [
-        { type: 'discord', enabled: true },
-        { type: 'slack', enabled: true }
-      ]
-    }));
+    mockFs.readFileSync.mockReturnValue(
+      JSON.stringify({
+        providers: [
+          { type: 'discord', enabled: true },
+          { type: 'slack', enabled: true },
+        ],
+      })
+    );
 
     mockFs.existsSync.mockReturnValue(true);
   });
@@ -139,7 +141,10 @@ describe('getMessengerProvider', () => {
 
       const result = await provider.sendMessageToChannel('test-channel', 'test message');
       expect(result).toBeDefined();
-      expect(mockDiscordService.sendMessageToChannel).toHaveBeenCalledWith('test-channel', 'test message');
+      expect(mockDiscordService.sendMessageToChannel).toHaveBeenCalledWith(
+        'test-channel',
+        'test message'
+      );
     });
 
     it('should return providers with correct client IDs', () => {
@@ -180,12 +185,14 @@ describe('getMessengerProvider', () => {
     });
 
     it('should handle configuration with disabled providers', () => {
-      mockFs.readFileSync.mockReturnValue(JSON.stringify({
-        providers: [
-          { type: 'discord', enabled: false },
-          { type: 'slack', enabled: true }
-        ]
-      }));
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          providers: [
+            { type: 'discord', enabled: false },
+            { type: 'slack', enabled: true },
+          ],
+        })
+      );
 
       process.env.MESSAGE_PROVIDER = 'slack';
       const providers = getMessengerProvider();

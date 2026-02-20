@@ -1,7 +1,7 @@
+import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
-import Debug from 'debug';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -20,10 +20,10 @@ router.get('/', (req, res) => {
     const providers = providerManager.getAllProviders();
     // Mask sensitive data? Token/API Key?
     // Frontend needs them to edit? Or we mask them like '****'?
-    // Typically editing requires seeing or overwriting. 
+    // Typically editing requires seeing or overwriting.
     // For security, masking is better, but for MVP editing, we send full config?
     // Current assumption: Admin is trusted.
-    
+
     // Optional: category filter
     const category = req.query.category as 'message' | 'llm' | undefined;
     const filtered = category ? providerManager.getAllProviders(category) : providers;
@@ -54,7 +54,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   try {
     const { type, category, name, config, enabled } = req.body;
-    
+
     if (!type || !name || !category) {
       return res.status(400).json({ error: 'Missing required fields: type, category, name' });
     }
@@ -83,7 +83,7 @@ router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-        
+
     // Prevent changing ID
     delete updates.id;
 

@@ -1,9 +1,9 @@
-import express, { Express } from 'express';
-import request from 'supertest';
-import agentsRouter from '../../src/server/routes/agents';
-import { authenticate, requireAdmin } from '../../src/auth/middleware';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import express, { Express } from 'express';
+import request from 'supertest';
+import { authenticate, requireAdmin } from '../../src/auth/middleware';
+import agentsRouter from '../../src/server/routes/agents';
 
 jest.mock('../../src/auth/middleware', () => ({
   authenticate: jest.fn((req, res, next) => {
@@ -81,9 +81,7 @@ describe('Agent API Endpoints', () => {
         },
         isActive: true,
       };
-      const response = await request(app)
-        .post('/api/agents')
-        .send(newAgent);
+      const response = await request(app).post('/api/agents').send(newAgent);
       expect(response.status).toBe(200);
       expect(response.body.agent).toHaveProperty('id');
       expect(response.body.agent.name).toBe('Test Agent');
@@ -106,9 +104,7 @@ describe('Agent API Endpoints', () => {
         name: 'Test Persona',
         systemPrompt: 'You are a test persona.',
       };
-      const response = await request(app)
-        .post('/api/agents/personas')
-        .send(newPersona);
+      const response = await request(app).post('/api/agents/personas').send(newPersona);
       expect(response.status).toBe(200);
       expect(response.body.persona).toHaveProperty('key', 'test_persona');
       expect(response.body.persona.name).toBe('Test Persona');
@@ -131,10 +127,8 @@ describe('Agent API Endpoints', () => {
 
       // Now, update the agent
       const updates = { name: 'Updated Agent Name' };
-      const updateResponse = await request(app)
-        .put(`/api/agents/${agentId}`)
-        .send(updates);
-      
+      const updateResponse = await request(app).put(`/api/agents/${agentId}`).send(updates);
+
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.agent.name).toBe('Updated Agent Name');
     });
@@ -176,7 +170,7 @@ describe('Agent API Endpoints', () => {
       const updateResponse = await request(app)
         .put(`/api/agents/personas/persona_to_update`)
         .send(updates);
-      
+
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.persona.name).toBe('Updated Persona Name');
       expect(updateResponse.body.persona.systemPrompt).toBe('Updated prompt.');

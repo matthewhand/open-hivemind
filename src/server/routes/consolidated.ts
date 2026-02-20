@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import Debug from 'debug';
+import { Router } from 'express';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction } from '../middleware/audit';
@@ -18,10 +18,10 @@ router.get('/system-status', async (req, res) => {
   try {
     const botManager = BotConfigurationManager.getInstance();
     const dbManager = DatabaseManager.getInstance();
-    
+
     const bots = botManager.getAllBots();
-    const activeBots = bots.filter(bot => (bot as any).enabled !== false);
-    
+    const activeBots = bots.filter((bot) => (bot as any).enabled !== false);
+
     let dbStats = null;
     try {
       if (dbManager.isConnected()) {
@@ -36,7 +36,7 @@ router.get('/system-status', async (req, res) => {
       bots: {
         total: bots.length,
         active: activeBots.length,
-        configured: bots.filter(bot => bot.messageProvider && bot.llmProvider).length,
+        configured: bots.filter((bot) => bot.messageProvider && bot.llmProvider).length,
       },
       database: {
         connected: dbManager.isConnected(),
@@ -50,8 +50,8 @@ router.get('/system-status', async (req, res) => {
       },
       environment: {
         nodeEnv: process.env.NODE_ENV || 'development',
-        hasEnvOverrides: Object.keys(process.env).some(key => 
-          /^(DISCORD_|SLACK_|TELEGRAM_|MATTERMOST_|OPENAI_|FLOWISE_|OPENWEBUI_)/.test(key),
+        hasEnvOverrides: Object.keys(process.env).some((key) =>
+          /^(DISCORD_|SLACK_|TELEGRAM_|MATTERMOST_|OPENAI_|FLOWISE_|OPENWEBUI_)/.test(key)
         ),
       },
     };
@@ -61,8 +61,8 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as any, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to get system status',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
@@ -73,30 +73,30 @@ router.get('/system-status', async (req, res) => {
 router.get('/providers', async (req, res) => {
   try {
     const messageProviders = [
-      { 
-        id: 'discord', 
-        name: 'Discord', 
+      {
+        id: 'discord',
+        name: 'Discord',
         description: 'Discord bot integration',
         requiredEnvVars: ['DISCORD_TOKEN'],
         configured: !!process.env.DISCORD_TOKEN,
       },
-      { 
-        id: 'slack', 
-        name: 'Slack', 
+      {
+        id: 'slack',
+        name: 'Slack',
         description: 'Slack bot integration',
         requiredEnvVars: ['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN'],
         configured: !!(process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN),
       },
-      { 
-        id: 'telegram', 
-        name: 'Telegram', 
+      {
+        id: 'telegram',
+        name: 'Telegram',
         description: 'Telegram bot integration',
         requiredEnvVars: ['TELEGRAM_BOT_TOKEN'],
         configured: !!process.env.TELEGRAM_BOT_TOKEN,
       },
-      { 
-        id: 'mattermost', 
-        name: 'Mattermost', 
+      {
+        id: 'mattermost',
+        name: 'Mattermost',
         description: 'Mattermost bot integration',
         requiredEnvVars: ['MATTERMOST_TOKEN', 'MATTERMOST_SERVER_URL'],
         configured: !!(process.env.MATTERMOST_TOKEN && process.env.MATTERMOST_SERVER_URL),
@@ -104,38 +104,38 @@ router.get('/providers', async (req, res) => {
     ];
 
     const llmProviders = [
-      { 
-        id: 'openai', 
-        name: 'OpenAI', 
+      {
+        id: 'openai',
+        name: 'OpenAI',
         description: 'OpenAI GPT models',
         requiredEnvVars: ['OPENAI_API_KEY'],
         configured: !!process.env.OPENAI_API_KEY,
       },
-      { 
-        id: 'flowise', 
-        name: 'Flowise', 
+      {
+        id: 'flowise',
+        name: 'Flowise',
         description: 'Flowise workflow engine',
         requiredEnvVars: ['FLOWISE_BASE_URL'],
         configured: !!process.env.FLOWISE_BASE_URL,
       },
-      { 
-        id: 'openwebui', 
-        name: 'Open WebUI', 
+      {
+        id: 'openwebui',
+        name: 'Open WebUI',
         description: 'Open WebUI local models',
         requiredEnvVars: ['OPENWEBUI_BASE_URL'],
         configured: !!process.env.OPENWEBUI_BASE_URL,
       },
     ];
 
-    res.json({ 
-      success: true, 
-      data: { messageProviders, llmProviders }, 
+    res.json({
+      success: true,
+      data: { messageProviders, llmProviders },
     });
   } catch (error) {
     debug('Error getting providers:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to get providers', 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get providers',
     });
   }
 });
@@ -144,14 +144,21 @@ router.get('/providers', async (req, res) => {
 router.get('/env-status', async (req, res) => {
   try {
     const envStatus: Record<string, { isSet: boolean; redactedValue?: string }> = {};
-    
+
     const checkEnvVars = [
-      'DISCORD_TOKEN', 'SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN', 'TELEGRAM_BOT_TOKEN',
-      'MATTERMOST_TOKEN', 'MATTERMOST_SERVER_URL', 'OPENAI_API_KEY', 
-      'FLOWISE_BASE_URL', 'OPENWEBUI_BASE_URL', 'MCP_SERVER_URL',
+      'DISCORD_TOKEN',
+      'SLACK_BOT_TOKEN',
+      'SLACK_APP_TOKEN',
+      'TELEGRAM_BOT_TOKEN',
+      'MATTERMOST_TOKEN',
+      'MATTERMOST_SERVER_URL',
+      'OPENAI_API_KEY',
+      'FLOWISE_BASE_URL',
+      'OPENWEBUI_BASE_URL',
+      'MCP_SERVER_URL',
     ];
 
-    checkEnvVars.forEach(varName => {
+    checkEnvVars.forEach((varName) => {
       const value = process.env[varName];
       envStatus[varName] = {
         isSet: !!value,
@@ -163,9 +170,9 @@ router.get('/env-status', async (req, res) => {
     res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to get environment status', 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get environment status',
     });
   }
 });
@@ -174,7 +181,7 @@ router.get('/env-status', async (req, res) => {
 router.post('/validate-config', async (req, res) => {
   try {
     const { botConfig } = req.body;
-    
+
     if (!botConfig) {
       return res.status(400).json({
         success: false,
@@ -217,41 +224,50 @@ router.post('/validate-config', async (req, res) => {
 
     if (botConfig.messageProvider && providerEnvMap[botConfig.messageProvider]) {
       const requiredVars = providerEnvMap[botConfig.messageProvider];
-      const missingVars = requiredVars.filter(varName => !process.env[varName]);
-      
+      const missingVars = requiredVars.filter((varName) => !process.env[varName]);
+
       if (missingVars.length > 0) {
         validation.warnings.push(
-          `Missing environment variables for ${botConfig.messageProvider}: ${missingVars.join(', ')}`,
+          `Missing environment variables for ${botConfig.messageProvider}: ${missingVars.join(', ')}`
         );
       }
     }
 
     if (botConfig.llmProvider && providerEnvMap[botConfig.llmProvider]) {
       const requiredVars = providerEnvMap[botConfig.llmProvider];
-      const missingVars = requiredVars.filter(varName => !process.env[varName]);
-      
+      const missingVars = requiredVars.filter((varName) => !process.env[varName]);
+
       if (missingVars.length > 0) {
         validation.warnings.push(
-          `Missing environment variables for ${botConfig.llmProvider}: ${missingVars.join(', ')}`,
+          `Missing environment variables for ${botConfig.llmProvider}: ${missingVars.join(', ')}`
         );
       }
     }
 
     // Validate MCP guard configuration
     if (botConfig.mcpGuard?.enabled) {
-      if (botConfig.mcpGuard.type === 'custom' && (!botConfig.mcpGuard.allowedUserIds || botConfig.mcpGuard.allowedUserIds.length === 0)) {
+      if (
+        botConfig.mcpGuard.type === 'custom' &&
+        (!botConfig.mcpGuard.allowedUserIds || botConfig.mcpGuard.allowedUserIds.length === 0)
+      ) {
         validation.warnings.push('Custom MCP guard enabled but no allowed user IDs specified');
       }
     }
 
-    logAdminAction(req as any, 'VALIDATE', 'bot-config', 'success', `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`);
+    logAdminAction(
+      req as any,
+      'VALIDATE',
+      'bot-config',
+      'success',
+      `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`
+    );
     res.json({ success: true, data: validation });
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as any, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to validate configuration', 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to validate configuration',
     });
   }
 });
@@ -284,7 +300,7 @@ router.get('/health', async (req, res) => {
       const dbManager = DatabaseManager.getInstance();
       health.checks.database.connected = dbManager.isConnected();
       health.checks.database.status = health.checks.database.connected ? 'healthy' : 'warning';
-      
+
       if (health.checks.database.connected) {
         await dbManager.getStats(); // Test query
       }
@@ -304,13 +320,16 @@ router.get('/health', async (req, res) => {
 
     // Check critical environment variables
     const criticalEnvVars = ['NODE_ENV'];
-    health.checks.environment.missingVars = criticalEnvVars.filter(varName => !process.env[varName]);
-    health.checks.environment.status = health.checks.environment.missingVars.length > 0 ? 'warning' : 'healthy';
+    health.checks.environment.missingVars = criticalEnvVars.filter(
+      (varName) => !process.env[varName]
+    );
+    health.checks.environment.status =
+      health.checks.environment.missingVars.length > 0 ? 'warning' : 'healthy';
 
     // Determine overall status
-    const hasErrors = Object.values(health.checks).some(check => check.status === 'error');
-    const hasWarnings = Object.values(health.checks).some(check => check.status === 'warning');
-    
+    const hasErrors = Object.values(health.checks).some((check) => check.status === 'error');
+    const hasWarnings = Object.values(health.checks).some((check) => check.status === 'warning');
+
     health.status = hasErrors ? 'error' : hasWarnings ? 'warning' : 'healthy';
 
     res.json({ success: true, data: health });
@@ -353,7 +372,7 @@ router.get('/metrics', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       metrics.application.bots.total = bots.length;
-      metrics.application.bots.active = bots.filter(bot => (bot as any).enabled !== false).length;
+      metrics.application.bots.active = bots.filter((bot) => (bot as any).enabled !== false).length;
     } catch (error) {
       debug('Error getting bot metrics:', error);
     }
@@ -362,7 +381,7 @@ router.get('/metrics', async (req, res) => {
     try {
       const dbManager = DatabaseManager.getInstance();
       metrics.application.database.connected = dbManager.isConnected();
-      
+
       if (metrics.application.database.connected) {
         metrics.application.database.stats = await dbManager.getStats();
       }
@@ -373,9 +392,9 @@ router.get('/metrics', async (req, res) => {
     res.json({ success: true, data: metrics });
   } catch (error) {
     debug('Error getting metrics:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to get metrics', 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get metrics',
     });
   }
 });

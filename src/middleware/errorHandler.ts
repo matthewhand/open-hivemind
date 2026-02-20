@@ -1,17 +1,16 @@
 /**
  * Global Error Handling Middleware for Open Hivemind
- * 
+ *
  * This middleware catches all unhandled errors and formats them consistently
  * using the new error types, with proper logging and correlation tracking.
  */
 
-import type { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
-import type { BaseHivemindError} from '../types/errorClasses';
-import { ErrorFactory } from '../types/errorClasses';
+import type { NextFunction, Request, Response } from 'express';
+import { MetricsCollector } from '../monitoring/MetricsCollector';
+import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, HivemindError } from '../types/errors';
 import { ErrorLogger, errorLogger } from '../utils/errorLogger';
-import { MetricsCollector } from '../monitoring/MetricsCollector';
 
 const debug = Debug('app:error:middleware');
 
@@ -66,16 +65,17 @@ interface ErrorResponse {
  */
 export function correlationMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Generate correlation ID if not already present
-  req.correlationId = req.headers['x-correlation-id'] as string || 
-                     req.headers['x-request-id'] as string ||
-                     generateCorrelationId();
-  
+  req.correlationId =
+    (req.headers['x-correlation-id'] as string) ||
+    (req.headers['x-request-id'] as string) ||
+    generateCorrelationId();
+
   // Add correlation ID to response headers
   res.setHeader('X-Correlation-ID', req.correlationId);
-  
+
   // Record start time for duration tracking
   req.startTime = Date.now();
-  
+
   debug(`Request ${req.method} ${req.path} - Correlation ID: ${req.correlationId}`);
   next();
 }
@@ -92,7 +92,7 @@ function generateCorrelationId(): string {
  */
 function extractErrorContext(req: Request): ErrorContext {
   const duration = req.startTime ? Date.now() - req.startTime : undefined;
-  
+
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
@@ -118,12 +118,20 @@ function sanitizeRequestBody(body: any): any {
   }
 
   const sensitiveFields = [
-    'password', 'token', 'secret', 'key', 'auth', 'credential',
-    'authorization', 'bearer', 'apikey', 'api_key',
+    'password',
+    'token',
+    'secret',
+    'key',
+    'auth',
+    'credential',
+    'authorization',
+    'bearer',
+    'apikey',
+    'api_key',
   ];
 
   const sanitized = { ...body };
-  
+
   for (const field of sensitiveFields) {
     if (field in sanitized) {
       sanitized[field] = '[REDACTED]';
@@ -139,10 +147,10 @@ function sanitizeRequestBody(body: any): any {
 function createErrorResponse(
   error: BaseHivemindError,
   context: ErrorContext,
-  includeStack: boolean = false,
+  includeStack: boolean = false
 ): ErrorResponse {
   const recovery = error.getRecoveryStrategy();
-  
+
   const response: ErrorResponse = {
     error: error.name,
     code: error.code || 'INTERNAL_ERROR',
@@ -178,7 +186,7 @@ export function globalErrorHandler(
   error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   // Convert error to BaseHivemindError
   const hivemindError = ErrorFactory.createError(error, {
@@ -220,7 +228,7 @@ export function globalErrorHandler(
  * Handle async errors in route handlers
  */
 export function asyncErrorHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>,
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -232,7 +240,7 @@ export function asyncErrorHandler(
  */
 export function handleUncaughtException(error: Error): void {
   const hivemindError = ErrorFactory.createError(error);
-  
+
   errorLogger.logError(hivemindError, {
     correlationId: 'uncaught_exception',
     path: 'global',
@@ -256,7 +264,7 @@ export function handleUncaughtException(error: Error): void {
  */
 export function handleUnhandledRejection(reason: unknown, promise: Promise<unknown>): void {
   const hivemindError = ErrorFactory.createError(reason);
-  
+
   errorLogger.logError(hivemindError, {
     correlationId: 'unhandled_rejection',
     path: 'global',
@@ -278,11 +286,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
 /**
  * Emit error event for monitoring systems
  */
-function emitErrorEvent(
-  error: BaseHivemindError,
-  context: ErrorContext,
-  statusCode: number,
-): void {
+function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusCode: number): void {
   // Emit to any monitoring systems or event emitters
   (process as any).emit('hivemind:error', {
     error: error.toJSON(),
@@ -311,10 +315,10 @@ export function setupGlobalErrorHandlers(): void {
 export function setupGracefulShutdown(): void {
   const shutdown = (signal: string): void => {
     console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-    
+
     // Close server, database connections, etc.
     // This would be implemented by the main application
-    
+
     setTimeout(() => {
       console.log('Graceful shutdown completed');
       process.exit(0);
@@ -323,22 +327,18 @@ export function setupGracefulShutdown(): void {
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
-  
+
   debug('Graceful shutdown handlers setup completed');
 }
 
 /**
  * Error recovery middleware for retryable errors
  */
-export function errorRecoveryMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
+export function errorRecoveryMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Check if this is a retry request
-  const retryCount = parseInt(req.headers['x-retry-count'] as string || '0');
-  const maxRetries = parseInt(req.headers['x-max-retries'] as string || '3');
-  
+  const retryCount = parseInt((req.headers['x-retry-count'] as string) || '0');
+  const maxRetries = parseInt((req.headers['x-max-retries'] as string) || '3');
+
   if (retryCount > 0) {
     debug(`Retry request ${req.method} ${req.path} - Attempt ${retryCount}/${maxRetries}`);
   }
@@ -353,11 +353,7 @@ export function errorRecoveryMiddleware(
 /**
  * Rate limiting error handler
  */
-export function rateLimitErrorHandler(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
+export function rateLimitErrorHandler(req: Request, res: Response, next: NextFunction): void {
   // This would be used with rate limiting middleware
   // to provide consistent rate limit error responses
   next();

@@ -1,5 +1,4 @@
-import type { ParsedCommand} from './parseCommand';
-import { parseCommand } from './parseCommand';
+import { parseCommand, type ParsedCommand } from './parseCommand';
 import { handleStatusCommand } from './statusCommand';
 
 /**
@@ -17,11 +16,11 @@ export async function routeCommand(commandContent: string): Promise<string | nul
 
   try {
     switch (parsed.commandName) {
-    case 'status':
-      return await handleStatusCommand(parsed.args);
+      case 'status':
+        return await handleStatusCommand(parsed.args);
       // Add additional command handlers here as needed
-    default:
-      return `Unrecognized command: ${parsed.commandName}`;
+      default:
+        return `Unrecognized command: ${parsed.commandName}`;
     }
   } catch (error: any) {
     return `Error: ${error.message}`;

@@ -25,4 +25,3 @@ describe('TypingActivity', () => {
     expect(activity.getActiveTypistCount('c1', 8000)).toBe(0);
   });
 });
-

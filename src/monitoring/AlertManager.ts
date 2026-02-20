@@ -1,6 +1,6 @@
-import type { HealthChecker, HealthCheckResult } from './HealthChecker';
 import { EventEmitter } from 'events';
 import TimerRegistry from '@src/utils/TimerRegistry';
+import type { HealthChecker, HealthCheckResult } from './HealthChecker';
 
 export interface AlertConfig {
   memoryThreshold: number; // percentage
@@ -45,7 +45,10 @@ export class AlertManager extends EventEmitter {
 
   // Bounded cache configuration
   private readonly MAX_ALERTS = parseInt(process.env.ALERT_MANAGER_MAX_ALERTS || '1000', 10);
-  private readonly MAX_FAILURE_COUNTS = parseInt(process.env.ALERT_MANAGER_MAX_FAILURE_COUNTS || '100', 10);
+  private readonly MAX_FAILURE_COUNTS = parseInt(
+    process.env.ALERT_MANAGER_MAX_FAILURE_COUNTS || '100',
+    10
+  );
 
   constructor(healthChecker: HealthChecker, config: Partial<AlertConfig> = {}) {
     super();
@@ -89,7 +92,7 @@ export class AlertManager extends EventEmitter {
   }
 
   public getActiveAlerts(): Alert[] {
-    return Array.from(this.alerts.values()).filter(alert => !alert.resolved);
+    return Array.from(this.alerts.values()).filter((alert) => !alert.resolved);
   }
 
   public getAllAlerts(): Alert[] {
@@ -126,7 +129,7 @@ export class AlertManager extends EventEmitter {
     message: string,
     value: number,
     threshold: number,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<Alert> {
     const alert: Alert = {
       id: `alert_${++this.alertIdCounter}_${Date.now()}`,
@@ -155,8 +158,9 @@ export class AlertManager extends EventEmitter {
   }
 
   private async sendNotifications(alert: Alert): Promise<void> {
-    const notificationPromises = Array.from(this.notificationChannels.values())
-      .map(channel => this.sendNotification(channel, alert));
+    const notificationPromises = Array.from(this.notificationChannels.values()).map((channel) =>
+      this.sendNotification(channel, alert)
+    );
 
     try {
       await Promise.allSettled(notificationPromises);
@@ -192,7 +196,7 @@ export class AlertManager extends EventEmitter {
           `Memory usage is at ${percentage}% (${used}MB / ${total}MB)`,
           percentage,
           this.config.memoryThreshold,
-          { used, total, process: process.pid },
+          { used, total, process: process.pid }
         );
       }
     } else {
@@ -214,7 +218,7 @@ export class AlertManager extends EventEmitter {
           `Disk usage is at ${diskUsage}%`,
           diskUsage,
           this.config.diskThreshold,
-          { diskUsage },
+          { diskUsage }
         );
       }
     } else {
@@ -223,8 +227,10 @@ export class AlertManager extends EventEmitter {
   }
 
   private async checkResponseTimes(healthCheck: HealthCheckResult): Promise<void> {
-    const slowServices = Object.entries(healthCheck.services)
-      .filter(([, service]) => service.responseTime && service.responseTime > this.config.responseTimeThreshold);
+    const slowServices = Object.entries(healthCheck.services).filter(
+      ([, service]) =>
+        service.responseTime && service.responseTime > this.config.responseTimeThreshold
+    );
 
     for (const [serviceName, service] of slowServices) {
       const alertKey = `response_time_${serviceName}`;
@@ -237,7 +243,7 @@ export class AlertManager extends EventEmitter {
           `${serviceName} response time is ${service.responseTime}ms`,
           service.responseTime!,
           this.config.responseTimeThreshold,
-          { serviceName, responseTime: service.responseTime },
+          { serviceName, responseTime: service.responseTime }
         );
       }
     }
@@ -256,7 +262,7 @@ export class AlertManager extends EventEmitter {
             `${serviceName} service is not responding`,
             0,
             0,
-            { serviceName, error: service.message },
+            { serviceName, error: service.message }
           );
         }
       } else {
@@ -277,7 +283,7 @@ export class AlertManager extends EventEmitter {
           'Database connection is experiencing issues',
           0,
           0,
-          { status: healthCheck.database.status },
+          { status: healthCheck.database.status }
         );
       }
     } else {
@@ -299,7 +305,7 @@ export class AlertManager extends EventEmitter {
           `Error rate is ${errorRate.toFixed(1)}%`,
           errorRate,
           this.config.errorRateThreshold,
-          { errorRate },
+          { errorRate }
         );
       }
     } else {
@@ -340,7 +346,7 @@ export class AlertManager extends EventEmitter {
 
   private async startMonitoring(): Promise<void> {
     const timerRegistry = TimerRegistry.getInstance();
-    
+
     // Check health every 30 seconds
     this.monitoringIntervalId = timerRegistry.registerInterval(
       'alertManager_healthMonitor',
@@ -361,8 +367,14 @@ export class AlertManager extends EventEmitter {
 
   private async processHealthCheck(healthCheck: HealthCheckResult): Promise<void> {
     // Update failure counts
-    this.updateFailureCount('memory_high', healthCheck.memory.percentage > this.config.memoryThreshold);
-    this.updateFailureCount('disk_high', (healthCheck.metrics.diskUsage || 0) > this.config.diskThreshold);
+    this.updateFailureCount(
+      'memory_high',
+      healthCheck.memory.percentage > this.config.memoryThreshold
+    );
+    this.updateFailureCount(
+      'disk_high',
+      (healthCheck.metrics.diskUsage || 0) > this.config.diskThreshold
+    );
     this.updateFailureCount('database_error', healthCheck.database.status === 'error');
 
     // Check various metrics
@@ -403,21 +415,27 @@ export class AlertManager extends EventEmitter {
   }> {
     const alerts = this.getAllAlerts();
 
-    const bySeverity = alerts.reduce((acc, alert) => {
-      acc[alert.severity] = (acc[alert.severity] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const bySeverity = alerts.reduce(
+      (acc, alert) => {
+        acc[alert.severity] = (acc[alert.severity] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const byType = alerts.reduce((acc, alert) => {
-      acc[alert.type] = (acc[alert.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const byType = alerts.reduce(
+      (acc, alert) => {
+        acc[alert.type] = (acc[alert.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return {
       total: alerts.length,
-      active: alerts.filter(a => !a.resolved).length,
-      acknowledged: alerts.filter(a => a.acknowledged).length,
-      resolved: alerts.filter(a => a.resolved).length,
+      active: alerts.filter((a) => !a.resolved).length,
+      acknowledged: alerts.filter((a) => a.acknowledged).length,
+      resolved: alerts.filter((a) => a.resolved).length,
       bySeverity,
       byType,
     };
@@ -431,7 +449,7 @@ export class AlertManager extends EventEmitter {
       config: this.config,
       alerts: this.getAllAlerts(),
       summary: alertSummary,
-      channels: Array.from(this.notificationChannels.values()).map(c => ({
+      channels: Array.from(this.notificationChannels.values()).map((c) => ({
         name: c.name,
         type: c.type,
       })),
@@ -451,7 +469,7 @@ export class AlertManager extends EventEmitter {
 
     // First, try to remove resolved alerts (oldest first)
     const resolvedAlerts = Array.from(this.alerts.values())
-      .filter(a => a.resolved)
+      .filter((a) => a.resolved)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     for (const alert of resolvedAlerts) {
@@ -463,8 +481,9 @@ export class AlertManager extends EventEmitter {
 
     // If still over limit, remove oldest alerts regardless of status
     if (this.alerts.size >= this.MAX_ALERTS) {
-      const allAlerts = Array.from(this.alerts.values())
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      const allAlerts = Array.from(this.alerts.values()).sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
 
       for (const alert of allAlerts) {
         if (this.alerts.size < this.MAX_ALERTS) {
@@ -484,8 +503,7 @@ export class AlertManager extends EventEmitter {
     }
 
     // Remove entries with lowest counts first (less important)
-    const entries = Array.from(this.failureCounts.entries())
-      .sort((a, b) => a[1] - b[1]);
+    const entries = Array.from(this.failureCounts.entries()).sort((a, b) => a[1] - b[1]);
 
     for (const [key] of entries) {
       if (this.failureCounts.size < this.MAX_FAILURE_COUNTS) {
@@ -522,21 +540,21 @@ export class AlertManager extends EventEmitter {
    */
   public shutdown(): void {
     const timerRegistry = TimerRegistry.getInstance();
-    
+
     if (this.monitoringIntervalId) {
       timerRegistry.clear(this.monitoringIntervalId);
       this.monitoringIntervalId = null;
       console.log('🔍 Health monitoring stopped');
     }
-    
+
     // Clear all alerts
     this.alerts.clear();
     this.failureCounts.clear();
     this.lastAlertTimes.clear();
-    
+
     // Remove all event listeners
     this.removeAllListeners();
-    
+
     console.log('✅ AlertManager shutdown complete');
   }
 }

@@ -1,5 +1,5 @@
-import { VoiceCommandHandler } from '@hivemind/adapter-discord/voice/voiceCommandHandler';
 import { VoiceConnection } from '@discordjs/voice';
+import { VoiceCommandHandler } from '@hivemind/adapter-discord/voice/voiceCommandHandler';
 
 jest.mock('@hivemind/adapter-discord/voice/speechToText');
 jest.mock('@hivemind/adapter-discord/media/convertOpusToWav');
@@ -38,9 +38,11 @@ describe('VoiceCommandHandler', () => {
 
     transcribeAudio.mockResolvedValue('Hello bot');
     convertOpusToWav.mockResolvedValue('/temp/audio.wav');
-    getLlmProvider.mockReturnValue([{
-      generateChatCompletion: jest.fn().mockResolvedValue('Hello human')
-    }]);
+    getLlmProvider.mockReturnValue([
+      {
+        generateChatCompletion: jest.fn().mockResolvedValue('Hello human'),
+      },
+    ]);
 
     const fs = require('fs');
     fs.existsSync = jest.fn().mockReturnValue(false);

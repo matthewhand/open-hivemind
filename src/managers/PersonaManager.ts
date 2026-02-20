@@ -1,9 +1,9 @@
-import Debug from 'debug';
-import { EventEmitter } from 'events';
 import crypto from 'crypto';
+import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
-import { HivemindError, ErrorUtils } from '../types/errors';
+import Debug from 'debug';
+import { ErrorUtils, HivemindError } from '../types/errors';
 
 const debug = Debug('app:PersonaManager');
 
@@ -11,7 +11,14 @@ export interface Persona {
   id: string;
   name: string;
   description: string;
-  category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
+  category:
+    | 'general'
+    | 'customer_service'
+    | 'creative'
+    | 'technical'
+    | 'educational'
+    | 'entertainment'
+    | 'professional';
   traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
   systemPrompt: string;
   isBuiltIn?: boolean;
@@ -27,7 +34,7 @@ export interface CreatePersonaRequest {
   systemPrompt: string;
 }
 
-export interface UpdatePersonaRequest extends Partial<CreatePersonaRequest> { }
+export interface UpdatePersonaRequest extends Partial<CreatePersonaRequest> {}
 
 // Built-in personas that are always available
 export const BUILTIN_PERSONAS: Persona[] = [
@@ -36,7 +43,8 @@ export const BUILTIN_PERSONAS: Persona[] = [
     name: 'Helpful Assistant',
     description: 'A friendly and helpful AI assistant',
     category: 'general',
-    systemPrompt: 'You are a helpful assistant. Be polite, professional, and provide accurate information.',
+    systemPrompt:
+      'You are a helpful assistant. Be polite, professional, and provide accurate information.',
     traits: [
       { name: 'Tone', value: 'Friendly', weight: 1, type: 'tone' },
       { name: 'Style', value: 'Professional', weight: 1, type: 'style' },
@@ -100,7 +108,7 @@ export class PersonaManager extends EventEmitter {
       this.personas.clear();
 
       // Load built-ins first
-      BUILTIN_PERSONAS.forEach(p => this.personas.set(p.id, { ...p }));
+      BUILTIN_PERSONAS.forEach((p) => this.personas.set(p.id, { ...p }));
 
       if (fs.existsSync(this.personasFilePath)) {
         const data = fs.readFileSync(this.personasFilePath, 'utf8');
@@ -198,7 +206,9 @@ export class PersonaManager extends EventEmitter {
 
   public deletePersona(id: string): boolean {
     const existing = this.personas.get(id);
-    if (!existing) { return false; }
+    if (!existing) {
+      return false;
+    }
 
     if (existing.isBuiltIn) {
       throw new Error('Cannot delete built-in personas');

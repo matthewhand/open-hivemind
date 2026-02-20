@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:generateResponse');
 

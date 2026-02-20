@@ -23,7 +23,9 @@ export function estimateTokensFromText(text: string): number {
  * Keeps the most recent messages while staying within an input token budget.
  * History is expected to be oldest-first (A -> B -> C). Returned array is also oldest-first.
  */
-export function trimHistoryToTokenBudget<TMessage extends { getText?: () => string; content?: string }>(
+export function trimHistoryToTokenBudget<
+  TMessage extends { getText?: () => string; content?: string },
+>(
   historyOldestFirst: TMessage[],
   params: {
     inputBudgetTokens: number;
@@ -31,7 +33,7 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
     systemPromptText?: string;
     perMessageOverheadTokens?: number;
     minKeepMessages?: number;
-  },
+  }
 ): HistoryBudgetResult<TMessage> {
   const budget = Math.max(0, Number(params.inputBudgetTokens) || 0);
   const perMsgOverhead = Math.max(0, Number(params.perMessageOverheadTokens ?? 6));
@@ -65,7 +67,8 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
   // Keep most recent messages (iterate backwards) until we hit budget.
   for (let i = historyOldestFirst.length - 1; i >= 0; i--) {
     const msg = historyOldestFirst[i];
-    const text = typeof msg.getText === 'function' ? msg.getText() : String((msg as any).content || '');
+    const text =
+      typeof msg.getText === 'function' ? msg.getText() : String((msg as any).content || '');
     const cost = estimateTokensFromText(text) + perMsgOverhead;
 
     // Always keep at least minKeep messages (even if slightly over budget).
@@ -75,7 +78,9 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
       continue;
     }
 
-    if (historyTokens + cost > remainingForHistory) {break;}
+    if (historyTokens + cost > remainingForHistory) {
+      break;
+    }
     kept.push(msg);
     historyTokens += cost;
   }
@@ -84,7 +89,9 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
 
   const total = nonHistoryTokens + historyTokens;
   const trimmedCount = Math.max(0, historyOldestFirst.length - kept.length);
-  debug(`Trimmed history: kept=${kept.length}/${historyOldestFirst.length} totalTokens~${total}/${budget}`);
+  debug(
+    `Trimmed history: kept=${kept.length}/${historyOldestFirst.length} totalTokens~${total}/${budget}`
+  );
 
   return {
     trimmed: kept,
@@ -98,4 +105,3 @@ export function trimHistoryToTokenBudget<TMessage extends { getText?: () => stri
     },
   };
 }
-

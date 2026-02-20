@@ -1,3 +1,6 @@
+import SlackMessage from '@integrations/slack/SlackMessage';
+import { SlackService } from '@integrations/slack/SlackService';
+
 /**
  * Test-only SlackService mock; no legacy config/network.
  */
@@ -12,9 +15,15 @@ jest.mock('@integrations/slack/SlackService', () => {
       return this.instance;
     }
     async initialize() {}
-    async shutdown() { FakeSlackService.instance = undefined; }
-    setMessageHandler(handler: any) { this.handler = handler; }
-    getBotManager() { return { getAllBots: () => this.bots }; }
+    async shutdown() {
+      FakeSlackService.instance = undefined;
+    }
+    setMessageHandler(handler: any) {
+      this.handler = handler;
+    }
+    getBotManager() {
+      return { getAllBots: () => this.bots };
+    }
     async sendMessageToChannel(channelId: string, text: string) {
       this.lastText = text;
       if (this.handler) {
@@ -23,16 +32,13 @@ jest.mock('@integrations/slack/SlackService', () => {
       return 'TST123.2';
     }
     async fetchMessages() {
-      const make = (t: string) => ({ getText: () => t } as any);
+      const make = (t: string) => ({ getText: () => t }) as any;
       // Simulate an echo response created by handler
       return this.lastText ? [make(this.lastText), make(`Echo: ${this.lastText}`)] : [];
     }
   }
   return { SlackService: FakeSlackService };
 });
-
-import { SlackService } from '@integrations/slack/SlackService';
-import SlackMessage from '@integrations/slack/SlackMessage';
 
 describe('SlackEventListener Integration (test-mocked)', () => {
   let service: any;

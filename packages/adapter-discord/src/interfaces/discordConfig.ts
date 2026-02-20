@@ -9,8 +9,12 @@ convict.addFormat({
     }
   },
   coerce: (val) => {
-    if (typeof val === 'object') {return val;}  // Already an object, return as-is
-    if (!val) {return {};}  // If undefined, return an empty object
+    if (typeof val === 'object') {
+      return val;
+    } // Already an object, return as-is
+    if (!val) {
+      return {};
+    } // If undefined, return an empty object
 
     return val.split(',').reduce((acc: Record<string, number>, kvp: string) => {
       const [channelId, bonus] = kvp.split(':');
@@ -23,12 +27,12 @@ convict.addFormat({
 });
 convict.addFormat({
   name: 'csv-array',
-  validate: function(val) {
+  validate: function (val) {
     if (typeof val !== 'string' && !Array.isArray(val)) {
       throw new Error('Must be a comma separated string or an array');
     }
   },
-  coerce: function(val) {
+  coerce: function (val) {
     return Array.isArray(val) ? val : val.split(',').map((s: string) => s.trim());
   },
 });
@@ -86,7 +90,7 @@ const discordConfig = convict({
   DISCORD_CHANNEL_BONUSES: {
     doc: 'Optional channel-specific bonuses as a KVP list.',
     format: 'channel-bonuses',
-    default: {} as Record<string, number>,  // Explicit type declaration
+    default: {} as Record<string, number>, // Explicit type declaration
     env: 'DISCORD_CHANNEL_BONUSES',
   },
   DISCORD_UNSOLICITED_CHANCE_MODIFIER: {
@@ -130,7 +134,7 @@ const discordConfig = convict({
     format: Number,
     default: 1.1,
     env: 'DISCORD_PRIORITY_CHANNEL_BONUS',
-  }, 
+  },
   DISCORD_LOGGING_ENABLED: {
     doc: 'Controls whether logs are written to files',
     format: Boolean,

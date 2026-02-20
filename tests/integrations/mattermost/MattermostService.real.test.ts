@@ -11,7 +11,9 @@ describe('Mattermost Real Integration', () => {
 
   beforeAll(() => {
     if (!REAL_MATTERMOST_URL || !REAL_MATTERMOST_TOKEN || !REAL_MATTERMOST_CHANNEL) {
-      console.log('Skipping real Mattermost tests - set REAL_MATTERMOST_URL, REAL_MATTERMOST_TOKEN, REAL_MATTERMOST_CHANNEL');
+      console.log(
+        'Skipping real Mattermost tests - set REAL_MATTERMOST_URL, REAL_MATTERMOST_TOKEN, REAL_MATTERMOST_CHANNEL'
+      );
     }
   });
 
@@ -19,17 +21,19 @@ describe('Mattermost Real Integration', () => {
     if (REAL_MATTERMOST_URL && REAL_MATTERMOST_TOKEN) {
       const { default: BotConfigurationManager } = require('@src/config/BotConfigurationManager');
       jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
-        getAllBots: () => [{
-          name: 'test-bot',
-          messageProvider: 'mattermost',
-          mattermost: {
-            serverUrl: REAL_MATTERMOST_URL,
-            token: REAL_MATTERMOST_TOKEN,
-            channel: REAL_MATTERMOST_CHANNEL
-          }
-        }]
+        getAllBots: () => [
+          {
+            name: 'test-bot',
+            messageProvider: 'mattermost',
+            mattermost: {
+              serverUrl: REAL_MATTERMOST_URL,
+              token: REAL_MATTERMOST_TOKEN,
+              channel: REAL_MATTERMOST_CHANNEL,
+            },
+          },
+        ],
       });
-      
+
       service = MattermostService.getInstance();
     }
   });
@@ -58,7 +62,7 @@ describe('Mattermost Real Integration', () => {
       REAL_MATTERMOST_CHANNEL,
       `Test message ${Date.now()}`
     );
-    
+
     expect(messageId).toBeTruthy();
     expect(typeof messageId).toBe('string');
   }, 30000);
@@ -68,7 +72,7 @@ describe('Mattermost Real Integration', () => {
 
     await service.initialize();
     const messages = await service.fetchMessages(REAL_MATTERMOST_CHANNEL, 5);
-    
+
     expect(Array.isArray(messages)).toBe(true);
     expect(messages.length).toBeGreaterThanOrEqual(0);
   }, 30000);

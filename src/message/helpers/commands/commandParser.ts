@@ -6,7 +6,9 @@ function parse(input: string): { command: string; args: string[] } | null {
     return null;
   }
   const body: string = trimmedInput.slice(1).trim();
-  if (!body) {return null;}
+  if (!body) {
+    return null;
+  }
   // Split the remaining text into command and arguments.
   const parts: string[] = body.split(/\s+/);
   const command: string = parts[0];

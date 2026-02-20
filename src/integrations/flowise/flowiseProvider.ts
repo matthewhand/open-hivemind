@@ -1,9 +1,9 @@
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
+import Debug from 'debug';
+import flowiseConfig from '@config/flowiseConfig';
 import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
-import flowiseConfig from '@config/flowiseConfig';
-import Debug from 'debug';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 const flowiseDebug = Debug('app:flowiseProvider');
 
@@ -26,7 +26,7 @@ export class FlowiseProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<string> {
     const channelId = metadata?.channelId;
     if (!channelId) {
@@ -37,13 +37,17 @@ export class FlowiseProvider implements ILlmProvider {
     try {
       flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
       let response: string;
-      
-      const useRest = this.config.useRest !== undefined ? this.config.useRest : flowiseConfig.get('FLOWISE_USE_REST');
+
+      const useRest =
+        this.config.useRest !== undefined
+          ? this.config.useRest
+          : flowiseConfig.get('FLOWISE_USE_REST');
 
       if (useRest) {
         response = await getFlowiseResponse(channelId, userMessage);
       } else {
-        const chatflowId = this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+        const chatflowId =
+          this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
         if (!chatflowId) {
           throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
         }

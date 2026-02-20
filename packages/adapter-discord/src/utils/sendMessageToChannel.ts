@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import type { TextChannel } from 'discord.js';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:sendMessageToChannel');
 
@@ -19,10 +19,7 @@ const debug = Debug('app:sendMessageToChannel');
  * @param {string} content - The content of the message to send.
  * @returns {Promise<void>} A promise that resolves when the message is sent.
  */
-export async function sendMessageToChannel(
-  channel: TextChannel,
-  content: string,
-): Promise<void> {
+export async function sendMessageToChannel(channel: TextChannel, content: string): Promise<void> {
   try {
     await channel.send(content);
     debug('Message sent to channel ' + channel.id);

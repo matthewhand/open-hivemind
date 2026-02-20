@@ -1,9 +1,9 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import {
-    setupTestWithErrorDetection,
-    assertNoErrors,
-    navigateAndWaitReady,
-    SELECTORS
+  assertNoErrors,
+  navigateAndWaitReady,
+  SELECTORS,
+  setupTestWithErrorDetection,
 } from './test-utils';
 
 /**
@@ -14,249 +14,258 @@ import {
 
 // Helper to get modal context
 const getModalDialog = (page: Page) => {
-    return page.locator('.modal-box, [role="dialog"]').first();
+  return page.locator('.modal-box, [role="dialog"]').first();
 };
 
 // Helper to open the modal
 async function openCreateBotModal(page: Page) {
-    const createButton = page.locator('button').filter({ hasText: /create.*bot|new.*bot/i }).first();
-    await createButton.click();
-    await page.waitForTimeout(1000);
-    return getModalDialog(page);
+  const createButton = page
+    .locator('button')
+    .filter({ hasText: /create.*bot|new.*bot/i })
+    .first();
+  await createButton.click();
+  await page.waitForTimeout(1000);
+  return getModalDialog(page);
 }
 
 test.describe('Bot Creation Form Validation', () => {
-    test.setTimeout(90000);
+  test.setTimeout(90000);
 
-    test('Create Bot modal opens with all form fields', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Create Bot modal opens with all form fields', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
-        await expect(modal).toBeVisible();
+    const modal = await openCreateBotModal(page);
+    await expect(modal).toBeVisible();
 
-        // Check for form fields
-        await expect(modal.locator('input').first()).toBeVisible();
-        await expect(modal.locator('select').first()).toBeVisible();
+    // Check for form fields
+    await expect(modal.locator('input').first()).toBeVisible();
+    await expect(modal.locator('select').first()).toBeVisible();
 
-        await page.screenshot({ path: 'test-results/create-bot-01-modal-open.png', fullPage: true });
-        await assertNoErrors(errors, 'Create Bot modal open');
+    await page.screenshot({ path: 'test-results/create-bot-01-modal-open.png', fullPage: true });
+    await assertNoErrors(errors, 'Create Bot modal open');
+  });
+
+  test('Submit button disabled when form is empty', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
+
+    const modal = await openCreateBotModal(page);
+
+    // Find the submit button WITHIN the modal
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+
+    // Should be disabled when form is empty
+    await expect(submitButton).toBeDisabled();
+
+    await page.screenshot({
+      path: 'test-results/create-bot-02-disabled-empty.png',
+      fullPage: true,
     });
+    await assertNoErrors(errors, 'Submit button disabled');
+  });
 
-    test('Submit button disabled when form is empty', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Submit button disabled with only name filled', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
 
-        // Find the submit button WITHIN the modal
-        const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    // Fill only name
+    const nameInput = modal.locator('input').first();
+    await nameInput.fill('Test Bot');
+    await page.waitForTimeout(300);
 
-        // Should be disabled when form is empty
-        await expect(submitButton).toBeDisabled();
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    await expect(submitButton).toBeDisabled();
 
-        await page.screenshot({ path: 'test-results/create-bot-02-disabled-empty.png', fullPage: true });
-        await assertNoErrors(errors, 'Submit button disabled');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-03-only-name.png', fullPage: true });
+    await assertNoErrors(errors, 'Submit with only name');
+  });
 
-    test('Submit button disabled with only name filled', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Submit button disabled without message provider', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
 
-        // Fill only name
-        const nameInput = modal.locator('input').first();
-        await nameInput.fill('Test Bot');
-        await page.waitForTimeout(300);
+    // Fill name
+    await modal.locator('input').first().fill('Test Bot');
 
-        const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
-        await expect(submitButton).toBeDisabled();
+    // Select only LLM provider
+    const llmSelect = modal.locator('select').last();
+    await llmSelect.selectOption('openai');
+    await page.waitForTimeout(300);
 
-        await page.screenshot({ path: 'test-results/create-bot-03-only-name.png', fullPage: true });
-        await assertNoErrors(errors, 'Submit with only name');
-    });
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    await expect(submitButton).toBeDisabled();
 
-    test('Submit button disabled without message provider', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+    await page.screenshot({ path: 'test-results/create-bot-04-no-message.png', fullPage: true });
+    await assertNoErrors(errors, 'Submit without message provider');
+  });
 
-        const modal = await openCreateBotModal(page);
+  test('Submit button disabled without LLM provider', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        // Fill name
-        await modal.locator('input').first().fill('Test Bot');
+    const modal = await openCreateBotModal(page);
 
-        // Select only LLM provider
-        const llmSelect = modal.locator('select').last();
-        await llmSelect.selectOption('openai');
-        await page.waitForTimeout(300);
+    // Fill name
+    await modal.locator('input').first().fill('Test Bot');
 
-        const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
-        await expect(submitButton).toBeDisabled();
+    // Select only message provider (second select after persona)
+    const selects = modal.locator('select');
+    const selectCount = await selects.count();
+    if (selectCount >= 2) {
+      await selects.nth(1).selectOption('discord');
+    }
+    await page.waitForTimeout(300);
 
-        await page.screenshot({ path: 'test-results/create-bot-04-no-message.png', fullPage: true });
-        await assertNoErrors(errors, 'Submit without message provider');
-    });
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    await expect(submitButton).toBeDisabled();
 
-    test('Submit button disabled without LLM provider', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+    await page.screenshot({ path: 'test-results/create-bot-05-no-llm.png', fullPage: true });
+    await assertNoErrors(errors, 'Submit without LLM provider');
+  });
 
-        const modal = await openCreateBotModal(page);
+  test('Submit button enabled with all required fields', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        // Fill name
-        await modal.locator('input').first().fill('Test Bot');
+    const modal = await openCreateBotModal(page);
 
-        // Select only message provider (second select after persona)
-        const selects = modal.locator('select');
-        const selectCount = await selects.count();
-        if (selectCount >= 2) {
-            await selects.nth(1).selectOption('discord');
-        }
-        await page.waitForTimeout(300);
+    // Fill name
+    await modal
+      .locator('input')
+      .first()
+      .fill('Test Bot ' + Date.now());
 
-        const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
-        await expect(submitButton).toBeDisabled();
+    // Get all selects and fill them
+    const selects = modal.locator('select');
+    const selectCount = await selects.count();
 
-        await page.screenshot({ path: 'test-results/create-bot-05-no-llm.png', fullPage: true });
-        await assertNoErrors(errors, 'Submit without LLM provider');
-    });
+    // Fill message provider (index 1 after persona)
+    if (selectCount >= 2) {
+      await selects.nth(1).selectOption('discord');
+    }
+    // Fill LLM provider (index 2)
+    if (selectCount >= 3) {
+      await selects.nth(2).selectOption('openai');
+    }
+    await page.waitForTimeout(300);
 
-    test('Submit button enabled with all required fields', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    await expect(submitButton).toBeEnabled();
 
-        const modal = await openCreateBotModal(page);
+    await page.screenshot({ path: 'test-results/create-bot-06-all-fields.png', fullPage: true });
+    await assertNoErrors(errors, 'Submit enabled with all fields');
+  });
 
-        // Fill name
-        await modal.locator('input').first().fill('Test Bot ' + Date.now());
+  test('Error styling on empty required selects', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        // Get all selects and fill them
-        const selects = modal.locator('select');
-        const selectCount = await selects.count();
+    const modal = await openCreateBotModal(page);
 
-        // Fill message provider (index 1 after persona)
-        if (selectCount >= 2) {
-            await selects.nth(1).selectOption('discord');
-        }
-        // Fill LLM provider (index 2)
-        if (selectCount >= 3) {
-            await selects.nth(2).selectOption('openai');
-        }
-        await page.waitForTimeout(300);
+    // Check for error styling on selects
+    const errorSelects = modal.locator('select.select-error');
+    const errorCount = await errorSelects.count();
 
-        const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
-        await expect(submitButton).toBeEnabled();
+    // Should have error styling on message and LLM provider selects
+    expect(errorCount).toBeGreaterThanOrEqual(2);
 
-        await page.screenshot({ path: 'test-results/create-bot-06-all-fields.png', fullPage: true });
-        await assertNoErrors(errors, 'Submit enabled with all fields');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-07-error-styling.png', fullPage: true });
+    await assertNoErrors(errors, 'Error styling on selects');
+  });
 
-    test('Error styling on empty required selects', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Persona has default value selected', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
 
-        // Check for error styling on selects
-        const errorSelects = modal.locator('select.select-error');
-        const errorCount = await errorSelects.count();
+    // First select is persona, should have default value
+    const personaSelect = modal.locator('select').first();
+    const value = await personaSelect.inputValue();
 
-        // Should have error styling on message and LLM provider selects
-        expect(errorCount).toBeGreaterThanOrEqual(2);
+    expect(value).toBeTruthy();
+    expect(value).toBe('default');
 
-        await page.screenshot({ path: 'test-results/create-bot-07-error-styling.png', fullPage: true });
-        await assertNoErrors(errors, 'Error styling on selects');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-08-persona.png', fullPage: true });
+    await assertNoErrors(errors, 'Persona default value');
+  });
 
-    test('Persona has default value selected', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Cancel button closes modal', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
+    await expect(modal).toBeVisible();
 
-        // First select is persona, should have default value
-        const personaSelect = modal.locator('select').first();
-        const value = await personaSelect.inputValue();
+    // Click cancel
+    const cancelButton = modal.locator('button').filter({ hasText: /cancel/i });
+    await cancelButton.click();
+    await page.waitForTimeout(500);
 
-        expect(value).toBeTruthy();
-        expect(value).toBe('default');
+    // Modal should not be visible
+    await expect(modal).not.toBeVisible();
 
-        await page.screenshot({ path: 'test-results/create-bot-08-persona.png', fullPage: true });
-        await assertNoErrors(errors, 'Persona default value');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-09-cancelled.png', fullPage: true });
+    await assertNoErrors(errors, 'Cancel button closes modal');
+  });
 
-    test('Cancel button closes modal', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Required fields marked with asterisk', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
-        await expect(modal).toBeVisible();
+    const modal = await openCreateBotModal(page);
 
-        // Click cancel
-        const cancelButton = modal.locator('button').filter({ hasText: /cancel/i });
-        await cancelButton.click();
-        await page.waitForTimeout(500);
+    // Check for asterisks
+    const asterisks = modal.locator('span.text-error:has-text("*")');
+    const count = await asterisks.count();
 
-        // Modal should not be visible
-        await expect(modal).not.toBeVisible();
+    // Should have at least 2 (Message Provider and LLM Provider)
+    expect(count).toBeGreaterThanOrEqual(2);
 
-        await page.screenshot({ path: 'test-results/create-bot-09-cancelled.png', fullPage: true });
-        await assertNoErrors(errors, 'Cancel button closes modal');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-10-asterisks.png', fullPage: true });
+    await assertNoErrors(errors, 'Required field asterisks');
+  });
 
-    test('Required fields marked with asterisk', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('Message provider has + button', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
 
-        // Check for asterisks
-        const asterisks = modal.locator('span.text-error:has-text("*")');
-        const count = await asterisks.count();
+    // Find Message Provider label section
+    const msgLabel = modal.locator('label:has-text("Message Provider")');
+    const msgFormControl = msgLabel.locator('xpath=..'); // Parent
 
-        // Should have at least 2 (Message Provider and LLM Provider)
-        expect(count).toBeGreaterThanOrEqual(2);
+    // Should have a square button with +
+    const plusButton = msgFormControl.locator('button.btn-square');
+    await expect(plusButton).toBeVisible();
 
-        await page.screenshot({ path: 'test-results/create-bot-10-asterisks.png', fullPage: true });
-        await assertNoErrors(errors, 'Required field asterisks');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-11-msg-plus.png', fullPage: true });
+    await assertNoErrors(errors, 'Message provider + button');
+  });
 
-    test('Message provider has + button', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
+  test('LLM provider has no + button', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    await navigateAndWaitReady(page, '/admin/bots');
 
-        const modal = await openCreateBotModal(page);
+    const modal = await openCreateBotModal(page);
 
-        // Find Message Provider label section
-        const msgLabel = modal.locator('label:has-text("Message Provider")');
-        const msgFormControl = msgLabel.locator('xpath=..'); // Parent
+    // Find LLM Provider label section
+    const llmLabel = modal.locator('label:has-text("LLM Provider")');
+    const llmFormControl = llmLabel.locator('xpath=..');
 
-        // Should have a square button with +
-        const plusButton = msgFormControl.locator('button.btn-square');
-        await expect(plusButton).toBeVisible();
+    // Should NOT have a square button
+    const plusButton = llmFormControl.locator('button.btn-square');
+    const count = await plusButton.count();
 
-        await page.screenshot({ path: 'test-results/create-bot-11-msg-plus.png', fullPage: true });
-        await assertNoErrors(errors, 'Message provider + button');
-    });
+    expect(count).toBe(0);
 
-    test('LLM provider has no + button', async ({ page }) => {
-        const errors = await setupTestWithErrorDetection(page);
-        await navigateAndWaitReady(page, '/admin/bots');
-
-        const modal = await openCreateBotModal(page);
-
-        // Find LLM Provider label section
-        const llmLabel = modal.locator('label:has-text("LLM Provider")');
-        const llmFormControl = llmLabel.locator('xpath=..');
-
-        // Should NOT have a square button
-        const plusButton = llmFormControl.locator('button.btn-square');
-        const count = await plusButton.count();
-
-        expect(count).toBe(0);
-
-        await page.screenshot({ path: 'test-results/create-bot-12-no-llm-plus.png', fullPage: true });
-        await assertNoErrors(errors, 'LLM provider no + button');
-    });
+    await page.screenshot({ path: 'test-results/create-bot-12-no-llm-plus.png', fullPage: true });
+    await assertNoErrors(errors, 'LLM provider no + button');
+  });
 });

@@ -16,7 +16,8 @@ class MockStatement {
   }
 
   run(...args: any[]): MockStatement {
-    const callback = typeof args[args.length - 1] === 'function' ? args[args.length - 1] : undefined;
+    const callback =
+      typeof args[args.length - 1] === 'function' ? args[args.length - 1] : undefined;
     callback?.call(this, null);
     return this;
   }
@@ -88,7 +89,7 @@ class MockDatabase {
           createdAt: normalizeDate(args[15]),
           updatedAt: normalizeDate(args[16]),
           createdBy: args[17],
-          updatedBy: args[18]
+          updatedBy: args[18],
         };
         configs.push(newConfig);
       }
@@ -111,7 +112,7 @@ class MockDatabase {
           reviewedAt: args[7],
           reviewComments: args[8],
           tenantId: args[9],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
         requests.push(newRequest);
       }
@@ -143,7 +144,7 @@ class MockDatabase {
           isActive: args[16],
           createdAt: args[17],
           createdBy: args[18],
-          changeLog: args[19]
+          changeLog: args[19],
         };
         versions.push(newVersion);
       }
@@ -163,7 +164,7 @@ class MockDatabase {
           performedBy: args[4],
           performedAt: args[5] || new Date().toISOString(),
           ipAddress: args[6],
-          userAgent: args[7]
+          userAgent: args[7],
         };
         audits.push(newAudit);
       }
@@ -183,7 +184,9 @@ class MockDatabase {
         const id = args[0];
         return configs.filter((config: any) => config.id === id);
       } else if (sql.includes('ORDER BY updatedAt DESC')) {
-        return [...configs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        return [...configs].sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
       } else if (sql.includes('IN (')) {
         // Handle bulk queries with IN clause
         const ids = args;
@@ -200,7 +203,9 @@ class MockDatabase {
         const id = args[0];
         return requests.filter((request: any) => request.id === id);
       } else if (sql.includes('ORDER BY createdAt DESC')) {
-        return [...requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...requests].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       }
       return requests;
     }

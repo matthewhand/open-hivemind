@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import Debug from 'debug';
+import { Router } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
 
 const debug = Debug('app:enterpriseRoutes');

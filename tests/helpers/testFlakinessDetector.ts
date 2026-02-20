@@ -57,22 +57,22 @@ class TestFlakinessDetector {
     }
 
     const totalRuns = history.length;
-    const passCount = history.filter(h => h.status === 'passed').length;
-    const failCount = history.filter(h => h.status === 'failed').length;
-    const skipCount = history.filter(h => h.status === 'skipped').length;
+    const passCount = history.filter((h) => h.status === 'passed').length;
+    const failCount = history.filter((h) => h.status === 'failed').length;
+    const skipCount = history.filter((h) => h.status === 'skipped').length;
 
     const failureRate = failCount / totalRuns;
     const flakinessScore = this.calculateFlakinessScore(history);
 
     // Recent failures (last 10 runs)
-    const recentFailures = history
-      .filter(h => h.status === 'failed')
-      .slice(-10);
+    const recentFailures = history.filter((h) => h.status === 'failed').slice(-10);
 
     // Duration statistics
-    const durations = history.map(h => h.duration);
+    const durations = history.map((h) => h.duration);
     const averageDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
-    const variance = durations.reduce((acc, val) => acc + Math.pow(val - averageDuration, 2), 0) / durations.length;
+    const variance =
+      durations.reduce((acc, val) => acc + Math.pow(val - averageDuration, 2), 0) /
+      durations.length;
     const standardDeviation = Math.sqrt(variance);
 
     // Determine if test is flaky
@@ -90,7 +90,7 @@ class TestFlakinessDetector {
       averageDuration,
       standardDeviation,
       isFlaky,
-      confidence
+      confidence,
     };
   }
 
@@ -103,7 +103,7 @@ class TestFlakinessDetector {
     }
 
     // Method 1: Simple failure rate
-    const failureRate = history.filter(h => h.status === 'failed').length / history.length;
+    const failureRate = history.filter((h) => h.status === 'failed').length / history.length;
 
     // Method 2: Alternating pass/fail patterns (high flakiness indicator)
     let alternatingScore = 0;
@@ -116,21 +116,22 @@ class TestFlakinessDetector {
 
     // Method 3: Recent failure rate (more recent failures are more concerning)
     const recentHistory = history.slice(-10);
-    const recentFailureRate = recentHistory.filter(h => h.status === 'failed').length / recentHistory.length;
+    const recentFailureRate =
+      recentHistory.filter((h) => h.status === 'failed').length / recentHistory.length;
 
     // Method 4: Duration variability (inconsistent timing can indicate flakiness)
-    const durations = history.map(h => h.duration);
+    const durations = history.map((h) => h.duration);
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
-    const durationVariance = durations.reduce((acc, val) => acc + Math.pow(val - avgDuration, 2), 0) / durations.length;
+    const durationVariance =
+      durations.reduce((acc, val) => acc + Math.pow(val - avgDuration, 2), 0) / durations.length;
     const durationVariability = Math.sqrt(durationVariance) / avgDuration; // Coefficient of variation
 
     // Combine scores with weights
-    const combinedScore = (
+    const combinedScore =
       failureRate * 0.4 +
       alternatingScore * 0.3 +
       recentFailureRate * 0.2 +
-      Math.min(durationVariability, 1) * 0.1 // Cap duration variability contribution
-    );
+      Math.min(durationVariability, 1) * 0.1; // Cap duration variability contribution
 
     return Math.min(combinedScore, 1);
   }
@@ -156,7 +157,7 @@ class TestFlakinessDetector {
    * Get flaky tests only
    */
   getFlakyTests(): FlakinessReport[] {
-    return this.getAllFlakinessReports().filter(report => report.isFlaky);
+    return this.getAllFlakinessReports().filter((report) => report.isFlaky);
   }
 
   /**
@@ -171,12 +172,13 @@ class TestFlakinessDetector {
     reliabilityScore: number; // 0-1, higher = more reliable
   } {
     const allReports = this.getAllFlakinessReports();
-    const flakyTests = allReports.filter(r => r.isFlaky);
+    const flakyTests = allReports.filter((r) => r.isFlaky);
 
     const flakinessRate = allReports.length > 0 ? flakyTests.length / allReports.length : 0;
-    const averageConfidence = allReports.length > 0
-      ? allReports.reduce((sum, r) => sum + r.confidence, 0) / allReports.length
-      : 0;
+    const averageConfidence =
+      allReports.length > 0
+        ? allReports.reduce((sum, r) => sum + r.confidence, 0) / allReports.length
+        : 0;
 
     const reliabilityScore = Math.max(0, 1 - flakinessRate);
 
@@ -186,7 +188,7 @@ class TestFlakinessDetector {
       flakinessRate,
       averageConfidence,
       mostFlakyTests: flakyTests.slice(0, 10),
-      reliabilityScore
+      reliabilityScore,
     };
   }
 
@@ -256,7 +258,7 @@ export class FlakinessReporter {
         duration: test.duration || 0,
         timestamp: Date.now(),
         errorMessage: test.failureMessages?.join('\n'),
-        filePath: testFilePath
+        filePath: testFilePath,
       };
 
       this.detector.recordExecution(execution);
@@ -269,7 +271,9 @@ export class FlakinessReporter {
     console.log('\n📊 Test Flakiness Report');
     console.log('========================');
     console.log(`Total Tests Analyzed: ${summary.totalTests}`);
-    console.log(`Flaky Tests: ${summary.flakyTests} (${(summary.flakinessRate * 100).toFixed(1)}%)`);
+    console.log(
+      `Flaky Tests: ${summary.flakyTests} (${(summary.flakinessRate * 100).toFixed(1)}%)`
+    );
     console.log(`Reliability Score: ${(summary.reliabilityScore * 100).toFixed(1)}%`);
     console.log(`Average Confidence: ${(summary.averageConfidence * 100).toFixed(1)}%`);
 
@@ -331,7 +335,9 @@ export function getFlakinessInsights(): {
   const recommendations: string[] = [];
 
   if (summary.flakinessRate > 0.1) {
-    criticalIssues.push(`High flakiness rate: ${(summary.flakinessRate * 100).toFixed(1)}% of tests are flaky`);
+    criticalIssues.push(
+      `High flakiness rate: ${(summary.flakinessRate * 100).toFixed(1)}% of tests are flaky`
+    );
   }
 
   if (flakyTests.length > 0) {
@@ -348,6 +354,6 @@ export function getFlakinessInsights(): {
   return {
     shouldBlockCI,
     criticalIssues,
-    recommendations
+    recommendations,
   };
 }

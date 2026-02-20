@@ -33,7 +33,7 @@ export class CommandTestBuilder {
     return {
       commandName: this.command,
       action: this.action,
-      args: this.args
+      args: this.args,
     };
   }
 }

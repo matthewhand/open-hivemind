@@ -16,7 +16,11 @@ export class ErrorHandler {
    * @param context - Context information about where the error occurred
    * @param severity - Error severity level (default: 'error')
    */
-  static handle(error: Error | unknown, context: string, severity: 'error' | 'warn' | 'info' = 'error'): void {
+  static handle(
+    error: Error | unknown,
+    context: string,
+    severity: 'error' | 'warn' | 'info' = 'error'
+  ): void {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const logMessage = `[${context}] ${errorMessage}`;
 
@@ -53,7 +57,7 @@ export class ErrorHandler {
   static async withErrorHandling<T>(
     operation: () => Promise<T>,
     context: string,
-    fallback: T | null = null,
+    fallback: T | null = null
   ): Promise<T | null> {
     try {
       return await operation();
@@ -72,13 +76,13 @@ export class ErrorHandler {
    */
   static createSafeWrapper<T extends any[], R>(
     fn: (...args: T) => R | Promise<R>,
-    context: string,
+    context: string
   ): (...args: T) => Promise<R | null> {
     return async (...args: T): Promise<R | null> => {
       try {
         const result = fn(...args);
         if (result instanceof Promise) {
-          return await result.catch(error => {
+          return await result.catch((error) => {
             this.handle(error, context);
             return null;
           });
@@ -143,7 +147,7 @@ export class PerformanceMonitor {
   static async measureAsync<T>(
     operation: () => Promise<T>,
     label: string,
-    threshold?: number,
+    threshold?: number
   ): Promise<T> {
     this.startTiming(label);
     try {

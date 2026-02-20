@@ -8,10 +8,10 @@
  * @since 2025-09-28
  */
 
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import { ConfigurationChange, HotReloadManager } from '../../src/config/HotReloadManager';
 import hotReloadRouter from '../../src/server/routes/hotReload';
-import { HotReloadManager, ConfigurationChange } from '../../src/config/HotReloadManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
 
 // Mock HotReloadManager
@@ -21,7 +21,7 @@ jest.mock('../../src/config/HotReloadManager', () => ({
       applyConfigurationChange: jest.fn().mockResolvedValue({
         success: true,
         message: 'Configuration change applied successfully',
-        changeId: 'test-change-123'
+        changeId: 'test-change-123',
       }),
       getChangeHistory: jest.fn().mockReturnValue([
         {
@@ -32,29 +32,29 @@ jest.mock('../../src/config/HotReloadManager', () => ({
           changes: { enabled: true },
           validated: true,
           applied: true,
-          rollbackAvailable: true
-        }
+          rollbackAvailable: true,
+        },
       ]),
       getAvailableRollbacks: jest.fn().mockReturnValue([
         {
           id: 'snapshot-1',
           timestamp: new Date().toISOString(),
-          description: 'Test snapshot'
-        }
+          description: 'Test snapshot',
+        },
       ]),
-      rollbackToSnapshot: jest.fn().mockResolvedValue(true)
-    })
+      rollbackToSnapshot: jest.fn().mockResolvedValue(true),
+    }),
   },
-  ConfigurationChange: class {}
+  ConfigurationChange: class {},
 }));
 
 // Mock WebSocketService
 jest.mock('../../src/server/services/WebSocketService', () => ({
   WebSocketService: {
     getInstance: jest.fn().mockReturnValue({
-      recordAlert: jest.fn()
-    })
-  }
+      recordAlert: jest.fn(),
+    }),
+  },
 }));
 
 describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
@@ -77,8 +77,8 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         botName: 'test-bot',
         changes: {
           enabled: true,
-          messageProvider: 'discord'
-        }
+          messageProvider: 'discord',
+        },
       };
 
       const response = await request(app)
@@ -95,7 +95,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       const invalidChangeData = {
         type: 'update',
         botName: 'test-bot',
-        changes: {} // Empty changes
+        changes: {}, // Empty changes
       };
 
       const response = await request(app)
@@ -124,13 +124,13 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle hot reload manager errors gracefully', async () => {
       const mockManager = HotReloadManager.getInstance as jest.MockedFunction<any>;
       mockManager.mockReturnValueOnce({
-        applyConfigurationChange: jest.fn().mockRejectedValue(new Error('Hot reload failed'))
+        applyConfigurationChange: jest.fn().mockRejectedValue(new Error('Hot reload failed')),
       });
 
       const changeData = {
         type: 'update',
         botName: 'test-bot',
-        changes: { enabled: false }
+        changes: { enabled: false },
       };
 
       const response = await request(app)
@@ -150,12 +150,10 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         const changeData = {
           type: changeType,
           botName: 'test-bot',
-          changes: { enabled: true }
+          changes: { enabled: true },
         };
 
-        const response = await request(app)
-          .post('/api/config/hot-reload')
-          .send(changeData);
+        const response = await request(app).post('/api/config/hot-reload').send(changeData);
 
         expect([200, 400, 500]).toContain(response.status);
         // Should not crash with valid types
@@ -165,9 +163,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/config/hot-reload/history - CHANGE HISTORY', () => {
     it('should return change history', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/history')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/history').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('history');
@@ -185,9 +181,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should validate change history structure', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/history')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/history').expect(200);
 
       if (response.body.history.length > 0) {
         const change = response.body.history[0];
@@ -207,12 +201,10 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       mockManager.mockReturnValueOnce({
         getChangeHistory: jest.fn().mockImplementation(() => {
           throw new Error('History retrieval failed');
-        })
+        }),
       });
 
-      const response = await request(app)
-        .get('/api/config/hot-reload/history')
-        .expect(500);
+      const response = await request(app).get('/api/config/hot-reload/history').expect(500);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('message');
@@ -222,9 +214,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     it('should default to reasonable limit when not specified', async () => {
       const mockManager = HotReloadManager.getInstance as jest.MockedFunction<any>;
 
-      await request(app)
-        .get('/api/config/hot-reload/history')
-        .expect(200);
+      await request(app).get('/api/config/hot-reload/history').expect(200);
 
       expect(mockManager().getChangeHistory).toHaveBeenCalledWith(50); // Default limit
     });
@@ -232,9 +222,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/config/hot-reload/rollbacks - AVAILABLE ROLLBACKS', () => {
     it('should return available rollback snapshots', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/rollbacks')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/rollbacks').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('rollbacks');
@@ -242,9 +230,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should validate rollback snapshot structure', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/rollbacks')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/rollbacks').expect(200);
 
       if (response.body.rollbacks.length > 0) {
         const rollback = response.body.rollbacks[0];
@@ -259,12 +245,10 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       mockManager.mockReturnValueOnce({
         getAvailableRollbacks: jest.fn().mockImplementation(() => {
           throw new Error('Rollback retrieval failed');
-        })
+        }),
       });
 
-      const response = await request(app)
-        .get('/api/config/hot-reload/rollbacks')
-        .expect(500);
+      const response = await request(app).get('/api/config/hot-reload/rollbacks').expect(500);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('message');
@@ -289,22 +273,20 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       const snapshotId = 'snapshot-123';
       const mockWSService = WebSocketService.getInstance as jest.MockedFunction<any>;
 
-      await request(app)
-        .post(`/api/config/hot-reload/rollback/${snapshotId}`)
-        .expect(200);
+      await request(app).post(`/api/config/hot-reload/rollback/${snapshotId}`).expect(200);
 
       expect(mockWSService().recordAlert).toHaveBeenCalledWith({
         level: 'warning',
         title: 'Configuration Rolled Back',
         message: expect.stringContaining(`Configuration rolled back to snapshot ${snapshotId}`),
-        metadata: { snapshotId }
+        metadata: { snapshotId },
       });
     });
 
     it('should handle rollback to non-existent snapshot', async () => {
       const mockManager = HotReloadManager.getInstance as jest.MockedFunction<any>;
       mockManager.mockReturnValueOnce({
-        rollbackToSnapshot: jest.fn().mockResolvedValue(false)
+        rollbackToSnapshot: jest.fn().mockResolvedValue(false),
       });
 
       const snapshotId = 'non-existent-snapshot';
@@ -321,7 +303,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle rollback errors gracefully', async () => {
       const mockManager = HotReloadManager.getInstance as jest.MockedFunction<any>;
       mockManager.mockReturnValueOnce({
-        rollbackToSnapshot: jest.fn().mockRejectedValue(new Error('Rollback failed'))
+        rollbackToSnapshot: jest.fn().mockRejectedValue(new Error('Rollback failed')),
       });
 
       const snapshotId = 'snapshot-123';
@@ -339,8 +321,9 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       const invalidSnapshotIds = ['', 'invalid-id', '../../../etc/passwd'];
 
       for (const snapshotId of invalidSnapshotIds) {
-        const response = await request(app)
-          .post(`/api/config/hot-reload/rollback/${encodeURIComponent(snapshotId)}`);
+        const response = await request(app).post(
+          `/api/config/hot-reload/rollback/${encodeURIComponent(snapshotId)}`
+        );
 
         expect([200, 400, 404, 500]).toContain(response.status);
         // Should not crash the application
@@ -350,9 +333,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /api/config/hot-reload/status - HOT RELOAD STATUS', () => {
     it('should return hot reload status information', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/status')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/status').expect(200);
 
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('status');
@@ -363,26 +344,20 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should indicate hot reload is active', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/status')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/status').expect(200);
 
       expect(response.body.status.isActive).toBe(true);
     });
 
     it('should include change history count', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/status')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/status').expect(200);
 
       expect(typeof response.body.status.changeHistoryCount).toBe('number');
       expect(response.body.status.changeHistoryCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should include available rollbacks count', async () => {
-      const response = await request(app)
-        .get('/api/config/hot-reload/status')
-        .expect(200);
+      const response = await request(app).get('/api/config/hot-reload/status').expect(200);
 
       expect(typeof response.body.status.availableRollbacksCount).toBe('number');
       expect(response.body.status.availableRollbacksCount).toBeGreaterThanOrEqual(0);
@@ -394,12 +369,10 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         getChangeHistory: jest.fn().mockImplementation(() => {
           throw new Error('Status retrieval failed');
         }),
-        getAvailableRollbacks: jest.fn().mockReturnValue([])
+        getAvailableRollbacks: jest.fn().mockReturnValue([]),
       });
 
-      const response = await request(app)
-        .get('/api/config/hot-reload/status')
-        .expect(500);
+      const response = await request(app).get('/api/config/hot-reload/status').expect(500);
 
       expect(response.body).toHaveProperty('success', false);
       expect(response.body).toHaveProperty('message');
@@ -420,16 +393,16 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       const changeData = {
         type: 'update',
         botName: 'test-bot',
-        changes: { enabled: true }
+        changes: { enabled: true },
       };
 
-      const requests = Array(5).fill(null).map(() =>
-        request(app).post('/api/config/hot-reload').send(changeData)
-      );
+      const requests = Array(5)
+        .fill(null)
+        .map(() => request(app).post('/api/config/hot-reload').send(changeData));
 
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect([200, 400, 500]).toContain(response.status);
       });
     });
@@ -439,21 +412,16 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
       const changeData = {
         type: 'update',
         botName: longString,
-        changes: { enabled: true }
+        changes: { enabled: true },
       };
 
-      const response = await request(app)
-        .post('/api/config/hot-reload')
-        .send(changeData);
+      const response = await request(app).post('/api/config/hot-reload').send(changeData);
 
       expect([200, 201, 400, 413]).toContain(response.status);
     });
 
     it('should handle empty request bodies', async () => {
-      const response = await request(app)
-        .post('/api/config/hot-reload')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/config/hot-reload').send({}).expect(400);
 
       expect(response.body).toHaveProperty('success', false);
     });
@@ -465,27 +433,25 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         {
           type: 'update',
           botName: '../../../etc/passwd',
-          changes: { enabled: true }
+          changes: { enabled: true },
         },
         {
           type: 'update',
           botName: 'test-bot',
           changes: {
             systemCommand: 'rm -rf /',
-            enabled: true
-          }
+            enabled: true,
+          },
         },
         {
           type: 'update',
           botName: '<script>alert("xss")</script>',
-          changes: { enabled: true }
-        }
+          changes: { enabled: true },
+        },
       ];
 
       for (const injection of injectionAttempts) {
-        const response = await request(app)
-          .post('/api/config/hot-reload')
-          .send(injection);
+        const response = await request(app).post('/api/config/hot-reload').send(injection);
 
         expect([200, 400, 404, 500]).toContain(response.status);
         // Should not crash the application
@@ -497,12 +463,13 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         '../../../etc/passwd',
         '..\\..\\..\\windows\\system32',
         '%2e%2e%2f%2e%2e%2f%2e%2e%2f',
-        '....//....//....//etc/passwd'
+        '....//....//....//etc/passwd',
       ];
 
       for (const snapshotId of maliciousSnapshotIds) {
-        const response = await request(app)
-          .post(`/api/config/hot-reload/rollback/${encodeURIComponent(snapshotId)}`);
+        const response = await request(app).post(
+          `/api/config/hot-reload/rollback/${encodeURIComponent(snapshotId)}`
+        );
 
         expect([200, 400, 404, 500]).toContain(response.status);
         // Should not expose sensitive information or crash
@@ -512,13 +479,15 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     it('should not expose sensitive information in error messages', async () => {
       const mockManager = HotReloadManager.getInstance as jest.MockedFunction<any>;
       mockManager.mockReturnValueOnce({
-        applyConfigurationChange: jest.fn().mockRejectedValue(new Error('Configuration validation failed'))
+        applyConfigurationChange: jest
+          .fn()
+          .mockRejectedValue(new Error('Configuration validation failed')),
       });
 
       const changeData = {
         type: 'update',
         botName: 'test-bot',
-        changes: { enabled: false }
+        changes: { enabled: false },
       };
 
       const response = await request(app)

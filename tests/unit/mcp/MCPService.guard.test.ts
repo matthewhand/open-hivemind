@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
-import { MCPService } from '../../../src/mcp/MCPService';
 import type { MCPGuardConfig } from '../../../src/mcp/MCPGuard';
+import { MCPService } from '../../../src/mcp/MCPService';
 
 jest.mock('@integrations/slack/providers/SlackMessageProvider', () => ({
   SlackMessageProvider: jest.fn().mockImplementation(() => ({
@@ -58,11 +58,16 @@ describe('MCPService guard enforcement', () => {
   it('allows owner when guard type owner', async () => {
     setGuard({ enabled: true, type: 'owner' });
     await expect(
-      service.executeTool('server', 'demo', {}, {
-        botName: 'BotA',
-        userId: 'owner123',
-        forumOwnerId: 'owner123',
-      })
+      service.executeTool(
+        'server',
+        'demo',
+        {},
+        {
+          botName: 'BotA',
+          userId: 'owner123',
+          forumOwnerId: 'owner123',
+        }
+      )
     ).resolves.toEqual({ ok: true });
     expect(callTool).toHaveBeenCalledTimes(1);
   });
@@ -70,11 +75,16 @@ describe('MCPService guard enforcement', () => {
   it('denies non-owner when guard type owner', async () => {
     setGuard({ enabled: true, type: 'owner' });
     await expect(
-      service.executeTool('server', 'demo', {}, {
-        botName: 'BotA',
-        userId: 'user-nope',
-        forumOwnerId: 'owner123',
-      })
+      service.executeTool(
+        'server',
+        'demo',
+        {},
+        {
+          botName: 'BotA',
+          userId: 'user-nope',
+          forumOwnerId: 'owner123',
+        }
+      )
     ).rejects.toThrow(/denied/i);
     expect(callTool).not.toHaveBeenCalled();
   });
@@ -82,10 +92,15 @@ describe('MCPService guard enforcement', () => {
   it('allows custom list when user present', async () => {
     setGuard({ enabled: true, type: 'custom', allowedUserIds: ['user-1', 'user-2'] });
     await expect(
-      service.executeTool('server', 'demo', {}, {
-        botName: 'BotA',
-        userId: 'user-2',
-      })
+      service.executeTool(
+        'server',
+        'demo',
+        {},
+        {
+          botName: 'BotA',
+          userId: 'user-2',
+        }
+      )
     ).resolves.toEqual({ ok: true });
     expect(callTool).toHaveBeenCalled();
   });
@@ -99,12 +114,17 @@ describe('MCPService guard enforcement', () => {
 
     setGuard({ enabled: true, type: 'owner' });
     await expect(
-      service.executeTool('server', 'demo', {}, {
-        botName: 'BotA',
-        userId: 'slack-owner',
-        messageProvider: 'slack',
-        forumId: 'C123',
-      })
+      service.executeTool(
+        'server',
+        'demo',
+        {},
+        {
+          botName: 'BotA',
+          userId: 'slack-owner',
+          messageProvider: 'slack',
+          forumId: 'C123',
+        }
+      )
     ).resolves.toEqual({ ok: true });
     expect(mockGetForumOwner).toHaveBeenCalledWith('C123');
   });

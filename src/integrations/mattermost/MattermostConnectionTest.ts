@@ -8,7 +8,7 @@ export interface MattermostConnectionTestResult {
 
 export const testMattermostConnection = async (
   serverUrl: string,
-  token: string,
+  token: string
 ): Promise<MattermostConnectionTestResult> => {
   const trimmedUrl = serverUrl.trim();
   const trimmedToken = token.trim();

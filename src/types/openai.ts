@@ -289,7 +289,15 @@ export interface OpenAIRun {
   created_at: number;
   thread_id: string;
   assistant_id: string;
-  status: 'queued' | 'in_progress' | 'requires_action' | 'cancelling' | 'cancelled' | 'failed' | 'completed' | 'expired';
+  status:
+    | 'queued'
+    | 'in_progress'
+    | 'requires_action'
+    | 'cancelling'
+    | 'cancelled'
+    | 'failed'
+    | 'completed'
+    | 'expired';
   required_action?: OpenAIRequiredAction;
   last_error?: OpenAIRunError;
   expires_at: number;
@@ -344,14 +352,27 @@ export function isOpenAIError(response: OpenAIResponse): response is OpenAIError
   return 'error' in response;
 }
 
-export function isChatCompletionResponse(response: OpenAIResponse): response is OpenAIChatCompletionResponse {
+export function isChatCompletionResponse(
+  response: OpenAIResponse
+): response is OpenAIChatCompletionResponse {
   return 'object' in response && response.object === 'chat.completion';
 }
 
-export function isModelsListResponse(response: OpenAIResponse): response is OpenAIModelsListResponse {
-  return 'object' in response && response.object === 'list' && 'data' in response && Array.isArray(response.data) && response.data.length > 0 && 'id' in response.data[0];
+export function isModelsListResponse(
+  response: OpenAIResponse
+): response is OpenAIModelsListResponse {
+  return (
+    'object' in response &&
+    response.object === 'list' &&
+    'data' in response &&
+    Array.isArray(response.data) &&
+    response.data.length > 0 &&
+    'id' in response.data[0]
+  );
 }
 
-export function isCompletionResponse(response: OpenAIResponse): response is OpenAICompletionResponse {
+export function isCompletionResponse(
+  response: OpenAIResponse
+): response is OpenAICompletionResponse {
   return 'object' in response && response.object === 'text_completion';
 }

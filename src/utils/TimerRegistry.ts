@@ -18,21 +18,21 @@ interface TimerRecord {
 /**
  * TimerRegistry provides centralized management of all timers and intervals.
  * This ensures proper cleanup during shutdown and prevents resource leaks.
- * 
+ *
  * @example
  * // Register a timeout
  * const timerId = TimerRegistry.getInstance().registerTimeout('my-timeout', () => {
  *   console.log('Timer fired');
  * }, 5000);
- * 
+ *
  * // Register an interval
  * const intervalId = TimerRegistry.getInstance().registerInterval('my-interval', () => {
  *   console.log('Interval fired');
  * }, 60000);
- * 
+ *
  * // Clear a specific timer
  * TimerRegistry.getInstance().clear(timerId);
- * 
+ *
  * // Clear all timers on shutdown
  * TimerRegistry.getInstance().clearAll();
  */
@@ -73,7 +73,7 @@ export class TimerRegistry {
     id: string,
     callback: () => void,
     delayMs: number,
-    description?: string,
+    description?: string
   ): string {
     this.enforceMaxTimers();
 
@@ -109,7 +109,7 @@ export class TimerRegistry {
     id: string,
     callback: () => void,
     intervalMs: number,
-    description?: string,
+    description?: string
   ): string {
     this.enforceMaxTimers();
 

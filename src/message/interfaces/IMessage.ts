@@ -116,7 +116,7 @@ export abstract class IMessage {
    */
   getText(): string {
     if (this.role === 'tool') {
-      return this.content;  // Default to content, override in implementations if needed
+      return this.content; // Default to content, override in implementations if needed
     }
     return this.content;
   }
@@ -196,7 +196,9 @@ export abstract class IMessage {
    *
    * @returns {boolean} True if this message is a reply to a bot
    */
-  isReplyToBot(): boolean { return false; }
+  isReplyToBot(): boolean {
+    return false;
+  }
 
   /**
    * Checks if this message mentions a specific user.
@@ -225,8 +227,10 @@ export abstract class IMessage {
 
   /**
    * Checks if this message was sent in a direct message (DM) context.
-   * 
+   *
    * @returns {boolean} True if the message is a DM
    */
-  isDirectMessage(): boolean { return false; }
+  isDirectMessage(): boolean {
+    return false;
+  }
 }

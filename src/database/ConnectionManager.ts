@@ -1,7 +1,6 @@
-import type { Database} from 'sqlite';
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
 import { EventEmitter } from 'events';
+import { open, type Database } from 'sqlite';
+import sqlite3 from 'sqlite3';
 import { Logger } from '@common/logger';
 
 export interface ConnectionOptions {
@@ -35,7 +34,7 @@ export class ConnectionManager extends EventEmitter {
       if (this.options.timeout) {
         await this.db.configure('busyTimeout', this.options.timeout);
       }
-      
+
       this.isConnected = true;
       Logger.info(`Connected to database: ${this.options.databasePath}`);
       this.emit('connected');
@@ -81,7 +80,7 @@ export class ConnectionManager extends EventEmitter {
 
     return new Promise((resolve, reject) => {
       if (params && params.length > 0) {
-        this.db!.run(query, params, function(err) {
+        this.db!.run(query, params, function (err) {
           if (err) {
             Logger.error(`Query execution error: ${err.message}`);
             reject(err);
@@ -90,7 +89,7 @@ export class ConnectionManager extends EventEmitter {
           }
         });
       } else {
-        this.db!.run(query, function(err) {
+        this.db!.run(query, function (err) {
           if (err) {
             Logger.error(`Query execution error: ${err.message}`);
             reject(err);

@@ -1,7 +1,6 @@
-import type { Client, VoiceChannel, GuildChannel } from 'discord.js';
-import { ChannelType } from 'discord.js';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ChannelType, type Client, type GuildChannel, type VoiceChannel } from 'discord.js';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:setupVoiceChannel');
 
@@ -15,7 +14,10 @@ const debug = Debug('app:setupVoiceChannel');
  * @param channelId - The ID of the channel to set up.
  * @returns The configured voice channel object.
  */
-export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceChannel | null> {
+export async function setupVoiceChannel(
+  client: Client,
+  channelId: string
+): Promise<VoiceChannel | null> {
   try {
     const channel = await client.channels.fetch(channelId);
 

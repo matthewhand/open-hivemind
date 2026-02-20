@@ -35,7 +35,7 @@ export async function runPerformanceTest(
     warmupIterations = 10,
     timeoutMs = 30000,
     acceptableAverageMs = 100,
-    acceptableMaxMs = 500
+    acceptableMaxMs = 500,
   } = options;
 
   // Warmup phase
@@ -67,7 +67,8 @@ export async function runPerformanceTest(
   const max = sortedSamples[sortedSamples.length - 1];
 
   // Standard deviation
-  const variance = samples.reduce((acc, val) => acc + Math.pow(val - average, 2), 0) / samples.length;
+  const variance =
+    samples.reduce((acc, val) => acc + Math.pow(val - average, 2), 0) / samples.length;
   const standardDeviation = Math.sqrt(variance);
 
   // Percentiles
@@ -83,7 +84,7 @@ export async function runPerformanceTest(
     max,
     standardDeviation,
     percentile95,
-    percentile99
+    percentile99,
   };
 
   // Assertions
@@ -159,7 +160,7 @@ export async function runMemoryTest(
     initialMemory,
     finalMemory,
     memoryDelta,
-    leaked
+    leaked,
   };
 }
 
@@ -182,11 +183,7 @@ export async function runConcurrencyTest(
   operationsPerSecond: number;
   averageLatency: number;
 }> {
-  const {
-    concurrentUsers = 10,
-    operationsPerUser = 100,
-    timeoutMs = 30000
-  } = options;
+  const { concurrentUsers = 10, operationsPerUser = 100, timeoutMs = 30000 } = options;
 
   const startTime = Date.now();
   const promises: Promise<void>[] = [];
@@ -230,7 +227,7 @@ export async function runConcurrencyTest(
     totalOperations,
     totalTime,
     operationsPerSecond,
-    averageLatency
+    averageLatency,
   };
 }
 
@@ -255,7 +252,7 @@ export function createPerformanceTestSuite(
           avg: `${result.average.toFixed(2)}ms`,
           median: `${result.median.toFixed(2)}ms`,
           p95: `${result.percentile95.toFixed(2)}ms`,
-          p99: `${result.percentile99.toFixed(2)}ms`
+          p99: `${result.percentile99.toFixed(2)}ms`,
         });
       }, 60000); // 60 second timeout for performance tests
     });

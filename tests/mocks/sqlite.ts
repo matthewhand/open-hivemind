@@ -60,12 +60,12 @@ export class Database {
   async run(sql: string, ...args: any[]): Promise<{ lastID: number; changes: number }> {
     // Call the mock function for tracking and get its result if mock was set up
     const mockResult = await mockRun(sql, ...args);
-    
+
     // If the mock returned a specific value (via mockResolvedValueOnce), use it
     if (mockResult !== undefined) {
       return mockResult;
     }
-    
+
     let changes = 0;
     let lastID = 0;
 
@@ -107,7 +107,7 @@ export class Database {
           createdAt: normalizeDate(args[15]),
           updatedAt: normalizeDate(args[16]),
           createdBy: args[17],
-          updatedBy: args[18]
+          updatedBy: args[18],
         };
         configs.push(newConfig);
       }
@@ -130,7 +130,7 @@ export class Database {
           reviewedAt: args[7],
           reviewComments: args[8],
           tenantId: args[9],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
         requests.push(newRequest);
       }
@@ -162,7 +162,7 @@ export class Database {
           isActive: args[16],
           createdAt: args[17],
           createdBy: args[18],
-          changeLog: args[19]
+          changeLog: args[19],
         };
         versions.push(newVersion);
       }
@@ -182,7 +182,7 @@ export class Database {
           performedBy: args[4],
           performedAt: args[5] || new Date().toISOString(),
           ipAddress: args[6],
-          userAgent: args[7]
+          userAgent: args[7],
         };
         audits.push(newAudit);
       }
@@ -198,16 +198,22 @@ export class Database {
           // Update fields based on the SET clause
           if (sql.includes('status = ?')) {
             const statusIndex = sql.indexOf('status = ?');
-            const statusArg = args.slice(0, -1).find((arg: any, index: number) =>
-              sql.substring(0, statusIndex).split(',').length === index + 1
-            );
+            const statusArg = args
+              .slice(0, -1)
+              .find(
+                (arg: any, index: number) =>
+                  sql.substring(0, statusIndex).split(',').length === index + 1
+              );
             if (statusArg) request.status = statusArg;
           }
           if (sql.includes('reviewedBy = ?')) {
             const reviewedByIndex = sql.indexOf('reviewedBy = ?');
-            const reviewedByArg = args.slice(0, -1).find((arg: any, index: number) =>
-              sql.substring(0, reviewedByIndex).split(',').length === index + 1
-            );
+            const reviewedByArg = args
+              .slice(0, -1)
+              .find(
+                (arg: any, index: number) =>
+                  sql.substring(0, reviewedByIndex).split(',').length === index + 1
+              );
             if (reviewedByArg) request.reviewedBy = reviewedByArg;
           }
           if (sql.includes('reviewedAt = ?')) {
@@ -215,9 +221,12 @@ export class Database {
           }
           if (sql.includes('reviewComments = ?')) {
             const reviewCommentsIndex = sql.indexOf('reviewComments = ?');
-            const reviewCommentsArg = args.slice(0, -1).find((arg: any, index: number) =>
-              sql.substring(0, reviewCommentsIndex).split(',').length === index + 1
-            );
+            const reviewCommentsArg = args
+              .slice(0, -1)
+              .find(
+                (arg: any, index: number) =>
+                  sql.substring(0, reviewCommentsIndex).split(',').length === index + 1
+              );
             if (reviewCommentsArg) request.reviewComments = reviewCommentsArg;
           }
           changes = 1;
@@ -232,9 +241,12 @@ export class Database {
           // Handle various UPDATE operations for bot_configurations
           if (sql.includes('isActive = ?')) {
             const isActiveIndex = sql.indexOf('isActive = ?');
-            const isActiveArg = args.slice(0, -1).find((arg: any, index: number) =>
-              sql.substring(0, isActiveIndex).split(',').length === index + 1
-            );
+            const isActiveArg = args
+              .slice(0, -1)
+              .find(
+                (arg: any, index: number) =>
+                  sql.substring(0, isActiveIndex).split(',').length === index + 1
+              );
             if (isActiveArg !== undefined) config.isActive = isActiveArg;
           }
           changes = 1;
@@ -267,7 +279,9 @@ export class Database {
         const configId = args[0];
         const version = args[1];
         const originalLength = versions.length;
-        const filtered = versions.filter((v: any) => !(v.botConfigurationId === configId && v.version === version));
+        const filtered = versions.filter(
+          (v: any) => !(v.botConfigurationId === configId && v.version === version)
+        );
         this.data.set('bot_configuration_versions', filtered);
         changes = originalLength - filtered.length;
       }
@@ -279,12 +293,12 @@ export class Database {
   async all(sql: string, ...args: any[]): Promise<any[]> {
     // Call the mock function for tracking and get its result if mock was set up
     const mockResult = await mockAll(sql, ...args);
-    
+
     // If the mock returned a specific value (via mockResolvedValueOnce), use it
     if (mockResult !== undefined) {
       return mockResult;
     }
-    
+
     // Handle case where parameters are passed as an array (common pattern in DatabaseManager)
     if (args.length === 1 && Array.isArray(args[0])) {
       args = args[0];
@@ -298,7 +312,9 @@ export class Database {
         const id = args[0];
         return configs.filter((config: any) => config.id === id);
       } else if (sql.includes('ORDER BY updatedAt DESC')) {
-        return [...configs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        return [...configs].sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
       } else if (sql.includes('IN (')) {
         // Handle bulk queries with IN clause
         const ids = args;
@@ -315,7 +331,9 @@ export class Database {
         const id = args[0];
         return requests.filter((request: any) => request.id === id);
       } else if (sql.includes('ORDER BY createdAt DESC')) {
-        return [...requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...requests].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       }
       return requests;
     }
@@ -355,17 +373,17 @@ export class Database {
       }
       return audits;
     }
-    
+
     // messages queries
     if (sql.includes('messages')) {
       return this.data.get('messages') || [];
     }
-    
+
     // anomalies queries
     if (sql.includes('anomalies')) {
       return this.data.get('anomalies') || [];
     }
-    
+
     // bot_metrics queries
     if (sql.includes('bot_metrics')) {
       return this.data.get('bot_metrics') || [];
@@ -377,12 +395,12 @@ export class Database {
   async get(sql: string, ...args: any[]): Promise<any> {
     // Call the mock function for tracking and get its result if mock was set up
     const mockResult = await mockGet(sql, ...args);
-    
+
     // If the mock returned a specific value (via mockResolvedValueOnce), use it
     if (mockResult !== undefined) {
       return mockResult;
     }
-    
+
     // Handle case where parameters are passed as an array (common pattern in DatabaseManager)
     if (args.length === 1 && Array.isArray(args[0])) {
       args = args[0];

@@ -1,11 +1,10 @@
-import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import Debug from 'debug';
-import type { IMessage } from '@message/interfaces/IMessage';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import discordConfig from '@config/discordConfig';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 const debug = Debug('app:sendFollowUpRequest');
-
-import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 /**
  * Sends an AI-generated follow-up message using chat completions.
@@ -19,7 +18,7 @@ export async function sendFollowUpRequest(
   channelId: string,
   followUpText: string,
   messageProvider: IMessageProvider,
-  senderKey?: string,
+  senderKey?: string
 ): Promise<void> {
   const { provider, metadata } = await getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
   if (!provider.supportsChatCompletion()) {

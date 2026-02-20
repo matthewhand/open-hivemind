@@ -99,7 +99,7 @@ export function testConfigErrorHandling(
       config = require(configPath).default;
     });
 
-    invalidKeys.forEach(key => {
+    invalidKeys.forEach((key) => {
       it(`should handle missing configuration key: ${key}`, () => {
         expect(() => config.get(key as any)).toThrow();
       });
@@ -107,7 +107,9 @@ export function testConfigErrorHandling(
 
     it('should handle empty string environment variables', () => {
       // This is a general test - specific implementations may vary
-      expect(typeof config.get(Object.keys(config._instance?.root || {})[0] || 'test')).toBeDefined();
+      expect(
+        typeof config.get(Object.keys(config._instance?.root || {})[0] || 'test')
+      ).toBeDefined();
     });
   });
 }
@@ -132,7 +134,7 @@ export function testConfigPerformance(
       const startTime = Date.now();
 
       for (let i = 0; i < 1000; i++) {
-        operations.forEach(op => op());
+        operations.forEach((op) => op());
       }
 
       const duration = Date.now() - startTime;
@@ -140,8 +142,8 @@ export function testConfigPerformance(
     });
 
     it('should maintain consistency across multiple calls', () => {
-      const results1 = operations.map(op => op());
-      const results2 = operations.map(op => op());
+      const results1 = operations.map((op) => op());
+      const results2 = operations.map((op) => op());
 
       results1.forEach((result, index) => {
         expect(result).toEqual(results2[index]);
@@ -149,14 +151,16 @@ export function testConfigPerformance(
     });
 
     it('should handle concurrent access patterns', async () => {
-      const promises = Array(50).fill(null).map(async () => {
-        return operations.map(op => op());
-      });
+      const promises = Array(50)
+        .fill(null)
+        .map(async () => {
+          return operations.map((op) => op());
+        });
 
       const results = await Promise.all(promises);
       const first = results[0];
 
-      results.forEach(result => {
+      results.forEach((result) => {
         result.forEach((value: any, index: number) => {
           expect(value).toEqual(first[index]);
         });

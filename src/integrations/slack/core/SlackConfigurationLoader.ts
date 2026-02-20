@@ -27,9 +27,9 @@ export class SlackConfigurationLoader {
    */
   public static loadFromBotConfigurationManager(): SlackBotInstance[] {
     const configManager = BotConfigurationManager.getInstance();
-    const slackBotConfigs = configManager.getAllBots().filter(bot =>
-      bot.messageProvider === 'slack' && bot.slack?.botToken,
-    );
+    const slackBotConfigs = configManager
+      .getAllBots()
+      .filter((bot) => bot.messageProvider === 'slack' && bot.slack?.botToken);
 
     if (slackBotConfigs.length === 0) {
       debug('No Slack bot configurations found in BotConfigurationManager');
@@ -38,7 +38,7 @@ export class SlackConfigurationLoader {
 
     debug(`Loading ${slackBotConfigs.length} Slack bot configurations`);
 
-    return slackBotConfigs.map(botConfig => ({
+    return slackBotConfigs.map((botConfig) => ({
       token: botConfig.slack!.botToken,
       signingSecret: botConfig.slack!.signingSecret || '',
       name: botConfig.name,
@@ -51,7 +51,10 @@ export class SlackConfigurationLoader {
   /**
    * Load legacy configuration from environment variables and config files
    */
-  public static loadLegacyConfiguration(): { instances: SlackBotInstance[], mode: 'socket' | 'rtm' } {
+  public static loadLegacyConfiguration(): {
+    instances: SlackBotInstance[];
+    mode: 'socket' | 'rtm';
+  } {
     const instances: SlackBotInstance[] = [];
     const mode: 'socket' | 'rtm' = 'socket'; // Default to socket mode
 
@@ -100,7 +103,7 @@ export class SlackConfigurationLoader {
   /**
    * Validate a Slack bot configuration
    */
-  public static validateBotConfig(config: SlackBotInstance): { valid: boolean, errors: string[] } {
+  public static validateBotConfig(config: SlackBotInstance): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!config.token) {

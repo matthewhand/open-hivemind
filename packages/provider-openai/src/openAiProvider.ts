@@ -1,15 +1,15 @@
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
-import { OpenAI } from 'openai';
-import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
+import { OpenAI } from 'openai';
 import {
+  ApiError,
   BaseHivemindError,
   ConfigurationError,
   NetworkError,
-  ApiError,
   TimeoutError,
 } from '@src/types/errorClasses';
+import openaiConfig from '@config/openaiConfig';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:openAiProvider');
 
@@ -17,7 +17,7 @@ const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE_MS = 1000;
 
-const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class OpenAiProvider implements ILlmProvider {
   name = 'openai';
@@ -38,17 +38,23 @@ export class OpenAiProvider implements ILlmProvider {
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<string> {
     debug('Starting chat completion generation');
 
     // Load configuration - prioritize env vars for critical settings
     debug('this.config:', JSON.stringify(this.config, null, 2));
     debug('process.env.OPENAI_MODEL:', process.env.OPENAI_MODEL);
-    const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
-    let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
+    const apiKey =
+      this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL =
+      this.config.baseUrl ||
+      openaiConfig.get('OPENAI_BASE_URL') ||
+      process.env.OPENAI_BASE_URL ||
+      DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
-    const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const organization =
+      this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
     const model =
       metadata?.modelOverride ||
       metadata?.model ||
@@ -57,7 +63,11 @@ export class OpenAiProvider implements ILlmProvider {
       openaiConfig.get('OPENAI_MODEL') ||
       'gpt-4o';
 
-    const systemPrompt = metadata?.systemPrompt || this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
+    const systemPrompt =
+      metadata?.systemPrompt ||
+      this.config.systemPrompt ||
+      openaiConfig.get('OPENAI_SYSTEM_PROMPT') ||
+      'You are a helpful assistant.';
 
     debug('OpenAI Config:', {
       baseURL,
@@ -82,7 +92,7 @@ export class OpenAiProvider implements ILlmProvider {
 
     const messages = [
       { role: 'system' as const, content: systemPrompt },
-      ...historyMessages.map(msg => ({
+      ...historyMessages.map((msg) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.getText() || '',
       })),
@@ -93,15 +103,22 @@ export class OpenAiProvider implements ILlmProvider {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         // Apply temperature boost from metadata if present (for duplicate retries)
-        const baseTemperature = this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
+        const baseTemperature =
+          this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
         const temperatureBoost = metadata?.temperatureBoost || 0;
         const effectiveTemperature = Math.min(1.5, baseTemperature + temperatureBoost); // Cap at 1.5
         if (temperatureBoost > 0) {
-          debug(`Applying temperature boost: ${baseTemperature} + ${temperatureBoost} = ${effectiveTemperature}`);
+          debug(
+            `Applying temperature boost: ${baseTemperature} + ${temperatureBoost} = ${effectiveTemperature}`
+          );
         }
 
         // Apply max tokens override from metadata (for spam prevention)
-        const maxTokens = metadata?.maxTokensOverride || this.config.maxTokens || openaiConfig.get('OPENAI_MAX_TOKENS') || 150;
+        const maxTokens =
+          metadata?.maxTokensOverride ||
+          this.config.maxTokens ||
+          openaiConfig.get('OPENAI_MAX_TOKENS') ||
+          150;
 
         const response = await openai.chat.completions.create({
           model,
@@ -117,7 +134,6 @@ export class OpenAiProvider implements ILlmProvider {
           return '';
         }
         return content;
-
       } catch (error: unknown) {
         this.handleError(error, attempt);
         if (attempt < MAX_RETRIES) {

@@ -1,11 +1,11 @@
-import Debug from 'debug';
 import axios from 'axios';
+import Debug from 'debug';
+import type { KnownBlock } from '@slack/web-api';
+import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
+import type { IMessage } from '@message/interfaces/IMessage';
 import type { SlackBotManager } from './SlackBotManager';
 import type SlackMessage from './SlackMessage';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { KnownBlock } from '@slack/web-api';
-import { ConfigurationError, ValidationError, NetworkError } from '@src/types/errorClasses';
-import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SlackMessageProcessor');
 
@@ -28,7 +28,7 @@ export class SlackMessageProcessor {
     if (!botManager) {
       throw new ConfigurationError(
         'SlackBotManager instance required',
-        'SLACK_BOT_MANAGER_REQUIRED',
+        'SLACK_BOT_MANAGER_REQUIRED'
       );
     }
     this.botManager = botManager;
@@ -39,17 +39,14 @@ export class SlackMessageProcessor {
       debug('Error: Invalid message or missing channelId');
       throw new ValidationError(
         'Message and channelId required',
-        'SLACK_MESSAGE_VALIDATION_FAILED',
+        'SLACK_MESSAGE_VALIDATION_FAILED'
       );
     }
 
     const botInfo = this.botManager.getAllBots()[0];
     if (!botInfo) {
       debug('Error: Bot information not found');
-      throw new ConfigurationError(
-        'Bot information not found',
-        'SLACK_BOT_INFO_NOT_FOUND',
-      );
+      throw new ConfigurationError('Bot information not found', 'SLACK_BOT_INFO_NOT_FOUND');
     }
     const channelId = message.getChannelId();
     let userId = message.getAuthorId();
@@ -72,14 +69,16 @@ export class SlackMessageProcessor {
           `Channel info fetch failed: ${channelInfoResp.error}`,
           'api' as any,
           'SLACK_CHANNEL_INFO_FETCH_FAILED',
-          500,
+          500
         );
       }
       const channelInfo = {
         channelId,
         channelName: channelInfoResp.channel?.name || 'unknown',
         description: channelInfoResp.channel?.purpose?.value || '',
-        createdDate: channelInfoResp.channel?.created ? new Date(channelInfoResp.channel.created * 1000).toISOString() : undefined,
+        createdDate: channelInfoResp.channel?.created
+          ? new Date(channelInfoResp.channel.created * 1000).toISOString()
+          : undefined,
       };
       debug(`Channel info: ${JSON.stringify(channelInfo)}`);
 
@@ -125,22 +124,36 @@ export class SlackMessageProcessor {
         });
       }
 
-      let channelContent = message.data.channelContent ? { ...(message.data.channelContent as any) } : undefined;
+      let channelContent = message.data.channelContent
+        ? { ...(message.data.channelContent as any) }
+        : undefined;
       if (!suppressCanvasContent) {
         debug(`Attempting to fetch canvas content for channel: ${channelId}`);
         try {
-          const listResponse = await botInfo.webClient.files.list({ types: 'canvas', channel: channelId });
-          debug(`files.list response: ok=${listResponse.ok}, files=${listResponse.files?.length || 0}`);
+          const listResponse = await botInfo.webClient.files.list({
+            types: 'canvas',
+            channel: channelId,
+          });
+          debug(
+            `files.list response: ok=${listResponse.ok}, files=${listResponse.files?.length || 0}`
+          );
           if (listResponse.ok && listResponse.files?.length) {
-            const targetContent = listResponse.files.find(f => f.linked_channel_id === channelId) || listResponse.files[0];
+            const targetContent =
+              listResponse.files.find((f) => f.linked_channel_id === channelId) ||
+              listResponse.files[0];
             debug(`Selected content: id=${targetContent?.id}, url=${targetContent?.url_private}`);
             if (targetContent && targetContent.id) {
               const contentInfo = await botInfo.webClient.files.info({ file: targetContent.id });
               debug(`files.info response: ok=${contentInfo.ok}`);
               if (contentInfo.ok) {
                 const contentInfoAny = contentInfo as any;
-                debug(`Channel content: ${contentInfoAny.content ? contentInfoAny.content.substring(0, 50) + '...' : 'Not present'}`);
-                if (contentInfoAny.file?.filetype === 'canvas' || contentInfoAny.file?.filetype === 'quip') {
+                debug(
+                  `Channel content: ${contentInfoAny.content ? contentInfoAny.content.substring(0, 50) + '...' : 'Not present'}`
+                );
+                if (
+                  contentInfoAny.file?.filetype === 'canvas' ||
+                  contentInfoAny.file?.filetype === 'quip'
+                ) {
                   channelContent = {
                     ...targetContent,
                     content: contentInfoAny.content || 'No content returned by API',
@@ -149,11 +162,14 @@ export class SlackMessageProcessor {
                   if (!contentInfoAny.content && contentInfoAny.file?.url_private) {
                     try {
                       const contentResponse = await axios.get(contentInfoAny.file.url_private, {
-                        headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                        headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                         timeout: 15000,
                       });
-                      (channelContent as any).content = contentResponse.data || 'No content available';
-                      debug(`Fetched content from url_private: ${(channelContent as any).content?.substring(0, 50)}...`);
+                      (channelContent as any).content =
+                        contentResponse.data || 'No content available';
+                      debug(
+                        `Fetched content from url_private: ${(channelContent as any).content?.substring(0, 50)}...`
+                      );
                     } catch (fetchError: unknown) {
                       const hivemindError = ErrorUtils.toHivemindError(fetchError) as any;
                       const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -166,9 +182,12 @@ export class SlackMessageProcessor {
                       (channelContent as any).content = 'No content available';
                     }
                   }
-                } else if (contentInfoAny.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfoAny.file.filetype || '')) {
+                } else if (
+                  contentInfoAny.file &&
+                  ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfoAny.file.filetype || '')
+                ) {
                   const fileResponse = await axios.get(contentInfoAny.file.url_private!, {
-                    headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                    headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer',
                     timeout: 15000,
                   });
@@ -178,13 +197,15 @@ export class SlackMessageProcessor {
                     content: `data:${contentInfoAny.file.mimetype};base64,${base64Content}`,
                     info: contentInfoAny.file,
                   };
-                  debug(`Binary content base64-encoded: ${(channelContent as any).content?.substring(0, 50)}...`);
+                  debug(
+                    `Binary content base64-encoded: ${(channelContent as any).content?.substring(0, 50)}...`
+                  );
                 } else {
                   throw ErrorUtils.createError(
                     `Unsupported file type: ${contentInfoAny.file?.filetype || 'unknown'}`,
                     'validation' as any,
                     'SLACK_UNSUPPORTED_FILE_TYPE',
-                    400,
+                    400
                   );
                 }
               } else {
@@ -193,10 +214,12 @@ export class SlackMessageProcessor {
                   contentInfoAny.error || 'Unknown error fetching channel content',
                   'api' as any,
                   'SLACK_CHANNEL_CONTENT_FETCH_FAILED',
-                  500,
+                  500
                 );
               }
-              debug(`Channel content retrieved: ${(channelContent as any).content?.substring(0, 50)}...`);
+              debug(
+                `Channel content retrieved: ${(channelContent as any).content?.substring(0, 50)}...`
+              );
             } else {
               debug('No valid content found in files.list');
               channelContent = { content: '', info: null };
@@ -221,25 +244,29 @@ export class SlackMessageProcessor {
         channelContent = { content: '', info: null };
       }
 
-      const channelContentStr = ((channelContent as any)?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+      const channelContentStr = ((channelContent as any)?.content || '')
+        .replace(/\n/g, '\\n')
+        .replace(/"/g, '\\"');
       const metadata = {
         channelInfo: { channelId: channelInfo.channelId },
         userInfo: { userName: slackUser.userName },
       };
       const messageDataAny = message.data as any;
-      const messageAttachments = messageDataAny.files?.map((file: any, index: number) => ({
-        id: index + 9999,
-        fileName: file.name || 'unknown',
-        fileType: file.filetype || 'unknown',
-        url: file.url_private || '',
-        size: file.size || 0,
-      })) || [];
-      const messageReactions = messageDataAny.reactions?.map((reaction: any) => ({
-        reaction: reaction.name || 'unknown',
-        reactedUserId: reaction.users?.[0] || 'unknown',
-        messageId: message.getMessageId(),
-        messageChannelId: channelId,
-      })) || [];
+      const messageAttachments =
+        messageDataAny.files?.map((file: any, index: number) => ({
+          id: index + 9999,
+          fileName: file.name || 'unknown',
+          fileType: file.filetype || 'unknown',
+          url: file.url_private || '',
+          size: file.size || 0,
+        })) || [];
+      const messageReactions =
+        messageDataAny.reactions?.map((reaction: any) => ({
+          reaction: reaction.name || 'unknown',
+          reactedUserId: reaction.users?.[0] || 'unknown',
+          messageId: message.getMessageId(),
+          messageChannelId: channelId,
+        })) || [];
 
       message.data = {
         ...message.data,
@@ -267,20 +294,23 @@ export class SlackMessageProcessor {
         `Message enrichment failed: ${hivemindError.message}`,
         errorInfo.type as any,
         'SLACK_MESSAGE_ENRICHMENT_FAILED',
-        500,
+        500
       );
     }
   }
 
   public async constructPayload(message: SlackMessage, history: IMessage[]): Promise<any> {
-    debug('Entering constructPayload', { text: message.getText(), channel: message.getChannelId() });
+    debug('Entering constructPayload', {
+      text: message.getText(),
+      channel: message.getChannelId(),
+    });
     if (!message) {
       debug('Error: Message required');
       throw ErrorUtils.createError(
         'Message required',
         'validation' as any,
         'SLACK_MESSAGE_REQUIRED',
-        400,
+        400
       );
     }
 
@@ -300,8 +330,22 @@ export class SlackMessageProcessor {
           role: 'assistant',
           content: '',
           tool_calls: [
-            { id: currentTs, type: 'function', function: { name: 'get_user_info', arguments: JSON.stringify({ username: metadata.userInfo.userName }) } },
-            { id: `${parseFloat(currentTs) + 0.0001}`, type: 'function', function: { name: 'get_channel_info', arguments: JSON.stringify({ channelId: metadata.channelInfo.channelId }) } },
+            {
+              id: currentTs,
+              type: 'function',
+              function: {
+                name: 'get_user_info',
+                arguments: JSON.stringify({ username: metadata.userInfo.userName }),
+              },
+            },
+            {
+              id: `${parseFloat(currentTs) + 0.0001}`,
+              type: 'function',
+              function: {
+                name: 'get_channel_info',
+                arguments: JSON.stringify({ channelId: metadata.channelInfo.channelId }),
+              },
+            },
           ],
         },
         {
@@ -321,14 +365,16 @@ export class SlackMessageProcessor {
           role: 'tool',
           tool_call_id: `${parseFloat(currentTs) + 0.0001}`,
           tool_name: 'get_channel_info',
-          content: JSON.stringify({ channelContent: { content: messageDataAny.channelContent?.content || '' } }),
+          content: JSON.stringify({
+            channelContent: { content: messageDataAny.channelContent?.content || '' },
+          }),
         },
         { role: 'user', content: message.getText() },
       ],
     };
 
     if (history?.length > 0) {
-      const historyMessages = history.map(h => {
+      const historyMessages = history.map((h) => {
         if (!h.getText()) {
           debug('Warning: Empty history message detected');
           return { role: h.role || 'unknown', content: '' };
@@ -343,8 +389,12 @@ export class SlackMessageProcessor {
     return payload;
   }
 
-  public async processResponse(rawResponse: string): Promise<{ text: string; blocks?: KnownBlock[] }> {
-    debug('Entering processResponse', { rawResponse: rawResponse.substring(0, 50) + (rawResponse.length > 50 ? '...' : '') });
+  public async processResponse(
+    rawResponse: string
+  ): Promise<{ text: string; blocks?: KnownBlock[] }> {
+    debug('Entering processResponse', {
+      rawResponse: rawResponse.substring(0, 50) + (rawResponse.length > 50 ? '...' : ''),
+    });
     if (!rawResponse) {
       debug('Error: No response provided');
       return { text: 'No response available' };
@@ -357,8 +407,8 @@ export class SlackMessageProcessor {
         .replace(/"/gi, '"')
         .replace(/["'"]|["'"]|["'"]/gi, '"')
         .replace(/&(?:amp;)?quot;/gi, '"')
-        .replace(/'/gi, '\'')
-        .replace(/&[^;\s]+;/g, match => {
+        .replace(/'/gi, "'")
+        .replace(/&[^;\s]+;/g, (match) => {
           const decoded = match
             .replace(/&/gi, '&')
             .replace(/"/gi, '"')
@@ -367,10 +417,12 @@ export class SlackMessageProcessor {
           return decoded;
         })
         // Fix contractions only, preserve double quotes for quotations
-        .replace(/(\w)"(\w)/g, '$1\'$2') // roarin" → roarin'
-        .replace(/(\w)"(\s|$)/g, '$1\'$2') // plunderin" → plunderin'
-        .replace(/['‘’]/g, '\''); // Normalize apostrophes
-      debug(`Processed text: ${processedText.substring(0, 50) + (processedText.length > 50 ? '...' : '')}`);
+        .replace(/(\w)"(\w)/g, "$1'$2") // roarin" → roarin'
+        .replace(/(\w)"(\s|$)/g, "$1'$2") // plunderin" → plunderin'
+        .replace(/['‘’]/g, "'"); // Normalize apostrophes
+      debug(
+        `Processed text: ${processedText.substring(0, 50) + (processedText.length > 50 ? '...' : '')}`
+      );
 
       // Manual mrkdwn formatting (bold and italics)
       processedText = processedText
@@ -379,23 +431,45 @@ export class SlackMessageProcessor {
 
       // Triple-decode and substitute entities, preserving " for quotes
       let finalText = processedText
-        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
-        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
-        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+        .replace(/&[^;\s]+;/g, (match) =>
+          match
+            .replace(/&/gi, '&')
+            .replace(/"/gi, '"')
+            .replace(/"/gi, '"')
+            .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)))
+        )
+        .replace(/&[^;\s]+;/g, (match) =>
+          match
+            .replace(/&/gi, '&')
+            .replace(/"/gi, '"')
+            .replace(/"/gi, '"')
+            .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)))
+        )
+        .replace(/&[^;\s]+;/g, (match) =>
+          match
+            .replace(/&/gi, '&')
+            .replace(/"/gi, '"')
+            .replace(/"/gi, '"')
+            .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)))
+        )
         .replace(/"/gi, '"') // Ensure " stays "
-        .replace(/"/gi, '\''); // Substitute ' only
+        .replace(/"/gi, "'"); // Substitute ' only
 
       // Create a single mrkdwn block
-      const blocks: KnownBlock[] = [{
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: finalText,
-          verbatim: true, // Prevent Slack re-escaping
+      const blocks: KnownBlock[] = [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: finalText,
+            verbatim: true, // Prevent Slack re-escaping
+          },
         },
-      }];
+      ];
 
-      debug(`Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`);
+      debug(
+        `Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`
+      );
       return { text: finalText, blocks };
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -414,8 +488,13 @@ export class SlackMessageProcessor {
     debug('Entering getThreadParticipants', { channelId, threadTs });
     const botInfo = this.botManager.getAllBots()[0];
     try {
-      const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
-      const participants = [...new Set(replies.messages?.map(m => m.user).filter(Boolean) as string[])];
+      const replies = await botInfo.webClient.conversations.replies({
+        channel: channelId,
+        ts: threadTs,
+      });
+      const participants = [
+        ...new Set(replies.messages?.map((m) => m.user).filter(Boolean) as string[]),
+      ];
       debug(`Thread participants: ${participants.length} users`);
       return participants;
     } catch (error: unknown) {
@@ -437,7 +516,10 @@ export class SlackMessageProcessor {
     debug('Entering getThreadMessageCount', { channelId, threadTs });
     const botInfo = this.botManager.getAllBots()[0];
     try {
-      const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
+      const replies = await botInfo.webClient.conversations.replies({
+        channel: channelId,
+        ts: threadTs,
+      });
       const count = replies.messages?.length || 0;
       debug(`Thread message count: ${count}`);
       return count;

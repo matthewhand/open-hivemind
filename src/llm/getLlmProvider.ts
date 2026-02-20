@@ -1,11 +1,11 @@
 import Debug from 'debug';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
+import ProviderConfigManager from '@src/config/ProviderConfigManager';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
-import llmConfig from '@config/llmConfig';
-import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import ProviderConfigManager from '@src/config/ProviderConfigManager';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:getLlmProvider');
 
@@ -18,8 +18,16 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     supportsCompletion: provider.supportsCompletion,
     // Add instance ID to provider object if interface allows, to help tracking?
     // For now we map it.
-    generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
-      const response = await provider.generateChatCompletion(userMessage, historyMessages, metadata);
+    generateChatCompletion: async (
+      userMessage: string,
+      historyMessages: IMessage[],
+      metadata?: Record<string, any>
+    ) => {
+      const response = await provider.generateChatCompletion(
+        userMessage,
+        historyMessages,
+        metadata
+      );
       if (response) {
         metrics.recordLlmTokenUsage(response.length);
       }
@@ -39,9 +47,17 @@ const openWebUI: ILlmProvider = {
   name: 'openwebui',
   supportsChatCompletion: () => true,
   supportsCompletion: () => false,
-  generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
+  generateChatCompletion: async (
+    userMessage: string,
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ) => {
     if (openWebUIImport.generateChatCompletion.length === 3) {
-      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages, metadata);
+      const result = await openWebUIImport.generateChatCompletion(
+        userMessage,
+        historyMessages,
+        metadata
+      );
       return result.text || '';
     } else {
       const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages);
@@ -55,7 +71,7 @@ const openWebUI: ILlmProvider = {
 
 export async function getLlmProvider(): Promise<ILlmProvider[]> {
   const providerManager = ProviderConfigManager.getInstance();
-  const configuredProviders = providerManager.getAllProviders('llm').filter(p => p.enabled);
+  const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
   const llmProviders: ILlmProvider[] = [];
 
@@ -97,9 +113,13 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
     // Fallback: Check Legacy Env Var (LLM_PROVIDER)
     // This is necessary if no migration happened or it failed, or for quick development.
     const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown;
-    const legacyTypes = (typeof rawProvider === 'string'
-      ? rawProvider.split(',').map((v: string) => v.trim())
-      : Array.isArray(rawProvider) ? rawProvider : []) as string[];
+    const legacyTypes = (
+      typeof rawProvider === 'string'
+        ? rawProvider.split(',').map((v: string) => v.trim())
+        : Array.isArray(rawProvider)
+          ? rawProvider
+          : []
+    ) as string[];
 
     if (legacyTypes.length > 0 && legacyTypes[0] !== '') {
       debug(`Fallback to legacy LLM_PROVIDER env var: ${legacyTypes.join(',')}`);
@@ -110,10 +130,16 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
             const { OpenAiProvider } = await import('@hivemind/provider-openai');
             instance = new OpenAiProvider();
             break;
-          case 'flowise': instance = new FlowiseProvider(); break;
-          case 'openwebui': instance = openWebUI; break;
+          case 'flowise':
+            instance = new FlowiseProvider();
+            break;
+          case 'openwebui':
+            instance = openWebUI;
+            break;
         }
-        if (instance) { llmProviders.push(withTokenCounting(instance, 'legacy')); }
+        if (instance) {
+          llmProviders.push(withTokenCounting(instance, 'legacy'));
+        }
       }
     }
   }

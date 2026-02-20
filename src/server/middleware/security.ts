@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
-import { RateLimitError } from '../../types/errorClasses';
 import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
+import { RateLimitError } from '../../types/errorClasses';
 
 const debug = Debug('app:securityMiddleware');
 
@@ -23,28 +23,32 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
 
   // Content Security Policy (CSP)
   const cspDirectives = [
-    'default-src \'self\'',
-    'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https:', // Allow inline scripts for WebSocket connections
-    'style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com',
-    'img-src \'self\' data: https:',
-    'font-src \'self\' https://fonts.gstatic.com',
-    'connect-src \'self\' ws: wss: https:', // Allow WebSocket connections
-    'media-src \'self\'',
-    'object-src \'none\'',
-    'frame-ancestors \'none\'',
-    'base-uri \'self\'',
-    'form-action \'self\'',
-    'frame-src \'none\'', // Prevent iframes
-    'worker-src \'none\'', // Prevent web workers
-    'manifest-src \'self\'',
-    'prefetch-src \'self\'',
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:", // Allow inline scripts for WebSocket connections
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: https:",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' ws: wss: https:", // Allow WebSocket connections
+    "media-src 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-src 'none'", // Prevent iframes
+    "worker-src 'none'", // Prevent web workers
+    "manifest-src 'self'",
+    "prefetch-src 'self'",
   ];
 
   if (process.env.NODE_ENV === 'development') {
     // Relax CSP for development
-    cspDirectives.push('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' http://localhost:* https://localhost:*');
-    cspDirectives.push('connect-src \'self\' ws: wss: http://localhost:* https://localhost:*');
-    cspDirectives.push('style-src \'self\' \'unsafe-inline\' http://localhost:* https://fonts.googleapis.com');
+    cspDirectives.push(
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://localhost:*"
+    );
+    cspDirectives.push("connect-src 'self' ws: wss: http://localhost:* https://localhost:*");
+    cspDirectives.push(
+      "style-src 'self' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com"
+    );
   }
 
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
@@ -82,9 +86,9 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
     timestamp: new Date().toISOString(),
     headers: {
       'content-type': req.get('content-type'),
-      'accept': req.get('accept'),
-      'referer': req.get('referer'),
-      'origin': req.get('origin'),
+      accept: req.get('accept'),
+      referer: req.get('referer'),
+      origin: req.get('origin'),
     },
   });
 
@@ -111,7 +115,8 @@ export function securityLogging(req: Request, res: Response, next: NextFunction)
     }
 
     // Alert on slow responses (potential DoS)
-    if (duration > 10000) { // 10 seconds
+    if (duration > 10000) {
+      // 10 seconds
       debug('Security Alert - Slow response:', {
         method: req.method,
         url: req.url,
@@ -149,7 +154,9 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
   const clientData = store.get(key);
 
   // Clean up old requests
-  clientData.requests = clientData.requests.filter((timestamp: number) => timestamp > now - windowMs);
+  clientData.requests = clientData.requests.filter(
+    (timestamp: number) => timestamp > now - windowMs
+  );
 
   // Check if limit exceeded
   if (clientData.requests.length >= maxRequests) {
@@ -160,7 +167,7 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
       retryAfter,
       maxRequests,
       0,
-      new Date(clientData.resetTime),
+      new Date(clientData.resetTime)
     );
   }
 
@@ -198,7 +205,7 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction): 
   // Sanitize headers and cookies
   sanitizeHeaders(req);
   sanitizeCookies(req);
- 
+
   next();
 }
 
@@ -219,7 +226,7 @@ function sanitizeObject(obj: any): void {
             '<': '<',
             '>': '>',
             '"': '"',
-            '\'': '&#x27;',
+            "'": '&#x27;',
             '&': '&',
           };
           return entityMap[match] || match;
@@ -293,7 +300,7 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
   let whitelist: string[] = [];
 
   if (whitelistEnv) {
-    whitelist = whitelistEnv.split(',').map(ip => ip.trim());
+    whitelist = whitelistEnv.split(',').map((ip) => ip.trim());
   } else {
     // Try to load from config files
     try {
@@ -313,7 +320,7 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
   }
 
   // Check if IP is in whitelist
-  const isAllowed = whitelist.some(allowedIP => {
+  const isAllowed = whitelist.some((allowedIP) => {
     if (allowedIP === '*' || allowedIP === '0.0.0.0') {
       return true; // Allow all
     }
@@ -353,7 +360,14 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
     const prefixLen = parseInt(prefix);
 
     // Simple implementation - in production you'd use a proper library
-    if (ip.startsWith(network.split('.').slice(0, Math.floor(prefixLen / 8)).join('.'))) {
+    if (
+      ip.startsWith(
+        network
+          .split('.')
+          .slice(0, Math.floor(prefixLen / 8))
+          .join('.')
+      )
+    ) {
       return true;
     }
   } catch (e) {

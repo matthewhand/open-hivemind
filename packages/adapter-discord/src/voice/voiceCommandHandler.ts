@@ -1,14 +1,18 @@
-import type { VoiceConnection } from '@discordjs/voice';
-import { createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
-import { transcribeAudio } from './speechToText';
-import { convertOpusToWav } from '../media/convertOpusToWav';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
-import OpenAI from 'openai';
-import openaiConfig from '@config/openaiConfig';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import OpenAI from 'openai';
+import {
+  AudioPlayerStatus,
+  createAudioPlayer,
+  createAudioResource,
+  type VoiceConnection,
+} from '@discordjs/voice';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import openaiConfig from '@config/openaiConfig';
+import { convertOpusToWav } from '../media/convertOpusToWav';
+import { transcribeAudio } from './speechToText';
 
 const debug = Debug('app:discord:voiceCommands');
 
@@ -21,11 +25,15 @@ export class VoiceCommandHandler {
   }
 
   async processVoiceInput(opusBuffer: Buffer): Promise<void> {
-    if (!this.isListening) { return; }
+    if (!this.isListening) {
+      return;
+    }
 
     try {
       const tempDir = './temp';
-      if (!fs.existsSync(tempDir)) { fs.mkdirSync(tempDir, { recursive: true }); }
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
 
       const wavPath = await convertOpusToWav(opusBuffer, tempDir);
       const transcription = await transcribeAudio(wavPath);
@@ -51,12 +59,14 @@ export class VoiceCommandHandler {
 
   private async generateResponse(text: string): Promise<string> {
     const llmProviders = await getLlmProvider();
-    if (llmProviders.length === 0) { return 'I\'m having trouble processing that.'; }
+    if (llmProviders.length === 0) {
+      return "I'm having trouble processing that.";
+    }
 
     try {
       return await llmProviders[0].generateChatCompletion(text, [], {});
     } catch {
-      return 'Sorry, I couldn\'t process that request.';
+      return "Sorry, I couldn't process that request.";
     }
   }
 
@@ -101,7 +111,9 @@ export class VoiceCommandHandler {
           }
         } catch (error: unknown) {
           const hivemindError = ErrorUtils.toHivemindError(error);
-          debug(`Failed to delete temporary file on error: ${ErrorUtils.getMessage(hivemindError)}`);
+          debug(
+            `Failed to delete temporary file on error: ${ErrorUtils.getMessage(hivemindError)}`
+          );
         }
       });
     } catch (error: unknown) {
@@ -112,7 +124,9 @@ export class VoiceCommandHandler {
         }
       } catch (cleanupError: unknown) {
         const hivemindCleanupError = ErrorUtils.toHivemindError(cleanupError);
-        debug(`Failed to delete temporary file during cleanup: ${ErrorUtils.getMessage(hivemindCleanupError)}`);
+        debug(
+          `Failed to delete temporary file during cleanup: ${ErrorUtils.getMessage(hivemindCleanupError)}`
+        );
       }
 
       const hivemindError = ErrorUtils.toHivemindError(error);

@@ -96,11 +96,7 @@ function sanitizeSet(set: Set<unknown>, seen: WeakSet<object>): unknown[] {
   return result;
 }
 
-function sanitizeValue(
-  key: string | undefined,
-  value: unknown,
-  seen: WeakSet<object>,
-): unknown {
+function sanitizeValue(key: string | undefined, value: unknown, seen: WeakSet<object>): unknown {
   if (value === null || value === undefined) {
     return value;
   }
@@ -158,23 +154,23 @@ function sanitizeValue(
 
 function sanitizeArgs(args: unknown[]): unknown[] {
   const seen = new WeakSet<object>();
-  return args.map(arg => sanitizeValue(undefined, arg, seen));
+  return args.map((arg) => sanitizeValue(undefined, arg, seen));
 }
 
 function getConsoleMethod(level: LogLevel): (...args: unknown[]) => void {
   switch (level) {
-  case 'trace':
-    return console.trace.bind(console);
-  case 'debug':
-    return (console.debug || console.log).bind(console);
-  case 'info':
-    return (console.info || console.log).bind(console);
-  case 'warn':
-    return (console.warn || console.log).bind(console);
-  case 'error':
-    return (console.error || console.log).bind(console);
-  default:
-    return console.log.bind(console);
+    case 'trace':
+      return console.trace.bind(console);
+    case 'debug':
+      return (console.debug || console.log).bind(console);
+    case 'info':
+      return (console.info || console.log).bind(console);
+    case 'warn':
+      return (console.warn || console.log).bind(console);
+    case 'error':
+      return (console.error || console.log).bind(console);
+    default:
+      return console.log.bind(console);
   }
 }
 

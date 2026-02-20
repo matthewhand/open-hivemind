@@ -1,6 +1,6 @@
 /**
  * Returns a random error message from a predefined list of messages.
- * 
+ *
  * @returns {string} A randomly selected error message.
  */
 export function getRandomErrorMessage(): string {

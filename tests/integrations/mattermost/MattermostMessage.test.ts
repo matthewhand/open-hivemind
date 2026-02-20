@@ -19,7 +19,7 @@ describe('MattermostMessage', () => {
       hashtags: '#test #mattermost',
       pending_post_id: '',
       reply_count: 2,
-      metadata: {}
+      metadata: {},
     };
   });
 

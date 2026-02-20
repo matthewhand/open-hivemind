@@ -1,9 +1,9 @@
-import express, { Express } from 'express';
-import request from 'supertest';
-import mcpRouter from '../../src/server/routes/mcp';
-import { authenticate, requireAdmin } from '../../src/auth/middleware';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import express, { Express } from 'express';
+import request from 'supertest';
+import { authenticate, requireAdmin } from '../../src/auth/middleware';
+import mcpRouter from '../../src/server/routes/mcp';
 
 jest.mock('../../src/auth/middleware', () => ({
   authenticate: jest.fn((req, res, next) => {
@@ -29,18 +29,18 @@ jest.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
         {
           name: 'test-tool',
           description: 'A test tool',
-          inputSchema: { type: 'object', properties: {} }
-        }
-      ]
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
     }),
-    callTool: jest.fn().mockResolvedValue({ result: 'test result' })
-  }))
+    callTool: jest.fn().mockResolvedValue({ result: 'test result' }),
+  })),
 }));
 
 jest.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
   StdioClientTransport: jest.fn().mockImplementation(() => ({
     // Mock transport implementation
-  }))
+  })),
 }));
 
 const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
@@ -88,11 +88,9 @@ describe('MCP API Endpoints', () => {
       const newServer = {
         name: 'test-server',
         url: 'stdio://test-command',
-        apiKey: 'test-key'
+        apiKey: 'test-key',
       };
-      const response = await request(app)
-        .post('/api/mcp/servers')
-        .send(newServer);
+      const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(200);
       expect(response.body.server).toHaveProperty('name', 'test-server');
       expect(response.body.server.connected).toBe(false);
@@ -102,14 +100,12 @@ describe('MCP API Endpoints', () => {
       // First, create a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
 
       // Try to create another with the same name
-      const response = await request(app)
-        .post('/api/mcp/servers')
-        .send(newServer);
+      const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('already exists');
     });
@@ -120,20 +116,18 @@ describe('MCP API Endpoints', () => {
       // First, create a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
 
       // Now connect to it
-      const response = await request(app)
-        .post('/api/mcp/servers/test-server/connect');
+      const response = await request(app).post('/api/mcp/servers/test-server/connect');
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('Successfully connected');
     });
 
     it('should reject connection to non-existent server', async () => {
-      const response = await request(app)
-        .post('/api/mcp/servers/non-existent/connect');
+      const response = await request(app).post('/api/mcp/servers/non-existent/connect');
       expect(response.status).toBe(404);
       expect(response.body.error).toContain('not found');
     });
@@ -144,14 +138,13 @@ describe('MCP API Endpoints', () => {
       // First, create and connect to a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
       await request(app).post('/api/mcp/servers/test-server/connect');
 
       // Now disconnect
-      const response = await request(app)
-        .post('/api/mcp/servers/test-server/disconnect');
+      const response = await request(app).post('/api/mcp/servers/test-server/disconnect');
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('Successfully disconnected');
     });
@@ -162,13 +155,12 @@ describe('MCP API Endpoints', () => {
       // First, create a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
 
       // Now delete it
-      const response = await request(app)
-        .delete('/api/mcp/servers/test-server');
+      const response = await request(app).delete('/api/mcp/servers/test-server');
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
@@ -183,22 +175,20 @@ describe('MCP API Endpoints', () => {
       // First, create and connect to a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
       await request(app).post('/api/mcp/servers/test-server/connect');
 
       // Now get tools
-      const response = await request(app)
-        .get('/api/mcp/servers/test-server/tools');
+      const response = await request(app).get('/api/mcp/servers/test-server/tools');
       expect(response.status).toBe(200);
       expect(response.body.tools).toBeInstanceOf(Array);
       expect(response.body.tools.length).toBeGreaterThan(0);
     });
 
     it('should reject getting tools from disconnected server', async () => {
-      const response = await request(app)
-        .get('/api/mcp/servers/disconnected-server/tools');
+      const response = await request(app).get('/api/mcp/servers/disconnected-server/tools');
       expect(response.status).toBe(404);
       expect(response.body.error).toContain('not connected');
     });
@@ -217,7 +207,7 @@ describe('MCP API Endpoints', () => {
       // First, create and connect to a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
       await request(app).post('/api/mcp/servers/test-server/connect');
@@ -242,11 +232,11 @@ describe('MCP API Endpoints', () => {
       // First, create and connect to a server
       const newServer = {
         name: 'test-server',
-        url: 'stdio://test-command'
+        url: 'stdio://test-command',
       };
       await request(app).post('/api/mcp/servers').send(newServer);
       await request(app).post('/api/mcp/servers/test-server/connect');
-      
+
       const response = await request(app)
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ arguments: {} });

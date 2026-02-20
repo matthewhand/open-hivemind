@@ -4,10 +4,10 @@
  * @description Provides comprehensive startup visibility with credential redaction
  */
 
-import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
-import { Logger } from '../common/logger';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Logger } from '../common/logger';
+import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
 
 const startupLog = Logger.withContext('startup:diagnostics');
 
@@ -70,24 +70,24 @@ export class StartupDiagnostics {
     const envSummary = this.analyzeEnvironmentVariables();
 
     // Critical configuration
-    const criticalPresent = envSummary.critical.filter(v => v.status === 'present').length;
+    const criticalPresent = envSummary.critical.filter((v) => v.status === 'present').length;
     const criticalTotal = envSummary.critical.length;
 
     startupLog.info('🔐 Critical Configuration', {
       present: `${criticalPresent}/${criticalTotal}`,
-      missing: envSummary.critical.filter(v => v.status === 'missing').map(v => v.key),
+      missing: envSummary.critical.filter((v) => v.status === 'missing').map((v) => v.key),
     });
 
     // Log present critical variables (redacted)
     envSummary.critical
-      .filter(v => v.status === 'present')
-      .forEach(v => {
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
         const redactedValue = redactSensitiveInfo(v.key, v.value);
         startupLog.debug(`   ✓ ${v.key}: ${redactedValue}`);
       });
 
     // Optional configuration
-    const optionalPresent = envSummary.optional.filter(v => v.status === 'present').length;
+    const optionalPresent = envSummary.optional.filter((v) => v.status === 'present').length;
 
     startupLog.info('🔧 Optional Configuration', {
       present: `${optionalPresent}/${envSummary.optional.length}`,
@@ -95,8 +95,8 @@ export class StartupDiagnostics {
 
     // Log present optional variables (redacted)
     envSummary.optional
-      .filter(v => v.status === 'present')
-      .forEach(v => {
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
         const redactedValue = redactSensitiveInfo(v.key, v.value);
         startupLog.debug(`   ✓ ${v.key}: ${redactedValue}`);
       });
@@ -106,11 +106,7 @@ export class StartupDiagnostics {
    * Analyze environment variables and categorize them
    */
   private analyzeEnvironmentVariables(): EnvironmentSummary {
-    const criticalVars = [
-      'NODE_ENV',
-      'PORT',
-      'MESSAGE_PROVIDER',
-    ];
+    const criticalVars = ['NODE_ENV', 'PORT', 'MESSAGE_PROVIDER'];
 
     const optionalVars = [
       'DISCORD_BOT_TOKEN',
@@ -144,7 +140,7 @@ export class StartupDiagnostics {
     };
 
     // Analyze critical variables
-    criticalVars.forEach(key => {
+    criticalVars.forEach((key) => {
       const value = process.env[key];
       summary.critical.push({
         key,
@@ -154,7 +150,7 @@ export class StartupDiagnostics {
     });
 
     // Analyze optional variables
-    optionalVars.forEach(key => {
+    optionalVars.forEach((key) => {
       const value = process.env[key];
       summary.optional.push({
         key,
@@ -189,7 +185,8 @@ export class StartupDiagnostics {
       'config/webhooks.json',
     ];
 
-    const configStatus: Array<{ path: string; exists: boolean; size?: number; error?: string }> = [];
+    const configStatus: Array<{ path: string; exists: boolean; size?: number; error?: string }> =
+      [];
 
     for (const configPath of configPaths) {
       try {
@@ -218,8 +215,8 @@ export class StartupDiagnostics {
       }
     }
 
-    const existingConfigs = configStatus.filter(c => c.exists);
-    const missingConfigs = configStatus.filter(c => !c.exists);
+    const existingConfigs = configStatus.filter((c) => c.exists);
+    const missingConfigs = configStatus.filter((c) => !c.exists);
 
     startupLog.info('📁 Configuration Files', {
       loaded: existingConfigs.length,
@@ -227,11 +224,11 @@ export class StartupDiagnostics {
       totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0),
     });
 
-    existingConfigs.forEach(config => {
+    existingConfigs.forEach((config) => {
       startupLog.debug(`   ✓ ${config.path} (${config.size} bytes)`);
     });
 
-    missingConfigs.forEach(config => {
+    missingConfigs.forEach((config) => {
       startupLog.debug(`   ⚠ ${config.path} (not found)`);
     });
   }
@@ -260,19 +257,19 @@ export class StartupDiagnostics {
       },
     ];
 
-    const configuredProviders = providers.filter(p => p.configured);
-    const unconfiguredProviders = providers.filter(p => !p.configured);
+    const configuredProviders = providers.filter((p) => p.configured);
+    const unconfiguredProviders = providers.filter((p) => !p.configured);
 
     startupLog.info('🔗 Provider Configuration', {
       configured: configuredProviders.length,
       unconfigured: unconfiguredProviders.length,
     });
 
-    configuredProviders.forEach(provider => {
+    configuredProviders.forEach((provider) => {
       startupLog.debug(`   ✓ ${provider.type}: configured`);
     });
 
-    unconfiguredProviders.forEach(provider => {
+    unconfiguredProviders.forEach((provider) => {
       startupLog.debug(`   ⚠ ${provider.type}: not configured`);
     });
 
@@ -311,7 +308,9 @@ export class StartupDiagnostics {
       startupLog.error('❌ SECURITY RISK: Authentication is DISABLED');
       startupLog.error('   ⚠️  WebUI and API are publicly accessible without authentication!');
       startupLog.error('   🚨 This is NOT recommended for internet-facing deployments');
-      startupLog.error('   💡 Set up authentication by configuring users or enabling auth middleware');
+      startupLog.error(
+        '   💡 Set up authentication by configuring users or enabling auth middleware'
+      );
     } else {
       startupLog.info('✅ Authentication is properly configured');
       if (authStatus.webuiProtected) {
@@ -381,7 +380,6 @@ export class StartupDiagnostics {
       } catch {
         // SecureConfigManager not available or doesn't have user counting
       }
-
     } catch (error) {
       startupLog.debug('Error checking authentication status', { error });
     }
@@ -417,9 +415,10 @@ export class StartupDiagnostics {
 
     const memoryMB = Math.round(resources.memoryUsage.heapUsed / 1024 / 1024);
     const memoryLimitMB = Math.round(resources.memoryUsage.heapTotal / 1024 / 1024);
-    const diskSpaceGB = resources.freeDiskSpace > 0
-      ? `${(resources.freeDiskSpace / (1024 * 1024 * 1024)).toFixed(2)}GB`
-      : 'Unknown';
+    const diskSpaceGB =
+      resources.freeDiskSpace > 0
+        ? `${(resources.freeDiskSpace / (1024 * 1024 * 1024)).toFixed(2)}GB`
+        : 'Unknown';
 
     startupLog.info('📊 Resource Summary', {
       nodeVersion: resources.nodeVersion,
@@ -442,7 +441,9 @@ export class StartupDiagnostics {
       if (process.platform === 'win32') {
         // Windows: use wmic to get free space
         const drive = cwd.charAt(0).toUpperCase();
-        const result = execSync(`wmic logicaldisk get size,freespace,caption`, { encoding: 'utf8' });
+        const result = execSync(`wmic logicaldisk get size,freespace,caption`, {
+          encoding: 'utf8',
+        });
         const lines = result.split('\n').filter((line: string) => line.trim());
         for (const line of lines) {
           if (line.startsWith(drive)) {
@@ -475,10 +476,14 @@ export class StartupDiagnostics {
       { key: 'SKIP_MESSENGERS', default: 'false', description: 'Skip messenger initialization' },
       { key: 'WEBHOOK_ENABLED', default: 'false', description: 'Enable webhook service' },
       { key: 'LOW_MEMORY_MODE', default: 'false', description: 'Enable low memory optimizations' },
-      { key: 'SUPPRESS_HEALTH_LOGS', default: 'true', description: 'Suppress health endpoint logs' },
+      {
+        key: 'SUPPRESS_HEALTH_LOGS',
+        default: 'true',
+        description: 'Suppress health endpoint logs',
+      },
     ];
 
-    flags.forEach(flag => {
+    flags.forEach((flag) => {
       const value = process.env[flag.key] || flag.default;
       const isActive = value === 'true' || value === '1';
       const icon = isActive ? '✅' : '❌';
@@ -530,7 +535,7 @@ export class StartupDiagnostics {
    */
   private isSensitiveKey(key: string): boolean {
     const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth'];
-    return sensitivePatterns.some(pattern => key.toLowerCase().includes(pattern));
+    return sensitivePatterns.some((pattern) => key.toLowerCase().includes(pattern));
   }
 }
 

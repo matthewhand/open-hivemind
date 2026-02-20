@@ -1,38 +1,35 @@
-import express from 'express';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
-import { join } from 'path';
-import { existsSync } from 'fs';
-
-// Error handling imports
-import { HivemindError, ErrorUtils } from '../types/errors';
+import express from 'express';
 import {
   correlationMiddleware,
   globalErrorHandler,
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
-
-// Route imports
-import healthRouter from './routes/health';
-import errorsRouter from './routes/errors';
-import adminRouter from './routes/admin';
-import agentsRouter from './routes/agents';
-import mcpRouter from './routes/mcp';
-import activityRouter from './routes/activity';
-import consolidatedRouter from './routes/consolidated';
-import dashboardRouter from './routes/dashboard';
-import configRouter from './routes/config';
-import hotReloadRouter from './routes/hotReload';
-import sitemapRouter from './routes/sitemap';
-import personasRouter from './routes/personas';
-import specsRouter from './routes/specs';
-import importExportRouter from './routes/importExport';
-
+// Error handling imports
+import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
 import { securityHeaders } from './middleware/security';
+import activityRouter from './routes/activity';
+import adminRouter from './routes/admin';
+import agentsRouter from './routes/agents';
+import configRouter from './routes/config';
+import consolidatedRouter from './routes/consolidated';
+import dashboardRouter from './routes/dashboard';
+import errorsRouter from './routes/errors';
+// Route imports
+import healthRouter from './routes/health';
+import hotReloadRouter from './routes/hotReload';
+import importExportRouter from './routes/importExport';
+import mcpRouter from './routes/mcp';
+import personasRouter from './routes/personas';
+import sitemapRouter from './routes/sitemap';
+import specsRouter from './routes/specs';
 
 const debug = Debug('app:webui:server');
 
@@ -77,9 +74,12 @@ export class WebUIServer {
     this.app.use(securityHeaders);
     // Production-grade CORS configuration
     const corsOptions = {
-      origin: (origin: string | undefined, callback: (err: Error | null, origin?: string) => void) => {
+      origin: (
+        origin: string | undefined,
+        callback: (err: Error | null, origin?: string) => void
+      ) => {
         const allowedOrigins = process.env.CORS_ORIGIN
-          ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+          ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
           : [];
 
         // In production, only allow specific origins
@@ -91,8 +91,12 @@ export class WebUIServer {
           }
         } else {
           // In development, allow localhost origins
-          if (!origin || allowedOrigins.includes(origin) ||
-            origin.includes('localhost') || origin.includes('127.0.1')) {
+          if (
+            !origin ||
+            allowedOrigins.includes(origin) ||
+            origin.includes('localhost') ||
+            origin.includes('127.0.1')
+          ) {
             callback(null, origin);
           } else {
             callback(new Error('Not allowed by CORS'));
@@ -140,27 +144,29 @@ export class WebUIServer {
     });
 
     // Error handler for malformed JSON in health API endpoints
-    this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
-      if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
-        const method = req.method.toUpperCase();
-        if (method === 'PUT') {
-          return res.status(404).json({
-            error: 'Failed to update endpoint',
-            message: 'Endpoint not found or payload invalid',
+    this.app.use(
+      (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
+        if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
+          const method = req.method.toUpperCase();
+          if (method === 'PUT') {
+            return res.status(404).json({
+              error: 'Failed to update endpoint',
+              message: 'Endpoint not found or payload invalid',
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          return res.status(400).json({
+            error: 'Invalid JSON payload',
+            message: 'Request body could not be parsed',
             timestamp: new Date().toISOString(),
           });
         }
 
-        return res.status(400).json({
-          error: 'Invalid JSON payload',
-          message: 'Request body could not be parsed',
-          timestamp: new Date().toISOString(),
-        });
+        return next(err);
       }
-
-      return next(err);
-    });
+    );
 
     // Audit logging for all requests
     this.app.use(auditMiddleware);

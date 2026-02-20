@@ -61,7 +61,7 @@ export const makeExternalRequest = (ip: string = '192.168.1.100') => {
 export const createTestLoginCredentials = (overrides = {}) => ({
   username: 'admin',
   password: 'test-password',
-  ...overrides
+  ...overrides,
 });
 
 export const createTestUser = (overrides = {}) => ({
@@ -69,7 +69,7 @@ export const createTestUser = (overrides = {}) => ({
   email: 'test@example.com',
   password: 'test-password',
   role: 'user',
-  ...overrides
+  ...overrides,
 });
 
 // Common test expectations
@@ -87,7 +87,11 @@ export const expectFailedAuth = (response: any, expectedError = 'Authentication 
   expect(response.body.error).toContain(expectedError);
 };
 
-export const expectBypassInfo = (response: any, isLocalBypass: boolean, adminPasswordSet?: boolean) => {
+export const expectBypassInfo = (
+  response: any,
+  isLocalBypass: boolean,
+  adminPasswordSet?: boolean
+) => {
   if (isLocalBypass) {
     expect(response.body.bypassInfo).toBeDefined();
     expect(response.body.bypassInfo.isLocalBypass).toBe(true);

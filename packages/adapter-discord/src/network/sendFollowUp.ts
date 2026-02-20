@@ -1,7 +1,6 @@
 import Debug from 'debug';
-import type { Message } from 'discord.js';
-import { TextChannel, DMChannel } from 'discord.js';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { DMChannel, TextChannel, type Message } from 'discord.js';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:sendFollowUp');
 
@@ -23,10 +22,7 @@ const debug = Debug('app:sendFollowUp');
  * @param followUpText - The follow-up text to send.
  * @returns A promise that resolves when the follow-up message is sent.
  */
-export const sendFollowUp = async (
-  message: Message,
-  followUpText: string,
-): Promise<void> => {
+export const sendFollowUp = async (message: Message, followUpText: string): Promise<void> => {
   try {
     if (!message || !followUpText) {
       throw ErrorUtils.createError(
@@ -34,11 +30,13 @@ export const sendFollowUp = async (
         'ValidationError' as any,
         'DISCORD_INVALID_FOLLOWUP_PARAMS',
         400,
-        { hasMessage: !!message, hasFollowUpText: !!followUpText },
+        { hasMessage: !!message, hasFollowUpText: !!followUpText }
       );
     }
     debug('Sending follow-up message to channel: ' + message.channel.id);
-    if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error('Unsupported channel type for send method.'); }
+    if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) {
+      throw new Error('Unsupported channel type for send method.');
+    }
     await message.channel.send(followUpText);
     debug('Follow-up message sent successfully');
   } catch (error: unknown) {
@@ -57,7 +55,7 @@ export const sendFollowUp = async (
       classification.type,
       'DISCORD_SEND_FOLLOWUP_ERROR',
       ErrorUtils.getStatusCode(hivemindError),
-      { originalError: error },
+      { originalError: error }
     );
   }
 };

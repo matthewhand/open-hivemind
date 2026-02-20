@@ -1,7 +1,6 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
-import { SitemapStream, streamToPromise } from 'sitemap';
 import { Readable } from 'stream';
+import { Router, type Request, type Response } from 'express';
+import { SitemapStream, streamToPromise } from 'sitemap';
 
 const router = Router();
 
@@ -37,7 +36,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Main Dashboard - Uber Interface',
       access: 'public',
     },
-    
+
     // Dashboard pages
     {
       url: '/uber/overview',
@@ -47,7 +46,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'System Overview and Status',
       access: 'public',
     },
-    
+
     // Bot management
     {
       url: '/uber/bots',
@@ -73,7 +72,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Bot Templates Gallery',
       access: 'public',
     },
-    
+
     // Persona management
     {
       url: '/uber/personas',
@@ -83,7 +82,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'AI Persona Management',
       access: 'public',
     },
-    
+
     // MCP Server management (Owner-only)
     {
       url: '/uber/mcp',
@@ -109,7 +108,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'MCP Tools Management',
       access: 'owner',
     },
-    
+
     // Security and guards
     {
       url: '/uber/guards',
@@ -119,7 +118,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Access Control Guards',
       access: 'owner',
     },
-    
+
     // Monitoring and activity
     {
       url: '/uber/monitoring',
@@ -137,7 +136,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Real-time Activity Monitor',
       access: 'public',
     },
-    
+
     // Settings and configuration
     {
       url: '/uber/settings',
@@ -147,7 +146,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'System Settings and Configuration',
       access: 'public',
     },
-    
+
     // Utilities
     {
       url: '/uber/export',
@@ -173,7 +172,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'DaisyUI Component Showcase',
       access: 'public',
     },
-    
+
     // Legacy interfaces
     {
       url: '/webui',
@@ -191,7 +190,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Admin Interface',
       access: 'authenticated',
     },
-    
+
     // Authentication
     {
       url: '/login',
@@ -201,7 +200,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'User Login',
       access: 'public',
     },
-    
+
     // API documentation (if publicly accessible)
     {
       url: '/api',
@@ -211,7 +210,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'API Documentation',
       access: 'public',
     },
-    
+
     // Health endpoints
     {
       url: '/health',
@@ -237,28 +236,30 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
   try {
     const routes = getRouteDefinitions();
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-    
+
     // Filter routes based on access level if needed
     const accessLevel = req.query.access as string;
     let filteredRoutes = routes;
-    
+
     if (accessLevel) {
-      filteredRoutes = routes.filter(route => route.access === accessLevel);
+      filteredRoutes = routes.filter((route) => route.access === accessLevel);
     }
-    
+
     // Create sitemap stream
     const sitemap = new SitemapStream({ hostname: baseUrl });
-    
+
     // Add URLs to sitemap
     const sitemapXml = await streamToPromise(
-      Readable.from(filteredRoutes.map(route => ({
-        url: route.url,
-        changefreq: route.changefreq,
-        priority: route.priority,
-        lastmod: route.lastmod,
-      }))).pipe(sitemap),
+      Readable.from(
+        filteredRoutes.map((route) => ({
+          url: route.url,
+          changefreq: route.changefreq,
+          priority: route.priority,
+          lastmod: route.lastmod,
+        }))
+      ).pipe(sitemap)
     );
-    
+
     res.header('Content-Type', 'application/xml');
     res.send(sitemapXml.toString());
   } catch (error) {
@@ -272,24 +273,24 @@ router.get('/sitemap.json', (req: Request, res: Response) => {
   try {
     const routes = getRouteDefinitions();
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-    
+
     const accessLevel = req.query.access as string;
     let filteredRoutes = routes;
-    
+
     if (accessLevel) {
-      filteredRoutes = routes.filter(route => route.access === accessLevel);
+      filteredRoutes = routes.filter((route) => route.access === accessLevel);
     }
-    
+
     const sitemap = {
       generated: new Date().toISOString(),
       baseUrl,
       totalUrls: filteredRoutes.length,
-      urls: filteredRoutes.map(route => ({
+      urls: filteredRoutes.map((route) => ({
         ...route,
         fullUrl: `${baseUrl}${route.url}`,
       })),
     };
-    
+
     res.json(sitemap);
   } catch (error) {
     console.error('Error generating JSON sitemap:', error);
@@ -302,7 +303,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
   try {
     const routes = getRouteDefinitions();
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-    
+
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -340,10 +341,28 @@ router.get('/sitemap', (req: Request, res: Response) => {
         <p><strong>Total Pages:</strong> ${routes.length}</p>
     </div>
     
-    ${generateSectionHTML('Main Application', routes.filter(r => r.url.startsWith('/uber')), baseUrl)}
-    ${generateSectionHTML('Legacy Interfaces', routes.filter(r => r.url.startsWith('/webui') || r.url.startsWith('/admin')), baseUrl)}
-    ${generateSectionHTML('System Endpoints', routes.filter(r => r.url.startsWith('/health') || r.url.startsWith('/api') || r.url === '/login'), baseUrl)}
-    ${generateSectionHTML('Root Pages', routes.filter(r => r.url === '/'), baseUrl)}
+    ${generateSectionHTML(
+      'Main Application',
+      routes.filter((r) => r.url.startsWith('/uber')),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'Legacy Interfaces',
+      routes.filter((r) => r.url.startsWith('/webui') || r.url.startsWith('/admin')),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'System Endpoints',
+      routes.filter(
+        (r) => r.url.startsWith('/health') || r.url.startsWith('/api') || r.url === '/login'
+      ),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'Root Pages',
+      routes.filter((r) => r.url === '/'),
+      baseUrl
+    )}
 </body>
 </html>`;
 
@@ -355,13 +374,17 @@ router.get('/sitemap', (req: Request, res: Response) => {
 });
 
 function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: string): string {
-  if (routes.length === 0) {return '';}
-  
+  if (routes.length === 0) {
+    return '';
+  }
+
   return `
     <div class="section">
         <h2>${title}</h2>
         <div class="route-grid">
-            ${routes.map(route => `
+            ${routes
+              .map(
+                (route) => `
                 <div class="route-card">
                     <div class="route-url">
                         <a href="${baseUrl}${route.url}" target="_blank">${route.url}</a>
@@ -372,7 +395,9 @@ function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: strin
                         Priority: ${route.priority} | ${route.changefreq}
                     </div>
                 </div>
-            `).join('')}
+            `
+              )
+              .join('')}
         </div>
     </div>`;
 }

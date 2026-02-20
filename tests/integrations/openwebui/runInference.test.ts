@@ -14,9 +14,10 @@ describe('runInference.generateChatCompletion', () => {
   const mockGetSessionKey = jest.spyOn(sessionManager, 'getSessionKey');
   const mockGetKnowledgeFileId = jest.spyOn(uploadKnowledgeFile, 'getKnowledgeFileId');
 
-  const makeMsg = (text: string) => ({
-    getText: () => text,
-  } as any);
+  const makeMsg = (text: string) =>
+    ({
+      getText: () => text,
+    }) as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -24,7 +25,9 @@ describe('runInference.generateChatCompletion', () => {
 
   it('throws when userMessage is empty or blank', async () => {
     await expect(generateChatCompletion('', [])).rejects.toThrow('User message cannot be empty.');
-    await expect(generateChatCompletion('   ', [])).rejects.toThrow('User message cannot be empty.');
+    await expect(generateChatCompletion('   ', [])).rejects.toThrow(
+      'User message cannot be empty.'
+    );
   });
 
   it('sends POST to /chat/completions with expected headers and payload; handles string response', async () => {
@@ -32,11 +35,9 @@ describe('runInference.generateChatCompletion', () => {
     mockGetKnowledgeFileId.mockReturnValue('kf-abc');
     mockedAxios.post.mockResolvedValue({ data: 'hello world' });
 
-    const res = await generateChatCompletion(
-      'Hi there',
-      [makeMsg('prev1'), makeMsg('prev2')],
-      { a: 1 }
-    );
+    const res = await generateChatCompletion('Hi there', [makeMsg('prev1'), makeMsg('prev2')], {
+      a: 1,
+    });
 
     expect(mockGetSessionKey).toHaveBeenCalledTimes(1);
     expect(mockGetKnowledgeFileId).toHaveBeenCalledTimes(1);

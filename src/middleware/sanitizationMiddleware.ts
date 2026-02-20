@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 // Input sanitization middleware
 // Cleans and sanitizes user input to prevent XSS and injection attacks
@@ -24,7 +24,7 @@ function sanitizeObject(obj: any): any {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
+    return obj.map((item) => sanitizeObject(item));
   }
 
   if (obj !== null && typeof obj === 'object') {

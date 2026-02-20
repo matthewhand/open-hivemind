@@ -45,10 +45,7 @@ export interface IMessengerService {
    *
    * Implementations that don't need this can omit it (or return null).
    */
-  resolveAgentContext?(params: {
-    botConfig: any;
-    agentDisplayName: string;
-  }): null | {
+  resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
     /**
      * Bot/user id for this agent instance (used for mention detection and self-filtering).
      */
@@ -97,7 +94,13 @@ export interface IMessengerService {
    * );
    * ```
    */
-  sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string): Promise<string>;
+  sendMessageToChannel(
+    channelId: string,
+    message: string,
+    senderName?: string,
+    threadId?: string,
+    replyToMessageId?: string
+  ): Promise<string>;
 
   /**
    * Retrieves messages from a specific channel.
@@ -143,7 +146,7 @@ export interface IMessengerService {
 
   /**
    * Gets the topic/description of a channel.
-   * 
+   *
    * @param {string} channelId - The channel identifier
    * @returns {Promise<string | null>} The channel topic or null if not available
    */
@@ -155,7 +158,6 @@ export interface IMessengerService {
    * @returns {string} The default channel ID
    */
   getDefaultChannel(): string;
-
 
   /**
    * Shuts down the messaging service gracefully.
@@ -199,7 +201,9 @@ export interface IMessengerService {
    * });
    * ```
    */
-  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void;
+  setMessageHandler(
+    handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+  ): void;
 
   /**
    * Gets the owner/creator of a forum/channel.
@@ -232,7 +236,7 @@ export interface IMessengerService {
   /**
    * Optional: Updates the bot's presence/activity status with model info.
    * For Discord, this updates the "Currently playing" status.
-   * 
+   *
    * @param {string} modelId - The model identifier to display
    * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
    */

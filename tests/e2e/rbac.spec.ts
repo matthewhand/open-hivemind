@@ -1,9 +1,5 @@
-import { test, expect } from '@playwright/test';
-import {
-  setupTestWithErrorDetection,
-  assertNoErrors,
-  navigateAndWaitReady
-} from './test-utils';
+import { expect, test } from '@playwright/test';
+import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 /**
  * RBAC E2E Tests with Strict Error Detection
@@ -15,12 +11,7 @@ test.describe('Role-Based Access Control', () => {
   test('admin can access all pages without errors', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
 
-    const adminPages = [
-      '/admin/overview',
-      '/admin/bots',
-      '/admin/config',
-      '/admin/settings'
-    ];
+    const adminPages = ['/admin/overview', '/admin/bots', '/admin/config', '/admin/settings'];
 
     for (const pagePath of adminPages) {
       await page.goto(pagePath);

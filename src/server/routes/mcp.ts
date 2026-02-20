@@ -1,12 +1,12 @@
-import { Router } from 'express';
-import Debug from 'debug';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import Debug from 'debug';
+import { Router } from 'express';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -71,7 +71,7 @@ const saveMCPServers = async (servers: MCPServer[]): Promise<void> => {
 const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
   try {
     debug(`Connecting to MCP server: ${server.name} at ${server.url}`);
-    
+
     // For stdio transport (local MCP servers)
     if (server.url.startsWith('stdio://')) {
       const command = server.url.replace('stdio://', '');
@@ -79,26 +79,29 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
         command: command,
         args: [],
       });
-      
-      const client = new Client({
-        name: `hivemind-${server.name}`,
-        version: '1.0.0',
-      }, {
-        capabilities: {
-          experimental: {},
+
+      const client = new Client(
+        {
+          name: `hivemind-${server.name}`,
+          version: '1.0.0',
         },
-      });
-      
+        {
+          capabilities: {
+            experimental: {},
+          },
+        }
+      );
+
       await client.connect(transport);
-      
+
       // Get available tools
       const toolsResponse = await client.listTools();
-      const tools = toolsResponse.tools.map(tool => ({
+      const tools = toolsResponse.tools.map((tool) => ({
         name: tool.name,
         description: tool.description || '',
         inputSchema: tool.inputSchema,
       }));
-      
+
       const mcpClient: MCPClient = {
         client,
         transport,
@@ -110,10 +113,10 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
           error: undefined,
         },
       };
-      
+
       connectedClients.set(server.name, mcpClient);
       debug(`Successfully connected to MCP server: ${server.name}`);
-      
+
       return mcpClient;
     } else {
       throw new Error(`Unsupported MCP server URL scheme: ${server.url}`);
@@ -147,14 +150,14 @@ const disconnectFromMCPServer = async (serverName: string): Promise<void> => {
 router.get('/servers', async (req, res) => {
   try {
     const servers = await loadMCPServers();
-    
+
     // Update connection status based on active clients
-    const updatedServers = servers.map(server => ({
+    const updatedServers = servers.map((server) => ({
       ...server,
       connected: connectedClients.has(server.name),
       tools: connectedClients.get(server.name)?.server.tools || server.tools,
     }));
-    
+
     res.json({ servers: updatedServers });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -179,28 +182,28 @@ router.get('/servers', async (req, res) => {
 router.post('/servers', async (req, res) => {
   try {
     const { name, url, apiKey } = req.body;
-    
+
     if (!name || !url) {
       return res.status(400).json({ error: 'Name and URL are required' });
     }
-    
+
     const servers = await loadMCPServers();
-    
+
     // Check if server already exists
-    if (servers.find(s => s.name === name)) {
+    if (servers.find((s) => s.name === name)) {
       return res.status(400).json({ error: 'MCP server with this name already exists' });
     }
-    
+
     const newServer: MCPServer = {
       name,
       url,
       apiKey,
       connected: false,
     };
-    
+
     servers.push(newServer);
     await saveMCPServers(servers);
-    
+
     debug(`Added new MCP server: ${name}`);
     res.json({ server: newServer });
   } catch (error: unknown) {
@@ -226,40 +229,40 @@ router.post('/servers', async (req, res) => {
 router.post('/servers/:name/connect', async (req, res) => {
   try {
     const { name } = req.params;
-    
+
     const servers = await loadMCPServers();
-    const server = servers.find(s => s.name === name);
-    
+    const server = servers.find((s) => s.name === name);
+
     if (!server) {
       return res.status(404).json({ error: 'MCP server not found' });
     }
-    
+
     if (connectedClients.has(name)) {
       return res.status(400).json({ error: 'MCP server already connected' });
     }
-    
+
     try {
       const mcpClient = await connectToMCPServer(server);
-      
+
       // Update server config with connection info
-      const serverIndex = servers.findIndex(s => s.name === name);
+      const serverIndex = servers.findIndex((s) => s.name === name);
       servers[serverIndex] = mcpClient.server;
       await saveMCPServers(servers);
-      
-      res.json({ 
+
+      res.json({
         server: mcpClient.server,
         message: 'Successfully connected to MCP server',
       });
     } catch (error) {
       // Update server config with error
-      const serverIndex = servers.findIndex(s => s.name === name);
+      const serverIndex = servers.findIndex((s) => s.name === name);
       servers[serverIndex] = {
         ...server,
         connected: false,
         error: String(error),
       };
       await saveMCPServers(servers);
-      
+
       res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
     }
   } catch (error: unknown) {
@@ -285,13 +288,13 @@ router.post('/servers/:name/connect', async (req, res) => {
 router.post('/servers/:name/disconnect', async (req, res) => {
   try {
     const { name } = req.params;
-    
+
     await disconnectFromMCPServer(name);
-    
+
     // Update server config
     const servers = await loadMCPServers();
-    const serverIndex = servers.findIndex(s => s.name === name);
-    
+    const serverIndex = servers.findIndex((s) => s.name === name);
+
     if (serverIndex !== -1) {
       servers[serverIndex] = {
         ...servers[serverIndex],
@@ -300,7 +303,7 @@ router.post('/servers/:name/disconnect', async (req, res) => {
       };
       await saveMCPServers(servers);
     }
-    
+
     res.json({ message: 'Successfully disconnected from MCP server' });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -325,21 +328,21 @@ router.post('/servers/:name/disconnect', async (req, res) => {
 router.delete('/servers/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    
+
     // Disconnect if connected
     if (connectedClients.has(name)) {
       await disconnectFromMCPServer(name);
     }
-    
+
     const servers = await loadMCPServers();
-    const filteredServers = servers.filter(s => s.name !== name);
-    
+    const filteredServers = servers.filter((s) => s.name !== name);
+
     if (filteredServers.length === servers.length) {
       return res.status(404).json({ error: 'MCP server not found' });
     }
-    
+
     await saveMCPServers(filteredServers);
-    
+
     debug(`Removed MCP server: ${name}`);
     res.json({ success: true });
   } catch (error: unknown) {
@@ -365,19 +368,19 @@ router.delete('/servers/:name', async (req, res) => {
 router.get('/servers/:name/tools', async (req, res) => {
   try {
     const { name } = req.params;
-    
+
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
       return res.status(404).json({ error: 'MCP server not connected' });
     }
-    
+
     const toolsResponse = await mcpClient.client.listTools();
-    const tools = toolsResponse.tools.map(tool => ({
+    const tools = toolsResponse.tools.map((tool) => ({
       name: tool.name,
       description: tool.description || '',
       inputSchema: tool.inputSchema,
     }));
-    
+
     res.json({ tools });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -403,21 +406,21 @@ router.post('/servers/:name/call-tool', async (req, res) => {
   try {
     const { name } = req.params;
     const { toolName, arguments: toolArgs } = req.body;
-    
+
     if (!toolName) {
       return res.status(400).json({ error: 'Tool name is required' });
     }
-    
+
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
       return res.status(404).json({ error: 'MCP server not connected' });
     }
-    
+
     const result = await mcpClient.client.callTool({
       name: toolName,
       arguments: toolArgs || {},
     });
-    
+
     res.json({ result });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -441,7 +444,7 @@ router.post('/servers/:name/call-tool', async (req, res) => {
 // GET /api/mcp/connected - Get all connected MCP servers
 router.get('/connected', async (req, res) => {
   try {
-    const connected = Array.from(connectedClients.values()).map(client => ({
+    const connected = Array.from(connectedClients.values()).map((client) => ({
       name: client.server.name,
       url: client.server.url,
       toolCount: client.server.tools?.length || 0,

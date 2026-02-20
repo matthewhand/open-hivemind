@@ -49,10 +49,11 @@ Make sure the specification is detailed, clear, and actionable.`;
 
       log.info('Successfully generated specification for topic:', trimmedTopic);
       return response.trim();
-
     } catch (error) {
       log.error('Failed to generate specification:', error);
-      throw new Error(`Failed to generate specification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate specification: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

@@ -1,12 +1,11 @@
-import type { VoiceConnection} from '@discordjs/voice';
-import { EndBehaviorType } from '@discordjs/voice';
-import { User } from 'discord.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { User } from 'discord.js';
+import { EndBehaviorType, type VoiceConnection } from '@discordjs/voice';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:discord:recorder');
 const pipelineAsync = promisify(pipeline);
@@ -21,8 +20,10 @@ export class AudioRecorder {
   }
 
   startRecording(userId?: string): void {
-    if (this.isRecording) {return;}
-    
+    if (this.isRecording) {
+      return;
+    }
+
     this.isRecording = true;
     debug('Started recording audio');
 
@@ -72,7 +73,7 @@ export class AudioRecorder {
 
   private recordAllUsers(): void {
     const receiver = this.connection.receiver;
-    
+
     receiver.speaking.on('start', (userId: string) => {
       if (this.isRecording && !this.recordings.has(userId)) {
         this.recordUser(userId);
@@ -89,7 +90,7 @@ export class AudioRecorder {
           'ValidationError' as any,
           'DISCORD_AUDIO_RECORDER_NO_RECORDING',
           404,
-          { userId },
+          { userId }
         );
       }
 
@@ -116,15 +117,17 @@ export class AudioRecorder {
         classification.type,
         'DISCORD_AUDIO_RECORDER_SAVE_ERROR',
         ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error, userId },
+        { originalError: error, userId }
       );
     }
   }
 
   getRecordingDuration(userId: string): number {
     const chunks = this.recordings.get(userId);
-    if (!chunks) {return 0;}
-    
+    if (!chunks) {
+      return 0;
+    }
+
     // Approximate duration based on chunk count (48kHz, 16-bit, mono)
     const totalSamples = chunks.length * 960; // 960 samples per chunk at 48kHz
     return totalSamples / 48000; // Convert to seconds

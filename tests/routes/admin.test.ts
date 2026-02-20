@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import adminRoutes from '../../src/server/routes/admin';
 
 // Mock dependencies
@@ -8,7 +8,9 @@ jest.mock('../../src/storage/webUIStorage', () => ({
   webUIStorage: {
     // In-memory provider stores for route tests
     _llmProviders: [{ id: 'llm1', name: 'LLM 1', type: 'openai', config: {}, isActive: true }],
-    _messengerProviders: [{ id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true }],
+    _messengerProviders: [
+      { id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true },
+    ],
 
     getPersonas: jest.fn(() => []),
     savePersona: jest.fn(),
@@ -17,7 +19,9 @@ jest.mock('../../src/storage/webUIStorage', () => ({
     saveMcp: jest.fn(),
     deleteMcp: jest.fn(),
 
-    getLlmProviders: jest.fn(function () { return this._llmProviders; }),
+    getLlmProviders: jest.fn(function () {
+      return this._llmProviders;
+    }),
     saveLlmProvider: jest.fn(function (provider: any) {
       const idx = this._llmProviders.findIndex((p: any) => p.id === provider.id);
       if (idx >= 0) this._llmProviders[idx] = provider;
@@ -27,7 +31,9 @@ jest.mock('../../src/storage/webUIStorage', () => ({
       this._llmProviders = this._llmProviders.filter((p: any) => p.id !== id);
     }),
 
-    getMessengerProviders: jest.fn(function () { return this._messengerProviders; }),
+    getMessengerProviders: jest.fn(function () {
+      return this._messengerProviders;
+    }),
     saveMessengerProvider: jest.fn(function (provider: any) {
       const idx = this._messengerProviders.findIndex((p: any) => p.id === provider.id);
       if (idx >= 0) this._messengerProviders[idx] = provider;
@@ -62,15 +68,17 @@ describe('Admin Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const { webUIStorage } = require('../../src/storage/webUIStorage');
-    webUIStorage._llmProviders = [{ id: 'llm1', name: 'LLM 1', type: 'openai', config: {}, isActive: true }];
-    webUIStorage._messengerProviders = [{ id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true }];
+    webUIStorage._llmProviders = [
+      { id: 'llm1', name: 'LLM 1', type: 'openai', config: {}, isActive: true },
+    ];
+    webUIStorage._messengerProviders = [
+      { id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true },
+    ];
   });
 
   describe('LLM Providers', () => {
     test('GET /api/admin/llm-providers should return providers list', async () => {
-      const response = await request(app)
-        .get('/api/admin/llm-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.providers).toBeDefined();
@@ -135,9 +143,7 @@ describe('Admin Routes', () => {
     });
 
     test('DELETE /api/admin/llm-providers/:id should delete provider', async () => {
-      const response = await request(app)
-        .delete('/api/admin/llm-providers/llm1')
-        .expect(200);
+      const response = await request(app).delete('/api/admin/llm-providers/llm1').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('deleted successfully');
@@ -156,9 +162,7 @@ describe('Admin Routes', () => {
 
   describe('Messenger Providers', () => {
     test('GET /api/admin/messenger-providers should return providers list', async () => {
-      const response = await request(app)
-        .get('/api/admin/messenger-providers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.providers).toBeDefined();
@@ -204,9 +208,7 @@ describe('Admin Routes', () => {
 
   describe('Personas', () => {
     test('GET /api/admin/personas should return personas list', async () => {
-      const response = await request(app)
-        .get('/api/admin/personas')
-        .expect(200);
+      const response = await request(app).get('/api/admin/personas').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.personas).toBeDefined();
@@ -220,10 +222,7 @@ describe('Admin Routes', () => {
         systemPrompt: 'You are a helpful test assistant.',
       };
 
-      const response = await request(app)
-        .post('/api/admin/personas')
-        .send(personaData)
-        .expect(200);
+      const response = await request(app).post('/api/admin/personas').send(personaData).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('created successfully');
@@ -236,10 +235,7 @@ describe('Admin Routes', () => {
         systemPrompt: 'You are a helpful test assistant.',
       };
 
-      const response = await request(app)
-        .post('/api/admin/personas')
-        .send(invalidData)
-        .expect(400);
+      const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
       expect(response.body.error).toBe('Validation error');
       expect(response.body.message).toContain('Key must contain only alphanumeric characters');
@@ -261,9 +257,7 @@ describe('Admin Routes', () => {
     });
 
     test('DELETE /api/admin/personas/:key should delete persona', async () => {
-      const response = await request(app)
-        .delete('/api/admin/personas/test_persona')
-        .expect(200);
+      const response = await request(app).delete('/api/admin/personas/test_persona').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('deleted successfully');
@@ -272,9 +266,7 @@ describe('Admin Routes', () => {
 
   describe('MCP Servers', () => {
     test('GET /api/admin/mcp-servers should return servers list', async () => {
-      const response = await request(app)
-        .get('/api/admin/mcp-servers')
-        .expect(200);
+      const response = await request(app).get('/api/admin/mcp-servers').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.servers).toBeDefined();
@@ -329,9 +321,7 @@ describe('Admin Routes', () => {
 
   describe('Tool Usage Guards', () => {
     test('GET /api/admin/tool-usage-guards should return guards list', async () => {
-      const response = await request(app)
-        .get('/api/admin/tool-usage-guards')
-        .expect(200);
+      const response = await request(app).get('/api/admin/tool-usage-guards').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.guards).toBeDefined();
@@ -394,9 +384,7 @@ describe('Admin Routes', () => {
     });
 
     test('DELETE /api/admin/tool-usage-guards/:id should delete guard', async () => {
-      const response = await request(app)
-        .delete('/api/admin/tool-usage-guards/guard1')
-        .expect(200);
+      const response = await request(app).delete('/api/admin/tool-usage-guards/guard1').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('deleted successfully');
@@ -415,9 +403,7 @@ describe('Admin Routes', () => {
 
   describe('Environment Overrides', () => {
     test('GET /api/admin/env-overrides should return environment variables', async () => {
-      const response = await request(app)
-        .get('/api/admin/env-overrides')
-        .expect(200);
+      const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.envVars).toBeDefined();

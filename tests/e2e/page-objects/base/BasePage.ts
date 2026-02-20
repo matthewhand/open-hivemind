@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 /**
  * BasePage provides common functionality for all page objects.
@@ -43,10 +43,7 @@ export class BasePage {
    */
   async clickElement(locator: Locator, waitForNavigation = false): Promise<void> {
     if (waitForNavigation) {
-      await Promise.all([
-        this.page.waitForNavigation(),
-        locator.click(),
-      ]);
+      await Promise.all([this.page.waitForNavigation(), locator.click()]);
     } else {
       await locator.click();
     }

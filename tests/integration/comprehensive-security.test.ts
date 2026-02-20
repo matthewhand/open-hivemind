@@ -1,3 +1,11 @@
+import express, { NextFunction, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import { body } from 'express-validator';
+import Redis from 'ioredis';
+import request from 'supertest';
+import { sanitizeInput } from '../../src/middleware/sanitizationMiddleware';
+import { validate } from '../../src/middleware/validationMiddleware';
+
 // Mock Redis for testing
 jest.mock('ioredis', () => {
   return jest.fn().mockImplementation(() => ({
@@ -6,24 +14,27 @@ jest.mock('ioredis', () => {
     del: jest.fn().mockResolvedValue(1),
     quit: jest.fn(),
     on: jest.fn(),
-    status: 'ready'
+    status: 'ready',
   }));
 });
-
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
-import { validate } from '../../src/middleware/validationMiddleware';
-import { body } from 'express-validator';
-import { applyCors } from '../../src/middleware/corsMiddleware';
-import { sanitizeInput } from '../../src/middleware/sanitizationMiddleware';
-import { applySessionManagement } from '../../src/middleware/sessionMiddleware';
-import Redis from 'ioredis';
 
 describe('Comprehensive Security Integration Tests', () => {
   let app: express.Application;
 
   beforeEach(() => {
+    // Reset modules to ensure fresh CORS config
+    jest.resetModules();
+
+    // Set CORS_ORIGIN for testing before importing the middleware
+    process.env.CORS_ORIGIN =
+      'https://trusted-domain.com,http://localhost:3000,http://localhost:3028';
+
+    // Re-import after setting env
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { applyCors } = require('../../src/middleware/corsMiddleware');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { applySessionManagement } = require('../../src/middleware/sessionMiddleware');
+
     app = express();
     app.set('trust proxy', 1); // Trust X-Forwarded-For headers
 
@@ -33,27 +44,31 @@ describe('Comprehensive Security Integration Tests', () => {
     app.use(applySessionManagement);
 
     // Test route with all security measures
-    app.post('/secure-endpoint', [
-      body('username').isEmail().withMessage('Invalid email'),
-      body('password').isLength({ min: 8 }).withMessage('Password too short'),
-      sanitizeInput,
-      validate
-    ], (req: Request, res: Response) => {
-      // Set session data to ensure cookie is sent
-      if (req.session) {
-        (req.session as any).user = 'test-user';
+    app.post(
+      '/secure-endpoint',
+      [
+        body('username').isEmail().withMessage('Invalid email'),
+        body('password').isLength({ min: 8 }).withMessage('Password too short'),
+        sanitizeInput,
+        validate,
+      ],
+      (req: Request, res: Response) => {
+        // Set session data to ensure cookie is sent
+        if (req.session) {
+          (req.session as any).user = 'test-user';
+        }
+        res.status(200).json({
+          message: 'Secure endpoint',
+          data: req.body,
+        });
       }
-      res.status(200).json({
-        message: 'Secure endpoint',
-        data: req.body
-      });
-    });
+    );
 
     // Test route without validation for comparison
     app.post('/insecure-endpoint', (req: Request, res: Response) => {
       res.status(200).json({
         message: 'Insecure endpoint',
-        data: req.body
+        data: req.body,
       });
     });
   });
@@ -72,7 +87,7 @@ describe('Comprehensive Security Integration Tests', () => {
         keyGenerator: (req) => req.ip || 'unknown',
         handler: (req, res) => {
           res.status(429).json({ error: 'Too many requests' });
-        }
+        },
       });
 
       testApp.use(testRateLimiter);
@@ -82,10 +97,7 @@ describe('Comprehensive Security Integration Tests', () => {
 
       // Make 5 requests (at limit)
       for (let i = 0; i < 5; i++) {
-        await request(testApp)
-          .post('/test-rate-limit')
-          .set('X-Forwarded-For', '10.0.0.1')
-          .send({});
+        await request(testApp).post('/test-rate-limit').set('X-Forwarded-For', '10.0.0.1').send({});
       }
 
       // 6th request should be rate limited
@@ -105,14 +117,16 @@ describe('Comprehensive Security Integration Tests', () => {
         .post('/secure-endpoint')
         .send({
           username: 'invalid-email',
-          password: 'short'
+          password: 'short',
         })
         .expect(400);
 
-      expect(response.body.errors).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: 'username', msg: 'Invalid email' }),
-        expect.objectContaining({ path: 'password', msg: 'Password too short' })
-      ]));
+      expect(response.body.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: 'username', msg: 'Invalid email' }),
+          expect.objectContaining({ path: 'password', msg: 'Password too short' }),
+        ])
+      );
     });
 
     test('should accept valid input', async () => {
@@ -120,7 +134,7 @@ describe('Comprehensive Security Integration Tests', () => {
         .post('/secure-endpoint')
         .send({
           username: 'valid@example.com',
-          password: 'validpassword'
+          password: 'validpassword',
         })
         .expect(200);
 
@@ -135,11 +149,13 @@ describe('Comprehensive Security Integration Tests', () => {
         .send({
           username: 'valid@example.com',
           password: 'validpassword',
-          comment: '<script>alert("xss")</script>'
+          comment: '<script>alert("xss")</script>',
         })
         .expect(200);
 
-      expect(response.body.data.comment).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+      expect(response.body.data.comment).toBe(
+        '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
+      );
     });
   });
 
@@ -150,7 +166,7 @@ describe('Comprehensive Security Integration Tests', () => {
         .set('Origin', 'https://trusted-domain.com')
         .send({
           username: 'valid@example.com',
-          password: 'validpassword'
+          password: 'validpassword',
         })
         .expect(200);
 
@@ -163,11 +179,11 @@ describe('Comprehensive Security Integration Tests', () => {
         .set('Origin', 'https://malicious-site.com')
         .send({
           username: 'valid@example.com',
-          password: 'validpassword'
+          password: 'validpassword',
         })
         .expect(403);
 
-      expect(response.body.error).toBe('Forbidden');
+      expect(response.body.error).toBe('CORS origin not allowed');
     });
   });
 
@@ -177,7 +193,7 @@ describe('Comprehensive Security Integration Tests', () => {
         .post('/secure-endpoint')
         .send({
           username: 'valid@example.com',
-          password: 'validpassword'
+          password: 'validpassword',
         })
         .expect(200);
 
@@ -197,7 +213,7 @@ describe('Comprehensive Security Integration Tests', () => {
         .post('/insecure-endpoint')
         .send({
           username: 'invalid-email',
-          password: 'short'
+          password: 'short',
         })
         .expect(200);
 

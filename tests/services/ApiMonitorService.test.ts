@@ -1,4 +1,7 @@
-import ApiMonitorService, { EndpointConfig, EndpointStatus } from '../../src/services/ApiMonitorService';
+import ApiMonitorService, {
+  EndpointConfig,
+  EndpointStatus,
+} from '../../src/services/ApiMonitorService';
 
 describe('ApiMonitorService', () => {
   let service: ApiMonitorService;
@@ -7,7 +10,7 @@ describe('ApiMonitorService', () => {
     service = ApiMonitorService.getInstance();
     service.stopAllMonitoring();
     // Clear all endpoints
-    service.getAllEndpoints().forEach(endpoint => {
+    service.getAllEndpoints().forEach((endpoint) => {
       service.removeEndpoint(endpoint.id);
     });
     // Remove all listeners to prevent accumulation

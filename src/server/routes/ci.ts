@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import Debug from 'debug';
+import { Router } from 'express';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -40,7 +40,12 @@ router.get('/api/deployments', (req, res) => {
             name: 'Deploy',
             status: 'success',
             duration: 240,
-            logs: ['Deployment started', 'Configuration validated', 'Services restarted', 'Health checks passed'],
+            logs: [
+              'Deployment started',
+              'Configuration validated',
+              'Services restarted',
+              'Health checks passed',
+            ],
           },
         ],
       },

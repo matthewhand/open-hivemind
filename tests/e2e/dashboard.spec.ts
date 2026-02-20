@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import {
-  setupTestWithErrorDetection,
   assertNoErrors,
   navigateAndWaitReady,
-  SELECTORS
+  SELECTORS,
+  setupTestWithErrorDetection,
 } from './test-utils';
 
 /**
@@ -28,7 +28,7 @@ test.describe('Dashboard experience', () => {
     await navigateAndWaitReady(page, '/admin/overview');
 
     const main = page.locator('main').first();
-    if (await main.count() > 0) {
+    if ((await main.count()) > 0) {
       await expect(main).toBeVisible();
     }
     await page.screenshot({ path: 'test-results/dashboard-02.png', fullPage: true });
@@ -41,7 +41,7 @@ test.describe('Dashboard experience', () => {
     await navigateAndWaitReady(page, '/admin/overview');
 
     const nav = page.locator('nav').first();
-    if (await nav.count() > 0) {
+    if ((await nav.count()) > 0) {
       await expect(nav).toBeVisible();
     }
     await page.screenshot({ path: 'test-results/dashboard-03.png', fullPage: true });

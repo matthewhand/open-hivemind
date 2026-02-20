@@ -3,10 +3,10 @@
  * Tests real API flows end-to-end
  */
 
-import request from 'supertest';
 import express from 'express';
-import { createServer } from '../../../src/server/server';
+import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
+import { createServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
   let app: express.Application;
@@ -33,9 +33,7 @@ describe('Health API Integration Tests', () => {
 
   describe('GET /api/health', () => {
     it('should return health status', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
@@ -44,9 +42,7 @@ describe('Health API Integration Tests', () => {
     });
 
     it('should include uptime information', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('uptime');
       expect(typeof response.body.uptime).toBe('number');
@@ -54,9 +50,7 @@ describe('Health API Integration Tests', () => {
     });
 
     it('should include memory usage', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('memory');
       expect(response.body.memory).toHaveProperty('used');
@@ -65,9 +59,7 @@ describe('Health API Integration Tests', () => {
     });
 
     it('should include system information', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('system');
       expect(response.body.system).toHaveProperty('platform');
@@ -78,9 +70,7 @@ describe('Health API Integration Tests', () => {
 
   describe('GET /api/health/detailed', () => {
     it('should return detailed health information', async () => {
-      const response = await request(app)
-        .get('/api/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/api/health/detailed').expect(200);
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('checks');
@@ -96,9 +86,7 @@ describe('Health API Integration Tests', () => {
     });
 
     it('should perform actual connectivity checks', async () => {
-      const response = await request(app)
-        .get('/api/health/detailed')
-        .expect(200);
+      const response = await request(app).get('/api/health/detailed').expect(200);
 
       // Database check should be present
       expect(response.body.checks.database).toHaveProperty('status');
@@ -113,14 +101,14 @@ describe('Health API Integration Tests', () => {
   describe('Health check reliability', () => {
     it('should handle concurrent health check requests', async () => {
       const concurrentRequests = 10;
-      const promises = Array(concurrentRequests).fill(null).map(() =>
-        request(app).get('/api/health').expect(200)
-      );
+      const promises = Array(concurrentRequests)
+        .fill(null)
+        .map(() => request(app).get('/api/health').expect(200));
 
       const responses = await Promise.all(promises);
 
       // All responses should be successful
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.body.status).toBe('healthy');
         expect(response.body).toHaveProperty('timestamp');
       });
@@ -129,9 +117,7 @@ describe('Health API Integration Tests', () => {
     it('should respond within acceptable time limits', async () => {
       const startTime = Date.now();
 
-      await request(app)
-        .get('/api/health')
-        .expect(200);
+      await request(app).get('/api/health').expect(200);
 
       const responseTime = Date.now() - startTime;
       expect(responseTime).toBeLessThan(1000); // Should respond within 1 second
@@ -139,10 +125,7 @@ describe('Health API Integration Tests', () => {
 
     it('should handle malformed requests gracefully', async () => {
       // Test with invalid headers
-      await request(app)
-        .get('/api/health')
-        .set('Content-Type', 'invalid')
-        .expect(200); // Should still work despite invalid headers
+      await request(app).get('/api/health').set('Content-Type', 'invalid').expect(200); // Should still work despite invalid headers
     });
   });
 
@@ -154,15 +137,13 @@ describe('Health API Integration Tests', () => {
       for (let i = 0; i < numberOfRequests; i++) {
         const startTime = Date.now();
 
-        await request(app)
-          .get('/api/health')
-          .expect(200);
+        await request(app).get('/api/health').expect(200);
 
         const responseTime = Date.now() - startTime;
         responseTimes.push(responseTime);
 
         // Small delay to simulate real usage
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       const averageResponseTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
@@ -174,7 +155,7 @@ describe('Health API Integration Tests', () => {
       console.log('Load test results:', {
         requests: numberOfRequests,
         avgResponseTime: `${averageResponseTime.toFixed(2)}ms`,
-        maxResponseTime: `${maxResponseTime.toFixed(2)}ms`
+        maxResponseTime: `${maxResponseTime.toFixed(2)}ms`,
       });
     });
   });

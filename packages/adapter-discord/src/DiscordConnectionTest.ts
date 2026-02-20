@@ -4,7 +4,9 @@ export interface DiscordConnectionTestResult {
   details?: Record<string, unknown>;
 }
 
-export const testDiscordConnection = async (token: string): Promise<DiscordConnectionTestResult> => {
+export const testDiscordConnection = async (
+  token: string
+): Promise<DiscordConnectionTestResult> => {
   const trimmed = token.trim();
   if (!trimmed) {
     return { ok: false, message: 'Discord bot token is required' };
