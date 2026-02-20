@@ -7,7 +7,7 @@
 import Debug from 'debug';
 import DOMPurify from 'dompurify';
 import type { NextFunction, Request, Response } from 'express';
-import { body, param, query, ValidationChain, validationResult } from 'express-validator';
+import { body, param, query, validationResult, type ValidationChain } from 'express-validator';
 import { JSDOM } from 'jsdom';
 import { ValidationError } from '../types/errorClasses';
 

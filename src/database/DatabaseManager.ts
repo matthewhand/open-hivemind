@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
-import { Database, open } from 'sqlite';
+import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 

@@ -1,14 +1,14 @@
 import Debug from 'debug';
-import { Request, Response, Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
-import { AuthMiddlewareRequest } from '../../auth/types';
+import { type AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfig } from '../../types/config';
 import { ConfigurationError } from '../../types/errorClasses';
-import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import {
   sanitizeBotConfig,
   validateBotConfigCreation,

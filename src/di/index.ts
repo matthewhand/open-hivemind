@@ -1,6 +1,6 @@
 /**
  * Dependency Injection Module
- * 
+ *
  * Re-export the DI container and utilities for convenient importing.
  */
 

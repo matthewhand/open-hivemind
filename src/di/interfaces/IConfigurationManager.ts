@@ -1,11 +1,11 @@
 /**
  * IConfigurationManager Interface
- * 
+ *
  * Abstraction for the ConfigurationManager singleton.
  * This interface allows for easier testing and decoupling from the concrete implementation.
  */
 
-import convict from 'convict';
+import type convict from 'convict';
 
 export interface IConfigurationManager {
   /**

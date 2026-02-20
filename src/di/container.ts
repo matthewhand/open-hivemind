@@ -1,15 +1,15 @@
 /**
  * Dependency Injection Container Configuration
- * 
+ *
  * This module configures the tsyringe DI container for the application.
  * It provides a centralized location for registering services and their dependencies.
- * 
+ *
  * Usage:
  * 1. Import 'reflect-metadata' at the entry point (src/index.ts)
  * 2. Use @injectable() decorator on service classes
  * 3. Use @inject() decorator for constructor dependencies
  * 4. Register services with container.register()
- * 
+ *
  * Benefits:
  * - Explicit dependency declaration
  * - Easier testing with mock injection
@@ -29,19 +29,19 @@ export const TOKENS = {
   UserConfigStore: 'UserConfigStore',
   ProviderConfigManager: 'ProviderConfigManager',
   HotReloadManager: 'HotReloadManager',
-  
+
   // Core Services
   BotManager: 'BotManager',
   PersonaManager: 'PersonaManager',
   MCPService: 'MCPService',
   MCPGuard: 'MCPGuard',
-  
+
   // Database
   DatabaseManager: 'DatabaseManager',
   ConnectionManager: 'ConnectionManager',
   MigrationManager: 'MigrationManager',
   SchemaManager: 'SchemaManager',
-  
+
   // Server Services
   WebSocketService: 'WebSocketService',
   ShutdownCoordinator: 'ShutdownCoordinator',
@@ -52,11 +52,11 @@ export const TOKENS = {
   ConfigurationImportExportService: 'ConfigurationImportExportService',
   RealTimeNotificationService: 'RealTimeNotificationService',
   RealTimeValidationService: 'RealTimeValidationService',
-  
+
   // Auth
   AuthManager: 'AuthManager',
   SessionManager: 'SessionManager',
-  
+
   // Monitoring
   AdvancedMonitor: 'AdvancedMonitor',
   HealthChecker: 'HealthChecker',
@@ -64,17 +64,17 @@ export const TOKENS = {
   AlertManager: 'AlertManager',
   MonitoringService: 'MonitoringService',
   ApiMonitorService: 'ApiMonitorService',
-  
+
   // Message Processing
   IdleResponseManager: 'IdleResponseManager',
   ChannelRouter: 'ChannelRouter',
-  
+
   // Utilities
   AuditLogger: 'AuditLogger',
   PerformanceProfiler: 'PerformanceProfiler',
   TimerRegistry: 'TimerRegistry',
   StartupDiagnostics: 'StartupDiagnostics',
-  
+
   // Integration Services
   SlackService: 'SlackService',
   MattermostService: 'MattermostService',

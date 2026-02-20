@@ -1,11 +1,11 @@
 /**
  * IBotManager Interface
- * 
+ *
  * Abstraction for the BotManager singleton.
  * This interface allows for easier testing and decoupling from the concrete implementation.
  */
 
-import { BotInstance } from '../../managers/BotManager';
+import { type BotInstance } from '../../managers/BotManager';
 
 export interface IBotManager {
   /**

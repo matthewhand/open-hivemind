@@ -1,6 +1,6 @@
 /**
  * DI Interfaces Index
- * 
+ *
  * Re-export all DI interfaces for convenient importing.
  */
 
