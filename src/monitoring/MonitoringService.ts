@@ -179,6 +179,35 @@ export class MonitoringService {
     }
   }
 
+  /**
+   * Gracefully shutdown the MonitoringService and all its components.
+   * This is more comprehensive than stop() - it shuts down all sub-components.
+   */
+  public shutdown(): void {
+    console.log('🔧 Shutting down monitoring service...');
+
+    // Stop the service first
+    this.stop();
+
+    // Shutdown sub-components
+    if (this.alertManager) {
+      this.alertManager.shutdown();
+      console.log('🚨 AlertManager shutdown complete');
+    }
+
+    if (this.healthChecker) {
+      this.healthChecker.shutdown();
+      console.log('💓 HealthChecker shutdown complete');
+    }
+
+    if (this.metricsCollector) {
+      this.metricsCollector.shutdown();
+      console.log('📊 MetricsCollector shutdown complete');
+    }
+
+    console.log('✅ MonitoringService shutdown complete');
+  }
+
   public getHealthMiddleware() {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {

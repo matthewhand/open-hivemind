@@ -244,4 +244,15 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
     this.history = [];
     console.log('📊 Metrics reset');
   }
+
+  /**
+   * Gracefully shutdown the MetricsCollector.
+   * Stops collection and clears all data.
+   */
+  shutdown(): void {
+    this.stopCollection();
+    this.history = [];
+    this.removeAllListeners();
+    console.log('📊 MetricsCollector shutdown complete');
+  }
 }

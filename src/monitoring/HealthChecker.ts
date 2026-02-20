@@ -340,4 +340,14 @@ export class HealthChecker {
     const healthData = await this.exportHealthData();
     await fs.writeFile(filePath, healthData, 'utf-8');
   }
+
+  /**
+   * Gracefully shutdown the HealthChecker.
+   * Clears health history and releases resources.
+   */
+  public shutdown(): void {
+    this.healthHistory = [];
+    this.lastCheckTime = 0;
+    console.log('💓 HealthChecker shutdown complete');
+  }
 }

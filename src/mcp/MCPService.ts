@@ -98,6 +98,25 @@ export class MCPService {
   }
 
   /**
+   * Disconnect from all MCP servers - used for graceful shutdown
+   */
+  public async disconnectAll(): Promise<void> {
+    debug('Disconnecting from all MCP servers...');
+    
+    const serverNames = Array.from(this.clients.keys());
+    const disconnectPromises = serverNames.map(
+      serverName => this.disconnectFromServer(serverName)
+    );
+    
+    await Promise.allSettled(disconnectPromises);
+    
+    this.clients.clear();
+    this.tools.clear();
+    
+    debug('All MCP connections closed');
+  }
+
+  /**
    * Get all tools from all connected servers
    */
   public getAllTools(): MCPTool[] {
