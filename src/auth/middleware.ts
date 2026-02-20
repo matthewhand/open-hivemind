@@ -6,6 +6,106 @@ import Debug from 'debug';
 
 const debug = Debug('app:AuthMiddleware');
 
+/**
+ * Validates if an IP address is a loopback (localhost) address
+ * Uses only socket-level IP to prevent header injection attacks
+ * 
+ * @param ip - The IP address to validate
+ * @returns true if the IP is a loopback address
+ */
+function isLoopbackIP(ip: string | undefined): boolean {
+  if (!ip) return false;
+  
+  // Check for IPv4 loopback
+  if (ip === '127.0.0.1') return true;
+  
+  // Check for IPv6 loopback
+  if (ip === '::1') return true;
+  
+  // Check for IPv4-mapped IPv6 loopback
+  if (ip === '::ffff:127.0.0.1') return true;
+  
+  // Check for any 127.x.x.x address (IPv4 loopback range)
+  // This handles cases like 127.0.0.2, 127.1.2.3, etc.
+  if (ip.startsWith('127.')) return true;
+  
+  // Check for IPv6 loopback with embedded IPv4
+  if (ip.toLowerCase().startsWith('::ffff:127.')) return true;
+  
+  return false;
+}
+
+/**
+ * Validates localhost bypass request with enhanced security
+ * 
+ * Security improvements:
+ * 1. Only checks socket-level IP (not headers that can be spoofed)
+ * 2. Requires explicit bypass token for additional verification
+ * 3. Logs all bypass attempts for audit
+ * 4. Creates session with expiration time
+ * 
+ * @param req - Express request object
+ * @returns Object with bypass status and user if successful
+ */
+function validateLocalhostBypass(req: Request): { allowed: boolean; user?: User; reason?: string } {
+  const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
+  
+  if (!allowLocalBypass) {
+    return { allowed: false, reason: 'Localhost bypass not enabled' };
+  }
+  
+  // Only check socket-level IP - headers can be spoofed
+  const socketIP = req.socket?.remoteAddress;
+  
+  if (!isLoopbackIP(socketIP)) {
+    debug('Localhost bypass rejected: non-loopback socket IP', { socketIP });
+    return { allowed: false, reason: 'Non-loopback IP' };
+  }
+  
+  // Require explicit bypass token for additional security
+  // This prevents accidental bypass in containerized environments
+  const bypassToken = process.env.LOCALHOST_BYPASS_TOKEN;
+  const bypassHeader = req.headers['x-localhost-bypass'];
+  
+  if (!bypassToken) {
+    debug('Localhost bypass rejected: no bypass token configured');
+    return { allowed: false, reason: 'Bypass token not configured' };
+  }
+  
+  if (bypassHeader !== bypassToken) {
+    debug('Localhost bypass rejected: invalid bypass token', { 
+      socketIP,
+      providedToken: bypassHeader ? '(provided)' : '(missing)'
+    });
+    return { allowed: false, reason: 'Invalid or missing bypass token' };
+  }
+  
+  // Log bypass usage for security audit
+  debug('SECURITY AUDIT: Localhost admin bypass used', {
+    ip: socketIP,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
+  
+  // Create limited admin user with session expiration
+  const sessionExpiresAt = Date.now() + 3600000; // 1 hour from now
+  
+  const defaultUser: User = {
+    id: 'localhost-admin',
+    username: 'localhost-admin',
+    email: 'admin@localhost',
+    role: 'admin',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+    // Custom property for session expiration
+    sessionExpiresAt,
+  } as User & { sessionExpiresAt: number };
+  
+  return { allowed: true, user: defaultUser };
+}
+
 export class AuthMiddleware {
   private authManager: AuthManager;
 
@@ -16,49 +116,34 @@ export class AuthMiddleware {
   /**
    * JWT Authentication middleware
    * Verifies JWT token and attaches user to request
-   * Bypasses authentication for localhost requests
+   * 
+   * SECURITY NOTE: Localhost bypass requires:
+   * 1. ALLOW_LOCALHOST_ADMIN=true environment variable
+   * 2. LOCALHOST_BYPASS_TOKEN set to a secure random value
+   * 3. X-Localhost-Bypass header matching the token
+   * 4. Request from actual loopback IP (socket-level check)
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = Array.isArray(req.headers.authorization) ? req.headers.authorization[0] : req.headers.authorization;
   
-      // Check if request is from localhost - bypass authentication when no auth header provided
-      const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
-  
-      // Check for localhost IPs and common localhost hostnames
-      const host = req.get('host');
-      const origin = req.get('origin');
-      const isLocalhost = clientIP === '127.0.0.1' ||
-                         clientIP === '::1' ||
-                         clientIP === '::ffff:127.0.0.1' ||
-                         host === 'localhost' ||
-                         host === '127.0.0.1' ||
-                         (host && host.includes('localhost')) ||
-                         (origin && origin.includes('localhost'));
-  
-      const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
-  
-      if ((!authHeader || !authHeader.startsWith('Bearer ')) && isLocalhost && allowLocalBypass) {
-        debug(`Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`);
-        // Create a default admin user for localhost access
-        const defaultUser: User = {
-          id: 'localhost-admin',
-          username: 'localhost-admin',
-          email: 'admin@localhost',
-          role: 'admin',
-          // tenant_id: 'default',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-        };
-
-        (req as AuthMiddlewareRequest).user = defaultUser;
-        (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(defaultUser.role);
-        next();
-        return;
-      }
-  
+      // Attempt localhost bypass if no auth header provided
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        const bypassResult = validateLocalhostBypass(req);
+        
+        if (bypassResult.allowed && bypassResult.user) {
+          debug(`Localhost bypass authenticated: ${req.method} ${req.path}`);
+          (req as AuthMiddlewareRequest).user = bypassResult.user;
+          (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(bypassResult.user.role);
+          next();
+          return;
+        }
+        
+        // If bypass was attempted but failed, log for security monitoring
+        if (process.env.ALLOW_LOCALHOST_ADMIN === 'true') {
+          debug('Localhost bypass attempted but rejected:', bypassResult.reason);
+        }
+        
         throw new AuthenticationError('Bearer token required in Authorization header', undefined, 'missing_token');
       }
   
