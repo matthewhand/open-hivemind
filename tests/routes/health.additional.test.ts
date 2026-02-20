@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import healthRouter from '../../src/routes/health';
+import healthRouter from '../../src/server/routes/health';
 
 describe('Health Route Additional Tests', () => {
   let app: express.Application;

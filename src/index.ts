@@ -267,10 +267,6 @@ app.get('/admin*', (req: Request, res: Response) => {
 //     res.sendFile(adminPath);
 // });
 
-// API routes under /api/uber
-// import uberRouter from './routes/uberRouter';
-// app.use('/api/uber', uberRouter);
-
 // React Router catch-all handler (must be AFTER all API routes)
 
 // Vite Proxy Middleware for Development (Must be before 404 handler)

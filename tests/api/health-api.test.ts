@@ -10,7 +10,7 @@
 
 import request from 'supertest';
 import express from 'express';
-import healthRouter from '../../src/routes/health';
+import healthRouter from '../../src/server/routes/health';
 
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;

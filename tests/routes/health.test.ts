@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { runRoute } from '../helpers/expressRunner';
-import healthRouter from '../../src/routes/health';
+import healthRouter from '../../src/server/routes/health';
 
 describe('Health Route', () => {
     let app: express.Application;
