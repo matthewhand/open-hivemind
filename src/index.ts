@@ -39,6 +39,7 @@ import { ipWhitelist } from '@src/server/middleware/security';
 import openapiRouter from '@src/server/routes/openapi';
 import sitemapRouter from '@src/server/routes/sitemap';
 import WebSocketService from '@src/server/services/WebSocketService';
+import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
@@ -85,17 +86,19 @@ if (!fs.existsSync(frontendDistPath)) {
   frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
 }
 
+// Initialize ShutdownCoordinator for graceful shutdown
+const shutdownCoordinator = ShutdownCoordinator.getInstance();
+
 // Add error handling for unhandled rejections and exceptions
+// These will trigger graceful shutdown via ShutdownCoordinator
 process.on('unhandledRejection', (reason, promise) => {
   appLogger.error('Unhandled promise rejection', { promise, reason });
-  // Application specific logging, throwing an error, or other logic here
-  process.exit(1);
+  shutdownCoordinator.initiateShutdown('unhandledRejection');
 });
 
 process.on('uncaughtException', (error) => {
   appLogger.error('Uncaught exception', { error });
-  // Application specific logging, throwing an error, or other logic here
-  process.exit(1);
+  shutdownCoordinator.initiateShutdown('uncaughtException');
 });
 
 const app = express();
@@ -414,6 +417,12 @@ async function main() {
       const providerName = service.providerName || 'slack';
       return messageProviders.includes(providerName.toLowerCase());
     });
+
+    // Register messenger services with ShutdownCoordinator
+    for (const service of messengerServices) {
+      shutdownCoordinator.registerMessengerService(service);
+    }
+
     if (filteredMessengers.length > 0) {
       appLogger.info('🤖 Starting messenger bots', {
         services: filteredMessengers.map((s: any) => s.providerName).join(', '),
@@ -436,6 +445,9 @@ async function main() {
     const port = parseInt(process.env.PORT || '3028', 10);
     const server = createServer(app);
 
+    // Register HTTP server with ShutdownCoordinator
+    shutdownCoordinator.registerHttpServer(server);
+
     // Initialize Vite in Development Mode (with HMR)
     if (process.env.NODE_ENV === 'development') {
       // @ts-ignore - Vite is a dev dependency using dynamic import
@@ -450,6 +462,9 @@ async function main() {
         configFile: path.join(process.cwd(), 'src/client/vite.config.ts'),
         root: path.join(process.cwd(), 'src/client'),
       });
+
+      // Register Vite server with ShutdownCoordinator
+      shutdownCoordinator.registerViteServer(viteServer);
 
       appLogger.info('⚡ Vite Middleware Active');
     }
@@ -496,6 +511,9 @@ async function main() {
   // Print legend for decision logs
   const StartupLegendService = require('./services/StartupLegendService').default;
   StartupLegendService.printLegend();
+
+  // Setup signal handlers for graceful shutdown
+  shutdownCoordinator.setupSignalHandlers();
 
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');

@@ -40,6 +40,7 @@ export class AlertManager extends EventEmitter {
   private failureCounts: Map<string, number> = new Map();
   private lastAlertTimes: Map<string, number> = new Map();
   private alertIdCounter: number = 0;
+  private monitoringInterval: NodeJS.Timeout | null = null;
 
   constructor(healthChecker: HealthChecker, config: Partial<AlertConfig> = {}) {
     super();
@@ -328,7 +329,7 @@ export class AlertManager extends EventEmitter {
 
   private async startMonitoring(): Promise<void> {
     // Check health every 30 seconds
-    setInterval(async () => {
+    this.monitoringInterval = setInterval(async () => {
       try {
         const healthCheck = await this.healthChecker.performHealthCheck();
         await this.processHealthCheck(healthCheck);
@@ -419,5 +420,27 @@ export class AlertManager extends EventEmitter {
     };
 
     return JSON.stringify(alertData, null, 2);
+  }
+
+  /**
+   * Gracefully shutdown the AlertManager.
+   * Clears the monitoring interval and releases resources.
+   */
+  public shutdown(): void {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+      console.log('🔍 Health monitoring stopped');
+    }
+    
+    // Clear all alerts
+    this.alerts.clear();
+    this.failureCounts.clear();
+    this.lastAlertTimes.clear();
+    
+    // Remove all event listeners
+    this.removeAllListeners();
+    
+    console.log('✅ AlertManager shutdown complete');
   }
 }

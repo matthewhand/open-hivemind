@@ -293,4 +293,37 @@ export class SlackBotManager {
     debug('No message handler set');
     return '';
   }
+
+  /**
+   * Gracefully shutdown all Slack bot connections
+   */
+  public async shutdown(): Promise<void> {
+    debug('Entering shutdown');
+    
+    for (const botInfo of this.slackBots) {
+      try {
+        // Disconnect Socket Mode client
+        if (botInfo.socketClient) {
+          await botInfo.socketClient.disconnect();
+          debug(`Socket client disconnected for bot: ${botInfo.botUserName}`);
+        }
+        
+        // Disconnect RTM client
+        if (botInfo.rtmClient) {
+          await botInfo.rtmClient.disconnect();
+          debug(`RTM client disconnected for bot: ${botInfo.botUserName}`);
+        }
+      } catch (error) {
+        debug(`Error disconnecting bot ${botInfo.botUserName}:`, error);
+      }
+    }
+    
+    // Clear all bots
+    this.slackBots = [];
+    this.processedEvents.clear();
+    this.lastEventTsByChannel.clear();
+    this.messageHandler = null;
+    
+    debug('SlackBotManager shutdown complete');
+  }
 }
