@@ -668,6 +668,12 @@ const messageConfig = convict({
       use_llm: true
     },
     env: 'GREETING'
+  },
+  MESSAGE_RESPONSE_PROFILES: {
+    doc: 'Response profiles for bots',
+    format: Object,
+    default: {},
+    env: 'MESSAGE_RESPONSE_PROFILES'
   }
 });
 

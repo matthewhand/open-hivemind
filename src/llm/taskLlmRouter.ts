@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { OpenAiProvider } from '@integrations/openai/openAiProvider';
+import { OpenAiProvider } from '@hivemind/provider-openai';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import ProviderConfigManager, { ProviderInstance } from '@src/config/ProviderConfigManager';

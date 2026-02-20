@@ -2,7 +2,7 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { Collection, Message, TextChannel, User, GuildMember } from 'discord.js';
-import { HivemindError, ErrorUtils } from '../../types/errors';
+import { HivemindError, ErrorUtils } from '../../../src/types/errors';
 
 const debug = Debug('app:DiscordMessage');
 

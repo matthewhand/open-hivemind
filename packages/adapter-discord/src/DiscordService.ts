@@ -1,16 +1,16 @@
 import { Client, GatewayIntentBits, Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
 import Debug from 'debug';
-import discordConfig from '../../config/discordConfig';
+import discordConfig from '@config/discordConfig';
 import DiscordMessage from './DiscordMessage';
-import { IMessage } from '../../message/interfaces/IMessage';
-import { IMessengerService } from '../../message/interfaces/IMessengerService';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import { IMessage } from '@message/interfaces/IMessage';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import {
   ValidationError,
   ConfigurationError,
   NetworkError,
   RateLimitError
-} from '../../types/errorClasses';
+} from '../../../src/types/errorClasses';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
@@ -18,12 +18,12 @@ import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
-import ProviderConfigManager from '../../config/ProviderConfigManager';
+import ProviderConfigManager from '@config/ProviderConfigManager';
 // Optional channel routing feature flag and router
-import messageConfig from '../../config/messageConfig';
+import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
-import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
-import WebSocketService from '../../server/services/WebSocketService';
+import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import WebSocketService from '../../../src/server/services/WebSocketService';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
 import { SpecifyCommand } from './commands/speckit/specify';
 import { EventEmitter } from 'events';

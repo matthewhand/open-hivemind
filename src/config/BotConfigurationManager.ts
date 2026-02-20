@@ -741,6 +741,34 @@ export class BotConfigurationManager {
     }
     return sanitized;
   }
+
+  /**
+   * Update a bot configuration
+   */
+  public async updateBot(name: string, updates: Record<string, unknown>): Promise<void> {
+    // For now, this is a stub that can be extended later
+    // The actual implementation would persist changes to config files or database
+    const bot = this.getBot(name);
+    if (!bot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+    // Updates would be applied here in a real implementation
+    this.warnings.push(`Bot "${name}" update requested but not persisted (stub implementation)`);
+  }
+
+  /**
+   * Add a new bot configuration
+   */
+  public async addBot(config: Record<string, unknown>): Promise<void> {
+    // For now, this is a stub that can be extended later
+    // The actual implementation would persist the new bot to config files or database
+    const name = config.name as string;
+    if (!name) {
+      throw new Error('Bot name is required');
+    }
+    // Bot would be added here in a real implementation
+    this.warnings.push(`Bot "${name}" add requested but not persisted (stub implementation)`);
+  }
 }
 
 export default BotConfigurationManager;

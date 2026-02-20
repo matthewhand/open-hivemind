@@ -226,9 +226,9 @@ export async function shouldReplyToMessage(
   const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastActivity / 1000)}s ago` : 'never';
 
   let chance = 0.0;
-  const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
+  const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE') as unknown;
   if (typeof baseChanceRaw === 'number') chance = baseChanceRaw;
-  else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') chance = Number(baseChanceRaw);
+  else if (typeof baseChanceRaw === 'string' && (baseChanceRaw as string).trim() !== '') chance = Number(baseChanceRaw);
 
   const baseChance = chance;
   mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);

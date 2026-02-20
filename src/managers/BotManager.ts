@@ -789,7 +789,7 @@ export class BotManager extends EventEmitter {
 
       const service = await this.getMessengerService(bot.messageProvider);
       if (service) {
-        return await service.getMessagesFromChannel(targetChannel, limit);
+        return await service.getMessagesFromChannel(targetChannel);
       }
 
       return [];

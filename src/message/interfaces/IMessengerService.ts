@@ -236,5 +236,14 @@ export interface IMessengerService {
    * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
    */
   setModelActivity?(modelId: string, senderKey?: string): Promise<void>;
+
+  /**
+   * Optional: Sends a typing indicator to a channel.
+   * 
+   * @param {string} channelId - The channel identifier to send typing indicator to
+   * @param {string} [senderName] - Optional sender name for multi-bot scenarios
+   * @param {string} [threadId] - Optional thread ID for thread-specific typing
+   */
+  sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
 }
 

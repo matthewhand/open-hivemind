@@ -1,0 +1,20 @@
+[
+  {
+    "key": "test",
+    "name": "Test",
+    "servers": [],
+    "enabled": true
+  },
+  {
+    "key": "unique-new-profile",
+    "name": "New Profile",
+    "servers": [],
+    "enabled": true
+  },
+  {
+    "key": "existing-key",
+    "name": "Duplicate",
+    "servers": [],
+    "enabled": true
+  }
+]
