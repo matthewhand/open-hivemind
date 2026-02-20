@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
+import TimerRegistry from '@src/utils/TimerRegistry';
 
 const debug = Debug('app:DuplicateMessageDetector');
 
@@ -12,13 +13,22 @@ interface MessageRecord {
 /**
  * Detects and suppresses duplicate/repetitive bot messages.
  * Tracks recent messages per channel and rejects duplicates within a configurable time window.
+ * 
+ * Memory-bounded with automatic cleanup to prevent unbounded growth.
  */
 export default class DuplicateMessageDetector {
   private static instance: DuplicateMessageDetector;
   private recentMessages: Map<string, MessageRecord[]> = new Map();
 
+  // Bounded cache configuration
+  private readonly MAX_CHANNELS = parseInt(process.env.DUPLICATE_DETECTOR_MAX_CHANNELS || '1000', 10);
+  private readonly CLEANUP_INTERVAL_MS = parseInt(process.env.DUPLICATE_DETECTOR_CLEANUP_INTERVAL_MS || '60000', 10);
+  private cleanupTimerId: string | null = null;
+
   private constructor() {
-    debug('DuplicateMessageDetector initialized');
+    debug('DuplicateMessageDetector initialized with MAX_CHANNELS=%d, CLEANUP_INTERVAL_MS=%d', 
+      this.MAX_CHANNELS, this.CLEANUP_INTERVAL_MS);
+    this.startCleanup();
   }
 
   public static getInstance(): DuplicateMessageDetector {
@@ -254,5 +264,91 @@ export default class DuplicateMessageDetector {
     } else {
       this.recentMessages.clear();
     }
+  }
+
+  /**
+   * Start periodic cleanup of old messages.
+   * Uses TimerRegistry for proper cleanup on shutdown.
+   */
+  private startCleanup(): void {
+    this.cleanupTimerId = TimerRegistry.getInstance().registerInterval(
+      'duplicate-detector-cleanup',
+      () => this.cleanup(),
+      this.CLEANUP_INTERVAL_MS,
+      'DuplicateMessageDetector periodic cleanup',
+    );
+  }
+
+  /**
+   * Cleanup old messages and enforce max channel limit.
+   * This prevents unbounded memory growth.
+   */
+  private cleanup(): void {
+    const windowMs = messageConfig.get('MESSAGE_DUPLICATE_WINDOW_MS') || 300000;
+    const now = Date.now();
+    let cleaned = 0;
+
+    // Remove expired messages from each channel
+    for (const [channelId, history] of this.recentMessages) {
+      const filtered = history.filter(msg => (now - msg.timestamp) < windowMs);
+      if (filtered.length === 0) {
+        this.recentMessages.delete(channelId);
+        cleaned++;
+      } else if (filtered.length !== history.length) {
+        this.recentMessages.set(channelId, filtered);
+      }
+    }
+
+    // Enforce max channels limit (LRU-style: remove oldest channels first)
+    if (this.recentMessages.size > this.MAX_CHANNELS) {
+      // Get all channels with their most recent message timestamp
+      const channelTimestamps: Array<[string, number]> = [];
+      for (const [channelId, history] of this.recentMessages) {
+        if (history.length > 0) {
+          channelTimestamps.push([channelId, history[history.length - 1].timestamp]);
+        }
+      }
+
+      // Sort by timestamp (oldest first)
+      channelTimestamps.sort((a, b) => a[1] - b[1]);
+
+      // Remove oldest channels
+      const toRemove = channelTimestamps.slice(0, this.recentMessages.size - this.MAX_CHANNELS);
+      for (const [channelId] of toRemove) {
+        this.recentMessages.delete(channelId);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      debug('Cleanup removed %d empty/old channels, current size: %d', cleaned, this.recentMessages.size);
+    }
+  }
+
+  /**
+   * Get statistics about the detector.
+   */
+  public getStats(): { channels: number; totalMessages: number; maxChannels: number } {
+    let totalMessages = 0;
+    for (const history of this.recentMessages.values()) {
+      totalMessages += history.length;
+    }
+    return {
+      channels: this.recentMessages.size,
+      totalMessages,
+      maxChannels: this.MAX_CHANNELS,
+    };
+  }
+
+  /**
+   * Shutdown the detector and cleanup resources.
+   */
+  public shutdown(): void {
+    if (this.cleanupTimerId) {
+      TimerRegistry.getInstance().clear(this.cleanupTimerId);
+      this.cleanupTimerId = null;
+    }
+    this.recentMessages.clear();
+    debug('DuplicateMessageDetector shutdown complete');
   }
 }

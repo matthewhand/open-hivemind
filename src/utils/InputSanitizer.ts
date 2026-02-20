@@ -201,6 +201,51 @@ export class InputSanitizer {
 export class RateLimiter {
   private static attempts = new Map<string, number[]>();
 
+  // Bounded cache configuration
+  private static readonly MAX_IDENTIFIERS = parseInt(process.env.RATE_LIMITER_MAX_IDENTIFIERS || '10000', 10);
+  private static readonly MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(process.env.RATE_LIMITER_MAX_ATTEMPTS_PER_ID || '100', 10);
+
+  /**
+   * Enforce max identifiers limit by removing oldest entries.
+   * Called when the Map size exceeds the limit.
+   */
+  private static enforceMaxIdentifiers(): void {
+    if (this.attempts.size < this.MAX_IDENTIFIERS) {
+      return;
+    }
+
+    // Find entries with oldest last attempt time
+    const entries = Array.from(this.attempts.entries())
+      .map(([key, timestamps]) => ({
+        key,
+        lastAttempt: timestamps.length > 0 ? Math.max(...timestamps) : 0,
+      }))
+      .sort((a, b) => a.lastAttempt - b.lastAttempt);
+
+    // Remove oldest 10% of entries
+    const toRemove = Math.ceil(this.MAX_IDENTIFIERS * 0.1);
+    for (let i = 0; i < toRemove && i < entries.length; i++) {
+      this.attempts.delete(entries[i].key);
+    }
+  }
+
+  /**
+   * Prune old attempts for a specific identifier and enforce max attempts limit.
+   */
+  private static pruneAttempts(identifier: string, windowMs: number): void {
+    const attempts = this.attempts.get(identifier);
+    if (!attempts) {
+      return;
+    }
+
+    const now = Date.now();
+    // Remove old attempts outside the window
+    const validAttempts = attempts.filter(time => now - time < windowMs);
+    // Also enforce max attempts per identifier to prevent unbounded array growth
+    const limitedAttempts = validAttempts.slice(-this.MAX_ATTEMPTS_PER_IDENTIFIER);
+    this.attempts.set(identifier, limitedAttempts);
+  }
+
   /**
    * Check if an action should be rate limited
    *
@@ -226,7 +271,12 @@ export class RateLimiter {
 
     // Add current attempt
     validAttempts.push(now);
-    this.attempts.set(identifier, validAttempts);
+    // Limit the array size to prevent unbounded growth
+    const limitedAttempts = validAttempts.slice(-this.MAX_ATTEMPTS_PER_IDENTIFIER);
+    this.attempts.set(identifier, limitedAttempts);
+
+    // Enforce max identifiers limit
+    this.enforceMaxIdentifiers();
 
     return true; // Allowed
   }
@@ -250,5 +300,31 @@ export class RateLimiter {
    */
   static clearLimit(identifier: string): void {
     this.attempts.delete(identifier);
+  }
+
+  /**
+   * Get statistics about the rate limiter state.
+   */
+  static getStats(): {
+    identifiersCount: number;
+    maxIdentifiers: number;
+    totalAttempts: number;
+  } {
+    let totalAttempts = 0;
+    for (const attempts of this.attempts.values()) {
+      totalAttempts += attempts.length;
+    }
+    return {
+      identifiersCount: this.attempts.size,
+      maxIdentifiers: this.MAX_IDENTIFIERS,
+      totalAttempts,
+    };
+  }
+
+  /**
+   * Clear all rate limit data.
+   */
+  static clearAll(): void {
+    this.attempts.clear();
   }
 }

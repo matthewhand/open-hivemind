@@ -1,5 +1,6 @@
 import type { HealthChecker, HealthCheckResult } from './HealthChecker';
 import { EventEmitter } from 'events';
+import TimerRegistry from '@src/utils/TimerRegistry';
 
 export interface AlertConfig {
   memoryThreshold: number; // percentage
@@ -40,7 +41,11 @@ export class AlertManager extends EventEmitter {
   private failureCounts: Map<string, number> = new Map();
   private lastAlertTimes: Map<string, number> = new Map();
   private alertIdCounter: number = 0;
-  private monitoringInterval: NodeJS.Timeout | null = null;
+  private monitoringIntervalId: string | null = null;
+
+  // Bounded cache configuration
+  private readonly MAX_ALERTS = parseInt(process.env.ALERT_MANAGER_MAX_ALERTS || '1000', 10);
+  private readonly MAX_FAILURE_COUNTS = parseInt(process.env.ALERT_MANAGER_MAX_FAILURE_COUNTS || '100', 10);
 
   constructor(healthChecker: HealthChecker, config: Partial<AlertConfig> = {}) {
     super();
@@ -136,6 +141,9 @@ export class AlertManager extends EventEmitter {
       resolved: false,
       metadata,
     };
+
+    // Enforce max alerts limit before adding new alert
+    this.enforceMaxAlerts();
 
     this.alerts.set(alert.id, alert);
     this.emit('alertCreated', alert);
@@ -325,18 +333,28 @@ export class AlertManager extends EventEmitter {
     } else {
       this.failureCounts.set(alertKey, 0);
     }
+
+    // Enforce max failure counts limit
+    this.enforceMaxFailureCounts();
   }
 
   private async startMonitoring(): Promise<void> {
+    const timerRegistry = TimerRegistry.getInstance();
+    
     // Check health every 30 seconds
-    this.monitoringInterval = setInterval(async () => {
-      try {
-        const healthCheck = await this.healthChecker.performHealthCheck();
-        await this.processHealthCheck(healthCheck);
-      } catch (error) {
-        console.error('Health monitoring failed:', error);
-      }
-    }, 30000);
+    this.monitoringIntervalId = timerRegistry.registerInterval(
+      'alertManager_healthMonitor',
+      async () => {
+        try {
+          const healthCheck = await this.healthChecker.performHealthCheck();
+          await this.processHealthCheck(healthCheck);
+        } catch (error) {
+          console.error('Health monitoring failed:', error);
+        }
+      },
+      30000,
+      'AlertManager health monitoring interval'
+    );
 
     console.log('🔍 Health monitoring started');
   }
@@ -423,13 +441,91 @@ export class AlertManager extends EventEmitter {
   }
 
   /**
+   * Enforce max alerts limit by removing oldest resolved alerts first.
+   * If still over limit after removing resolved, removes oldest alerts.
+   */
+  private enforceMaxAlerts(): void {
+    if (this.alerts.size < this.MAX_ALERTS) {
+      return;
+    }
+
+    // First, try to remove resolved alerts (oldest first)
+    const resolvedAlerts = Array.from(this.alerts.values())
+      .filter(a => a.resolved)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    for (const alert of resolvedAlerts) {
+      if (this.alerts.size < this.MAX_ALERTS) {
+        break;
+      }
+      this.alerts.delete(alert.id);
+    }
+
+    // If still over limit, remove oldest alerts regardless of status
+    if (this.alerts.size >= this.MAX_ALERTS) {
+      const allAlerts = Array.from(this.alerts.values())
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+      for (const alert of allAlerts) {
+        if (this.alerts.size < this.MAX_ALERTS) {
+          break;
+        }
+        this.alerts.delete(alert.id);
+      }
+    }
+  }
+
+  /**
+   * Enforce max failure counts limit by removing oldest entries.
+   */
+  private enforceMaxFailureCounts(): void {
+    if (this.failureCounts.size < this.MAX_FAILURE_COUNTS) {
+      return;
+    }
+
+    // Remove entries with lowest counts first (less important)
+    const entries = Array.from(this.failureCounts.entries())
+      .sort((a, b) => a[1] - b[1]);
+
+    for (const [key] of entries) {
+      if (this.failureCounts.size < this.MAX_FAILURE_COUNTS) {
+        break;
+      }
+      this.failureCounts.delete(key);
+    }
+  }
+
+  /**
+   * Get statistics about the AlertManager state.
+   */
+  public getStats(): {
+    alertsCount: number;
+    maxAlerts: number;
+    failureCountsSize: number;
+    maxFailureCounts: number;
+    notificationChannelsCount: number;
+    isMonitoring: boolean;
+  } {
+    return {
+      alertsCount: this.alerts.size,
+      maxAlerts: this.MAX_ALERTS,
+      failureCountsSize: this.failureCounts.size,
+      maxFailureCounts: this.MAX_FAILURE_COUNTS,
+      notificationChannelsCount: this.notificationChannels.size,
+      isMonitoring: this.monitoringIntervalId !== null,
+    };
+  }
+
+  /**
    * Gracefully shutdown the AlertManager.
    * Clears the monitoring interval and releases resources.
    */
   public shutdown(): void {
-    if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
-      this.monitoringInterval = null;
+    const timerRegistry = TimerRegistry.getInstance();
+    
+    if (this.monitoringIntervalId) {
+      timerRegistry.clear(this.monitoringIntervalId);
+      this.monitoringIntervalId = null;
       console.log('🔍 Health monitoring stopped');
     }
     
