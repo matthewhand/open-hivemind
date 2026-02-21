@@ -7,7 +7,11 @@
 import Debug from 'debug';
 import DOMPurify from 'dompurify';
 import type { NextFunction, Request, Response } from 'express';
+<<<<<<< HEAD
 import { body, param, query, validationResult, type ValidationChain } from 'express-validator';
+=======
+import { body, param, query, ValidationChain, validationResult } from 'express-validator';
+>>>>>>> feature/bot-wizard-and-fixes
 import { JSDOM } from 'jsdom';
 import { ValidationError } from '../types/errorClasses';
 
