@@ -1,13 +1,13 @@
 /**
  * Base error class for all Open-Hivemind errors.
- * 
+ *
  * Provides structured error information with:
  * - Error codes for programmatic handling
  * - Categories for error classification
  * - Context data for debugging
  * - Cause chain for error wrapping
  * - JSON serialization for logging
- * 
+ *
  * @example
  * ```typescript
  * throw new DatabaseNotInitializedError('Database not initialized', {
@@ -47,7 +47,7 @@ export interface ErrorJSON {
 
 /**
  * Abstract base class for all Open-Hivemind errors.
- * 
+ *
  * Extend this class to create domain-specific errors with
  * consistent structure and serialization.
  */
@@ -56,46 +56,42 @@ export abstract class HivemindError extends Error {
    * Unique error code for programmatic handling
    */
   abstract readonly code: string;
-  
+
   /**
    * Category for error classification
    */
   abstract readonly category: ErrorCategory;
-  
+
   /**
    * Additional context for debugging
    */
   readonly context: ErrorContext;
-  
+
   /**
    * ISO timestamp when error was created
    */
   readonly timestamp: string;
-  
+
   /**
    * Optional trace ID for request tracing
    */
   traceId?: string;
-  
+
   /**
    * Original error that caused this error
    */
   cause?: Error;
 
-  constructor(
-    message: string,
-    context: ErrorContext = {},
-    cause?: Error
-  ) {
+  constructor(message: string, context: ErrorContext = {}, cause?: Error) {
     super(message);
     this.name = this.constructor.name;
     this.context = context;
     this.timestamp = new Date().toISOString();
-    
+
     if (cause) {
       this.cause = cause;
     }
-    
+
     // Maintain proper stack trace in V8 environments
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
@@ -152,15 +148,15 @@ export abstract class HivemindError extends Error {
    */
   toString(): string {
     const parts = [`[${this.code}] ${this.message}`];
-    
+
     if (this.traceId) {
       parts.push(`traceId=${this.traceId}`);
     }
-    
+
     if (Object.keys(this.context).length > 0) {
       parts.push(`context=${JSON.stringify(this.context)}`);
     }
-    
+
     return parts.join(' ');
   }
 }
@@ -189,7 +185,11 @@ export class DatabaseNotInitializedError extends DatabaseError {
 export class DatabaseConnectionError extends DatabaseError {
   readonly code = 'DB_CONNECTION_FAILED';
 
-  constructor(message = 'Failed to connect to database', context: ErrorContext = {}, cause?: Error) {
+  constructor(
+    message = 'Failed to connect to database',
+    context: ErrorContext = {},
+    cause?: Error
+  ) {
     super(message, context, cause);
   }
 }
@@ -280,7 +280,11 @@ export class InputValidationError extends ValidationError {
   readonly value: unknown;
 
   constructor(field: string, value: unknown, reason: string, context: ErrorContext = {}) {
-    super(`Invalid input for field '${field}': ${reason}`, { ...context, field, value: String(value) });
+    super(`Invalid input for field '${field}': ${reason}`, {
+      ...context,
+      field,
+      value: String(value),
+    });
     this.field = field;
     this.value = value;
   }
@@ -320,7 +324,11 @@ export class TimeoutError extends SystemError {
   readonly timeoutMs: number;
 
   constructor(operation: string, timeoutMs: number, context: ErrorContext = {}) {
-    super(`Operation '${operation}' timed out after ${timeoutMs}ms`, { ...context, operation, timeoutMs });
+    super(`Operation '${operation}' timed out after ${timeoutMs}ms`, {
+      ...context,
+      operation,
+      timeoutMs,
+    });
     this.operation = operation;
     this.timeoutMs = timeoutMs;
   }
@@ -380,10 +388,10 @@ export function wrapError(error: unknown, context: ErrorContext = {}): HivemindE
   if (isHivemindError(error)) {
     return error;
   }
-  
+
   const message = error instanceof Error ? error.message : String(error);
   const cause = error instanceof Error ? error : undefined;
-  
+
   return new (class extends SystemError {
     readonly code = 'WRAPPED_ERROR';
   })(message, context, cause);

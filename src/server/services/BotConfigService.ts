@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import {
-  BotConfiguration,
-  BotConfigurationAudit,
-  BotConfigurationVersion,
   DatabaseManager,
+  type BotConfiguration,
+  type BotConfigurationAudit,
+  type BotConfigurationVersion,
 } from '../../database/DatabaseManager';
 import { ConfigurationError } from '../../types/errorClasses';
-import { BotConfig, ConfigurationValidator } from './ConfigurationValidator';
+import { ConfigurationValidator, type BotConfig } from './ConfigurationValidator';
 
 const debug = Debug('app:BotConfigService');
 

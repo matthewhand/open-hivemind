@@ -1,10 +1,8 @@
 import { EventEmitter } from 'events';
-import type { Application } from 'express';
 import retry from 'async-retry';
 import Debug from 'debug';
+import type { Application } from 'express';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
-// Routing (feature-flagged parity)
-import messageConfig from '@config/messageConfig';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
   ApiError,
@@ -15,6 +13,8 @@ import {
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
+// Routing (feature-flagged parity)
+import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
@@ -218,7 +218,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       debug(
         `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
-      
+
       // Record WebSocket monitoring event for failed message
       try {
         const ws = require('@src/server/services/WebSocketService')

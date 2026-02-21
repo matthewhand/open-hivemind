@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
 
 const debug = Debug('app:csrfMiddleware');
 
@@ -41,19 +41,22 @@ const tokenStore = new Map<string, CsrfTokenEntry>();
 /**
  * Clean up expired tokens periodically
  */
-setInterval(() => {
-  const now = Date.now();
-  let expiredCount = 0;
-  for (const [key, entry] of tokenStore.entries()) {
-    if (now - entry.createdAt > defaultConfig.tokenExpiration) {
-      tokenStore.delete(key);
-      expiredCount++;
+setInterval(
+  () => {
+    const now = Date.now();
+    let expiredCount = 0;
+    for (const [key, entry] of tokenStore.entries()) {
+      if (now - entry.createdAt > defaultConfig.tokenExpiration) {
+        tokenStore.delete(key);
+        expiredCount++;
+      }
     }
-  }
-  if (expiredCount > 0) {
-    debug('Cleaned up expired CSRF tokens:', expiredCount);
-  }
-}, 60 * 60 * 1000); // Clean up every hour
+    if (expiredCount > 0) {
+      debug('Cleaned up expired CSRF tokens:', expiredCount);
+    }
+  },
+  60 * 60 * 1000
+); // Clean up every hour
 
 /**
  * Generate a cryptographically secure CSRF token
@@ -88,19 +91,19 @@ function storeToken(sessionId: string, token: string): void {
  */
 function validateToken(sessionId: string, providedToken: string): boolean {
   const entry = tokenStore.get(sessionId);
-  
+
   if (!entry) {
     debug('CSRF token not found for session:', sessionId);
     return false;
   }
-  
+
   // Check expiration
   if (Date.now() - entry.createdAt > defaultConfig.tokenExpiration) {
     debug('CSRF token expired for session:', sessionId);
     tokenStore.delete(sessionId);
     return false;
   }
-  
+
   // Constant-time comparison to prevent timing attacks
   try {
     return crypto.timingSafeEqual(
@@ -115,14 +118,14 @@ function validateToken(sessionId: string, providedToken: string): boolean {
 
 /**
  * CSRF Protection Middleware
- * 
+ *
  * This middleware provides CSRF protection for state-changing operations.
- * 
+ *
  * Usage:
  * 1. Client requests CSRF token via GET /api/csrf-token
  * 2. Client includes token in X-CSRF-Token header for POST/PUT/DELETE requests
  * 3. Middleware validates token before allowing the request
- * 
+ *
  * Security considerations:
  * - Tokens are bound to session (IP + User-Agent)
  * - Tokens expire after 24 hours
@@ -132,30 +135,30 @@ function validateToken(sessionId: string, providedToken: string): boolean {
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
   const method = req.method.toUpperCase();
-  
+
   // Skip CSRF check for safe methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
     next();
     return;
   }
-  
+
   // Skip CSRF check in test environment
   if (process.env.NODE_ENV === 'test') {
     debug('CSRF check skipped in test environment');
     next();
     return;
   }
-  
+
   const sessionId = getSessionId(req);
   const providedToken = req.get(defaultConfig.headerName) || req.body?._csrf;
-  
+
   if (!providedToken) {
     debug('CSRF token missing in request', {
       method,
       path: req.path,
       sessionId: sessionId.substring(0, 8) + '...',
     });
-    
+
     res.status(403).json({
       error: 'CSRF Token Required',
       message: 'A valid CSRF token is required for this operation',
@@ -163,14 +166,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     });
     return;
   }
-  
+
   if (!validateToken(sessionId, providedToken)) {
     debug('CSRF token validation failed', {
       method,
       path: req.path,
       sessionId: sessionId.substring(0, 8) + '...',
     });
-    
+
     res.status(403).json({
       error: 'Invalid CSRF Token',
       message: 'The provided CSRF token is invalid or expired',
@@ -178,29 +181,29 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     });
     return;
   }
-  
+
   debug('CSRF validation passed', {
     method,
     path: req.path,
     sessionId: sessionId.substring(0, 8) + '...',
   });
-  
+
   next();
 }
 
 /**
  * CSRF Token Endpoint Handler
- * 
+ *
  * Generates and returns a new CSRF token for the client
  * The token is stored in an httpOnly cookie and returned in the response body
  */
 export function csrfTokenHandler(req: Request, res: Response): void {
   const sessionId = getSessionId(req);
   const token = generateCsrfToken();
-  
+
   // Store token for this session
   storeToken(sessionId, token);
-  
+
   // Set token in httpOnly cookie for additional security
   res.cookie(defaultConfig.cookieName, token, {
     httpOnly: true,
@@ -209,12 +212,12 @@ export function csrfTokenHandler(req: Request, res: Response): void {
     maxAge: defaultConfig.tokenExpiration,
     path: '/',
   });
-  
+
   debug('CSRF token generated', {
     sessionId: sessionId.substring(0, 8) + '...',
     tokenPreview: token.substring(0, 8) + '...',
   });
-  
+
   res.json({
     csrfToken: token,
     expiresIn: defaultConfig.tokenExpiration,
@@ -223,13 +226,13 @@ export function csrfTokenHandler(req: Request, res: Response): void {
 
 /**
  * Optional: Double-submit cookie pattern for stateless CSRF protection
- * 
+ *
  * This is an alternative approach that doesn't require server-side token storage.
  * Use this for stateless applications or when Redis is not available.
  */
 export function csrfDoubleSubmit(req: Request, res: Response, next: NextFunction): void {
   const method = req.method.toUpperCase();
-  
+
   // Skip CSRF check for safe methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
     // Generate and set cookie for GET requests if not present
@@ -246,11 +249,11 @@ export function csrfDoubleSubmit(req: Request, res: Response, next: NextFunction
     next();
     return;
   }
-  
+
   // For state-changing methods, validate double-submit
   const cookieToken = req.cookies?.[defaultConfig.cookieName];
   const headerToken = req.get(defaultConfig.headerName) || req.body?._csrf;
-  
+
   if (!cookieToken || !headerToken) {
     res.status(403).json({
       error: 'CSRF Token Required',
@@ -259,20 +262,22 @@ export function csrfDoubleSubmit(req: Request, res: Response, next: NextFunction
     });
     return;
   }
-  
+
   // Constant-time comparison
   try {
-    if (crypto.timingSafeEqual(
-      Buffer.from(cookieToken, 'base64url'),
-      Buffer.from(headerToken, 'base64url')
-    )) {
+    if (
+      crypto.timingSafeEqual(
+        Buffer.from(cookieToken, 'base64url'),
+        Buffer.from(headerToken, 'base64url')
+      )
+    ) {
       next();
       return;
     }
   } catch {
     // Invalid format - fall through to error
   }
-  
+
   res.status(403).json({
     error: 'Invalid CSRF Token',
     message: 'CSRF tokens in cookie and header do not match',
