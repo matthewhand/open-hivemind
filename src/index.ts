@@ -17,7 +17,7 @@ const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
-const healthRouteModule = require('./routes/health');
+const healthRouteModule = require('@src/server/routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
