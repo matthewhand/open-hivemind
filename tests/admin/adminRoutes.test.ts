@@ -1,7 +1,7 @@
-import express from 'express';
-import request from 'supertest';
 import fs from 'fs';
 import path from 'path';
+import express from 'express';
+import request from 'supertest';
 
 // Mocks
 jest.mock('../../src/auth/middleware', () => ({
@@ -47,6 +47,41 @@ app.use('/api/admin', adminRouter);
 describe('Admin Routes I/O Performance', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('GET /personas', () => {
+    it('should load personas using asynchronous fs methods', async () => {
+      // Mock fs.promises methods
+      const mockReadDirPromise = jest.spyOn(fs.promises, 'readdir').mockResolvedValue(['persona2.json'] as any);
+      const mockReadFilePromise = jest.spyOn(fs.promises, 'readFile').mockImplementation((p: any) => {
+        if (p.toString().endsWith('persona2.json')) {
+          return Promise.resolve(
+            JSON.stringify({
+              key: 'persona2',
+              name: 'Persona 2',
+              systemPrompt: 'You are persona 2',
+            })
+          );
+        }
+        return Promise.resolve('');
+      });
+      const mockAccessPromise = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
+
+      const res = await request(app).get('/api/admin/personas');
+
+      expect(res.status).toBe(200);
+      expect(res.body.ok).toBe(true);
+      expect(res.body.personas).toHaveLength(1);
+      expect(res.body.personas[0].key).toBe('persona2');
+
+      expect(mockReadDirPromise).toHaveBeenCalled();
+      expect(mockReadFilePromise).toHaveBeenCalled();
+      expect(mockAccessPromise).toHaveBeenCalled();
+      
+      mockReadDirPromise.mockRestore();
+      mockReadFilePromise.mockRestore();
+      mockAccessPromise.mockRestore();
+    });
   });
 
   it('should handle /slack-bots POST request', async () => {

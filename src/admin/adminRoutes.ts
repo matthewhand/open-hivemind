@@ -48,22 +48,25 @@ async function loadPersonas(): Promise<Array<{ key: string; name: string; system
       return fallback;
     }
 
-    const out: any[] = [];
     const files = await fs.promises.readdir(personasDir);
-    for (const file of files) {
-      if (!file.endsWith('.json')) {
-        continue;
-      }
+    const validFiles = files.filter((file) => file.endsWith('.json'));
+
+    const promises = validFiles.map(async (file) => {
       try {
         const content = await fs.promises.readFile(path.join(personasDir, file), 'utf8');
         const data = JSON.parse(content);
         if (data && data.key && data.name && typeof data.systemPrompt === 'string') {
-          out.push(data);
+          return data;
         }
       } catch (e) {
         debug('Invalid persona file:', file, e);
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    const out: any[] = results.filter((item) => item !== null);
+
     return out.length ? out : fallback;
   } catch (e) {
     debug('Failed loading personas', e);

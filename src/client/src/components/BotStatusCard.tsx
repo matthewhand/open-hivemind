@@ -207,16 +207,17 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="secondary" className="btn-outline"
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
-              className="flex items-center gap-2"
             >
               <Cog6ToothIcon className="w-4 h-4" />
               Details
             </Button>
             <Button
               size="sm"
-              variant="secondary" className="btn-outline"
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
               onClick={() => {
                 setLoading(true);
                 setTimeout(() => {
@@ -225,7 +226,6 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                 }, 1000);
               }}
               disabled={loading}
-              className="flex items-center gap-2"
             >
               {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
               Refresh
