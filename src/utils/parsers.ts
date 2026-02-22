@@ -71,37 +71,12 @@ export const messageParser = {
    */
   stripFormatting: (text: string): string => {
     return text
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .replace(/<[^>]+>/g, '') // Remove Slack mentions
       .replace(/\*([^*]+)\*/g, '$1') // Remove bold
       .replace(/_([^_]+)_/g, '$1') // Remove italic
       .replace(/`([^`]+)`/g, '$1') // Remove inline code
-      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .trim();
-  },
-};
-
-/**
- * URL parsing utilities
- */
-export const urlParser = {
-  /**
-   * Extract URLs from text
-   */
-  extractUrls: (text: string): string[] => {
-    const urlRegex = /https?:\/\/[^\s]+/g;
-    return text.match(urlRegex) || [];
-  },
-
-  /**
-   * Validate URL format
-   */
-  isValidUrl: (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
   },
 };
 
@@ -123,7 +98,7 @@ export const jsonParser = {
   /**
    * Safely stringify JSON with error handling
    */
-  safeStringify: (obj: any, fallback: string = '{}'): string => {
+  safeStringify: (obj: any, fallback = '{}'): string => {
     try {
       return JSON.stringify(obj);
     } catch {
@@ -139,7 +114,7 @@ export const numberParser = {
   /**
    * Parse number with fallback
    */
-  parseNumber: (value: string | number, fallback: number = 0): number => {
+  parseNumber: (value: string | number, fallback = 0): number => {
     if (typeof value === 'number') {
       return isNaN(value) ? fallback : value;
     }
@@ -151,8 +126,9 @@ export const numberParser = {
   /**
    * Parse integer with fallback
    */
-  parseInt: (value: string | number, fallback: number = 0): number => {
+  parseInt: (value: string | number, fallback = 0): number => {
     if (typeof value === 'number') {
+      if (isNaN(value)) return fallback;
       return Math.floor(value);
     }
 

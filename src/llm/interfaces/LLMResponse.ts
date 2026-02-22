@@ -24,8 +24,8 @@ class LLMResponse {
     choices: { index: number; message: { role: string; content: string }; finish_reason: string }[],
     usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number },
     content: string,
-    finish_reason: string = 'completed',
-    completion_tokens: number = 0
+    finish_reason = 'completed',
+    completion_tokens = 0
   ) {
     this.id = id;
     this.object = object;

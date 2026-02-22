@@ -361,7 +361,7 @@ export async function shouldReplyToMessage(
       }
     }
     if (firstMatchIndex !== Infinity) {
-      let preceding = text.substring(0, firstMatchIndex).replace(/<(@|!|#|&|a:)[^>]+>/g, '');
+      const preceding = text.substring(0, firstMatchIndex).replace(/<(@|!|#|&|a:)[^>]+>/g, '');
       isLeadingAddress = !/[a-z0-9]/.test(preceding);
     } else if (isWakeword) {
       isLeadingAddress = true;
@@ -487,7 +487,7 @@ export async function shouldReplyToMessage(
 
   chance = Math.max(0, Math.min(1, chance));
   const roll = Math.random();
-  let decision = roll < chance;
+  const decision = roll < chance;
 
   // Generate human-readable prose explanation
   const prose = generateProseExplanation(
@@ -713,9 +713,9 @@ function applyModifiers(
   botId: string,
   platform: 'discord' | 'generic',
   chance: number,
-  isDirectlyAddressed: boolean = false,
-  isLeadingAddress: boolean = false,
-  isReplyToBot: boolean = false,
+  isDirectlyAddressed = false,
+  isLeadingAddress = false,
+  isReplyToBot = false,
   botConfig?: Record<string, any>
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();

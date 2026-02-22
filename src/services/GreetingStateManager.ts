@@ -4,18 +4,19 @@ import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('GreetingStateManager');
 
-interface GreetingState {
-  [serviceId: string]: {
+type GreetingState = Record<
+  string,
+  {
     timestamp: number;
     channelId: string;
-  };
-}
+  }
+>;
 
 export class GreetingStateManager {
   private static instance: GreetingStateManager;
   private stateFilePath: string;
   private state: GreetingState = {};
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');

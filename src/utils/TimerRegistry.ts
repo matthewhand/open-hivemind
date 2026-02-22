@@ -38,7 +38,7 @@ interface TimerRecord {
  */
 export class TimerRegistry {
   private static instance: TimerRegistry;
-  private timers: Map<string, TimerRecord> = new Map();
+  private timers = new Map<string, TimerRecord>();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   // Configuration

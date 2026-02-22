@@ -68,7 +68,9 @@
     "@client": "dist/src/client",
     "@server": "dist/src/server",
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
-    "@hivemind/adapter-discord": "dist/packages/adapter-discord/src"
+    "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
+    "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
+    "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
@@ -239,13 +241,12 @@
     "sinon": "^19.0.2",
     "supertest": "^7.0.0",
     "tailwindcss": "^4.1.14",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-unused-exports": "^10.1.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.39.1",
-    "uuid": "^9.0.1",
     "vite": "^7.1.2",
     "wrangler": "^4.34.0"
   },

@@ -4,6 +4,7 @@ import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
+import { container } from 'tsyringe';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';

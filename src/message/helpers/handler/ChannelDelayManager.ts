@@ -22,7 +22,7 @@ interface ChannelDelayState {
  */
 export class ChannelDelayManager {
   private static instance: ChannelDelayManager;
-  private states: Map<string, ChannelDelayState> = new Map();
+  private states = new Map<string, ChannelDelayState>();
 
   public static getInstance(): ChannelDelayManager {
     if (!ChannelDelayManager.instance) {

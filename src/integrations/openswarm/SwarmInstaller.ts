@@ -54,7 +54,7 @@ export class SwarmInstaller {
     }
   }
 
-  async startSwarm(port: number = 8000): Promise<{ success: boolean; message: string }> {
+  async startSwarm(port = 8000): Promise<{ success: boolean; message: string }> {
     try {
       // Validate port
       const portNum = Number(port);

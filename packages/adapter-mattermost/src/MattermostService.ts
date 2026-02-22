@@ -33,9 +33,9 @@ const RETRY_CONFIG = {
 
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
-  private clients: Map<string, MattermostClient> = new Map();
-  private channels: Map<string, string> = new Map();
-  private botConfigs: Map<string, any> = new Map();
+  private clients = new Map<string, MattermostClient>();
+  private channels = new Map<string, string>();
+  private botConfigs = new Map<string, any>();
   private app?: Application;
 
   public supportsChannelPrioritization: boolean = true;
@@ -224,7 +224,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
-  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
+  public async getMessagesFromChannel(channelId: string, limit = 10): Promise<IMessage[]> {
     return this.fetchMessages(channelId, limit);
   }
 
@@ -482,7 +482,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }> {
+  }[] {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
       const serviceName = `mattermost-${name}`;

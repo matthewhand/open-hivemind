@@ -23,7 +23,7 @@ export class AnomalyDetectionService extends EventEmitter {
     metricsToMonitor: ['responseTime', 'errors'],
     minDataPoints: 10,
   };
-  private dataWindows: Map<string, number[]> = new Map(); // metric -> rolling data points
+  private dataWindows = new Map<string, number[]>(); // metric -> rolling data points
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
 
@@ -51,7 +51,7 @@ export class AnomalyDetectionService extends EventEmitter {
       return;
     }
 
-    let window = this.dataWindows.get(metric) || [];
+    const window = this.dataWindows.get(metric) || [];
     window.push(value);
     if (window.length > this.config.windowSize) {
       window.shift();

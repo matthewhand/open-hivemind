@@ -80,7 +80,7 @@ export class SustainedTypingIndicator {
  * @param responseLength - Length of the response (if known)
  * @returns Delay in milliseconds
  */
-export function calculateTypingDelay(messageLength: number, responseLength: number = 0): number {
+export function calculateTypingDelay(messageLength: number, responseLength = 0): number {
   // Base delay: 3 seconds
   const baseDelay = 3000;
 

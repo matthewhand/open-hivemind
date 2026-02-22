@@ -19,7 +19,7 @@ export interface Persona {
     | 'educational'
     | 'entertainment'
     | 'professional';
-  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
+  traits: { name: string; value: string; weight?: number; type?: string }[];
   systemPrompt: string;
   isBuiltIn?: boolean;
   createdAt: string;
@@ -85,7 +85,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
 
 export class PersonaManager extends EventEmitter {
   private static instance: PersonaManager;
-  private personas: Map<string, Persona> = new Map();
+  private personas = new Map<string, Persona>();
   private personasFilePath: string;
 
   private constructor() {

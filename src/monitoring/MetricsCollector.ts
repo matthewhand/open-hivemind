@@ -43,7 +43,7 @@ export class MetricsCollector extends EventEmitter {
     llmTokenUsage: 0,
   };
   private history: MetricData[] = [];
-  private isCollecting: boolean = false;
+  private isCollecting = false;
   private collectionInterval: NodeJS.Timeout | null = null;
 
   static getInstance(): MetricsCollector {

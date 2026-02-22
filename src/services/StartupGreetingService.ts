@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { inject, singleton } from 'tsyringe';
 import { Message } from '@src/types/messages';
 import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';

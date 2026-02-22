@@ -50,7 +50,7 @@ export const environment = {
   /**
    * Get environment variable with fallback
    */
-  get: (key: string, fallback: string = ''): string => {
+  get: (key: string, fallback = ''): string => {
     return process.env[key] || fallback;
   },
 

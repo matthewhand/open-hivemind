@@ -18,7 +18,7 @@ interface MessageRecord {
  */
 export default class DuplicateMessageDetector {
   private static instance: DuplicateMessageDetector;
-  private recentMessages: Map<string, MessageRecord[]> = new Map();
+  private recentMessages = new Map<string, MessageRecord[]>();
 
   // Bounded cache configuration
   private readonly MAX_CHANNELS = parseInt(
@@ -113,16 +113,23 @@ export default class DuplicateMessageDetector {
     // Fuzzy check: if edit distance is very small relative to length
     // e.g. "Hello world." vs "Hello world!"
     if (norm1.length > 10 && normalizedContent2.length > 10) {
-      const dist = this.levenshteinDistance(norm1, normalizedContent2);
       const maxLen = Math.max(norm1.length, normalizedContent2.length);
       // Allow 5% difference or 5 characters, whichever is smaller
       const threshold = Math.min(5, Math.ceil(maxLen * 0.05));
+
+      // Optimization: If length difference exceeds threshold, Levenshtein distance
+      // will definitely exceed threshold. Avoid O(N*M) calculation.
+      if (Math.abs(norm1.length - normalizedContent2.length) > threshold) {
+        return false;
+      }
+
+      const dist = this.levenshteinDistance(norm1, normalizedContent2, threshold);
       return dist <= threshold;
     }
     return false;
   }
 
-  private levenshteinDistance(a: string, b: string): number {
+  private levenshteinDistance(a: string, b: string, limit?: number): number {
     if (a.length === 0) {
       return b.length;
     }
@@ -141,13 +148,24 @@ export default class DuplicateMessageDetector {
 
     for (let i = 1; i <= b.length; i++) {
       nextRow[0] = i;
+      let minRowVal = i;
+
       for (let j = 1; j <= a.length; j++) {
         if (b.charAt(i - 1) === a.charAt(j - 1)) {
           nextRow[j] = row[j - 1];
         } else {
           nextRow[j] = Math.min(row[j - 1], row[j], nextRow[j - 1]) + 1;
         }
+        if (nextRow[j] < minRowVal) {
+          minRowVal = nextRow[j];
+        }
       }
+
+      // Early exit if limit provided and all values in row exceed limit
+      if (limit !== undefined && minRowVal > limit) {
+        return limit + 1;
+      }
+
       // Swap rows for next iteration
       const temp = row;
       row = nextRow;
@@ -391,7 +409,7 @@ export default class DuplicateMessageDetector {
     // Enforce max channels limit (LRU-style: remove oldest channels first)
     if (this.recentMessages.size > this.MAX_CHANNELS) {
       // Get all channels with their most recent message timestamp
-      const channelTimestamps: Array<[string, number]> = [];
+      const channelTimestamps: [string, number][] = [];
       for (const [channelId, history] of this.recentMessages) {
         if (history.length > 0) {
           channelTimestamps.push([channelId, history[history.length - 1].timestamp]);

@@ -67,14 +67,15 @@ interface ApplicationMetrics {
 
 interface HealthStatus {
   overall: 'healthy' | 'degraded' | 'unhealthy';
-  services: {
-    [serviceName: string]: {
+  services: Record<
+    string,
+    {
       status: 'up' | 'down' | 'degraded';
       responseTime?: number;
       lastCheck: number;
       error?: string;
-    };
-  };
+    }
+  >;
   alerts: Alert[];
 }
 

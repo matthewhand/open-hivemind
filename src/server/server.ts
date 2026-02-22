@@ -55,7 +55,7 @@ export class WebUIServer {
   private port: number;
   private readonly frontendDistPath: string;
 
-  constructor(port: number = 3000) {
+  constructor(port = 3000) {
     this.port = port;
     this.app = express();
     this.frontendDistPath = resolveFrontendDistPath();

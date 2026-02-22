@@ -41,7 +41,7 @@ export default class MattermostClient {
   private serverUrl: string;
   private token: string;
   private api: AxiosInstance;
-  private connected: boolean = false;
+  private connected = false;
   private me: User | null = null;
   private teamsCache: { data: Team[]; timestamp: number } | null = null;
   private channelIdCache: Map<string, { id: string; timestamp: number }> = new Map();
@@ -99,11 +99,7 @@ export default class MattermostClient {
     }
   }
 
-  async getChannelPosts(
-    channelId: string,
-    page: number = 0,
-    perPage: number = 60
-  ): Promise<MattermostPost[]> {
+  async getChannelPosts(channelId: string, page = 0, perPage = 60): Promise<MattermostPost[]> {
     try {
       const response = await this.api.get(`/channels/${channelId}/posts`, {
         params: { page, per_page: perPage },

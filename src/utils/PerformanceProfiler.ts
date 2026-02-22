@@ -46,10 +46,10 @@ export class PerformanceProfiler {
   private static instance: PerformanceProfiler;
   private isProfiling = false;
   private snapshots: PerformanceSnapshot[] = [];
-  private methodProfiles: Map<string, MethodProfile> = new Map();
-  private startTime: number = 0;
-  private profileName: string = 'default';
-  private maxSnapshots: number = 50;
+  private methodProfiles = new Map<string, MethodProfile>();
+  private startTime = 0;
+  private profileName = 'default';
+  private maxSnapshots = 50;
   private cleanupInterval: NodeJS.Timeout | null = null;
   private maxProfileAge: number = 24 * 60 * 60 * 1000; // 24 hours
 

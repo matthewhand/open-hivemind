@@ -3,8 +3,8 @@
  */
 class TimingManager {
   config: { minDelay: number; maxDelay: number; decayRate: number };
-  channelsTimingInfo: { [channelId: string]: { lastIncomingMessageTime: number } };
-  channelTimers: { [channelId: string]: NodeJS.Timeout };
+  channelsTimingInfo: Record<string, { lastIncomingMessageTime: number }>;
+  channelTimers: Record<string, NodeJS.Timeout>;
 
   constructor(
     config: { minDelay: number; maxDelay: number; decayRate: number } = {

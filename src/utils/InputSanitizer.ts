@@ -266,11 +266,7 @@ export class RateLimiter {
    * @param windowMs - Time window in milliseconds
    * @returns Whether the action is allowed
    */
-  static checkLimit(
-    identifier: string,
-    maxAttempts: number = 10,
-    windowMs: number = 60000
-  ): boolean {
+  static checkLimit(identifier: string, maxAttempts = 10, windowMs = 60000): boolean {
     const now = Date.now();
     const attempts = this.attempts.get(identifier) || [];
 
@@ -300,7 +296,7 @@ export class RateLimiter {
    * @param maxAttempts - Maximum attempts allowed
    * @returns Number of remaining attempts
    */
-  static getRemainingAttempts(identifier: string, maxAttempts: number = 10): number {
+  static getRemainingAttempts(identifier: string, maxAttempts = 10): number {
     const attempts = this.attempts.get(identifier) || [];
     return Math.max(0, maxAttempts - attempts.length);
   }

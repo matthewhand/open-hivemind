@@ -16,13 +16,14 @@ export interface HealthCheckResult {
     status: 'connected' | 'disconnected' | 'error';
     responseTime?: number;
   };
-  services: {
-    [key: string]: {
+  services: Record<
+    string,
+    {
       status: 'up' | 'down' | 'degraded';
       responseTime?: number;
       message?: string;
-    };
-  };
+    }
+  >;
   metrics: {
     cpuUsage?: number;
     diskUsage?: number;
@@ -38,7 +39,7 @@ export class HealthChecker {
   private healthHistory: HealthCheckResult[];
   private maxHistory: number;
 
-  constructor(checkInterval: number = 30000, maxHistory: number = 100) {
+  constructor(checkInterval = 30000, maxHistory = 100) {
     this.startTime = performance.now();
     this.checkInterval = checkInterval;
     this.lastCheckTime = 0;

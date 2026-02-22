@@ -74,7 +74,7 @@ export class BotManager extends EventEmitter {
   private static instance: BotManager;
   private botConfigManager: BotConfigurationManager;
   private secureConfigManager: SecureConfigManager;
-  private customBots: Map<string, BotInstance> = new Map();
+  private customBots = new Map<string, BotInstance>();
   private botsFilePath: string;
 
   constructor() {
@@ -509,7 +509,7 @@ export class BotManager extends EventEmitter {
 
       // Stop any active connections or services associated with this bot
       const botWithServices = bot as BotInstance & {
-        services?: Array<{ stop?: () => Promise<void> }>;
+        services?: { stop?: () => Promise<void> }[];
       };
       if (botWithServices.services && Array.isArray(botWithServices.services)) {
         for (const service of botWithServices.services) {
@@ -529,7 +529,7 @@ export class BotManager extends EventEmitter {
 
       // Close any active connections
       const botWithConnections = bot as BotInstance & {
-        connections?: Array<{ close?: () => Promise<void> }>;
+        connections?: { close?: () => Promise<void> }[];
       };
       if (botWithConnections.connections && Array.isArray(botWithConnections.connections)) {
         for (const connection of botWithConnections.connections) {
@@ -797,11 +797,7 @@ export class BotManager extends EventEmitter {
   /**
    * Get chat history for a bot
    */
-  public async getBotHistory(
-    botId: string,
-    channelId?: string,
-    limit: number = 20
-  ): Promise<any[]> {
+  public async getBotHistory(botId: string, channelId?: string, limit = 20): Promise<any[]> {
     try {
       const bot = await this.getBot(botId);
       if (!bot) {
@@ -963,7 +959,7 @@ export class BotManager extends EventEmitter {
   }
 
   // Runtime state management (in-memory tracking)
-  private runningBots: Set<string> = new Set();
+  private runningBots = new Set<string>();
 
   private setBotRunningState(botId: string, isRunning: boolean): void {
     if (isRunning) {
@@ -985,13 +981,13 @@ export class BotManager extends EventEmitter {
    * Get status of all bots
    */
   public async getBotsStatus(): Promise<
-    Array<{
+    {
       id: string;
       name: string;
       provider: string;
       isRunning: boolean;
       isActive: boolean;
-    }>
+    }[]
   > {
     const allBots = await this.getAllBots();
     return allBots.map((bot: BotInstance) => ({
@@ -1029,13 +1025,13 @@ export class BotManager extends EventEmitter {
    * Health check for all bots
    */
   public async performHealthCheck(): Promise<
-    Array<{
+    {
       botId: string;
       name: string;
       status: 'healthy' | 'unhealthy' | 'stopped';
       lastCheck: Date;
       issues?: string[];
-    }>
+    }[]
   > {
     const allBots = await this.getAllBots();
     const healthChecks = allBots.map(async (bot: BotInstance) => {

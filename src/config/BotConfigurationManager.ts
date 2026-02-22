@@ -302,8 +302,8 @@ const botSchema = {
 
 export class BotConfigurationManager {
   private static instance: BotConfigurationManager;
-  private bots: Map<string, BotConfig> = new Map();
-  private legacyMode: boolean = false;
+  private bots = new Map<string, BotConfig>();
+  private legacyMode = false;
   private warnings: string[] = [];
   private userConfigStore = UserConfigStore.getInstance();
 

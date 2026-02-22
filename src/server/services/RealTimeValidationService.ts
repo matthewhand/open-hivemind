@@ -93,9 +93,9 @@ export class RealTimeValidationService extends EventEmitter {
   private botConfigService: BotConfigService;
   private templateService: ConfigurationTemplateService;
   private dbManager: DatabaseManager;
-  private rules: Map<string, ValidationRule> = new Map();
-  private profiles: Map<string, ValidationProfile> = new Map();
-  private subscriptions: Map<string, ValidationSubscription> = new Map();
+  private rules = new Map<string, ValidationRule>();
+  private profiles = new Map<string, ValidationProfile>();
+  private subscriptions = new Map<string, ValidationSubscription>();
   private validationHistory: ValidationReport[] = [];
   private maxHistorySize = 100;
 
@@ -612,7 +612,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   public async validateConfiguration(
     configId: number,
-    profileId: string = 'standard',
+    profileId = 'standard',
     clientId?: string
   ): Promise<ValidationReport> {
     const startTime = Date.now();
@@ -756,10 +756,7 @@ export class RealTimeValidationService extends EventEmitter {
   /**
    * Validate configuration data directly
    */
-  public validateConfigurationData(
-    configData: any,
-    profileId: string = 'standard'
-  ): ValidationResult {
+  public validateConfigurationData(configData: any, profileId = 'standard'): ValidationResult {
     try {
       // Get validation profile
       const profile = this.profiles.get(profileId);
@@ -847,7 +844,7 @@ export class RealTimeValidationService extends EventEmitter {
   public subscribe(
     configId: number,
     clientId: string,
-    profileId: string = 'standard'
+    profileId = 'standard'
   ): ValidationSubscription {
     const subId = this.getSubscriptionId(configId, clientId);
 
@@ -896,7 +893,7 @@ export class RealTimeValidationService extends EventEmitter {
   /**
    * Get validation history
    */
-  public getValidationHistory(configId?: number, limit: number = 50): ValidationReport[] {
+  public getValidationHistory(configId?: number, limit = 50): ValidationReport[] {
     let history = this.validationHistory;
 
     if (configId) {

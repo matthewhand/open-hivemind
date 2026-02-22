@@ -3,10 +3,10 @@ import * as path from 'path';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const SlackMgr = require('../../integrations/slack/SlackService');
+const SlackMgr = require('@hivemind/adapter-slack');
 const MattermostMgr = (() => {
   try {
-    return require('../../integrations/mattermost/MattermostService');
+    return require('@hivemind/adapter-mattermost');
   } catch (_e) {
     return null;
   }
@@ -49,9 +49,9 @@ export function getMessengerProvider() {
   const providerFilter: string[] =
     typeof rawProviders === 'string'
       ? rawProviders
-        .split(',')
-        .map((v: string) => v.trim().toLowerCase())
-        .filter(Boolean)
+          .split(',')
+          .map((v: string) => v.trim().toLowerCase())
+          .filter(Boolean)
       : Array.isArray(rawProviders)
         ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
         : [];
@@ -61,7 +61,7 @@ export function getMessengerProvider() {
   };
 
   // In tests we exclusively support the { providers: [{ type: string }] } shape
-  const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig as any).providers)
+  const providersArray: { type: string }[] = Array.isArray((messengersConfig as any).providers)
     ? (messengersConfig as any).providers
     : [];
 
@@ -76,7 +76,6 @@ export function getMessengerProvider() {
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (hasDiscord && wantProvider('discord')) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const DiscordMgr = require('@hivemind/adapter-discord');
       const svc = DiscordMgr?.DiscordService?.getInstance
         ? DiscordMgr.DiscordService.getInstance()
@@ -110,7 +109,13 @@ export function getMessengerProvider() {
         svc = SlackMgr.default.getInstance();
       } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
         svc = SlackMgr.getInstance();
+      } else if (SlackMgr?.SlackService) {
+        // Handle case where SlackService is a class constructor exported directly or in namespace
+        if (SlackMgr.SlackService.getInstance) {
+          svc = SlackMgr.SlackService.getInstance();
+        }
       }
+
       if (svc) {
         // Ensure provider identity is exposed for tests
         if (typeof (svc as any).provider === 'undefined') {
@@ -171,7 +176,10 @@ export function getMessengerProvider() {
           svc = SlackMgr.default.getInstance();
         } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
           svc = SlackMgr.getInstance();
+        } else if (SlackMgr?.SlackService?.getInstance) {
+          svc = SlackMgr.SlackService.getInstance();
         }
+
         if (svc) {
           if (typeof (svc as any).provider === 'undefined') {
             (svc as any).provider = 'slack';
@@ -182,7 +190,7 @@ export function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
-          sendMessageToChannel: () => { },
+          sendMessageToChannel: () => {},
           getClientId: () => 'SLACK_CLIENT_ID',
         });
       }

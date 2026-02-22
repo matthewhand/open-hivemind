@@ -5,5 +5,10 @@
  * This package contains platform-agnostic contracts that all adapters implement.
  */
 
-export { IMessage } from './IMessage';
-export type { IMessengerService } from './IMessengerService';
+export * from './IMessage';
+export * from './IMessengerService';
+export * from './IErrorTypes';
+export * from './ILlmProvider';
+export * from './IBotConfig';
+export * from './IServiceDependencies';
+export * from './IAdapterFactory';
