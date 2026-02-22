@@ -62,7 +62,7 @@ module.exports = {
     collectCoverageFrom: [
       'src/server/**/*.ts',
       'src/database/**/*.ts',
-      'packages/**/*.ts',
+      'src/integrations/**/*.ts',
       '!src/**/*.d.ts'
     ],
     coverageDirectory: '<rootDir>/coverage/integration',

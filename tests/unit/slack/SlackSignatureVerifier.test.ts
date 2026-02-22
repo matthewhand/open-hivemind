@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
-import { SlackSignatureVerifier } from '@hivemind/adapter-slack/SlackSignatureVerifier';
+import { SlackSignatureVerifier } from '@src/integrations/slack/SlackSignatureVerifier';
 
 describe('SlackSignatureVerifier', () => {
   const secret = 'test-secret';

@@ -1,4 +1,4 @@
-import { SlackMessageIO } from '@hivemind/adapter-slack/modules/ISlackMessageIO';
+import { SlackMessageIO } from '@integrations/slack/modules/ISlackMessageIO';
 
 describe('SlackMessageIO send queue and backoff', () => {
   function makeIO(mockPost: jest.Mock) {

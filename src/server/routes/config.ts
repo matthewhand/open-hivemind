@@ -38,9 +38,9 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
-import { testMattermostConnection } from '@hivemind/adapter-mattermost/MattermostConnectionTest';
+import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '@hivemind/adapter-slack/SlackConnectionTest';
+import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';

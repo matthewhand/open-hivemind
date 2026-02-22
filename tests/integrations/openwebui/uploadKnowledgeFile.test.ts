@@ -31,7 +31,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     jest.doMock('debug', () => () => jest.fn());
 
     // Mock config with apiUrl and knowledgeFile
-    jest.doMock('@hivemind/provider-openwebui/openWebUIConfig', () => ({
+    jest.doMock('../../../src/integrations/openwebui/openWebUIConfig', () => ({
       __esModule: true,
       default: {
         getProperties: () => ({
@@ -45,7 +45,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     }));
 
     // Mock sessionManager.getSessionKey to return a stable token
-    jest.doMock('@hivemind/provider-openwebui/sessionManager', () => ({
+    jest.doMock('../../../src/integrations/openwebui/sessionManager', () => ({
       __esModule: true,
       getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
     }));
@@ -71,7 +71,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
 
     let mod: any;
     jest.isolateModules(() => {
-      mod = require('@hivemind/provider-openwebui/uploadKnowledgeFile');
+      mod = require('../../../src/integrations/openwebui/uploadKnowledgeFile');
     });
 
     const axios = require('axios');

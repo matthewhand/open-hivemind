@@ -1,8 +1,8 @@
-// @hivemind/adapter-discord/DiscordMessage.ts
+// src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { Collection, TextChannel, type GuildMember, type Message, type User } from 'discord.js';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-import { ErrorUtils, HivemindError } from '@types/errors';
+import { ErrorUtils, HivemindError } from '../../../src/types/errors';
 
 const debug = Debug('app:DiscordMessage');
 

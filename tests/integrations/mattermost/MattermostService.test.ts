@@ -1,7 +1,7 @@
-import MattermostClient from '@hivemind/adapter-mattermost/mattermostClient';
-import { MattermostService } from '@hivemind/adapter-mattermost/MattermostService';
+import MattermostClient from '@src/integrations/mattermost/mattermostClient';
+import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 
-jest.mock('@hivemind/adapter-mattermost/mattermostClient');
+jest.mock('@src/integrations/mattermost/mattermostClient');
 jest.mock('@src/config/BotConfigurationManager');
 
 describe('MattermostService', () => {
@@ -18,7 +18,7 @@ describe('MattermostService', () => {
       disconnect: jest.fn(),
     } as any;
 
-    const { default: MockClient } = require('@hivemind/adapter-mattermost/mattermostClient');
+    const { default: MockClient } = require('@src/integrations/mattermost/mattermostClient');
     MockClient.mockImplementation(() => mockClient);
 
     const { default: BotConfigurationManager } = require('@src/config/BotConfigurationManager');

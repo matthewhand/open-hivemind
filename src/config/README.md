@@ -138,7 +138,7 @@ Auxiliary settings:
 - Prefer resetting modules between tests:
 ```ts
 jest.resetModules();
-const mod = require('@hivemind/adapter-discord/DiscordService');
+const mod = require('@integrations/discord/DiscordService');
 ```
 
 - Prepare environment per test and restore:
@@ -159,7 +159,7 @@ const originalConfig = fs.readFileSync(configPath, 'utf-8');
 try {
   fs.writeFileSync(configPath, JSON.stringify({ providers: [] }));
   jest.resetModules();
-  const svc = require('@hivemind/adapter-discord/DiscordService');
+  const svc = require('@integrations/discord/DiscordService');
   // ... assertions ...
 } finally {
   fs.writeFileSync(configPath, originalConfig);

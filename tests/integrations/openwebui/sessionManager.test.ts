@@ -17,7 +17,7 @@ const mockedConfig = {
     return this.props;
   },
 };
-jest.mock('@hivemind/provider-openwebui/openWebUIConfig', () => ({
+jest.mock('../../../src/integrations/openwebui/openWebUIConfig', () => ({
   __esModule: true,
   default: mockedConfig,
 }));
@@ -37,7 +37,7 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
   jest.resetModules();
   const axiosPost = jest.fn();
 
-  jest.doMock('@hivemind/provider-openwebui/openWebUIConfig', () => ({
+  jest.doMock('../../../src/integrations/openwebui/openWebUIConfig', () => ({
     __esModule: true,
     default: {
       getProperties: () => ({
@@ -60,7 +60,7 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
   jest.isolateModules(() => {
     prime({ axiosPost });
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    mod = require('@hivemind/provider-openwebui/sessionManager');
+    mod = require('../../../src/integrations/openwebui/sessionManager');
   });
   return { mod, axiosPost };
 }

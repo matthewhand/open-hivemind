@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import express from 'express';
 import { WebClient } from '@slack/web-api';
-import { SlackService } from '@hivemind/adapter-slack/SlackService';
+import { SlackService } from '@integrations/slack/SlackService';
 
 // Top-level mocks
 jest.mock('fs');
@@ -66,7 +66,7 @@ const mockBotManagerInstance = {
   setMessageHandler: jest.fn(),
 };
 
-jest.mock('@hivemind/adapter-slack/SlackBotManager', () => ({
+jest.mock('@integrations/slack/SlackBotManager', () => ({
   SlackBotManager: jest.fn().mockImplementation(() => mockBotManagerInstance),
 }));
 
@@ -82,7 +82,7 @@ describe('SlackService', () => {
 
     app = express();
 
-    const { SlackBotManager } = require('@hivemind/adapter-slack/SlackBotManager');
+    const { SlackBotManager } = require('@integrations/slack/SlackBotManager');
     mockBotManager = mockBotManagerInstance;
 
     // Define mockWebClient first
@@ -205,7 +205,7 @@ describe('SlackService', () => {
     // Test shutdown
     await service.shutdown();
     expect(
-      (require('@hivemind/adapter-slack/SlackService').SlackService as any).instance
+      (require('@integrations/slack/SlackService').SlackService as any).instance
     ).toBeUndefined();
   });
 });

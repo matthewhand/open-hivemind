@@ -1,6 +1,6 @@
 import { FlowiseClient } from 'flowise-sdk';
-import flowiseConfig from '@hivemind/provider-flowise/flowiseConfig';
-import { getFlowiseSdkResponse } from '@hivemind/provider-flowise/flowiseSdkClient';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 
 jest.mock('flowise-sdk', () => {
   const createPrediction = jest.fn();
@@ -12,8 +12,8 @@ jest.mock('flowise-sdk', () => {
   return { FlowiseClient: ctor };
 });
 
-jest.mock('@hivemind/provider-flowise/flowiseConfig', () => {
-  const actual = jest.requireActual('@hivemind/provider-flowise/flowiseConfig');
+jest.mock('@integrations/flowise/flowiseConfig', () => {
+  const actual = jest.requireActual('@integrations/flowise/flowiseConfig');
   return {
     __esModule: true,
     default: {

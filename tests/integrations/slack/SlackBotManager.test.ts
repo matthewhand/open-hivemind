@@ -1,7 +1,7 @@
 import { RTMClient } from '@slack/rtm-api';
 import { SocketModeClient } from '@slack/socket-mode';
 import { WebClient } from '@slack/web-api';
-import { SlackBotManager } from '@hivemind/adapter-slack/SlackBotManager';
+import { SlackBotManager } from '@integrations/slack/SlackBotManager';
 
 jest.mock('@slack/socket-mode');
 jest.mock('@slack/rtm-api');

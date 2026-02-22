@@ -23,6 +23,7 @@ const unitIntegrationProject = {
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@hivemind/adapter-discord$': '<rootDir>/packages/adapter-discord/src/index.ts',
     '^@hivemind/adapter-discord/(.*)$': '<rootDir>/packages/adapter-discord/src/$1',
@@ -73,6 +74,7 @@ const realIntegrationProject = {
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@hivemind/adapter-discord$': '<rootDir>/packages/adapter-discord/src/index.ts',
     '^@hivemind/adapter-discord/(.*)$': '<rootDir>/packages/adapter-discord/src/$1',
@@ -120,6 +122,7 @@ const projects = [
       '^@message/(.*)$': '<rootDir>/src/message/$1',
       '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
       '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
+      '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
       '^@types/(.*)$': '<rootDir>/src/types/$1',
       '^@hivemind/adapter-discord$': '<rootDir>/packages/adapter-discord/src/index.ts',
       '^@hivemind/adapter-discord/(.*)$': '<rootDir>/packages/adapter-discord/src/$1',

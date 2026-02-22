@@ -1,5 +1,5 @@
 import { exec, spawn } from 'child_process';
-import { SwarmInstaller } from '@hivemind/provider-openswarm/SwarmInstaller';
+import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
 
 // Mock child_process fully
 jest.mock('child_process', () => ({

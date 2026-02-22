@@ -1,5 +1,5 @@
 import axios from 'axios';
-import MattermostClient from '@hivemind/adapter-mattermost/mattermostClient';
+import MattermostClient from '@src/integrations/mattermost/mattermostClient';
 
 jest.mock('axios');
 

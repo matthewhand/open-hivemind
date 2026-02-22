@@ -44,6 +44,9 @@
       "@webhook/*": [
         "src/webhook/*"
       ],
+      "@integrations/*": [
+        "src/integrations/*"
+      ],
       "@types/*": [
         "src/types/*"
       ],

@@ -63,6 +63,7 @@
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
     "@webhook": "dist/src/webhook",
+    "@integrations": "dist/src/integrations",
     "@types": "dist/src/types",
     "@client": "dist/src/client",
     "@server": "dist/src/server",

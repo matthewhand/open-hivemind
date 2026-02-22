@@ -1,13 +1,13 @@
 import { WebClient } from '@slack/web-api';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import slackConfig from '@src/config/slackConfig';
-import { SlackBotManager } from '@hivemind/adapter-slack/SlackBotManager';
-import { SlackEventProcessor } from '@hivemind/adapter-slack/SlackEventProcessor';
-import SlackMessage from '@hivemind/adapter-slack/SlackMessage';
-import { SlackService } from '@hivemind/adapter-slack/SlackService';
+import { SlackBotManager } from '@integrations/slack/SlackBotManager';
+import { SlackEventProcessor } from '@integrations/slack/SlackEventProcessor';
+import SlackMessage from '@integrations/slack/SlackMessage';
+import { SlackService } from '@integrations/slack/SlackService';
 
-jest.mock('@hivemind/adapter-slack/SlackBotManager');
-jest.mock('@hivemind/adapter-slack/SlackMessage');
+jest.mock('@integrations/slack/SlackBotManager');
+jest.mock('@integrations/slack/SlackMessage');
 jest.mock('@src/config/slackConfig');
 jest.mock('@src/config/BotConfigurationManager');
 jest.mock('@slack/web-api');

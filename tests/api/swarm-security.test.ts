@@ -10,7 +10,7 @@ import { authenticateToken } from '../../src/server/middleware/auth';
 jest.mock('../../src/auth/AuthManager');
 
 // Mock SwarmInstaller
-jest.mock('@hivemind/provider-openswarm/SwarmInstaller', () => {
+jest.mock('../../src/integrations/openswarm/SwarmInstaller', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
       checkPython: jest.fn().mockResolvedValue(true),

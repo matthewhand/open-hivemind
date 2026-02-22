@@ -136,7 +136,7 @@ export class SlackMessageHandler {
     historyMessages: IMessage[],
     botConfig: any
   ): Promise<string> {
-    const { generateChatCompletionDirect } = require('@hivemind/provider-openwebui/directClient');
+    const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');
 
     return await generateChatCompletionDirect(
       {

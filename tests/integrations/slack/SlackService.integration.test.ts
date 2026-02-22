@@ -1,9 +1,9 @@
-import { SlackService } from '@hivemind/adapter-slack/SlackService';
+import { SlackService } from '@integrations/slack/SlackService';
 
 /**
  * Test-only SlackService mock to avoid requiring legacy config or network.
  */
-jest.mock('@hivemind/adapter-slack/SlackService', () => {
+jest.mock('@integrations/slack/SlackService', () => {
   class FakeSlackService {
     static instance: any;
     private handler: any = null;

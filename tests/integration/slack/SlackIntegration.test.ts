@@ -17,13 +17,13 @@ const canRunTests = hasAllEnvVars(...slackConfig.requiredEnvVars);
 
 createIntegrationSuite(slackConfig.name, slackConfig.requiredEnvVars, () => {
   // Lazy import to avoid loading Slack SDK if tests are skipped
-  let SlackService: typeof import('@hivemind/adapter-slack/SlackService').SlackService;
+  let SlackService: typeof import('@integrations/slack/SlackService').SlackService;
 
   beforeAll(async () => {
     if (!canRunTests) return;
 
     // Dynamic import to avoid loading if skipped
-    const slackModule = await import('@hivemind/adapter-slack/SlackService');
+    const slackModule = await import('@integrations/slack/SlackService');
     SlackService = slackModule.SlackService;
 
     // Log redacted credentials for debugging (safe - only shows partial)
