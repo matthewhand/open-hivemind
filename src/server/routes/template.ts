@@ -192,7 +192,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
       errors: errors.array(),
     });
   }
-  next();
+  return next();
 };
 
 /**
@@ -221,14 +221,14 @@ router.get(
       }
 
       const templates = await templateService.getAllTemplates(filters);
-      res.json({
+      return res.json({
         success: true,
         data: templates,
         count: templates.length,
       });
     } catch (error) {
       console.error('Error getting templates:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to get templates',
         error: (error as any).message,
@@ -250,14 +250,14 @@ router.get(
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const templates = await templateService.getPopularTemplates(limit);
-      res.json({
+      return res.json({
         success: true,
         data: templates,
         count: templates.length,
       });
     } catch (error) {
       console.error('Error getting popular templates:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to get popular templates',
         error: (error as any).message,
@@ -279,14 +279,14 @@ router.get(
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const templates = await templateService.getRecentTemplates(limit);
-      res.json({
+      return res.json({
         success: true,
         data: templates,
         count: templates.length,
       });
     } catch (error) {
       console.error('Error getting recent templates:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to get recent templates',
         error: (error as any).message,
@@ -308,14 +308,14 @@ router.get(
     try {
       const { category } = req.params;
       const templates = await templateService.getTemplatesByCategory(category);
-      res.json({
+      return res.json({
         success: true,
         data: templates,
         count: templates.length,
       });
     } catch (error) {
       console.error('Error getting templates by category:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to get templates by category',
         error: (error as any).message,
@@ -345,13 +345,13 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: template,
       });
     } catch (error) {
       console.error('Error getting template:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to get template',
         error: (error as any).message,
@@ -379,14 +379,14 @@ router.post(
         createdBy,
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Template created successfully',
         data: template,
       });
     } catch (error) {
       console.error('Error creating template:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Failed to create template',
         error: (error as any).message,
@@ -410,14 +410,14 @@ router.put(
       const { templateId } = req.params;
       const template = await templateService.updateTemplate(templateId, req.body);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Template updated successfully',
         data: template,
       });
     } catch (error) {
       console.error('Error updating template:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Failed to update template',
         error: (error as any).message,
@@ -441,19 +441,19 @@ router.delete(
       const success = await templateService.deleteTemplate(templateId);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Template deleted successfully',
         });
       } else {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'Template not found',
         });
       }
     } catch (error) {
       console.error('Error deleting template:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Failed to delete template',
         error: (error as any).message,
@@ -481,14 +481,14 @@ router.post(
 
       const template = await templateService.duplicateTemplate(templateId, newName, createdBy);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Template duplicated successfully',
         data: template,
       });
     } catch (error) {
       console.error('Error duplicating template:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Failed to duplicate template',
         error: (error as any).message,
@@ -513,10 +513,10 @@ router.get(
 
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="${templateId}.json"`);
-      res.send(templateJson);
+      return res.send(templateJson);
     } catch (error) {
       console.error('Error exporting template:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Failed to export template',
         error: (error as any).message,
@@ -543,14 +543,14 @@ router.post('/import', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
 
     const template = await templateService.importTemplate(req.body.templateData, createdBy);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Template imported successfully',
       data: template,
     });
   } catch (error) {
     console.error('Error importing template:', error);
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: 'Failed to import template',
       error: (error as any).message,
@@ -572,13 +572,13 @@ router.post(
       const { templateId } = req.params;
       await templateService.incrementUsageCount(templateId);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Template usage tracked successfully',
       });
     } catch (error) {
       console.error('Error tracking template usage:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to track template usage',
         error: (error as any).message,

@@ -7,6 +7,7 @@ import SlackService from '@integrations/slack/SlackService';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
+import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -20,7 +21,7 @@ adminRouter.use(authenticate);
 // Apply audit middleware to all admin routes
 adminRouter.use(auditMiddleware);
 
-function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string }> {
+async function loadPersonas(): Promise<Array<{ key: string; name: string; systemPrompt: string }>> {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
   const personasDir = path.join(configDir, 'personas');
   const fallback = [
@@ -41,23 +42,31 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
     },
   ];
   try {
-    if (!fs.existsSync(personasDir)) {
+    try {
+      await fs.promises.access(personasDir);
+    } catch {
       return fallback;
     }
-    const out: any[] = [];
-    for (const file of fs.readdirSync(personasDir)) {
-      if (!file.endsWith('.json')) {
-        continue;
-      }
+
+    const files = await fs.promises.readdir(personasDir);
+    const validFiles = files.filter((file) => file.endsWith('.json'));
+
+    const promises = validFiles.map(async (file) => {
       try {
-        const data = JSON.parse(fs.readFileSync(path.join(personasDir, file), 'utf8'));
+        const content = await fs.promises.readFile(path.join(personasDir, file), 'utf8');
+        const data = JSON.parse(content);
         if (data && data.key && data.name && typeof data.systemPrompt === 'string') {
-          out.push(data);
+          return data;
         }
       } catch (e) {
         debug('Invalid persona file:', file, e);
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    const out: any[] = results.filter((item) => item !== null);
+
     return out.length ? out : fallback;
   } catch (e) {
     debug('Failed loading personas', e);
@@ -65,7 +74,7 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
   }
 }
 
-adminRouter.get('/status', (_req: Request, res: Response): void => {
+adminRouter.get('/status', (_req: Request, res: Response) => {
   try {
     const slack = SlackService.getInstance();
     const slackBots = slack.getBotNames();
@@ -82,13 +91,13 @@ adminRouter.get('/status', (_req: Request, res: Response): void => {
     let discordInfo: any[] = [];
     try {
       const ds = (Discord as any).DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as any[];
-      discordBots = bots.map((b: any) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b: any) => ({
+      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
+      discordInfo = bots.map((b) => ({
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
-    } catch {}
+    } catch { }
     res.json({
       ok: true,
       slackBots,
@@ -102,8 +111,8 @@ adminRouter.get('/status', (_req: Request, res: Response): void => {
   }
 });
 
-adminRouter.get('/personas', (_req: Request, res: Response): void => {
-  res.json({ ok: true, personas: loadPersonas() });
+adminRouter.get('/personas', async (_req: Request, res: Response) => {
+  res.json({ ok: true, personas: await loadPersonas() });
 });
 
 const LLM_PROVIDERS = [
@@ -149,16 +158,16 @@ const MESSENGER_PROVIDERS = [
   },
 ];
 
-adminRouter.get('/llm-providers', (_req: Request, res: Response): void => {
+adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
   res.json({ ok: true, providers: LLM_PROVIDERS });
 });
 
-adminRouter.get('/messenger-providers', (_req: Request, res: Response): void => {
+adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
   res.json({ ok: true, providers: MESSENGER_PROVIDERS });
 });
 
 // Minimal Slack bot creation: supports a single instance add at runtime
-adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
+adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   try {
     const { name, botToken, signingSecret, appToken, defaultChannelId, joinChannels, mode, llm } =
       req.body || {};
@@ -170,10 +179,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
         'failure',
         'Missing required fields: name, botToken, signingSecret'
       );
-      res
+      return res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
-      return;
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -181,11 +189,15 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: any = { slack: { instances: [] } };
     try {
-      if (fs.existsSync(messengersPath)) {
-        cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
+      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(fileContent);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
-    } catch (e) {
-      debug('Failed reading messengers.json, starting fresh', e);
     }
     cfg.slack = cfg.slack || {};
     cfg.slack.mode = cfg.slack.mode || mode || 'socket';
@@ -193,8 +205,8 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     cfg.slack.instances.push({ name, token: botToken, signingSecret, llm });
 
     try {
-      fs.mkdirSync(path.dirname(messengersPath), { recursive: true });
-      fs.writeFileSync(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
       debug('Failed writing messengers.json', e);
       // Non-fatal; still attempt runtime add
@@ -227,7 +239,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'success',
       `Created Slack bot ${name} with token and configuration`
     );
-    res.json({ ok: true });
+    return res.json({ ok: true });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -236,14 +248,14 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'failure',
       `Failed to create Slack bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
 export default adminRouter;
 
 // Discord admin routes
-adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
+adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   try {
     const { name, token, llm } = req.body || {};
     if (!token) {
@@ -254,27 +266,30 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      res.status(400).json({ ok: false, error: 'token is required' });
-      return;
+      return res.status(400).json({ ok: false, error: 'token is required' });
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: any = { discord: { instances: [] } };
     try {
-      if (fs.existsSync(messengersPath)) {
-        cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
+      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(fileContent);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
-    } catch (e) {
-      debug('Failed reading messengers.json, starting fresh', e);
     }
     cfg.discord = cfg.discord || {};
     cfg.discord.instances = cfg.discord.instances || [];
     cfg.discord.instances.push({ name: name || '', token, llm });
 
     try {
-      fs.mkdirSync(path.dirname(messengersPath), { recursive: true });
-      fs.writeFileSync(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
       debug('Failed writing messengers.json', e);
     }
@@ -291,8 +306,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'success',
         `Created Discord bot ${name || 'unnamed'} with runtime initialization`
       );
-      res.json({ ok: true, note: 'Added and saved.' });
-      return;
+      return res.json({ ok: true, note: 'Added and saved.' });
     } catch (e) {
       debug('Discord runtime add failed; config persisted:', e);
     }
@@ -303,7 +317,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'success',
       `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
     );
-    res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -312,20 +326,25 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'failure',
       `Failed to create Discord bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
 // Reload bots from messengers.json (adds missing instances for Slack and Discord)
-adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
+adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Response) => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
-    if (!fs.existsSync(messengersPath)) {
-      res.status(400).json({ ok: false, error: 'messengers.json not found' });
-      return;
+    let cfg: any;
+    try {
+      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(content);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      }
+      throw e;
     }
-    const cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
     let addedSlack = 0;
     let addedDiscord = 0;
     try {
@@ -375,7 +394,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'success',
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
-    res.json({ ok: true, addedSlack, addedDiscord });
+    return res.json({ ok: true, addedSlack, addedDiscord });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -384,6 +403,6 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'failure',
       `Failed to reload bots: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });

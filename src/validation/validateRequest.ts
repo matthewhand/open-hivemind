@@ -14,7 +14,7 @@ export const validateRequest =
         query: req.query,
         params: req.params,
       });
-      next();
+      return next();
     } catch (error) {
       if (error instanceof ZodError) {
         // Format Zod validation errors for response

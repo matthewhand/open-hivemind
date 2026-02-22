@@ -1,4 +1,5 @@
 // Import Express types for TypeScript
+import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
@@ -14,6 +15,7 @@ import botsRouter from '@src/server/routes/bots';
 import ciRouter from '@src/server/routes/ci';
 import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
+import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
@@ -26,6 +28,7 @@ import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
@@ -39,9 +42,6 @@ require('dotenv/config');
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
 // in development because its _moduleAliases in package.json point to dist/, which does not
 // exist (or is stale) when running directly from src.
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
-  require('module-alias/register');
-}
 const express = require('express');
 
 const debug = require('debug');
@@ -250,7 +250,7 @@ if (!allowAllIPs) {
 }
 
 // Unified API routes - all on same port, no separation
-app.use('/api/swarm', swarmRouter);
+app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
@@ -267,6 +267,7 @@ app.use('/api/openapi', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
 app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute); // Root health endpoint (for frontend polling)
 app.use(sitemapRouter); // Sitemap routes at root level
@@ -276,13 +277,6 @@ app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.p
 app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
-
-// Deprecated /admin static serve (commented out)
-// app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
-// app.use('/admin', (req: Request, res: Response) => {
-//     const adminPath = path.join(process.cwd(), 'public/admin/index.html');
-//     res.sendFile(adminPath);
-// });
 
 // React Router catch-all handler (must be AFTER all API routes)
 
@@ -424,6 +418,18 @@ async function main() {
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
+  // Initialize Demo Mode Service
+  const demoService = DemoModeService.getInstance();
+  demoService.initialize();
+
+  if (demoService.isInDemoMode()) {
+    appLogger.info('🎭 Demo Mode ACTIVE - No credentials configured');
+    appLogger.info('🎭 The WebUI will show demo bots and simulated responses');
+    appLogger.info('🎭 Configure API keys/tokens to enable production mode');
+  } else {
+    appLogger.info('✅ Production Mode - Credentials detected');
+  }
+
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
 
@@ -435,8 +441,15 @@ async function main() {
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
-  if (skipMessengers) {
-    appLogger.info('🤖 Skipping messenger initialization due to SKIP_MESSENGERS=true');
+  // In demo mode, skip messenger initialization if no real providers configured
+  const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
+
+  if (shouldSkipMessengers) {
+    if (demoService.isInDemoMode()) {
+      appLogger.info('🎭 Skipping messenger initialization - Demo Mode active');
+    } else {
+      appLogger.info('🤖 Skipping messenger initialization due to SKIP_MESSENGERS=true');
+    }
   } else {
     appLogger.info('📡 Initializing messenger services');
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;

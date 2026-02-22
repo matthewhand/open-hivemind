@@ -156,7 +156,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
-    "uuid": "^8.3.2",
+    "uuid": "^11.0.5",
     "uuidv4": "^6.2.13",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2"
@@ -245,6 +245,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.1",
+    "uuid": "^9.0.1",
     "vite": "^7.1.2",
     "wrangler": "^4.34.0"
   }

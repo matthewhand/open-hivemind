@@ -38,6 +38,7 @@ describe('Bots API Endpoints', () => {
       const newBot = {
         name: 'TestBotMinimal',
         messageProvider: 'discord',
+        llmProvider: 'openai', // Required when no default is configured
         description: 'Created via test',
         // config is intentionally missing
       };
@@ -55,6 +56,7 @@ describe('Bots API Endpoints', () => {
       const newBot = {
         name: 'TestBotFull',
         messageProvider: 'discord',
+        llmProvider: 'openai', // Required when no default is configured
         description: 'Created via test',
         config: {
           discord: { token: 'fake-token' },

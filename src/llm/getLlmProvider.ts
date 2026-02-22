@@ -6,6 +6,7 @@ import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
+import type { IConfigAccessor } from '@src/types/configAccessor';
 
 const debug = Debug('app:getLlmProvider');
 
@@ -69,7 +70,7 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-export async function getLlmProvider(): Promise<ILlmProvider[]> {
+export function getLlmProvider(): ILlmProvider[] {
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
@@ -82,7 +83,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = await import('@hivemind/provider-openai');
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider(config.config);
             debug(`Initialized OpenAI provider instance: ${config.name}`);
             break;
@@ -112,7 +114,7 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
   if (llmProviders.length === 0) {
     // Fallback: Check Legacy Env Var (LLM_PROVIDER)
     // This is necessary if no migration happened or it failed, or for quick development.
-    const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown;
+    const rawProvider: unknown = (llmConfig as unknown as IConfigAccessor).get('LLM_PROVIDER');
     const legacyTypes = (
       typeof rawProvider === 'string'
         ? rawProvider.split(',').map((v: string) => v.trim())
@@ -127,7 +129,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = await import('@hivemind/provider-openai');
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider();
             break;
           case 'flowise':
@@ -147,7 +150,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
   if (llmProviders.length === 0) {
     // If still empty, default to OpenAI (legacy default)
     debug('No providers configured, defaulting to OpenAI (Legacy default)');
-    const { OpenAiProvider } = await import('@hivemind/provider-openai');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { OpenAiProvider } = require('@hivemind/provider-openai');
     llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
   }
 

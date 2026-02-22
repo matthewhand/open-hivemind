@@ -1,11 +1,3 @@
-/**
- * Service Registration
- *
- * This module registers all application services with the DI container.
- * Import this file at application startup to initialize the container.
- */
-
-import 'reflect-metadata';
 import { container, Lifecycle } from 'tsyringe';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
@@ -16,33 +8,23 @@ import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';
 
 /**
- * Registers all core services with the DI container.
- * Should be called once at application startup.
+ * Registers all application services in the dependency injection container.
+ * This should be called once at application startup.
  */
 export function registerServices(): void {
-  // Configuration services - singletons
+  // Config Management
   container.register(
     TOKENS.ConfigurationManager,
     {
-      useClass: ConfigurationManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
-  );
-
-  container.register(
-    TOKENS.SecureConfigManager,
-    {
-      useClass: SecureConfigManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: ConfigurationManager.getInstance(),
+    }
   );
 
   container.register(
     TOKENS.BotConfigurationManager,
     {
-      useClass: BotConfigurationManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: BotConfigurationManager.getInstance(),
+    }
   );
 
   container.register(
@@ -60,14 +42,13 @@ export function registerServices(): void {
     }
   );
 
-  console.log('✅ DI services registered');
-}
+  container.register(
+    TOKENS.SecureConfigManager,
+    {
+      useValue: SecureConfigManager.getInstance(),
+    }
+  );
 
-/**
- * Checks if services are already registered
- */
-export function areServicesRegistered(): boolean {
-  return container.isRegistered(TOKENS.ConfigurationManager);
+  // Note: Specialized services like MCPService and Messenger providers 
+  // are often registered separately or initialized on demand.
 }
-
-export { container, TOKENS };

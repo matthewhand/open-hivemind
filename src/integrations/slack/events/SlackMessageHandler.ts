@@ -93,7 +93,7 @@ export class SlackMessageHandler {
   ): Promise<{ text: string; blocks?: KnownBlock[] } | null> {
     try {
       const userMessage = enrichedMessage.getText() || '';
-      const formattedHistory: IMessage[] = historyMessages as unknown as IMessage[];
+      const formattedHistory: IMessage[] = historyMessages;
 
       let llmResponse: string;
 

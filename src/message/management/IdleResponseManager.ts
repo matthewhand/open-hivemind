@@ -102,13 +102,13 @@ export class IdleResponseManager {
     }
   }
 
-  public async initialize(serviceNames?: string[]): Promise<void> {
+  public initialize(serviceNames?: string[]): void {
     if (!this.enabled) {
       log('Idle response manager is disabled');
       return;
     }
 
-    const messengerServices = await getMessengerProvider();
+    const messengerServices = getMessengerProvider();
 
     // If serviceNames provided (for testing), use those instead of actual services
     if (serviceNames && serviceNames.length > 0) {
@@ -119,11 +119,11 @@ export class IdleResponseManager {
             sendMessageToChannel: async () => 'mock-message-id',
             getMessagesFromChannel: async () => [],
             getClientId: () => 'test-client-id',
-            initialize: async () => {},
-            sendPublicAnnouncement: async () => {},
+            initialize: async () => { },
+            sendPublicAnnouncement: async () => { },
             getDefaultChannel: () => 'test-channel',
-            shutdown: async () => {},
-            setMessageHandler: () => {},
+            shutdown: async () => { },
+            setMessageHandler: () => { },
           };
 
           this.serviceActivities.set(serviceName, {
@@ -499,7 +499,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         if (activityBotId) {
           recordBotActivity(channelId, activityBotId);
         }
-      } catch {}
+      } catch { }
 
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;

@@ -190,9 +190,9 @@ export async function handleMessage(
         const resolvedAgentContext =
           typeof (messageProvider as any)?.resolveAgentContext === 'function'
             ? (messageProvider as any).resolveAgentContext({
-                botConfig,
-                agentDisplayName: activeAgentName,
-              })
+              botConfig,
+              agentDisplayName: activeAgentName,
+            })
             : null;
 
         const botId = String(
@@ -422,9 +422,10 @@ export async function handleMessage(
         // Bot-specific jitter: deterministic offset based on botId to spread bots apart
         // This ensures each bot has a unique delay offset that persists across invocations
         // Using a better hash to reduce collisions between similar bot IDs
-        const botHash = botId
-          .split('')
-          .reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+        let botHash = 0;
+        for (let i = 0; i < botId.length; i++) {
+          botHash += botId.charCodeAt(i) * (i + 1);
+        }
         const botSpecificJitter = botHash % 2000; // 0-2000ms unique per bot (halved from 4000)
 
         // Token usage multiplier (slower if channel is hot)
@@ -518,7 +519,7 @@ export async function handleMessage(
               const density = IncomingMessageDensity.getInstance();
               const { total } = density.getDensity(channelId, Date.now() - waitStart);
               messagesPostedCount = total;
-            } catch {}
+            } catch { }
           }
 
           // TIERED TRAFFIC: Only delay if traffic is significant (3+ messages)
@@ -610,7 +611,7 @@ export async function handleMessage(
               return;
             }
             try {
-              await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => {});
+              await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => { });
             } finally {
               scheduleNextTypingPulse();
             }
@@ -648,7 +649,7 @@ export async function handleMessage(
             }
 
             typingStarted = true;
-            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => {});
+            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
             // Start pulsed typing refreshes (with occasional gaps).
             scheduleNextTypingPulse();
           }
@@ -801,7 +802,7 @@ export async function handleMessage(
             estimatedTotalTokens: budgeted.meta.estimatedTotalTokens,
             inputBudgetTokens: budgeted.meta.inputBudgetTokens,
           });
-        } catch {}
+        } catch { }
 
         while (retryCount <= MAX_DUPLICATE_RETRIES) {
           const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
@@ -853,9 +854,9 @@ export async function handleMessage(
           // Start recurring typing indicator during inference
           let inferenceTypingInterval: NodeJS.Timeout | null = null;
           if (messageProvider.sendTyping) {
-            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => {});
+            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
             inferenceTypingInterval = setInterval(async () => {
-              await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => {});
+              await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => { });
             }, 8000);
           }
 
@@ -991,7 +992,7 @@ export async function handleMessage(
         // Update Discord presence with model info (if supported)
         const modelId = botConfig.llmModel || botConfig.llmProvider || 'unknown';
         if (typeof (messageProvider as any).setModelActivity === 'function') {
-          (messageProvider as any).setModelActivity(modelId, providerSenderKey).catch(() => {});
+          (messageProvider as any).setModelActivity(modelId, providerSenderKey).catch(() => { });
         }
 
         // Split response on newlines for natural line-by-line sending
@@ -1034,7 +1035,7 @@ export async function handleMessage(
 
           // Ensure typing indicator stays alive if we wait
           if (remainingTypingWait > 4000 && messageProvider.sendTyping) {
-            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => {});
+            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
           }
           await new Promise((resolve) => setTimeout(resolve, remainingTypingWait));
         } else {
@@ -1050,7 +1051,7 @@ export async function handleMessage(
         if (typingTimeout) {
           try {
             clearTimeout(typingTimeout);
-          } catch {}
+          } catch { }
           typingTimeout = null;
         }
 
@@ -1096,7 +1097,7 @@ export async function handleMessage(
           // Wait with typing indicator BEFORE sending (applies to ALL lines now, including the first)
           logger(`Waiting ${adjustedDelay}ms with typing before line ${i + 1}...`);
           if (messageProvider.sendTyping) {
-            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => {});
+            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
           }
           await new Promise((resolve) => setTimeout(resolve, adjustedDelay));
 
@@ -1200,25 +1201,25 @@ export async function handleMessage(
         if (typingInterval) {
           try {
             clearInterval(typingInterval);
-          } catch {}
+          } catch { }
           typingInterval = null;
         }
         if (typingTimeout) {
           try {
             clearTimeout(typingTimeout);
-          } catch {}
+          } catch { }
           typingTimeout = null;
         }
         // Always unlock the channel after processing
         if (didLock) {
           try {
             processingLocks.unlock(channelId, resolvedBotId);
-          } catch {}
+          } catch { }
         }
         if (isLeaderInvocation && delayKey) {
           try {
             channelDelayManager.clear(delayKey);
-          } catch {}
+          } catch { }
         }
       }
     },
