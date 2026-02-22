@@ -51,13 +51,13 @@ router.get('/api/deployments', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       deployments,
     });
   } catch (error) {
     debug('Deployments API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get deployments',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -100,13 +100,13 @@ router.post('/api/deployments', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       deployment,
     });
   } catch (error) {
     debug('Create deployment API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to create deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -142,13 +142,13 @@ router.get('/api/deployments/:id', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       deployment,
     });
   } catch (error) {
     debug('Get deployment API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -163,14 +163,14 @@ router.post('/api/deployments/:id/rollback', (req, res) => {
 
     // In a real implementation, this would trigger a rollback
     // For now, simulate rollback
-    res.json({
+    return res.json({
       success: true,
       message: `Deployment ${id} rolled back successfully`,
       rollbackId: `rollback_${Date.now()}`,
     });
   } catch (error) {
     debug('Rollback deployment API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to rollback deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -199,13 +199,13 @@ router.get('/api/drift', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       drifts,
     });
   } catch (error) {
     debug('Drift detection API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get drift detections',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -237,13 +237,13 @@ router.post('/api/deployments/validate', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       validation,
     });
   } catch (error) {
     debug('Validation API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to validate configuration',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -265,13 +265,13 @@ router.get('/api/pipeline/status', (req, res) => {
       failedDeployments: 1,
     };
 
-    res.json({
+    return res.json({
       success: true,
       status,
     });
   } catch (error) {
     debug('Pipeline status API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get pipeline status',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -299,13 +299,13 @@ router.post('/api/tests/run', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       testRun,
     });
   } catch (error) {
     debug('Test run API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to run tests',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -350,13 +350,13 @@ router.get('/api/tests/results/:id', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       results,
     });
   } catch (error) {
     debug('Test results API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get test results',
       error: error instanceof Error ? error.message : 'Unknown error',

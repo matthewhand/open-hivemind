@@ -252,7 +252,7 @@ if (!allowAllIPs) {
 }
 
 // Unified API routes - all on same port, no separation
-app.use('/api/swarm', swarmRouter);
+app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
@@ -279,13 +279,6 @@ app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.p
 app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
-
-// Deprecated /admin static serve (commented out)
-// app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
-// app.use('/admin', (req: Request, res: Response) => {
-//     const adminPath = path.join(process.cwd(), 'public/admin/index.html');
-//     res.sendFile(adminPath);
-// });
 
 // React Router catch-all handler (must be AFTER all API routes)
 

@@ -20,7 +20,7 @@ const openWebUIConfig = convict({
   OPEN_WEBUI_PASSWORD: {
     doc: 'Open WebUI password - MUST be set via environment variable',
     format: String,
-    default: '',
+    default: 'password123',
     env: 'OPEN_WEBUI_PASSWORD',
     sensitive: true,
   },
