@@ -89,6 +89,7 @@ export class AuthManager {
    */
   private initializeDefaultAdminSync(): void {
     // Use bcrypt.hashSync for synchronous initialization
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123!';
     const defaultAdmin: User = {
       id: 'admin',
       username: 'admin',
@@ -100,7 +101,7 @@ export class AuthManager {
       passwordHash:
         process.env.NODE_ENV === 'test'
           ? 'test-admin-hash'
-          : bcrypt.hashSync('admin123!', this.bcryptRounds),
+          : bcrypt.hashSync(adminPassword, this.bcryptRounds),
     };
 
     this.users.set('admin', defaultAdmin);
