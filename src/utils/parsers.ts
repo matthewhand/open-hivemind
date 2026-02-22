@@ -71,11 +71,11 @@ export const messageParser = {
    */
   stripFormatting: (text: string): string => {
     return text
+      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .replace(/<[^>]+>/g, '') // Remove Slack mentions
       .replace(/\*([^*]+)\*/g, '$1') // Remove bold
       .replace(/_([^_]+)_/g, '$1') // Remove italic
       .replace(/`([^`]+)`/g, '$1') // Remove inline code
-      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .trim();
   },
 };
@@ -153,6 +153,7 @@ export const numberParser = {
    */
   parseInt: (value: string | number, fallback: number = 0): number => {
     if (typeof value === 'number') {
+      if (isNaN(value)) return fallback;
       return Math.floor(value);
     }
 
