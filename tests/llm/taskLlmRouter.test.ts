@@ -39,6 +39,8 @@ jest.mock('@hivemind/provider-openai', () => ({
       return `openai:${String(cfg?.model || '')}:${String(metadata?.modelOverride || '')}`;
     }),
     generateCompletion: jest.fn(async () => ''),
+    validateCredentials: jest.fn().mockResolvedValue(true),
+    generateResponse: jest.fn().mockResolvedValue('test response'),
   })),
 }));
 
@@ -51,6 +53,8 @@ jest.mock('@integrations/flowise/flowiseProvider', () => ({
     supportsCompletion: () => false,
     generateChatCompletion: jest.fn(async () => 'flowise'),
     generateCompletion: jest.fn(async () => ''),
+    validateCredentials: jest.fn().mockResolvedValue(true),
+    generateResponse: jest.fn().mockResolvedValue('flowise'),
   })),
 }));
 
@@ -75,6 +79,8 @@ describe('taskLlmRouter.getTaskLlm', () => {
       supportsCompletion: () => false,
       generateChatCompletion: async () => 'fallback',
       generateCompletion: async () => 'fallback',
+      validateCredentials: async () => true,
+      generateResponse: async () => 'fallback',
     };
 
     // Import after mocks
@@ -93,6 +99,8 @@ describe('taskLlmRouter.getTaskLlm', () => {
       supportsCompletion: () => false,
       generateChatCompletion: async () => 'fallback',
       generateCompletion: async () => 'fallback',
+      validateCredentials: async () => true,
+      generateResponse: async () => 'fallback',
     };
 
     process.env.LLM_SEMANTIC_MODEL = 'gpt-5.1-nano';

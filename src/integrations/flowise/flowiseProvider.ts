@@ -64,6 +64,32 @@ export class FlowiseProvider implements ILlmProvider {
     flowiseDebug('generateCompletion is not supported, redirecting to generateChatCompletion.');
     return this.generateChatCompletion(prompt, [], { channelId: 'default-completion' });
   }
+
+  async validateCredentials(): Promise<boolean> {
+    try {
+      // Flowise doesn't have a dedicated credential validation endpoint,
+      // so we check if the configuration is present
+      const useRest =
+        this.config.useRest !== undefined
+          ? this.config.useRest
+          : flowiseConfig.get('FLOWISE_USE_REST');
+
+      if (useRest) {
+        const apiUrl = this.config.apiUrl || flowiseConfig.get('FLOWISE_API_ENDPOINT');
+        return !!apiUrl;
+      } else {
+        const chatflowId =
+          this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+        return !!chatflowId;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  async generateResponse(message: IMessage, context?: IMessage[]): Promise<string> {
+    return this.generateChatCompletion(message.getText(), context || [], message.metadata);
+  }
 }
 
 export default new FlowiseProvider();

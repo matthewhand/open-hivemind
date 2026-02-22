@@ -70,6 +70,16 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
       }
       return response;
     },
+    validateCredentials: async () => {
+      return provider.validateCredentials();
+    },
+    generateResponse: async (message: IMessage, context?: IMessage[]) => {
+      const response = await provider.generateResponse(message, context);
+      if (response) {
+        metrics.recordLlmTokenUsage(response.length);
+      }
+      return response;
+    },
   };
 }
 
@@ -99,6 +109,22 @@ const openWebUI: ILlmProvider = {
   },
   generateCompletion: async () => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
+  },
+  validateCredentials: async () => {
+    try {
+      await openWebUIImport.generateChatCompletion('test', [], {});
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  generateResponse: async (message: IMessage, context?: IMessage[]) => {
+    const result = await openWebUIImport.generateChatCompletion(
+      message.getText(),
+      context || [],
+      message.metadata
+    );
+    return result.text || '';
   },
 };
 

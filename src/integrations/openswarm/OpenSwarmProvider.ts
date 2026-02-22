@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { LLMResponse } from '@llm/interfaces/LLMResponse';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
@@ -54,5 +54,24 @@ export class OpenSwarmProvider implements ILlmProvider {
   async generateCompletion(prompt: string): Promise<string> {
     const content = await this.generateChatCompletion(prompt, [], {});
     return content;
+  }
+
+  async validateCredentials(): Promise<boolean> {
+    try {
+      // Check if the base URL is reachable
+      const response = await axios.get(`${this.baseUrl}/models`, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        timeout: 5000,
+      });
+      return response.status === 200;
+    } catch {
+      return false;
+    }
+  }
+
+  async generateResponse(message: IMessage, context?: IMessage[]): Promise<string> {
+    return this.generateChatCompletion(message.getText(), context || [], message.metadata);
   }
 }

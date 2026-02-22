@@ -66,6 +66,25 @@ export const openWebUIProvider: ILlmProvider = {
       throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
     }
   },
+
+  async validateCredentials(): Promise<boolean> {
+    try {
+      // Check if the API URL is configured and reachable
+      const apiUrl = openWebUIConfig.get('apiUrl');
+      if (!apiUrl) {
+        return false;
+      }
+      // Try to make a simple request to verify connectivity
+      const response = await openWebUIClient.get('/models');
+      return response.status === 200;
+    } catch {
+      return false;
+    }
+  },
+
+  async generateResponse(message: IMessage, context?: IMessage[]): Promise<string> {
+    return this.generateChatCompletion(message.getText(), context || []);
+  },
 };
 
 /**
