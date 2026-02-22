@@ -1,4 +1,4 @@
-import { MattermostMessage, MattermostPost } from '@src/integrations/mattermost/MattermostMessage';
+import { MattermostMessage, MattermostPost } from '@hivemind/adapter-mattermost';
 
 describe('MattermostMessage', () => {
   let mockPost: MattermostPost;

@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { testMattermostConnection } from '@hivemind/adapter-mattermost';
+import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import discordConfig from '../../config/discordConfig';
@@ -38,9 +40,6 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
-import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
-// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -1473,8 +1472,7 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'discord') {
       const rawToken = String((config as any).DISCORD_BOT_TOKEN || (config as any).token || '');
       const token = rawToken.split(',')[0]?.trim() || '';
-      const { testDiscordConnection } =
-        await import('@hivemind/adapter-discord/DiscordConnectionTest');
+      const { testDiscordConnection } = await import('@hivemind/adapter-discord');
       const result = await testDiscordConnection(token);
       return res.json(result);
     }

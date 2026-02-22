@@ -76,7 +76,7 @@ function mockDiscordMinimal() {
  * dependencies we also stub them minimally to just expose scoreChannel in the same pattern.
  */
 function mockSlackMinimal() {
-  jest.doMock('../../../src/integrations/slack/SlackService', () => {
+  jest.doMock('@hivemind/adapter-slack', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('../../../src/config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires

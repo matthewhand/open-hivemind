@@ -1,7 +1,7 @@
 import MattermostClient from '@src/integrations/mattermost/mattermostClient';
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
+import { MattermostService } from '@hivemind/adapter-mattermost';
 
-jest.mock('@src/integrations/mattermost/mattermostClient');
+jest.mock('@hivemind/adapter-mattermost');
 jest.mock('@src/config/BotConfigurationManager');
 
 describe('MattermostService', () => {

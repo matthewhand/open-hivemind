@@ -3,10 +3,10 @@ import * as path from 'path';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const SlackMgr = require('../../integrations/slack/SlackService');
+const SlackMgr = require('@hivemind/adapter-slack');
 const MattermostMgr = (() => {
   try {
-    return require('../../integrations/mattermost/MattermostService');
+    return require('@hivemind/adapter-mattermost');
   } catch (_e) {
     return null;
   }
@@ -109,7 +109,13 @@ export function getMessengerProvider() {
         svc = SlackMgr.default.getInstance();
       } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
         svc = SlackMgr.getInstance();
+      } else if (SlackMgr?.SlackService) {
+        // Handle case where SlackService is a class constructor exported directly or in namespace
+        if (SlackMgr.SlackService.getInstance) {
+          svc = SlackMgr.SlackService.getInstance();
+        }
       }
+
       if (svc) {
         // Ensure provider identity is exposed for tests
         if (typeof (svc as any).provider === 'undefined') {
@@ -170,7 +176,10 @@ export function getMessengerProvider() {
           svc = SlackMgr.default.getInstance();
         } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
           svc = SlackMgr.getInstance();
+        } else if (SlackMgr?.SlackService?.getInstance) {
+          svc = SlackMgr.SlackService.getInstance();
         }
+
         if (svc) {
           if (typeof (svc as any).provider === 'undefined') {
             (svc as any).provider = 'slack';

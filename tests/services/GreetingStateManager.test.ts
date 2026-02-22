@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import fs from 'fs/promises';
 import path from 'path';
 import Logger from '@common/logger';
@@ -70,14 +71,6 @@ describe('GreetingStateManager', () => {
     dateSpy.mockRestore();
   });
 
-  describe('Singleton Pattern', () => {
-    it('should return the same instance', () => {
-      const instance1 = GreetingStateManager.getInstance();
-      const instance2 = GreetingStateManager.getInstance();
-      expect(instance1).toBe(instance2);
-    });
-  });
-
   describe('Initialization', () => {
     it('should initialize successfully when file exists', async () => {
       const initialState = {
@@ -85,7 +78,7 @@ describe('GreetingStateManager', () => {
       };
       mockFs.readFile.mockResolvedValue(JSON.stringify(initialState));
 
-      const manager = GreetingStateManager.getInstance();
+      const manager = new GreetingStateManager();
       await manager.initialize();
 
       expect(mockFs.access).toHaveBeenCalledWith(EXPECTED_DATA_DIR);
@@ -97,7 +90,7 @@ describe('GreetingStateManager', () => {
       // access fails first (dir missing), then mkdir called
       mockFs.access.mockRejectedValueOnce(new Error('ENOENT'));
 
-      const manager = GreetingStateManager.getInstance();
+      const manager = new GreetingStateManager();
       await manager.initialize();
 
       expect(mockFs.mkdir).toHaveBeenCalledWith(EXPECTED_DATA_DIR, { recursive: true });
@@ -108,7 +101,7 @@ describe('GreetingStateManager', () => {
       error.code = 'ENOENT';
       mockFs.readFile.mockRejectedValue(error);
 
-      const manager = GreetingStateManager.getInstance();
+      const manager = new GreetingStateManager();
       await manager.initialize();
 
       expect(manager.getAllState()).toEqual({});
@@ -120,7 +113,7 @@ describe('GreetingStateManager', () => {
       const error = new Error('Permission denied');
       mockFs.readFile.mockRejectedValue(error);
 
-      const manager = GreetingStateManager.getInstance();
+      const manager = new GreetingStateManager();
       await manager.initialize();
 
       expect(manager.getAllState()).toEqual({});
@@ -128,7 +121,7 @@ describe('GreetingStateManager', () => {
     });
 
     it('should not re-initialize if already initialized', async () => {
-      const manager = GreetingStateManager.getInstance();
+      const manager = new GreetingStateManager();
       await manager.initialize();
       mockFs.readFile.mockClear();
 
@@ -147,7 +140,7 @@ describe('GreetingStateManager', () => {
 
         mockFs.readFile.mockResolvedValue(JSON.stringify(initialState));
 
-        const manager = GreetingStateManager.getInstance();
+        const manager = new GreetingStateManager();
         await manager.initialize();
 
         const state = manager.getAllState();
@@ -168,7 +161,7 @@ describe('GreetingStateManager', () => {
         const error = new Error('Write failed');
         mockFs.writeFile.mockRejectedValue(error);
 
-        const manager = GreetingStateManager.getInstance();
+        const manager = new GreetingStateManager();
         await manager.initialize();
 
         // Wait for async operations (cleanupExpiredEntries calls saveState without await)
@@ -185,16 +178,14 @@ describe('GreetingStateManager', () => {
     let manager: GreetingStateManager;
 
     beforeEach(async () => {
-      manager = GreetingStateManager.getInstance();
+      manager = new GreetingStateManager();
       await manager.initialize();
       mockFs.writeFile.mockClear(); // Clear initialization writes
     });
 
     describe('hasGreetingBeenSent', () => {
       it('should throw error if not initialized', () => {
-          // Reset instance to uninitialized state
-          setPrivateInstance(undefined);
-          const newManager = GreetingStateManager.getInstance();
+          const newManager = new GreetingStateManager();
 
           expect(() => newManager.hasGreetingBeenSent('service-1')).toThrow('GreetingStateManager must be initialized before use');
       });
@@ -219,12 +210,11 @@ describe('GreetingStateManager', () => {
         // 1. Setup initial state with an expired entry
         const expiredTime = NOW - (24 * 60 * 60 * 1000) - 100;
         // We need to re-initialize to inject this state easily
-        setPrivateInstance(undefined);
         mockFs.readFile.mockResolvedValue(JSON.stringify({
             'expired-service': { timestamp: expiredTime, channelId: 'chan-1' }
         }));
 
-        manager = GreetingStateManager.getInstance();
+        manager = new GreetingStateManager();
         // Skip auto-cleanup during init for this test?
         // No, init calls cleanupExpiredEntries. So it will be removed during init.
         // We need to test the logic inside hasGreetingBeenSent.
@@ -253,15 +243,12 @@ describe('GreetingStateManager', () => {
       });
 
       it('should log error if saving state fails after expiration removal', async () => {
-        // Reset instance to force re-initialization
-        setPrivateInstance(undefined);
-
         // Setup valid entry that will expire
         mockFs.readFile.mockResolvedValue(JSON.stringify({
             'service-to-expire': { timestamp: NOW, channelId: 'chan-1' }
         }));
 
-        manager = GreetingStateManager.getInstance();
+        manager = new GreetingStateManager();
         await manager.initialize();
 
         expect(manager.getAllState()).toHaveProperty('service-to-expire');

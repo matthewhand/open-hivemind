@@ -21,13 +21,9 @@ export function registerServices(): void {
     useValue: BotConfigurationManager.getInstance(),
   });
 
-  container.register(
-    TOKENS.UserConfigStore,
-    {
-      useClass: UserConfigStore,
-    },
-    { lifecycle: Lifecycle.Singleton }
-  );
+  container.register(TOKENS.UserConfigStore, {
+    useValue: UserConfigStore.getInstance(),
+  });
 
   container.register(TOKENS.ProviderConfigManager, {
     useFactory: (_) => ProviderConfigManager.getInstance(),

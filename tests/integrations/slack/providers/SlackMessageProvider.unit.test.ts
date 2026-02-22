@@ -24,7 +24,7 @@ describe('SlackMessageProvider unit', () => {
 
   test('a) getClientId delegates to SlackService.getInstance().getClientId()', async () => {
     const { SlackMessageProvider } =
-      await import('../../../../src/integrations/slack/providers/SlackMessageProvider');
+        await import('@hivemind/adapter-slack');
     const provider = new SlackMessageProvider();
 
     const clientId = provider.getClientId();

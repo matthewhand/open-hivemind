@@ -88,6 +88,22 @@ export function sanitizeObject<T>(obj: T, options: SanitizationOptions = {}): T 
 }
 
 /**
+ * Common validation regex patterns
+ */
+export const ValidationPatterns = {
+  // Simple email regex for validation
+  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  // URL regex
+  url: /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i,
+  // Safe string (alphanumeric, underscore, dash)
+  safeString: /^[a-zA-Z0-9_-]+$/,
+  // ObjectId (MongoDB)
+  objectId: /^[0-9a-fA-F]{24}$/,
+  // UUID v4
+  uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+};
+
+/**
  * Common validators for reuse
  */
 export const CommonValidators = {

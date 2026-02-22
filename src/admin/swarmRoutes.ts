@@ -49,7 +49,8 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
       port = parseInt(String(rawPort).trim(), 10);
 
       if (port < 1 || port > 65535) {
-        return res.status(400).json({ ok: false, error: 'Port must be between 1 and 65535' });
+        res.status(400).json({ ok: false, error: 'Port must be between 1 and 65535' });
+        return;
       }
     }
 

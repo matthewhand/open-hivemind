@@ -303,7 +303,8 @@ export const Discord = {
      */
     public async getChannelOwnerId(channelId: string): Promise<string | null> {
       try {
-        const botInfo = this.bots[0];
+        const bots = this.botManager.getAllBots();
+        const botInfo = bots[0];
         if (!botInfo) return null;
 
         const channel = await botInfo.client.channels.fetch(channelId);

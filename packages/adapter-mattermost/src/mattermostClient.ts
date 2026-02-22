@@ -32,12 +32,22 @@ interface Channel {
   header?: string;
 }
 
+interface Team {
+  id: string;
+  [key: string]: any;
+}
+
 export default class MattermostClient {
   private serverUrl: string;
   private token: string;
   private api: AxiosInstance;
-  private connected: boolean = false;
+  private connected = false;
   private me: User | null = null;
+  private teamsCache: { data: Team[]; timestamp: number } | null = null;
+  private channelIdCache = new Map<string, { id: string; timestamp: number }>();
+  private pendingLookups = new Map<string, Promise<string>>();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_CACHE_SIZE = 1000;
 
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
@@ -89,11 +99,7 @@ export default class MattermostClient {
     }
   }
 
-  async getChannelPosts(
-    channelId: string,
-    page: number = 0,
-    perPage: number = 60
-  ): Promise<MattermostPost[]> {
+  async getChannelPosts(channelId: string, page = 0, perPage = 60): Promise<MattermostPost[]> {
     try {
       const response = await this.api.get(`/channels/${channelId}/posts`, {
         params: { page, per_page: perPage },
@@ -148,21 +154,56 @@ export default class MattermostClient {
       return channel;
     }
 
-    try {
-      const teamsResponse = await this.api.get('/users/me/teams');
-      const teams = teamsResponse.data;
-
-      for (const team of teams) {
-        const channelData = await this.getChannelByName(team.id, channel);
-        if (channelData) {
-          return channelData.id;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to resolve channel:', error);
+    // Check cache
+    const cachedChannel = this.channelIdCache.get(channel);
+    if (cachedChannel && Date.now() - cachedChannel.timestamp < this.CACHE_TTL) {
+      return cachedChannel.id;
     }
 
-    throw new Error(`Channel not found: ${channel}`);
+    // Check pending lookups to prevent race conditions
+    const pending = this.pendingLookups.get(channel);
+    if (pending) {
+      return pending;
+    }
+
+    const lookupPromise = (async (): Promise<string> => {
+      try {
+        let teams: Team[];
+        if (this.teamsCache && Date.now() - this.teamsCache.timestamp < this.CACHE_TTL) {
+          teams = this.teamsCache.data;
+        } else {
+          // Clear stale cache
+          this.teamsCache = null;
+          const teamsResponse = await this.api.get('/users/me/teams');
+          teams = teamsResponse.data;
+          this.teamsCache = { data: teams, timestamp: Date.now() };
+        }
+
+        const channelPromises = teams.map((team) => this.getChannelByName(team.id, channel));
+        const results = await Promise.all(channelPromises);
+        const foundChannel = results.find((c) => !!c);
+
+        if (foundChannel) {
+          // Enforce cache size limit
+          if (this.channelIdCache.size >= this.MAX_CACHE_SIZE) {
+            const firstKey = this.channelIdCache.keys().next().value;
+            if (firstKey) this.channelIdCache.delete(firstKey);
+          }
+          this.channelIdCache.set(channel, { id: foundChannel.id, timestamp: Date.now() });
+          return foundChannel.id;
+        }
+
+        throw new Error(`Channel not found: ${channel}`);
+      } catch (error) {
+        console.error('Failed to resolve channel:', error);
+        throw error;
+      } finally {
+        this.pendingLookups.delete(channel);
+      }
+    })();
+
+    this.pendingLookups.set(channel, lookupPromise);
+    return lookupPromise;
   }
 
   isConnected(): boolean {
@@ -171,6 +212,9 @@ export default class MattermostClient {
 
   disconnect(): void {
     this.connected = false;
+    this.teamsCache = null;
+    this.channelIdCache.clear();
+    this.pendingLookups.clear();
   }
 
   getCurrentUserId(): string | null {

@@ -10,7 +10,26 @@
 
 import express from 'express';
 import request from 'supertest';
-import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+
+// Mock authentication middleware
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next(),
+}));
+
+// Mock WebSocketService
+jest.mock('@src/server/services/WebSocketService', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn().mockReturnValue({
+      getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errors: [] }),
+      getAllBotStats: jest.fn().mockReturnValue({}),
+      getMessageFlow: jest.fn().mockReturnValue([]),
+    }),
+  },
+}));
+
 import dashboardRouter from '../../src/server/routes/dashboard';
 
 describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
@@ -29,7 +48,11 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /dashboard/api/status - HAPPY PATH TESTS', () => {
     it('should return valid bot status with all required fields', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/api/status');
+      if (response.status !== 200) {
+        console.error('Dashboard API Error:', response.body);
+      }
+      expect(response.status).toBe(200);
 
       expect(response.body).toHaveProperty('bots');
       expect(response.body).toHaveProperty('uptime');

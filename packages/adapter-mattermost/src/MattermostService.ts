@@ -1,6 +1,20 @@
 import { EventEmitter } from 'events';
+import retry from 'async-retry';
+import Debug from 'debug';
 import type { Application } from 'express';
+import { container } from 'tsyringe';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
+import {
+  ApiError,
+  BaseHivemindError,
+  ConfigurationError,
+  NetworkError,
+  ValidationError,
+} from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
+import { createErrorResponse } from '@src/utils/errorResponse';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -8,23 +22,34 @@ import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import MattermostClient from './mattermostClient';
 
+const debug = Debug('app:MattermostService:verbose');
+
+// Metrics and retry configuration
+const metrics = MetricsCollector.getInstance();
+const RETRY_CONFIG = {
+  retries: 3,
+  minTimeout: 1000,
+  maxTimeout: 5000,
+  factor: 2,
+};
+
 /**
  * MattermostService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
-  private clients: Map<string, MattermostClient> = new Map();
-  private channels: Map<string, string> = new Map();
-  private botConfigs: Map<string, any> = new Map();
+  private clients = new Map<string, MattermostClient>();
+  private channels = new Map<string, string>();
+  private botConfigs = new Map<string, any>();
   private app?: Application;
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
-  public supportsChannelPrioritization: boolean = true;
+  public supportsChannelPrioritization = true;
 
   private constructor() {
     super();
-    console.log('Initializing MattermostService with multi-instance support');
+    debug('Initializing MattermostService with multi-instance support');
     this.initializeFromConfiguration();
   }
 
@@ -39,11 +64,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
       .filter((bot) => bot.messageProvider === 'mattermost' && bot.mattermost?.token);
 
     if (mattermostBotConfigs.length === 0) {
-      console.warn('No Mattermost bot configurations found');
+      debug('No Mattermost bot configurations found');
       return;
     }
 
-    console.log(`Initializing ${mattermostBotConfigs.length} Mattermost bot instances`);
+    debug(`Initializing ${mattermostBotConfigs.length} Mattermost bot instances`);
 
     for (const botConfig of mattermostBotConfigs) {
       this.initializeBotInstance(botConfig);
@@ -57,11 +82,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
     const botName = botConfig.name;
 
     if (!botConfig.mattermost?.serverUrl || !botConfig.mattermost?.token) {
-      console.error(`Invalid Mattermost configuration for bot: ${botName}`);
+      debug(`Invalid Mattermost configuration for bot: ${botName}`);
       return;
     }
 
-    console.log(`Initializing Mattermost bot: ${botName}`);
+    debug(`Initializing Mattermost bot: ${botName}`);
 
     const client = new MattermostClient({
       serverUrl: botConfig.mattermost.serverUrl,
@@ -88,12 +113,12 @@ export class MattermostService extends EventEmitter implements IMessengerService
   }
 
   public async initialize(): Promise<void> {
-    console.log('Initializing Mattermost connections...');
+    debug('Initializing Mattermost connections...');
 
     for (const [botName, client] of this.clients) {
       try {
         await client.connect();
-        console.log(`Connected to Mattermost server for bot: ${botName}`);
+        debug(`Connected to Mattermost server for bot: ${botName}`);
         // Cache identity for mention detection / self-filtering.
         const botConfig = this.botConfigs.get(botName) || {};
         this.botConfigs.set(botName, {
@@ -102,12 +127,12 @@ export class MattermostService extends EventEmitter implements IMessengerService
           username: client.getCurrentUsername?.() || botConfig.username,
         });
       } catch (error) {
-        console.error(`Failed to connect to Mattermost for bot ${botName}:`, error);
+        debug(`Failed to connect to Mattermost for bot ${botName}:`, error);
         throw error;
       }
     }
 
-    const startupGreetingService = require('../../services/StartupGreetingService').default;
+    const startupGreetingService = container.resolve(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 
@@ -116,7 +141,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   }
 
   public setMessageHandler(): void {
-    console.log('Setting message handler for Mattermost bots');
+    debug('Setting message handler for Mattermost bots');
   }
 
   public async sendMessageToChannel(
@@ -126,74 +151,181 @@ export class MattermostService extends EventEmitter implements IMessengerService
     threadId?: string,
     replyToMessageId?: string
   ): Promise<string> {
-    const botName = senderName || Array.from(this.clients.keys())[0];
-    const client = this.clients.get(botName);
+    debug('Entering sendMessageToChannel (delegated)', {
+      channelId,
+      textPreview: text ? text.substring(0, 50) + (text.length > 50 ? '...' : '') : '',
+      senderName,
+      threadId,
+    });
 
-    if (!client) {
-      throw new Error(`Bot ${botName} not found`);
-    }
+    const startTime = Date.now();
+    let attemptCount = 0;
 
     try {
-      const rootId = threadId || replyToMessageId;
-      const post = await client.postMessage({
-        channel: channelId,
-        text: text,
-        ...(rootId ? { root_id: rootId } : {}),
-      });
+      const result = await retry(async (bail, attempt) => {
+        attemptCount = attempt;
+        debug(`Attempting to send message (attempt ${attempt})`);
 
-      console.log(`[${botName}] Sent message to channel ${channelId}`);
-      return post.id;
-    } catch (error) {
-      console.error(`[${botName}] Failed to send message:`, error);
-      return '';
+        try {
+          const botName = senderName || Array.from(this.clients.keys())[0];
+          const client = this.clients.get(botName);
+
+          if (!client) {
+            const errorMsg = `Bot ${botName} not found`;
+            debug(errorMsg);
+            throw new ValidationError(errorMsg, 'senderName', botName);
+          }
+
+          const rootId = threadId || replyToMessageId;
+          const post = await client.postMessage({
+            channel: channelId,
+            text: text,
+            ...(rootId ? { root_id: rootId } : {}),
+          });
+
+          debug(`[${botName}] Sent message to channel ${channelId}`);
+          return post.id;
+        } catch (error: any) {
+          debug(`Send message attempt ${attempt} failed: ${error.message}`);
+
+          // Don't retry on certain errors
+          if (
+            error.message?.includes('channel_not_found') ||
+            error.message?.includes('not_in_channel') ||
+            error.message?.includes('missing_scope')
+          ) {
+            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            bail(bailError);
+            return '';
+          }
+
+          // Convert error to appropriate Hivemind error type
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          const errType = (hivemindError as any).type;
+          if (errType === 'network' || errType === 'api') {
+            throw hivemindError;
+          }
+
+          throw error;
+        }
+      }, RETRY_CONFIG);
+
+      const duration = Date.now() - startTime;
+      metrics.incrementMessages();
+      metrics.recordResponseTime(duration);
+      debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
+      return result;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      metrics.incrementErrors();
+      debug(
+        `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+      );
+
+      // Record WebSocket monitoring event for failed message
+      try {
+        const ws = require('@src/server/services/WebSocketService')
+          .default as typeof import('@src/server/services/WebSocketService').default;
+        ws.getInstance().recordMessageFlow({
+          botName: senderName || Array.from(this.clients.keys())[0],
+          provider: 'mattermost',
+          channelId,
+          userId: 'system',
+          messageType: 'outgoing',
+          contentLength: text.length,
+          status: 'error',
+          errorMessage: error.message,
+        });
+      } catch {}
+
+      throw error;
     }
   }
 
-  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
+  public async getMessagesFromChannel(channelId: string, limit = 10): Promise<IMessage[]> {
     return this.fetchMessages(channelId, limit);
   }
 
-  public async fetchMessages(
-    channelId: string,
-    limit: number = 10,
-    botName?: string
-  ): Promise<IMessage[]> {
-    const targetBot = botName || Array.from(this.clients.keys())[0];
-    const client = this.clients.get(targetBot);
+  public async fetchMessages(channelId: string, limit = 10, botName?: string): Promise<IMessage[]> {
+    debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
 
-    if (!client) {
-      console.error(`Bot ${targetBot} not found`);
-      return [];
-    }
+    const startTime = Date.now();
+    let attemptCount = 0;
 
     try {
-      const posts = await client.getChannelPosts(channelId, 0, limit);
-      const messages: IMessage[] = [];
+      const result = await retry(async (bail, attempt) => {
+        attemptCount = attempt;
+        debug(`Attempting to fetch messages (attempt ${attempt})`);
 
-      const botConfig = this.botConfigs.get(targetBot) || {};
-      const botUsername = botConfig.username;
-      const botUserId = botConfig.userId;
+        try {
+          const targetBot = botName || Array.from(this.clients.keys())[0];
+          const client = this.clients.get(targetBot);
 
-      for (const post of posts.slice(0, limit)) {
-        const user = await client.getUser(post.user_id);
-        const username = user
-          ? `${user.first_name} ${user.last_name}`.trim() || user.username
-          : 'Unknown';
-        const isBot = Boolean(user?.is_bot);
+          if (!client) {
+            debug(`Bot ${targetBot} not found`);
+            return [];
+          }
 
-        const { MattermostMessage } = await import('./MattermostMessage');
-        const mattermostMsg = new MattermostMessage(post, username, {
-          isBot,
-          botUsername,
-          botUserId,
-        });
-        messages.push(mattermostMsg);
-      }
+          const posts = await client.getChannelPosts(channelId, 0, limit);
+          const messages: IMessage[] = [];
 
-      return messages.reverse(); // Most recent first
-    } catch (error) {
-      console.error(`[${targetBot}] Failed to fetch messages:`, error);
-      return [];
+          const botConfig = this.botConfigs.get(targetBot) || {};
+          const botUsername = botConfig.username;
+          const botUserId = botConfig.userId;
+
+          for (const post of posts.slice(0, limit)) {
+            const user = await client.getUser(post.user_id);
+            const username = user
+              ? `${user.first_name} ${user.last_name}`.trim() || user.username
+              : 'Unknown';
+            const isBot = Boolean(user?.is_bot);
+
+            const { MattermostMessage } = await import('./MattermostMessage');
+            const mattermostMsg = new MattermostMessage(post, username, {
+              isBot,
+              botUsername,
+              botUserId,
+            });
+            messages.push(mattermostMsg);
+          }
+
+          return messages.reverse(); // Most recent first
+        } catch (error: any) {
+          debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
+
+          // Don't retry on certain errors
+          if (
+            error.message?.includes('channel_not_found') ||
+            error.message?.includes('not_in_channel') ||
+            error.message?.includes('missing_scope')
+          ) {
+            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            bail(bailError);
+            return [];
+          }
+
+          // Convert error to appropriate Hivemind error type
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          const errType = (hivemindError as any).type;
+          if (errType === 'network' || errType === 'api') {
+            throw hivemindError;
+          }
+
+          throw error;
+        }
+      }, RETRY_CONFIG);
+
+      const duration = Date.now() - startTime;
+      metrics.recordResponseTime(duration);
+      debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
+      return result;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      metrics.incrementErrors();
+      debug(
+        `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+      );
+      return []; // Return empty array on failure
     }
   }
 
@@ -207,15 +339,15 @@ export class MattermostService extends EventEmitter implements IMessengerService
           channel: channelId,
           text: text,
         });
-        console.log(`[${botName}] Sent announcement to channel ${channelId}`);
+        debug(`[${botName}] Sent announcement to channel ${channelId}`);
       } catch (error) {
-        console.error(`[${botName}] Failed to send announcement:`, error);
+        debug(`[${botName}] Failed to send announcement:`, error);
       }
     }
   }
 
   public async joinChannel(channel: string): Promise<void> {
-    console.log(`Joining Mattermost channel: ${channel}`);
+    debug(`Joining Mattermost channel: ${channel}`);
   }
 
   public getClientId(): string {
@@ -349,7 +481,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   }
 
   public async shutdown(): Promise<void> {
-    console.log('Shutting down MattermostService...');
+    debug('Shutting down MattermostService...');
     MattermostService.instance = undefined;
   }
 
@@ -387,11 +519,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
   /**
    * Returns individual service wrappers for each managed Mattermost bot.
    */
-  public getDelegatedServices(): Array<{
+  public getDelegatedServices(): {
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }> {
+  }[] {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
       const serviceName = `mattermost-${name}`;

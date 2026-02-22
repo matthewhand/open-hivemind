@@ -1,7 +1,5 @@
 import axios from 'axios';
-import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
-import SlackMessage from '@src/integrations/slack/SlackMessage';
-import { SlackMessageProcessor } from '@src/integrations/slack/SlackMessageProcessor';
+import { SlackBotManager, SlackMessage, SlackMessageProcessor } from '@hivemind/adapter-slack';
 
 jest.mock('axios', () => ({
   get: jest.fn(),

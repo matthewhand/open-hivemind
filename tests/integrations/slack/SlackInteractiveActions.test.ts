@@ -1,5 +1,4 @@
-import { SlackInteractiveActions } from '../../../src/integrations/slack/SlackInteractiveActions';
-import { SlackService } from '../../../src/integrations/slack/SlackService';
+import { SlackInteractiveActions, SlackService } from '@hivemind/adapter-slack';
 
 // Create a proper mock type
 type MockedSlackService = {

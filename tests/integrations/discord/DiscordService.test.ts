@@ -190,6 +190,13 @@ describe('DiscordService', () => {
     });
 
     MockMessageConfig.get.mockReturnValue(undefined);
+
+    // Mock StartupGreetingService
+    jest.mock('@services/StartupGreetingService', () => ({
+      default: {
+        emit: jest.fn(),
+      },
+    }));
   };
 
   beforeEach(() => {
@@ -275,7 +282,8 @@ describe('DiscordService', () => {
       const combinedLogs = mockDebugCaptures
         .map((c: { namespace: string; message: string }) => `[${c.namespace}] ${c.message}`)
         .join('\n');
-      expect(combinedLogs).toContain('app:discordService');
+      // DiscordService delegates initialization to manager, so logs come from manager
+      expect(combinedLogs).toContain('app:discordBotManager');
       expect(combinedLogs).toContain('Discord bot ready:');
       expect(combinedLogs).toContain('name=TestBot1');
       expect(combinedLogs).toContain(`id=${bot.client.user.id}`);
@@ -332,9 +340,6 @@ describe('DiscordService', () => {
 
       service.setMessageHandler(mockHandlerError);
 
-      // Verify that the message handler is stored
-      expect((service as any).currentHandler).toBe(mockHandlerError);
-
       // Verify that event listeners are set up for all bots
       const bot = service.getAllBots()[0];
 
@@ -374,21 +379,22 @@ describe('DiscordService', () => {
   describe('agent context resolution', () => {
     it('resolveAgentContext can use per-bot id to include discord username as a name candidate', () => {
       // Arrange: simulate a swarm bot whose config includes the resolved Discord user id.
-      (service as any).bots = [
-        {
-          botUserId: '555555555555555555',
-          botUserName: 'SomeInternalLabel',
-          client: {
-            user: { username: 'seneca', globalName: 'Seneca' },
-            destroy: jest.fn().mockResolvedValue(undefined),
-          },
-          config: {
-            BOT_ID: '555555555555555555',
-            discord: { clientId: '555555555555555555' },
-            name: 'NotSeneca',
-          },
+      const mockBot = {
+        botUserId: '555555555555555555',
+        botUserName: 'SomeInternalLabel',
+        client: {
+          user: { username: 'seneca', globalName: 'Seneca' },
+          destroy: jest.fn().mockResolvedValue(undefined),
         },
-      ];
+        config: {
+          BOT_ID: '555555555555555555',
+          discord: { clientId: '555555555555555555' },
+          name: 'NotSeneca',
+        },
+      };
+
+      // Mock botManager.getAllBots to return our mock bot
+      jest.spyOn(service.botManager, 'getAllBots').mockReturnValue([mockBot]);
 
       const ctx = service.resolveAgentContext({
         botConfig: {

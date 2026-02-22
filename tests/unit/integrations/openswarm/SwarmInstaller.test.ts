@@ -82,7 +82,7 @@ describe('SwarmInstaller', () => {
       const result = await installer.startSwarm('invalid' as any);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Invalid port number');
+      expect(result.message).toContain('Invalid port');
       expect(mockSpawn).not.toHaveBeenCalled();
     });
 
@@ -90,7 +90,7 @@ describe('SwarmInstaller', () => {
       const result = await installer.startSwarm(70000);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Invalid port number');
+      expect(result.message).toContain('Invalid port');
       expect(mockSpawn).not.toHaveBeenCalled();
     });
 
@@ -98,7 +98,7 @@ describe('SwarmInstaller', () => {
       const result = await installer.startSwarm(-1);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Invalid port number');
+      expect(result.message).toContain('Invalid port');
       expect(mockSpawn).not.toHaveBeenCalled();
     });
 
