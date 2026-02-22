@@ -27,9 +27,10 @@ import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
+import { container } from 'tsyringe';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import DemoModeService from '@src/services/DemoModeService';
-import StartupGreetingService from '@src/services/StartupGreetingService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -431,7 +432,8 @@ async function main() {
   }
 
   // Initialize the StartupGreetingService
-  await StartupGreetingService.initialize();
+  const startupGreetingService = container.resolve(StartupGreetingService);
+  await startupGreetingService.initialize();
 
   const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', {
