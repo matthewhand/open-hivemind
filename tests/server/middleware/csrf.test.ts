@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { csrfProtection, csrfTokenHandler, generateCsrfToken, csrfConfig } from '../../../src/server/middleware/csrf';
+import {
+  csrfConfig,
+  csrfProtection,
+  csrfTokenHandler,
+  generateCsrfToken,
+} from '../../../src/server/middleware/csrf';
 
 describe('CSRF Middleware', () => {
   let mockReq: Partial<Request>;
@@ -159,9 +164,9 @@ describe('CSRF Middleware', () => {
       // First generate a token using the handler
       mockReq.ip = '127.0.0.1';
       mockReq.headers['user-agent'] = 'test-user-agent';
-      
+
       csrfTokenHandler(mockReq as Request, mockRes as Response);
-      
+
       // Get the token from the mock response
       const callArgs = (mockRes.json as jest.Mock).mock.calls[0][0];
       const token = callArgs.csrfToken;

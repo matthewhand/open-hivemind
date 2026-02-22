@@ -20,7 +20,7 @@ adminRouter.use(authenticate);
 // Apply audit middleware to all admin routes
 adminRouter.use(auditMiddleware);
 
-function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string }> {
+async function loadPersonas(): Promise<Array<{ key: string; name: string; systemPrompt: string }>> {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
   const personasDir = path.join(configDir, 'personas');
   const fallback = [
@@ -41,23 +41,31 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
     },
   ];
   try {
-    if (!fs.existsSync(personasDir)) {
+    try {
+      await fs.promises.access(personasDir);
+    } catch {
       return fallback;
     }
-    const out: any[] = [];
-    for (const file of fs.readdirSync(personasDir)) {
-      if (!file.endsWith('.json')) {
-        continue;
-      }
+
+    const files = await fs.promises.readdir(personasDir);
+    const validFiles = files.filter((file) => file.endsWith('.json'));
+
+    const promises = validFiles.map(async (file) => {
       try {
-        const data = JSON.parse(fs.readFileSync(path.join(personasDir, file), 'utf8'));
+        const content = await fs.promises.readFile(path.join(personasDir, file), 'utf8');
+        const data = JSON.parse(content);
         if (data && data.key && data.name && typeof data.systemPrompt === 'string') {
-          out.push(data);
+          return data;
         }
       } catch (e) {
         debug('Invalid persona file:', file, e);
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    const out: any[] = results.filter((item) => item !== null);
+
     return out.length ? out : fallback;
   } catch (e) {
     debug('Failed loading personas', e);
@@ -102,8 +110,8 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
   }
 });
 
-adminRouter.get('/personas', (_req: Request, res: Response) => {
-  res.json({ ok: true, personas: loadPersonas() });
+adminRouter.get('/personas', async (_req: Request, res: Response) => {
+  res.json({ ok: true, personas: await loadPersonas() });
 });
 
 const LLM_PROVIDERS = [
