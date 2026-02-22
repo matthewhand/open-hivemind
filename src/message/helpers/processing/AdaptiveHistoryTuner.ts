@@ -15,7 +15,7 @@ interface ChannelState {
  */
 export class AdaptiveHistoryTuner {
   private static instance: AdaptiveHistoryTuner;
-  private state: Map<string, ChannelState> = new Map();
+  private state = new Map<string, ChannelState>();
 
   public static getInstance(): AdaptiveHistoryTuner {
     if (!AdaptiveHistoryTuner.instance) {

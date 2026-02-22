@@ -26,10 +26,10 @@ const debug = Debug('app:MCPProviderManager');
  * servers that provide external tool capabilities to bots.
  */
 export class MCPProviderManager extends EventEmitter implements IMCPProviderManager {
-  private providers: Map<string, MCPProviderConfig> = new Map();
-  private processes: Map<string, ChildProcess> = new Map();
-  private statuses: Map<string, MCPProviderStatus> = new Map();
-  private healthCheckIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private providers = new Map<string, MCPProviderConfig>();
+  private processes = new Map<string, ChildProcess>();
+  private statuses = new Map<string, MCPProviderStatus>();
+  private healthCheckIntervals = new Map<string, NodeJS.Timeout>();
 
   constructor() {
     super();

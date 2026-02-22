@@ -8,8 +8,8 @@ const debug = Debug('app:IncomingMessageDensity');
  */
 export class IncomingMessageDensity {
   private static instance: IncomingMessageDensity;
-  private channelHistory: Map<string, Array<{ ts: number; isBot: boolean }>> = new Map();
-  private participantLastSeen: Map<string, Map<string, number>> = new Map();
+  private channelHistory = new Map<string, { ts: number; isBot: boolean }[]>();
+  private participantLastSeen = new Map<string, Map<string, number>>();
   private readonly WINDOW_MS = 300000; // 5 minutes
 
   public static getInstance(): IncomingMessageDensity {
@@ -47,11 +47,7 @@ export class IncomingMessageDensity {
    * Backwards-compatible convenience method used by older call sites and tests.
    * Records a message and returns the legacy 1/N density modifier (based on total messages in 1 min).
    */
-  public recordMessageAndGetModifier(
-    channelId: string,
-    authorId?: string,
-    isBot: boolean = false
-  ): number {
+  public recordMessageAndGetModifier(channelId: string, authorId?: string, isBot = false): number {
     this.recordMessage(channelId, authorId, isBot);
     const modifier = this.getDensityModifier(channelId);
     debug(
@@ -65,7 +61,7 @@ export class IncomingMessageDensity {
    */
   public getDensity(
     channelId: string,
-    windowMs: number = 60000
+    windowMs = 60000
   ): { userCount: number; botCount: number; total: number } {
     const now = Date.now();
     const history = this.channelHistory.get(channelId) || [];

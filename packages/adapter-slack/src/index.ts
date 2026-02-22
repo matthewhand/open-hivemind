@@ -21,3 +21,7 @@ export { SlackEventProcessor } from './SlackEventProcessor';
 export { SlackMessageProcessor } from './SlackMessageProcessor';
 export { SlackWelcomeHandler } from './SlackWelcomeHandler';
 export { default as SlackMessage } from './SlackMessage';
+
+// New exports for migration
+export { SlackMessageProvider } from './providers/SlackMessageProvider';
+export { testSlackConnection } from './SlackConnectionTest';

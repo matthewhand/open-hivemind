@@ -222,7 +222,7 @@ function sanitizeObject(obj: any): void {
         .replace(/javascript:/gi, '')
         .replace(/on\w+\s*=/gi, '')
         .replace(/[<>'"&]/g, (match) => {
-          const entityMap: { [key: string]: string } = {
+          const entityMap: Record<string, string> = {
             '<': '<',
             '>': '>',
             '"': '"',

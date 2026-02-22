@@ -38,9 +38,9 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
-import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
+import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
+import { testSlackConnection } from '@hivemind/adapter-slack';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -253,18 +253,18 @@ router.get('/templates', async (req, res) => {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    // Check if templates directory exists asynchronously
+    let files: string[] = [];
     try {
-      await fs.promises.access(templatesDir);
-    } catch {
+      files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    } catch (e) {
       return res.json({ templates: [] });
     }
 
-    const files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
-
     const templatesPromises = files.map(async (file) => {
       try {
-        const content = JSON.parse(await fs.promises.readFile(path.join(templatesDir, file), 'utf8'));
+        const content = JSON.parse(
+          await fs.promises.readFile(path.join(templatesDir, file), 'utf8')
+        );
         return {
           id: file.replace('.json', ''),
           name: content.name || file.replace('.json', ''),
@@ -553,7 +553,7 @@ router.get('/', async (req, res) => {
       // Return demo bots in demo mode
       const demoBots = demoService.getDemoBots();
       return res.json({
-        bots: demoBots.map((bot) => ({
+        bots: demoBots.map(bot => ({
           ...bot,
           id: bot.id,
           name: bot.name,
@@ -598,44 +598,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-            ...mergedBot.discord,
-            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-          }
+              ...mergedBot.discord,
+              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+            }
           : undefined,
         slack: mergedBot.slack
           ? {
-            ...mergedBot.slack,
-            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-            signingSecret: redactSensitiveInfo(
-              'SLACK_SIGNING_SECRET',
-              mergedBot.slack.signingSecret || ''
-            ),
-          }
+              ...mergedBot.slack,
+              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+              signingSecret: redactSensitiveInfo(
+                'SLACK_SIGNING_SECRET',
+                mergedBot.slack.signingSecret || ''
+              ),
+            }
           : undefined,
         openai: mergedBot.openai
           ? {
-            ...mergedBot.openai,
-            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-          }
+              ...mergedBot.openai,
+              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+            }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-            ...mergedBot.flowise,
-            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-          }
+              ...mergedBot.flowise,
+              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+            }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-            ...mergedBot.openwebui,
-            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-          }
+              ...mergedBot.openwebui,
+              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+            }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-            ...mergedBot.openswarm,
-            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-          }
+              ...mergedBot.openswarm,
+              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+            }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1471,8 +1471,7 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'discord') {
       const rawToken = String((config as any).DISCORD_BOT_TOKEN || (config as any).token || '');
       const token = rawToken.split(',')[0]?.trim() || '';
-      const { testDiscordConnection } =
-        await import('@hivemind/adapter-discord/DiscordConnectionTest');
+      const { testDiscordConnection } = await import('@hivemind/adapter-discord');
       const result = await testDiscordConnection(token);
       return res.json(result);
     }
@@ -1488,9 +1487,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-        (config as any).serverUrl ||
-        (config as any).url ||
-        ''
+          (config as any).serverUrl ||
+          (config as any).url ||
+          ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);

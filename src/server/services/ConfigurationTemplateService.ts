@@ -451,7 +451,7 @@ export class ConfigurationTemplateService {
   /**
    * Get popular templates (by usage count)
    */
-  async getPopularTemplates(limit: number = 10): Promise<ConfigurationTemplate[]> {
+  async getPopularTemplates(limit = 10): Promise<ConfigurationTemplate[]> {
     const templates = await this.getAllTemplates();
     return templates.sort((a, b) => b.usageCount - a.usageCount).slice(0, limit);
   }
@@ -459,7 +459,7 @@ export class ConfigurationTemplateService {
   /**
    * Get recently created templates
    */
-  async getRecentTemplates(limit: number = 10): Promise<ConfigurationTemplate[]> {
+  async getRecentTemplates(limit = 10): Promise<ConfigurationTemplate[]> {
     const templates = await this.getAllTemplates();
     return templates.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
   }

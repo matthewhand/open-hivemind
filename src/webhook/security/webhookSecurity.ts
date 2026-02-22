@@ -7,7 +7,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     (k) => k.toLowerCase() === 'x-webhook-token'
   );
   const providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
-  const expectedToken: string = String(webhookConfig.get('WEBHOOK_TOKEN'));
+  const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
     throw new Error('WEBHOOK_TOKEN is not configured');

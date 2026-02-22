@@ -6,99 +6,87 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
-Open-Hivemind is a **multi-agent orchestration framework** for deploying a
-coordinated network of LLM-powered bots across Discord, Slack, and Mattermost.
-Each running bot behaves like a neuron in a shared digital consciousness: they
-share recent context, keep a unified voice, and can be independently tuned via
-personas, system instructions, and guarded access to external tools.
+Open-Hivemind is a **multi-agent orchestration framework** for deploying a coordinated network of LLM-powered bots across Discord, Slack, and Mattermost. Each running bot behaves like a neuron in a shared digital consciousness: they share recent context, keep a unified voice, and can be independently tuned via personas, system instructions, and guarded access to external tools.
 
-## Table of Contents
-- [For Operators](#for-operators)
-- [For Developers](#for-developers)
-- [Documentation & Roadmap](#documentation--roadmap)
-- [License](#license)
+## Core Functionality
 
-## For Operators
-### What you get
-- **Solo & Swarm mode**: run one bot or many (multi-token) instances with shared context.
-- **Unified voice**: responses are emitted as `*AgentName*: message` for consistent multi-agent identity.
-- **Shared short-term memory**: a per-channel cache of the last ~10 messages is used as shared context.
-- **WebUI-first operations**: configure providers, personas, MCP servers, and overrides (with env-var lock awareness).
-- **Conservative response policy**: by default, the bot only replies when explicitly addressed.
-- **Human-ish pacing**: reading delays, burst coalescing, pulsed typing indicators, and rate-backoff (delay, not silence).
-- **Idle engagement (non-spammy)**: at-most-one idle response per idle window, with context-aware prompts.
-- **Safety rails**: duplicate-response suppression, prompt-leak stripping, and bot-to-bot filters.
-- **MCP tooling**: connect Model Context Protocol servers and guard tool usage (owner-only / allowlist).
-- **Platform reach**: Discord (multi-instance), Slack (Socket Mode), Mattermost (experimental).
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost.
+*   **Unified Voice**: Consistent identity across platforms.
+*   **Shared Context**: Maintain conversation history and context across interactions.
+*   **WebUI Management**: Configure LLMs, personas, and bots via a user-friendly interface.
+*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression.
+*   **Extensible**: Supports MCP servers and custom tool integrations.
 
-### Architecture at a glance
-```
-┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│   Discord   │   │    Slack    │   │ Mattermost  │
-└────┬────────┘   └────┬────────┘   └────┬────────┘
-     │                 │                 │
-     └─────────────────┼─────────────────┘
-                       │
-             ┌─────────▼─────────┐
-             │  Message Router   │
-             │  + Context Cache  │
-             └─────────┬─────────┘
-                       │
-             ┌─────────▼─────────┐
-             │  LLM Providers    │
-             │ OpenAI · Flowise │
-             │ OpenWebUI · MCP  │
-             └─────────┬─────────┘
-                       │
-             ┌─────────▼─────────┐
-             │ Response Composer │
-             │  + Rate Limiter   │
-             └───────────────────┘
-```
+## Installation & Quick Start
 
-### Quick Start (Golden Path)
-The fastest way to get running is our unified development environment.
+Choose the method that best suits your environment.
 
-1. **Install & Run**
-   ```bash
-   git clone https://github.com/matthewhand/open-hivemind.git
-   cd open-hivemind
-   npm install
-   make start-dev
-   ```
+### Option 1: Pinokio (Easiest / Local)
 
-2. **Access the Dashboard**
-   Open **[http://localhost:3028](http://localhost:3028)** in your browser.
+Recommended for users who want a one-click local setup.
 
-3. **Create Your First Bot**
-   - Go to **Bots** in the sidebar.
-   - Click **Create Bot**.
-   - Enter a name (e.g., `MyFirstBot`) and description.
-   - Click **Create**.
+1.  Install [Pinokio](https://pinokio.computer/).
+2.  Open Pinokio and click **Discover**.
+3.  Enter the URL for this repository: `https://github.com/matthewhand/open-hivemind`.
+4.  Click **Download** and then **Install**.
+5.  Once installed, click **Start**.
+6.  Click **Open WebUI** to launch the dashboard in your browser.
 
-4. **Verify It Works**
-   - Click on your new bot to see its details.
-   - (Optional) Use the **Chat Preview** if available, or configure a Discord/Slack token in **Config**.
+### Option 2: Docker (Containerized)
 
----
-
-### Other Installation Options
-For Docker, Pinokio, or Production deployment check [`docs/installation.md`](docs/installation.md).
-
-### Development & Testing
-We use `make` to manage quality gates:
+Ideal for production or isolated environments.
 
 ```bash
-make lint       # Run ESLint (warnings allowed)
-make quality    # Lint + Build
-make ci         # Full CI suite
+# Pull the latest image
+docker pull matthewhand/open-hivemind:latest
+
+# Run the container (ensure you have a .env file configured)
+docker run --rm \
+  --env-file .env \
+  -p 3028:3028 \
+  matthewhand/open-hivemind:latest
 ```
 
-## Documentation & Roadmap
-- Start at [`docs/README.md`](docs/README.md) for a curated documentation hub.
-- Platform and feature deep-dives live in [`PACKAGE.md`](PACKAGE.md).
-- Recent changes and behavioral tuning notes: [`docs/reference/release-notes-2025-12-15.md`](docs/reference/release-notes-2025-12-15.md).
-- Upcoming work and priorities: [`docs/reference/todo.md`](docs/reference/todo.md).
+Access the WebUI at `http://localhost:3028`.
+
+### Option 3: Node.js (Developer)
+
+For developers who want to modify the code or run locally without Docker.
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/matthewhand/open-hivemind.git
+    cd open-hivemind
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the development server:**
+    ```bash
+    npm run dev
+    ```
+
+Access the WebUI at `http://localhost:3028`.
+
+## Getting Started with WebUI
+
+Once the application is running, open your browser to `http://localhost:3028`.
+
+1.  **Configure LLM Provider**: Navigate to **Configuration > LLM Providers** to set up your API keys (e.g., OpenAI, Anthropic).
+2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
+3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
+
+For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](USERGUIDE.md).
+
+## Documentation
+
+*   [User Guide](USERGUIDE.md): Detailed explanation of all WebUI features.
+*   [Installation Guide](docs/installation.md): Advanced deployment options and configurations.
+*   [Package Documentation](PACKAGE.md): Deep dives into platform specifics.
 
 ## License
+
 Released under the [MIT License](LICENSE).

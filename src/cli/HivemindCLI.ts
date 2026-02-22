@@ -300,7 +300,7 @@ export class HivemindCLI {
     await this.addBot(answers);
   }
 
-  private listBots(verbose: boolean = false): void {
+  private listBots(verbose = false): void {
     const bots = this.configManager.getAllBots();
 
     if (bots.length === 0) {
@@ -322,7 +322,7 @@ export class HivemindCLI {
     });
   }
 
-  private async removeBot(name: string, force: boolean = false): Promise<void> {
+  private async removeBot(name: string, force = false): Promise<void> {
     const bots = this.configManager.getAllBots();
     const bot = bots.find((b) => b.name === name);
 

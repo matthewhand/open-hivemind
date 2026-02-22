@@ -14,7 +14,7 @@ interface ActivityState {
  */
 export class GlobalActivityTracker {
   private static instance: GlobalActivityTracker;
-  private states: Map<string, ActivityState> = new Map();
+  private states = new Map<string, ActivityState>();
 
   // Configuration defaults
   private readonly DECAY_PER_MINUTE = 0.5; // Score drops by 0.5 every minute
@@ -33,7 +33,7 @@ export class GlobalActivityTracker {
    * Record new activity for a bot (increment score).
    * Call this when the bot successfully sends a message.
    */
-  public recordActivity(botId: string, cost: number = 1.0): void {
+  public recordActivity(botId: string, cost = 1.0): void {
     const currentState = this.getUpdatedState(botId);
 
     currentState.score = Math.min(this.SCORE_LIMIT, currentState.score + cost);

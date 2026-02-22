@@ -24,7 +24,7 @@ export interface SubscriptionFilter {
 export class RealTimeNotificationService extends EventEmitter {
   private static instance: RealTimeNotificationService | null = null;
   private notifications: NotificationEvent[] = [];
-  private maxNotifications: number = 1000;
+  private maxNotifications = 1000;
   private webSocketService: WebSocketService;
 
   private constructor() {
@@ -67,7 +67,7 @@ export class RealTimeNotificationService extends EventEmitter {
     return notification.id;
   }
 
-  public getNotifications(limit: number = 50, filter?: SubscriptionFilter): NotificationEvent[] {
+  public getNotifications(limit = 50, filter?: SubscriptionFilter): NotificationEvent[] {
     let filtered = [...this.notifications];
 
     if (filter) {

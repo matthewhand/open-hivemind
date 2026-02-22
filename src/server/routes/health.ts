@@ -677,7 +677,7 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
 
 function detectErrorSpikes(
   errorStats: Record<string, number>
-): Array<{ type: string; count: number; severity: 'low' | 'medium' | 'high' }> {
+): { type: string; count: number; severity: 'low' | 'medium' | 'high' }[] {
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
   const threshold = totalErrors * 0.3; // 30% threshold for spikes
 
@@ -692,8 +692,8 @@ function detectErrorSpikes(
 
 function detectErrorCorrelations(
   errorStats: Record<string, number>
-): Array<{ pattern: string; description: string }> {
-  const correlations: Array<{ pattern: string; description: string }> = [];
+): { pattern: string; description: string }[] {
+  const correlations: { pattern: string; description: string }[] = [];
 
   // Check for network + timeout correlation
   if ((errorStats['network'] || 0) > 0 && (errorStats['timeout'] || 0) > 0) {
@@ -717,8 +717,8 @@ function detectErrorCorrelations(
 function detectErrorAnomalies(
   recentErrors: number,
   errorStats: Record<string, number>
-): Array<{ type: string; anomaly: string }> {
-  const anomalies: Array<{ type: string; anomaly: string }> = [];
+): { type: string; anomaly: string }[] {
+  const anomalies: { type: string; anomaly: string }[] = [];
 
   // Check for unusual error types
   const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);

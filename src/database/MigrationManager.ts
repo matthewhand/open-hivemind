@@ -10,7 +10,7 @@ export interface Migration {
 
 export class MigrationManager {
   private migrations: Migration[] = [];
-  private executedMigrations: Set<string> = new Set();
+  private executedMigrations = new Set<string>();
   private db: any;
 
   constructor(db: any) {

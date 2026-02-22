@@ -12,9 +12,9 @@ import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
 const startupLog = Logger.withContext('startup:diagnostics');
 
 interface EnvironmentSummary {
-  critical: Array<{ key: string; value: string; status: 'present' | 'missing' | 'invalid' }>;
-  optional: Array<{ key: string; value: string; status: 'present' | 'missing' }>;
-  featureFlags: Array<{ key: string; value: string; description: string }>;
+  critical: { key: string; value: string; status: 'present' | 'missing' | 'invalid' }[];
+  optional: { key: string; value: string; status: 'present' | 'missing' }[];
+  featureFlags: { key: string; value: string; description: string }[];
 }
 
 interface ProviderStatus {
@@ -185,8 +185,7 @@ export class StartupDiagnostics {
       'config/webhooks.json',
     ];
 
-    const configStatus: Array<{ path: string; exists: boolean; size?: number; error?: string }> =
-      [];
+    const configStatus: { path: string; exists: boolean; size?: number; error?: string }[] = [];
 
     for (const configPath of configPaths) {
       try {

@@ -10,7 +10,7 @@ export interface BotConfiguration {
   responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpServers?: { name: string; serverUrl?: string }[] | string[];
   mcpGuard?: MCPCGuardConfig;
   discord?: DiscordConfig;
   slack?: SlackConfig;

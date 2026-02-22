@@ -59,9 +59,9 @@ export interface HealthCheckResult {
 
 export class ApiMonitorService extends EventEmitter {
   private static instance: ApiMonitorService;
-  private endpoints: Map<string, EndpointConfig> = new Map();
-  private statuses: Map<string, EndpointStatus> = new Map();
-  private monitoringIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private endpoints = new Map<string, EndpointConfig>();
+  private statuses = new Map<string, EndpointStatus>();
+  private monitoringIntervals = new Map<string, NodeJS.Timeout>();
   private isMonitoring = false;
 
   private constructor() {

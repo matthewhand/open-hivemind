@@ -147,7 +147,7 @@ function sanitizeRequestBody(body: any): any {
 function createErrorResponse(
   error: BaseHivemindError,
   context: ErrorContext,
-  includeStack: boolean = false
+  includeStack = false
 ): ErrorResponse {
   const recovery = error.getRecoveryStrategy();
 

@@ -15,9 +15,7 @@ interface BotDisabledState {
   disabledAt?: string;
 }
 
-interface GeneralSettings {
-  [key: string]: any;  // Flexible key-value store for general settings
-}
+type GeneralSettings = Record<string, any>;
 
 export class UserConfigStore {
   private static instance: UserConfigStore;

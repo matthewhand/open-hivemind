@@ -297,10 +297,7 @@ export class ConfigurationVersionService {
   /**
    * Get audit log for a bot configuration
    */
-  async getAuditLog(
-    botConfigurationId: number,
-    limit: number = 50
-  ): Promise<BotConfigurationAudit[]> {
+  async getAuditLog(botConfigurationId: number, limit = 50): Promise<BotConfigurationAudit[]> {
     try {
       const audits = await this.dbManager.getBotConfigurationAudit(botConfigurationId);
       return audits.slice(0, limit);
@@ -320,7 +317,7 @@ export class ConfigurationVersionService {
     const differences: ConfigurationDifference[] = [];
 
     // Helper function to compare objects recursively
-    const compareObjects = (obj1: any, obj2: any, path: string = '') => {
+    const compareObjects = (obj1: any, obj2: any, path = '') => {
       const allKeys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
 
       for (const key of allKeys) {

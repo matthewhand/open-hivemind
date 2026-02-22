@@ -59,9 +59,9 @@ enum CircuitState {
  */
 export class CircuitBreaker {
   private state: CircuitState = CircuitState.CLOSED;
-  private failureCount: number = 0;
-  private lastFailureTime: number = 0;
-  private successCount: number = 0;
+  private failureCount = 0;
+  private lastFailureTime = 0;
+  private successCount = 0;
 
   constructor(private config: CircuitBreakerConfig) {}
 
@@ -297,7 +297,7 @@ export class RetryHandler {
  * Fallback mechanism manager
  */
 export class FallbackManager {
-  private fallbacks: Map<string, (() => Promise<any>)[]> = new Map();
+  private fallbacks = new Map<string, (() => Promise<any>)[]>();
 
   /**
    * Register fallback for an operation
@@ -393,9 +393,9 @@ export class FallbackManager {
  * Adaptive recovery manager that combines retry, circuit breaker, and fallback strategies
  */
 export class AdaptiveRecoveryManager {
-  private circuitBreakers: Map<string, CircuitBreaker> = new Map();
-  private retryHandlers: Map<string, RetryHandler> = new Map();
-  private fallbackManagers: Map<string, FallbackManager> = new Map();
+  private circuitBreakers = new Map<string, CircuitBreaker>();
+  private retryHandlers = new Map<string, RetryHandler>();
+  private fallbackManagers = new Map<string, FallbackManager>();
 
   constructor(
     private defaultRetryConfig: RetryConfig,

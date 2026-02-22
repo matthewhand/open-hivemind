@@ -26,8 +26,8 @@ interface ServiceActivity {
 
 export class IdleResponseManager {
   private static instance: IdleResponseManager;
-  private serviceActivities: Map<string, ServiceActivity> = new Map();
-  private enabled: boolean = true;
+  private serviceActivities = new Map<string, ServiceActivity>();
+  private enabled = true;
   private minDelay: number = parseInt(process.env.IDLE_RESPONSE_MIN_DELAY || '60000', 10); // 60 seconds
   private maxDelay: number = parseInt(process.env.IDLE_RESPONSE_MAX_DELAY || '3600000', 10); // 60 minutes
   private idlePrompts: string[] = [
@@ -119,11 +119,11 @@ export class IdleResponseManager {
             sendMessageToChannel: async () => 'mock-message-id',
             getMessagesFromChannel: async () => [],
             getClientId: () => 'test-client-id',
-            initialize: async () => { },
-            sendPublicAnnouncement: async () => { },
+            initialize: async () => {},
+            sendPublicAnnouncement: async () => {},
             getDefaultChannel: () => 'test-channel',
-            shutdown: async () => { },
-            setMessageHandler: () => { },
+            shutdown: async () => {},
+            setMessageHandler: () => {},
           };
 
           this.serviceActivities.set(serviceName, {
@@ -499,7 +499,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         if (activityBotId) {
           recordBotActivity(channelId, activityBotId);
         }
-      } catch { }
+      } catch {}
 
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;
@@ -569,17 +569,17 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
 
   public getStats(): {
     totalServices: number;
-    serviceDetails: Array<{
+    serviceDetails: {
       serviceName: string;
       totalChannels: number;
       lastInteractedChannel: string | null;
-      channelDetails: Array<{
+      channelDetails: {
         channelId: string;
         interactionCount: number;
         lastInteraction: Date;
         hasTimer: boolean;
-      }>;
-    }>;
+      }[];
+    }[];
   } {
     const serviceDetails = Array.from(this.serviceActivities.entries()).map(
       ([serviceName, serviceActivity]) => ({

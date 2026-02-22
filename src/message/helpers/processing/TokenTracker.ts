@@ -18,7 +18,7 @@ interface TokenRecord {
  */
 class TokenTracker {
   private static instance: TokenTracker;
-  private channelTokens: Map<string, TokenRecord[]> = new Map();
+  private channelTokens = new Map<string, TokenRecord[]>();
 
   // Configuration
   private readonly WINDOW_MS = 60000; // 1 minute window

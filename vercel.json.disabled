@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:serverless",
+  "outputDirectory": "src/client/dist",
+  "devCommand": "npm run dev:frontend-only",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

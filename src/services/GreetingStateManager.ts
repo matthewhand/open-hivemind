@@ -1,25 +1,24 @@
 import fs from 'fs/promises';
 import path from 'path';
 import Logger from '@common/logger';
-import { singleton } from 'tsyringe';
 
 const appLogger = Logger.withContext('GreetingStateManager');
 
-interface GreetingState {
-  [serviceId: string]: {
+type GreetingState = Record<
+  string,
+  {
     timestamp: number;
     channelId: string;
-  };
-}
+  }
+>;
 
-@singleton()
 export class GreetingStateManager {
   private static instance: GreetingStateManager;
   private stateFilePath: string;
   private state: GreetingState = {};
-  private initialized: boolean = false;
+  private initialized = false;
 
-  public constructor() {
+  private constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');
   }
 

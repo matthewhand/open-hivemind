@@ -2,7 +2,7 @@ import { watch } from 'fs';
 import { EventEmitter } from 'events';
 
 export class ConfigWatcher extends EventEmitter {
-  private watchers: Map<string, any> = new Map();
+  private watchers = new Map<string, any>();
   
   watchConfig(configPath: string) {
     if (this.watchers.has(configPath)) {return;}

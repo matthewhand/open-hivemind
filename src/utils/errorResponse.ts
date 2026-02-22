@@ -338,7 +338,7 @@ export const ErrorResponses = {
   /**
    * Unauthorized error (401)
    */
-  unauthorized(message: string = 'Authentication required'): ErrorResponseBuilder {
+  unauthorized(message = 'Authentication required'): ErrorResponseBuilder {
     const error = {
       code: 'UNAUTHORIZED',
       message,
@@ -350,7 +350,7 @@ export const ErrorResponses = {
   /**
    * Forbidden error (403)
    */
-  forbidden(message: string = 'Access denied'): ErrorResponseBuilder {
+  forbidden(message = 'Access denied'): ErrorResponseBuilder {
     const error = {
       code: 'FORBIDDEN',
       message,
@@ -362,7 +362,7 @@ export const ErrorResponses = {
   /**
    * Not found error (404)
    */
-  notFound(resource: string = 'Resource'): ErrorResponseBuilder {
+  notFound(resource = 'Resource'): ErrorResponseBuilder {
     const error = {
       code: 'NOT_FOUND',
       message: `${resource} not found`,
@@ -413,7 +413,7 @@ export const ErrorResponses = {
   /**
    * Internal server error (500)
    */
-  internalServerError(message: string = 'Internal server error'): ErrorResponseBuilder {
+  internalServerError(message = 'Internal server error'): ErrorResponseBuilder {
     const error = {
       code: 'INTERNAL_SERVER_ERROR',
       message,
@@ -425,7 +425,7 @@ export const ErrorResponses = {
   /**
    * Service unavailable error (503)
    */
-  serviceUnavailable(message: string = 'Service temporarily unavailable'): ErrorResponseBuilder {
+  serviceUnavailable(message = 'Service temporarily unavailable'): ErrorResponseBuilder {
     const error = {
       code: 'SERVICE_UNAVAILABLE',
       message,

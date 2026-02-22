@@ -60,7 +60,7 @@ export interface PermissionCheck {
   userId?: string;
 }
 
-export type PermissionResult = {
+export interface PermissionResult {
   granted: boolean;
   reason?: string;
-};
+}
