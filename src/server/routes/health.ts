@@ -10,7 +10,7 @@ const router = Router();
 
 // Basic health check
 router.get('/', (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
   });
@@ -80,7 +80,7 @@ router.get('/detailed', (req, res) => {
     },
   };
 
-  res.json(healthData);
+  return res.json(healthData);
 });
 
 // System metrics endpoint
@@ -111,7 +111,7 @@ router.get('/metrics', (req, res) => {
     },
   };
 
-  res.json(metricsData);
+  return res.json(metricsData);
 });
 
 // Alerts endpoint
@@ -144,7 +144,7 @@ router.get('/alerts', (req, res) => {
     });
   }
 
-  res.json({
+  return res.json({
     alerts: alerts,
     count: alerts.length,
     timestamp: new Date().toISOString(),
@@ -155,7 +155,7 @@ router.get('/alerts', (req, res) => {
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
   // For now, we'll assume the service is ready if it's responding
-  res.json({
+  return res.json({
     ready: true,
     timestamp: new Date().toISOString(),
     checks: {
@@ -169,7 +169,7 @@ router.get('/ready', (req, res) => {
 // Liveness probe
 router.get('/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
-  res.json({
+  return res.json({
     alive: true,
     timestamp: new Date().toISOString(),
   });
@@ -215,7 +215,7 @@ nodejs_version_info{version="${process.version}"} 1
 `;
 
   res.set('Content-Type', 'text/plain');
-  res.send(metrics);
+  return res.send(metrics);
 });
 
 // API endpoints monitoring
@@ -224,7 +224,7 @@ router.get('/api-endpoints', (req, res) => {
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
-  res.json({
+  return res.json({
     overall: overallHealth,
     endpoints: statuses,
     timestamp: new Date().toISOString(),
@@ -243,7 +243,7 @@ router.get('/api-endpoints/:id', (req, res) => {
     });
   }
 
-  res.json({
+  return res.json({
     endpoint: status,
     timestamp: new Date().toISOString(),
   });
@@ -281,13 +281,13 @@ router.post('/cleanup', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Failed to add endpoint',
       message: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
@@ -327,13 +327,13 @@ router.post('/api-endpoints', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Failed to add endpoint',
       message: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
@@ -348,13 +348,13 @@ router.put('/api-endpoints/:id', (req, res) => {
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
 
-    res.json({
+    return res.json({
       message: 'Endpoint updated successfully',
       endpoint: apiMonitor.getEndpoint(req.params.id),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(404).json({
+    return res.status(404).json({
       error: 'Failed to update endpoint',
       message: error instanceof Error ? error.message : 'Endpoint not found',
       timestamp: new Date().toISOString(),
@@ -377,13 +377,13 @@ router.delete('/api-endpoints/:id', (req, res) => {
     }
     apiMonitor.removeEndpoint(req.params.id);
 
-    res.json({
+    return res.json({
       message: 'Endpoint removed successfully',
       removedEndpoint: endpoint,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(404).json({
+    return res.status(404).json({
       error: 'Failed to remove endpoint',
       message: error instanceof Error ? error.message : 'Endpoint not found',
       timestamp: new Date().toISOString(),
@@ -396,7 +396,7 @@ router.post('/api-endpoints/start', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
-  res.json({
+  return res.json({
     message: 'Started monitoring all endpoints',
     timestamp: new Date().toISOString(),
   });
@@ -407,7 +407,7 @@ router.post('/api-endpoints/stop', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 
-  res.json({
+  return res.json({
     message: 'Stopped monitoring all endpoints',
     timestamp: new Date().toISOString(),
   });
@@ -461,7 +461,7 @@ router.get('/errors', (req, res) => {
     },
   };
 
-  res.json(errorHealthData);
+  return res.json(errorHealthData);
 });
 
 // Recovery system health endpoint
@@ -488,7 +488,7 @@ router.get('/recovery', (req, res) => {
     },
   };
 
-  res.json(recoveryHealthData);
+  return res.json(recoveryHealthData);
 });
 
 // Error patterns and anomalies endpoint
@@ -520,7 +520,7 @@ router.get('/errors/patterns', (req, res) => {
     recommendations: generatePatternRecommendations(errorStats, recentErrors),
   };
 
-  res.json(patternsData);
+  return res.json(patternsData);
 });
 
 // Helper functions for health calculations

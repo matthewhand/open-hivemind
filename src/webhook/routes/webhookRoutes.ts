@@ -114,7 +114,7 @@ export function configureWebhookRoutes(
 
       predictionImageMap.delete(predictionId);
       res.setHeader('Content-Type', 'application/json');
-      res.status(200).json({ success: true, processed: predictionId });
+      return res.status(200).json({ success: true, processed: predictionId });
     }
   );
 }

@@ -122,7 +122,7 @@ export class SessionManager {
         }
       }
 
-      next();
+      return next();
     };
   }
 }

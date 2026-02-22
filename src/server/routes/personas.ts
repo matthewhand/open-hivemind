@@ -41,9 +41,9 @@ const UpdatePersonaSchema = z.object({
 router.get('/', (req, res) => {
   try {
     const personas = manager.getAllPersonas();
-    res.json(personas);
+    return res.json(personas);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -54,9 +54,9 @@ router.get('/:id', (req, res) => {
     if (!persona) {
       return res.status(404).json({ error: 'Persona not found' });
     }
-    res.json(persona);
+    return res.json(persona);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -65,9 +65,9 @@ router.post('/', async (req, res) => {
   try {
     // Basic validation until strict schema is hooked up globally if needed
     const newPersona = manager.createPersona(req.body);
-    res.status(201).json(newPersona);
+    return res.status(201).json(newPersona);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 });
 
@@ -75,9 +75,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
-    res.json(updatedPersona);
+    return res.json(updatedPersona);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 });
 
@@ -88,9 +88,9 @@ router.delete('/:id', (req, res) => {
     if (!success) {
       return res.status(404).json({ error: 'Persona not found' });
     }
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 });
 

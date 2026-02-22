@@ -31,7 +31,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   req.user = payload;
-  next();
+  return next();
 };
 
 export const requirePermission = (permission: string) => {
@@ -55,7 +55,7 @@ export const requirePermission = (permission: string) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -73,7 +73,7 @@ export const requireRole = (role: string) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -93,5 +93,5 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
     }
   }
 
-  next();
+  return next();
 };

@@ -119,14 +119,14 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
 
     const authResult = await authManager.login(credentials);
 
-    res.json({
+    return res.json({
       success: true,
       data: authResult,
       message: 'Login successful',
     });
   } catch (error: any) {
     debug('Login error:', error.message);
-    res.status(401).json({
+    return res.status(401).json({
       error: 'Authentication failed',
       message: error.message || 'Invalid credentials',
     });
@@ -149,14 +149,14 @@ router.post(
 
       const user = await authManager.register(registerData);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: { user },
         message: 'User registered successfully',
       });
     } catch (error: any) {
       debug('Registration error:', error.message);
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Registration failed',
         message: error.message || 'Failed to register user',
       });
@@ -177,14 +177,14 @@ router.post(
 
       const authResult = await authManager.refreshToken(refreshToken);
 
-      res.json({
+      return res.json({
         success: true,
         data: authResult,
         message: 'Token refreshed successfully',
       });
     } catch (error: any) {
       debug('Token refresh error:', error.message);
-      res.status(401).json({
+      return res.status(401).json({
         error: 'Token refresh failed',
         message: error.message || 'Invalid refresh token',
       });
@@ -209,13 +209,13 @@ router.post(
         await authManager.logout(refreshToken);
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Logout successful',
       });
     } catch (error: any) {
       debug('Logout error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Logout failed',
         message: 'An error occurred during logout',
       });
@@ -229,7 +229,7 @@ router.post(
  */
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
-  res.json({
+  return res.json({
     success: true,
     data: { user: authReq.user },
   });
@@ -286,19 +286,19 @@ router.put(
       const success = await authManager.changePassword(req.user.id, newPassword);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Password changed successfully',
         });
       } else {
-        res.status(500).json({
+        return res.status(500).json({
           error: 'Password change failed',
           message: 'Failed to update password',
         });
       }
     } catch (error: any) {
       debug('Password change error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Password change failed',
         message: 'An error occurred while changing password',
       });
@@ -315,14 +315,14 @@ router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) =
   try {
     const users = authManager.getAllUsers();
 
-    res.json({
+    return res.json({
       success: true,
       data: { users },
       total: users.length,
     });
   } catch (error: any) {
     debug('Get users error:', error.message);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get users',
       message: 'An error occurred while retrieving users',
     });
@@ -351,13 +351,13 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: { user },
       });
     } catch (error: any) {
       debug('Get user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to get user',
         message: 'An error occurred while retrieving user',
       });
@@ -393,14 +393,14 @@ router.put(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: { user: updatedUser },
         message: 'User updated successfully',
       });
     } catch (error: any) {
       debug('Update user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to update user',
         message: 'An error occurred while updating user',
       });
@@ -439,13 +439,13 @@ router.delete(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'User deleted successfully',
       });
     } catch (error: any) {
       debug('Delete user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to delete user',
         message: 'An error occurred while deleting user',
       });
@@ -468,7 +468,7 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
 
   const permissions = authManager.getUserPermissions(authReq.user.role);
 
-  res.json({
+  return res.json({
     success: true,
     data: {
       role: authReq.user.role,

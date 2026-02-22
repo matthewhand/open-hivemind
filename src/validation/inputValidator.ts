@@ -290,9 +290,9 @@ export const validateInput = (req: Request, res: Response, next: NextFunction) =
 
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map((err) => ({
-      field: err.param,
+      field: (err as any).param || (err as any).path || 'unknown',
       message: err.msg,
-      value: err.value !== undefined ? '[REDACTED]' : undefined,
+      value: (err as any).value !== undefined ? '[REDACTED]' : undefined,
     }));
 
     debug('Validation errors:', errorMessages);
@@ -304,7 +304,7 @@ export const validateInput = (req: Request, res: Response, next: NextFunction) =
     });
   }
 
-  next();
+  return next();
 };
 
 /**
@@ -332,7 +332,7 @@ export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
         ...options,
       });
     }
-    next();
+    return next();
   };
 };
 
@@ -348,7 +348,7 @@ export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
         ...options,
       });
     }
-    next();
+    return next();
   };
 };
 
@@ -364,7 +364,7 @@ export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
         ...options,
       });
     }
-    next();
+    return next();
   };
 };
 
@@ -432,7 +432,7 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
     });
   }
 
-  next();
+  return next();
 };
 
 /**
@@ -465,7 +465,7 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -484,7 +484,7 @@ export const limitRequestSize = (maxSizeKB: number = 100) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 

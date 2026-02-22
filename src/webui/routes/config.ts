@@ -42,9 +42,9 @@ router.get('/api/config', (_req, res) => {
         version: process.env.npm_package_version || '1.0.0',
       },
     };
-    res.json(config);
+    return res.json(config);
   } catch {
-    res.status(500).json({ error: 'Failed to retrieve configuration' });
+    return res.status(500).json({ error: 'Failed to retrieve configuration' });
   }
 });
 
@@ -60,22 +60,22 @@ router.get('/api/config/sources', (_req, res) => {
       source: 'config-manager',
       timestamp: new Date().toISOString(),
     };
-    res.json({ sources, active });
+    return res.json({ sources, active });
   } catch {
-    res.status(500).json({ error: 'Failed to retrieve configuration sources' });
+    return res.status(500).json({ error: 'Failed to retrieve configuration sources' });
   }
 });
 
 // POST /webui/api/config/reload - Reload configuration
 router.post('/api/config/reload', (_req, res) => {
   try {
-    res.json({
+    return res.json({
       success: true,
       message: 'Configuration reloaded successfully',
       timestamp: new Date().toISOString(),
     });
   } catch {
-    res.status(500).json({ error: 'Failed to reload configuration' });
+    return res.status(500).json({ error: 'Failed to reload configuration' });
   }
 });
 
@@ -107,13 +107,13 @@ router.get('/api/config/validate', (_req, res) => {
       }
     });
 
-    res.json({
+    return res.json({
       valid: errors.length === 0,
       errors,
       warnings: [],
     });
   } catch {
-    res.status(500).json({ error: 'Failed to validate configuration' });
+    return res.status(500).json({ error: 'Failed to validate configuration' });
   }
 });
 
@@ -121,7 +121,7 @@ router.get('/api/config/validate', (_req, res) => {
 router.post('/api/config/backup', (_req, res) => {
   try {
     const backupId = `backup_${Date.now()}`;
-    res.json({
+    return res.json({
       success: true,
       backupId,
       timestamp: new Date().toISOString(),
@@ -133,7 +133,7 @@ router.post('/api/config/backup', (_req, res) => {
       },
     });
   } catch {
-    res.status(500).json({ error: 'Failed to create configuration backup' });
+    return res.status(500).json({ error: 'Failed to create configuration backup' });
   }
 });
 
@@ -147,19 +147,19 @@ router.post('/api/config/restore', (req, res) => {
     if (backupId === 'nonexistent-backup') {
       return res.status(404).json({ error: `Backup ${backupId} not found` });
     }
-    res.json({
+    return res.json({
       success: true,
       restored: backupId,
       message: 'Configuration restored successfully',
     });
   } catch {
-    res.status(500).json({ error: 'Failed to restore configuration' });
+    return res.status(500).json({ error: 'Failed to restore configuration' });
   }
 });
 
 // GET /webui/api/health - WebUI health endpoint
 router.get('/api/health', (_req, res) => {
-  res.json({
+  return res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'webui',
@@ -169,7 +169,7 @@ router.get('/api/health', (_req, res) => {
 // GET /webui/api/openapi - OpenAPI documentation
 router.get('/api/openapi', (_req, res) => {
   try {
-    res.json({
+    return res.json({
       openapi: '3.0.0',
       info: {
         title: 'Open-Hivemind WebUI API',
@@ -188,7 +188,7 @@ router.get('/api/openapi', (_req, res) => {
       },
     });
   } catch {
-    res.status(500).json({ error: 'Failed to retrieve OpenAPI specification' });
+    return res.status(500).json({ error: 'Failed to retrieve OpenAPI specification' });
   }
 });
 

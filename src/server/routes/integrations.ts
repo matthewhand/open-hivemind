@@ -28,10 +28,10 @@ router.get('/', (req, res) => {
     const category = req.query.category as 'message' | 'llm' | undefined;
     const filtered = category ? providerManager.getAllProviders(category) : providers;
 
-    res.json(filtered);
+    return res.json(filtered);
   } catch (err: any) {
     log('Error fetching integrations:', err);
-    res.status(500).json({ error: 'Failed to fetch integrations' });
+    return res.status(500).json({ error: 'Failed to fetch integrations' });
   }
 });
 
@@ -44,7 +44,7 @@ router.get('/:id', (req, res) => {
   if (!provider) {
     return res.status(404).json({ error: 'Provider not found' });
   }
-  res.json(provider);
+  return res.json(provider);
 });
 
 /**
@@ -68,10 +68,10 @@ router.post('/', (req, res) => {
     });
 
     log(`Created new ${category} provider: ${name} (${type})`);
-    res.status(201).json(newInstance);
+    return res.status(201).json(newInstance);
   } catch (err: any) {
     log('Error creating integration:', err);
-    res.status(500).json({ error: 'Failed to create integration' });
+    return res.status(500).json({ error: 'Failed to create integration' });
   }
 });
 
@@ -93,10 +93,10 @@ router.put('/:id', (req, res) => {
     }
 
     log(`Updated provider: ${updated.name}`);
-    res.json(updated);
+    return res.json(updated);
   } catch (err: any) {
     log('Error updating integration:', err);
-    res.status(500).json({ error: 'Failed to update integration' });
+    return res.status(500).json({ error: 'Failed to update integration' });
   }
 });
 
@@ -111,10 +111,10 @@ router.delete('/:id', (req, res) => {
       return res.status(404).json({ error: 'Provider not found' });
     }
     log(`Deleted provider: ${req.params.id}`);
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (err: any) {
     log('Error deleting integration:', err);
-    res.status(500).json({ error: 'Failed to delete integration' });
+    return res.status(500).json({ error: 'Failed to delete integration' });
   }
 });
 
