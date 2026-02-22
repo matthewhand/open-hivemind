@@ -11,9 +11,11 @@ import type {
     IServiceDependencies,
     IMessengerService,
 } from '@hivemind/shared-types';
-import { DiscordService } from './DiscordService';
-export { DiscordService } from './DiscordService';
+import { DiscordService, Discord } from './DiscordService';
+export { DiscordService, Discord };
 export { default as DiscordMessage } from './DiscordMessage';
+export { testDiscordConnection } from './DiscordConnectionTest';
+export { DiscordMessageProvider } from './providers/DiscordMessageProvider';
 export type { Bot } from './managers/DiscordBotManager';
 
 /**
