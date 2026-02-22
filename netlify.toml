@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm run build:serverless"
+  command = "npm run build:serverless"
   publish = "src/client/dist"
 
 [build.environment]
@@ -7,7 +7,7 @@
   NPM_FLAGS = "--no-audit"
 
 [dev]
-  command = "pnpm run dev:frontend-only"
+  command = "npm run dev:frontend-only"
   publish = "src/client/dist"
 
 [[redirects]]
