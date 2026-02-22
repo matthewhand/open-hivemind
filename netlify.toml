@@ -1,21 +1,12 @@
 [build]
-  command = "pnpm run build:serverless"
+  command = "npm run build:serverless"
   publish = "src/client/dist"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--no-audit"
-
-# Disable deploy previews for pull requests — only deploy on main
-[context.deploy-preview]
-  command = "echo 'Deploy previews disabled'"
-  ignore = "exit 0"
-
-[context.branch-deploy]
-  ignore = "exit 0"
 
 [dev]
-  command = "pnpm run dev:frontend-only"
+  command = "npm run dev:frontend-only"
   publish = "src/client/dist"
 
 [[redirects]]
@@ -27,3 +18,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Suppress builds for Pull Requests and Branch Deploys
+[context.deploy-preview]
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"

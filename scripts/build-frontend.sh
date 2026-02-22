@@ -17,7 +17,7 @@ fi
 echo "[build:frontend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 pushd src/client >/dev/null
 set -x
-NODE_ENV=production ../../node_modules/.bin/vite build
+NODE_ENV=production node ../../node_modules/.bin/vite build
 set +x
 popd >/dev/null
 echo "[build:frontend] finished at $(timestamp)"

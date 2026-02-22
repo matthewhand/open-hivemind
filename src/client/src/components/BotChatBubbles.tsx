@@ -1,6 +1,4 @@
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
-import EmptyState from './DaisyUI/EmptyState';
 
 interface Message {
     id: string;
@@ -37,21 +35,14 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
 
     if (messages.length === 0) {
         return (
-            <EmptyState
-                icon={MessageSquare}
-                title="No chat history"
-                description="Start a conversation with the bot to see messages appear here."
-            />
+            <div className="text-center p-8 text-neutral-content/50">
+                <p>No chat history available.</p>
+            </div>
         );
     }
 
     return (
-        <div
-            className="flex flex-col gap-2 p-4 max-h-[600px] overflow-y-auto"
-            role="log"
-            aria-live="polite"
-            tabIndex={0}
-        >
+        <div className="flex flex-col gap-2 p-4 max-h-[600px] overflow-y-auto">
             {messages.map((msg, index) => {
                 const isBot = msg.role === 'assistant' || msg.sender === botName;
                 const align = isBot ? 'chat-start' : 'chat-end';

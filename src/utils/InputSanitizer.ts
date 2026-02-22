@@ -16,22 +16,11 @@ export class InputSanitizer {
       return '';
     }
 
-    let sanitized = content;
-    let previous = '';
-    let iterations = 0;
-
-    // Loop to handle nested replacements, max 5 iterations to prevent potential ReDoS/infinite loops
-    while (sanitized !== previous && iterations < 5) {
-      previous = sanitized;
-      sanitized = sanitized
+    return (
+      content
         // Remove script tags and javascript: protocols
         .replace(/<script[^>]*>.*?<\/script>/gi, '')
-        .replace(/javascript:/gi, '');
-      iterations++;
-    }
-
-    return (
-      sanitized
+        .replace(/javascript:/gi, '')
         // Remove potentially harmful HTML
         .replace(/<[^>]*>/g, '')
         // Remove null bytes and control characters
@@ -219,29 +208,21 @@ export class RateLimiter {
   private static attempts = new Map<string, number[]>();
 
   // Bounded cache configuration
-  private static MAX_IDENTIFIERS = parseInt(
+  private static readonly MAX_IDENTIFIERS = parseInt(
     process.env.RATE_LIMITER_MAX_IDENTIFIERS || '10000',
     10
   );
-  private static MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(
+  private static readonly MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(
     process.env.RATE_LIMITER_MAX_ATTEMPTS_PER_ID || '100',
     10
   );
-
-  /**
-   * Configure limits for testing purposes
-   */
-  static configure(maxIdentifiers: number, maxAttempts: number): void {
-    this.MAX_IDENTIFIERS = maxIdentifiers;
-    this.MAX_ATTEMPTS_PER_IDENTIFIER = maxAttempts;
-  }
 
   /**
    * Enforce max identifiers limit by removing oldest entries.
    * Called when the Map size exceeds the limit.
    */
   private static enforceMaxIdentifiers(): void {
-    if (this.attempts.size <= this.MAX_IDENTIFIERS) {
+    if (this.attempts.size < this.MAX_IDENTIFIERS) {
       return;
     }
 
@@ -253,11 +234,28 @@ export class RateLimiter {
       }))
       .sort((a, b) => a.lastAttempt - b.lastAttempt);
 
-    // Remove oldest 10% of entries (at least 1)
-    const toRemove = Math.max(1, Math.ceil(this.MAX_IDENTIFIERS * 0.1));
+    // Remove oldest 10% of entries
+    const toRemove = Math.ceil(this.MAX_IDENTIFIERS * 0.1);
     for (let i = 0; i < toRemove && i < entries.length; i++) {
       this.attempts.delete(entries[i].key);
     }
+  }
+
+  /**
+   * Prune old attempts for a specific identifier and enforce max attempts limit.
+   */
+  private static pruneAttempts(identifier: string, windowMs: number): void {
+    const attempts = this.attempts.get(identifier);
+    if (!attempts) {
+      return;
+    }
+
+    const now = Date.now();
+    // Remove old attempts outside the window
+    const validAttempts = attempts.filter((time) => now - time < windowMs);
+    // Also enforce max attempts per identifier to prevent unbounded array growth
+    const limitedAttempts = validAttempts.slice(-this.MAX_ATTEMPTS_PER_IDENTIFIER);
+    this.attempts.set(identifier, limitedAttempts);
   }
 
   /**
