@@ -21,7 +21,12 @@ adminRouter.use(authenticate);
 // Apply audit middleware to all admin routes
 adminRouter.use(auditMiddleware);
 
+let cachedPersonas: Array<{ key: string; name: string; systemPrompt: string }> | null = null;
+
 function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string }> {
+  if (cachedPersonas) {
+    return cachedPersonas;
+  }
   const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
   const personasDir = path.join(configDir, 'personas');
   const fallback = [
@@ -43,6 +48,7 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
   ];
   try {
     if (!fs.existsSync(personasDir)) {
+      cachedPersonas = fallback;
       return fallback;
     }
     const out: any[] = [];
@@ -59,9 +65,12 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
         debug('Invalid persona file:', file, e);
       }
     }
-    return out.length ? out : fallback;
+    const result = out.length ? out : fallback;
+    cachedPersonas = result;
+    return result;
   } catch (e) {
     debug('Failed loading personas', e);
+    cachedPersonas = fallback;
     return fallback;
   }
 }
