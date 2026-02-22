@@ -422,9 +422,10 @@ export async function handleMessage(
         // Bot-specific jitter: deterministic offset based on botId to spread bots apart
         // This ensures each bot has a unique delay offset that persists across invocations
         // Using a better hash to reduce collisions between similar bot IDs
-        const botHash = botId
-          .split('')
-          .reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+        let botHash = 0;
+        for (let i = 0; i < botId.length; i++) {
+          botHash += botId.charCodeAt(i) * (i + 1);
+        }
         const botSpecificJitter = botHash % 2000; // 0-2000ms unique per bot (halved from 4000)
 
         // Token usage multiplier (slower if channel is hot)
