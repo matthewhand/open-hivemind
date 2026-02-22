@@ -2,7 +2,7 @@ import { container, Lifecycle } from 'tsyringe';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
-import { ProviderConfigManager } from '../config/ProviderConfigManager';
+import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';

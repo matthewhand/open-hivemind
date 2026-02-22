@@ -236,7 +236,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
@@ -471,7 +471,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   /**
