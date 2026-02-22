@@ -6,11 +6,12 @@
 import express from 'express';
 import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
-import { createServer } from '../../../src/server/server';
+import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
   let app: express.Application;
   let server: any;
+  const webUIServer = getWebUIServer();
 
   beforeAll(async () => {
     // Set up test configuration
@@ -21,7 +22,17 @@ describe('Health API Integration Tests', () => {
     ConfigurationManager.getInstance();
 
     // Create and start server
-    app = await createServer();
+    app = webUIServer.getApp();
+
+    // We don't need to manually listen if we use supertest with the app instance
+    // But if we want to test the full server start:
+    // await webUIServer.start();
+    // However, supertest prefers just the app.
+    // If we do start it, we must stop it.
+    // For integration tests, just using the app is usually sufficient unless we test
+    // server-level events like 'error' on port conflict.
+
+    // To mimic the original test structure:
     server = app.listen(0); // Use random available port
   });
 
@@ -29,6 +40,8 @@ describe('Health API Integration Tests', () => {
     if (server) {
       await new Promise((resolve) => server.close(resolve));
     }
+    // Also stop the WebUIServer if it was started (it wasn't in this case, but good practice)
+    await webUIServer.stop();
   });
 
   describe('GET /api/health', () => {

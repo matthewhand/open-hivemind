@@ -367,6 +367,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should not expose sensitive information', async () => {
+      // Set a sensitive env var for this test
+      process.env.DISCORD_TOKEN = 'test-token-1234';
+
       const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       const responseString = JSON.stringify(response.body).toLowerCase();
@@ -374,7 +377,14 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       // The test should check that the *values* are redacted, not that the keys are absent.
       // A simple check for "***" is a good indicator of redaction.
       const redactedResponse = JSON.stringify(response.body.data.envVars);
+
+      // Verify redaction logic works for the injected token
       expect(redactedResponse).toContain('***');
+      if (response.body.data.envVars['DISCORD_TOKEN']) {
+        expect(response.body.data.envVars['DISCORD_TOKEN']).toContain('***');
+        expect(response.body.data.envVars['DISCORD_TOKEN']).not.toBe('test-token-1234');
+      }
+
       // The test should ensure sensitive *values* are not exposed, not just check for '***'
       // A more robust check would be to ensure no unredacted secrets exist.
       // For now, we'll keep the check for '***' as an indicator of redaction,
@@ -383,6 +393,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       // all possible sensitive keys and their expected redacted values.
       expect(redactedResponse).not.toMatch(/"token":\s*"[^*][^"]*"/);
       expect(redactedResponse).not.toMatch(/"password":\s*"[^*][^"]*"/);
+
+      // Clean up
+      delete process.env.DISCORD_TOKEN;
     });
   });
 
