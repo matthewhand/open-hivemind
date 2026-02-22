@@ -4,7 +4,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { Discord } from '@hivemind/adapter-discord';
 import type { IBotInfo } from '@src/types/botInfo';
-import SlackService from '@integrations/slack/SlackService';
+import { SlackService } from '@hivemind/adapter-slack';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';

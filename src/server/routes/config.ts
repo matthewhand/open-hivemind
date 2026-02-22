@@ -38,9 +38,9 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
-import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
+import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
+import { testSlackConnection } from '@hivemind/adapter-slack';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -253,14 +253,12 @@ router.get('/templates', async (req, res) => {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    // Check if templates directory exists asynchronously
+    let files: string[] = [];
     try {
-      await fs.promises.access(templatesDir);
-    } catch {
+      files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    } catch (e) {
       return res.json({ templates: [] });
     }
-
-    const files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
 
     const templatesPromises = files.map(async (file) => {
       try {
@@ -555,7 +553,7 @@ router.get('/', async (req, res) => {
       // Return demo bots in demo mode
       const demoBots = demoService.getDemoBots();
       return res.json({
-        bots: demoBots.map((bot) => ({
+        bots: demoBots.map(bot => ({
           ...bot,
           id: bot.id,
           name: bot.name,
@@ -1473,8 +1471,7 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'discord') {
       const rawToken = String((config as any).DISCORD_BOT_TOKEN || (config as any).token || '');
       const token = rawToken.split(',')[0]?.trim() || '';
-      const { testDiscordConnection } =
-        await import('@hivemind/adapter-discord/DiscordConnectionTest');
+      const { testDiscordConnection } = await import('@hivemind/adapter-discord');
       const result = await testDiscordConnection(token);
       return res.json(result);
     }

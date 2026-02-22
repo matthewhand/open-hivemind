@@ -57,9 +57,12 @@ export class SwarmInstaller {
   async startSwarm(port = 8000): Promise<{ success: boolean; message: string }> {
     try {
       // Validate port
-      const numericPort = typeof port === 'number' ? port : parseInt(String(port), 10);
-      if (isNaN(numericPort) || numericPort < 1 || numericPort > 65535) {
-        return { success: false, message: `Invalid port: ${port}` };
+      const portNum = Number(port);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        return {
+          success: false,
+          message: 'Invalid port number. Must be between 1 and 65535.',
+        };
       }
 
       // Check if swarm-api command is available
@@ -72,8 +75,8 @@ export class SwarmInstaller {
         };
       }
 
-      // Start swarm API server in background using spawn for security (avoid shell injection)
-      const child = spawn('swarm-api', ['--port', numericPort.toString()], {
+      // Start swarm API server in background
+      const child = spawn('swarm-api', ['--port', portNum.toString()], {
         detached: true,
         stdio: 'ignore',
       });
@@ -82,7 +85,7 @@ export class SwarmInstaller {
       // Wait a moment for startup
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      return { success: true, message: `OpenSwarm API started on port ${numericPort}` };
+      return { success: true, message: `OpenSwarm API started on port ${portNum}` };
     } catch (error: any) {
       return { success: false, message: `Failed to start: ${error.message}` };
     }

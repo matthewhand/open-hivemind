@@ -13,7 +13,7 @@ const router = Router();
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@integrations/slack/SlackService').default as any;
+      const svc = require('@hivemind/adapter-slack').SlackService as any;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];

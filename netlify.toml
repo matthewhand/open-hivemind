@@ -1,10 +1,9 @@
 [build]
-  command = "pnpm run build:serverless"
+  command = "npm run build:serverless"
   publish = "src/client/dist"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--no-audit"
 
 # Production context (main branch only)
 [context.production]
@@ -20,7 +19,7 @@
   ignore = "exit 1"
 
 [dev]
-  command = "pnpm run dev:frontend-only"
+  command = "npm run dev:frontend-only"
   publish = "src/client/dist"
 
 [[redirects]]
@@ -32,3 +31,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Suppress builds for Pull Requests and Branch Deploys
+[context.deploy-preview]
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"

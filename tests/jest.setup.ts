@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Server } from 'http';
 import express from 'express';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
