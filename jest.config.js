@@ -1,6 +1,6 @@
 const unitIntegrationProject = {
   displayName: 'unit-integration',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests', '<rootDir>/packages'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   // testTimeout handled in setup files to avoid CLI conflicts
