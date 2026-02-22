@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import type { SlackBotManager } from '../SlackBotManager';
 import type { SlackWelcomeHandler } from '../SlackWelcomeHandler';
+import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:SlackBotFacade');
 
@@ -11,8 +12,8 @@ export interface ISlackBotFacade {
     botManager: SlackBotManager,
     welcomeHandler?: SlackWelcomeHandler
   ): Promise<void>;
-  getFirstBotInfo(botManager: SlackBotManager): any | undefined;
-  getAllBots(botManager: SlackBotManager): any[];
+  getFirstBotInfo(botManager: SlackBotManager): IBotInfo | undefined;
+  getAllBots(botManager: SlackBotManager): IBotInfo[];
 }
 
 /**
@@ -41,12 +42,12 @@ export class SlackBotFacade implements ISlackBotFacade {
     }
   }
 
-  getFirstBotInfo(botManager: SlackBotManager): any | undefined {
+  getFirstBotInfo(botManager: SlackBotManager): IBotInfo | undefined {
     const bots = botManager.getAllBots();
     return bots[0];
   }
 
-  getAllBots(botManager: SlackBotManager): any[] {
-    return botManager.getAllBots();
+  getAllBots(botManager: SlackBotManager): IBotInfo[] {
+    return botManager.getAllBots() as IBotInfo[];
   }
 }

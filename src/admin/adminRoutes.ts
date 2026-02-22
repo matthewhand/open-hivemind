@@ -7,6 +7,7 @@ import SlackService from '@integrations/slack/SlackService';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
+import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -82,13 +83,13 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
     let discordInfo: any[] = [];
     try {
       const ds = (Discord as any).DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as any[];
-      discordBots = bots.map((b: any) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b: any) => ({
+      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
+      discordInfo = bots.map((b) => ({
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
-    } catch {}
+    } catch { }
     res.json({
       ok: true,
       slackBots,
@@ -226,7 +227,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'success',
       `Created Slack bot ${name} with token and configuration`
     );
-    res.json({ ok: true });
+    return res.json({ ok: true });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -235,7 +236,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'failure',
       `Failed to create Slack bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
@@ -289,8 +290,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'success',
         `Created Discord bot ${name || 'unnamed'} with runtime initialization`
       );
-      res.json({ ok: true, note: 'Added and saved.' });
-      return;
+      return res.json({ ok: true, note: 'Added and saved.' });
     } catch (e) {
       debug('Discord runtime add failed; config persisted:', e);
     }
@@ -301,7 +301,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'success',
       `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
     );
-    res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -310,7 +310,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'failure',
       `Failed to create Discord bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
@@ -372,7 +372,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'success',
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
-    res.json({ ok: true, addedSlack, addedDiscord });
+    return res.json({ ok: true, addedSlack, addedDiscord });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -381,6 +381,6 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'failure',
       `Failed to reload bots: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });

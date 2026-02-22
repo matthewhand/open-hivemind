@@ -39,7 +39,7 @@ export const webhookService = {
     log('Registering platform-agnostic webhook routes');
     if (!messageService) {
       try {
-        configureWebhookRoutes(app, null as unknown as IMessengerService, channelId);
+        configureWebhookRoutes(app, {} as IMessengerService, channelId);
       } catch {
         // Swallow route registration errors when no message service is provided
       }
