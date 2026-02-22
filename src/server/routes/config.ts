@@ -637,7 +637,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get configuration sources (env vars vs config files)
-router.get('/sources', (req, res) => {
+router.get('/sources', async (req, res) => {
   try {
     const envVars = Object.keys(process.env)
       .filter(
@@ -668,26 +668,32 @@ router.get('/sources', (req, res) => {
       );
 
     // Detect config files
-    const fs = require('fs');
-    const path = require('path');
     const configDir = path.join(__dirname, '../../../config');
-    const configFiles: any[] = [];
+    let configFiles: any[] = [];
 
     try {
-      const files = fs.readdirSync(configDir);
-      files.forEach((file: string) => {
-        if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
+      const files = await fs.promises.readdir(configDir);
+      const statsPromises = files
+        .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
+        .map(async (file) => {
           const filePath = path.join(configDir, file);
-          const stats = fs.statSync(filePath);
-          configFiles.push({
-            name: file,
-            path: filePath,
-            size: stats.size,
-            modified: stats.mtime,
-            type: path.extname(file).slice(1),
-          });
-        }
-      });
+          try {
+            const stats = await fs.promises.stat(filePath);
+            return {
+              name: file,
+              path: filePath,
+              size: stats.size,
+              modified: stats.mtime,
+              type: path.extname(file).slice(1),
+            };
+          } catch (e) {
+            console.warn(`Could not stat file ${file}:`, e);
+            return null;
+          }
+        });
+
+      const results = await Promise.all(statsPromises);
+      configFiles = results.filter((r) => r !== null);
     } catch (fileError) {
       console.warn('Could not read config directory:', fileError);
     }
