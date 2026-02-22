@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
 import { Router } from 'express';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
@@ -51,6 +52,7 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
 
+const debug = Debug('app:server:routes:config');
 const router = Router();
 
 // Map of base config types to their convict objects (used as schema sources)
@@ -87,7 +89,7 @@ const loadDynamicConfigs = () => {
           const name = match[0].replace('.json', ''); // e.g. openai-dev
 
           if (schemaSources[type] && !globalConfigs[name]) {
-            console.log(`Loading dynamic config: ${name} (type: ${type})`);
+            debug(`Loading dynamic config: ${name} (type: ${type})`);
             // Create new convict instance using the base type's schema
             const convict = require('convict'); // Require local to avoid module caching issues if any
             const newConfig = convict(schemaSources[type].getSchema());
@@ -436,7 +438,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
       const match = configName.match(/^([a-z]+)-.+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
-        console.log(`Creating new dynamic config: ${configName} (type: ${type})`);
+        debug(`Creating new dynamic config: ${configName} (type: ${type})`);
         const convict = require('convict');
         config = convict(schemaSources[type].getSchema());
         globalConfigs[configName] = config;
@@ -783,7 +785,7 @@ router.get('/sources', (req, res) => {
 router.post('/reload', (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    console.log('Manager instance obtained:', !!manager);
+    debug('Manager instance obtained:', !!manager);
     manager.reload();
 
     // Skip audit logging entirely in test mode
@@ -850,7 +852,7 @@ router.post('/api/cache/clear', (req, res) => {
 
     // Force reload configuration to clear any internal caches
     const manager = BotConfigurationManager.getInstance();
-    console.log('Manager instance obtained:', !!manager);
+    debug('Manager instance obtained:', !!manager);
     manager.reload();
 
     // No audit logging needed in test mode
@@ -883,11 +885,11 @@ router.post('/api/cache/clear', (req, res) => {
 router.get('/export', (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    console.log('Manager instance obtained:', !!manager);
+    debug('Manager instance obtained:', !!manager);
     const bots = manager.getAllBots();
-    console.log('Bots obtained:', bots.length);
+    debug('Bots obtained:', bots.length);
     const warnings = manager.getWarnings();
-    console.log('Warnings obtained:', warnings);
+    debug('Warnings obtained:', warnings);
 
     // Create export data with current timestamp
     const exportData = {
@@ -904,7 +906,7 @@ router.get('/export', (req, res) => {
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
-    console.log('Headers set, about to send response');
+    debug('Headers set, about to send response');
     res.send(jsonContent);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -1795,7 +1797,7 @@ router.delete('/mcp-server-profiles/:key', (req, res) => {
 
 // Catch-all route for debugging - MUST BE LAST
 router.use('*', (req, res) => {
-  console.log('Config router catch-all:', req.method, req.originalUrl);
+  debug('Config router catch-all:', req.method, req.originalUrl);
   res.status(404).json({ error: 'Route not found in config router' });
 });
 
