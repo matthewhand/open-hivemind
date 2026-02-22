@@ -14,6 +14,7 @@ import botsRouter from '@src/server/routes/bots';
 import ciRouter from '@src/server/routes/ci';
 import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
+import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
@@ -26,6 +27,7 @@ import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
@@ -267,6 +269,7 @@ app.use('/api/openapi', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
 app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute); // Root health endpoint (for frontend polling)
 app.use(sitemapRouter); // Sitemap routes at root level
@@ -424,6 +427,18 @@ async function main() {
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
+  // Initialize Demo Mode Service
+  const demoService = DemoModeService.getInstance();
+  demoService.initialize();
+
+  if (demoService.isInDemoMode()) {
+    appLogger.info('🎭 Demo Mode ACTIVE - No credentials configured');
+    appLogger.info('🎭 The WebUI will show demo bots and simulated responses');
+    appLogger.info('🎭 Configure API keys/tokens to enable production mode');
+  } else {
+    appLogger.info('✅ Production Mode - Credentials detected');
+  }
+
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
 
@@ -435,8 +450,15 @@ async function main() {
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
-  if (skipMessengers) {
-    appLogger.info('🤖 Skipping messenger initialization due to SKIP_MESSENGERS=true');
+  // In demo mode, skip messenger initialization if no real providers configured
+  const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
+
+  if (shouldSkipMessengers) {
+    if (demoService.isInDemoMode()) {
+      appLogger.info('🎭 Skipping messenger initialization - Demo Mode active');
+    } else {
+      appLogger.info('🤖 Skipping messenger initialization due to SKIP_MESSENGERS=true');
+    }
   } else {
     appLogger.info('📡 Initializing messenger services');
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;

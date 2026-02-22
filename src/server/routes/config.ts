@@ -41,6 +41,7 @@ import { testMattermostConnection } from '../../integrations/mattermost/Mattermo
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
 import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
 import { BotManager } from '../../managers/BotManager';
+import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
 import {
   ConfigBackupSchema,
@@ -540,6 +541,32 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 // Get all configuration with sensitive data redacted
 router.get('/', async (req, res) => {
   try {
+    // Check for demo mode first
+    const demoService = DemoModeService.getInstance();
+
+    if (demoService.isInDemoMode()) {
+      // Return demo bots in demo mode
+      const demoBots = demoService.getDemoBots();
+      return res.json({
+        bots: demoBots.map(bot => ({
+          ...bot,
+          id: bot.id,
+          name: bot.name,
+          messageProvider: bot.messageProvider,
+          llmProvider: bot.llmProvider,
+          persona: bot.persona,
+          systemInstruction: bot.systemInstruction,
+          status: 'demo',
+          connected: true,
+          isDemo: true,
+        })),
+        warnings: ['Running in demo mode - configure API keys to enable production mode'],
+        legacyMode: false,
+        environment: process.env.NODE_ENV || 'development',
+        isDemoMode: true,
+      });
+    }
+
     const botManager = BotManager.getInstance();
     const bots = await botManager.getAllBots();
     const manager = BotConfigurationManager.getInstance();
@@ -566,44 +593,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
+            ...mergedBot.discord,
+            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+          }
           : undefined,
         slack: mergedBot.slack
           ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
+            ...mergedBot.slack,
+            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+            signingSecret: redactSensitiveInfo(
+              'SLACK_SIGNING_SECRET',
+              mergedBot.slack.signingSecret || ''
+            ),
+          }
           : undefined,
         openai: mergedBot.openai
           ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
+            ...mergedBot.openai,
+            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+          }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
+            ...mergedBot.flowise,
+            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+          }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
+            ...mergedBot.openwebui,
+            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+          }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
+            ...mergedBot.openswarm,
+            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+          }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -614,6 +641,7 @@ router.get('/', async (req, res) => {
       warnings,
       legacyMode: manager.isLegacyMode(),
       environment: process.env.NODE_ENV || 'development',
+      isDemoMode: false,
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -1449,9 +1477,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-          (config as any).serverUrl ||
-          (config as any).url ||
-          ''
+        (config as any).serverUrl ||
+        (config as any).url ||
+        ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);
@@ -1471,6 +1499,39 @@ router.post('/message-provider/test', async (req, res) => {
 // GET /api/config/llm-profiles - Get LLM profile templates
 router.get('/llm-profiles', (req, res) => {
   try {
+    // Check for demo mode
+    const demoService = DemoModeService.getInstance();
+
+    if (demoService.isInDemoMode()) {
+      // Return demo LLM profiles
+      return res.json({
+        profiles: {
+          llm: [
+            {
+              key: 'demo-openai',
+              name: 'Demo OpenAI Profile',
+              description: 'Demo profile for OpenAI - configure API key to enable',
+              provider: 'openai',
+              config: {
+                model: 'gpt-4',
+                temperature: 0.7,
+              },
+            },
+            {
+              key: 'demo-flowise',
+              name: 'Demo Flowise Profile',
+              description: 'Demo profile for Flowise - configure API key to enable',
+              provider: 'flowise',
+              config: {
+                apiBaseUrl: 'http://localhost:3000/api/v1',
+              },
+            },
+          ],
+        },
+        isDemo: true,
+      });
+    }
+
     res.json({
       profiles: getLlmProfiles(),
     });

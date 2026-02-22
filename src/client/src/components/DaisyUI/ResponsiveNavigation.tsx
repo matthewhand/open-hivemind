@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMediaQuery } from '../../hooks/useResponsive';
 import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
+import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
 
 interface NavItem {
@@ -72,8 +73,11 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       {/* MAIN CONTENT - Offset for sidebar */}
       <main
         className={`flex-1 min-h-screen p-6 transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'
-        }`}
+          }`}
       >
+        {/* Demo Mode Banner */}
+        <DemoModeBanner />
+
         {/* White content card */}
         <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
           <div className="mb-4">
