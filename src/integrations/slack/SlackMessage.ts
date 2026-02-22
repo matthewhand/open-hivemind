@@ -183,14 +183,14 @@ export default class SlackMessage extends IMessage {
   private resolveTimestamp(data: SlackMessageData): Date | undefined {
     const ts = data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
     if (!ts || typeof ts !== 'string') {
-      return;
+      return undefined;
     }
     // Slack ts "seconds.millis"
     const [secStr, fracStr] = ts.split('.');
     const sec = Number(secStr);
     const ms = Number((fracStr || '0').padEnd(3, '0').slice(0, 3));
     if (!Number.isFinite(sec) || !Number.isFinite(ms)) {
-      return;
+      return undefined;
     }
     return new Date(sec * 1000 + ms);
   }

@@ -156,10 +156,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               Last updated: {lastRefresh.toLocaleTimeString()}
             </span>
             <Button
-              variant="secondary" className="btn-outline"
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
               onClick={handleRefresh}
               disabled={loading}
-              className="flex items-center gap-2"
             >
               {loading ? (
                 <span className="loading loading-spinner loading-sm"></span>
