@@ -3,7 +3,6 @@ import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import IntegrationsPanel from '../components/IntegrationsPanel';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { Plug } from 'lucide-react';
-// import ComprehensiveConfigPanel from '../components/ComprehensiveConfigPanel'; // Kept for reference but unused
 
 const ConfigPage: React.FC = () => {
   const breadcrumbItems = [
