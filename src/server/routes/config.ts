@@ -246,33 +246,40 @@ router.put('/bots/:name', async (req, res) => {
 });
 
 // GET /api/config/templates - List available templates
-router.get('/templates', (req, res) => {
+router.get('/templates', async (req, res) => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    if (!fs.existsSync(templatesDir)) {
-      return res.json({ templates: [] });
+    try {
+      await fs.promises.access(templatesDir);
+    } catch {
+      res.json({ templates: [] });
+      return;
     }
 
-    const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith('.json'));
-    const templates = files
-      .map((file) => {
-        try {
-          const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
-          return {
-            id: file.replace('.json', ''),
-            name: content.name || file.replace('.json', ''),
-            description: content.description || 'No description provided',
-            provider: content.provider || content.messageProvider || 'unknown',
-            content,
-          };
-        } catch (e) {
-          console.warn(`Failed to parse template ${file}:`, e);
-          return null; // Skip invalid
-        }
-      })
-      .filter((t) => t !== null);
+    const files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    const templates = (
+      await Promise.all(
+        files.map(async (file) => {
+          try {
+            const content = JSON.parse(
+              await fs.promises.readFile(path.join(templatesDir, file), 'utf8')
+            );
+            return {
+              id: file.replace('.json', ''),
+              name: content.name || file.replace('.json', ''),
+              description: content.description || 'No description provided',
+              provider: content.provider || content.messageProvider || 'unknown',
+              content,
+            };
+          } catch (e) {
+            console.warn(`Failed to parse template ${file}:`, e);
+            return null; // Skip invalid
+          }
+        })
+      )
+    ).filter((t) => t !== null);
 
     res.json({ templates });
   } catch (error: unknown) {
@@ -548,7 +555,7 @@ router.get('/', async (req, res) => {
       // Return demo bots in demo mode
       const demoBots = demoService.getDemoBots();
       return res.json({
-        bots: demoBots.map(bot => ({
+        bots: demoBots.map((bot) => ({
           ...bot,
           id: bot.id,
           name: bot.name,
@@ -593,44 +600,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-            ...mergedBot.discord,
-            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-          }
+              ...mergedBot.discord,
+              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+            }
           : undefined,
         slack: mergedBot.slack
           ? {
-            ...mergedBot.slack,
-            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-            signingSecret: redactSensitiveInfo(
-              'SLACK_SIGNING_SECRET',
-              mergedBot.slack.signingSecret || ''
-            ),
-          }
+              ...mergedBot.slack,
+              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+              signingSecret: redactSensitiveInfo(
+                'SLACK_SIGNING_SECRET',
+                mergedBot.slack.signingSecret || ''
+              ),
+            }
           : undefined,
         openai: mergedBot.openai
           ? {
-            ...mergedBot.openai,
-            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-          }
+              ...mergedBot.openai,
+              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+            }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-            ...mergedBot.flowise,
-            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-          }
+              ...mergedBot.flowise,
+              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+            }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-            ...mergedBot.openwebui,
-            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-          }
+              ...mergedBot.openwebui,
+              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+            }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-            ...mergedBot.openswarm,
-            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-          }
+              ...mergedBot.openswarm,
+              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+            }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1477,9 +1484,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-        (config as any).serverUrl ||
-        (config as any).url ||
-        ''
+          (config as any).serverUrl ||
+          (config as any).url ||
+          ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);
