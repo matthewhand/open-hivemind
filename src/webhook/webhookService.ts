@@ -41,7 +41,7 @@ export const webhookService = {
       try {
         configureWebhookRoutes(app, null as unknown as IMessengerService, channelId);
       } catch {
-        // Swallow route registration errors when no message service is provided
+        // Keep startup resilient when no message service is available
       }
     } else {
       configureWebhookRoutes(app, messageService as IMessengerService, channelId);

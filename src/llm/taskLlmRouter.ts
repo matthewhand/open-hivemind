@@ -102,10 +102,10 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-async function createProviderFromInstance(
+function createProviderFromInstance(
   instance: ProviderInstance,
   modelOverride?: string
-): Promise<ILlmProvider | null> {
+): ILlmProvider | null {
   try {
     const type = String(instance.type || '').toLowerCase();
     const baseConfig = instance.config || {};
@@ -114,7 +114,8 @@ async function createProviderFromInstance(
     let provider: ILlmProvider | undefined;
     switch (type) {
       case 'openai':
-        const { OpenAiProvider } = await import('@hivemind/provider-openai');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { OpenAiProvider } = require('@hivemind/provider-openai');
         provider = new OpenAiProvider(cfg);
         break;
       case 'flowise':
@@ -166,10 +167,10 @@ function pickProviderInstance(
   return null;
 }
 
-export async function getTaskLlm(
+export function getTaskLlm(
   task: LlmTask,
   opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }
-): Promise<TaskLlmSelection> {
+): TaskLlmSelection {
   const overrides = readOverride(task);
   const providerRef = overrides.providerRef;
   const modelRef = overrides.modelRef;
@@ -183,7 +184,7 @@ export async function getTaskLlm(
   const fallbackProviders =
     opts?.fallbackProviders && opts.fallbackProviders.length > 0
       ? opts.fallbackProviders
-      : await getLlmProvider();
+      : getLlmProvider();
 
   if (!providerRef) {
     return {
@@ -204,7 +205,7 @@ export async function getTaskLlm(
     return { provider: fallbackProviders[0], metadata, source: 'default' };
   }
 
-  const instanceProvider = await createProviderFromInstance(picked, modelRef);
+  const instanceProvider = createProviderFromInstance(picked, modelRef);
   if (!instanceProvider) {
     debug(
       `Task ${task}: provider instance "${picked.id}" failed to initialize; falling back to default providers`

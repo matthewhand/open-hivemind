@@ -1,4 +1,6 @@
 import { EventEmitter } from 'events';
+import { container } from 'tsyringe';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
@@ -130,7 +132,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService = require('../../services/StartupGreetingService').default;
+    const startupGreetingService = container.resolve(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 
@@ -199,12 +201,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (
-            hivemindError &&
-            typeof hivemindError === 'object' &&
-            'type' in hivemindError &&
-            ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api')
-          ) {
+          const errType = (hivemindError as any).type;
+          if (errType === 'network' || errType === 'api') {
             throw hivemindError;
           }
 
@@ -238,7 +236,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
@@ -312,7 +310,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          const errType = (hivemindError as any).type;
+          if (errType === 'network' || errType === 'api') {
             throw hivemindError;
           }
 
@@ -472,7 +471,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   /**

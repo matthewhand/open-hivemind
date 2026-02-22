@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "es2021",
     "module": "CommonJS",
     "strict": false,
     "noImplicitAny": false,
@@ -70,6 +70,12 @@
       ],
       "@hivemind/adapter-discord/*": [
         "packages/adapter-discord/src/*"
+      ],
+      "@hivemind/adapter-slack": [
+        "packages/adapter-slack/src/index.ts"
+      ],
+      "@hivemind/adapter-slack/*": [
+        "packages/adapter-slack/src/*"
       ]
     },
     "experimentalDecorators": true,
@@ -78,7 +84,8 @@
   "include": [
     "src/**/*",
     "packages/provider-openai/src/**/*",
-    "packages/adapter-discord/src/**/*"
+    "packages/adapter-discord/src/**/*",
+    "packages/adapter-slack/src/**/*"
   ],
   "exclude": [
     "tests/**/*",

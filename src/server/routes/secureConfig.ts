@@ -33,14 +33,14 @@ router.get('/', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: configs,
       count: configs.length,
     });
   } catch (error: any) {
     debug('Failed to list secure configs:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve configurations',
     });
@@ -63,13 +63,13 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: config,
     });
   } catch (error: any) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve configuration',
     });
@@ -116,7 +116,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       `Created secure configuration ${name} of type ${type}`
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Configuration stored securely',
       data: { id, name, type },
@@ -130,7 +130,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to create secure configuration: ${error.message}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to store configuration',
     });
@@ -192,7 +192,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       }
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Configuration updated successfully',
       data: { id, name, type },
@@ -206,7 +206,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to update secure configuration: ${error.message}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to update configuration',
     });
@@ -245,7 +245,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       }
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Configuration deleted successfully',
     });
@@ -258,7 +258,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to delete secure configuration: ${error.message}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to delete configuration',
     });
@@ -281,7 +281,7 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
       'Created backup of all secure configurations'
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Backup created successfully',
       data: { backupId },
@@ -295,7 +295,7 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to create backup: ${error.message}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to create backup',
     });
@@ -310,14 +310,14 @@ router.get('/backups/list', async (req: Request, res: Response) => {
   try {
     const backups = await secureConfigManager.listBackups();
 
-    res.json({
+    return res.json({
       success: true,
       data: backups,
       count: backups.length,
     });
   } catch (error: any) {
     debug('Failed to list backups:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve backups',
     });
@@ -341,7 +341,7 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
       `Restored secure configurations from backup ${backupId}`
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: `Successfully restored from backup ${backupId}`,
     });
@@ -354,7 +354,7 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
       'failure',
       `Failed to restore from backup ${req.params.backupId}: ${error.message}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to restore from backup',
     });

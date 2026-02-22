@@ -25,108 +25,18 @@ const authManager = AuthManager.getInstance();
 router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
   try {
     const credentials: LoginCredentials = req.body;
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
-    const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === 'localhost';
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const disableLocalBypass = process.env.DISABLE_LOCAL_ADMIN_BYPASS === 'true';
-
-    // Check for localhost bypass with environment variable override
-    if (isLocalhost && !disableLocalBypass) {
-      debug('Localhost admin bypass available', { clientIP, adminPassword: !!adminPassword });
-
-      // If ADMIN_PASSWORD is set, use it as the password for admin user
-      if (adminPassword) {
-        if (credentials.username === 'admin' && credentials.password === adminPassword) {
-          const adminUser = await authManager
-            .login({
-              username: 'admin',
-              password: adminPassword,
-            })
-            .catch(async () => {
-              // Create admin user if it doesn't exist
-              try {
-                return await authManager.register({
-                  username: 'admin',
-                  email: 'admin@localhost',
-                  password: adminPassword,
-                  role: 'admin',
-                });
-              } catch (regError: any) {
-                debug('Failed to create admin user:', regError.message);
-                throw new Error('Failed to create admin user');
-              }
-            });
-
-          const authResult = await authManager.login({
-            username: 'admin',
-            password: adminPassword,
-          });
-
-          return res.json({
-            success: true,
-            data: authResult,
-            message: 'Login successful',
-            bypassInfo: {
-              isLocalBypass: true,
-              adminPasswordSet: true,
-              note: 'Access granted via localhost with ADMIN_PASSWORD',
-            },
-          });
-        }
-      } else {
-        // No admin password set, allow any admin credentials on localhost
-        if (credentials.username === 'admin') {
-          const adminUser = await authManager
-            .login({
-              username: 'admin',
-              password: credentials.password,
-            })
-            .catch(async () => {
-              // Create admin user if it doesn't exist with provided password
-              try {
-                return await authManager.register({
-                  username: 'admin',
-                  email: 'admin@localhost',
-                  password: credentials.password,
-                  role: 'admin',
-                });
-              } catch (regError: any) {
-                debug('Failed to create admin user:', regError.message);
-                throw new Error('Failed to create admin user');
-              }
-            });
-
-          const authResult = await authManager.login({
-            username: 'admin',
-            password: credentials.password,
-          });
-
-          return res.json({
-            success: true,
-            data: authResult,
-            message: 'Login successful',
-            bypassInfo: {
-              isLocalBypass: true,
-              adminPasswordSet: false,
-              note: 'Access granted via localhost bypass',
-            },
-          });
-        }
-      }
-    }
-
     // Normal authentication flow
 
     const authResult = await authManager.login(credentials);
 
-    res.json({
+    return res.json({
       success: true,
       data: authResult,
       message: 'Login successful',
     });
   } catch (error: any) {
     debug('Login error:', error.message);
-    res.status(401).json({
+    return res.status(401).json({
       error: 'Authentication failed',
       message: error.message || 'Invalid credentials',
     });
@@ -149,14 +59,14 @@ router.post(
 
       const user = await authManager.register(registerData);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: { user },
         message: 'User registered successfully',
       });
     } catch (error: any) {
       debug('Registration error:', error.message);
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Registration failed',
         message: error.message || 'Failed to register user',
       });
@@ -177,14 +87,14 @@ router.post(
 
       const authResult = await authManager.refreshToken(refreshToken);
 
-      res.json({
+      return res.json({
         success: true,
         data: authResult,
         message: 'Token refreshed successfully',
       });
     } catch (error: any) {
       debug('Token refresh error:', error.message);
-      res.status(401).json({
+      return res.status(401).json({
         error: 'Token refresh failed',
         message: error.message || 'Invalid refresh token',
       });
@@ -209,13 +119,13 @@ router.post(
         await authManager.logout(refreshToken);
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Logout successful',
       });
     } catch (error: any) {
       debug('Logout error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Logout failed',
         message: 'An error occurred during logout',
       });
@@ -229,7 +139,7 @@ router.post(
  */
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
-  res.json({
+  return res.json({
     success: true,
     data: { user: authReq.user },
   });
@@ -286,19 +196,19 @@ router.put(
       const success = await authManager.changePassword(req.user.id, newPassword);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Password changed successfully',
         });
       } else {
-        res.status(500).json({
+        return res.status(500).json({
           error: 'Password change failed',
           message: 'Failed to update password',
         });
       }
     } catch (error: any) {
       debug('Password change error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Password change failed',
         message: 'An error occurred while changing password',
       });
@@ -315,14 +225,14 @@ router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) =
   try {
     const users = authManager.getAllUsers();
 
-    res.json({
+    return res.json({
       success: true,
       data: { users },
       total: users.length,
     });
   } catch (error: any) {
     debug('Get users error:', error.message);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get users',
       message: 'An error occurred while retrieving users',
     });
@@ -351,13 +261,13 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: { user },
       });
     } catch (error: any) {
       debug('Get user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to get user',
         message: 'An error occurred while retrieving user',
       });
@@ -393,14 +303,14 @@ router.put(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: { user: updatedUser },
         message: 'User updated successfully',
       });
     } catch (error: any) {
       debug('Update user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to update user',
         message: 'An error occurred while updating user',
       });
@@ -439,13 +349,13 @@ router.delete(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'User deleted successfully',
       });
     } catch (error: any) {
       debug('Delete user error:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to delete user',
         message: 'An error occurred while deleting user',
       });
@@ -468,7 +378,7 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
 
   const permissions = authManager.getUserPermissions(authReq.user.role);
 
-  res.json({
+  return res.json({
     success: true,
     data: {
       role: authReq.user.role,

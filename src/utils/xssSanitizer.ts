@@ -92,10 +92,10 @@ export function sanitizeText(text: string): string {
   }
 
   return text
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;');
 }
@@ -187,7 +187,7 @@ export const ContextSanitizers = {
    * Sanitize for HTML attribute context
    */
   attribute: (value: string): string => {
-    return sanitizeText(value).replace(/"/g, '"');
+    return sanitizeText(value);
   },
 
   /**
