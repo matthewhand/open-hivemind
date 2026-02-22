@@ -12,3 +12,12 @@ export * from './ILlmProvider';
 export * from './IBotConfig';
 export * from './IServiceDependencies';
 export * from './IAdapterFactory';
+export {
+    BaseError,
+    ValidationError,
+    NetworkError,
+    ApiError,
+    ConfigurationError,
+    defaultErrorFactory,
+    type IErrorFactory,
+} from './errors';
