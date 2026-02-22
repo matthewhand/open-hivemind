@@ -6,6 +6,14 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-audit"
 
+# Disable deploy previews for pull requests — only deploy on main
+[context.deploy-preview]
+  command = "echo 'Deploy previews disabled'"
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"
+
 [dev]
   command = "pnpm run dev:frontend-only"
   publish = "src/client/dist"
