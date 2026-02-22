@@ -245,33 +245,39 @@ router.put('/bots/:name', async (req, res) => {
 });
 
 // GET /api/config/templates - List available templates
-router.get('/templates', (req, res) => {
+router.get('/templates', async (req, res) => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    if (!fs.existsSync(templatesDir)) {
+    try {
+      await fs.promises.access(templatesDir);
+    } catch {
       return res.json({ templates: [] });
     }
 
-    const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith('.json'));
-    const templates = files
-      .map((file) => {
-        try {
-          const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
-          return {
-            id: file.replace('.json', ''),
-            name: content.name || file.replace('.json', ''),
-            description: content.description || 'No description provided',
-            provider: content.provider || content.messageProvider || 'unknown',
-            content,
-          };
-        } catch (e) {
-          console.warn(`Failed to parse template ${file}:`, e);
-          return null; // Skip invalid
-        }
-      })
-      .filter((t) => t !== null);
+    const files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    const templates = (
+      await Promise.all(
+        files.map(async (file) => {
+          try {
+            const content = JSON.parse(
+              await fs.promises.readFile(path.join(templatesDir, file), 'utf8')
+            );
+            return {
+              id: file.replace('.json', ''),
+              name: content.name || file.replace('.json', ''),
+              description: content.description || 'No description provided',
+              provider: content.provider || content.messageProvider || 'unknown',
+              content,
+            };
+          } catch (e) {
+            console.warn(`Failed to parse template ${file}:`, e);
+            return null; // Skip invalid
+          }
+        })
+      )
+    ).filter((t) => t !== null);
 
     res.json({ templates });
   } catch (error: unknown) {
