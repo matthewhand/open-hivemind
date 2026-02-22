@@ -114,11 +114,13 @@ export class SessionManager {
         try {
           const isValid = await this.validateSession(token);
           if (!isValid) {
-            return res.status(401).json({ error: 'Session expired or invalid' });
+            res.status(401).json({ error: 'Session expired or invalid' });
+            return;
           }
         } catch (error) {
           debug('Session validation error: %s', error);
-          return res.status(401).json({ error: 'Session validation failed' });
+          res.status(401).json({ error: 'Session validation failed' });
+          return;
         }
       }
 
