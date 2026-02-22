@@ -1,3 +1,1 @@
-import MattermostService from './MattermostService';
-
-export default MattermostService;
+export { MattermostService as default, MattermostService } from '@hivemind/adapter-mattermost';

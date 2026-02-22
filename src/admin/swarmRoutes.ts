@@ -36,9 +36,9 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
   try {
     const port = req.body.port || 8000;
     const result = await installer.startSwarm(port);
-    res.json({ ok: result.success, message: result.message });
+    return res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 

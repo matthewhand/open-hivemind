@@ -3,6 +3,10 @@ import { createReadStream, createWriteStream, promises as fs } from 'fs';
 import { basename, join } from 'path';
 import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
+// @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
+import { parse } from 'csv-parse/sync';
+// @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
+import { stringify } from 'csv-stringify/sync';
 import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
