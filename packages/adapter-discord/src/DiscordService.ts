@@ -389,8 +389,6 @@ export const Discord = {
       console.info(`║  DEFAULT_CHANNEL_ID                     : ${defaultChannel || '(not set)'}`);
       console.info('╚══════════════════════════════════════════════════════════════╝\n');
 
-      console.log('!!! EMITTING service-ready FOR DiscordService !!!');
-      console.log('!!! DiscordService EMITTER INSTANCE:', this);
       const startupGreetingService = require('@services/StartupGreetingService').default;
       startupGreetingService.emit('service-ready', this);
     }
