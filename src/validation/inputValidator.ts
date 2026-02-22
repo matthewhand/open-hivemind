@@ -265,11 +265,11 @@ export const CommonValidators = {
     .withMessage('Invalid provider type'),
 
   // Boolean field
-  boolean: (field: string) =>
+  boolean: (field: string): ValidationChain =>
     body(field).optional().isBoolean().withMessage(`${field} must be a boolean`).toBoolean(),
 
   // Array of strings
-  stringArray: (field: string) =>
+  stringArray: (field: string): ValidationChain =>
     body(field)
       .optional()
       .isArray()
@@ -285,23 +285,24 @@ export const CommonValidators = {
 /**
  * Validation middleware that checks for errors
  */
-export const validateInput = (req: Request, res: Response, next: NextFunction) => {
+export const validateInput = (req: Request, res: Response, next: NextFunction): void => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map((err) => ({
-      field: err.param,
+    const errorMessages = errors.array().map((err: any) => ({
+      field: err.param || err.path,
       message: err.msg,
       value: err.value !== undefined ? '[REDACTED]' : undefined,
     }));
 
     debug('Validation errors:', errorMessages);
 
-    return res.status(400).json({
+    res.status(400).json({
       error: 'Validation failed',
       code: 'VALIDATION_ERROR',
       details: errorMessages,
     });
+    return;
   }
 
   next();
@@ -324,7 +325,7 @@ export function validate(validations: ValidationChain[]) {
  * Sanitization middleware for request body
  */
 export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body, {
         trim: true,
@@ -340,7 +341,7 @@ export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
  * Sanitization middleware for query parameters
  */
 export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.query && typeof req.query === 'object') {
       req.query = sanitizeObject(req.query, {
         trim: true,
@@ -356,7 +357,7 @@ export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
  * Sanitization middleware for URL parameters
  */
 export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.params && typeof req.params === 'object') {
       req.params = sanitizeObject(req.params, {
         trim: true,
@@ -378,7 +379,7 @@ export const sanitizeAll = (options: SanitizationOptions = {}) => {
 /**
  * NoSQL injection prevention
  */
-export const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction) => {
+export const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction): void => {
   const checkForInjection = (obj: any): boolean => {
     if (!obj || typeof obj !== 'object') return false;
 
@@ -426,10 +427,11 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
     checkForInjection(req.params)
   ) {
     debug('Potential NoSQL injection detected');
-    return res.status(400).json({
+    res.status(400).json({
       error: 'Invalid input detected',
       code: 'INJECTION_DETECTED',
     });
+    return;
   }
 
   next();
@@ -473,15 +475,16 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
  * Request size limit middleware
  */
 export const limitRequestSize = (maxSizeKB: number = 100) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
     const maxSizeBytes = maxSizeKB * 1024;
 
     if (contentLength > maxSizeBytes) {
-      return res.status(413).json({
+      res.status(413).json({
         error: `Request body too large. Maximum size: ${maxSizeKB}KB`,
         code: 'REQUEST_TOO_LARGE',
       });
+      return;
     }
 
     next();

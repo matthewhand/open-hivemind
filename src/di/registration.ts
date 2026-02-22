@@ -56,9 +56,8 @@ export function registerServices(): void {
   container.register(
     TOKENS.ProviderConfigManager,
     {
-      useClass: ProviderConfigManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useFactory: (_) => ProviderConfigManager.getInstance(),
+    }
   );
 
   console.log('✅ DI services registered');

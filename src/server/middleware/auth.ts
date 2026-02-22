@@ -10,12 +10,13 @@ declare global {
   }
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
+    res.status(401).json({ error: 'Access token required' });
+    return;
   }
 
   let payload;
@@ -23,11 +24,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     const authManager = AuthManager.getInstance();
     payload = authManager.verifyAccessToken(token);
   } catch (err) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    res.status(403).json({ error: 'Invalid or expired token' });
+    return;
   }
 
   if (!payload) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    res.status(403).json({ error: 'Invalid or expired token' });
+    return;
   }
 
   req.user = payload;
@@ -35,24 +38,27 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 };
 
 export const requirePermission = (permission: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     const authManager = AuthManager.getInstance();
     const user = authManager.getUser(req.user.userId);
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      res.status(401).json({ error: 'User not found' });
+      return;
     }
 
     if (!authManager.hasPermission(user.role, permission)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'Insufficient permissions',
         required: permission,
         userRole: user.role,
       });
+      return;
     }
 
     next();
@@ -60,24 +66,26 @@ export const requirePermission = (permission: string) => {
 };
 
 export const requireRole = (role: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     if (req.user.role !== role) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'Insufficient role',
         required: role,
         userRole: req.user.role,
       });
+      return;
     }
 
     next();
   };
 };
 
-export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

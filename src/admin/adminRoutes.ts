@@ -65,7 +65,7 @@ function loadPersonas(): Array<{ key: string; name: string; systemPrompt: string
   }
 }
 
-adminRouter.get('/status', (_req: Request, res: Response) => {
+adminRouter.get('/status', (_req: Request, res: Response): void => {
   try {
     const slack = SlackService.getInstance();
     const slackBots = slack.getBotNames();
@@ -102,7 +102,7 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
   }
 });
 
-adminRouter.get('/personas', (_req: Request, res: Response) => {
+adminRouter.get('/personas', (_req: Request, res: Response): void => {
   res.json({ ok: true, personas: loadPersonas() });
 });
 
@@ -149,16 +149,16 @@ const MESSENGER_PROVIDERS = [
   },
 ];
 
-adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
+adminRouter.get('/llm-providers', (_req: Request, res: Response): void => {
   res.json({ ok: true, providers: LLM_PROVIDERS });
 });
 
-adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
+adminRouter.get('/messenger-providers', (_req: Request, res: Response): void => {
   res.json({ ok: true, providers: MESSENGER_PROVIDERS });
 });
 
 // Minimal Slack bot creation: supports a single instance add at runtime
-adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
+adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
   try {
     const { name, botToken, signingSecret, appToken, defaultChannelId, joinChannels, mode, llm } =
       req.body || {};
@@ -170,9 +170,10 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
         'failure',
         'Missing required fields: name, botToken, signingSecret'
       );
-      return res
+      res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+      return;
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -242,7 +243,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
 export default adminRouter;
 
 // Discord admin routes
-adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
+adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
   try {
     const { name, token, llm } = req.body || {};
     if (!token) {
@@ -253,7 +254,8 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      return res.status(400).json({ ok: false, error: 'token is required' });
+      res.status(400).json({ ok: false, error: 'token is required' });
+      return;
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -315,12 +317,13 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
 });
 
 // Reload bots from messengers.json (adds missing instances for Slack and Discord)
-adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Response) => {
+adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Response): Promise<void> => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     if (!fs.existsSync(messengersPath)) {
-      return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      return;
     }
     const cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
     let addedSlack = 0;

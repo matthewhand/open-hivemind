@@ -19,7 +19,7 @@ export interface ProviderStore {
   llm: ProviderInstance[];
 }
 
-class ProviderConfigManager {
+export class ProviderConfigManager {
   private static instance: ProviderConfigManager;
   private configPath: string;
   private store: ProviderStore = { message: [], llm: [] };
