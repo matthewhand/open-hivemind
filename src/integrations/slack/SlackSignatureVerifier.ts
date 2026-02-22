@@ -46,9 +46,10 @@ export class SlackSignatureVerifier {
     }
 
     // Prefer a preserved raw body string if provided by upstream middleware
+    const reqWithRawBody = req as Request & { rawBody?: unknown };
     const bodyStr =
-      (req as any).rawBody && typeof (req as any).rawBody === 'string'
-        ? (req as any).rawBody
+      reqWithRawBody.rawBody && typeof reqWithRawBody.rawBody === 'string'
+        ? reqWithRawBody.rawBody
         : typeof req.body === 'string'
           ? (req.body as string)
           : JSON.stringify(req.body);
