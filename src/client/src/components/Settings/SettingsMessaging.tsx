@@ -4,12 +4,12 @@ import { Alert, Toggle, Button } from '../DaisyUI';
 import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
 
 interface MessagingConfig {
-    onlyWhenSpokenTo: boolean;
-    allowBotToBot: boolean;
-    unsolicitedAddressed: boolean;
-    unsolicitedUnaddressed: boolean;
-    baseChance: number;
-    graceWindowMs: number;
+  onlyWhenSpokenTo: boolean;
+  allowBotToBot: boolean;
+  unsolicitedAddressed: boolean;
+  unsolicitedUnaddressed: boolean;
+  baseChance: number;
+  graceWindowMs: number;
 }
 
 const SettingsMessaging: React.FC = () => {
@@ -81,7 +81,7 @@ const SettingsMessaging: React.FC = () => {
         }),
       });
 
-      if (!response.ok) {throw new Error('Failed to save settings');}
+      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
       setTimeout(() => setAlert(null), 5000);
     } catch {
@@ -125,7 +125,7 @@ const SettingsMessaging: React.FC = () => {
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
-                        Response Mode
+            Response Mode
           </h6>
 
           <div className="form-control mb-4">
@@ -133,7 +133,7 @@ const SettingsMessaging: React.FC = () => {
               <div>
                 <span className="label-text font-medium">Only When Spoken To</span>
                 <p className="text-xs text-base-content/60 mt-1">
-                                    Bot only replies when directly mentioned, replied to, or wakeword used
+                  Bot only replies when directly mentioned, replied to, or wakeword used
                 </p>
               </div>
               <Toggle
@@ -164,7 +164,7 @@ const SettingsMessaging: React.FC = () => {
               disabled={!settings.onlyWhenSpokenTo}
             />
             <p className="text-xs text-base-content/60 mt-1">
-                            After speaking, bot can reply freely for this duration
+              After speaking, bot can reply freely for this duration
             </p>
           </div>
         </div>
@@ -173,7 +173,7 @@ const SettingsMessaging: React.FC = () => {
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <Bot className="w-4 h-4" />
-                        Bot-to-Bot Interaction
+            Bot-to-Bot Interaction
           </h6>
 
           <div className="form-control">
@@ -181,7 +181,7 @@ const SettingsMessaging: React.FC = () => {
               <div>
                 <span className="label-text font-medium">Allow Bot-to-Bot Replies</span>
                 <p className="text-xs text-base-content/60 mt-1">
-                                    Allow spontaneous replies to other bots (not just direct mentions)
+                  Allow spontaneous replies to other bots (not just direct mentions)
                 </p>
               </div>
               <Toggle
@@ -204,7 +204,7 @@ const SettingsMessaging: React.FC = () => {
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <Users className="w-4 h-4" />
-                        Unsolicited Replies
+            Unsolicited Replies
           </h6>
 
           <div className="form-control mb-3">
@@ -212,7 +212,7 @@ const SettingsMessaging: React.FC = () => {
               <div>
                 <span className="label-text font-medium">Reply to @mentions (others)</span>
                 <p className="text-xs text-base-content/60 mt-1">
-                                    Join conversations where others are mentioned
+                  Join conversations where others are mentioned
                 </p>
               </div>
               <Toggle
@@ -228,7 +228,7 @@ const SettingsMessaging: React.FC = () => {
               <div>
                 <span className="label-text font-medium">Reply to general messages</span>
                 <p className="text-xs text-base-content/60 mt-1">
-                                    Spontaneously join unaddressed conversations
+                  Spontaneously join unaddressed conversations
                 </p>
               </div>
               <Toggle
@@ -244,7 +244,7 @@ const SettingsMessaging: React.FC = () => {
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-accent rounded-full"></span>
-                        Response Probability
+            Response Probability
           </h6>
 
           <div className="form-control">
@@ -270,7 +270,7 @@ const SettingsMessaging: React.FC = () => {
               <span>100%</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-                            Chance to reply to unsolicited messages that look like opportunities
+              Chance to reply to unsolicited messages that look like opportunities
             </p>
           </div>
         </div>
@@ -280,7 +280,7 @@ const SettingsMessaging: React.FC = () => {
       <div className="collapse collapse-arrow bg-base-200/30">
         <input type="checkbox" />
         <div className="collapse-title text-sm font-medium">
-                    Environment Variables Reference
+          Environment Variables Reference
         </div>
         <div className="collapse-content">
           <div className="overflow-x-auto">
@@ -296,22 +296,22 @@ const SettingsMessaging: React.FC = () => {
                 <tr>
                   <td>Only When Spoken To</td>
                   <td>MESSAGE_ONLY_WHEN_SPOKEN_TO</td>
-                  <td>{settings.onlyWhenSpokenTo ? '✅ true' : '❌ false'}</td>
+                  <td>{settings.onlyWhenSpokenTo ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
                   <td>Allow Bot-to-Bot</td>
                   <td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td>
-                  <td>{settings.allowBotToBot ? '✅ true' : '❌ false'}</td>
+                  <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
                   <td>Unsolicited Addressed</td>
                   <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
-                  <td>{settings.unsolicitedAddressed ? '✅ true' : '❌ false'}</td>
+                  <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
                   <td>Unsolicited Unaddressed</td>
                   <td>MESSAGE_UNSOLICITED_UNADDRESSED</td>
-                  <td>{settings.unsolicitedUnaddressed ? '✅ true' : '❌ false'}</td>
+                  <td>{settings.unsolicitedUnaddressed ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
                   <td>Base Chance</td>

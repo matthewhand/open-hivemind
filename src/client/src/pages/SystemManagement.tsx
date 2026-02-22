@@ -191,7 +191,7 @@ const SystemManagement: React.FC = () => {
       metrics: [
         { label: 'Total Backups', value: backups.length, icon: '💾' },
         { label: 'Latest', value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None', icon: '📅' },
-        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '❌' },
+        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '➖' },
       ],
     },
     {

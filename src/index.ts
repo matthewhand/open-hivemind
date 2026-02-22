@@ -1,4 +1,5 @@
 // Import Express types for TypeScript
+import 'reflect-metadata';
 import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';

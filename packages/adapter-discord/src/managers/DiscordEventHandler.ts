@@ -1,14 +1,39 @@
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig';
-import TypingActivity from '@message/helpers/processing/TypingActivity';
-import type { IMessage } from '@message/interfaces/IMessage';
-import WebSocketService from '../../../../src/server/services/WebSocketService';
+import type { IMessage, IServiceDependencies } from '@hivemind/shared-types';
 import DiscordMessage from '../DiscordMessage';
-import { handleSpeckitSpecify } from '../handlers/speckit/specifyHandler';
 import { type Bot, type DiscordBotManager } from './DiscordBotManager';
+
+const log = Debug('app:discordEventHandler');
+
+/**
+ * Simple typing activity tracker - moved from external dependency
+ */
+class TypingActivity {
+  private static instance: TypingActivity;
+  private typingUsers = new Map<string, Map<string, number>>();
+
+  static getInstance(): TypingActivity {
+    if (!TypingActivity.instance) {
+      TypingActivity.instance = new TypingActivity();
+    }
+    return TypingActivity.instance;
+  }
+
+  recordTyping(channelId: string, userId: string): void {
+    if (!this.typingUsers.has(channelId)) {
+      this.typingUsers.set(channelId, new Map());
+    }
+    this.typingUsers.get(channelId)!.set(userId, Date.now());
+  }
+
+  getLastTypingTime(channelId: string, userId: string): number {
+    return this.typingUsers.get(channelId)?.get(userId) || 0;
+  }
+}
 
 export class DiscordEventHandler {
   private botManager: DiscordBotManager;
+  private deps: IServiceDependencies;
   private historyFetcher: (channelId: string) => Promise<IMessage[]>;
   private handlerSet: boolean = false;
   private currentHandler?: (
@@ -19,9 +44,11 @@ export class DiscordEventHandler {
 
   constructor(
     botManager: DiscordBotManager,
+    deps: IServiceDependencies,
     historyFetcher: (channelId: string) => Promise<IMessage[]>
   ) {
     this.botManager = botManager;
+    this.deps = deps;
     this.historyFetcher = historyFetcher;
   }
 
@@ -49,18 +76,12 @@ export class DiscordEventHandler {
     if (this.currentHandler) {
       this.attachMessageListeners(bot);
     }
-    // Interactions are usually set globally or on init?
-    // DiscordService called setInteractionHandler explicitly.
-    // If we add a bot late, we should probably attach interaction listeners too?
-    // The original code didn't seem to attach interaction listeners in `addBot` explicitly,
-    // only message listeners (implied by `if (this.currentHandler)` block).
-    // But `setInteractionHandler` logic was static in `initialize`.
-    // Let's stick to attaching message listeners if handler is present.
-    // Ideally we should attach interaction listeners too.
     this.attachInteractionListeners(bot);
   }
 
   private attachMessageListeners(bot: Bot): void {
+    const { messageConfig, webSocketService } = this.deps;
+
     // Track other users typing (used for pre-typing delay heuristics).
     bot.client.on('typingStart', (typing: any) => {
       try {
@@ -74,7 +95,7 @@ export class DiscordEventHandler {
           return;
         }
         TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-      } catch {}
+      } catch { }
     });
 
     bot.client.on('messageCreate', async (message) => {
@@ -87,14 +108,14 @@ export class DiscordEventHandler {
           return;
         }
 
-        const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+        const ignoreBots = Boolean(messageConfig?.get('MESSAGE_IGNORE_BOTS'));
         if (ignoreBots && message.author.bot) {
           return;
         }
 
         // Emit incoming message flow event
         try {
-          WebSocketService.getInstance().recordMessageFlow({
+          webSocketService?.recordMessageFlow({
             botName: bot.botUserName,
             provider: 'discord',
             channelId: message.channelId,
@@ -103,7 +124,7 @@ export class DiscordEventHandler {
             contentLength: (message.content || '').length,
             status: 'success',
           });
-        } catch {}
+        } catch { }
 
         let repliedMessage: any = null;
         try {
@@ -122,7 +143,7 @@ export class DiscordEventHandler {
           await this.currentHandler(wrappedMessage, history, bot.config);
         }
       } catch (error) {
-        console.error(`Error in Discord message handler for bot ${bot.botUserName}:`, error);
+        log(`Error in Discord message handler for bot ${bot.botUserName}:`, error);
         return;
       }
     });
@@ -140,8 +161,19 @@ export class DiscordEventHandler {
       const commandName = interaction.commandName;
       const subcommand = interaction.options.getSubcommand();
 
+      // Handle speckit commands - this would be injected or configured in a full refactor
       if (commandName === 'speckit' && subcommand === 'specify') {
-        await handleSpeckitSpecify(interaction);
+        log(`Speckit specify command received from ${interaction.user.id}`);
+        // Note: The actual handler requires external dependencies
+        // This should be injected via dependencies in a full implementation
+        try {
+          await interaction.reply({
+            content: 'Speckit specify command - handler not available in decoupled mode',
+            ephemeral: true,
+          });
+        } catch (error) {
+          log('Error handling speckit command:', error);
+        }
       }
     });
   }
