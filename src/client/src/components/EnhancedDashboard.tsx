@@ -223,28 +223,36 @@ const EnhancedDashboard: React.FC = () => {
           <StatsCards
             stats={[
               {
+                id: 'total-bots',
                 title: 'Total Bots',
-                value: stats.totalBots.toString(),
+                value: stats.totalBots,
                 icon: '🤖',
-                trend: stats.activeBots === stats.totalBots ? '100% Active' : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`,
+                description: stats.activeBots === stats.totalBots ? '100% Active' : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`,
+                color: 'primary',
               },
               {
+                id: 'messages-today',
                 title: 'Messages Today',
-                value: stats.totalMessages.toLocaleString(),
+                value: stats.totalMessages,
                 icon: '💬',
-                trend: stats.totalMessages > 1000 ? 'High Volume' : 'Normal',
+                description: stats.totalMessages > 1000 ? 'High Volume' : 'Normal',
+                color: 'secondary',
               },
               {
+                id: 'system-uptime',
                 title: 'System Uptime',
                 value: `${Math.floor(stats.uptime / 3600)}h ${Math.floor((stats.uptime % 3600) / 60)}m`,
                 icon: '⚡',
-                trend: stats.uptime > 86400 ? '> 24h' : '< 24h',
+                description: stats.uptime > 86400 ? '> 24h' : '< 24h',
+                color: 'accent',
               },
               {
+                id: 'total-errors',
                 title: 'Total Errors',
-                value: stats.totalErrors.toString(),
+                value: stats.totalErrors,
                 icon: stats.totalErrors > 0 ? '⚠️' : '✅',
-                trend: stats.totalErrors === 0 ? 'All Good' : 'Needs Attention',
+                description: stats.totalErrors === 0 ? 'All Good' : 'Needs Attention',
+                color: stats.totalErrors > 0 ? 'error' : 'success',
               },
             ]}
           />
