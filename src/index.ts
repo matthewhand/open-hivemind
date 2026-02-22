@@ -280,13 +280,6 @@ app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
-// Deprecated /admin static serve (commented out)
-// app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
-// app.use('/admin', (req: Request, res: Response) => {
-//     const adminPath = path.join(process.cwd(), 'public/admin/index.html');
-//     res.sendFile(adminPath);
-// });
-
 // React Router catch-all handler (must be AFTER all API routes)
 
 // Vite Proxy Middleware for Development (Must be before 404 handler)
