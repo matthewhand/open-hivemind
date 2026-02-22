@@ -98,12 +98,14 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
       discordInfo,
     });
   } catch {
-    res.json({ ok: true, bots: [] });
+    res.$1json(...);
+      return;
   }
 });
 
 adminRouter.get('/personas', (_req: Request, res: Response) => {
-  res.json({ ok: true, personas: loadPersonas() });
+  res.$1json(...);
+      return;
 });
 
 const LLM_PROVIDERS = [
@@ -150,11 +152,13 @@ const MESSENGER_PROVIDERS = [
 ];
 
 adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: LLM_PROVIDERS });
+  res.$1json(...);
+      return;
 });
 
 adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: MESSENGER_PROVIDERS });
+  res.$1json(...);
+      return;
 });
 
 // Minimal Slack bot creation: supports a single instance add at runtime
@@ -226,7 +230,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'success',
       `Created Slack bot ${name} with token and configuration`
     );
-    res.json({ ok: true });
+    res.$1json(...);
+      return;
+    return;
   } catch (e: any) {
     logAdminAction(
       req,
@@ -235,7 +241,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'failure',
       `Failed to create Slack bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    res.$1json(...);
+      return;
+    return;
   }
 });
 
@@ -253,7 +261,8 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      return res.status(400).json({ ok: false, error: 'token is required' });
+      res.$1json(...);
+      return;
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -289,7 +298,8 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'success',
         `Created Discord bot ${name || 'unnamed'} with runtime initialization`
       );
-      res.json({ ok: true, note: 'Added and saved.' });
+      res.$1json(...);
+      return;
       return;
     } catch (e) {
       debug('Discord runtime add failed; config persisted:', e);
@@ -301,7 +311,9 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'success',
       `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
     );
-    res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    res.$1json(...);
+      return;
+    return;
   } catch (e: any) {
     logAdminAction(
       req,
@@ -310,7 +322,9 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'failure',
       `Failed to create Discord bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    res.$1json(...);
+      return;
+    return;
   }
 });
 
@@ -320,7 +334,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     if (!fs.existsSync(messengersPath)) {
-      return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      res.$1json(...);
+      return;
     }
     const cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
     let addedSlack = 0;
@@ -372,7 +387,9 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'success',
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
-    res.json({ ok: true, addedSlack, addedDiscord });
+    res.$1json(...);
+      return;
+    return;
   } catch (e: any) {
     logAdminAction(
       req,
@@ -381,6 +398,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'failure',
       `Failed to reload bots: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    res.$1json(...);
+      return;
+    return;
   }
 });

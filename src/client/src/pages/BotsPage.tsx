@@ -497,7 +497,7 @@ const BotsPage: React.FC = () => {
       )}
 
       {/* Create Bot Wizard Modal */}
-      < Modal
+      <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Bot"
@@ -513,10 +513,10 @@ const BotsPage: React.FC = () => {
           llmProfiles={llmProfiles}
           defaultLlmConfigured={defaultLlmConfigured}
         />
-      </Modal >
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      < Modal
+      <Modal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, bot: null })}
         title="Delete Bot"
@@ -536,10 +536,10 @@ const BotsPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </Modal >
+      </Modal>
 
       {/* Preview Modal */}
-      < Modal
+      <Modal
         isOpen={!!previewBot}
         onClose={() => setPreviewBot(null)}
         title={previewBot?.name || 'Bot Details'}
@@ -680,8 +680,8 @@ const BotsPage: React.FC = () => {
             </div>
           </div>
         )}
-      </Modal >
-    </div >
+      </Modal>
+    </div>
   );
 };
 

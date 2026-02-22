@@ -306,6 +306,10 @@ export class WebUIServer {
 // Export singleton instance
 let webUIServerInstance: WebUIServer | null = null;
 
+export async function createServer(): Promise<express.Application> {
+  return getWebUIServer().getApp();
+}
+
 export function getWebUIServer(port?: number): WebUIServer {
   if (!webUIServerInstance) {
     webUIServerInstance = new WebUIServer(port);
