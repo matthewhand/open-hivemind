@@ -59,8 +59,11 @@ export class DiscordMessageProvider {
 
   public async getForumOwner(forumId: string): Promise<string> {
     try {
-      // Placeholder implementation until Discord ownership lookup is wired.
-      // Discord channel owner information requires additional API scopes; for now
+      const ownerId = await this.discordSvc.getChannelOwnerId(forumId);
+      if (ownerId) {
+        return ownerId;
+      }
+      // Fallback: If owner cannot be determined (e.g. DM, or API error),
       // surface a deterministic identifier so guard logic can still function.
       return `discord-owner-${forumId}`;
     } catch (error) {
