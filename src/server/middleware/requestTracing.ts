@@ -21,6 +21,7 @@ import {
   type Request,
   type Response,
 } from 'express';
+import { randomUUID } from 'crypto';
 import { createLogger, type StructuredLogger } from '@src/common/StructuredLogger';
 
 /**
