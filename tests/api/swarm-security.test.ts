@@ -1,10 +1,10 @@
-import request from 'supertest';
-import express from 'express';
-import swarmRouter from '../../src/admin/swarmRoutes';
-import { authenticateToken } from '../../src/server/middleware/auth';
-import { AuthManager } from '../../src/auth/AuthManager';
 import fs from 'fs';
 import path from 'path';
+import express from 'express';
+import request from 'supertest';
+import swarmRouter from '../../src/admin/swarmRoutes';
+import { AuthManager } from '../../src/auth/AuthManager';
+import { authenticateToken } from '../../src/server/middleware/auth';
 
 // Mock AuthManager
 jest.mock('../../src/auth/AuthManager');
@@ -29,18 +29,18 @@ describe('Swarm API Security', () => {
   // SCENARIO: Secure Configuration (Verification)
   describe('Secure Configuration (Middleware + Router)', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+      jest.clearAllMocks();
 
-        // Setup mock AuthManager
-        mockAuthManager = {
-            verifyAccessToken: jest.fn(),
-        };
-        (AuthManager.getInstance as jest.Mock).mockReturnValue(mockAuthManager);
+      // Setup mock AuthManager
+      mockAuthManager = {
+        verifyAccessToken: jest.fn(),
+      };
+      (AuthManager.getInstance as jest.Mock).mockReturnValue(mockAuthManager);
 
-        app = express();
-        app.use(express.json());
-        // Secure mounting: With middleware (as it SHOULD be in src/index.ts)
-        app.use('/api/swarm', authenticateToken, swarmRouter);
+      app = express();
+      app.use(express.json());
+      // Secure mounting: With middleware (as it SHOULD be in src/index.ts)
+      app.use('/api/swarm', authenticateToken, swarmRouter);
     });
 
     it('denies access to /api/swarm/check without authentication', async () => {
@@ -76,16 +76,18 @@ describe('Swarm API Security', () => {
 
   // SCENARIO: Source Code Verification
   describe('Source Code Verification', () => {
-      it('src/index.ts should have authentication on /api/swarm', () => {
-          const indexPath = path.join(__dirname, '../../src/index.ts');
-          const content = fs.readFileSync(indexPath, 'utf-8');
+    it('src/index.ts should have authentication on /api/swarm', () => {
+      const indexPath = path.join(__dirname, '../../src/index.ts');
+      const content = fs.readFileSync(indexPath, 'utf-8');
 
-          // Check for the secure line
-          const hasSecureLine = content.includes("app.use('/api/swarm', authenticateToken, swarmRouter);");
+      // Check for the secure line
+      const hasSecureLine = content.includes(
+        "app.use('/api/swarm', authenticateToken, swarmRouter);"
+      );
 
-          // Check for the vulnerable line (should be gone or commented out, but we check for replacement)
-          // Actually, we just want to ensure the secure line exists.
-          expect(hasSecureLine).toBe(true);
-      });
+      // Check for the vulnerable line (should be gone or commented out, but we check for replacement)
+      // Actually, we just want to ensure the secure line exists.
+      expect(hasSecureLine).toBe(true);
+    });
   });
 });

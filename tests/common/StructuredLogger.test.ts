@@ -28,14 +28,14 @@ describe('StructuredLogger', () => {
   beforeEach(() => {
     // Create a fresh logger for each test
     logger = createLogger('test-service');
-    
+
     // Spy on console methods
     consoleSpy = {
       log: jest.spyOn(console, 'log').mockImplementation(),
       error: jest.spyOn(console, 'error').mockImplementation(),
       warn: jest.spyOn(console, 'warn').mockImplementation(),
     };
-    
+
     // Clear environment
     delete process.env.DEBUG;
   });
@@ -66,10 +66,10 @@ describe('StructuredLogger', () => {
     it('should include service name in log entries', () => {
       // Set DEBUG to enable output
       process.env.DEBUG = 'app:test-service:*';
-      
+
       const testLogger = createLogger('my-test-service');
       testLogger.info('Test message');
-      
+
       // The logger uses debug package, so we verify it was called
       // In production, this would output JSON
     });
@@ -77,14 +77,14 @@ describe('StructuredLogger', () => {
     it('should include context in log entries', () => {
       const context = { userId: '123', action: 'login' };
       logger.info('User logged in', context);
-      
+
       // Verify the method doesn't throw
     });
 
     it('should handle errors in error logging', () => {
       const error = new Error('Test error');
       logger.error('An error occurred', error);
-      
+
       // Verify the method doesn't throw
     });
 
@@ -92,7 +92,7 @@ describe('StructuredLogger', () => {
       const error = new Error('Test error');
       const context = { requestId: 'req-123' };
       logger.error('An error occurred', error, context);
-      
+
       // Verify the method doesn't throw
     });
   });
@@ -107,7 +107,7 @@ describe('StructuredLogger', () => {
     it('should include trace ID in log entries', () => {
       const tracedLogger = logger.withTraceId('trace-456');
       tracedLogger.info('Traced message');
-      
+
       // Verify the method doesn't throw
     });
   });
@@ -130,9 +130,9 @@ describe('StructuredLogger', () => {
     it('should merge parent context with child context', () => {
       const parentLogger = logger.child({ service: 'parent' });
       const childLogger = parentLogger.child({ component: 'child' });
-      
+
       childLogger.info('Child message');
-      
+
       // Verify the method doesn't throw
     });
   });
@@ -141,7 +141,7 @@ describe('StructuredLogger', () => {
     it('should allow debug logging', () => {
       // Debug uses the debug package, not console
       logger.debug('Debug message');
-      
+
       // Verify the method doesn't throw
     });
 
@@ -151,7 +151,7 @@ describe('StructuredLogger', () => {
       logger.info('Info message');
       logger.warn('Warning message');
       logger.error('Error message');
-      
+
       // Verify the methods don't throw
     });
   });
@@ -166,10 +166,10 @@ describe('StructuredLogger', () => {
         message: 'Test message',
         context: { key: 'value' },
       };
-      
+
       const json = JSON.stringify(entry);
       const parsed = JSON.parse(json);
-      
+
       expect(parsed.timestamp).toBeDefined();
       expect(parsed.level).toBe('info');
       expect(parsed.service).toBe('test-service');
