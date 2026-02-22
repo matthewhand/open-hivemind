@@ -19,6 +19,21 @@ describe('InputSanitizer', () => {
       expect(InputSanitizer.sanitizeMessage(input)).toBe('Check this: alert("xss")');
     });
 
+    test('should prevent nested javascript: protocol evasion', () => {
+      const input = 'java<script>script</script>:alert("xss")';
+      expect(InputSanitizer.sanitizeMessage(input)).not.toContain('javascript:');
+    });
+
+    test('should prevent recursive replacement evasion', () => {
+      const input = 'javajavascript:script:alert(1)';
+      expect(InputSanitizer.sanitizeMessage(input)).not.toContain('javascript:');
+    });
+
+    test('should handle complex nested obfuscation', () => {
+      const input = 'javajavajavascript:script:script:alert(1)';
+      expect(InputSanitizer.sanitizeMessage(input)).not.toContain('javascript:');
+    });
+
     test('should remove HTML tags', () => {
       const input = '<b>Bold</b> and <i>Italic</i>';
       expect(InputSanitizer.sanitizeMessage(input)).toBe('Bold and Italic');
@@ -129,12 +144,6 @@ describe('InputSanitizer', () => {
     });
 
     test('should not strip non-matching quotes (strict phase)', () => {
-      // "hello' - unmatched, but phase 2 greedy strip might catch it?
-      // Let's check implementation.
-      // Phase 1: Recursive Matching Pairs.
-      // Phase 2: Greedy Unmatched Stripping (removes from start/end if in list)
-
-      // So "hello' -> hello' (after phase 1) -> hello (after phase 2)
       expect(InputSanitizer.stripSurroundingQuotes('"hello\'')).toBe('hello');
     });
 
@@ -163,6 +172,7 @@ describe('InputSanitizer', () => {
       expect(InputSanitizer.sanitizeConfigValue('true', 'boolean')).toBe(true);
       expect(InputSanitizer.sanitizeConfigValue('false', 'boolean')).toBe(false);
       expect(InputSanitizer.sanitizeConfigValue('other', 'boolean')).toBe(false);
+      expect(InputSanitizer.sanitizeConfigValue(123, 'boolean')).toBeNull();
     });
 
     test('should return null for unknown type', () => {
@@ -172,41 +182,36 @@ describe('InputSanitizer', () => {
 });
 
 describe('RateLimiter', () => {
+  // Store original limits to restore them if needed, though clearAll is called
+  // But configure changes static properties that persist.
+
   beforeEach(() => {
     RateLimiter.clearAll();
+    RateLimiter.configure(10000, 100); // Reset to defaults
   });
 
   test('should allow requests within limit', () => {
     const id = 'user1';
-    // Default limit is 10
     for (let i = 0; i < 10; i++) {
       expect(RateLimiter.checkLimit(id)).toBe(true);
     }
-    // 11th should fail
     expect(RateLimiter.checkLimit(id)).toBe(false);
   });
 
   test('should reset after window expires', async () => {
     const id = 'user2';
-    const windowMs = 100; // Short window for testing
-
-    // Fill up limit
+    const windowMs = 100;
     for (let i = 0; i < 10; i++) {
       RateLimiter.checkLimit(id, 10, windowMs);
     }
     expect(RateLimiter.checkLimit(id, 10, windowMs)).toBe(false);
-
-    // Wait for window to expire
     await new Promise(resolve => setTimeout(resolve, 150));
-
-    // Should be allowed again
     expect(RateLimiter.checkLimit(id, 10, windowMs)).toBe(true);
   });
 
   test('should track remaining attempts', () => {
     const id = 'user3';
     expect(RateLimiter.getRemainingAttempts(id, 10)).toBe(10);
-
     RateLimiter.checkLimit(id, 10);
     expect(RateLimiter.getRemainingAttempts(id, 10)).toBe(9);
   });
@@ -215,7 +220,6 @@ describe('RateLimiter', () => {
     const id = 'user4';
     RateLimiter.checkLimit(id);
     expect(RateLimiter.getRemainingAttempts(id, 10)).toBe(9);
-
     RateLimiter.clearLimit(id);
     expect(RateLimiter.getRemainingAttempts(id, 10)).toBe(10);
   });
@@ -224,9 +228,87 @@ describe('RateLimiter', () => {
     RateLimiter.checkLimit('userA');
     RateLimiter.checkLimit('userB');
     RateLimiter.checkLimit('userB');
-
     const stats = RateLimiter.getStats();
     expect(stats.identifiersCount).toBe(2);
     expect(stats.totalAttempts).toBe(3);
+  });
+
+  test('should enforce max identifiers limit', async () => {
+    // Configure small limit
+    RateLimiter.configure(3, 10);
+
+    // Add 3 users
+    RateLimiter.checkLimit('user1');
+    await new Promise(resolve => setTimeout(resolve, 10)); // Ensure timestamps differ slightly
+    RateLimiter.checkLimit('user2');
+    await new Promise(resolve => setTimeout(resolve, 10));
+    RateLimiter.checkLimit('user3');
+
+    expect(RateLimiter.getStats().identifiersCount).toBe(3);
+
+    // Add 4th user, should trigger eviction of oldest (user1)
+    await new Promise(resolve => setTimeout(resolve, 10));
+    RateLimiter.checkLimit('user4');
+
+    const stats = RateLimiter.getStats();
+    // Logic removes oldest 10% (ceil(3 * 0.1) = 1).
+    // So 3 -> 2 + 1 = 3 again?
+    // Wait.
+    // enforceMaxIdentifiers:
+    // if size < MAX (3), return.
+    // when size is 3, it's NOT < 3? No, 3 < 3 is false.
+    // So if size is 3 (max), it enters?
+    // Code: `if (this.attempts.size < this.MAX_IDENTIFIERS) return;`
+    // If size is 3 and MAX is 3, it proceeds.
+    // toRemove = ceil(3 * 0.1) = 1.
+    // Removes 1 entry.
+    // Size becomes 2.
+    // Then user4 is added? No, user4 was added just before check?
+    // Wait, let's check order in `checkLimit`.
+    // 1. Check existing.
+    // 2. Add current attempt.
+    // 3. Update map (sets identifier). Size increases to 4 (if new).
+    // 4. Call enforceMaxIdentifiers.
+    // 5. enforce sees size 4. MAX is 3. 4 < 3 is false. Proceeds.
+    // 6. toRemove = ceil(3 * 0.1) = 1.
+    // 7. Sorts by last attempt.
+    // 8. Removes 1 oldest.
+    // 9. Size becomes 3.
+
+    expect(stats.identifiersCount).toBe(3);
+
+    // Check if user1 (oldest) is gone
+    // We can check by seeing if history is empty or if we can infer it.
+    // getRemainingAttempts('user1') should be max (10) if it's cleared (treated as new).
+    // But if we add it again it would be allowed.
+    // Wait, `checkLimit` adds it.
+
+    // We can verify user1 is gone by accessing the private map? No.
+    // We can verify user1 is gone because `checkLimit` returns true?
+    // If we had used up all attempts for user1, and it was cleared, we would have fresh attempts.
+
+    // Let's use up attempts for user1.
+    RateLimiter.configure(3, 2); // Max 2 attempts
+    RateLimiter.clearAll();
+
+    RateLimiter.checkLimit('user1', 2); // 1/2
+    RateLimiter.checkLimit('user1', 2); // 2/2
+    expect(RateLimiter.checkLimit('user1', 2)).toBe(false); // blocked
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+    RateLimiter.checkLimit('user2', 2);
+    await new Promise(resolve => setTimeout(resolve, 10));
+    RateLimiter.checkLimit('user3', 2);
+
+    // Now we have 3 users. user1 is blocked.
+    // Add user4
+    await new Promise(resolve => setTimeout(resolve, 10));
+    RateLimiter.checkLimit('user4', 2);
+
+    // user1 should have been evicted (oldest last attempt).
+    // If user1 is evicted, it's forgotten.
+    // If we check user1 again, it should be treated as new user -> allowed.
+
+    expect(RateLimiter.checkLimit('user1', 2)).toBe(true);
   });
 });
