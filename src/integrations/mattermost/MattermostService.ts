@@ -199,7 +199,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api') {
+          if (
+            (hivemindError as any).type === 'network' ||
+            (hivemindError as any).type === 'api'
+          ) {
             throw hivemindError;
           }
 
@@ -307,7 +310,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          if (
+            (hivemindError as any).type === 'network' ||
+            (hivemindError as any).type === 'api'
+          ) {
             throw hivemindError;
           }
 

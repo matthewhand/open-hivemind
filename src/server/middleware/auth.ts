@@ -40,14 +40,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 export const requirePermission = (permission: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     const authManager = AuthManager.getInstance();
     const user = authManager.getUser(req.user.userId);
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      res.status(401).json({ error: 'User not found' });
+      return;
     }
 
     if (!authManager.hasPermission(user.role, permission)) {
