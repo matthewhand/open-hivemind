@@ -1,86 +1,100 @@
 # User Guide
 
-## Introduction
-Open-Hivemind is a revolutionary multi-agent framework designed for aggregating messaging platforms into a unified digital hivemind. This guide provides a comprehensive walkthrough for configuration, usage, troubleshooting, and advanced customization, ensuring you can fully harness the collective intelligence of the system.
+This guide provides a detailed walkthrough of the Open-Hivemind WebUI, organized by the menu structure you see in the application.
 
-## Detailed Overview: The Digital Hivemind
-The concept behind Open-Hivemind is to create a seamless, unified bot ecosystem that operates both as a singular entity and as a synchronized swarm. Inspired by neural networks and collective intelligence, every agent in the system contributes to a shared operational purpose. Key aspects include:
-- **Multi-Token Management:** Environment variables such as `DISCORD_BOT_TOKEN` enable the system to split tokens and assign them to various agents, ensuring each operates with a unique identity.
-- **Dynamic Username Allocation:** When insufficient usernames are provided via `DISCORD_USERNAME_OVERRIDE`, default names are generated (e.g., Bot1, Bot2) to maintain a unique identity for each agent.
-- **Event-Driven Architecture:** By subscribing to events like Discord's `messageCreate`, the framework triggers intelligent responses while avoiding redundancy through safeguards like the handler flag.
+## Overview
 
-## Platform Integrations
+### [Dashboard / Overview](/admin/overview)
+The central hub for monitoring your bot ecosystem.
+*   **Bot Status**: View real-time status of all running bots (Online, Offline, Error).
+*   **Recent Activity**: See a feed of recent interactions and events.
+*   **System Health**: Quick glance at CPU, memory, and uptime.
 
-### Discord Integration
-Open-Hivemind leverages Discord’s API to deliver robust, real-time messaging:
-- **Initialization:** Multiple Discord clients are instantiated based on provided tokens, allowing the system to run several agents concurrently.
-- **Message Handling:** The `DiscordService` class listens for `messageCreate` events. It filters out messages from bots, wraps incoming data into `DiscordMessage` objects, and processes commands or triggers as needed.
-- **Error Resilience:** Through robust try-catch mechanisms, functions like `sendMessageToChannel` and `fetchMessages` log errors and execute fallback procedures, ensuring continuous operation despite occasional failures.
-- **Graceful Shutdown:** The `shutdown()` method systematically disconnects all clients to free resources and prevent lingering processes, demonstrating advanced resource management.
+## Configuration
 
-### Slack Integration
-Though designed differently from Discord, the Slack integration adheres to similar high standards:
-- **Real-Time Connectivity:** The framework uses Slack’s API to process messages, join multiple channels via `SLACK_JOIN_CHANNELS`, and maintain synchronization with Discord.
-- **Seamless Transition:** Administrators can switch between Discord and Slack by adjusting the `MESSAGE_PROVIDER` setting, ensuring a consistent experience without modifications to the core code.
-- **Unified Messaging Protocol:** Both integrations follow a harmonized messaging format, ensuring that responses maintain a uniform style across platforms.
+### [LLM Providers](/admin/integrations/llm)
+Manage connections to Large Language Model providers.
+*   **Add Provider**: Configure API keys and endpoints for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
+*   **Model Selection**: Choose default models for different tasks (chat, summarization, etc.).
+*   **Test Connection**: Verify your API credentials are working.
 
-## Agent Choreography and Contextual Memory
-The multi-agent architecture of Open-Hivemind ensures that each bot functions both independently and as a synchronized part of the whole:
-- **Coordinated Responses:** Even when operating as multiple agents, the system coordinates responses so that a single, unified message is delivered.
-- **Context-Aware Interactions:** The framework fetches prior messages (up to 10 recent entries) to provide continuity in conversations, ensuring responses are grounded in context.
-- **Dynamic Role Specialization:** Agents can be assigned specialized roles (e.g., greeters, information retrievers, troubleshooters) based on real-time demands and environmental cues, optimizing overall responsiveness.
+### [Message Platforms](/admin/integrations/message)
+Connect your bots to messaging services.
+*   **Discord**: Add your Discord Bot Token and configure server settings.
+*   **Slack**: Set up your Slack App Token and Bot Token.
+*   **Mattermost**: Configure your Mattermost URL and Bot Token.
+*   **Status**: Check connection health for each platform.
 
-## Configuration and Environment
-Configuration is at the core of Open-Hivemind’s flexibility:
-- **Convict-Powered Flexibility:** Leveraging convict for configuration management, settings from .env files and JSON files control various aspects such as API endpoints, rate limits, and messaging behavior.
-- **Environment Variables:** Critical parameters like `MESSAGE_PROVIDER`, `LLM_PROVIDER`, and multi-token settings are defined in environment files, allowing dynamic adjustments without code changes.
-- **Performance Tuning:** Administrators can fine-tune parameters such as `MESSAGE_RATE_LIMIT_PER_CHANNEL` and `MESSAGE_ADD_USER_HINT` to balance responsiveness and avoid flooding.
+### [Bots](/admin/bots)
+Create and manage individual bot instances.
+*   **Create Bot**: Define a new bot with a unique name.
+*   **Link Persona**: Assign a specific personality to the bot.
+*   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
+*   **Active Status**: Toggle bots on or off individually.
 
-### Task-Specific LLM Overrides (Provider + Model)
-By default, the bot uses the configured reply LLM for both responses and internal “helper” tasks (like semantic on-topic checks). You can override *specific tasks* to use different providers/models via environment variables.
+### [Personas](/admin/personas)
+Define the personality and behavior of your bots.
+*   **System Prompt**: Write the core instructions that define who the bot is (e.g., "You are a helpful coding assistant").
+*   **Tone & Style**: Adjust the bot's communication style (formal, casual, witty).
+*   **Context**: Provide background information the bot should know.
 
-Supported tasks:
-- `semantic` (semantic relevance check for reply probability)
-- `summary` (helper summarization calls)
-- `followup` (LLM follow-up generation)
-- `idle` (idle response generation)
+### [Guards](/admin/guards)
+Set up safety and security boundaries.
+*   **Content Filters**: Block specific words or phrases.
+*   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
+*   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
 
-Environment variables:
-- `LLM_TASK_<TASK>_PROVIDER` and `LLM_TASK_<TASK>_MODEL` (preferred)
-- Back-compat aliases: `LLM_<TASK>_PROVIDER` and `LLM_<TASK>_MODEL`
+## System
 
-Provider references can be:
-- Provider instance id (recommended): e.g. `openai-default`
-- Provider instance name: e.g. `Default OpenAI`
-- Provider type: e.g. `openai` (uses the first enabled provider of that type)
+### [Settings](/admin/settings)
+General system configuration.
+*   **Rate Limits**: Adjust global message rate limits to prevent spam.
+*   **Logging**: Configure log levels and retention policies.
+*   **Updates**: Check for system updates.
 
-Example:
-- `LLM_TASK_SEMANTIC_PROVIDER=openai-default`
-- `LLM_TASK_SEMANTIC_MODEL=gemini-3.0-flash`
-- `LLM_TASK_SUMMARY_PROVIDER=openai-default`
-- `LLM_TASK_SUMMARY_MODEL=gpt-5.1-nano`
+### [Webhook](/admin/integrations/webhook)
+Configure incoming webhooks for external integrations.
+*   **Endpoint Management**: specific URLs to trigger bot actions from external services.
+*   **Security**: Manage webhook secrets and verification.
 
-## Troubleshooting and Debugging
-Maintaining a high-performance bot ecosystem requires proactive diagnosis:
-- **Detailed Logging:** Utilizing the Debug library, every critical operation is logged. This includes client initialization, error events, and message dispatch details, providing a comprehensive trail for troubleshooting.
-- **Error Handling Mechanisms:** Error-prone operations are wrapped in try-catch blocks to prevent the system from crashing, ensuring that failures are logged without halting the entire process.
-- **Automated Testing:** The framework includes 33 Jest test suites which continuously validate functionality, ensuring both individual components and overall system performance remain at peak levels.
+### [Monitoring](/admin/monitoring)
+Deep dive into system performance.
+*   **Metrics**: detailed graphs of API usage, response times, and error rates.
+*   **Logs**: Searchable real-time system logs.
+*   **Health Checks**: Detailed status of all internal services and dependencies.
 
-## Advanced Guidelines and Community Contributions
-For power users and contributors, Open-Hivemind offers deep extensibility:
-- **Modular Extensibility:** The architecture supports additional plugins and modules, whether for new messaging platforms or experimental LLM integrations, without requiring core changes.
-- **Code Quality Standards:** All contributions must adhere to strict TypeScript guidelines and modular design principles, ensuring maintainability and scalability.
-- **Collaborative Development:** The project thrives on community input, encouraging contributions that can expand dynamic role specialization, improve context handling, or integrate advanced features.
+### [Global Defaults](/admin/configuration)
+Set default behaviors for new bots.
+*   **Default LLM**: The fallback provider if none is specified for a bot.
+*   **Default Persona**: The base personality applied to new bots.
 
-## Future Enhancements and Community Extensions
-Open-Hivemind’s roadmap is geared towards continuous evolution:
-- **Expanded Platform Coverage:** Future updates aim to support additional platforms such as Telegram and WhatsApp, further broadening the ecosystem’s reach.
-- **Enhanced Cognitive Abilities:** Planned improvements in LLM integration will provide even deeper contextual analysis and smarter interactions.
-- **Modular Community Development:** A community-led approach will drive the creation of new modules, empowering users to extend functionality in innovative ways.
-- **Robust Telemetry and Monitoring:** Advanced dashboards and telemetry tools will be implemented to monitor system health and performance continuously.
+## AI & Analytics
 
-## Conclusion
-This User Guide is a comprehensive resource for deploying, configuring, and extending Open-Hivemind. Whether you are setting up your own digital hivemind or contributing to its evolution, this guide serves as your starting point for mastering an interconnected, intelligent bot ecosystem.
+### [AI Dashboard](/admin/ai/dashboard)
+Visual insights into your AI usage.
+*   **Token Usage**: Track token consumption across different providers.
+*   **Cost Estimation**: Estimate costs based on usage.
+*   **Model Performance**: Compare response times and quality across models.
 
----
-For further details, please refer to the Development Guide and in-depth code documentation.
+### [Analytics](/admin/analytics)
+Historical data and trends.
+*   **Conversation Volume**: Track message volume over time.
+*   **User Engagement**: See active users and interaction frequency.
+*   **Topic Analysis**: (If enabled) High-level analysis of conversation topics.
+
+### [Anomaly Detection](/admin/ai/anomalies)
+Identify unusual patterns in bot behavior.
+*   **Spike Detection**: Alerts for sudden increases in message volume or errors.
+*   **Behavioral Drifts**: Detect if a bot starts deviating from its persona.
+
+### [AI Assistant](/admin/ai/chat)
+An internal chat interface for admins.
+*   **Test Prompts**: Experiment with prompts before deploying them to bots.
+*   **System Queries**: Ask the AI questions about the system configuration or logs.
+
+## Developer
+
+### [UI Components](/admin/showcase)
+A reference for developers extending the WebUI.
+*   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+*   **Theme Preview**: Test how components look with different themes.
