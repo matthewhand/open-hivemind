@@ -16,16 +16,7 @@
  */
 
 import { randomUUID } from 'crypto';
-<<<<<<< HEAD
 import { type NextFunction, type Request, type Response } from 'express';
-=======
-import {
-  type NextFunction,
-  type Request,
-  type Response,
-} from 'express';
-import { randomUUID } from 'crypto';
->>>>>>> origin/main
 import { createLogger, type StructuredLogger } from '@src/common/StructuredLogger';
 
 /**
