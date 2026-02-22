@@ -8,9 +8,10 @@ router.get('/api/config', (_req, res) => {
   try {
     const bots = BotConfigurationManager.getInstance().getAllBots();
     const config = {
-      bots: bots.map((bot: any) => {
+      bots: bots.map((bot: Record<string, unknown>) => {
         // Deep clone the bot to avoid modifying the original
-        const botClone = JSON.parse(JSON.stringify(bot));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const botClone: any = JSON.parse(JSON.stringify(bot));
 
         // Redact sensitive information
         if (botClone.discord && botClone.discord.token) {
@@ -83,14 +84,14 @@ router.post('/api/config/reload', (_req, res) => {
 router.get('/api/config/validate', (_req, res) => {
   try {
     const config = BotConfigurationManager.getInstance().getAllBots();
-    const errors: any[] = [];
+    const errors: Record<string, string>[] = [];
 
     // Basic validation
     if (!Array.isArray(config)) {
       errors.push({ field: 'bots', message: 'Bots must be an array', severity: 'error' });
     }
 
-    (config || []).forEach((bot: any, index: number) => {
+    (config || []).forEach((bot: Record<string, unknown>, index: number) => {
       if (!bot.name) {
         errors.push({
           field: `bots[${index}].name`,
