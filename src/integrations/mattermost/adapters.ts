@@ -71,8 +71,15 @@ export class MetricsCollectorAdapter implements IMetricsCollector {
     }
 
     recordMessageFlow(event: import('@hivemind/shared-types').MessageFlowEventData): void {
-        // Import WebSocketService lazily to avoid circular dependency at module load time
-        // This is safe because recordMessageFlow is only called at runtime
+        // Dynamic require is intentionally used here to break the circular dependency chain:
+        // adapters.ts -> WebSocketService -> (other modules) -> adapters.ts
+        //
+        // At module load time, WebSocketService may not be fully initialized, so we load it
+        // lazily at runtime when recordMessageFlow is actually called. This is safe because
+        // this method is only invoked after the application has fully started.
+        //
+        // IMPORTANT: If you change the path to WebSocketService, update this require path accordingly.
+        // Path: src/integrations/mattermost/adapters.ts -> src/server/services/WebSocketService.ts
         const WebSocketService = require('../../server/services/WebSocketService').default;
         WebSocketService.getInstance().recordMessageFlow(event);
     }
