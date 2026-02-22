@@ -242,6 +242,7 @@ export class ConfigurationVersionService {
         oldValues: JSON.stringify({ restoredFrom: version }),
         newValues: JSON.stringify(restoredConfig),
         performedAt: new Date(),
+        performedBy: restoredBy,
       });
 
       debug(`Restored bot configuration ID: ${botConfigurationId} to version: ${version}`);
