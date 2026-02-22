@@ -1691,7 +1691,8 @@ router.put('/messaging', async (req, res) => {
 
     // Reload config (convict will pick up new values on next get, but we force load here)
     try {
-      messageConfig.loadFile(targetPath);
+      // Use load() with object to avoid synchronous file read in loadFile()
+      messageConfig.load(merged);
     } catch {
       /* validation may fail, ignore */
     }
