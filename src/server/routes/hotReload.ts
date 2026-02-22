@@ -23,10 +23,10 @@ router.post('/api/config/hot-reload', async (req, res) => {
     const hotReloadManager = HotReloadManager.getInstance();
     const result = await hotReloadManager.applyConfigurationChange(changeData);
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
     debug('Hot reload API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Hot reload failed',
       error:
@@ -45,13 +45,13 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     const hotReloadManager = HotReloadManager.getInstance();
     const history = hotReloadManager.getChangeHistory(limit);
 
-    res.json({
+    return res.json({
       success: true,
       history,
     });
   } catch (error) {
     debug('Hot reload history API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get change history',
       error:
@@ -69,13 +69,13 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     const hotReloadManager = HotReloadManager.getInstance();
     const rollbacks = hotReloadManager.getAvailableRollbacks();
 
-    res.json({
+    return res.json({
       success: true,
       rollbacks,
     });
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get available rollbacks',
       error:
@@ -105,19 +105,19 @@ router.post('/api/config/hot-reload/rollback/:snapshotId', async (req, res) => {
         metadata: { snapshotId },
       });
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Configuration rolled back successfully',
       });
     } else {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: 'Rollback snapshot not found or rollback failed',
       });
     }
   } catch (error) {
     debug('Hot reload rollback API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Rollback failed',
       error:
@@ -134,7 +134,7 @@ router.get('/api/config/hot-reload/status', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
 
-    res.json({
+    return res.json({
       success: true,
       status: {
         isActive: true, // Hot reload is always active in this implementation
@@ -145,7 +145,7 @@ router.get('/api/config/hot-reload/status', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload status API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get hot reload status',
       error:

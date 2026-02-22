@@ -71,13 +71,13 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       data: { guards },
       message: 'Tool usage guards retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve tool usage guards',
       message: error.message || 'An error occurred while retrieving tool usage guards',
     });
@@ -118,13 +118,13 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
       isActive: isActive !== false,
     };
 
-    res.json({
+    return res.json({
       success: true,
       data: { guard: newGuard },
       message: 'Tool usage guard created successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to create tool usage guard',
       message: error.message || 'An error occurred while creating tool usage guard',
     });
@@ -166,13 +166,13 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
       isActive: isActive !== false,
     };
 
-    res.json({
+    return res.json({
       success: true,
       data: { guard: updatedGuard },
       message: 'Tool usage guard updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update tool usage guard',
       message: error.message || 'An error occurred while updating tool usage guard',
     });
@@ -190,12 +190,12 @@ router.delete(
       // In a real implementation, this would delete from database
       // For now, just return success
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Tool usage guard deleted successfully',
       });
     } catch (error: any) {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to delete tool usage guard',
         message: error.message || 'An error occurred while deleting tool usage guard',
       });
@@ -215,12 +215,12 @@ router.post(
       // In a real implementation, this would update in database
       // For now, just return success
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Tool usage guard status updated successfully',
       });
     } catch (error: any) {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to update guard status',
         message: error.message || 'An error occurred while updating guard status',
       });
@@ -260,13 +260,13 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
     // Save to persistent storage
     webUIStorage.saveLlmProvider(newProvider);
 
-    res.json({
+    return res.json({
       success: true,
       data: { provider: newProvider },
       message: 'LLM provider created successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to create LLM provider',
       message: error.message || 'An error occurred while creating LLM provider',
     });
@@ -302,13 +302,13 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
     // Save to persistent storage
     webUIStorage.saveLlmProvider(updatedProvider);
 
-    res.json({
+    return res.json({
       success: true,
       data: { provider: updatedProvider },
       message: 'LLM provider updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update LLM provider',
       message: error.message || 'An error occurred while updating LLM provider',
     });
@@ -323,12 +323,12 @@ router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
     // Delete from persistent storage
     webUIStorage.deleteLlmProvider(id);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'LLM provider deleted successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to delete LLM provider',
       message: error.message || 'An error occurred while deleting LLM provider',
     });
@@ -354,12 +354,12 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'LLM provider status updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update provider status',
       message: error.message || 'An error occurred while updating provider status',
     });
@@ -402,13 +402,13 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
     // Save to persistent storage
     webUIStorage.saveMessengerProvider(newProvider);
 
-    res.json({
+    return res.json({
       success: true,
       data: { provider: newProvider },
       message: 'Messenger provider created successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to create messenger provider',
       message: error.message || 'An error occurred while creating messenger provider',
     });
@@ -456,13 +456,13 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
     // Save to persistent storage
     webUIStorage.saveMessengerProvider(updatedProvider);
 
-    res.json({
+    return res.json({
       success: true,
       data: { provider: updatedProvider },
       message: 'Messenger provider updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update messenger provider',
       message: error.message || 'An error occurred while updating messenger provider',
     });
@@ -477,12 +477,12 @@ router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response
     // Delete from persistent storage
     webUIStorage.deleteMessengerProvider(id);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Messenger provider deleted successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to delete messenger provider',
       message: error.message || 'An error occurred while deleting messenger provider',
     });
@@ -508,12 +508,12 @@ router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Res
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Messenger provider status updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update provider status',
       message: error.message || 'An error occurred while updating provider status',
     });
@@ -526,13 +526,13 @@ router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
     // Return provider *types* supported by this build (not user-configured instances)
     const providers = ['openai', 'flowise', 'openwebui', 'ollama'];
 
-    res.json({
+    return res.json({
       success: true,
       data: { providers },
       message: 'LLM providers retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve LLM providers',
       message: error.message || 'An error occurred while retrieving LLM providers',
     });
@@ -545,13 +545,13 @@ router.get('/api/admin/messenger-providers', (req: Request, res: Response) => {
     // Return provider *types* supported by this build (not user-configured instances)
     const providers = ['discord', 'slack', 'mattermost', 'webhook'];
 
-    res.json({
+    return res.json({
       success: true,
       data: { providers },
       message: 'Messenger providers retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve messenger providers',
       message: error.message || 'An error occurred while retrieving messenger providers',
     });
@@ -586,13 +586,13 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
     // Combine stored and default personas
     const allPersonas = [...storedPersonas, ...defaultPersonas];
 
-    res.json({
+    return res.json({
       success: true,
       data: { personas: allPersonas },
       message: 'Personas retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve personas',
       message: error.message || 'An error occurred while retrieving personas',
     });
@@ -622,12 +622,12 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
     // Save to persistent storage
     webUIStorage.savePersona({ key, name, systemPrompt });
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Persona created successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to create persona',
       message: error.message || 'An error occurred while creating persona',
     });
@@ -651,12 +651,12 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
     // Save to persistent storage
     webUIStorage.savePersona({ key, name, systemPrompt });
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Persona updated successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to update persona',
       message: error.message || 'An error occurred while updating persona',
     });
@@ -671,12 +671,12 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
     // Delete from persistent storage
     webUIStorage.deletePersona(key);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Persona deleted successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to delete persona',
       message: error.message || 'An error occurred while deleting persona',
     });
@@ -718,13 +718,13 @@ router.post(
       // Save to persistent storage with sanitized API key
       webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
 
-      res.json({
+      return res.json({
         success: true,
         data: { tools },
         message: `Successfully connected to MCP server: ${name}`,
       });
     } catch (error: any) {
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to connect to MCP server',
         message: error.message || 'An error occurred while connecting to MCP server',
       });
@@ -751,12 +751,12 @@ router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Respo
     // Remove from persistent storage
     webUIStorage.deleteMcp(name);
 
-    res.json({
+    return res.json({
       success: true,
       message: `Successfully disconnected from MCP server: ${name}`,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to disconnect from MCP server',
       message: error.message || 'An error occurred while disconnecting from MCP server',
     });
@@ -772,13 +772,13 @@ router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = webUIStorage.getMcps();
 
-    res.json({
+    return res.json({
       success: true,
       data: { servers, configurations: storedMcps },
       message: 'Connected MCP servers retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve MCP servers',
       message: error.message || 'An error occurred while retrieving MCP servers',
     });
@@ -800,13 +800,13 @@ router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Respo
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: { tools },
       message: `Tools retrieved successfully from MCP server: ${name}`,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve tools',
       message: error.message || 'An error occurred while retrieving tools',
     });
@@ -818,13 +818,13 @@ router.get('/api/admin/env-overrides', (req: Request, res: Response) => {
   try {
     const envVars = getRelevantEnvVars();
 
-    res.json({
+    return res.json({
       success: true,
       data: { envVars },
       message: 'Environment variable overrides retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve environment variable overrides',
       message: error.message || 'An error occurred while retrieving environment variable overrides',
     });
@@ -838,13 +838,13 @@ router.get('/api/admin/activity/messages', (req: Request, res: Response) => {
     // For now, we'll return mock data
     const messages: any[] = [];
 
-    res.json({
+    return res.json({
       success: true,
       data: { messages },
       message: 'Activity messages retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve activity messages',
       message: error.message || 'An error occurred while retrieving activity messages',
     });
@@ -858,13 +858,13 @@ router.get('/api/admin/activity/metrics', (req: Request, res: Response) => {
     // For now, we'll return mock data
     const metrics: any[] = [];
 
-    res.json({
+    return res.json({
       success: true,
       data: { metrics },
       message: 'Performance metrics retrieved successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to retrieve performance metrics',
       message: error.message || 'An error occurred while retrieving performance metrics',
     });
@@ -910,10 +910,10 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
       }
     });
 
-    res.json({ envVars: envOverrides });
+    return res.json({ envVars: envOverrides });
   } catch (error) {
     debug('Error fetching environment overrides:', error);
-    res.status(500).json({ error: 'Failed to fetch environment overrides' });
+    return res.status(500).json({ error: 'Failed to fetch environment overrides' });
   }
 });
 
@@ -975,13 +975,13 @@ router.get('/providers', async (req: Request, res: Response) => {
       },
     ];
 
-    res.json({
+    return res.json({
       messageProviders,
       llmProviders,
     });
   } catch (error) {
     debug('Error fetching providers:', error);
-    res.status(500).json({ error: 'Failed to fetch providers' });
+    return res.status(500).json({ error: 'Failed to fetch providers' });
   }
 });
 
@@ -1004,10 +1004,10 @@ router.get('/system-info', async (req: Request, res: Response) => {
       environment: process.env.NODE_ENV || 'development',
     };
 
-    res.json({ systemInfo });
+    return res.json({ systemInfo });
   } catch (error) {
     debug('Error fetching system info:', error);
-    res.status(500).json({ error: 'Failed to fetch system info' });
+    return res.status(500).json({ error: 'Failed to fetch system info' });
   }
 });
 

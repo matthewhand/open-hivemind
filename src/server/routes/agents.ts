@@ -140,7 +140,7 @@ router.get('/', async (req, res) => {
       ),
     }));
 
-    res.json({ agents: agentsWithEnvInfo });
+    return res.json({ agents: agentsWithEnvInfo });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -152,7 +152,7 @@ router.get('/', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENTS_FETCH_ERROR',
       timestamp: new Date().toISOString(),
@@ -175,7 +175,7 @@ router.post('/', async (req, res) => {
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
 
     debug(`Created new agent: ${newAgent.name}`);
-    res.json({ agent: newAgent });
+    return res.json({ agent: newAgent });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -187,7 +187,7 @@ router.post('/', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_CREATE_ERROR',
       timestamp: new Date().toISOString(),
@@ -212,7 +212,7 @@ router.put('/:id', async (req, res) => {
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
 
     debug(`Updated agent: ${agents[agentIndex].name}`);
-    res.json({ agent: agents[agentIndex] });
+    return res.json({ agent: agents[agentIndex] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -224,7 +224,7 @@ router.put('/:id', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_UPDATE_ERROR',
       timestamp: new Date().toISOString(),
@@ -247,7 +247,7 @@ router.delete('/:id', async (req, res) => {
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
 
     debug(`Deleted agent: ${id}`);
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -259,7 +259,7 @@ router.delete('/:id', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_DELETE_ERROR',
       timestamp: new Date().toISOString(),
@@ -291,7 +291,7 @@ router.get('/personas', async (req, res) => {
       },
     ]);
 
-    res.json({ personas });
+    return res.json({ personas });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -303,7 +303,7 @@ router.get('/personas', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONAS_FETCH_ERROR',
       timestamp: new Date().toISOString(),
@@ -334,7 +334,7 @@ router.post('/personas', async (req, res) => {
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
 
     debug(`Created new persona: ${name}`);
-    res.json({ persona: newPersona });
+    return res.json({ persona: newPersona });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -346,7 +346,7 @@ router.post('/personas', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_CREATE_ERROR',
       timestamp: new Date().toISOString(),
@@ -371,7 +371,7 @@ router.put('/personas/:key', async (req, res) => {
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
 
     debug(`Updated persona: ${name}`);
-    res.json({ persona: personas[personaIndex] });
+    return res.json({ persona: personas[personaIndex] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -383,7 +383,7 @@ router.put('/personas/:key', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_UPDATE_ERROR',
       timestamp: new Date().toISOString(),
@@ -410,7 +410,7 @@ router.delete('/personas/:key', async (req, res) => {
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
 
     debug(`Deleted persona: ${key}`);
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -422,7 +422,7 @@ router.delete('/personas/:key', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_DELETE_ERROR',
       timestamp: new Date().toISOString(),

@@ -168,7 +168,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
       errors: errors.array(),
     });
   }
-  next();
+  return next();
 };
 
 /**
@@ -192,7 +192,7 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
       message: error.message,
     });
   }
-  next();
+  return next();
 };
 
 /**
@@ -217,7 +217,7 @@ router.post(
       );
 
       if (result.success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Configurations exported successfully',
           data: {
@@ -227,7 +227,7 @@ router.post(
           },
         });
       } else {
-        res.status(400).json({
+        return res.status(400).json({
           success: false,
           message: 'Export failed',
           error: result.error,
@@ -235,7 +235,7 @@ router.post(
       }
     } catch (error) {
       console.error('Error exporting configurations:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
         error: (error as any).message,
@@ -280,7 +280,7 @@ router.post(
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
-      res.json({
+      return res.json({
         success: result.success,
         message: result.success ? 'Configurations imported successfully' : 'Import failed',
         data: result,
@@ -297,7 +297,7 @@ router.post(
         }
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
         error: (error as any).message,
@@ -336,7 +336,7 @@ router.post(
       );
 
       if (result.success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Backup created successfully',
           data: {
@@ -346,7 +346,7 @@ router.post(
           },
         });
       } else {
-        res.status(400).json({
+        return res.status(400).json({
           success: false,
           message: 'Backup creation failed',
           error: result.error,
@@ -354,7 +354,7 @@ router.post(
       }
     } catch (error) {
       console.error('Error creating backup:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
         error: (error as any).message,
@@ -370,14 +370,14 @@ router.post(
 router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const backups = await importExportService.listBackups();
-    res.json({
+    return res.json({
       success: true,
       data: backups,
       count: backups.length,
     });
   } catch (error) {
     console.error('Error listing backups:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
       error: (error as any).message,
@@ -427,14 +427,14 @@ router.post(
         restoredBy
       );
 
-      res.json({
+      return res.json({
         success: result.success,
         message: result.success ? 'Backup restored successfully' : 'Backup restoration failed',
         data: result,
       });
     } catch (error) {
       console.error('Error restoring from backup:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
         error: (error as any).message,
@@ -456,19 +456,19 @@ router.delete(
       const success = await importExportService.deleteBackup(backupId);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Backup deleted successfully',
         });
       } else {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'Backup not found',
         });
       }
     } catch (error) {
       console.error('Error deleting backup:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
         error: (error as any).message,
@@ -516,10 +516,10 @@ router.get(
       // Set headers and send file
       res.setHeader('Content-Type', 'application/gzip');
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
-      res.sendFile(backupPath);
+      return res.sendFile(backupPath);
     } catch (error) {
       console.error('Error downloading backup:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
         error: (error as any).message,
@@ -560,7 +560,7 @@ router.post(
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'File validation completed',
         data: result,
@@ -577,7 +577,7 @@ router.post(
         }
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
         error: (error as any).message,

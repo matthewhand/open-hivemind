@@ -30,14 +30,14 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const bots = await botManager.getAllBots();
 
-    res.json({
+    return res.json({
       success: true,
       data: { bots },
       total: bots.length,
     });
   } catch (error: any) {
     debug('Error getting bots:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get bots',
       message: error.message || 'An error occurred while retrieving bots',
     });
@@ -61,13 +61,13 @@ router.get('/:botId', validateRequest(BotIdParamSchema), async (req: Request, re
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: { bot },
     });
   } catch (error: any) {
     debug('Error getting bot:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get bot',
       message: error.message || 'An error occurred while retrieving bot',
     });
@@ -96,7 +96,7 @@ router.post('/', validateRequest(CreateBotSchema), async (req: AuditedRequest, r
       }
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: { bot },
       message: 'Bot created successfully',
@@ -110,7 +110,7 @@ router.post('/', validateRequest(CreateBotSchema), async (req: AuditedRequest, r
       'failure',
       `Failed to create bot: ${error.message}`
     );
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Failed to create bot',
       message: error.message || 'An error occurred while creating bot',
     });
@@ -131,14 +131,14 @@ router.post(
 
       const clonedBot = await botManager.cloneBot(botId, newName);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: { bot: clonedBot },
         message: 'Bot cloned successfully',
       });
     } catch (error: any) {
       debug('Error cloning bot:', error);
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Failed to clone bot',
         message: error.message || 'An error occurred while cloning bot',
       });
@@ -169,7 +169,7 @@ router.put(
         newValue: updatedBot,
       });
 
-      res.json({
+      return res.json({
         success: true,
         data: { bot: updatedBot },
         message: 'Bot updated successfully',
@@ -183,7 +183,7 @@ router.put(
         'failure',
         `Failed to update bot: ${error.message}`
       );
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Failed to update bot',
         message: error.message || 'An error occurred while updating bot',
       });
@@ -220,7 +220,7 @@ router.delete(
         oldValue: botToDelete,
       });
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Bot deleted successfully',
       });
@@ -233,7 +233,7 @@ router.delete(
         'failure',
         `Failed to delete bot: ${error.message}`
       );
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to delete bot',
         message: error.message || 'An error occurred while deleting bot',
       });
@@ -262,13 +262,13 @@ router.post(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Bot started successfully',
       });
     } catch (error: any) {
       debug('Error starting bot:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to start bot',
         message: error.message || 'An error occurred while starting bot',
       });
@@ -297,13 +297,13 @@ router.post(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Bot stopped successfully',
       });
     } catch (error: any) {
       debug('Error stopping bot:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to stop bot',
         message: error.message || 'An error occurred while stopping bot',
       });
@@ -359,13 +359,13 @@ router.get(
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, limit);
 
-      res.json({
+      return res.json({
         success: true,
         data: { activity: combinedActivity },
       });
     } catch (error: any) {
       debug('Error getting bot activity:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to get bot activity',
         message: error.message || 'An error occurred while getting bot activity',
       });
@@ -389,13 +389,13 @@ router.get(
 
       const history = await botManager.getBotHistory(botId, channelId, limit);
 
-      res.json({
+      return res.json({
         success: true,
         data: { history },
       });
     } catch (error: any) {
       debug('Error getting bot history:', error);
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to get bot history',
         message: error.message || 'An error occurred while getting bot history',
       });
@@ -473,7 +473,7 @@ router.get('/templates', (req: Request, res: Response) => {
     },
   ];
 
-  res.json({
+  return res.json({
     success: true,
     data: { templates },
   });

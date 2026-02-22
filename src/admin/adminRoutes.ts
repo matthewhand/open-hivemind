@@ -99,7 +99,7 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
     } catch { }
-    res.json({
+    return res.json({
       ok: true,
       slackBots,
       discordBots,
@@ -108,12 +108,12 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
       discordInfo,
     });
   } catch {
-    res.json({ ok: true, bots: [] });
+    return res.json({ ok: true, bots: [] });
   }
 });
 
 adminRouter.get('/personas', (_req: Request, res: Response) => {
-  res.json({ ok: true, personas: loadPersonas() });
+  return res.json({ ok: true, personas: loadPersonas() });
 });
 
 const LLM_PROVIDERS = [
@@ -160,11 +160,11 @@ const MESSENGER_PROVIDERS = [
 ];
 
 adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: LLM_PROVIDERS });
+  return res.json({ ok: true, providers: LLM_PROVIDERS });
 });
 
 adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: MESSENGER_PROVIDERS });
+  return res.json({ ok: true, providers: MESSENGER_PROVIDERS });
 });
 
 // Minimal Slack bot creation: supports a single instance add at runtime

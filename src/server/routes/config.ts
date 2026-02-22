@@ -122,7 +122,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // GET /api/config/ping - Diagnostic endpoint
 router.get('/ping', (req, res) => {
-  res.json({ message: 'pong', timestamp: new Date().toISOString() });
+  return res.json({ message: 'pong', timestamp: new Date().toISOString() });
 });
 
 // Sensitive key patterns for redaction
@@ -197,14 +197,14 @@ router.get('/bots', async (req, res) => {
       };
     });
 
-    res.json({
+    return res.json({
       bots: safeBots,
       count: safeBots.length,
       warnings: manager.getWarnings(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOTS_ERROR',
     });
@@ -237,10 +237,10 @@ router.put('/bots/:name', async (req, res) => {
     // Apply updates via manager
     await manager.updateBot(name, cleanUpdates);
 
-    res.json({ success: true, message: `Bot "${name}" updated` });
+    return res.json({ success: true, message: `Bot "${name}" updated` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOT_UPDATE_ERROR',
     });
@@ -278,10 +278,10 @@ router.get('/templates', async (req, res) => {
 
     const templates = (await Promise.all(templatesPromises)).filter((t) => t !== null);
 
-    res.json({ templates });
+    return res.json({ templates });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_TEMPLATES_ERROR',
     });
@@ -320,10 +320,10 @@ router.post('/templates/:id/create', async (req, res) => {
     const manager = BotConfigurationManager.getInstance();
     await manager.addBot(newBotConfig);
 
-    res.json({ success: true, message: `Bot "${name}" created from template "${id}"` });
+    return res.json({ success: true, message: `Bot "${name}" created from template "${id}"` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_TEMPLATE_CREATE_ERROR',
     });
@@ -397,10 +397,10 @@ router.get('/global', (req, res) => {
       };
     }
 
-    res.json(response);
+    return res.json(response);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
     });
@@ -531,10 +531,10 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
       );
     }
 
-    res.json({ success: true, message: 'Configuration updated and persisted' });
+    return res.json({ success: true, message: 'Configuration updated and persisted' });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
     });
@@ -639,7 +639,7 @@ router.get('/', async (req, res) => {
       };
     });
 
-    res.json({
+    return res.json({
       bots: sanitizedBots,
       warnings,
       legacyMode: manager.isLegacyMode(),
@@ -658,7 +658,7 @@ router.get('/', async (req, res) => {
       stack: process.env.NODE_ENV === 'test' ? hivemindError.stack : undefined,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_API_ERROR',
       timestamp: new Date().toISOString(),
@@ -756,7 +756,7 @@ router.get('/sources', async (req, res) => {
       });
     });
 
-    res.json({
+    return res.json({
       environmentVariables: envVars,
       configFiles,
       overrides,
@@ -772,7 +772,7 @@ router.get('/sources', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_SOURCES_ERROR',
       timestamp: new Date().toISOString(),
@@ -802,7 +802,7 @@ router.post('/reload', (req, res) => {
       }
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Configuration reloaded successfully',
       timestamp: new Date().toISOString(),
@@ -833,7 +833,7 @@ router.post('/reload', (req, res) => {
       }
     }
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_RELOAD_ERROR',
       timestamp: new Date().toISOString(),
@@ -856,7 +856,7 @@ router.post('/api/cache/clear', (req, res) => {
 
     // No audit logging needed in test mode
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Cache cleared successfully',
       timestamp: new Date().toISOString(),
@@ -872,7 +872,7 @@ router.post('/api/cache/clear', (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CACHE_CLEAR_ERROR',
       timestamp: new Date().toISOString(),
@@ -906,7 +906,7 @@ router.get('/export', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
     debug('Headers set, about to send response');
-    res.send(jsonContent);
+    return res.send(jsonContent);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -918,7 +918,7 @@ router.get('/export', (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_EXPORT_ERROR',
       timestamp: new Date().toISOString(),
@@ -953,7 +953,7 @@ router.get('/validate', (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       valid: errors.length === 0,
       errors,
     });
@@ -968,7 +968,7 @@ router.get('/validate', (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_VALIDATION_ERROR',
       timestamp: new Date().toISOString(),
@@ -988,7 +988,7 @@ router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
     // In a real implementation, this would save to a file or database
     // For now, just return success
 
-    res.json({
+    return res.json({
       backupId,
       timestamp: new Date().toISOString(),
       message: 'Configuration backup created successfully',
@@ -1004,7 +1004,7 @@ router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_BACKUP_ERROR',
       timestamp: new Date().toISOString(),
@@ -1024,7 +1024,7 @@ router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) =>
     // In a real implementation, this would restore from a file or database
     // For now, just return success
 
-    res.json({
+    return res.json({
       success: true,
       restored: backupId,
       message: 'Configuration restored successfully',
@@ -1040,7 +1040,7 @@ router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) =>
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_RESTORE_ERROR',
       timestamp: new Date().toISOString(),
@@ -1050,7 +1050,7 @@ router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) =>
 
 // WebUI health endpoint
 router.get('/api/health', (req, res) => {
-  res.json({
+  return res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'webui',
@@ -1148,7 +1148,7 @@ router.get('/api/openapi', (req, res) => {
         },
       },
     };
-    res.json(openapiSpec);
+    return res.json(openapiSpec);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -1160,7 +1160,7 @@ router.get('/api/openapi', (req, res) => {
       severity: errorInfo.severity,
     });
 
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'OPENAPI_GENERATION_ERROR',
       timestamp: new Date().toISOString(),
@@ -1208,7 +1208,7 @@ function buildFieldMetadata(
 // GET /api/config/messaging - Get messaging behavior settings
 router.get('/messaging', (req, res) => {
   try {
-    res.json({
+    return res.json({
       MESSAGE_ONLY_WHEN_SPOKEN_TO: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'),
       MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: messageConfig.get(
         'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'
@@ -1223,7 +1223,7 @@ router.get('/messaging', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGING_CONFIG_GET_ERROR',
     });
@@ -1233,12 +1233,12 @@ router.get('/messaging', (req, res) => {
 // GET /api/config/guardrails - Get MCP guardrail profiles
 router.get('/guardrails', (req, res) => {
   try {
-    res.json({
+    return res.json({
       profiles: getGuardrailProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'GUARDRAIL_CONFIG_GET_ERROR',
     });
@@ -1271,10 +1271,10 @@ router.put('/guardrails', (req, res) => {
     }
 
     saveGuardrailProfiles(profiles);
-    res.json({ success: true, profiles });
+    return res.json({ success: true, profiles });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'GUARDRAIL_CONFIG_PUT_ERROR',
     });
@@ -1302,10 +1302,10 @@ router.post('/guardrails', (req, res) => {
 
     profiles.push(profile);
     saveGuardrailProfiles(profiles);
-    res.status(201).json({ success: true, profile });
+    return res.status(201).json({ success: true, profile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'GUARDRAIL_CONFIG_POST_ERROR',
     });
@@ -1325,10 +1325,10 @@ router.delete('/guardrails/:key', (req, res) => {
 
     profiles.splice(index, 1);
     saveGuardrailProfiles(profiles);
-    res.json({ success: true, deletedKey: key });
+    return res.json({ success: true, deletedKey: key });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'GUARDRAIL_CONFIG_DELETE_ERROR',
     });
@@ -1338,12 +1338,12 @@ router.delete('/guardrails/:key', (req, res) => {
 // GET /api/config/response-profiles - Get response/engagement profiles
 router.get('/response-profiles', (req, res) => {
   try {
-    res.json({
+    return res.json({
       profiles: getResponseProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_GET_ERROR',
     });
@@ -1365,13 +1365,13 @@ router.post('/response-profiles', (req, res) => {
     }
 
     const created = createResponseProfile(profile);
-    res.status(201).json({ success: true, profile: created });
+    return res.status(201).json({ success: true, profile: created });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const statusCode = hivemindError.message?.includes('already exists')
       ? 409
       : hivemindError.statusCode || 500;
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_POST_ERROR',
     });
@@ -1385,13 +1385,13 @@ router.put('/response-profiles/:key', (req, res) => {
     const updates = req.body as Partial<ResponseProfile>;
 
     const updated = updateResponseProfile(key, updates);
-    res.json({ success: true, profile: updated });
+    return res.json({ success: true, profile: updated });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const statusCode = hivemindError.message?.includes('not found')
       ? 404
       : hivemindError.statusCode || 500;
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_PUT_ERROR',
     });
@@ -1403,7 +1403,7 @@ router.delete('/response-profiles/:key', (req, res) => {
   try {
     const key = req.params.key;
     deleteResponseProfile(key);
-    res.json({ success: true, deletedKey: key });
+    return res.json({ success: true, deletedKey: key });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const statusCode = hivemindError.message?.includes('not found')
@@ -1411,7 +1411,7 @@ router.delete('/response-profiles/:key', (req, res) => {
       : hivemindError.message?.includes('built-in')
         ? 403
         : hivemindError.statusCode || 500;
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       error: hivemindError.message,
       code: 'RESPONSE_PROFILE_DELETE_ERROR',
     });
@@ -1426,7 +1426,7 @@ router.get('/llm-status', async (req, res) => {
     const bots = await botManager.getAllBots();
     const missing = bots.filter((bot) => !bot.llmProvider || String(bot.llmProvider).trim() === '');
 
-    res.json({
+    return res.json({
       defaultConfigured: llmDefaults.configured,
       defaultProviders: llmDefaults.providers,
       libraryStatus: llmDefaults.libraryStatus,
@@ -1435,7 +1435,7 @@ router.get('/llm-status', async (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_STATUS_GET_ERROR',
     });
@@ -1490,7 +1490,7 @@ router.post('/message-provider/test', async (req, res) => {
     return res.status(400).json({ error: `Unsupported provider "${provider}"` });
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROVIDER_TEST_ERROR',
     });
@@ -1533,12 +1533,12 @@ router.get('/llm-profiles', (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       profiles: getLlmProfiles(),
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_GET_ERROR',
     });
@@ -1589,10 +1589,10 @@ router.put('/llm-profiles', (req, res) => {
     }
 
     saveLlmProfiles({ llm: llmProfiles });
-    res.json({ success: true, profiles: { llm: llmProfiles } });
+    return res.json({ success: true, profiles: { llm: llmProfiles } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_PUT_ERROR',
     });
@@ -1625,10 +1625,10 @@ router.post('/llm-profiles', (req, res) => {
 
     allProfiles.llm.push(newProfile);
     saveLlmProfiles(allProfiles);
-    res.status(201).json({ success: true, profile: newProfile });
+    return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_POST_ERROR',
     });
@@ -1648,10 +1648,10 @@ router.delete('/llm-profiles/:key', (req, res) => {
 
     allProfiles.llm.splice(index, 1);
     saveLlmProfiles(allProfiles);
-    res.json({ success: true, deletedKey: key });
+    return res.json({ success: true, deletedKey: key });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_DELETE_ERROR',
     });
@@ -1688,7 +1688,7 @@ router.put('/messaging', async (req, res) => {
       /* validation may fail, ignore */
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Messaging settings updated. Restart may be required for some settings.',
       savedTo: targetPath,
@@ -1696,7 +1696,7 @@ router.put('/messaging', async (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGING_CONFIG_PUT_ERROR',
     });
@@ -1711,10 +1711,10 @@ router.put('/messaging', async (req, res) => {
 router.get('/mcp-server-profiles', (_req, res) => {
   try {
     const profiles = getMcpServerProfiles();
-    res.json({ profiles });
+    return res.json({ profiles });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MCP_SERVER_PROFILES_GET_ERROR',
     });
@@ -1743,10 +1743,10 @@ router.post('/mcp-server-profiles', (req, res) => {
       mcpServers,
     });
 
-    res.status(201).json({ success: true, profile });
+    return res.status(201).json({ success: true, profile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 400).json({
+    return res.status(hivemindError.statusCode || 400).json({
       error: hivemindError.message,
       code: 'MCP_SERVER_PROFILE_CREATE_ERROR',
     });
@@ -1764,10 +1764,10 @@ router.put('/mcp-server-profiles/:key', (req, res) => {
       return res.status(404).json({ error: `Profile "${key}" not found` });
     }
 
-    res.json({ success: true, profile: updated });
+    return res.json({ success: true, profile: updated });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MCP_SERVER_PROFILE_UPDATE_ERROR',
     });
@@ -1783,10 +1783,10 @@ router.delete('/mcp-server-profiles/:key', (req, res) => {
       return res.status(404).json({ error: `Profile "${key}" not found` });
     }
 
-    res.json({ success: true, message: `Profile "${key}" deleted` });
+    return res.json({ success: true, message: `Profile "${key}" deleted` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
+    return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MCP_SERVER_PROFILE_DELETE_ERROR',
     });
@@ -1796,7 +1796,7 @@ router.delete('/mcp-server-profiles/:key', (req, res) => {
 // Catch-all route for debugging - MUST BE LAST
 router.use('*', (req, res) => {
   debug('Config router catch-all:', req.method, req.originalUrl);
-  res.status(404).json({ error: 'Route not found in config router' });
+  return res.status(404).json({ error: 'Route not found in config router' });
 });
 
 export default router;

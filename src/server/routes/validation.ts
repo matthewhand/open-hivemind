@@ -257,7 +257,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
       timestamp: hivemindError.timestamp,
     });
   }
-  next();
+  return next();
 };
 
 /**
@@ -281,7 +281,7 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
       warnings: managerWarnings,
     };
 
-    res.json({
+    return res.json({
       isValid: summary.isValid,
       warnings: summary.warnings,
       errors: summary.errors,
@@ -297,7 +297,7 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
     const errorMessage = 'Failed to validate configuration';
     const originalMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    res.status(500).json({
+    return res.status(500).json({
       error: errorMessage,
       code: 'VALIDATION_ERROR',
       isValid: false,
@@ -394,7 +394,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
   };
 
   try {
-    res.json(schema);
+    return res.json(schema);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
@@ -404,7 +404,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
 
     console.error('Error in', 'Validation schema endpoint');
 
-    res
+    return res
       .status(500)
       .type('application/json')
       .send(
@@ -424,7 +424,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
 router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const rules = validationService.getAllRules();
-    res.json({
+    return res.json({
       success: true,
       data: rules,
       count: rules.length,
@@ -438,7 +438,7 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
 
     console.error('Error in', 'Get validation rules endpoint');
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: hivemindError.message,
       code: hivemindError.code,
@@ -467,7 +467,7 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: rule,
       });
@@ -480,7 +480,7 @@ router.get(
 
       console.error('Error in', 'Get validation rule endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -525,7 +525,7 @@ router.post(
 
       validationService.addRule(rule);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Validation rule created successfully',
         data: rule,
@@ -539,7 +539,7 @@ router.post(
 
       console.error('Error in', 'Create validation rule endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -564,12 +564,12 @@ router.delete(
       const success = validationService.removeRule(ruleId);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Validation rule deleted successfully',
         });
       } else {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'Validation rule not found',
         });
@@ -583,7 +583,7 @@ router.delete(
 
       console.error('Error in', 'Delete validation rule endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -600,7 +600,7 @@ router.delete(
 router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const profiles = validationService.getAllProfiles();
-    res.json({
+    return res.json({
       success: true,
       data: profiles,
       count: profiles.length,
@@ -614,7 +614,7 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
 
     console.error('Error in', 'Get validation profiles endpoint');
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: hivemindError.message,
       code: hivemindError.code,
@@ -643,7 +643,7 @@ router.get(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: profile,
       });
@@ -656,7 +656,7 @@ router.get(
 
       console.error('Error in', 'Get validation profile endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -710,7 +710,7 @@ router.post(
 
       validationService.addProfile(profile);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Validation profile created successfully',
         data: profile,
@@ -724,7 +724,7 @@ router.post(
 
       console.error('Error in', 'Create validation profile endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -749,12 +749,12 @@ router.delete(
       const success = validationService.removeProfile(profileId);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Validation profile deleted successfully',
         });
       } else {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'Validation profile not found',
         });
@@ -768,7 +768,7 @@ router.delete(
 
       console.error('Error in', 'Delete validation profile endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -792,14 +792,14 @@ router.post(
 
       const report = await validationService.validateConfiguration(configId, profileId, clientId);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Configuration validated successfully',
         data: report,
       });
     } catch (error) {
       console.error('Error validating configuration:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Failed to validate configuration',
         error: (error as any).message,
@@ -822,7 +822,7 @@ router.post(
 
       const result = validationService.validateConfigurationData(configData, profileId);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Configuration data validated successfully',
         data: result,
@@ -836,7 +836,7 @@ router.post(
 
       console.error('Error in', 'Validate configuration data endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -860,7 +860,7 @@ router.post(
 
       const subscription = validationService.subscribe(configId, clientId, profileId);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Subscribed to validation successfully',
         data: subscription,
@@ -874,7 +874,7 @@ router.post(
 
       console.error('Error in', 'Subscribe to validation endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -901,12 +901,12 @@ router.delete(
       const success = validationService.unsubscribe(configIdNum, clientId);
 
       if (success) {
-        res.json({
+        return res.json({
           success: true,
           message: 'Unsubscribed from validation successfully',
         });
       } else {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'Subscription not found',
         });
@@ -920,7 +920,7 @@ router.delete(
 
       console.error('Error in', 'Unsubscribe from validation endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -952,7 +952,7 @@ router.get(
 
       const history = validationService.getValidationHistory(configId, limit);
 
-      res.json({
+      return res.json({
         success: true,
         data: history,
         count: history.length,
@@ -966,7 +966,7 @@ router.get(
 
       console.error('Error in', 'Get validation history endpoint');
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: hivemindError.message,
         code: hivemindError.code,
@@ -984,7 +984,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
   try {
     const statistics = validationService.getValidationStatistics();
 
-    res.json({
+    return res.json({
       success: true,
       data: statistics,
     });
@@ -997,7 +997,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
 
     console.error('Error in', 'Get validation statistics endpoint');
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: hivemindError.message,
       code: hivemindError.code,
@@ -1013,7 +1013,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
 router.get('/api/validation/ws', (req: AuthMiddlewareRequest, res: Response) => {
   // This is a placeholder for WebSocket implementation
   // In a real implementation, you would set up a WebSocket connection
-  res.json({
+  return res.json({
     success: false,
     message: 'WebSocket endpoint not implemented yet',
   });

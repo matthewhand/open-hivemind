@@ -249,7 +249,7 @@ router.post('/servers/:name/connect', async (req, res) => {
       servers[serverIndex] = mcpClient.server;
       await saveMCPServers(servers);
 
-    return res.json({
+      return res.json({
         server: mcpClient.server,
         message: 'Successfully connected to MCP server',
       });
@@ -263,7 +263,7 @@ router.post('/servers/:name/connect', async (req, res) => {
       };
       await saveMCPServers(servers);
 
-    return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
+      return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
     }
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
