@@ -700,29 +700,37 @@ router.get('/sources', async (req, res) => {
 
     // Detect config files
     const configDir = path.join(__dirname, '../../../config');
-    const configFiles: any[] = [];
+    let configFiles: Record<string, any>[] = [];
 
     try {
       const files = await fs.promises.readdir(configDir);
-      for (const file of files) {
-        if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
+      const statsPromises = files
+        .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
+        .map(async (file) => {
           const filePath = path.join(configDir, file);
-          const stats = await fs.promises.stat(filePath);
-          configFiles.push({
-            name: file,
-            path: filePath,
-            size: stats.size,
-            modified: stats.mtime,
-            type: path.extname(file).slice(1),
-          });
-        }
-      }
+          try {
+            const stats = await fs.promises.stat(filePath);
+            return {
+              name: file,
+              path: filePath,
+              size: stats.size,
+              modified: stats.mtime,
+              type: path.extname(file).slice(1),
+            };
+          } catch (e) {
+            console.warn(`Could not stat file ${file}:`, e);
+            return null;
+          }
+        });
+
+      const results = await Promise.all(statsPromises);
+      configFiles = results.filter((r) => r !== null) as Record<string, any>[];
     } catch (fileError) {
       console.warn('Could not read config directory:', fileError);
     }
 
     // Detect overrides (env vars that override config file values)
-    const overrides: any[] = [];
+    const overrides: Record<string, any>[] = [];
     const manager = BotConfigurationManager.getInstance();
     let bots: any[] = [];
     try {

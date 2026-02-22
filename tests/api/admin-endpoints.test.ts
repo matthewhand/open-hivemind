@@ -38,6 +38,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
 
   beforeAll(() => {
+    // Set a dummy sensitive env var for testing redaction
+    process.env.OPENAI_API_KEY = 'sk-test-1234567890';
+
     app = express();
     app.use(express.json());
     app.use('/', adminRouter);

@@ -28,8 +28,10 @@ describe('Health API Integration Tests', () => {
   });
 
   afterAll(async () => {
-    if (server) {
-      await new Promise((resolve) => server.close(resolve));
+    // If we manually started the server, we need to close it if WebUIServer doesn't handle it in supertest context
+    // Actually supertest manages its own server if we pass it the app, but here we explicitly start it.
+    if (server && server.close) {
+        await new Promise(resolve => server.close(resolve));
     }
   });
 
