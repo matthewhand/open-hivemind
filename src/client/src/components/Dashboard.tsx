@@ -280,7 +280,7 @@ const Dashboard: React.FC = () => {
                         🧠 {bot.llmProvider.toUpperCase()}
                       </Badge>
                     )}
-                    <Badge variant="neutral" className="badge-outline" className="text-xs">
+                    <Badge variant="neutral" className="badge-outline text-xs">
                       📱 {bot.messageProvider.toUpperCase()}
                     </Badge>
                   </div>

@@ -52,7 +52,7 @@ router.get('/', async (req: Request, res: Response) => {
       };
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         bots: botsWithOverrides,
@@ -64,7 +64,7 @@ router.get('/', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     debug('Error getting bot configurations:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get bot configurations',
       message: error.message || 'An error occurred while retrieving bot configurations',
     });
@@ -90,7 +90,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
 
     const overrides = userConfigStore.getBotOverride(bot.name);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         bot: {
@@ -106,7 +106,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     debug('Error getting bot configuration:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to get bot configuration',
       message: error.message || 'An error occurred while retrieving bot configuration',
     });
@@ -143,7 +143,7 @@ router.post(
         }
       );
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: { bot: newBot },
         message: 'Bot configuration created successfully',
@@ -165,7 +165,7 @@ router.post(
         'failure',
         `Failed to create bot configuration: ${error.message}`
       );
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Failed to create bot configuration',
         message: error.message || 'An error occurred while creating bot configuration',
       });
@@ -271,7 +271,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       }
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Bot configuration update requires approval.',
       approvalRequestId,
@@ -293,7 +293,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       'failure',
       `Failed to update bot configuration: ${error.message}`
     );
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Failed to update bot configuration',
       message: error.message || 'An error occurred while updating bot configuration',
     });
@@ -455,7 +455,7 @@ router.post(
         }
       );
 
-      res.json({
+      return res.json({
         success: true,
         data: { bot: updatedBot },
         message: 'Bot configuration updated successfully',
@@ -469,7 +469,7 @@ router.post(
         'failure',
         `Failed to apply bot configuration update: ${error.message}`
       );
-      res.status(400).json({
+      return res.status(400).json({
         error: 'Failed to apply bot configuration update',
         message: error.message || 'An error occurred while applying bot configuration update',
       });
@@ -535,7 +535,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     },
   };
 
-  res.json({
+  return res.json({
     success: true,
     data: { templates },
   });

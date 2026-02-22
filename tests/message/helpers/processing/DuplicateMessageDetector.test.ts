@@ -8,6 +8,12 @@ describe('DuplicateMessageDetector', () => {
   let detector: DuplicateMessageDetector;
   const channelId = 'test-channel';
 
+  afterAll(() => {
+    if (detector) {
+      detector.shutdown();
+    }
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset singleton using any cast or finding a way to clear state
@@ -112,5 +118,24 @@ describe('DuplicateMessageDetector', () => {
     detector.recordMessage(channelId, 'and the');
     detector.recordMessage(channelId, 'the and');
     expect(detector.getRepetitionTemperatureBoost(channelId)).toBe(0);
+  });
+
+  it('should detect fuzzy duplicates for external messages', () => {
+    // "This is a long message" -> normalized "this is a long message" (22 chars)
+    const externalHistory = ['This is a long message'];
+
+    // "This is a long massage" -> edit distance 1 (e->a)
+    expect(detector.isDuplicate(channelId, 'This is a long massage', externalHistory)).toBe(true);
+
+    // "This is a totally different message" -> distance large
+    expect(detector.isDuplicate(channelId, 'This is a totally different message', externalHistory)).toBe(false);
+  });
+
+  it('should efficiently reject similar length but different content strings', () => {
+    // "aaaaa" vs "bbbbb". Length 5.
+    // Threshold = min(5, ceil(5*0.05)) = 1.
+    // Levenshtein should exit early.
+    const externalHistory = ['aaaaa'];
+    expect(detector.isDuplicate(channelId, 'bbbbb', externalHistory)).toBe(false);
   });
 });

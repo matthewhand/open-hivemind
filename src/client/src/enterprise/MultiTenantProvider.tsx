@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, react-hooks/rules-of-hooks */
 import React, { createContext, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setCurrentTenant as setReduxCurrentTenant } from '../store/slices/authSlice';
 import { useAuth } from '../contexts/AuthContext';
 import {
   BuildingOfficeIcon,
-  UserIcon,
   ExclamationTriangleIcon,
-  PlusCircleIcon,
 } from '@heroicons/react/24/outline';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
@@ -53,15 +50,11 @@ interface MultiTenantContextType {
   getUserUsage: () => { used: number; total: number; percentage: number };
 }
 
-const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
+export const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
 
 interface MultiTenantProviderProps {
   children: React.ReactNode;
 }
-
-// Start with clean slate - No demo data
-const mockTenants: Tenant[] = [];
-const mockUsers: TenantUser[] = [];
 
 export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
@@ -71,14 +64,6 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([]);
   const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
-
-  // Allow unauthenticated access (e.g. Login page)
-  if (!isAuthenticated) { return <>{children}</>; }
-
-  // Onboarding State - Removed for auto-bootstrapping
-  // const [newOrgName, setNewOrgName] = useState('');
-  // const [newOrgDomain, setNewOrgDomain] = useState('');
-  // const [isCreating, setIsCreating] = useState(false);
 
   // Tenant management functions
   const switchTenant = async (tenantId: string): Promise<void> => {
@@ -190,6 +175,9 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
       bootstrap();
     }
   }, [isAuthenticated, availableTenants.length, user, dispatch]);
+
+  // Allow unauthenticated access (e.g. Login page)
+  if (!isAuthenticated) { return <>{children}</>; }
 
   const updateUserRole = async (userId: string, newRole: string): Promise<void> => {
     const updatedUsers = tenantUsers.map(user =>

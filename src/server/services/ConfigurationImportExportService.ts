@@ -3,6 +3,8 @@ import { createReadStream, createWriteStream, promises as fs } from 'fs';
 import { basename, join } from 'path';
 import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
+import { parse } from 'csv-parse/sync';
+import { stringify } from 'csv-stringify/sync';
 import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -810,11 +812,9 @@ export class ConfigurationImportExportService {
   }
 
   /**
-   * Convert data to CSV (simplified implementation)
+   * Convert data to CSV
    */
   private convertToCSV(data: any): string {
-    // This is a simplified CSV converter for configurations
-    // In production, use a proper CSV library
     if (!data.configurations || !Array.isArray(data.configurations)) {
       throw new Error('Cannot convert non-configuration data to CSV');
     }
@@ -824,24 +824,10 @@ export class ConfigurationImportExportService {
       return '';
     }
 
-    // Get headers from first configuration
-    const headers = Object.keys(configs[0]);
-    let csv = headers.join(',') + '\n';
-
-    // Add data rows
-    for (const config of configs) {
-      const row = headers.map((header) => {
-        const value = config[header];
-        // Escape quotes and wrap in quotes if contains comma or quote
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      });
-      csv += row.join(',') + '\n';
-    }
-
-    return csv;
+    return stringify(configs, {
+      header: true,
+      columns: Object.keys(configs[0]), // Ensure we only output columns present in the first object, consistent with previous behavior
+    });
   }
 
   /**
@@ -854,39 +840,20 @@ export class ConfigurationImportExportService {
   }
 
   /**
-   * Parse CSV (simplified implementation)
+   * Parse CSV
    */
   private parseCSV(csvString: string): any {
-    // This is a simplified CSV parser
-    // In production, use a proper CSV library
-    const lines = csvString.trim().split('\n');
-    if (lines.length < 2) {
-      throw new Error('Invalid CSV format');
+    try {
+      const configurations = parse(csvString, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      });
+
+      return { configurations };
+    } catch (error) {
+      throw new Error(`Invalid CSV format: ${(error as any).message}`);
     }
-
-    const headers = lines[0].split(',');
-    const configurations = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',');
-      const config: any = {};
-
-      for (let j = 0; j < headers.length; j++) {
-        const header = headers[j].trim();
-        let value = values[j] || '';
-
-        // Remove quotes if present
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.substring(1, value.length - 1).replace(/""/g, '"');
-        }
-
-        config[header] = value;
-      }
-
-      configurations.push(config);
-    }
-
-    return { configurations };
   }
 
   /**

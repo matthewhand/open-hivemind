@@ -51,17 +51,17 @@ export class ConfigurationTemplateService {
   private configValidator: ConfigurationValidator;
   private templatesDir: string;
 
-  private constructor() {
+  private constructor(templatesDir?: string) {
     this.dbManager = DatabaseManager.getInstance();
     this.configValidator = new ConfigurationValidator();
-    this.templatesDir = join(process.cwd(), 'config', 'templates');
+    this.templatesDir = templatesDir || join(process.cwd(), 'config', 'templates');
     this.ensureTemplatesDirectory();
     this.loadBuiltInTemplates();
   }
 
-  public static getInstance(): ConfigurationTemplateService {
+  public static getInstance(templatesDir?: string): ConfigurationTemplateService {
     if (!ConfigurationTemplateService.instance) {
-      ConfigurationTemplateService.instance = new ConfigurationTemplateService();
+      ConfigurationTemplateService.instance = new ConfigurationTemplateService(templatesDir);
     }
     return ConfigurationTemplateService.instance;
   }
@@ -408,10 +408,10 @@ export class ConfigurationTemplateService {
   async getAllTemplates(filter?: TemplateFilter): Promise<ConfigurationTemplate[]> {
     try {
       const files = await fs.readdir(this.templatesDir);
-      const templates: ConfigurationTemplate[] = [];
 
-      for (const file of files) {
-        if (file.endsWith('.json')) {
+      const templatePromises = files
+        .filter((file) => file.endsWith('.json'))
+        .map(async (file) => {
           try {
             const filePath = join(this.templatesDir, file);
             const data = await fs.readFile(filePath, 'utf-8');
@@ -421,15 +421,18 @@ export class ConfigurationTemplateService {
             template.createdAt = new Date(template.createdAt);
             template.updatedAt = new Date(template.updatedAt);
 
-            // Apply filters
-            if (this.matchesFilter(template, filter)) {
-              templates.push(template);
-            }
+            return template;
           } catch (error) {
             debug('Error loading template file:', file, error);
+            return null;
           }
-        }
-      }
+        });
+
+      const results = await Promise.all(templatePromises);
+
+      const templates = results
+        .filter((t): t is ConfigurationTemplate => t !== null)
+        .filter((t) => this.matchesFilter(t, filter));
 
       return templates.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     } catch (error) {

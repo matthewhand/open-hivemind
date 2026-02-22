@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { requireRole } from '../middleware/auth';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
@@ -147,7 +148,7 @@ const disconnectFromMCPServer = async (serverName: string): Promise<void> => {
 // Routes
 
 // GET /api/mcp/servers - Get all MCP servers
-router.get('/servers', async (req, res) => {
+router.get('/servers', requireRole('admin'), async (req, res) => {
   try {
     const servers = await loadMCPServers();
 
@@ -179,7 +180,7 @@ router.get('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers - Add new MCP server
-router.post('/servers', async (req, res) => {
+router.post('/servers', requireRole('admin'), async (req, res) => {
   try {
     const { name, url, apiKey } = req.body;
 
@@ -226,7 +227,7 @@ router.post('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/connect - Connect to MCP server
-router.post('/servers/:name/connect', async (req, res) => {
+router.post('/servers/:name/connect', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -249,7 +250,7 @@ router.post('/servers/:name/connect', async (req, res) => {
       servers[serverIndex] = mcpClient.server;
       await saveMCPServers(servers);
 
-    return res.json({
+      return res.json({
         server: mcpClient.server,
         message: 'Successfully connected to MCP server',
       });
@@ -263,7 +264,7 @@ router.post('/servers/:name/connect', async (req, res) => {
       };
       await saveMCPServers(servers);
 
-    return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
+      return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
     }
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -285,7 +286,7 @@ router.post('/servers/:name/connect', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/disconnect - Disconnect from MCP server
-router.post('/servers/:name/disconnect', async (req, res) => {
+router.post('/servers/:name/disconnect', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -325,7 +326,7 @@ router.post('/servers/:name/disconnect', async (req, res) => {
 });
 
 // DELETE /api/mcp/servers/:name - Remove MCP server
-router.delete('/servers/:name', async (req, res) => {
+router.delete('/servers/:name', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -442,7 +443,7 @@ router.post('/servers/:name/call-tool', async (req, res) => {
 });
 
 // GET /api/mcp/connected - Get all connected MCP servers
-router.get('/connected', async (req, res) => {
+router.get('/connected', requireRole('admin'), async (req, res) => {
   try {
     const connected = Array.from(connectedClients.values()).map((client) => ({
       name: client.server.name,
@@ -474,7 +475,7 @@ router.get('/connected', async (req, res) => {
 // === MCP Provider Manager Endpoints ===
 
 // GET /api/mcp/providers - Get all MCP providers
-router.get('/providers', async (req, res) => {
+router.get('/providers', requireRole('admin'), async (req, res) => {
   try {
     const providers = mcpProviderManager.getAllProviders();
     const statuses = mcpProviderManager.getAllProviderStatuses();
@@ -513,7 +514,7 @@ router.get('/providers', async (req, res) => {
 });
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
-router.get('/providers/:id', async (req, res) => {
+router.get('/providers/:id', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const provider = mcpProviderManager.getProvider(id);
@@ -555,7 +556,7 @@ router.get('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers - Create new MCP provider
-router.post('/providers', async (req, res) => {
+router.post('/providers', requireRole('admin'), async (req, res) => {
   try {
     const providerConfig: MCPProviderConfig = req.body;
 
@@ -598,7 +599,7 @@ router.post('/providers', async (req, res) => {
 });
 
 // PUT /api/mcp/providers/:id - Update MCP provider
-router.put('/providers/:id', async (req, res) => {
+router.put('/providers/:id', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<MCPProviderConfig> = req.body;
@@ -652,7 +653,7 @@ router.put('/providers/:id', async (req, res) => {
 });
 
 // DELETE /api/mcp/providers/:id - Delete MCP provider
-router.delete('/providers/:id', async (req, res) => {
+router.delete('/providers/:id', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -691,7 +692,7 @@ router.delete('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/start - Start MCP provider
-router.post('/providers/:id/start', async (req, res) => {
+router.post('/providers/:id/start', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -730,7 +731,7 @@ router.post('/providers/:id/start', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/stop - Stop MCP provider
-router.post('/providers/:id/stop', async (req, res) => {
+router.post('/providers/:id/stop', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -769,7 +770,7 @@ router.post('/providers/:id/stop', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/test - Test MCP provider
-router.post('/providers/:id/test', async (req, res) => {
+router.post('/providers/:id/test', requireRole('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -837,7 +838,7 @@ router.get('/providers/templates', async (req, res) => {
 });
 
 // GET /api/mcp/providers/stats - Get MCP provider statistics
-router.get('/providers/stats', async (req, res) => {
+router.get('/providers/stats', requireRole('admin'), async (req, res) => {
   try {
     const stats = mcpProviderManager.getStats();
 

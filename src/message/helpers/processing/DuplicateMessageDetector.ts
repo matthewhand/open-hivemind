@@ -113,44 +113,66 @@ export default class DuplicateMessageDetector {
     // Fuzzy check: if edit distance is very small relative to length
     // e.g. "Hello world." vs "Hello world!"
     if (norm1.length > 10 && normalizedContent2.length > 10) {
-      const dist = this.levenshteinDistance(norm1, normalizedContent2);
       const maxLen = Math.max(norm1.length, normalizedContent2.length);
       // Allow 5% difference or 5 characters, whichever is smaller
       const threshold = Math.min(5, Math.ceil(maxLen * 0.05));
+
+      // Optimization: If length difference exceeds threshold, Levenshtein distance
+      // will definitely exceed threshold. Avoid O(N*M) calculation.
+      if (Math.abs(norm1.length - normalizedContent2.length) > threshold) {
+        return false;
+      }
+
+      const dist = this.levenshteinDistance(norm1, normalizedContent2, threshold);
       return dist <= threshold;
     }
     return false;
   }
 
-  private levenshteinDistance(a: string, b: string): number {
+  private levenshteinDistance(a: string, b: string, limit?: number): number {
     if (a.length === 0) {
       return b.length;
     }
     if (b.length === 0) {
       return a.length;
     }
-    const matrix = [];
-    let i;
-    for (i = 0; i <= b.length; i++) {
-      matrix[i] = [i];
+
+    // Optimization: Use O(min(N, M)) space instead of O(N*M)
+    // Make sure 'a' is the shorter string to minimize row size
+    if (a.length > b.length) {
+      [a, b] = [b, a];
     }
-    let j;
-    for (j = 0; j <= a.length; j++) {
-      matrix[0][j] = j;
-    }
-    for (i = 1; i <= b.length; i++) {
-      for (j = 1; j <= a.length; j++) {
-        if (b.charAt(i - 1) == a.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
+
+    let row = Array.from({ length: a.length + 1 }, (_, k) => k);
+    let nextRow = new Array(a.length + 1);
+
+    for (let i = 1; i <= b.length; i++) {
+      nextRow[0] = i;
+      let minRowVal = i;
+
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          nextRow[j] = row[j - 1];
         } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
-          );
+          nextRow[j] = Math.min(row[j - 1], row[j], nextRow[j - 1]) + 1;
+        }
+        if (nextRow[j] < minRowVal) {
+          minRowVal = nextRow[j];
         }
       }
+
+      // Early exit if limit provided and all values in row exceed limit
+      if (limit !== undefined && minRowVal > limit) {
+        return limit + 1;
+      }
+
+      // Swap rows for next iteration
+      const temp = row;
+      row = nextRow;
+      nextRow = temp;
     }
-    return matrix[b.length][a.length];
+
+    return row[a.length];
   }
 
   /**
