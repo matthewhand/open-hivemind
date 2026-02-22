@@ -9,7 +9,7 @@ router.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, X-Correlation-ID');
-  res.status(204).send();
+  return res.status(204).send();
 });
 
 // Frontend error reporting endpoint
@@ -70,7 +70,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
     });
 
     // Return success response
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       correlationId: errorReport.correlationId,
       message: 'Error report received and logged',
@@ -90,7 +90,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
     const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Failed to process error report',
       correlationId: correlationId,
     });
@@ -101,10 +101,10 @@ router.post('/frontend', async (req: Request, res: Response) => {
 router.get('/stats', async (req: Request, res: Response) => {
   try {
     const stats = await errorLogger.getErrorStats();
-    res.json(stats);
+    return res.json(stats);
   } catch (error) {
     console.error('Failed to get error stats:', error);
-    res.status(500).json({ error: 'Failed to retrieve error statistics' });
+    return res.status(500).json({ error: 'Failed to retrieve error statistics' });
   }
 });
 
@@ -113,10 +113,10 @@ router.get('/recent', async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const recentErrors = await errorLogger.getRecentErrors(limit);
-    res.json(recentErrors);
+    return res.json(recentErrors);
   } catch (error) {
     console.error('Failed to get recent errors:', error);
-    res.status(500).json({ error: 'Failed to retrieve recent errors' });
+    return res.status(500).json({ error: 'Failed to retrieve recent errors' });
   }
 });
 

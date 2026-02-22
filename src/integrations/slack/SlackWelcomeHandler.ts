@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { KnownBlock } from '@slack/web-api';
+import type { KnownBlock, ChatPostMessageArguments } from '@slack/web-api';
 import { markdownToBlocks } from '@tryfabric/mack';
 import messageConfig from '@src/config/messageConfig';
 import slackConfig from '@src/config/slackConfig';
@@ -349,7 +349,14 @@ export class SlackWelcomeHandler {
     }
 
     try {
-      const options: any = {
+      const formattedBlocks = blocks?.length ? blocks.map((block) => {
+        if (block.type === 'section' && block.text?.type === 'mrkdwn') {
+          return { ...block, text: { ...block.text, verbatim: true } };
+        }
+        return block;
+      }) : undefined;
+
+      const options: ChatPostMessageArguments = {
         channel: channelId,
         text:
           decodedText ||
@@ -358,21 +365,9 @@ export class SlackWelcomeHandler {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-        parse: 'none',
+        ...(threadId ? { thread_ts: threadId } : {}),
+        ...(formattedBlocks ? { blocks: formattedBlocks } : {})
       };
-
-      if (threadId) {
-        options.thread_ts = threadId;
-      }
-
-      if (blocks?.length) {
-        options.blocks = blocks.map((block) => {
-          if (block.type === 'section' && block.text?.type === 'mrkdwn') {
-            return { ...block, text: { ...block.text, verbatim: true } };
-          }
-          return block;
-        });
-      }
 
       debug(
         `Final text to post: ${options.text.substring(0, 50)}${options.text.length > 50 ? '...' : ''}`

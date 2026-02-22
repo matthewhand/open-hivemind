@@ -7,6 +7,7 @@ import SlackService from '@integrations/slack/SlackService';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
+import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -90,13 +91,13 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
     let discordInfo: any[] = [];
     try {
       const ds = (Discord as any).DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as any[];
-      discordBots = bots.map((b: any) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b: any) => ({
+      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
+      discordInfo = bots.map((b) => ({
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
-    } catch {}
+    } catch { }
     res.json({
       ok: true,
       slackBots,
@@ -178,10 +179,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
         'failure',
         'Missing required fields: name, botToken, signingSecret'
       );
-      res
+      return res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
-      return;
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -189,11 +189,15 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: any = { slack: { instances: [] } };
     try {
-      if (fs.existsSync(messengersPath)) {
-        cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
+      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(fileContent);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
-    } catch (e) {
-      debug('Failed reading messengers.json, starting fresh', e);
     }
     cfg.slack = cfg.slack || {};
     cfg.slack.mode = cfg.slack.mode || mode || 'socket';
@@ -201,8 +205,8 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     cfg.slack.instances.push({ name, token: botToken, signingSecret, llm });
 
     try {
-      fs.mkdirSync(path.dirname(messengersPath), { recursive: true });
-      fs.writeFileSync(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
       debug('Failed writing messengers.json', e);
       // Non-fatal; still attempt runtime add
@@ -235,7 +239,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'success',
       `Created Slack bot ${name} with token and configuration`
     );
-    res.json({ ok: true });
+    return res.json({ ok: true });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -244,7 +248,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'failure',
       `Failed to create Slack bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
@@ -262,27 +266,30 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      res.status(400).json({ ok: false, error: 'token is required' });
-      return;
+      return res.status(400).json({ ok: false, error: 'token is required' });
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: any = { discord: { instances: [] } };
     try {
-      if (fs.existsSync(messengersPath)) {
-        cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
+      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(fileContent);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
-    } catch (e) {
-      debug('Failed reading messengers.json, starting fresh', e);
     }
     cfg.discord = cfg.discord || {};
     cfg.discord.instances = cfg.discord.instances || [];
     cfg.discord.instances.push({ name: name || '', token, llm });
 
     try {
-      fs.mkdirSync(path.dirname(messengersPath), { recursive: true });
-      fs.writeFileSync(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
       debug('Failed writing messengers.json', e);
     }
@@ -299,8 +306,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'success',
         `Created Discord bot ${name || 'unnamed'} with runtime initialization`
       );
-      res.json({ ok: true, note: 'Added and saved.' });
-      return;
+      return res.json({ ok: true, note: 'Added and saved.' });
     } catch (e) {
       debug('Discord runtime add failed; config persisted:', e);
     }
@@ -311,7 +317,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'success',
       `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
     );
-    res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -320,7 +326,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'failure',
       `Failed to create Discord bot: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
@@ -329,11 +335,16 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
-    if (!fs.existsSync(messengersPath)) {
-      res.status(400).json({ ok: false, error: 'messengers.json not found' });
-      return;
+    let cfg: any;
+    try {
+      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(content);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      }
+      throw e;
     }
-    const cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
     let addedSlack = 0;
     let addedDiscord = 0;
     try {
@@ -383,7 +394,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'success',
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
-    res.json({ ok: true, addedSlack, addedDiscord });
+    return res.json({ ok: true, addedSlack, addedDiscord });
   } catch (e: any) {
     logAdminAction(
       req,
@@ -392,6 +403,6 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'failure',
       `Failed to reload bots: ${e?.message || String(e)}`
     );
-    res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });

@@ -5,7 +5,7 @@
  * This interface allows for easier testing and decoupling from the concrete implementation.
  */
 
-import { type MCPServerConfig, type MCPTool } from '../../mcp/MCPService';
+import { type MCPConfig, type MCPTool } from '../../mcp/MCPService';
 
 export interface IMCPService {
   /**
@@ -13,7 +13,7 @@ export interface IMCPService {
    * @param config - Server configuration
    * @returns true if connected successfully
    */
-  connectToServer(config: MCPServerConfig): Promise<boolean>;
+  connectToServer(config: MCPConfig): Promise<boolean>;
 
   /**
    * Disconnects from an MCP server

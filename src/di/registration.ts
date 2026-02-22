@@ -10,7 +10,7 @@ import { container, Lifecycle } from 'tsyringe';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
-import { ProviderConfigManager } from '../config/ProviderConfigManager';
+import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';
@@ -48,17 +48,15 @@ export function registerServices(): void {
   container.register(
     TOKENS.UserConfigStore,
     {
-      useClass: UserConfigStore,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: UserConfigStore.getInstance(),
+    }
   );
 
   container.register(
     TOKENS.ProviderConfigManager,
     {
-      useClass: ProviderConfigManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: ProviderConfigManager.getInstance(),
+    }
   );
 
   console.log('✅ DI services registered');

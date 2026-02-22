@@ -29,7 +29,7 @@ export class SlackEventListener {
         if (!llmProvider.length) {
           throw ErrorUtils.createError(
             'No LLM providers available',
-            'configuration' as any,
+            'configuration',
             'SLACK_NO_LLM_PROVIDERS',
             500
           );
