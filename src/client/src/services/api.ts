@@ -262,6 +262,57 @@ export interface ActivityResponse {
 }
 
 class ApiService {
+  private csrfToken: string | null = null;
+  private csrfTokenPromise: Promise<string> | null = null;
+
+  /**
+   * Fetch CSRF token from the server and cache it
+   */
+  private async fetchCsrfToken(): Promise<string> {
+    // If already fetching, return the existing promise to avoid race conditions
+    if (this.csrfTokenPromise) {
+      return this.csrfTokenPromise;
+    }
+
+    const fetchPromise = (async (): Promise<string> => {
+      try {
+        const response = await fetch(buildUrl('/api/csrf-token'), {
+          method: 'GET',
+          credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+          // CSRF endpoint not available (e.g., in dev mode or not configured)
+          return '';
+        }
+
+        const data = await response.json();
+        const token = data.token || data.csrfToken || '';
+        this.csrfToken = token;
+        return token;
+      } catch (error) {
+        // Silently fail - CSRF may not be required in all environments
+        console.debug('CSRF token fetch failed (may not be required):', error);
+        return '';
+      } finally {
+        this.csrfTokenPromise = null;
+      }
+    })();
+
+    this.csrfTokenPromise = fetchPromise;
+    return fetchPromise;
+  }
+
+  /**
+   * Get the current CSRF token, fetching it if necessary
+   */
+  private async getCsrfToken(): Promise<string> {
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
+    return this.fetchCsrfToken();
+  }
+
   public async get<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
@@ -286,8 +337,17 @@ class ApiService {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
+  public async patch<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const url = buildUrl(endpoint);
+    const method = options?.method?.toUpperCase() || 'GET';
 
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
@@ -304,6 +364,15 @@ class ApiService {
           }
         } catch (e) {
           console.error('Failed to parse auth token', e);
+        }
+      }
+
+      // Add CSRF token for mutating requests (POST, PUT, DELETE, PATCH)
+      const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+      if (mutatingMethods.includes(method)) {
+        const csrfToken = await this.getCsrfToken();
+        if (csrfToken) {
+          authHeaders['X-CSRF-Token'] = csrfToken;
         }
       }
 
