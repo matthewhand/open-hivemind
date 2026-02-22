@@ -17,9 +17,9 @@ module.exports = [
       'scripts/**',
     ],
   },
-  // TypeScript files in src/
+  // TypeScript files in src/ and packages/
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx'],
     languageOptions: {
       parser: typescriptParser,
       ecmaVersion: 'latest',
