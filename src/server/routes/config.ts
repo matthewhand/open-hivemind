@@ -245,33 +245,35 @@ router.put('/bots/:name', async (req, res) => {
 });
 
 // GET /api/config/templates - List available templates
-router.get('/templates', (req, res) => {
+router.get('/templates', async (req, res) => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    if (!fs.existsSync(templatesDir)) {
+    let files: string[] = [];
+    try {
+      files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    } catch (e) {
       return res.json({ templates: [] });
     }
 
-    const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith('.json'));
-    const templates = files
-      .map((file) => {
-        try {
-          const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
-          return {
-            id: file.replace('.json', ''),
-            name: content.name || file.replace('.json', ''),
-            description: content.description || 'No description provided',
-            provider: content.provider || content.messageProvider || 'unknown',
-            content,
-          };
-        } catch (e) {
-          console.warn(`Failed to parse template ${file}:`, e);
-          return null; // Skip invalid
-        }
-      })
-      .filter((t) => t !== null);
+    const templatesPromises = files.map(async (file) => {
+      try {
+        const content = JSON.parse(await fs.promises.readFile(path.join(templatesDir, file), 'utf8'));
+        return {
+          id: file.replace('.json', ''),
+          name: content.name || file.replace('.json', ''),
+          description: content.description || 'No description provided',
+          provider: content.provider || content.messageProvider || 'unknown',
+          content,
+        };
+      } catch (e) {
+        console.warn(`Failed to parse template ${file}:`, e);
+        return null; // Skip invalid
+      }
+    });
+
+    const templates = (await Promise.all(templatesPromises)).filter((t) => t !== null);
 
     res.json({ templates });
   } catch (error: unknown) {
@@ -296,11 +298,13 @@ router.post('/templates/:id/create', async (req, res) => {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatePath = path.join(configDir, 'templates', `${id}.json`);
 
-    if (!fs.existsSync(templatePath)) {
-      return res.status(404).json({ error: 'Template not found' });
+    let template;
+    try {
+      const data = await fs.promises.readFile(templatePath, 'utf8');
+      template = JSON.parse(data);
+    } catch (e) {
+      return res.status(404).json({ error: 'Template not found or invalid' });
     }
-
-    const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
 
     // Create new bot config based on template
     const newBotConfig = {
@@ -493,12 +497,11 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Read existing file if not creating new
     let fileContent: any = {};
-    if (fs.existsSync(targetPath)) {
-      try {
-        fileContent = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
-      } catch (e) {
-        // ignore
-      }
+    try {
+      const data = await fs.promises.readFile(targetPath, 'utf8');
+      fileContent = JSON.parse(data);
+    } catch (e) {
+      // ignore - file might not exist or be invalid JSON
     }
 
     // Merge updates
@@ -506,11 +509,9 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Write back
     const targetDir = path.dirname(targetPath);
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
+    await fs.promises.mkdir(targetDir, { recursive: true });
 
-    fs.writeFileSync(targetPath, JSON.stringify(newContent, null, 2));
+    await fs.promises.writeFile(targetPath, JSON.stringify(newContent, null, 2));
 
     // Reload config in memory
     config.load(newContent);
@@ -637,7 +638,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get configuration sources (env vars vs config files)
-router.get('/sources', (req, res) => {
+router.get('/sources', async (req, res) => {
   try {
     const envVars = Object.keys(process.env)
       .filter(
@@ -668,17 +669,15 @@ router.get('/sources', (req, res) => {
       );
 
     // Detect config files
-    const fs = require('fs');
-    const path = require('path');
     const configDir = path.join(__dirname, '../../../config');
     const configFiles: any[] = [];
 
     try {
-      const files = fs.readdirSync(configDir);
-      files.forEach((file: string) => {
+      const files = await fs.promises.readdir(configDir);
+      for (const file of files) {
         if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
           const filePath = path.join(configDir, file);
-          const stats = fs.statSync(filePath);
+          const stats = await fs.promises.stat(filePath);
           configFiles.push({
             name: file,
             path: filePath,
@@ -687,7 +686,7 @@ router.get('/sources', (req, res) => {
             type: path.extname(file).slice(1),
           });
         }
-      });
+      }
     } catch (fileError) {
       console.warn('Could not read config directory:', fileError);
     }
@@ -1605,20 +1604,19 @@ router.put('/messaging', async (req, res) => {
 
     // Load existing file or start fresh
     let existing: Record<string, any> = {};
-    if (fs.existsSync(targetPath)) {
-      try {
-        existing = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
-      } catch {
-        /* ignore parse errors, start fresh */
-      }
+    try {
+      const data = await fs.promises.readFile(targetPath, 'utf-8');
+      existing = JSON.parse(data);
+    } catch {
+      /* ignore parse errors, start fresh */
     }
 
     // Merge updates
     const merged = { ...existing, ...updates };
 
     // Write back
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, JSON.stringify(merged, null, 2));
+    await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.promises.writeFile(targetPath, JSON.stringify(merged, null, 2));
 
     // Reload config (convict will pick up new values on next get, but we force load here)
     try {
