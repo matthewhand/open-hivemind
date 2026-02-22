@@ -1,4 +1,6 @@
 import { EventEmitter } from 'events';
+import { container } from 'tsyringe';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
@@ -130,7 +132,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService = require('../../services/StartupGreetingService').default;
+    const startupGreetingService = container.resolve(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 
