@@ -6,6 +6,11 @@
 
 import DOMPurify from 'dompurify';
 
+// Initialize DOMPurify correctly for both browser and Node/JSDOM environments
+const sanitizer = typeof DOMPurify === 'function'
+  ? (DOMPurify as any)(window)
+  : DOMPurify;
+
 /**
  * Configuration for DOMPurify sanitization
  */
@@ -26,7 +31,7 @@ const SANITIZE_CONFIG: DOMPurify.Config = {
 };
 
 // Configure DOMPurify to hook into all sanitization
-DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+sanitizer.addHook('uponSanitizeElement', (node, data) => {
   // Remove any element with javascript: in attributes
   if (node instanceof Element) {
     for (const attr of node.attributes) {
@@ -49,7 +54,7 @@ export function sanitizeHTML(dirty: string, config?: DOMPurify.Config): string {
   }
   
   const finalConfig = config ? { ...SANITIZE_CONFIG, ...config } : SANITIZE_CONFIG;
-  return DOMPurify.sanitize(dirty, finalConfig);
+  return sanitizer.sanitize(dirty, finalConfig);
 }
 
 /**
@@ -148,7 +153,7 @@ export function stripHTML(html: string): string {
     return '';
   }
   
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
+  return sanitizer.sanitize(html, { ALLOWED_TAGS: [] });
 }
 
 /**
@@ -159,7 +164,7 @@ export const ContextSanitizers = {
    * Sanitize for HTML attribute context
    */
   attribute: (value: string): string => {
-    return sanitizeText(value).replace(/"/g, '"');
+    return sanitizeText(value).replace(/"/g, '&quot;');
   },
   
   /**
