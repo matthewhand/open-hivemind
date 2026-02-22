@@ -6,6 +6,19 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-audit"
 
+# Production context (main branch only)
+[context.production]
+  command = "pnpm run build:serverless"
+  publish = "src/client/dist"
+
+# Explicitly disable deploy previews for PRs
+[context.deploy-preview]
+  ignore = "exit 1"
+
+# Explicitly disable branch deploys for non-main branches
+[context.branch-deploy]
+  ignore = "exit 1"
+
 [dev]
   command = "pnpm run dev:frontend-only"
   publish = "src/client/dist"
