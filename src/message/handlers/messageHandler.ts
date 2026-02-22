@@ -1249,7 +1249,7 @@ function stripSystemPromptLeak(response: string, ...promptTexts: string[]): stri
     if (!out.includes(p)) {
       continue;
     }
-    out = out.split(p).join('');
+    out = out.replaceAll(p, '');
   }
 
   return out.trim();
