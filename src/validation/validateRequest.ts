@@ -6,7 +6,8 @@ import { ZodError, type AnyZodObject } from 'zod';
  * @param schema Zod schema to validate against
  */
 export const validateRequest =
-  (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction): void => {
+  (schema: AnyZodObject) =>
+  (req: Request, res: Response, next: NextFunction): void => {
     try {
       // Validate request data against schema
       schema.parse({

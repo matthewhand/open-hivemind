@@ -64,8 +64,7 @@ export class ShutdownCoordinator {
   private totalTimeout: number;
 
   // Shutdown state tracking
-  private phaseResults: Map<string, { success: boolean; duration: number; error?: Error }> =
-    new Map();
+  private phaseResults = new Map<string, { success: boolean; duration: number; error?: Error }>();
 
   private constructor() {
     // Load timeouts from environment or use defaults
@@ -180,7 +179,7 @@ export class ShutdownCoordinator {
    * @param signal - The signal that triggered shutdown
    * @param exitCode - The exit code to use (default: 0)
    */
-  public async initiateShutdown(signal: string, exitCode: number = 0): Promise<void> {
+  public async initiateShutdown(signal: string, exitCode = 0): Promise<void> {
     if (this.isShuttingDown) {
       debug(`Shutdown already in progress, ignoring signal: ${signal}`);
       return;

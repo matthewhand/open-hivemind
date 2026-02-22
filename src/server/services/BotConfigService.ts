@@ -526,8 +526,8 @@ export class BotConfigService {
     total: number;
     active: number;
     inactive: number;
-    byProvider: { [key: string]: number };
-    byLlmProvider: { [key: string]: number };
+    byProvider: Record<string, number>;
+    byLlmProvider: Record<string, number>;
   }> {
     try {
       this.ensureDatabaseEnabled('retrieve bot configuration statistics');
@@ -538,8 +538,8 @@ export class BotConfigService {
         total: configs.length,
         active: configs.filter((c) => c.isActive).length,
         inactive: configs.filter((c) => !c.isActive).length,
-        byProvider: {} as { [key: string]: number },
-        byLlmProvider: {} as { [key: string]: number },
+        byProvider: {} as Record<string, number>,
+        byLlmProvider: {} as Record<string, number>,
       };
 
       configs.forEach((config) => {

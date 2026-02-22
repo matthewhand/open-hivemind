@@ -28,7 +28,7 @@ export class MattermostMessage extends IMessage {
 
   constructor(
     post: MattermostPost,
-    username: string = 'Unknown',
+    username = 'Unknown',
     options?: { isBot?: boolean; botUsername?: string; botUserId?: string }
   ) {
     super(post, 'user', {

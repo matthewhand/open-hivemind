@@ -40,7 +40,7 @@ export function splitMessageContent(messageText: string, maxLength = 1997): stri
 
     // Doesn't fit, need to split.
     // Must reserve 3 chars for trailing '...'
-    let contentQuota = availableSpace - 3;
+    const contentQuota = availableSpace - 3;
 
     // Candidate slice
     let chunkContent = messageText.slice(chunkStartIndex, chunkStartIndex + contentQuota).trimEnd();

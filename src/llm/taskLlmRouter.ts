@@ -114,7 +114,6 @@ function createProviderFromInstance(
     let provider: ILlmProvider | undefined;
     switch (type) {
       case 'openai':
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { OpenAiProvider } = require('@hivemind/provider-openai');
         provider = new OpenAiProvider(cfg);
         break;

@@ -101,13 +101,16 @@ export const CommonValidators = {
       .withMessage(`${field} must be a string`),
 
   // Optional string field
-  optionalString: (field: string) => body(field).optional().isString().withMessage(`${field} must be a string`),
+  optionalString: (field: string) =>
+    body(field).optional().isString().withMessage(`${field} must be a string`),
 
   // URL field
-  url: (field: string) => body(field).optional().isURL().withMessage(`${field} must be a valid URL`),
+  url: (field: string) =>
+    body(field).optional().isURL().withMessage(`${field} must be a valid URL`),
 
   // Email field
-  email: (field: string) => body(field).optional().isEmail().withMessage(`${field} must be a valid email`),
+  email: (field: string) =>
+    body(field).optional().isEmail().withMessage(`${field} must be a valid email`),
 
   // Enum field
   oneOf: (field: string, values: string[]) =>
@@ -120,7 +123,17 @@ export const CommonValidators = {
   providerType: (field: string) =>
     body(field)
       .optional()
-      .isIn(['openai', 'flowise', 'openwebui', 'ollama', 'anthropic', 'google', 'discord', 'slack', 'mattermost'])
+      .isIn([
+        'openai',
+        'flowise',
+        'openwebui',
+        'ollama',
+        'anthropic',
+        'google',
+        'discord',
+        'slack',
+        'mattermost',
+      ])
       .withMessage('Invalid provider type'),
 
   // Boolean field
@@ -295,7 +308,7 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
 /**
  * Request size limit middleware
  */
-export const limitRequestSize = (maxSizeKB: number = 100) => {
+export const limitRequestSize = (maxSizeKB = 100) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
     const maxSizeBytes = maxSizeKB * 1024;

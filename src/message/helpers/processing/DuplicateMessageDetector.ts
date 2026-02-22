@@ -18,7 +18,7 @@ interface MessageRecord {
  */
 export default class DuplicateMessageDetector {
   private static instance: DuplicateMessageDetector;
-  private recentMessages: Map<string, MessageRecord[]> = new Map();
+  private recentMessages = new Map<string, MessageRecord[]>();
 
   // Bounded cache configuration
   private readonly MAX_CHANNELS = parseInt(
@@ -409,7 +409,7 @@ export default class DuplicateMessageDetector {
     // Enforce max channels limit (LRU-style: remove oldest channels first)
     if (this.recentMessages.size > this.MAX_CHANNELS) {
       // Get all channels with their most recent message timestamp
-      const channelTimestamps: Array<[string, number]> = [];
+      const channelTimestamps: [string, number][] = [];
       for (const [channelId, history] of this.recentMessages) {
         if (history.length > 0) {
           channelTimestamps.push([channelId, history[history.length - 1].timestamp]);

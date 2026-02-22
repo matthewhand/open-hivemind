@@ -58,8 +58,8 @@ export class WebSocketService {
   private lastCpuUsage = process.cpuUsage();
   private lastHrTime = process.hrtime.bigint();
   // per-bot stats
-  private botMessageCounts: Map<string, number> = new Map();
-  private botErrors: Map<string, string[]> = new Map();
+  private botMessageCounts = new Map<string, number>();
+  private botErrors = new Map<string, string[]>();
   // API monitoring
   private apiMonitorService: ApiMonitorService;
 

@@ -19,10 +19,10 @@ import type { IMessengerService } from './interfaces/IMessengerService';
 const debug = Debug('app:ProviderRegistry');
 
 // Cache of loaded providers
-const loadedProviders: Map<string, IMessengerService> = new Map();
+const loadedProviders = new Map<string, IMessengerService>();
 
 // Discovered provider metadata
-const discoveredProviders: Map<string, { modulePath: string; serviceExport: string }> = new Map();
+const discoveredProviders = new Map<string, { modulePath: string; serviceExport: string }>();
 
 let initialized = false;
 

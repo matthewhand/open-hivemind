@@ -264,7 +264,9 @@ router.get('/templates', async (req, res) => {
 
     const templatesPromises = files.map(async (file) => {
       try {
-        const content = JSON.parse(await fs.promises.readFile(path.join(templatesDir, file), 'utf8'));
+        const content = JSON.parse(
+          await fs.promises.readFile(path.join(templatesDir, file), 'utf8')
+        );
         return {
           id: file.replace('.json', ''),
           name: content.name || file.replace('.json', ''),
@@ -598,44 +600,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-            ...mergedBot.discord,
-            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-          }
+              ...mergedBot.discord,
+              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+            }
           : undefined,
         slack: mergedBot.slack
           ? {
-            ...mergedBot.slack,
-            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-            signingSecret: redactSensitiveInfo(
-              'SLACK_SIGNING_SECRET',
-              mergedBot.slack.signingSecret || ''
-            ),
-          }
+              ...mergedBot.slack,
+              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+              signingSecret: redactSensitiveInfo(
+                'SLACK_SIGNING_SECRET',
+                mergedBot.slack.signingSecret || ''
+              ),
+            }
           : undefined,
         openai: mergedBot.openai
           ? {
-            ...mergedBot.openai,
-            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-          }
+              ...mergedBot.openai,
+              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+            }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-            ...mergedBot.flowise,
-            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-          }
+              ...mergedBot.flowise,
+              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+            }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-            ...mergedBot.openwebui,
-            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-          }
+              ...mergedBot.openwebui,
+              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+            }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-            ...mergedBot.openswarm,
-            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-          }
+              ...mergedBot.openswarm,
+              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+            }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1488,9 +1490,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-        (config as any).serverUrl ||
-        (config as any).url ||
-        ''
+          (config as any).serverUrl ||
+          (config as any).url ||
+          ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);

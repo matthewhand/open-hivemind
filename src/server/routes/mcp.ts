@@ -2,12 +2,12 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { requireRole } from '../middleware/auth';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
+import { requireRole } from '../middleware/auth';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -20,11 +20,11 @@ interface MCPServer {
   url: string;
   apiKey?: string;
   connected: boolean;
-  tools?: Array<{
+  tools?: {
     name: string;
     description: string;
     inputSchema: any;
-  }>;
+  }[];
   lastConnected?: string;
   error?: string;
 }

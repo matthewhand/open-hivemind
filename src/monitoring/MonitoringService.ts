@@ -31,7 +31,7 @@ export class MonitoringService {
   private alertManager: AlertManager;
   private metricsCollector: MetricsCollector;
   private config: MonitoringConfig;
-  private isRunning: boolean = false;
+  private isRunning = false;
 
   constructor(config: Partial<MonitoringConfig> = {}) {
     this.config = {

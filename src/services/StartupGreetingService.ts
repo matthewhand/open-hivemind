@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
+import { inject, singleton } from 'tsyringe';
 import { Message } from '@src/types/messages';
 import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
-import { singleton, inject } from 'tsyringe';
 import { GreetingStateManager } from './GreetingStateManager';
 
 const appLogger = Logger.withContext('StartupGreetingService');
@@ -17,7 +17,9 @@ interface GreetingConfig {
 
 @singleton()
 export class StartupGreetingService extends EventEmitter {
-  public constructor(@inject(GreetingStateManager) private greetingStateManager: GreetingStateManager) {
+  public constructor(
+    @inject(GreetingStateManager) private greetingStateManager: GreetingStateManager
+  ) {
     super();
     appLogger.info('StartupGreetingService initialized');
     this.on('service-ready', this.handleServiceReady.bind(this));

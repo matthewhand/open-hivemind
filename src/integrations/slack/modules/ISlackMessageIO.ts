@@ -30,11 +30,11 @@ export interface ISlackMessageIO {
  * Default implementation that uses SlackBotManager to access bots/webClient.
  */
 export class SlackMessageIO implements ISlackMessageIO {
-  private sendTails: Map<string, Promise<any>> = new Map();
-  private typingPlaceholders: Map<
+  private sendTails = new Map<string, Promise<any>>();
+  private typingPlaceholders = new Map<
     string,
     { ts: string; channelId: string; threadId?: string; createdAt: number }
-  > = new Map();
+  >();
   private readonly TYPING_PLACEHOLDER_TTL_MS = 120000;
 
   constructor(
@@ -362,11 +362,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     }
   }
 
-  public async fetchMessages(
-    channelId: string,
-    limit: number = 10,
-    botName?: string
-  ): Promise<IMessage[]> {
+  public async fetchMessages(channelId: string, limit = 10, botName?: string): Promise<IMessage[]> {
     debug('fetchMessages()', { channelId, limit, botName });
 
     const targetBot = botName || this.getDefaultBotName();

@@ -4,11 +4,11 @@ import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:openWebUI:direct');
 
-type OpenWebUIOverrides = {
+interface OpenWebUIOverrides {
   apiUrl: string;
   authHeader?: string;
   model: string;
-};
+}
 
 export async function generateChatCompletionDirect(
   overrides: OpenWebUIOverrides,
@@ -26,13 +26,13 @@ export async function generateChatCompletionDirect(
   }
   const client = axios.create({ baseURL, headers, timeout: 15000 });
 
-  const messages: Array<{ role: string; content: string }> = [];
+  const messages: { role: string; content: string }[] = [];
   if (systemPrompt && systemPrompt.trim()) {
     messages.push({ role: 'system', content: systemPrompt });
   }
   for (const h of historyMessages) {
     try {
-      const role = ((h as unknown) as { role?: string }).role || 'user';
+      const role = (h as unknown as { role?: string }).role || 'user';
       const content = h.getText();
       messages.push({ role, content });
     } catch {
