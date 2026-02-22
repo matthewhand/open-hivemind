@@ -13,6 +13,7 @@ import {
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
+import type { IConfigAccessor } from '@src/types/configAccessor';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -199,7 +200,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api') {
+          const errorType = (hivemindError as any).type;
+          if (errorType === 'network' || errorType === 'api') {
             throw hivemindError;
           }
 
@@ -307,7 +309,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api') {
+          const errorType = (hivemindError as any).type;
+          if (errorType === 'network' || errorType === 'api') {
             throw hivemindError;
           }
 
@@ -491,7 +494,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
    */
   public scoreChannel(channelId: string): number {
     try {
-      const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
+      const enabled = Boolean((messageConfig as unknown as IConfigAccessor).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
       if (!enabled) {
         return 0;
       }

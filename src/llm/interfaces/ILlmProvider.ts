@@ -122,4 +122,5 @@ export interface ILlmProvider {
    * ```
    */
   generateCompletion: (prompt: string) => Promise<string>;
+
 }

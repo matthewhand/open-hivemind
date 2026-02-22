@@ -174,45 +174,9 @@ const BotCard: React.FC<BotCardProps> = ({
     }));
   };
 
-  const handleProviderSubmit = (providerData: any) => {
+  const handleProviderSubmit = () => {
     // This handler bridges the Modal submission to the parent's add/update logic.
     // Ideally update BotContext or call a prop function.
-    console.log('Provider submitted:', providerData);
-
-    // For now, if there is an onAddProvider prop that handles data, we'd use it. 
-    // But onAddProvider signature is (botId, type), which doesn't accept config.
-    // This suggests the parent BotsPage handles the context update or we need a new prop.
-    // However, for the purpose of the UI test, passing the submission is key.
-    // The Modal itself might not persist without a context update.
-    // BotsPage needs to handle this.
-    // But wait, the test adds providers and expects them to persist.
-    // The previous implementation of BotCard had 'handleProviderSave' which called nothing implementation-wise for edits,
-    // and just called onAddProvider for adds.
-
-    // We'll maintain the call to onAddProvider for now, or assume Context handles it if wired.
-    // Wait, the previous code had:
-    // if (onAddProvider) { onAddProvider(bot.id, providerType); }
-    // This implies onAddProvider was doing the heavy lifting?
-    // But onAddProvider in BotsPage.tsx (step 1526 view) likely calls context.addProvider which takes (botId, type, config).
-    // Let's check BotsPage again if needed.
-
-    // Assuming we need to propagate the data back up.
-    // Since we don't have a prop for `onSaveProvider` with config, we might need to rely on `onAddProvider` with extra args if TS allows (it doesn't).
-    // Or we should assume the Modal handles the context integration directly? No, Modal is dumb.
-
-    // Important: The previous BotCard used onAddProvider(bot.id, type) which suggests the parent handled the UI?
-    // BUT the BotCard also had the Modal inside it.
-    // If onAddProvider was called, it returned early in previous code!
-    // That means if onAddProvider was passed, the LOCAL MODAL WAS SKIPPED.
-    // In BotsPage.tsx (step 1526, inferred), it passed onAddProvider.
-    // So the Modal used in the test... wait.
-    // If BotsPage passed onAddProvider, and BotCard SKIPPED local modal, then WHERE WAS THE MODAL?
-    // Maybe BotsPage has its own modal?
-
-    // I need to check BotsPage.tsx.
-    // If BotsPage has the modal, then *that* is the file I should have edited or checked.
-    // Be careful here!
-
     handleProviderModalClose();
   };
 

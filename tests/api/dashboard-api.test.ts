@@ -10,8 +10,8 @@
 
 import express from 'express';
 import request from 'supertest';
-import { BotConfigurationManager } from '../../dist/src/config/BotConfigurationManager';
-import dashboardRouter from '../../dist/src/server/routes/dashboard';
+import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
+import dashboardRouter from '../../src/server/routes/dashboard';
 
 describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;

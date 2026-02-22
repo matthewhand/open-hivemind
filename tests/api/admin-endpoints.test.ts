@@ -370,22 +370,26 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should not expose sensitive information', async () => {
+      // Mock environment variables for this test
+      process.env.OPENAI_API_KEY = 'sk-test-1234567890abcdef';
+      process.env.DISCORD_TOKEN = 'discord-token-123';
+
       const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
-      const responseString = JSON.stringify(response.body).toLowerCase();
-      // This test is flawed because the env vars contain these keys.
-      // The test should check that the *values* are redacted, not that the keys are absent.
-      // A simple check for "***" is a good indicator of redaction.
       const redactedResponse = JSON.stringify(response.body.data.envVars);
+
+      // Should find the mocked keys
+      expect(redactedResponse).toContain('OPENAI_API_KEY');
+
+      // Should find *** in values
       expect(redactedResponse).toContain('***');
-      // The test should ensure sensitive *values* are not exposed, not just check for '***'
-      // A more robust check would be to ensure no unredacted secrets exist.
-      // For now, we'll keep the check for '***' as an indicator of redaction,
-      // but also check that specific known sensitive values are not present in plain text.
-      // This is a simplified check - a more thorough implementation would require knowing
-      // all possible sensitive keys and their expected redacted values.
-      expect(redactedResponse).not.toMatch(/"token":\s*"[^*][^"]*"/);
-      expect(redactedResponse).not.toMatch(/"password":\s*"[^*][^"]*"/);
+
+      // Should NOT find plain text secrets
+      expect(redactedResponse).not.toContain('sk-test-1234567890abcdef');
+
+      // Clean up
+      delete process.env.OPENAI_API_KEY;
+      delete process.env.DISCORD_TOKEN;
     });
   });
 

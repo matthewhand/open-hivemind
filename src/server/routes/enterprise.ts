@@ -41,13 +41,13 @@ router.get('/api/compliance', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       complianceRules,
     });
   } catch (error) {
     debug('Compliance API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get compliance status',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -86,13 +86,13 @@ router.get('/api/cloud-providers', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       cloudProviders,
     });
   } catch (error) {
     debug('Cloud providers API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get cloud providers',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -124,13 +124,13 @@ router.post('/api/cloud-providers', (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    res.json({
+    return res.json({
       success: true,
       cloudProvider,
     });
   } catch (error) {
     debug('Add cloud provider API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to add cloud provider',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -173,13 +173,13 @@ router.get('/api/integrations', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       integrations,
     });
   } catch (error) {
     debug('Integrations API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get integrations',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -212,13 +212,13 @@ router.post('/api/integrations', (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    res.json({
+    return res.json({
       success: true,
       integration,
     });
   } catch (error) {
     debug('Add integration API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to add integration',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -242,14 +242,14 @@ router.get('/api/audit', (req, res) => {
       auditEvents = auditLogger.getAuditEvents(Number(limit), Number(offset));
     }
 
-    res.json({
+    return res.json({
       success: true,
       auditEvents,
       total: auditEvents.length,
     });
   } catch (error) {
     debug('Audit API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get audit events',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -292,13 +292,13 @@ router.get('/api/performance', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       performanceMetrics,
     });
   } catch (error) {
     debug('Performance API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get performance metrics',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -320,13 +320,13 @@ router.post('/api/compliance/check', (req, res) => {
       nextCheck: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     };
 
-    res.json({
+    return res.json({
       success: true,
       complianceResults,
     });
   } catch (error) {
     debug('Compliance check API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to run compliance check',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -360,13 +360,13 @@ router.get('/api/security/alerts', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       securityAlerts,
     });
   } catch (error) {
     debug('Security alerts API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get security alerts',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -400,13 +400,13 @@ router.get('/api/governance/policies', (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       governancePolicies,
     });
   } catch (error) {
     debug('Governance policies API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get governance policies',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -435,13 +435,13 @@ router.post('/api/performance/optimize', (req, res) => {
       ],
     };
 
-    res.json({
+    return res.json({
       success: true,
       optimizationResults,
     });
   } catch (error) {
     debug('Performance optimization API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to optimize performance',
       error: error instanceof Error ? error.message : 'Unknown error',
