@@ -5,7 +5,7 @@
  * This interface allows for easier testing and decoupling from the concrete implementation.
  */
 
-import { type MCPServerConfig, type MCPTool } from '../../mcp/MCPService';
+import { type MCPConfig as MCPServerConfig, type MCPTool } from '../../mcp/MCPService';
 
 export interface IMCPService {
   /**

@@ -199,7 +199,12 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          if (
+            hivemindError &&
+            typeof hivemindError === 'object' &&
+            'type' in hivemindError &&
+            ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api')
+          ) {
             throw hivemindError;
           }
 
@@ -233,7 +238,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch { }
+      } catch {}
 
       throw error;
     }
@@ -467,7 +472,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch { }
+    } catch {}
   }
 
   /**
