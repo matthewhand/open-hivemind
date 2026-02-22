@@ -51,19 +51,19 @@ router.post('/', async (req, res) => {
     await fs.mkdir(specDir, { recursive: true });
     await fs.writeFile(path.join(specDir, 'spec.md'), content);
 
-    res.status(201).json(newSpec);
+    return res.status(201).json(newSpec);
   } catch (error) {
     console.error('Failed to save spec:', error);
-    res.status(500).json({ error: 'Failed to save specification' });
+    return res.status(500).json({ error: 'Failed to save specification' });
   }
 });
 
 router.get('/', async (req, res) => {
   try {
     const index = await getSpecsIndex();
-    res.json(index);
+    return res.json(index);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to retrieve specifications' });
+    return res.status(500).json({ error: 'Failed to retrieve specifications' });
   }
 });
 
@@ -80,9 +80,9 @@ router.get('/:id', async (req, res) => {
     const versions = await fs.readdir(path.join(specsDirectory, id));
     const specWithVersions = { ...spec, versions };
 
-    res.json(specWithVersions);
+    return res.json(specWithVersions);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to retrieve specification' });
+    return res.status(500).json({ error: 'Failed to retrieve specification' });
   }
 });
 

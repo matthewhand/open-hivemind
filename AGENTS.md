@@ -85,8 +85,6 @@ export interface ILlmProvider {
     metadata?: Record<string, any>
   ) => Promise<string>;
   generateCompletion: (prompt: string) => Promise<string>;
-  validateCredentials(): Promise<boolean>;
-  generateResponse(message: IMessage, context?: IMessage[]): Promise<string>;
 }
 ```
 

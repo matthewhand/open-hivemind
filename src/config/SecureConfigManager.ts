@@ -225,14 +225,16 @@ export class SecureConfigManager {
         version: '1.0',
       };
 
-      // Collect all configuration data
+      // Collect all configuration data in parallel
+      const configPromises = configs.map(configId => this.getConfig(configId));
+      const configResults = await Promise.all(configPromises);
+
       const configData: Record<string, SecureConfig> = {};
-      for (const configId of configs) {
-        const config = await this.getConfig(configId);
+      configResults.forEach((config, index) => {
         if (config) {
-          configData[configId] = config;
+          configData[configs[index]] = config;
         }
-      }
+      });
 
       // Create full backup structure
       const fullBackupData = { metadata: backupData, data: configData };
@@ -300,10 +302,11 @@ export class SecureConfigManager {
 
       const { metadata, data } = fullBackupData;
 
-      // Restore configurations
-      for (const [configId, config] of Object.entries(data)) {
-        await this.storeConfig(config as SecureConfig);
-      }
+      // Restore configurations in parallel
+      const restorePromises = Object.values(data).map(config =>
+        this.storeConfig(config as SecureConfig),
+      );
+      await Promise.all(restorePromises);
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: unknown) {
@@ -332,8 +335,9 @@ export class SecureConfigManager {
       const files = await fs.promises.readdir(this.backupDir);
       const backups: BackupMetadata[] = [];
 
-      for (const file of files) {
-        if (file.endsWith('.json')) {
+      const backupPromises = files
+        .filter(file => file.endsWith('.json'))
+        .map(async file => {
           try {
             const filePath = path.join(this.backupDir, file);
             const encryptedData = await fs.promises.readFile(filePath, 'utf8');
@@ -341,7 +345,7 @@ export class SecureConfigManager {
             const backupData = JSON.parse(decryptedData);
 
             if (this.verifyChecksum(backupData.metadata)) {
-              backups.push(backupData.metadata);
+              return backupData.metadata;
             }
           } catch (error: unknown) {
             const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -354,8 +358,15 @@ export class SecureConfigManager {
               file,
             });
           }
+          return null;
+        });
+
+      const results = await Promise.all(backupPromises);
+      results.forEach(metadata => {
+        if (metadata) {
+          backups.push(metadata);
         }
-      }
+      });
 
       return backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (error: unknown) {

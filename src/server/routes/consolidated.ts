@@ -57,11 +57,11 @@ router.get('/system-status', async (req, res) => {
     };
 
     logAdminAction(req as any, 'VIEW', 'system-status', 'success', 'System status retrieved');
-    res.json({ success: true, data: systemStatus });
+    return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as any, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to get system status',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -127,13 +127,13 @@ router.get('/providers', async (req, res) => {
       },
     ];
 
-    res.json({
+    return res.json({
       success: true,
       data: { messageProviders, llmProviders },
     });
   } catch (error) {
     debug('Error getting providers:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to get providers',
     });
@@ -167,10 +167,10 @@ router.get('/env-status', async (req, res) => {
     });
 
     logAdminAction(req as any, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
-    res.json({ success: true, data: envStatus });
+    return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to get environment status',
     });
@@ -261,11 +261,11 @@ router.post('/validate-config', async (req, res) => {
       'success',
       `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`
     );
-    res.json({ success: true, data: validation });
+    return res.json({ success: true, data: validation });
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as any, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to validate configuration',
     });
@@ -332,12 +332,12 @@ router.get('/health', async (req, res) => {
 
     health.status = hasErrors ? 'error' : hasWarnings ? 'warning' : 'healthy';
 
-    res.json({ success: true, data: health });
+    return res.json({ success: true, data: health });
   } catch (error) {
     debug('Error getting health status:', error);
     const { createErrorResponse } = await import('../../utils/errorResponse');
     const errorResponse = createErrorResponse(error as Error, req.path);
-    res.status(errorResponse.getStatusCode() || 500).json({
+    return res.status(errorResponse.getStatusCode() || 500).json({
       success: false,
       ...errorResponse,
     });
@@ -389,10 +389,10 @@ router.get('/metrics', async (req, res) => {
       debug('Error getting database metrics:', error);
     }
 
-    res.json({ success: true, data: metrics });
+    return res.json({ success: true, data: metrics });
   } catch (error) {
     debug('Error getting metrics:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to get metrics',
     });

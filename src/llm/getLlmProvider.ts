@@ -4,7 +4,6 @@ import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
-import { getSessionKey } from '@integrations/openwebui/sessionManager';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IConfigAccessor } from '@src/types/configAccessor';
@@ -42,16 +41,6 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
       }
       return response;
     },
-    validateCredentials: async () => {
-      return provider.validateCredentials();
-    },
-    generateResponse: async (message: IMessage, context?: IMessage[]) => {
-      const response = await provider.generateResponse(message, context);
-      if (response) {
-        metrics.recordLlmTokenUsage(response.length);
-      }
-      return response;
-    },
   };
 }
 
@@ -79,25 +68,9 @@ const openWebUI: ILlmProvider = {
   generateCompletion: async () => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
   },
-  validateCredentials: async () => {
-    try {
-      await getSessionKey();
-      return true;
-    } catch {
-      return false;
-    }
-  },
-  generateResponse: async (message: IMessage, context?: IMessage[]) => {
-    const result = await openWebUIImport.generateChatCompletion(
-      message.getText(),
-      context || [],
-      message.metadata
-    );
-    return result.text || '';
-  },
 };
 
-export async function getLlmProvider(): Promise<ILlmProvider[]> {
+export function getLlmProvider(): ILlmProvider[] {
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
@@ -110,7 +83,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = await import('@hivemind/provider-openai');
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider(config.config);
             debug(`Initialized OpenAI provider instance: ${config.name}`);
             break;
@@ -155,7 +129,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = await import('@hivemind/provider-openai');
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider();
             break;
           case 'flowise':
@@ -175,7 +150,8 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
   if (llmProviders.length === 0) {
     // If still empty, default to OpenAI (legacy default)
     debug('No providers configured, defaulting to OpenAI (Legacy default)');
-    const { OpenAiProvider } = await import('@hivemind/provider-openai');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { OpenAiProvider } = require('@hivemind/provider-openai');
     llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
   }
 

@@ -123,21 +123,4 @@ export interface ILlmProvider {
    */
   generateCompletion: (prompt: string) => Promise<string>;
 
-  /**
-   * Validates the credentials for the provider.
-   * This can involve checking if API keys are set, or making a test request to the API.
-   *
-   * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
-   */
-  validateCredentials(): Promise<boolean>;
-
-  /**
-   * Convenience alias for generating a response from a message object.
-   * Delegates to generateChatCompletion or generateCompletion based on provider capabilities.
-   *
-   * @param {IMessage} message - The input message object.
-   * @param {IMessage[]} [context] - Optional conversation history.
-   * @returns {Promise<string>} The generated response text.
-   */
-  generateResponse(message: IMessage, context?: IMessage[]): Promise<string>;
 }

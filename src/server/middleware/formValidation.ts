@@ -204,7 +204,7 @@ export const validateBotConfigCreation = [
         details: errors.array(),
       });
     }
-    next();
+    return next();
   },
 ];
 
@@ -408,7 +408,7 @@ export const validateBotConfigUpdate = [
         details: errors.array(),
       });
     }
-    next();
+    return next();
   },
 ];
 
@@ -510,10 +510,10 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
       name: data.name,
       messageProvider: data.messageProvider,
     });
-    next();
+    return next();
   } catch (error) {
     debug('Error sanitizing bot configuration:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Sanitization failed',
       message: 'Failed to sanitize request data',
     });

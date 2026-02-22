@@ -1,4 +1,5 @@
 // Import Express types for TypeScript
+import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
@@ -26,9 +27,10 @@ import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
+import { container } from 'tsyringe';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import DemoModeService from '@src/services/DemoModeService';
-import StartupGreetingService from '@src/services/StartupGreetingService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -41,9 +43,6 @@ require('dotenv/config');
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
 // in development because its _moduleAliases in package.json point to dist/, which does not
 // exist (or is stale) when running directly from src.
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
-  require('module-alias/register');
-}
 const express = require('express');
 
 const debug = require('debug');
@@ -252,7 +251,7 @@ if (!allowAllIPs) {
 }
 
 // Unified API routes - all on same port, no separation
-app.use('/api/swarm', swarmRouter);
+app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
@@ -279,13 +278,6 @@ app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.p
 app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
-
-// Deprecated /admin static serve (commented out)
-// app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
-// app.use('/admin', (req: Request, res: Response) => {
-//     const adminPath = path.join(process.cwd(), 'public/admin/index.html');
-//     res.sendFile(adminPath);
-// });
 
 // React Router catch-all handler (must be AFTER all API routes)
 
@@ -440,7 +432,8 @@ async function main() {
   }
 
   // Initialize the StartupGreetingService
-  await StartupGreetingService.initialize();
+  const startupGreetingService = container.resolve(StartupGreetingService);
+  await startupGreetingService.initialize();
 
   const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', {
