@@ -1,20 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
+import { Alert, Button, Card, Input, Select, Toggle, Modal, Badge } from './DaisyUI';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
   CpuChipIcon,
   PlusIcon,
   PencilSquareIcon,
-  TrashIcon,
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
 import {
   MessageSquare,
   Brain,
-  Plug,
-  CheckCircle,
   AlertCircle,
   Bot,
 } from 'lucide-react';

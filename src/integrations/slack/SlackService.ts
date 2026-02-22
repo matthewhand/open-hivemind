@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
+import { container } from 'tsyringe';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import retry from 'async-retry';
 import Debug from 'debug';
 import express, { type Application } from 'express';
@@ -377,9 +379,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
       }
     }
 
-    debug('EMITTING service-ready FOR SlackService');
-    debug('SlackService EMITTER INSTANCE: %O', this);
-    const startupGreetingService = require('@src/services/StartupGreetingService').default;
+    const startupGreetingService = container.resolve(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 

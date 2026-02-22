@@ -142,9 +142,9 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  // Skip CSRF check in test environment
-  if (process.env.NODE_ENV === 'test') {
-    debug('CSRF check skipped in test environment');
+  // Optional skip for tests when explicitly enabled
+  if (process.env.NODE_ENV === 'test' && process.env.CSRF_SKIP_IN_TEST === 'true') {
+    debug('CSRF check skipped in test environment (CSRF_SKIP_IN_TEST=true)');
     next();
     return;
   }

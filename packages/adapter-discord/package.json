@@ -11,19 +11,19 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
-        "discord.js": "^14.14.1",
         "@discordjs/rest": "^2.0.0",
         "@discordjs/voice": "^0.17.0",
         "debug": "^4.3.7",
-        "libsodium-wrappers": "^0.7.9",
-        "ffmpeg-static": "^5.2.0"
+        "discord.js": "^14.14.1",
+        "ffmpeg-static": "^5.2.0",
+        "libsodium-wrappers": "^0.7.9"
     },
     "peerDependencies": {
         "@hivemind/shared-types": "*"
     },
     "devDependencies": {
-        "typescript": "^5.9.2",
-        "@types/debug": "^4.1.12"
+        "@types/debug": "^4.1.12",
+        "typescript": "^5.9.2"
     },
     "files": [
         "dist",

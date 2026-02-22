@@ -348,7 +348,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
     return next();
   }
 
-  const path = req.path;
+  const path = req.baseUrl + req.path;
 
   // Apply different rate limiters based on route patterns
   if (path.startsWith('/api/config')) {
