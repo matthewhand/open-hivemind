@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
@@ -56,6 +56,15 @@ export class SwarmInstaller {
 
   async startSwarm(port: number = 8000): Promise<{ success: boolean; message: string }> {
     try {
+      // Validate port
+      const portNum = Number(port);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        return {
+          success: false,
+          message: 'Invalid port number. Must be between 1 and 65535.',
+        };
+      }
+
       // Check if swarm-api command is available
       try {
         await execAsync('swarm-api --help');
@@ -67,12 +76,16 @@ export class SwarmInstaller {
       }
 
       // Start swarm API server in background
-      exec(`swarm-api --port ${port}`);
+      const child = spawn('swarm-api', ['--port', portNum.toString()], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
 
       // Wait a moment for startup
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      return { success: true, message: `OpenSwarm API started on port ${port}` };
+      return { success: true, message: `OpenSwarm API started on port ${portNum}` };
     } catch (error: any) {
       return { success: false, message: `Failed to start: ${error.message}` };
     }
