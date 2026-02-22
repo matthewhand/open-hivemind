@@ -30,9 +30,8 @@ export function registerServices(): void {
   container.register(
     TOKENS.UserConfigStore,
     {
-      useClass: UserConfigStore,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: UserConfigStore.getInstance(),
+    }
   );
 
   container.register(

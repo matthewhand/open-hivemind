@@ -275,7 +275,8 @@ describe('DiscordService', () => {
       const combinedLogs = mockDebugCaptures
         .map((c: { namespace: string; message: string }) => `[${c.namespace}] ${c.message}`)
         .join('\n');
-      expect(combinedLogs).toContain('app:discordService');
+      // Updated to match refactored logging location (moved to DiscordBotManager)
+      expect(combinedLogs).toContain('app:discordBotManager');
       expect(combinedLogs).toContain('Discord bot ready:');
       expect(combinedLogs).toContain('name=TestBot1');
       expect(combinedLogs).toContain(`id=${bot.client.user.id}`);
@@ -332,8 +333,8 @@ describe('DiscordService', () => {
 
       service.setMessageHandler(mockHandlerError);
 
-      // Verify that the message handler is stored
-      expect((service as any).currentHandler).toBe(mockHandlerError);
+      // Verify that the message handler is stored (delegated to eventHandler)
+      expect((service as any).eventHandler.currentHandler).toBe(mockHandlerError);
 
       // Verify that event listeners are set up for all bots
       const bot = service.getAllBots()[0];
@@ -374,7 +375,8 @@ describe('DiscordService', () => {
   describe('agent context resolution', () => {
     it('resolveAgentContext can use per-bot id to include discord username as a name candidate', () => {
       // Arrange: simulate a swarm bot whose config includes the resolved Discord user id.
-      (service as any).bots = [
+      // Updated to inject into botManager as DiscordService delegates storage
+      (service as any).botManager.bots = [
         {
           botUserId: '555555555555555555',
           botUserName: 'SomeInternalLabel',

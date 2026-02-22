@@ -14,12 +14,20 @@ interface GreetingState {
 
 @singleton()
 export class GreetingStateManager {
+  private static instance: GreetingStateManager;
   private stateFilePath: string;
   private state: GreetingState = {};
   private initialized: boolean = false;
 
   public constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');
+  }
+
+  public static getInstance(): GreetingStateManager {
+    if (!GreetingStateManager.instance) {
+      GreetingStateManager.instance = new GreetingStateManager();
+    }
+    return GreetingStateManager.instance;
   }
 
   /**
