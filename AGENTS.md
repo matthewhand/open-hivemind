@@ -54,7 +54,7 @@ console.log(botConfig.get('MESSAGE_PROVIDER')); // 'discord'
 - Always provide a `default` + `env` mapping in convict schema
 
 ### 3. Message Flow & Integrations
-**Files**: `src/integrations/{discord,slack,mattermost}/`, `src/message/handlers/`
+**Files**: `packages/adapter-discord/`, `packages/adapter-slack/`, `packages/adapter-mattermost/`, `src/message/handlers/`
 
 **Pattern**: `IMessengerService` interface implemented by `DiscordService`, `SlackService`, `MattermostService`
 - `onMessage(IMessage)` → `messageHandler.ts` processes → routes to `getLlmProvider()` → response sent back
@@ -216,7 +216,7 @@ npm run test -- --testPathPattern="ConfigurationManager"
 | `src/config/BotConfigurationManager.ts` | Multi-bot configuration parsing & validation |
 | `src/config/ConfigurationManager.ts` | Global config singleton + env var precedence |
 | `src/message/handlers/messageHandler.ts` | Core message orchestration (detect mention → route → respond) |
-| `src/integrations/{discord,slack,mattermost}/` | Platform adapters implementing `IMessengerService` |
+| `packages/adapter-{discord,slack,mattermost}/` | Platform adapters implementing `IMessengerService` |
 | `src/llm/getLlmProvider.ts` | LLM provider factory |
 | `src/mcp/MCPService.ts` | MCP server connections & tool discovery |
 | `src/server/routes/config.ts` | WebUI configuration API endpoints |

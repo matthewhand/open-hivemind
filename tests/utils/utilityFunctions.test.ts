@@ -554,7 +554,7 @@ describe('Utility Functions Comprehensive Tests', () => {
         'http://host.docker.internal:3000/api/'
       );
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_USERNAME')).toBe('admin');
-      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_PASSWORD')).toBe('password123');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_PASSWORD')).toBe('');
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_KNOWLEDGE_FILE')).toBe('');
       expect(freshOpenWebUIConfig.get('OPEN_WEBUI_MODEL')).toBe('llama3.2');
 
