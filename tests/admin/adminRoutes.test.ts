@@ -50,15 +50,7 @@ describe('Admin Routes I/O Performance', () => {
   });
 
   it('should handle /slack-bots POST request', async () => {
-    // Mock fs methods
-    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
-    // Mock readFileSync to simulate data
-    jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify({ slack: { instances: [] } }));
-    // Mock writeFileSync to do nothing
-    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
-    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => "");
-
-    // For async implementation
+    // Mock async implementation
     jest.spyOn(fs.promises, 'readFile').mockResolvedValue(JSON.stringify({ slack: { instances: [] } }));
     jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);

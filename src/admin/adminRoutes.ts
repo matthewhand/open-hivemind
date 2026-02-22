@@ -189,8 +189,11 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
     } catch (e: any) {
-      if (e.code !== 'ENOENT') {
-        debug('Failed reading messengers.json, starting fresh', e);
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
     }
     cfg.slack = cfg.slack || {};
@@ -270,8 +273,11 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
     } catch (e: any) {
-      if (e.code !== 'ENOENT') {
-        debug('Failed reading messengers.json, starting fresh', e);
+      if (e.code === 'ENOENT') {
+        // File doesn't exist yet, start with empty config
+      } else {
+        debug('Failed reading messengers.json', e);
+        throw e;
       }
     }
     cfg.discord = cfg.discord || {};
