@@ -1,6 +1,9 @@
-import request from 'supertest';
-import express from 'express';
+import fs from 'fs'; // Use default import
 import path from 'path';
+import express from 'express';
+import request from 'supertest';
+// Import the router after mocks
+import configRouter from '../../src/server/routes/config';
 
 // Mock fs before importing the router
 jest.mock('fs', () => {
@@ -43,23 +46,53 @@ jest.mock('../../src/config/UserConfigStore', () => ({
 }));
 
 // Mock config modules
-const mockConfigFactory = () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) });
+const mockConfigFactory = () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+});
 
-jest.mock('../../src/config/discordConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
-jest.mock('../../src/config/flowiseConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
+jest.mock('../../src/config/discordConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
+jest.mock('../../src/config/flowiseConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
 jest.mock('../../src/config/guardrailProfiles', () => ({ getGuardrailProfiles: () => [] }));
-jest.mock('../../src/config/llmConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
+jest.mock('../../src/config/llmConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
 jest.mock('../../src/config/llmDefaultStatus', () => ({ getLlmDefaultStatus: () => ({}) }));
 jest.mock('../../src/config/llmProfiles', () => ({ getLlmProfiles: () => ({ llm: [] }) }));
-jest.mock('../../src/config/mattermostConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
+jest.mock('../../src/config/mattermostConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
 jest.mock('../../src/config/mcpServerProfiles', () => ({ getMcpServerProfiles: () => [] }));
 jest.mock('../../src/config/messageConfig', () => ({ get: () => {} }));
-jest.mock('../../src/config/ollamaConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
-jest.mock('../../src/config/openaiConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
-jest.mock('../../src/config/openWebUIConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
+jest.mock('../../src/config/ollamaConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
+jest.mock('../../src/config/openaiConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
+jest.mock('../../src/config/openWebUIConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
 jest.mock('../../src/config/responseProfileManager', () => ({ getResponseProfiles: () => [] }));
-jest.mock('../../src/config/slackConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
-jest.mock('../../src/config/webhookConfig', () => ({ getSchema: () => ({ properties: {} }), getProperties: () => ({}) }));
+jest.mock('../../src/config/slackConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
+jest.mock('../../src/config/webhookConfig', () => ({
+  getSchema: () => ({ properties: {} }),
+  getProperties: () => ({}),
+}));
 
 jest.mock('../../src/server/middleware/audit', () => ({
   auditMiddleware: (req: any, res: any, next: any) => next(),
@@ -67,15 +100,11 @@ jest.mock('../../src/server/middleware/audit', () => ({
 }));
 
 jest.mock('../../src/integrations/mattermost/MattermostConnectionTest', () => ({
-    testMattermostConnection: jest.fn(),
+  testMattermostConnection: jest.fn(),
 }));
 jest.mock('../../src/integrations/slack/SlackConnectionTest', () => ({
-    testSlackConnection: jest.fn(),
+  testSlackConnection: jest.fn(),
 }));
-
-// Import the router after mocks
-import configRouter from '../../src/server/routes/config';
-import fs from 'fs'; // Use default import
 
 describe('Config Templates Route', () => {
   let app: express.Application;
@@ -100,14 +129,16 @@ describe('Config Templates Route', () => {
     (fs.promises.access as jest.Mock).mockResolvedValue(undefined);
     (fs.promises.readdir as jest.Mock).mockResolvedValue(['test-template.json']);
     (fs.promises.readFile as jest.Mock).mockImplementation((filepath) => {
-        if (String(filepath).endsWith('test-template.json')) {
-            return Promise.resolve(JSON.stringify({
-                name: 'Test Template',
-                description: 'A test template',
-                provider: 'test-provider'
-            }));
-        }
-        return Promise.reject(new Error('File not found ' + filepath));
+      if (String(filepath).endsWith('test-template.json')) {
+        return Promise.resolve(
+          JSON.stringify({
+            name: 'Test Template',
+            description: 'A test template',
+            provider: 'test-provider',
+          })
+        );
+      }
+      return Promise.reject(new Error('File not found ' + filepath));
     });
 
     const response = await request(app).get('/api/config/templates');
@@ -118,16 +149,19 @@ describe('Config Templates Route', () => {
 
     expect(fs.promises.access).toHaveBeenCalledWith(templatesDir);
     expect(fs.promises.readdir).toHaveBeenCalledWith(templatesDir);
-    expect(fs.promises.readFile).toHaveBeenCalledWith(path.join(templatesDir, 'test-template.json'), 'utf8');
+    expect(fs.promises.readFile).toHaveBeenCalledWith(
+      path.join(templatesDir, 'test-template.json'),
+      'utf8'
+    );
   });
 
   it('should handle missing templates directory', async () => {
-      (fs.promises.access as jest.Mock).mockRejectedValue(new Error('ENOENT'));
+    (fs.promises.access as jest.Mock).mockRejectedValue(new Error('ENOENT'));
 
-      const response = await request(app).get('/api/config/templates');
+    const response = await request(app).get('/api/config/templates');
 
-      expect(response.status).toBe(200);
-      expect(response.body.templates).toEqual([]);
+    expect(response.status).toBe(200);
+    expect(response.body.templates).toEqual([]);
   });
 
   it('should skip invalid JSON templates', async () => {
@@ -136,14 +170,14 @@ describe('Config Templates Route', () => {
     (fs.promises.readdir as jest.Mock).mockResolvedValue(['valid.json', 'bad.json']);
 
     (fs.promises.readFile as jest.Mock).mockImplementation((filepath) => {
-        const p = String(filepath);
-        if (p.endsWith('valid.json')) {
-             return Promise.resolve(JSON.stringify({ name: 'Valid' }));
-        }
-        if (p.endsWith('bad.json')) {
-             return Promise.resolve('invalid json content');
-        }
-        return Promise.reject(new Error(`Unexpected file: ${p}`));
+      const p = String(filepath);
+      if (p.endsWith('valid.json')) {
+        return Promise.resolve(JSON.stringify({ name: 'Valid' }));
+      }
+      if (p.endsWith('bad.json')) {
+        return Promise.resolve('invalid json content');
+      }
+      return Promise.reject(new Error(`Unexpected file: ${p}`));
     });
 
     const response = await request(app).get('/api/config/templates');
