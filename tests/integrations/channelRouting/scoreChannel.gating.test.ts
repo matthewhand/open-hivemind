@@ -76,7 +76,7 @@ function mockDiscordMinimal() {
  * dependencies we also stub them minimally to just expose scoreChannel in the same pattern.
  */
 function mockSlackMinimal() {
-  jest.doMock('../../../src/integrations/slack/SlackService', () => {
+  jest.doMock('@hivemind/adapter-slack/SlackService', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('../../../src/config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -95,7 +95,7 @@ function mockSlackMinimal() {
 }
 
 function mockMattermostMinimal() {
-  jest.doMock('../../../src/integrations/mattermost/MattermostService', () => {
+  jest.doMock('@hivemind/adapter-mattermost/MattermostService', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('../../../src/config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -115,8 +115,8 @@ function mockMattermostMinimal() {
 
 async function loadServices() {
   const dMod: any = await import('@hivemind/adapter-discord');
-  const sMod: any = await import('../../../src/integrations/slack/SlackService');
-  const mMod: any = await import('../../../src/integrations/mattermost/MattermostService');
+  const sMod: any = await import('@hivemind/adapter-slack/SlackService');
+  const mMod: any = await import('@hivemind/adapter-mattermost/MattermostService');
 
   const DiscordService = dMod.default ?? dMod.DiscordService ?? dMod;
   const SlackService = sMod.default ?? sMod.SlackService ?? sMod;

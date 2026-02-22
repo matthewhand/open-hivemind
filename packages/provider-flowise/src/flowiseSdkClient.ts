@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { FlowiseClient } from 'flowise-sdk';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from '@hivemind/provider-flowise/flowiseConfig';
 
 const debug = Debug('app:flowiseSdkClient');
 

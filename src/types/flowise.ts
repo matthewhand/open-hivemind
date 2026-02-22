@@ -5,9 +5,9 @@
  * replacing 'any' usage in Flowise integrations.
  *
  * Based on analysis of:
- * - src/integrations/flowise/flowiseProvider.ts
- * - src/integrations/flowise/flowiseRestClient.ts
- * - src/integrations/flowise/flowiseSdkClient.ts
+ * - @hivemind/provider-flowise/flowiseProvider.ts
+ * - @hivemind/provider-flowise/flowiseRestClient.ts
+ * - @hivemind/provider-flowise/flowiseSdkClient.ts
  */
 
 // ============================================================================

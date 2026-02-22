@@ -1,5 +1,5 @@
 import axios from 'axios';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from '@hivemind/provider-flowise/flowiseConfig';
 
 /**
  * Fetches and returns a list of available chat flows from the Flowise API.

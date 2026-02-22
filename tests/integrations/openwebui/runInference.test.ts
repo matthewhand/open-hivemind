@@ -1,8 +1,8 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
-import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
-import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
+import { generateChatCompletion } from '@hivemind/provider-openwebui/runInference';
+import * as sessionManager from '@hivemind/provider-openwebui/sessionManager';
+import * as uploadKnowledgeFile from '@hivemind/provider-openwebui/uploadKnowledgeFile';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());

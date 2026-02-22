@@ -44,9 +44,6 @@
       "@webhook/*": [
         "src/webhook/*"
       ],
-      "@integrations/*": [
-        "src/integrations/*"
-      ],
       "@types/*": [
         "src/types/*"
       ],
@@ -70,6 +67,42 @@
       ],
       "@hivemind/adapter-discord/*": [
         "packages/adapter-discord/src/*"
+      ],
+      "@hivemind/adapter-mattermost": [
+        "packages/adapter-mattermost/src/index.ts"
+      ],
+      "@hivemind/adapter-mattermost/*": [
+        "packages/adapter-mattermost/src/*"
+      ],
+      "@hivemind/adapter-slack": [
+        "packages/adapter-slack/src/index.ts"
+      ],
+      "@hivemind/adapter-slack/*": [
+        "packages/adapter-slack/src/*"
+      ],
+      "@hivemind/provider-flowise": [
+        "packages/provider-flowise/src/index.ts"
+      ],
+      "@hivemind/provider-flowise/*": [
+        "packages/provider-flowise/src/*"
+      ],
+      "@hivemind/provider-openswarm": [
+        "packages/provider-openswarm/src/index.ts"
+      ],
+      "@hivemind/provider-openswarm/*": [
+        "packages/provider-openswarm/src/*"
+      ],
+      "@hivemind/provider-openwebui": [
+        "packages/provider-openwebui/src/index.ts"
+      ],
+      "@hivemind/provider-openwebui/*": [
+        "packages/provider-openwebui/src/*"
+      ],
+      "@hivemind/shared-types": [
+        "packages/shared-types/src/index.ts"
+      ],
+      "@hivemind/shared-types/*": [
+        "packages/shared-types/src/*"
       ]
     },
     "experimentalDecorators": true,
@@ -78,7 +111,13 @@
   "include": [
     "src/**/*",
     "packages/provider-openai/src/**/*",
-    "packages/adapter-discord/src/**/*"
+    "packages/adapter-discord/src/**/*",
+    "packages/adapter-mattermost/src/**/*",
+    "packages/adapter-slack/src/**/*",
+    "packages/provider-flowise/src/**/*",
+    "packages/provider-openswarm/src/**/*",
+    "packages/provider-openwebui/src/**/*",
+    "packages/shared-types/src/**/*"
   ],
   "exclude": [
     "tests/**/*",

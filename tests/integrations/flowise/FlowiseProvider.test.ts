@@ -1,12 +1,12 @@
 import flowiseConfig from '@config/flowiseConfig';
-import flowiseProvider from '@integrations/flowise/flowiseProvider';
-import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
+import flowiseProvider from '@hivemind/provider-flowise/flowiseProvider';
+import { getFlowiseResponse } from '@hivemind/provider-flowise/flowiseRestClient';
+import { getFlowiseSdkResponse } from '@hivemind/provider-flowise/flowiseSdkClient';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IMessage } from '@message/interfaces/IMessage';
 
-jest.mock('@integrations/flowise/flowiseRestClient');
-jest.mock('@integrations/flowise/flowiseSdkClient');
+jest.mock('@hivemind/provider-flowise/flowiseRestClient');
+jest.mock('@hivemind/provider-flowise/flowiseSdkClient');
 jest.mock('@llm/getLlmProvider');
 jest.mock('@config/flowiseConfig');
 

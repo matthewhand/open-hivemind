@@ -3,7 +3,7 @@ import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
 
 // Mock the SwarmInstaller to return successful responses
-jest.mock('@src/integrations/openswarm/SwarmInstaller', () => {
+jest.mock('@hivemind/provider-openswarm/SwarmInstaller', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
       checkPython: jest.fn().mockResolvedValue(true),

@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import type { MCPGuardConfig } from '../../../src/mcp/MCPGuard';
 import { MCPService } from '../../../src/mcp/MCPService';
 
-jest.mock('@integrations/slack/providers/SlackMessageProvider', () => ({
+jest.mock('@hivemind/adapter-slack/providers/SlackMessageProvider', () => ({
   SlackMessageProvider: jest.fn().mockImplementation(() => ({
     getForumOwner: jest.fn(),
   })),
@@ -106,7 +106,7 @@ describe('MCPService guard enforcement', () => {
   });
 
   it('derives forum owner via provider when not supplied', async () => {
-    const { SlackMessageProvider } = require('@integrations/slack/providers/SlackMessageProvider');
+    const { SlackMessageProvider } = require('@hivemind/adapter-slack/providers/SlackMessageProvider');
     const mockGetForumOwner = jest.fn().mockResolvedValue('slack-owner') as any;
     SlackMessageProvider.mockImplementation(() => ({
       getForumOwner: mockGetForumOwner,

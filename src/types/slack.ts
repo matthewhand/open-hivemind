@@ -5,8 +5,8 @@
  * replacing 'any' usage in Slack integrations.
  *
  * Based on analysis of:
- * - src/integrations/slack/SlackService.ts
- * - src/integrations/slack/SlackMessage.ts
+ * - @hivemind/adapter-slack/SlackService.ts
+ * - @hivemind/adapter-slack/SlackMessage.ts
  */
 
 // ============================================================================

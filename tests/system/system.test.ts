@@ -4,8 +4,8 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 // Mock the modules
 jest.mock('@llm/getLlmProvider');
 jest.mock('@hivemind/adapter-discord');
-jest.mock('@integrations/slack/SlackService');
-jest.mock('@integrations/mattermost/MattermostService');
+jest.mock('@hivemind/adapter-slack/SlackService');
+jest.mock('@hivemind/adapter-mattermost/MattermostService');
 
 // Test suite enabled
 const describeOrSkip = describe;

@@ -28,13 +28,13 @@ import {
   computeScore as channelComputeScore,
   pickBestChannel,
 } from '@message/routing/ChannelRouter';
-import WebSocketService from '../../../src/server/services/WebSocketService';
+import WebSocketService from '@server/services/WebSocketService';
 import {
   ConfigurationError,
   NetworkError,
   RateLimitError,
   ValidationError,
-} from '../../../src/types/errorClasses';
+} from '@types/errorClasses';
 import { SpecifyCommand } from './commands/speckit/specify';
 import DiscordMessage from './DiscordMessage';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';

@@ -1,4 +1,4 @@
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
+import { MattermostService } from '@hivemind/adapter-mattermost/MattermostService';
 
 const REAL_MATTERMOST_URL = process.env.REAL_MATTERMOST_URL;
 const REAL_MATTERMOST_TOKEN = process.env.REAL_MATTERMOST_TOKEN;

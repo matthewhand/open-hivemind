@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
+import { SwarmInstaller } from '@hivemind/provider-openswarm/SwarmInstaller';
 
 export const installer = new SwarmInstaller();
 const swarmRouter = Router();

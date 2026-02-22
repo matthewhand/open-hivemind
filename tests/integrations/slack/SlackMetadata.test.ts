@@ -1,4 +1,4 @@
-import { extractSlackMetadata } from '../../../src/integrations/slack/slackMetadata';
+import { extractSlackMetadata } from '@hivemind/adapter-slack/slackMetadata';
 
 describe('Slack Metadata Extraction', () => {
   it('should extract metadata from a complete Slack event', () => {

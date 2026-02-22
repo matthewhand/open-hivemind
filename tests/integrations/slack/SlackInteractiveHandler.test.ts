@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { InteractiveActionHandlers } from '@integrations/slack/InteractiveActionHandlers';
-import { SlackInteractiveHandler } from '@integrations/slack/SlackInteractiveHandler';
+import { InteractiveActionHandlers } from '@hivemind/adapter-slack/InteractiveActionHandlers';
+import { SlackInteractiveHandler } from '@hivemind/adapter-slack/SlackInteractiveHandler';
 
 describe('SlackInteractiveHandler', () => {
   let mockHandlers: jest.Mocked<InteractiveActionHandlers>;

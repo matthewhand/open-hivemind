@@ -4,7 +4,7 @@ import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandle
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import messageConfig from '@config/messageConfig';
-import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
+import { generateChatCompletionDirect } from '@hivemind/provider-openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';

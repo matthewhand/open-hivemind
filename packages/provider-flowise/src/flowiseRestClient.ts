@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from '@hivemind/provider-flowise/flowiseConfig';
 
 const debug = Debug('app:flowiseClient');
 

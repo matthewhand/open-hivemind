@@ -18,7 +18,7 @@ jest.mock('../../src/server/middleware/security', () => ({
   ipWhitelist: (req: any, res: any, next: any) => next(),
 }));
 
-jest.mock('@integrations/slack/SlackService', () => ({
+jest.mock('@hivemind/adapter-slack/SlackService', () => ({
   getInstance: jest.fn().mockReturnValue({
     addBot: jest.fn().mockResolvedValue(true),
     getBotNames: jest.fn().mockReturnValue([]),
