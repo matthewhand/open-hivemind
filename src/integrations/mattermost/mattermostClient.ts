@@ -32,12 +32,20 @@ interface Channel {
   header?: string;
 }
 
+interface Team {
+  id: string;
+  [key: string]: any;
+}
+
 export default class MattermostClient {
   private serverUrl: string;
   private token: string;
   private api: AxiosInstance;
   private connected: boolean = false;
   private me: User | null = null;
+  private teamsCache: { data: Team[]; timestamp: number } | null = null;
+  private channelIdCache: Map<string, { id: string; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
@@ -148,15 +156,29 @@ export default class MattermostClient {
       return channel;
     }
 
-    try {
-      const teamsResponse = await this.api.get('/users/me/teams');
-      const teams = teamsResponse.data;
+    // Check cache
+    const cachedChannel = this.channelIdCache.get(channel);
+    if (cachedChannel && Date.now() - cachedChannel.timestamp < this.CACHE_TTL) {
+      return cachedChannel.id;
+    }
 
-      for (const team of teams) {
-        const channelData = await this.getChannelByName(team.id, channel);
-        if (channelData) {
-          return channelData.id;
-        }
+    try {
+      let teams: Team[];
+      if (this.teamsCache && Date.now() - this.teamsCache.timestamp < this.CACHE_TTL) {
+        teams = this.teamsCache.data;
+      } else {
+        const teamsResponse = await this.api.get('/users/me/teams');
+        teams = teamsResponse.data;
+        this.teamsCache = { data: teams, timestamp: Date.now() };
+      }
+
+      const channelPromises = teams.map((team) => this.getChannelByName(team.id, channel));
+      const results = await Promise.all(channelPromises);
+      const foundChannel = results.find((c) => !!c);
+
+      if (foundChannel) {
+        this.channelIdCache.set(channel, { id: foundChannel.id, timestamp: Date.now() });
+        return foundChannel.id;
       }
     } catch (error) {
       console.error('Failed to resolve channel:', error);
@@ -171,6 +193,8 @@ export default class MattermostClient {
 
   disconnect(): void {
     this.connected = false;
+    this.teamsCache = null;
+    this.channelIdCache.clear();
   }
 
   getCurrentUserId(): string | null {
