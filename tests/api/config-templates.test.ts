@@ -36,16 +36,6 @@ jest.mock('../../src/services/DemoModeService', () => ({
   },
 }));
 
-// Mock convict configs
-const convictMock = {
-  get: jest.fn(),
-  getSchema: jest.fn().mockReturnValue({}),
-  getProperties: jest.fn().mockReturnValue({}),
-  loadFile: jest.fn(),
-  validate: jest.fn(),
-  load: jest.fn(),
-};
-
 // Inline mocks to avoid hoisting issues
 jest.mock('../../src/config/messageConfig', () => ({
   get: jest.fn(),
