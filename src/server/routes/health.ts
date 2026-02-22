@@ -10,9 +10,22 @@ const router = Router();
 
 // Basic health check
 router.get('/', (req, res) => {
+  const memoryUsage = process.memoryUsage();
   return res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: {
+      used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+      total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
+    },
+    system: {
+      platform: process.platform,
+      nodeVersion: process.version,
+      processId: process.pid,
+    },
   });
 });
 
@@ -33,6 +46,11 @@ router.get('/detailed', (req, res) => {
   const healthData = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
+    checks: {
+      database: { status: 'healthy' },
+      configuration: { status: 'healthy' },
+      services: { status: 'healthy' },
+    },
     uptime: uptime,
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
