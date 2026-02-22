@@ -421,7 +421,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
             contentLength: (message.getText?.() || '').length,
             status: 'success',
           });
-        } catch { }
+        } catch {}
         debug(
           `[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`
         );
@@ -1036,7 +1036,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     if (this.botManagers.size === 0 && process.env.SLACK_BOT_TOKEN) {
       try {
         this.initializeLegacyConfiguration();
-      } catch { }
+      } catch {}
     }
     if (this.botManagers.size === 0) {
       // As a last resort in unit tests, return a minimal mocked manager instance
@@ -1110,12 +1110,12 @@ export class SlackService extends EventEmitter implements IMessengerService {
       for (const b of bots) {
         try {
           await b.socketClient?.disconnect?.();
-        } catch { }
+        } catch {}
         try {
           await b.rtmClient?.disconnect?.();
-        } catch { }
+        } catch {}
       }
-    } catch { }
+    } catch {}
     this.botManagers.delete(botName);
     this.signatureVerifiers.delete(botName);
     this.interactiveHandlers.delete(botName);

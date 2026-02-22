@@ -1,7 +1,7 @@
 import Debug from 'debug';
+import type { IBotInfo } from '@src/types/botInfo';
 import type { SlackBotManager } from '../SlackBotManager';
 import type { SlackWelcomeHandler } from '../SlackWelcomeHandler';
-import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:SlackBotFacade');
 

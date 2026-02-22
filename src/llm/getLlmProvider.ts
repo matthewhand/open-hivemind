@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { IConfigAccessor } from '@src/types/configAccessor';
 
 const debug = Debug('app:getLlmProvider');
 

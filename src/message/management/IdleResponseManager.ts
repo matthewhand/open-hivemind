@@ -119,11 +119,11 @@ export class IdleResponseManager {
             sendMessageToChannel: async () => 'mock-message-id',
             getMessagesFromChannel: async () => [],
             getClientId: () => 'test-client-id',
-            initialize: async () => { },
-            sendPublicAnnouncement: async () => { },
+            initialize: async () => {},
+            sendPublicAnnouncement: async () => {},
             getDefaultChannel: () => 'test-channel',
-            shutdown: async () => { },
-            setMessageHandler: () => { },
+            shutdown: async () => {},
+            setMessageHandler: () => {},
           };
 
           this.serviceActivities.set(serviceName, {
@@ -499,7 +499,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         if (activityBotId) {
           recordBotActivity(channelId, activityBotId);
         }
-      } catch { }
+      } catch {}
 
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;

@@ -45,19 +45,13 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
-  container.register(
-    TOKENS.UserConfigStore,
-    {
-      useValue: UserConfigStore.getInstance(),
-    }
-  );
+  container.register(TOKENS.UserConfigStore, {
+    useValue: UserConfigStore.getInstance(),
+  });
 
-  container.register(
-    TOKENS.ProviderConfigManager,
-    {
-      useValue: ProviderConfigManager.getInstance(),
-    }
-  );
+  container.register(TOKENS.ProviderConfigManager, {
+    useValue: ProviderConfigManager.getInstance(),
+  });
 
   console.log('✅ DI services registered');
 }

@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { KnownBlock, ChatPostMessageArguments } from '@slack/web-api';
+import type { ChatPostMessageArguments, KnownBlock } from '@slack/web-api';
 import { markdownToBlocks } from '@tryfabric/mack';
 import messageConfig from '@src/config/messageConfig';
 import slackConfig from '@src/config/slackConfig';
@@ -349,12 +349,14 @@ export class SlackWelcomeHandler {
     }
 
     try {
-      const formattedBlocks = blocks?.length ? blocks.map((block) => {
-        if (block.type === 'section' && block.text?.type === 'mrkdwn') {
-          return { ...block, text: { ...block.text, verbatim: true } };
-        }
-        return block;
-      }) : undefined;
+      const formattedBlocks = blocks?.length
+        ? blocks.map((block) => {
+            if (block.type === 'section' && block.text?.type === 'mrkdwn') {
+              return { ...block, text: { ...block.text, verbatim: true } };
+            }
+            return block;
+          })
+        : undefined;
 
       const options: ChatPostMessageArguments = {
         channel: channelId,
@@ -366,7 +368,7 @@ export class SlackWelcomeHandler {
         unfurl_links: true,
         unfurl_media: true,
         ...(threadId ? { thread_ts: threadId } : {}),
-        ...(formattedBlocks ? { blocks: formattedBlocks } : {})
+        ...(formattedBlocks ? { blocks: formattedBlocks } : {}),
       };
 
       debug(
