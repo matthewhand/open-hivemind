@@ -253,14 +253,12 @@ router.get('/templates', async (req, res) => {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const templatesDir = path.join(configDir, 'templates');
 
-    // Check if templates directory exists asynchronously
+    let files: string[] = [];
     try {
-      await fs.promises.access(templatesDir);
-    } catch {
+      files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
+    } catch (e) {
       return res.json({ templates: [] });
     }
-
-    const files = (await fs.promises.readdir(templatesDir)).filter((f) => f.endsWith('.json'));
 
     const templatesPromises = files.map(async (file) => {
       try {
@@ -555,7 +553,7 @@ router.get('/', async (req, res) => {
       // Return demo bots in demo mode
       const demoBots = demoService.getDemoBots();
       return res.json({
-        bots: demoBots.map((bot) => ({
+        bots: demoBots.map(bot => ({
           ...bot,
           id: bot.id,
           name: bot.name,

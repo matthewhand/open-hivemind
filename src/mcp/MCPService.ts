@@ -7,8 +7,6 @@ import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
 const debug = Debug('app:mcp');
 
-export type MCPServerConfig = MCPConfig;
-
 export interface MCPConfig {
   serverUrl: string;
   apiKey?: string;

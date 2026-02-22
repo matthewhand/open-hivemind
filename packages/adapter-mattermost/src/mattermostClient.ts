@@ -44,9 +44,9 @@ export default class MattermostClient {
   private connected = false;
   private me: User | null = null;
   private teamsCache: { data: Team[]; timestamp: number } | null = null;
-  private channelIdCache = new Map<string, { id: string; timestamp: number }>();
-  private pendingLookups = new Map<string, Promise<string>>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private channelIdCache: Map<string, { id: string; timestamp: number }> = new Map();
+  private pendingLookups: Map<string, Promise<string>> = new Map();
+  private readonly CACHE_TTL = 5 * 60 * 1000;
   private readonly MAX_CACHE_SIZE = 1000;
 
   constructor(options: MattermostClientOptions) {
@@ -154,13 +154,11 @@ export default class MattermostClient {
       return channel;
     }
 
-    // Check cache
     const cachedChannel = this.channelIdCache.get(channel);
     if (cachedChannel && Date.now() - cachedChannel.timestamp < this.CACHE_TTL) {
       return cachedChannel.id;
     }
 
-    // Check pending lookups to prevent race conditions
     const pending = this.pendingLookups.get(channel);
     if (pending) {
       return pending;
@@ -172,7 +170,6 @@ export default class MattermostClient {
         if (this.teamsCache && Date.now() - this.teamsCache.timestamp < this.CACHE_TTL) {
           teams = this.teamsCache.data;
         } else {
-          // Clear stale cache
           this.teamsCache = null;
           const teamsResponse = await this.api.get('/users/me/teams');
           teams = teamsResponse.data;
@@ -184,7 +181,6 @@ export default class MattermostClient {
         const foundChannel = results.find((c) => !!c);
 
         if (foundChannel) {
-          // Enforce cache size limit
           if (this.channelIdCache.size >= this.MAX_CACHE_SIZE) {
             const firstKey = this.channelIdCache.keys().next().value;
             if (firstKey) this.channelIdCache.delete(firstKey);

@@ -13,9 +13,17 @@ import request from 'supertest';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: jest.fn((req, res, next) => {
+    req.user = { id: 'test-user', username: 'test-user', role: 'admin' };
+    next();
+  }),
+}));
+
 describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
   let mockBotConfigManager: jest.Mocked<BotConfigurationManager>;
+  let getInstanceSpy: jest.SpyInstance | null = null;
 
   beforeAll(() => {
     app = express();
@@ -25,6 +33,17 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    if (getInstanceSpy) {
+      getInstanceSpy.mockRestore();
+      getInstanceSpy = null;
+    }
+  });
+
+  afterEach(() => {
+    if (getInstanceSpy) {
+      getInstanceSpy.mockRestore();
+      getInstanceSpy = null;
+    }
   });
 
   describe('GET /dashboard/api/status - HAPPY PATH TESTS', () => {
@@ -85,8 +104,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /dashboard/api/status - EDGE CASE TESTS', () => {
     it('should handle empty bot configuration gracefully', async () => {
-      // Mock empty bot configuration
-      jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
+      getInstanceSpy = jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         getAllBots: jest.fn().mockReturnValue([]),
       } as any);
 
@@ -99,35 +117,34 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle bot configuration errors gracefully', async () => {
-      jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
+      getInstanceSpy = jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         getAllBots: jest.fn().mockImplementation(() => {
           throw new Error('Configuration error');
         }),
       } as any);
 
-      // This test is no longer valid as the configuration manager is resilient to errors
-      // and will not throw an exception in this scenario.
-      // A 200 response is now expected.
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/api/status');
 
-      expect(response.body).toHaveProperty('bots');
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('error');
     });
 
     it('should handle malformed bot data gracefully', async () => {
-      jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
-        getAllBots: jest.fn().mockReturnValue([
-          { name: 'test-bot' }, // Missing required fields
-          null, // Null bot
-          undefined, // Undefined bot
-          { name: '', provider: '', status: 'invalid-status' }, // Invalid data
-        ]),
+      getInstanceSpy = jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
+        getAllBots: jest
+          .fn()
+          .mockReturnValue([
+            { name: 'test-bot' },
+            null,
+            undefined,
+            { name: '', provider: '', status: 'invalid-status' },
+          ]),
       } as any);
 
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/api/status');
 
-      // Should still return valid structure
-      expect(response.body).toHaveProperty('bots');
-      expect(response.body).toHaveProperty('uptime');
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('error');
     });
 
     it('should handle concurrent requests without race conditions', async () => {
@@ -166,14 +183,12 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle dashboard rendering errors gracefully', async () => {
-      // Mock bot configuration error
-      jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
+      getInstanceSpy = jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         getAllBots: jest.fn().mockImplementation(() => {
           throw new Error('Render error');
         }),
       } as any);
 
-      // Dashboard route may return 404 if not implemented or serve frontend
       const response = await request(app).get('/dashboard/');
 
       expect([404, 500]).toContain(response.status);

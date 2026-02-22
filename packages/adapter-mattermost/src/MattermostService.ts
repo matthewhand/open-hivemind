@@ -15,7 +15,6 @@ import {
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
-// Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
@@ -24,7 +23,6 @@ import MattermostClient from './mattermostClient';
 
 const debug = Debug('app:MattermostService:verbose');
 
-// Metrics and retry configuration
 const metrics = MetricsCollector.getInstance();
 const RETRY_CONFIG = {
   retries: 3,
@@ -33,10 +31,6 @@ const RETRY_CONFIG = {
   factor: 2,
 };
 
-/**
- * MattermostService implementation supporting multi-instance configuration
- * Uses BotConfigurationManager for consistent multi-bot support across platforms
- */
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
   private clients = new Map<string, MattermostClient>();
@@ -44,8 +38,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private botConfigs = new Map<string, any>();
   private app?: Application;
 
-  // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
-  public supportsChannelPrioritization = true;
+  public supportsChannelPrioritization: boolean = true;
 
   private constructor() {
     super();
@@ -53,10 +46,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     this.initializeFromConfiguration();
   }
 
-  /**
-   * Initialize MattermostService from BotConfigurationManager
-   * Supports multiple Mattermost bot instances with BOTS_* environment variables
-   */
   private initializeFromConfiguration(): void {
     const configManager = BotConfigurationManager.getInstance();
     const mattermostBotConfigs = configManager
@@ -75,9 +64,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
-  /**
-   * Initialize a single Mattermost bot instance
-   */
   private initializeBotInstance(botConfig: any): void {
     const botName = botConfig.name;
 
@@ -119,7 +105,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         await client.connect();
         debug(`Connected to Mattermost server for bot: ${botName}`);
-        // Cache identity for mention detection / self-filtering.
         const botConfig = this.botConfigs.get(botName) || {};
         this.botConfigs.set(botName, {
           ...botConfig,
@@ -188,7 +173,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
         } catch (error: any) {
           debug(`Send message attempt ${attempt} failed: ${error.message}`);
 
-          // Don't retry on certain errors
           if (
             error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
@@ -199,7 +183,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
             return '';
           }
 
-          // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
           const errType = (hivemindError as any).type;
           if (errType === 'network' || errType === 'api') {
@@ -222,7 +205,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
         `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
 
-      // Record WebSocket monitoring event for failed message
       try {
         const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
@@ -246,7 +228,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
     return this.fetchMessages(channelId, limit);
   }
 
-  public async fetchMessages(channelId: string, limit = 10, botName?: string): Promise<IMessage[]> {
+  public async fetchMessages(
+    channelId: string,
+    limit: number = 10,
+    botName?: string
+  ): Promise<IMessage[]> {
     debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
 
     const startTime = Date.now();
@@ -289,11 +275,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
             messages.push(mattermostMsg);
           }
 
-          return messages.reverse(); // Most recent first
+          return messages.reverse();
         } catch (error: any) {
           debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
 
-          // Don't retry on certain errors
           if (
             error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
@@ -304,7 +289,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
             return [];
           }
 
-          // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
           const errType = (hivemindError as any).type;
           if (errType === 'network' || errType === 'api') {
@@ -325,7 +309,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       debug(
         `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
-      return []; // Return empty array on failure
+      return [];
     }
   }
 
@@ -414,7 +398,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
       const agentDisplayName = String(params?.agentDisplayName || '').trim();
       const agentInstanceName = String(botConfig?.name || '').trim();
 
-      // MattermostService selects bot instances by their configured bot name key.
       const senderKey = agentInstanceName || agentDisplayName;
       const client = this.clients.get(senderKey);
       const botId = client?.getCurrentUserId?.() || botConfig?.userId || senderKey;
@@ -434,9 +417,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     return this.channels.get(firstBot) || 'town-square';
   }
 
-  /**
-   * Best-effort channel topic lookup (purpose/header).
-   */
   public async getChannelTopic(channelId: string): Promise<string | null> {
     try {
       const firstBot = Array.from(this.clients.keys())[0];
@@ -452,9 +432,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
-  /**
-   * Best-effort typing indicator (server dependent).
-   */
   public async sendTyping(
     channelId: string,
     senderName?: string,
@@ -470,10 +447,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     } catch {}
   }
 
-  /**
-   * Mattermost does not expose a reliable "activity status" for bot tokens across all servers.
-   * This is currently a no-op to avoid noisy failures.
-   */
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
     void modelId;
     void senderKey;
@@ -485,10 +458,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
     MattermostService.instance = undefined;
   }
 
-  /**
-   * Channel scoring hook: returns 0 when MESSAGE_CHANNEL_ROUTER_ENABLED is disabled,
-   * otherwise delegates to ChannelRouter.computeScore to keep parity with other providers.
-   */
   public scoreChannel(channelId: string): number {
     try {
       const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
@@ -497,29 +466,19 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
       return channelComputeScore(channelId);
     } catch {
-      // Be conservative: on any error, neutralize impact
       return 0;
     }
   }
 
-  /**
-   * Get all configured bot names
-   */
   public getBotNames(): string[] {
     return Array.from(this.clients.keys());
   }
 
-  /**
-   * Get configuration for a specific bot
-   */
   public getBotConfig(botName: string): any {
     return this.botConfigs.get(botName);
   }
 
-  /**
-   * Returns individual service wrappers for each managed Mattermost bot.
-   */
-  public getDelegatedServices(): {
+  public getDelegatedServices(): Array<{
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;

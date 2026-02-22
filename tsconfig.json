@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "target": "es2018",
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "module": "CommonJS",
     "strict": false,
     "noImplicitAny": false,
@@ -14,10 +18,7 @@
     "outDir": "./dist",
     "rootDir": "./",
     "baseUrl": "./",
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
@@ -26,63 +27,25 @@
     "forceConsistentCasingInFileNames": false,
     "isolatedModules": false,
     "paths": {
-      "@command/*": [
-        "src/command/*"
-      ],
-      "@common/*": [
-        "src/common/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ],
-      "@llm/*": [
-        "src/llm/*"
-      ],
-      "@message/*": [
-        "src/message/*"
-      ],
-      "@webhook/*": [
-        "src/webhook/*"
-      ],
-      "@integrations/*": [
-        "src/integrations/*"
-      ],
-      "@types/*": [
-        "src/types/*"
-      ],
-      "@src/*": [
-        "src/*"
-      ],
-      "@tests/*": [
-        "tests/*"
-      ],
-      "testUtils": [
-        "./tests/testUtils"
-      ],
-      "@hivemind/provider-openai": [
-        "packages/provider-openai/src/index.ts"
-      ],
-      "@hivemind/provider-openai/*": [
-        "packages/provider-openai/src/*"
-      ],
-      "@hivemind/adapter-discord": [
-        "packages/adapter-discord/src/index.ts"
-      ],
-      "@hivemind/adapter-discord/*": [
-        "packages/adapter-discord/src/*"
-      ],
-      "@hivemind/adapter-slack": [
-        "packages/adapter-slack/src/index.ts"
-      ],
-      "@hivemind/adapter-slack/*": [
-        "packages/adapter-slack/src/*"
-      ],
-      "@hivemind/adapter-mattermost": [
-        "packages/adapter-mattermost/src/index.ts"
-      ],
-      "@hivemind/adapter-mattermost/*": [
-        "packages/adapter-mattermost/src/*"
-      ]
+      "@command/*": ["src/command/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@llm/*": ["src/llm/*"],
+      "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
+      "@integrations/*": ["src/integrations/*"],
+      "@types/*": ["src/types/*"],
+      "@src/*": ["src/*"],
+      "@tests/*": ["tests/*"],
+      "testUtils": ["./tests/testUtils"],
+      "@hivemind/provider-openai": ["packages/provider-openai/src/index.ts"],
+      "@hivemind/provider-openai/*": ["packages/provider-openai/src/*"],
+      "@hivemind/adapter-discord": ["packages/adapter-discord/src/index.ts"],
+      "@hivemind/adapter-discord/*": ["packages/adapter-discord/src/*"],
+      "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
+      "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
+      "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
+      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -94,12 +57,6 @@
     "packages/adapter-slack/src/**/*",
     "packages/adapter-mattermost/src/**/*"
   ],
-  "exclude": [
-    "tests/**/*",
-    "node_modules",
-    "src/client/**/*"
-  ],
-  "files": [
-    "src/global.d.ts"
-  ]
+  "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
+  "files": ["src/global.d.ts"]
 }
