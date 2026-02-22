@@ -156,6 +156,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
+    "uuid": "^11.0.5",
     "uuidv4": "^6.2.13",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2"

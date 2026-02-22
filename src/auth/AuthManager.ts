@@ -89,6 +89,32 @@ export class AuthManager {
    */
   private initializeDefaultAdminSync(): void {
     // Use bcrypt.hashSync for synchronous initialization
+    if (process.env.NODE_ENV === 'test') {
+      const defaultAdmin: User = {
+        id: 'admin',
+        username: 'admin',
+        email: 'admin@localhost',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: null,
+        passwordHash: 'test-admin-hash',
+      };
+      this.users.set('admin', defaultAdmin);
+      return;
+    }
+
+    let password = process.env.ADMIN_PASSWORD;
+
+    if (!password) {
+      password = crypto.randomBytes(16).toString('hex');
+      console.warn('================================================================');
+      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
+      console.warn(`Generated temporary admin password: ${password}`);
+      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
+      console.warn('================================================================');
+    }
+
     const defaultAdmin: User = {
       id: 'admin',
       username: 'admin',
@@ -97,10 +123,7 @@ export class AuthManager {
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      passwordHash:
-        process.env.NODE_ENV === 'test'
-          ? 'test-admin-hash'
-          : bcrypt.hashSync('admin123!', this.bcryptRounds),
+      passwordHash: bcrypt.hashSync(password, this.bcryptRounds),
     };
 
     this.users.set('admin', defaultAdmin);
