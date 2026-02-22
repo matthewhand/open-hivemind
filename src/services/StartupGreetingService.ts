@@ -4,6 +4,7 @@ import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
+import { singleton, inject } from 'tsyringe';
 import { GreetingStateManager } from './GreetingStateManager';
 
 const appLogger = Logger.withContext('StartupGreetingService');
@@ -14,22 +15,12 @@ interface GreetingConfig {
   use_llm?: boolean;
 }
 
-class StartupGreetingService extends EventEmitter {
-  private static instance: StartupGreetingService;
-  private greetingStateManager: GreetingStateManager;
-
-  private constructor() {
+@singleton()
+export class StartupGreetingService extends EventEmitter {
+  public constructor(@inject(GreetingStateManager) private greetingStateManager: GreetingStateManager) {
     super();
     appLogger.info('StartupGreetingService initialized');
-    this.greetingStateManager = GreetingStateManager.getInstance();
     this.on('service-ready', this.handleServiceReady.bind(this));
-  }
-
-  public static getInstance(): StartupGreetingService {
-    if (!StartupGreetingService.instance) {
-      StartupGreetingService.instance = new StartupGreetingService();
-    }
-    return StartupGreetingService.instance;
   }
 
   public async initialize() {
@@ -151,4 +142,4 @@ IMPORTANT: Do not wrap any part of your response in quotation marks. Just output
   }
 }
 
-export default StartupGreetingService.getInstance();
+export default StartupGreetingService;

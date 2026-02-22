@@ -296,6 +296,39 @@ export const Discord = {
       }
     }
 
+    /**
+     * Retrieves the owner ID of a Discord channel (guild owner or thread owner).
+     * @param channelId The channel ID
+     * @returns The owner ID string or null if not found
+     */
+    public async getChannelOwnerId(channelId: string): Promise<string | null> {
+      try {
+        const botInfo = this.bots[0];
+        if (!botInfo) return null;
+
+        const channel = await botInfo.client.channels.fetch(channelId);
+        if (!channel) return null;
+
+        // If it is a thread, it has ownerId
+        if ('ownerId' in channel && typeof (channel as any).ownerId === 'string') {
+          return (channel as any).ownerId;
+        }
+
+        // If it is a guild channel, return guild owner
+        if ('guild' in channel) {
+          const guild = (channel as any).guild;
+          if (guild && 'ownerId' in guild) {
+            return guild.ownerId;
+          }
+        }
+
+        return null;
+      } catch (error) {
+        log(`Error fetching channel owner for ${channelId}: ${error}`);
+        return null;
+      }
+    }
+
     public async sendPublicAnnouncement(
       channelId: string,
       announcement: string,
