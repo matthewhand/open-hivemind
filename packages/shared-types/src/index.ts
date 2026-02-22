@@ -7,3 +7,12 @@
 
 export { IMessage } from './IMessage';
 export type { IMessengerService } from './IMessengerService';
+export {
+    BaseError,
+    ValidationError,
+    NetworkError,
+    ApiError,
+    ConfigurationError,
+    defaultErrorFactory,
+    type IErrorFactory,
+} from './errors';
