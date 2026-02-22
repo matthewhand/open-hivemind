@@ -115,14 +115,14 @@ router.get('/messages', async (req, res) => {
     // `;
     // const messages = await db.all(query, [...params, filter.limit, filter.offset]);
 
-    res.json({
+    return res.json({
       messages,
       total: messages.length,
       filter,
     });
   } catch (error) {
     debug('Error fetching message activity:', error);
-    res.status(500).json({ error: 'Failed to fetch message activity' });
+    return res.status(500).json({ error: 'Failed to fetch message activity' });
   }
 });
 
@@ -144,10 +144,10 @@ router.get('/llm-usage', async (req, res) => {
     // Mock LLM usage data
     const usage: LLMUsageMetric[] = [];
 
-    res.json({ usage, filter });
+    return res.json({ usage, filter });
   } catch (error) {
     debug('Error fetching LLM usage:', error);
-    res.status(500).json({ error: 'Failed to fetch LLM usage' });
+    return res.status(500).json({ error: 'Failed to fetch LLM usage' });
   }
 });
 
@@ -179,10 +179,10 @@ router.get('/summary', async (req, res) => {
       timeRangeEnd: filter.endDate || new Date().toISOString(),
     };
 
-    res.json({ summary });
+    return res.json({ summary });
   } catch (error) {
     debug('Error fetching activity summary:', error);
-    res.status(500).json({ error: 'Failed to fetch activity summary' });
+    return res.status(500).json({ error: 'Failed to fetch activity summary' });
   }
 });
 
@@ -240,7 +240,7 @@ router.get('/chart-data', async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       messageActivity: messageActivityData,
       llmUsage: llmUsageData,
       interval,
@@ -248,7 +248,7 @@ router.get('/chart-data', async (req, res) => {
     });
   } catch (error) {
     debug('Error fetching chart data:', error);
-    res.status(500).json({ error: 'Failed to fetch chart data' });
+    return res.status(500).json({ error: 'Failed to fetch chart data' });
   }
 });
 
@@ -291,10 +291,10 @@ router.get('/agents', async (req, res) => {
       },
     ];
 
-    res.json({ agents: agentActivity, filter });
+    return res.json({ agents: agentActivity, filter });
   } catch (error) {
     debug('Error fetching agent activity:', error);
-    res.status(500).json({ error: 'Failed to fetch agent activity' });
+    return res.status(500).json({ error: 'Failed to fetch agent activity' });
   }
 });
 
@@ -327,10 +327,10 @@ router.get('/mcp-tools', async (req, res) => {
       },
     ];
 
-    res.json({ mcpTools: mcpToolUsage, filter });
+    return res.json({ mcpTools: mcpToolUsage, filter });
   } catch (error) {
     debug('Error fetching MCP tool usage:', error);
-    res.status(500).json({ error: 'Failed to fetch MCP tool usage' });
+    return res.status(500).json({ error: 'Failed to fetch MCP tool usage' });
   }
 });
 
@@ -363,10 +363,10 @@ router.post('/log', async (req, res) => {
       status,
     });
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
     debug('Error logging activity:', error);
-    res.status(500).json({ error: 'Failed to log activity' });
+    return res.status(500).json({ error: 'Failed to log activity' });
   }
 });
 

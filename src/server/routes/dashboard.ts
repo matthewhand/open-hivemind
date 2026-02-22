@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { authenticateToken } from '../middleware/auth';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -31,7 +32,7 @@ function isProviderConnected(bot: any): boolean {
   }
 }
 
-router.get('/api/status', (req, res) => {
+router.get('/api/status', authenticateToken, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -56,7 +57,7 @@ router.get('/api/status', (req, res) => {
   }
 });
 
-router.get('/api/activity', (req, res) => {
+router.get('/api/activity', authenticateToken, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const ws = WebSocketService.getInstance();

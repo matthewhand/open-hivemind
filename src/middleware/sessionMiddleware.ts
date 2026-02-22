@@ -91,7 +91,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
         debug('Session regeneration failed:', err);
         return next(err);
       }
-      next();
+      return next();
     });
     return;
   }
@@ -104,7 +104,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
       if (err) {
         debug('Session destruction failed:', err);
       }
-      res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
+      return res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
     });
     return;
   }
@@ -118,7 +118,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
 
-  next();
+  return next();
 };
 
 /**
@@ -144,7 +144,7 @@ export const requireSession = (req: Request, res: Response, next: NextFunction) 
       code: 'AUTHENTICATION_REQUIRED',
     });
   }
-  next();
+  return next();
 };
 
 /**
