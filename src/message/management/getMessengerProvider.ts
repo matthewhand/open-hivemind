@@ -127,16 +127,19 @@ export function getMessengerProvider() {
     }
   }
 
-  // Mattermost (singleton)
+  // Mattermost (singleton) - uses lazy initialization via getMattermostService()
   if (MattermostMgr && wantProvider('mattermost') && hasMattermost) {
     try {
-      const svc = MattermostMgr.MattermostService?.getInstance
-        ? MattermostMgr.MattermostService.getInstance()
-        : MattermostMgr.default?.getInstance
-          ? MattermostMgr.default.getInstance()
-          : MattermostMgr.getInstance
-            ? MattermostMgr.getInstance()
-            : null;
+      // Prefer the lazy initialization function to avoid early module load issues
+      const svc = MattermostMgr.getMattermostService
+        ? MattermostMgr.getMattermostService()
+        : MattermostMgr.MattermostService?.getInstance
+          ? MattermostMgr.MattermostService.getInstance()
+          : MattermostMgr.default?.getInstance
+            ? MattermostMgr.default.getInstance()
+            : MattermostMgr.getInstance
+              ? MattermostMgr.getInstance()
+              : null;
       if (svc) {
         messengerServices.push(svc);
         gmpDebug('Initialized Mattermost provider');
