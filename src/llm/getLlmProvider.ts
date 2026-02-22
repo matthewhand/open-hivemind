@@ -4,6 +4,7 @@ import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
+import { getSessionKey } from '@integrations/openwebui/sessionManager';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 
@@ -40,6 +41,16 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
       }
       return response;
     },
+    validateCredentials: async () => {
+      return provider.validateCredentials();
+    },
+    generateResponse: async (message: IMessage, context?: IMessage[]) => {
+      const response = await provider.generateResponse(message, context);
+      if (response) {
+        metrics.recordLlmTokenUsage(response.length);
+      }
+      return response;
+    },
   };
 }
 
@@ -66,6 +77,22 @@ const openWebUI: ILlmProvider = {
   },
   generateCompletion: async () => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
+  },
+  validateCredentials: async () => {
+    try {
+      await getSessionKey();
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  generateResponse: async (message: IMessage, context?: IMessage[]) => {
+    const result = await openWebUIImport.generateChatCompletion(
+      message.getText(),
+      context || [],
+      message.metadata
+    );
+    return result.text || '';
   },
 };
 

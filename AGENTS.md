@@ -70,8 +70,23 @@ console.log(botConfig.get('MESSAGE_PROVIDER')); // 'discord'
 **Interface Pattern**:
 ```typescript
 export interface ILlmProvider {
-  generateResponse(message: Message, context?: IMessage[]): Promise<string>;
+  name: string;
+  supportsChatCompletion: () => boolean;
+  supportsCompletion: () => boolean;
+  generateChatCompletion: (
+    userMessage: string,
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ) => Promise<string>;
+  generateStreamingChatCompletion?: (
+    userMessage: string,
+    historyMessages: IMessage[],
+    onChunk: (chunk: string) => void,
+    metadata?: Record<string, any>
+  ) => Promise<string>;
+  generateCompletion: (prompt: string) => Promise<string>;
   validateCredentials(): Promise<boolean>;
+  generateResponse(message: IMessage, context?: IMessage[]): Promise<string>;
 }
 ```
 
