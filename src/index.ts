@@ -250,7 +250,7 @@ if (!allowAllIPs) {
 }
 
 // Unified API routes - all on same port, no separation
-app.use('/api/swarm', swarmRouter);
+app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
