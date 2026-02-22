@@ -14,10 +14,21 @@ import { BotConfigurationManager } from '../../src/config/BotConfigurationManage
 import dashboardRouter from '../../src/server/routes/dashboard';
 
 jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: jest.fn((req, res, next) => {
-    req.user = { id: 'test-user', username: 'test-user', role: 'admin' };
-    next();
-  }),
+  authenticateToken: (req: any, res: any, next: any) => next(),
+  requirePermission: () => (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next(),
+  optionalAuth: (req: any, res: any, next: any) => next(),
+}));
+
+jest.mock('../../src/server/services/WebSocketService', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn().mockReturnValue({
+      getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errors: [] }),
+      getMessageFlow: jest.fn().mockReturnValue([]),
+      getAllBotStats: jest.fn().mockReturnValue({}),
+    }),
+  },
 }));
 
 describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
@@ -32,18 +43,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    if (getInstanceSpy) {
-      getInstanceSpy.mockRestore();
-      getInstanceSpy = null;
-    }
-  });
-
-  afterEach(() => {
-    if (getInstanceSpy) {
-      getInstanceSpy.mockRestore();
-      getInstanceSpy = null;
-    }
+    jest.restoreAllMocks();
   });
 
   describe('GET /dashboard/api/status - HAPPY PATH TESTS', () => {

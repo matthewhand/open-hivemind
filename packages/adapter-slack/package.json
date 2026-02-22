@@ -2,7 +2,6 @@
     "name": "@hivemind/adapter-slack",
     "version": "1.0.0",
     "description": "Slack adapter for Open Hivemind",
-    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {

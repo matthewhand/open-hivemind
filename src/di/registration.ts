@@ -24,9 +24,22 @@ export function registerServices(): void {
   container.register(
     TOKENS.ConfigurationManager,
     {
-      useClass: ConfigurationManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: ConfigurationManager.getInstance(),
+    }
+  );
+
+  container.register(
+    TOKENS.BotConfigurationManager,
+    {
+      useValue: BotConfigurationManager.getInstance(),
+    }
+  );
+
+  container.register(
+    TOKENS.UserConfigStore,
+    {
+      useValue: UserConfigStore.getInstance(),
+    }
   );
 
   container.register(

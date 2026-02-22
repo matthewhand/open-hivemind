@@ -35,20 +35,29 @@ function isProviderConnected(bot: any): boolean {
 router.get('/api/status', authenticateToken, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
+    let bots = [];
+    try {
+      bots = manager.getAllBots();
+    } catch (e) {
+      console.warn('Failed to load bots for status:', e);
+      bots = [];
+    }
+
     const ws = WebSocketService.getInstance();
 
     // Keep status lightweight and deterministic for tests: mark configured bots as active
-    const status = bots.map((bot) => ({
-      id: bot.name, // Using name as ID for now, could be improved with a real ID
-      name: bot.name,
-      provider: bot.messageProvider,
-      llmProvider: bot.llmProvider,
-      status: 'active',
-      connected: isProviderConnected(bot),
-      messageCount: ws.getBotStats(bot.name).messageCount,
-      errorCount: ws.getBotStats(bot.name).errors.length,
-    }));
+    const status = bots
+      .filter((bot) => bot && bot.name)
+      .map((bot) => ({
+        id: bot.name, // Using name as ID for now, could be improved with a real ID
+        name: bot.name,
+        provider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        status: 'active',
+        connected: isProviderConnected(bot),
+        messageCount: ws.getBotStats(bot.name).messageCount,
+        errorCount: ws.getBotStats(bot.name).errors.length,
+      }));
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
