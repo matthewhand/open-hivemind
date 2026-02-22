@@ -5,9 +5,7 @@ import { setCurrentTenant as setReduxCurrentTenant } from '../store/slices/authS
 import { useAuth } from '../contexts/AuthContext';
 import {
   BuildingOfficeIcon,
-  UserIcon,
   ExclamationTriangleIcon,
-  PlusCircleIcon,
 } from '@heroicons/react/24/outline';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
@@ -53,15 +51,11 @@ interface MultiTenantContextType {
   getUserUsage: () => { used: number; total: number; percentage: number };
 }
 
-const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
+export const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
 
 interface MultiTenantProviderProps {
   children: React.ReactNode;
 }
-
-// Start with clean slate - No demo data
-const mockTenants: Tenant[] = [];
-const mockUsers: TenantUser[] = [];
 
 export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
@@ -74,11 +68,6 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
 
   // Allow unauthenticated access (e.g. Login page)
   if (!isAuthenticated) { return <>{children}</>; }
-
-  // Onboarding State - Removed for auto-bootstrapping
-  // const [newOrgName, setNewOrgName] = useState('');
-  // const [newOrgDomain, setNewOrgDomain] = useState('');
-  // const [isCreating, setIsCreating] = useState(false);
 
   // Tenant management functions
   const switchTenant = async (tenantId: string): Promise<void> => {
