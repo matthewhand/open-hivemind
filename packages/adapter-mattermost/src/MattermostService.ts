@@ -2,28 +2,22 @@ import { EventEmitter } from 'events';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
-import { container } from 'tsyringe';
-import BotConfigurationManager from '@src/config/BotConfigurationManager';
-import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import {
-  ApiError,
-  BaseHivemindError,
-  ConfigurationError,
-  NetworkError,
+  type IBotConfigProvider,
+  type IMetricsCollector,
+  type IStartupGreetingEmitter,
+  type IChannelScorer,
+  type IErrorFactory,
+  type IMessengerService,
+  type IMessage,
+  type MessageFlowEventData,
   ValidationError,
-} from '@src/types/errorClasses';
-import { ErrorUtils } from '@src/types/errors';
-import { createErrorResponse } from '@src/utils/errorResponse';
-import messageConfig from '@config/messageConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+  getErrorFactory,
+} from '@hivemind/shared-types';
 import MattermostClient from './mattermostClient';
 
 const debug = Debug('app:MattermostService:verbose');
 
-const metrics = MetricsCollector.getInstance();
 const RETRY_CONFIG = {
   retries: 3,
   minTimeout: 1000,
@@ -31,24 +25,73 @@ const RETRY_CONFIG = {
   factor: 2,
 };
 
+/**
+ * Dependencies required by MattermostService.
+ */
+export interface MattermostServiceDependencies {
+  botConfigProvider: IBotConfigProvider;
+  metricsCollector: IMetricsCollector;
+  greetingEmitter?: IStartupGreetingEmitter;
+  channelScorer?: IChannelScorer;
+  errorFactory?: IErrorFactory;
+}
+
+/**
+ * Default no-op metrics collector for fallback.
+ */
+class NoOpMetricsCollector implements IMetricsCollector {
+  incrementMessages(): void { }
+  incrementErrors(): void { }
+  recordResponseTime(_time: number): void { }
+  recordMessageFlow(_event: MessageFlowEventData): void { }
+}
+
+/**
+ * Default no-op greeting emitter for fallback.
+ */
+class NoOpGreetingEmitter implements IStartupGreetingEmitter {
+  emitServiceReady(_service: IMessengerService): void { }
+}
+
+/**
+ * Default no-op channel scorer for fallback.
+ */
+class NoOpChannelScorer implements IChannelScorer {
+  isRouterEnabled(): boolean {
+    return false;
+  }
+  computeScore(_channelId: string): number {
+    return 0;
+  }
+}
+
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
   private clients: Map<string, MattermostClient> = new Map();
   private channels: Map<string, string> = new Map();
   private botConfigs: Map<string, any> = new Map();
   private app?: Application;
+  private deps: MattermostServiceDependencies;
 
   public supportsChannelPrioritization: boolean = true;
 
-  private constructor() {
+  private constructor(deps?: MattermostServiceDependencies) {
     super();
+    // Use provided dependencies or fallback to no-op implementations
+    this.deps = {
+      botConfigProvider: deps?.botConfigProvider ?? { getAllBots: () => [] },
+      metricsCollector: deps?.metricsCollector ?? new NoOpMetricsCollector(),
+      greetingEmitter: deps?.greetingEmitter ?? new NoOpGreetingEmitter(),
+      channelScorer: deps?.channelScorer ?? new NoOpChannelScorer(),
+      errorFactory: deps?.errorFactory ?? getErrorFactory(),
+    };
     debug('Initializing MattermostService with multi-instance support');
     this.initializeFromConfiguration();
   }
 
   private initializeFromConfiguration(): void {
-    const configManager = BotConfigurationManager.getInstance();
-    const mattermostBotConfigs = configManager
+    const { botConfigProvider } = this.deps;
+    const mattermostBotConfigs = botConfigProvider
       .getAllBots()
       .filter((bot) => bot.messageProvider === 'mattermost' && bot.mattermost?.token);
 
@@ -91,11 +134,39 @@ export class MattermostService extends EventEmitter implements IMessengerService
     });
   }
 
-  public static getInstance(): MattermostService {
+  public static getInstance(deps?: MattermostServiceDependencies): MattermostService {
     if (!MattermostService.instance) {
-      MattermostService.instance = new MattermostService();
+      MattermostService.instance = new MattermostService(deps);
+    } else if (deps) {
+      // Update dependencies if provided to an existing instance
+      this.instance.setDependencies(deps);
     }
     return MattermostService.instance;
+  }
+
+  /**
+   * Reset the singleton instance. Useful for testing.
+   */
+  public static resetInstance(): void {
+    MattermostService.instance = undefined;
+  }
+
+  /**
+   * Set or update dependencies after construction.
+   * Useful for lazy initialization or testing.
+   */
+  public setDependencies(deps: MattermostServiceDependencies): void {
+    this.deps = {
+      ...this.deps,
+      ...deps,
+    };
+    // Re-initialize if botConfigProvider changed
+    if (deps.botConfigProvider) {
+      this.clients.clear();
+      this.channels.clear();
+      this.botConfigs.clear();
+      this.initializeFromConfiguration();
+    }
   }
 
   public async initialize(): Promise<void> {
@@ -117,8 +188,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService = container.resolve(StartupGreetingService);
-    startupGreetingService.emit('service-ready', this);
+    this.deps.greetingEmitter?.emitServiceReady(this);
   }
 
   public setApp(app: Application): void {
@@ -183,10 +253,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
             return '';
           }
 
-          const hivemindError = ErrorUtils.toHivemindError(error);
-          const errType = (hivemindError as any).type;
+          // Check if it's a network/api error type
+          const errType = (error as any).type;
           if (errType === 'network' || errType === 'api') {
-            throw hivemindError;
+            throw error;
           }
 
           throw error;
@@ -194,31 +264,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }, RETRY_CONFIG);
 
       const duration = Date.now() - startTime;
-      metrics.incrementMessages();
-      metrics.recordResponseTime(duration);
+      this.deps.metricsCollector.incrementMessages();
+      this.deps.metricsCollector.recordResponseTime(duration);
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      metrics.incrementErrors();
+      this.deps.metricsCollector.incrementErrors();
       debug(
         `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
-
-      try {
-        const ws = require('@src/server/services/WebSocketService')
-          .default as typeof import('@src/server/services/WebSocketService').default;
-        ws.getInstance().recordMessageFlow({
-          botName: senderName || Array.from(this.clients.keys())[0],
-          provider: 'mattermost',
-          channelId,
-          userId: 'system',
-          messageType: 'outgoing',
-          contentLength: text.length,
-          status: 'error',
-          errorMessage: error.message,
-        });
-      } catch {}
 
       throw error;
     }
@@ -289,10 +344,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
             return [];
           }
 
-          const hivemindError = ErrorUtils.toHivemindError(error);
-          const errType = (hivemindError as any).type;
+          // Check if it's a network/api error type
+          const errType = (error as any).type;
           if (errType === 'network' || errType === 'api') {
-            throw hivemindError;
+            throw error;
           }
 
           throw error;
@@ -300,12 +355,12 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }, RETRY_CONFIG);
 
       const duration = Date.now() - startTime;
-      metrics.recordResponseTime(duration);
+      this.deps.metricsCollector.recordResponseTime(duration);
       debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      metrics.incrementErrors();
+      this.deps.metricsCollector.incrementErrors();
       debug(
         `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
@@ -444,7 +499,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
@@ -460,11 +515,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public scoreChannel(channelId: string): number {
     try {
-      const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
-      if (!enabled) {
+      if (!this.deps.channelScorer?.isRouterEnabled()) {
         return 0;
       }
-      return channelComputeScore(channelId);
+      return this.deps.channelScorer.computeScore(channelId);
     } catch {
       return 0;
     }

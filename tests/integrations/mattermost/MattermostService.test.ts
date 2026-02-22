@@ -1,5 +1,4 @@
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
-
+// Mock dependencies before importing the module
 jest.mock('@hivemind/adapter-mattermost', () => {
   const mockClient = {
     connect: jest.fn().mockResolvedValue(undefined),
@@ -21,10 +20,12 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     private clients: Map<string, any> = new Map();
     private channels: Map<string, string> = new Map();
     private botConfigs: Map<string, any> = new Map();
+    private deps: any;
     public supportsChannelPrioritization: boolean = true;
 
-    private constructor() {
+    private constructor(deps?: any) {
       super();
+      this.deps = deps || {};
       this.clients.set('test-bot', mockClient);
       this.channels.set('test-bot', 'general');
       this.botConfigs.set('test-bot', {
@@ -37,20 +38,31 @@ jest.mock('@hivemind/adapter-mattermost', () => {
       });
     }
 
-    public static getInstance(): MockMattermostService {
+    public static getInstance(deps?: any): MockMattermostService {
       if (!MockMattermostService.instance) {
-        MockMattermostService.instance = new MockMattermostService();
+        MockMattermostService.instance = new MockMattermostService(deps);
+      } else if (deps) {
+        // Update dependencies if provided to an existing instance
+        MockMattermostService.instance.setDependencies(deps);
       }
       return MockMattermostService.instance;
+    }
+
+    public static resetInstance(): void {
+      MockMattermostService.instance = undefined;
+    }
+
+    public setDependencies(deps: any): void {
+      this.deps = { ...this.deps, ...deps };
     }
 
     public async initialize(): Promise<void> {
       await mockClient.connect();
     }
 
-    public setApp(): void {}
+    public setApp(): void { }
 
-    public setMessageHandler(): void {}
+    public setMessageHandler(): void { }
 
     public async sendMessageToChannel(
       channelId: string,
@@ -102,7 +114,7 @@ jest.mock('@hivemind/adapter-mattermost', () => {
       });
     }
 
-    public async joinChannel(): Promise<void> {}
+    public async joinChannel(): Promise<void> { }
 
     public getClientId(): string {
       return 'test-bot';
@@ -116,9 +128,9 @@ jest.mock('@hivemind/adapter-mattermost', () => {
       return null;
     }
 
-    public async sendTyping(): Promise<void> {}
+    public async sendTyping(): Promise<void> { }
 
-    public async setModelActivity(): Promise<void> {}
+    public async setModelActivity(): Promise<void> { }
 
     public async shutdown(): Promise<void> {
       MockMattermostService.instance = undefined;
@@ -158,26 +170,15 @@ jest.mock('@hivemind/adapter-mattermost', () => {
   };
 });
 
-jest.mock('@src/config/BotConfigurationManager', () => ({
-  getInstance: jest.fn(() => ({
-    getAllBots: () => [
-      {
-        name: 'test-bot',
-        messageProvider: 'mattermost',
-        mattermost: {
-          serverUrl: 'https://mattermost.example.com',
-          token: 'test-token',
-          channel: 'general',
-        },
-      },
-    ],
-  })),
-}));
+// Import from the adapter package directly to test the class
+import { MattermostService } from '@hivemind/adapter-mattermost';
 
 describe('MattermostService', () => {
   let service: MattermostService;
 
   beforeEach(() => {
+    // Reset instance before each test
+    (MattermostService as any).instance = undefined;
     service = MattermostService.getInstance();
   });
 
@@ -224,5 +225,61 @@ describe('MattermostService', () => {
 
     await service.shutdown();
     expect((MattermostService as any).instance).toBeUndefined();
+  });
+
+  describe('getInstance with dependencies', () => {
+    it('should return the same instance on subsequent calls', () => {
+      const instance1 = MattermostService.getInstance();
+      const instance2 = MattermostService.getInstance();
+      expect(instance1).toBe(instance2);
+    });
+
+    it('should update dependencies when provided to an existing instance', () => {
+      // First call without dependencies
+      const instance1 = MattermostService.getInstance();
+
+      // Create mock dependencies
+      const mockBotConfigProvider = {
+        getAllBots: jest.fn().mockReturnValue([]),
+      };
+      const mockMetricsCollector = {
+        incrementMessages: jest.fn(),
+        incrementErrors: jest.fn(),
+        recordResponseTime: jest.fn(),
+        recordMessageFlow: jest.fn(),
+      };
+
+      // Second call with dependencies - should update existing instance
+      const instance2 = MattermostService.getInstance({
+        botConfigProvider: mockBotConfigProvider as any,
+        metricsCollector: mockMetricsCollector as any,
+      });
+
+      // Should still be the same instance
+      expect(instance2).toBe(instance1);
+    });
+
+    it('should create new instance with dependencies when none exists', () => {
+      // Reset the instance first
+      (MattermostService as any).instance = undefined;
+
+      const mockBotConfigProvider = {
+        getAllBots: jest.fn().mockReturnValue([]),
+      };
+      const mockMetricsCollector = {
+        incrementMessages: jest.fn(),
+        incrementErrors: jest.fn(),
+        recordResponseTime: jest.fn(),
+        recordMessageFlow: jest.fn(),
+      };
+
+      const instance = MattermostService.getInstance({
+        botConfigProvider: mockBotConfigProvider as any,
+        metricsCollector: mockMetricsCollector as any,
+      });
+
+      expect(instance).toBeDefined();
+      expect(instance).toBeInstanceOf(MattermostService);
+    });
   });
 });
