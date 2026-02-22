@@ -168,6 +168,16 @@ export class OpenAiProvider implements ILlmProvider {
     }
   }
 
+  async validateCredentials(): Promise<boolean> {
+    const apiKey =
+      this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    return !!apiKey;
+  }
+
+  async generateResponse(message: IMessage, context?: IMessage[]): Promise<string> {
+    return this.generateChatCompletion(message.getText(), context || [], message.metadata);
+  }
+
   private handleError(error: unknown, attempt: number) {
     debug(`Attempt ${attempt} failed: ${error}`);
   }

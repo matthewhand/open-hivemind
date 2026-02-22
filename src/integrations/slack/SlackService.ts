@@ -31,7 +31,7 @@ import { SlackBotManager } from './SlackBotManager';
 import { SlackEventProcessor } from './SlackEventProcessor';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
-import type SlackMessage from './SlackMessage';
+import SlackMessage from './SlackMessage';
 import { SlackMessageProcessor } from './SlackMessageProcessor';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackWelcomeHandler } from './SlackWelcomeHandler';
@@ -421,7 +421,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
             contentLength: (message.getText?.() || '').length,
             status: 'success',
           });
-        } catch {}
+        } catch { }
         debug(
           `[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`
         );
@@ -454,9 +454,11 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
         const threadTs = message.data.thread_ts || message.data.ts;
         try {
-          const enrichedMessage: SlackMessage = await messageProcessor.enrichSlackMessage(
-            message as unknown as SlackMessage
-          );
+          if (!(message instanceof SlackMessage)) {
+            debug(`[${botName}] message is not a SlackMessage`);
+            return '';
+          }
+          const enrichedMessage: SlackMessage = await messageProcessor.enrichSlackMessage(message);
           const channelId = enrichedMessage.getChannelId();
 
           // Fetch last 10 messages from the channel
@@ -467,9 +469,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
           const payload = await messageProcessor.constructPayload(enrichedMessage, historyMessages);
           const userMessage = payload.messages[payload.messages.length - 1].content;
-          // historyMessages are already SlackMessage instances implementing IMessage in Slack domain.
-          // Cast to IMessage[] to satisfy typing for LLM provider history input.
-          const formattedHistory: IMessage[] = historyMessages as unknown as IMessage[];
+          const formattedHistory: IMessage[] = historyMessages;
           const metadataWithMessages = { ...payload.metadata, messages: payload.messages };
           const llmProviders = await getLlmProvider();
 
@@ -1036,7 +1036,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     if (this.botManagers.size === 0 && process.env.SLACK_BOT_TOKEN) {
       try {
         this.initializeLegacyConfiguration();
-      } catch {}
+      } catch { }
     }
     if (this.botManagers.size === 0) {
       // As a last resort in unit tests, return a minimal mocked manager instance
@@ -1110,12 +1110,12 @@ export class SlackService extends EventEmitter implements IMessengerService {
       for (const b of bots) {
         try {
           await b.socketClient?.disconnect?.();
-        } catch {}
+        } catch { }
         try {
           await b.rtmClient?.disconnect?.();
-        } catch {}
+        } catch { }
       }
-    } catch {}
+    } catch { }
     this.botManagers.delete(botName);
     this.signatureVerifiers.delete(botName);
     this.interactiveHandlers.delete(botName);

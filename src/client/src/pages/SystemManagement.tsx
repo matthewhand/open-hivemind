@@ -4,7 +4,6 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
-// import { toast } from 'react-hot-toast';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -76,7 +75,6 @@ const SystemManagement: React.FC = () => {
       }));
     } catch (error) {
       console.error('Failed to fetch system config:', error);
-      // toast.error('Failed to load system configuration');
     }
   };
 
@@ -108,10 +106,8 @@ const SystemManagement: React.FC = () => {
 
       // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
-      // toast.success('Configuration saved');
     } catch (error) {
       console.error('Failed to update configuration:', error);
-      // toast.error('Failed to save configuration');
     } finally {
       setIsLoading(false);
     }

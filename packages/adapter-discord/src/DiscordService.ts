@@ -87,7 +87,7 @@ export const Discord = {
    * ```
    */
   DiscordService: class extends EventEmitter implements IMessengerService {
-    private static instance: DiscordService;
+    private static instance: DiscordService | undefined;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
     private voiceManager: any;
@@ -300,7 +300,7 @@ export const Discord = {
       if (invalidBots.length > 0) {
         log(
           `DiscordService.initialize(): found ${invalidBots.length} bot(s) with missing/empty tokens: ` +
-            invalidBots.map((b) => b.name).join(', ')
+          invalidBots.map((b) => b.name).join(', ')
         );
         throw new ValidationError(
           'Cannot initialize DiscordService: One or more bot tokens are empty',
@@ -327,7 +327,7 @@ export const Discord = {
               }
               bot.config.BOT_ID = bot.botUserId;
               bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
-            } catch {}
+            } catch { }
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
           });
@@ -418,7 +418,7 @@ export const Discord = {
               return;
             }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-          } catch {}
+          } catch { }
         });
 
         bot.client.on('messageCreate', async (message) => {
@@ -450,7 +450,7 @@ export const Discord = {
                 contentLength: (message.content || '').length,
                 status: 'success',
               });
-            } catch {}
+            } catch { }
 
             let repliedMessage: any = null;
             try {
@@ -539,7 +539,7 @@ export const Discord = {
               return;
             }
             TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-          } catch {}
+          } catch { }
         });
 
         client.on('messageCreate', async (message) => {
@@ -586,7 +586,7 @@ export const Discord = {
               ...(newBot.config.discord || {}),
               clientId: newBot.botUserId,
             };
-          } catch {}
+          } catch { }
           resolve();
         });
         client.login(token).catch(reject);
@@ -617,14 +617,14 @@ export const Discord = {
         const botInfo =
           (senderName && isSnowflake(senderName)
             ? this.bots.find(
-                (b) =>
-                  b.botUserId === senderName ||
-                  b.config?.BOT_ID === senderName ||
-                  b.config?.discord?.clientId === senderName
-              )
+              (b) =>
+                b.botUserId === senderName ||
+                b.config?.BOT_ID === senderName ||
+                b.config?.discord?.clientId === senderName
+            )
             : this.bots.find(
-                (b) => b.botUserName === senderName || b.config?.name === senderName
-              )) || this.bots[0];
+              (b) => b.botUserName === senderName || b.config?.name === senderName
+            )) || this.bots[0];
 
         log(
           `sendTyping: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`
@@ -695,11 +695,11 @@ export const Discord = {
       const botInfo =
         (senderName && isSnowflake(senderName)
           ? this.bots.find(
-              (b) =>
-                b.botUserId === senderName ||
-                b.config?.BOT_ID === senderName ||
-                b.config?.discord?.clientId === senderName
-            )
+            (b) =>
+              b.botUserId === senderName ||
+              b.config?.BOT_ID === senderName ||
+              b.config?.discord?.clientId === senderName
+          )
           : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
         this.bots[0];
       const effectiveSenderName = botInfo.botUserName;
@@ -789,7 +789,7 @@ export const Discord = {
             contentLength: (text || '').length,
             status: 'success',
           });
-        } catch {}
+        } catch { }
         return message.id;
       } catch (error: unknown) {
         if (error instanceof ValidationError) {
@@ -805,7 +805,7 @@ export const Discord = {
               botName: botInfo.botUserName,
               metadata: { channelId: selectedChannelId, errorType: 'ValidationError' },
             });
-          } catch {}
+          } catch { }
           return '';
         }
 
@@ -827,7 +827,7 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'NetworkError' },
           });
-        } catch {}
+        } catch { }
         return '';
       }
     }
@@ -892,7 +892,7 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId, errorType: 'NetworkError' },
           });
-        } catch {}
+        } catch { }
 
         return [];
       }
@@ -1001,11 +1001,11 @@ export const Discord = {
 
         const byId = cfgId
           ? this.bots.find(
-              (b) =>
-                b.botUserId === cfgId ||
-                b.config?.BOT_ID === cfgId ||
-                b.config?.discord?.clientId === cfgId
-            )
+            (b) =>
+              b.botUserId === cfgId ||
+              b.config?.BOT_ID === cfgId ||
+              b.config?.discord?.clientId === cfgId
+          )
           : undefined;
 
         const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
@@ -1092,7 +1092,7 @@ export const Discord = {
         await bot.client.destroy();
         log(`Bot ${bot.botUserName} shut down`);
       }
-      Discord.DiscordService.instance = undefined as any;
+      Discord.DiscordService.instance = undefined;
     }
 
     /**

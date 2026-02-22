@@ -32,7 +32,7 @@ export async function generateChatCompletionDirect(
   }
   for (const h of historyMessages) {
     try {
-      const role = (h as any).role || 'user';
+      const role = ((h as unknown) as { role?: string }).role || 'user';
       const content = h.getText();
       messages.push({ role, content });
     } catch {
