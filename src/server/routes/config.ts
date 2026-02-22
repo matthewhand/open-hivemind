@@ -669,7 +669,7 @@ router.get('/sources', async (req, res) => {
 
     // Detect config files
     const configDir = path.join(__dirname, '../../../config');
-    let configFiles: any[] = [];
+    let configFiles: Record<string, any>[] = [];
 
     try {
       const files = await fs.promises.readdir(configDir);
@@ -693,13 +693,13 @@ router.get('/sources', async (req, res) => {
         });
 
       const results = await Promise.all(statsPromises);
-      configFiles = results.filter((r) => r !== null);
+      configFiles = results.filter((r) => r !== null) as Record<string, any>[];
     } catch (fileError) {
       console.warn('Could not read config directory:', fileError);
     }
 
     // Detect overrides (env vars that override config file values)
-    const overrides: any[] = [];
+    const overrides: Record<string, any>[] = [];
     const manager = BotConfigurationManager.getInstance();
     let bots: any[] = [];
     try {
