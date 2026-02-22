@@ -12,8 +12,6 @@ This report analyzes code quality, consistency issues, and technical debt across
 - **Class-based Files**: 207 files
 - **Largest Files**:
   - `DatabaseManager.ts`: 1,335 lines
-  - `AnalyticsCollector.ts`: 554 lines
-  - `UsageTracker.ts`: 567 lines
   - `MCPProviderManager.ts`: 852 lines
 
 ## Identified Issues
@@ -33,8 +31,6 @@ This report analyzes code quality, consistency issues, and technical debt across
 **Large Classes (>300 lines)**:
 1. `DatabaseManager` (1,335 lines)
 2. `MCPProviderManager` (852 lines)
-3. `UsageTracker` (567 lines)
-4. `AnalyticsCollector` (554 lines)
 
 **Problems**:
 - Single Responsibility Principle violations

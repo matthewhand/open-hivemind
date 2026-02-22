@@ -61,10 +61,6 @@ open-hivemind/
 │   │   ├── AlertManager.ts       # Alert management
 │   │   ├── MetricsCollector.ts   # Metrics collection
 │   │   └── MonitoringService.ts  # Unified monitoring service
-│   ├── analytics/               # Analytics and usage tracking
-│   │   ├── AnalyticsCollector.ts # Event tracking
-│   │   ├── UsageTracker.ts       # User analytics
-│   │   └── index.ts              # Analytics exports
 │   ├── scripts/                  # Automation scripts
 │   │   ├── deploy.sh            # Deployment automation
 │   │   ├── backup.sh            # Backup and recovery
@@ -101,8 +97,7 @@ Frontend Application
 │   └── WebSocket Hooks
 ├── Services (Business Logic)
 │   ├── API Service
-│   ├── WebSocket Service
-│   └── Analytics Service
+│   └── WebSocket Service
 └── Types (Type Definitions)
     ├── Domain Types
     ├── API Types
@@ -127,7 +122,6 @@ Backend Application
 │   └── Configuration (Settings)
 └── Infrastructure Layer
     ├── Monitoring (Health Checks)
-    ├── Analytics (Event Tracking)
     └── Security (Authentication)
 ```
 
@@ -151,31 +145,13 @@ Monitoring System
     ├── Express Middleware
     ├── API Endpoints
     └── WebSocket Events
-
-Analytics System
-├── Event Collector (User Actions)
-│   ├── Page Views
-│   ├── Click Events
-│   └── Form Submissions
-├── Usage Tracker (Behavior Analysis)
-│   ├── User Sessions
-│   ├── Feature Adoption
-│   └── Retention Metrics
-├── Data Processing (Aggregation)
-│   ├── Real-time Processing
-│   ├── Batch Processing
-│   └── Data Export
-└── Reporting (Visualization)
-    ├── Dashboard Components
-    ├── API Endpoints
-    └── Export Functions
 ```
 
 ## 🔄 Data Flow
 
 ### **User Interaction Flow**
 ```
-User Action → Frontend Event → Analytics Service → Backend API → Database
+User Action → Frontend Event → Backend API → Database
                 ↓
 WebSocket Event → Real-time Update → Dashboard Refresh
 ```
@@ -185,13 +161,6 @@ WebSocket Event → Real-time Update → Dashboard Refresh
 System Metrics → Health Checker → Alert Manager → Notification Channel
                 ↓
 Dashboard ← Monitoring Service ← Metrics Collector ← Real-time Data
-```
-
-### **Data Processing Flow**
-```
-Raw Events → Analytics Collector → Usage Tracker → Aggregated Metrics → Dashboard
-                ↓
-Database ← Backup System ← Scheduled Tasks ← Automation Scripts
 ```
 
 ## 🔐 Security Architecture
@@ -269,9 +238,7 @@ Automated Backup → Health Check → Performance Test → Rollback (if needed)
 - **Alert History**: Historical alert data and trends
 
 ### **Analytics & Reporting**
-- **User Analytics**: Behavior, engagement, retention
 - **Performance Analytics**: Response times, error rates, throughput
-- **Business Analytics**: Feature usage, adoption rates
 - **System Analytics**: Resource utilization, capacity planning
 
 ## 🔧 Maintenance & Operations
