@@ -49,9 +49,9 @@ export function getMessengerProvider() {
   const providerFilter: string[] =
     typeof rawProviders === 'string'
       ? rawProviders
-        .split(',')
-        .map((v: string) => v.trim().toLowerCase())
-        .filter(Boolean)
+          .split(',')
+          .map((v: string) => v.trim().toLowerCase())
+          .filter(Boolean)
       : Array.isArray(rawProviders)
         ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
         : [];
@@ -61,7 +61,7 @@ export function getMessengerProvider() {
   };
 
   // In tests we exclusively support the { providers: [{ type: string }] } shape
-  const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig as any).providers)
+  const providersArray: { type: string }[] = Array.isArray((messengersConfig as any).providers)
     ? (messengersConfig as any).providers
     : [];
 
@@ -76,7 +76,6 @@ export function getMessengerProvider() {
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (hasDiscord && wantProvider('discord')) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const DiscordMgr = require('@hivemind/adapter-discord');
       const svc = DiscordMgr?.DiscordService?.getInstance
         ? DiscordMgr.DiscordService.getInstance()
@@ -182,7 +181,7 @@ export function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
-          sendMessageToChannel: () => { },
+          sendMessageToChannel: () => {},
           getClientId: () => 'SLACK_CLIENT_ID',
         });
       }

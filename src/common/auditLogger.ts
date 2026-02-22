@@ -23,7 +23,7 @@ export class AuditLogger {
   private static instance: AuditLogger;
   private logFilePath: string;
   private maxLogSize: number = 10 * 1024 * 1024; // 10MB
-  private maxLogFiles: number = 5;
+  private maxLogFiles = 5;
 
   private constructor() {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -168,7 +168,7 @@ export class AuditLogger {
     });
   }
 
-  public getAuditEvents(limit: number = 100, offset: number = 0): AuditEvent[] {
+  public getAuditEvents(limit = 100, offset = 0): AuditEvent[] {
     try {
       if (!fs.existsSync(this.logFilePath)) {
         return [];
@@ -198,17 +198,17 @@ export class AuditLogger {
     }
   }
 
-  public getAuditEventsByUser(user: string, limit: number = 100): AuditEvent[] {
+  public getAuditEventsByUser(user: string, limit = 100): AuditEvent[] {
     const allEvents = this.getAuditEvents(1000); // Get more to filter
     return allEvents.filter((event) => event.user === user).slice(0, limit);
   }
 
-  public getAuditEventsByAction(action: string, limit: number = 100): AuditEvent[] {
+  public getAuditEventsByAction(action: string, limit = 100): AuditEvent[] {
     const allEvents = this.getAuditEvents(1000); // Get more to filter
     return allEvents.filter((event) => event.action === action).slice(0, limit);
   }
 
-  public getBotActivity(botId: string, limit: number = 50): AuditEvent[] {
+  public getBotActivity(botId: string, limit = 50): AuditEvent[] {
     const allEvents = this.getAuditEvents(2000);
     const resourceKey = `bots/${botId}`;
     return allEvents

@@ -36,11 +36,11 @@ export interface NotificationChannel {
 export class AlertManager extends EventEmitter {
   private healthChecker: HealthChecker;
   private config: AlertConfig;
-  private alerts: Map<string, Alert> = new Map();
-  private notificationChannels: Map<string, NotificationChannel> = new Map();
-  private failureCounts: Map<string, number> = new Map();
-  private lastAlertTimes: Map<string, number> = new Map();
-  private alertIdCounter: number = 0;
+  private alerts = new Map<string, Alert>();
+  private notificationChannels = new Map<string, NotificationChannel>();
+  private failureCounts = new Map<string, number>();
+  private lastAlertTimes = new Map<string, number>();
+  private alertIdCounter = 0;
   private monitoringIntervalId: string | null = null;
 
   // Bounded cache configuration

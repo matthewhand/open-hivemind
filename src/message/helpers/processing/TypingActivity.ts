@@ -8,7 +8,7 @@ const debug = Debug('app:TypingActivity');
  */
 export class TypingActivity {
   private static instance: TypingActivity;
-  private byChannel: Map<string, Map<string, number>> = new Map();
+  private byChannel = new Map<string, Map<string, number>>();
 
   public static getInstance(): TypingActivity {
     if (!TypingActivity.instance) {

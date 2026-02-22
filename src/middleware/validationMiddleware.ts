@@ -30,7 +30,7 @@ export const commonValidations = {
   message: () => body('message').isLength({ min: 1, max: 5000 }).trim().escape(),
 
   // For numeric values
-  number: (min: number = 0, max: number = 1000000) => body('number').isInt({ min, max }).toInt(),
+  number: (min = 0, max = 1000000) => body('number').isInt({ min, max }).toInt(),
 
   // For boolean values
   boolean: () => body('boolean').isBoolean().toBoolean(),

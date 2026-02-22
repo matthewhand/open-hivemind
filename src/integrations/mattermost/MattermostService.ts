@@ -1,11 +1,11 @@
 import { EventEmitter } from 'events';
-import { container } from 'tsyringe';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
+import { container } from 'tsyringe';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import {
   ApiError,
   BaseHivemindError,
@@ -39,13 +39,13 @@ const RETRY_CONFIG = {
  */
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
-  private clients: Map<string, MattermostClient> = new Map();
-  private channels: Map<string, string> = new Map();
-  private botConfigs: Map<string, any> = new Map();
+  private clients = new Map<string, MattermostClient>();
+  private channels = new Map<string, string>();
+  private botConfigs = new Map<string, any>();
   private app?: Application;
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
-  public supportsChannelPrioritization: boolean = true;
+  public supportsChannelPrioritization = true;
 
   private constructor() {
     super();
@@ -236,21 +236,17 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch { }
+      } catch {}
 
       throw error;
     }
   }
 
-  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
+  public async getMessagesFromChannel(channelId: string, limit = 10): Promise<IMessage[]> {
     return this.fetchMessages(channelId, limit);
   }
 
-  public async fetchMessages(
-    channelId: string,
-    limit: number = 10,
-    botName?: string
-  ): Promise<IMessage[]> {
+  public async fetchMessages(channelId: string, limit = 10, botName?: string): Promise<IMessage[]> {
     debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
 
     const startTime = Date.now();
@@ -471,7 +467,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch { }
+    } catch {}
   }
 
   /**
@@ -523,11 +519,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
   /**
    * Returns individual service wrappers for each managed Mattermost bot.
    */
-  public getDelegatedServices(): Array<{
+  public getDelegatedServices(): {
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }> {
+  }[] {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
       const serviceName = `mattermost-${name}`;

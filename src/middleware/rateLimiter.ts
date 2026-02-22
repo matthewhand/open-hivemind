@@ -122,7 +122,7 @@ initializeRedis().catch((err) => {
  * Used as fallback when Redis is not available
  */
 class MemoryStoreWithCleanup {
-  private hits: Map<string, { count: number; resetTime: number }> = new Map();
+  private hits = new Map<string, { count: number; resetTime: number }>();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private windowMs: number;
 
@@ -177,7 +177,7 @@ class MemoryStoreWithCleanup {
 }
 
 // Store instances for different rate limiters
-const memoryStores: Map<string, MemoryStoreWithCleanup> = new Map();
+const memoryStores = new Map<string, MemoryStoreWithCleanup>();
 
 /**
  * Create appropriate store based on environment

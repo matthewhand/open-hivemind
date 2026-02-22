@@ -9,7 +9,7 @@ export interface TypingState {
 
 export class TypingMonitor extends EventEmitter {
   private static instance: TypingMonitor;
-  private typingStates: Map<string, TypingState> = new Map(); // key: channelId:userId
+  private typingStates = new Map<string, TypingState>(); // key: channelId:userId
   private readonly TYPING_TTL_MS = 10000; // 10 seconds (Discord default is ~10s)
 
   public static getInstance(): TypingMonitor {

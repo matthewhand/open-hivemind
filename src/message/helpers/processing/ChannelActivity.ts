@@ -5,7 +5,7 @@ const debug = Debug('app:ChannelActivity');
 const lastBotActivityByChannelAndBot = new Map<string, number>();
 
 // Track all recent bot activity per channel for crosstalk detection
-const recentChannelActivity: Map<string, Array<{ botId: string; timestamp: number }>> = new Map();
+const recentChannelActivity = new Map<string, { botId: string; timestamp: number }[]>();
 const ACTIVITY_WINDOW_MS = 30000; // 30 seconds
 
 export function recordBotActivity(channelId: string, botId: string): void {
@@ -35,7 +35,7 @@ export function getLastBotActivity(channelId: string, botId: string): number {
 export function getRecentChannelActivity(
   channelId: string,
   since: number
-): Array<{ botId: string; timestamp: number }> {
+): { botId: string; timestamp: number }[] {
   const activities = recentChannelActivity.get(channelId) || [];
   return activities.filter((a) => a.timestamp > since);
 }

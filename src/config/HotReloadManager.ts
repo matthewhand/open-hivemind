@@ -34,9 +34,9 @@ export interface HotReloadResult {
 export class HotReloadManager {
   private static instance: HotReloadManager;
   private changeHistory: ConfigurationChange[] = [];
-  private rollbackSnapshots: Map<string, Record<string, any>> = new Map();
+  private rollbackSnapshots = new Map<string, Record<string, any>>();
   private isReloading = false;
-  private configWatchers: Map<string, fs.FSWatcher> = new Map();
+  private configWatchers = new Map<string, fs.FSWatcher>();
   private userConfigStore = UserConfigStore.getInstance();
 
   private constructor() {

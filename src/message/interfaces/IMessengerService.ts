@@ -26,7 +26,7 @@ export interface IMessengerService {
    * Optional: return per-instance startup summaries for operator-friendly logging.
    * Implementations that don't support per-instance introspection can omit this.
    */
-  getAgentStartupSummaries?: () => Array<{
+  getAgentStartupSummaries?: () => {
     name: string;
     provider: string;
     botId?: string;
@@ -35,7 +35,7 @@ export interface IMessengerService {
     llmModel?: string;
     llmEndpoint?: string;
     systemPrompt?: string;
-  }>;
+  }[];
 
   /**
    * Optional integration hook: resolve per-agent identity and routing hints.
@@ -227,11 +227,11 @@ export interface IMessengerService {
    * Useful for services like Discord that manage multiple bot instances under one connection.
    * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
    */
-  getDelegatedServices?(): Array<{
+  getDelegatedServices?(): {
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }>;
+  }[];
 
   /**
    * Optional: Updates the bot's presence/activity status with model info.

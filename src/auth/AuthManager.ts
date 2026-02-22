@@ -10,8 +10,8 @@ const debug = Debug('app:AuthManager');
 
 export class AuthManager {
   private static instance: AuthManager;
-  private users: Map<string, User> = new Map();
-  private refreshTokens: Set<string> = new Set();
+  private users = new Map<string, User>();
+  private refreshTokens = new Set<string>();
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly bcryptRounds = 12;

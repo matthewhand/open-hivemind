@@ -14,9 +14,7 @@
  * Represents the original object received from Discord, Slack, Telegram, etc.
  * The shape varies per provider, so we keep it loosely typed but encapsulated.
  */
-export interface RawMessageData {
-  [key: string]: unknown;
-}
+export type RawMessageData = Record<string, unknown>;
 
 /**
  * Enumerates the possible roles a message can have.
@@ -82,6 +80,4 @@ export interface Message {
  * Payload used for public announcements. The shape varies per platform,
  * therefore it is defined as a generic record.
  */
-export interface AnnouncementPayload {
-  [key: string]: unknown;
-}
+export type AnnouncementPayload = Record<string, unknown>;

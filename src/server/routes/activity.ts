@@ -210,13 +210,13 @@ router.get('/chart-data', async (req, res) => {
       : new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const endTime = filter.endDate ? new Date(filter.endDate) : now;
 
-    const messageActivityData: Array<{ timestamp: string; count: number; provider?: string }> = [];
-    const llmUsageData: Array<{
+    const messageActivityData: { timestamp: string; count: number; provider?: string }[] = [];
+    const llmUsageData: {
       timestamp: string;
       usage: number;
       provider?: string;
       responseTime: number;
-    }> = [];
+    }[] = [];
 
     // Generate hourly data points
     const intervalMs = interval === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;

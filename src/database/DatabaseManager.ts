@@ -145,7 +145,7 @@ export interface BotConfiguration {
   responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[] | string;
+  mcpServers?: { name: string; serverUrl?: string }[] | string[] | string;
   mcpGuard?: MCPCGuardConfig | string;
   mcpGuardProfile?: string;
   discord?: DiscordConfig | string;
@@ -175,7 +175,7 @@ export interface BotConfigurationVersion {
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[] | string;
+  mcpServers?: { name: string; serverUrl?: string }[] | string[] | string;
   mcpGuard?: MCPCGuardConfig | string;
   discord?: DiscordConfig | string;
   slack?: SlackConfig | string;
@@ -802,7 +802,7 @@ export class DatabaseManager {
     channelId: string,
     userId: string,
     content: string,
-    provider: string = 'unknown'
+    provider = 'unknown'
   ): Promise<number> {
     if (!this.db || !this.connected) {
       // Return mock ID for tests when not connected
@@ -915,11 +915,7 @@ export class DatabaseManager {
     }
   }
 
-  async getMessages(
-    channelId: string,
-    limit: number = 50,
-    offset: number = 0
-  ): Promise<MessageRecord[]> {
+  async getMessages(channelId: string, limit = 50, offset = 0): Promise<MessageRecord[]> {
     return this.getMessageHistory(channelId, limit);
   }
 
@@ -1016,7 +1012,7 @@ export class DatabaseManager {
     totalMessages: number;
     totalChannels: number;
     totalAuthors: number;
-    providers: { [key: string]: number };
+    providers: Record<string, number>;
   }> {
     this.ensureConnected();
 
@@ -1028,7 +1024,7 @@ export class DatabaseManager {
         this.db!.all('SELECT provider, COUNT(*) as count FROM messages GROUP BY provider'),
       ]);
 
-      const providers: { [key: string]: number } = {};
+      const providers: Record<string, number> = {};
       providerStats.forEach((row: any) => {
         providers[row.provider] = row.count;
       });
@@ -1200,12 +1196,10 @@ export class DatabaseManager {
    * Get all bot configurations with their versions and audit logs in optimized bulk queries
    */
   async getAllBotConfigurationsWithDetails(): Promise<
-    Array<
-      BotConfiguration & {
-        versions: BotConfigurationVersion[];
-        auditLog: BotConfigurationAudit[];
-      }
-    >
+    (BotConfiguration & {
+      versions: BotConfigurationVersion[];
+      auditLog: BotConfigurationAudit[];
+    })[]
   > {
     this.ensureConnected();
 

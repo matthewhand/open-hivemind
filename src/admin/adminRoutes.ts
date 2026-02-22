@@ -3,11 +3,11 @@ import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { Discord } from '@hivemind/adapter-discord';
+import type { IBotInfo } from '@src/types/botInfo';
 import SlackService from '@integrations/slack/SlackService';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
-import type { IBotInfo } from '@src/types/botInfo';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -21,7 +21,7 @@ adminRouter.use(authenticate);
 // Apply audit middleware to all admin routes
 adminRouter.use(auditMiddleware);
 
-async function loadPersonas(): Promise<Array<{ key: string; name: string; systemPrompt: string }>> {
+async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt: string }[]> {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
   const personasDir = path.join(configDir, 'personas');
   const fallback = [
@@ -97,7 +97,7 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
-    } catch { }
+    } catch {}
     res.json({
       ok: true,
       slackBots,

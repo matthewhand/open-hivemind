@@ -98,7 +98,7 @@ export const jsonParser = {
   /**
    * Safely stringify JSON with error handling
    */
-  safeStringify: (obj: any, fallback: string = '{}'): string => {
+  safeStringify: (obj: any, fallback = '{}'): string => {
     try {
       return JSON.stringify(obj);
     } catch {
@@ -114,7 +114,7 @@ export const numberParser = {
   /**
    * Parse number with fallback
    */
-  parseNumber: (value: string | number, fallback: number = 0): number => {
+  parseNumber: (value: string | number, fallback = 0): number => {
     if (typeof value === 'number') {
       return isNaN(value) ? fallback : value;
     }
@@ -126,7 +126,7 @@ export const numberParser = {
   /**
    * Parse integer with fallback
    */
-  parseInt: (value: string | number, fallback: number = 0): number => {
+  parseInt: (value: string | number, fallback = 0): number => {
     if (typeof value === 'number') {
       if (isNaN(value)) return fallback;
       return Math.floor(value);

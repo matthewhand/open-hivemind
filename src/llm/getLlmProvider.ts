@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { IConfigAccessor } from '@src/types/configAccessor';
 
 const debug = Debug('app:getLlmProvider');
 
@@ -83,7 +83,6 @@ export function getLlmProvider(): ILlmProvider[] {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider(config.config);
             debug(`Initialized OpenAI provider instance: ${config.name}`);
@@ -129,7 +128,6 @@ export function getLlmProvider(): ILlmProvider[] {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
           case 'openai':
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const { OpenAiProvider } = require('@hivemind/provider-openai');
             instance = new OpenAiProvider();
             break;
@@ -150,7 +148,7 @@ export function getLlmProvider(): ILlmProvider[] {
   if (llmProviders.length === 0) {
     // If still empty, default to OpenAI (legacy default)
     debug('No providers configured, defaulting to OpenAI (Legacy default)');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const { OpenAiProvider } = require('@hivemind/provider-openai');
     llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
   }

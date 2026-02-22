@@ -33,7 +33,7 @@ function coercePriority(n: number): number {
   return i < 0 ? 0 : i;
 }
 
-function parseCSVMap(input: string): Array<[string, string]> {
+function parseCSVMap(input: string): [string, string][] {
   return input
     .split(',')
     .map(s => s.trim())
@@ -91,7 +91,7 @@ convict.addFormat({
     }
     if (typeof val === 'string') {
       const s = val.trim();
-      let entries: Array<[string, string]> = [];
+      let entries: [string, string][] = [];
       if (s.startsWith('{')) {
         const obj = strictParseJSON(s);
         entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
@@ -148,7 +148,7 @@ convict.addFormat({
     }
     if (typeof val === 'string') {
       const s = val.trim();
-      let entries: Array<[string, string]> = [];
+      let entries: [string, string][] = [];
       if (s.startsWith('{')) {
         const obj = strictParseJSON(s);
         entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
@@ -801,7 +801,7 @@ if (typeof process !== 'undefined' && process.env) {
 
   if (typeof bEnv === 'string') {
     const s = bEnv.trim();
-    let entries: Array<[string, string]> = [];
+    let entries: [string, string][] = [];
     if (s.startsWith('{')) {
       const obj = strictParseJSON(s); // throws if malformed
       entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
@@ -818,7 +818,7 @@ if (typeof process !== 'undefined' && process.env) {
 
   if (typeof pEnv === 'string') {
     const s = pEnv.trim();
-    let entries: Array<[string, string]> = [];
+    let entries: [string, string][] = [];
     if (s.startsWith('{')) {
       const obj = strictParseJSON(s); // throws if malformed
       entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);

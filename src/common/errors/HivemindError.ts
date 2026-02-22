@@ -26,9 +26,7 @@ export type ErrorCategory = 'database' | 'network' | 'validation' | 'configurati
 /**
  * Context information for errors
  */
-export interface ErrorContext {
-  [key: string]: unknown;
-}
+export type ErrorContext = Record<string, unknown>;
 
 /**
  * JSON representation of an error for logging

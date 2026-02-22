@@ -24,8 +24,8 @@ export interface MCPTool {
 
 export class MCPService {
   private static instance: MCPService;
-  private clients: Map<string, any> = new Map();
-  private tools: Map<string, MCPTool[]> = new Map();
+  private clients = new Map<string, any>();
+  private tools = new Map<string, MCPTool[]>();
 
   private constructor() {}
 

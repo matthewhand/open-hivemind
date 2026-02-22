@@ -4,7 +4,7 @@ const debug = Debug('app:OutgoingMessageRateLimiter');
 
 export class OutgoingMessageRateLimiter {
   private static instance: OutgoingMessageRateLimiter;
-  private byChannel: Map<string, number[]> = new Map();
+  private byChannel = new Map<string, number[]>();
 
   // Bounded cache configuration
   private readonly MAX_CHANNELS = parseInt(

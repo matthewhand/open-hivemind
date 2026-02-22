@@ -13,19 +13,13 @@ import { TOKENS } from './container';
  */
 export function registerServices(): void {
   // Config Management
-  container.register(
-    TOKENS.ConfigurationManager,
-    {
-      useValue: ConfigurationManager.getInstance(),
-    }
-  );
+  container.register(TOKENS.ConfigurationManager, {
+    useValue: ConfigurationManager.getInstance(),
+  });
 
-  container.register(
-    TOKENS.BotConfigurationManager,
-    {
-      useValue: BotConfigurationManager.getInstance(),
-    }
-  );
+  container.register(TOKENS.BotConfigurationManager, {
+    useValue: BotConfigurationManager.getInstance(),
+  });
 
   container.register(
     TOKENS.UserConfigStore,
@@ -35,20 +29,14 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
-  container.register(
-    TOKENS.ProviderConfigManager,
-    {
-      useFactory: (_) => ProviderConfigManager.getInstance(),
-    }
-  );
+  container.register(TOKENS.ProviderConfigManager, {
+    useFactory: (_) => ProviderConfigManager.getInstance(),
+  });
 
-  container.register(
-    TOKENS.SecureConfigManager,
-    {
-      useValue: SecureConfigManager.getInstance(),
-    }
-  );
+  container.register(TOKENS.SecureConfigManager, {
+    useValue: SecureConfigManager.getInstance(),
+  });
 
-  // Note: Specialized services like MCPService and Messenger providers 
+  // Note: Specialized services like MCPService and Messenger providers
   // are often registered separately or initialized on demand.
 }

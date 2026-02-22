@@ -102,8 +102,8 @@ export class ErrorLogger {
   private static instance: ErrorLogger;
   private config: LoggerConfig;
   private debug: Debug.Debugger;
-  private errorCounts: Map<string, number> = new Map();
-  private lastErrors: Map<string, number> = new Map(); // correlationId -> timestamp
+  private errorCounts = new Map<string, number>();
+  private lastErrors = new Map<string, number>(); // correlationId -> timestamp
 
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
@@ -447,7 +447,7 @@ export class ErrorLogger {
       low: Math.floor(totalErrors * 0.2),
     };
 
-    const byDate: { [key: string]: number } = {};
+    const byDate: Record<string, number> = {};
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
@@ -467,7 +467,7 @@ export class ErrorLogger {
   /**
    * Get recent error count
    */
-  getRecentErrorCount(timeframeMs: number = 60000): number {
+  getRecentErrorCount(timeframeMs = 60000): number {
     const cutoff = Date.now() - timeframeMs;
     return Array.from(this.lastErrors.values()).filter((timestamp) => timestamp > cutoff).length;
   }
@@ -476,8 +476,8 @@ export class ErrorLogger {
    * Get recent errors
    */
   getRecentErrors(
-    limit: number = 10
-  ): Array<{ error: HivemindError; context: ErrorContext; timestamp: number }> {
+    limit = 10
+  ): { error: HivemindError; context: ErrorContext; timestamp: number }[] {
     return Array.from(this.lastErrors.entries())
       .sort((a, b) => b[1] - a[1]) // Sort by timestamp descending
       .slice(0, limit)
