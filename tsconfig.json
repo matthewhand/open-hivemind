@@ -76,6 +76,12 @@
       ],
       "@hivemind/adapter-slack/*": [
         "packages/adapter-slack/src/*"
+      ],
+      "@hivemind/adapter-mattermost": [
+        "packages/adapter-mattermost/src/index.ts"
+      ],
+      "@hivemind/adapter-mattermost/*": [
+        "packages/adapter-mattermost/src/*"
       ]
     },
     "experimentalDecorators": true,
@@ -85,7 +91,8 @@
     "src/**/*",
     "packages/provider-openai/src/**/*",
     "packages/adapter-discord/src/**/*",
-    "packages/adapter-slack/src/**/*"
+    "packages/adapter-slack/src/**/*",
+    "packages/adapter-mattermost/src/**/*"
   ],
   "exclude": [
     "tests/**/*",

@@ -1,4 +1,4 @@
-import { SlackService } from '@integrations/slack/SlackService';
+import { SlackService } from '../SlackService';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
