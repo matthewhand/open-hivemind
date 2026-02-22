@@ -148,7 +148,8 @@ export const Discord = {
 
       console.log('!!! EMITTING service-ready FOR DiscordService !!!');
       console.log('!!! DiscordService EMITTER INSTANCE:', this);
-      const startupGreetingService = require('@services/StartupGreetingService').default;
+      const StartupGreetingService = require('@services/StartupGreetingService').default;
+      const startupGreetingService = StartupGreetingService.getInstance();
       startupGreetingService.emit('service-ready', this);
     }
 
@@ -303,7 +304,7 @@ export const Discord = {
      */
     public async getChannelOwnerId(channelId: string): Promise<string | null> {
       try {
-        const botInfo = this.bots[0];
+        const botInfo = this.botManager.getAllBots()[0];
         if (!botInfo) return null;
 
         const channel = await botInfo.client.channels.fetch(channelId);
