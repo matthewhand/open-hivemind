@@ -148,6 +148,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 >
                                     <option value="discord">Discord</option>
                                     <option value="slack">Slack</option>
+                                    <option value="mattermost">Mattermost</option>
                                 </select>
                             </div>
 

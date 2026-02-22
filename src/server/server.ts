@@ -14,6 +14,7 @@ import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
+import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
@@ -122,26 +123,11 @@ export class WebUIServer {
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-    // CSRF protection for sensitive routes
-    this.app.use((req, res, next) => {
-      // Skip CSRF for GET, OPTIONS, and health checks
-      if (req.method === 'GET' || req.method === 'OPTIONS' || req.path.startsWith('/health')) {
-        return next();
-      }
+    // CSRF token endpoint - must be before CSRF protection middleware
+    this.app.get('/api/csrf-token', csrfTokenHandler);
 
-      // Check for CSRF token in headers or body
-      const csrfToken = req.headers['x-csrf-token'] || req.body._csrf;
-
-      // For now, we'll allow requests without CSRF token but log them
-      // In production, you should generate and validate proper CSRF tokens
-      if (!csrfToken) {
-        debug('CSRF token missing for non-GET request to:', req.path);
-        // TODO: Uncomment in production after implementing token generation
-        // return res.status(403).json({ error: 'CSRF token required' });
-      }
-
-      next();
-    });
+    // CSRF protection for all API routes
+    this.app.use('/api', csrfProtection);
 
     // Error handler for malformed JSON in health API endpoints
     this.app.use(
