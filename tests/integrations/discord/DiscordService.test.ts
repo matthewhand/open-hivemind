@@ -144,7 +144,11 @@ describe('DiscordService', () => {
       dsModule.Discord.DiscordService.instance = undefined;
     }
     // Also clear the bots array if instance exists
-    if (dsModule.Discord && dsModule.Discord.DiscordService && dsModule.Discord.DiscordService.instance) {
+    if (
+      dsModule.Discord &&
+      dsModule.Discord.DiscordService &&
+      dsModule.Discord.DiscordService.instance
+    ) {
       dsModule.Discord.DiscordService.instance.bots = [];
     }
   };

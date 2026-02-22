@@ -3,23 +3,23 @@
  */
 
 import {
-  HivemindError,
-  DatabaseNotInitializedError,
-  DatabaseConnectionError,
-  DatabaseQueryError,
   BotNotFoundError,
-  MCPConnectionError,
-  MissingConfigError,
+  DatabaseConnectionError,
+  DatabaseNotInitializedError,
+  DatabaseQueryError,
+  ErrorCategory,
+  generateErrorId,
+  getErrorCategory,
+  getErrorCode,
+  HivemindError,
   InputValidationError,
   InvalidConfigError,
-  TimeoutError,
-  NotImplementedError,
   isHivemindError,
-  getErrorCode,
-  getErrorCategory,
-  generateErrorId,
+  MCPConnectionError,
+  MissingConfigError,
+  NotImplementedError,
+  TimeoutError,
   wrapError,
-  ErrorCategory,
 } from '@src/common/errors/HivemindError';
 
 describe('HivemindError', () => {
@@ -27,7 +27,7 @@ describe('HivemindError', () => {
     describe('DatabaseNotInitializedError', () => {
       it('should create error with correct properties', () => {
         const error = new DatabaseNotInitializedError('Database not ready');
-        
+
         expect(error).toBeInstanceOf(Error);
         expect(error).toBeInstanceOf(HivemindError);
         expect(error.code).toBe('DB_NOT_INITIALIZED');
@@ -39,7 +39,7 @@ describe('HivemindError', () => {
       it('should include context', () => {
         const context = { operation: 'query', table: 'users' };
         const error = new DatabaseNotInitializedError('DB error', context);
-        
+
         expect(error.context).toEqual(context);
       });
     });
@@ -47,7 +47,7 @@ describe('HivemindError', () => {
     describe('DatabaseConnectionError', () => {
       it('should create error with correct properties', () => {
         const error = new DatabaseConnectionError('Connection failed');
-        
+
         expect(error.code).toBe('DB_CONNECTION_FAILED');
         expect(error.category).toBe('database');
       });
@@ -55,7 +55,7 @@ describe('HivemindError', () => {
       it('should include cause chain', () => {
         const cause = new Error('ECONNREFUSED');
         const error = new DatabaseConnectionError('Connection failed', {}, cause);
-        
+
         expect(error.cause).toBe(cause);
       });
     });
@@ -63,7 +63,7 @@ describe('HivemindError', () => {
     describe('DatabaseQueryError', () => {
       it('should create error with correct properties', () => {
         const error = new DatabaseQueryError('Query failed');
-        
+
         expect(error.code).toBe('DB_QUERY_FAILED');
         expect(error.category).toBe('database');
       });
@@ -72,7 +72,7 @@ describe('HivemindError', () => {
     describe('BotNotFoundError', () => {
       it('should create error with correct properties', () => {
         const error = new BotNotFoundError('my-bot');
-        
+
         expect(error.code).toBe('BOT_NOT_FOUND');
         expect(error.category).toBe('network');
         expect(error.message).toContain('my-bot');
@@ -80,7 +80,7 @@ describe('HivemindError', () => {
 
       it('should include bot name in context', () => {
         const error = new BotNotFoundError('test-bot');
-        
+
         expect(error.context.botName).toBe('test-bot');
       });
     });
@@ -88,7 +88,7 @@ describe('HivemindError', () => {
     describe('MCPConnectionError', () => {
       it('should create error with correct properties', () => {
         const error = new MCPConnectionError('mcp-server-1', 'Connection timeout');
-        
+
         expect(error.code).toBe('MCP_CONNECTION_FAILED');
         expect(error.category).toBe('network');
         expect(error.message).toContain('mcp-server-1');
@@ -99,7 +99,7 @@ describe('HivemindError', () => {
     describe('MissingConfigError', () => {
       it('should create error with correct properties', () => {
         const error = new MissingConfigError('API_KEY');
-        
+
         expect(error.code).toBe('MISSING_CONFIG');
         expect(error.category).toBe('validation');
         expect(error.message).toContain('API_KEY');
@@ -110,7 +110,7 @@ describe('HivemindError', () => {
     describe('InputValidationError', () => {
       it('should create error with correct properties', () => {
         const error = new InputValidationError('email', 'invalid-email', 'Invalid email format');
-        
+
         expect(error.code).toBe('INVALID_INPUT');
         expect(error.category).toBe('validation');
         expect(error.message).toContain('email');
@@ -119,7 +119,7 @@ describe('HivemindError', () => {
 
       it('should include field information', () => {
         const error = new InputValidationError('email', 'invalid-email', 'Invalid email format');
-        
+
         expect(error.context.field).toBe('email');
         expect(error.context.value).toBe('invalid-email');
       });
@@ -127,8 +127,11 @@ describe('HivemindError', () => {
 
     describe('InvalidConfigError', () => {
       it('should create error with correct properties', () => {
-        const error = new InvalidConfigError('Invalid PORT: must be a number', { configKey: 'PORT', reason: 'Must be a number' });
-        
+        const error = new InvalidConfigError('Invalid PORT: must be a number', {
+          configKey: 'PORT',
+          reason: 'Must be a number',
+        });
+
         expect(error.code).toBe('INVALID_CONFIG');
         expect(error.category).toBe('configuration');
         expect(error.context.configKey).toBe('PORT');
@@ -139,7 +142,7 @@ describe('HivemindError', () => {
     describe('TimeoutError', () => {
       it('should create error with correct properties', () => {
         const error = new TimeoutError('api-call', 5000);
-        
+
         expect(error.code).toBe('TIMEOUT');
         expect(error.category).toBe('system');
         expect(error.context.operation).toBe('api-call');
@@ -150,7 +153,7 @@ describe('HivemindError', () => {
     describe('NotImplementedError', () => {
       it('should create error with correct properties', () => {
         const error = new NotImplementedError('feature-x');
-        
+
         expect(error.code).toBe('NOT_IMPLEMENTED');
         expect(error.category).toBe('system');
         expect(error.message).toContain('feature-x');
@@ -206,7 +209,7 @@ describe('HivemindError', () => {
       it('should generate unique IDs', () => {
         const id1 = generateErrorId();
         const id2 = generateErrorId();
-        
+
         expect(id1).not.toBe(id2);
         // generateErrorId returns UUID format
         expect(id1).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
@@ -217,7 +220,7 @@ describe('HivemindError', () => {
       it('should wrap regular errors in HivemindError', () => {
         const originalError = new Error('Original error');
         const wrapped = wrapError(originalError, { someContext: 'value' });
-        
+
         expect(isHivemindError(wrapped)).toBe(true);
         expect(wrapped.code).toBe('WRAPPED_ERROR');
         expect(wrapped.category).toBe('system');
@@ -227,7 +230,7 @@ describe('HivemindError', () => {
       it('should return HivemindError as-is', () => {
         const error = new DatabaseNotInitializedError('test');
         const wrapped = wrapError(error, { someContext: 'value' });
-        
+
         expect(wrapped).toBe(error);
       });
     });
@@ -237,9 +240,9 @@ describe('HivemindError', () => {
     it('should serialize error to JSON', () => {
       const error = new DatabaseConnectionError('Connection failed', { host: 'localhost' });
       error.traceId = 'trace-123';
-      
+
       const json = error.toJSON();
-      
+
       expect(json.code).toBe('DB_CONNECTION_FAILED');
       expect(json.category).toBe('database');
       expect(json.message).toBe('Connection failed');
@@ -251,9 +254,9 @@ describe('HivemindError', () => {
     it('should include cause chain in JSON', () => {
       const cause = new Error('Underlying error');
       const error = new DatabaseConnectionError('Connection failed', {}, cause);
-      
+
       const json = error.toJSON();
-      
+
       expect(json.cause).toBeDefined();
       expect(json.cause.message).toBe('Underlying error');
     });
@@ -263,7 +266,7 @@ describe('HivemindError', () => {
     it('should allow setting trace ID', () => {
       const error = new DatabaseNotInitializedError('test');
       error.traceId = 'trace-456';
-      
+
       expect(error.traceId).toBe('trace-456');
     });
   });
