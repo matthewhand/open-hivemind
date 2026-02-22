@@ -1,4 +1,5 @@
 // Import Express types for TypeScript
+import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
@@ -39,9 +40,6 @@ require('dotenv/config');
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
 // in development because its _moduleAliases in package.json point to dist/, which does not
 // exist (or is stale) when running directly from src.
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
-  require('module-alias/register');
-}
 const express = require('express');
 
 const debug = require('debug');

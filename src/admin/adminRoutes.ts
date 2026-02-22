@@ -178,9 +178,10 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
         'failure',
         'Missing required fields: name, botToken, signingSecret'
       );
-      return res
+      res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+      return;
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -261,7 +262,8 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      return res.status(400).json({ ok: false, error: 'token is required' });
+      res.status(400).json({ ok: false, error: 'token is required' });
+      return;
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -328,7 +330,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     if (!fs.existsSync(messengersPath)) {
-      return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      res.status(400).json({ ok: false, error: 'messengers.json not found' });
+      return;
     }
     const cfg = JSON.parse(fs.readFileSync(messengersPath, 'utf8'));
     let addedSlack = 0;
