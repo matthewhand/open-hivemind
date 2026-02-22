@@ -6,7 +6,7 @@
 import express from 'express';
 import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
-import { createServer } from '../../../src/server/server';
+import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
   let app: express.Application;
@@ -21,8 +21,9 @@ describe('Health API Integration Tests', () => {
     ConfigurationManager.getInstance();
 
     // Create and start server
-    app = await createServer();
-    server = app.listen(0); // Use random available port
+    const webUIServer = getWebUIServer(0);
+    app = webUIServer.getApp();
+    // server = app.listen(0); // Use random available port
   });
 
   afterAll(async () => {
