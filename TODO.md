@@ -48,16 +48,16 @@
 #### **1. Alerts & Prompts (5 components)**
 - [✅] Alert (standardized across all components)
 - [✅] Badge (standardized variant prop)
-- [ ] Breadcrumb
+- [✅] Breadcrumb
 - [✅] Button
 - [✅] Card
 
 #### **2. Data Display (8 components)**
 - [✅] Chat Bubble
-- [✅] Collapse
+- [ ] Collapse
 - [✅] Countdown
-- [✅] Diff
-- [✅] Indicator
+- [ ] Diff
+- [ ] Indicator
 - [✅] Progress
 - [✅] Stat
 - [✅] Table
@@ -86,22 +86,22 @@
 
 #### **5. Layout (10 components)**
 - [ ] Artboard
-- [ ] Avatar
-- [ ] Badge (duplicate - already covered)
-- [ ] Card (duplicate - already covered)
-- [ ] Divider
-- [ ] Drawer
+- [✅] Avatar
+- [✅] Badge (duplicate - already covered)
+- [✅] Card (duplicate - already covered)
+- [✅] Divider
+- [✅] Drawer
 - [ ] Footer
-- [ ] Hero
+- [✅] Hero
 - [ ] Indicator (duplicate - already covered)
 - [ ] Stack
 
 #### **6. Navigation (7 components)**
-- [ ] Breadcrumb (duplicate - already covered)
-- [ ] Button (duplicate - already covered)
+- [✅] Breadcrumb (duplicate - already covered)
+- [✅] Button (duplicate - already covered)
 - [ ] Link
-- [ ] Menu
-- [ ] Navbar
+- [✅] Menu
+- [✅] Navbar
 - [ ] Steps
 - [ ] Tab
 
