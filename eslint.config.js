@@ -1,10 +1,10 @@
-const typescriptParser = require('@typescript-eslint/parser');
+const tseslint = require('typescript-eslint');
 const globals = require('globals');
 const eslintPluginPrettier = require('eslint-plugin-prettier');
 const eslintConfigPrettier = require('eslint-config-prettier');
 
-module.exports = [
-  // Global ignores - don't lint build output, dependencies, or generated files
+module.exports = tseslint.config(
+  // Global ignores
   {
     ignores: [
       '**/dist/**',
@@ -17,11 +17,10 @@ module.exports = [
       'scripts/**',
     ],
   },
-  // TypeScript files in src/
+
+  // Base setup for all files
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
     languageOptions: {
-      parser: typescriptParser,
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
@@ -30,23 +29,36 @@ module.exports = [
       },
     },
     plugins: {
-      '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
       prettier: eslintPluginPrettier,
     },
     rules: {
-      // Prettier integration
       'prettier/prettier': 'error',
-
-      // Code style - now enforced
       'indent': ['error', 2, { SwitchCase: 1 }],
       'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
       'semi': ['error', 'always'],
       'comma-dangle': ['error', 'es5'],
-
-      // Errors - critical issues only
       'no-debugger': 'error',
+      'eqeqeq': 'warn',
+      'curly': ['warn', 'all'],
+      'no-console': 'warn',
+    },
+  },
 
-      // Warnings - gradual cleanup
+  // TypeScript Configuration (Type-Aware)
+  // This automatically applies to .ts, .tsx, .mts, .cts files
+  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
+
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      // Custom overrides
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': [
         'warn',
@@ -57,75 +69,35 @@ module.exports = [
       '@typescript-eslint/explicit-module-boundary-types': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/no-empty-function': 'warn',
-      'eqeqeq': 'warn',
-      'curly': ['warn', 'all'],
-      'no-console': 'warn',
 
-      // Off - handled elsewhere
-      'no-unused-vars': 'off', // Handled by @typescript-eslint/no-unused-vars
-      'no-empty-function': 'off', // Handled by @typescript-eslint/no-empty-function
+      // Disable base rules replaced by TS rules
+      'no-unused-vars': 'off',
+      'no-empty-function': 'off',
     },
   },
-  // JavaScript files in src/
+
+  // JavaScript files
   {
-    files: ['src/**/*.js', 'src/**/*.jsx'],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        ...globals.es2021,
-      },
-    },
-    plugins: {
-      prettier: eslintPluginPrettier,
-    },
+    files: ['**/*.js', '**/*.jsx'],
+    ...tseslint.configs.disableTypeChecked,
     rules: {
-      // Prettier integration
-      'prettier/prettier': 'error',
-
-      // Code style - now enforced
-      'indent': ['error', 2, { SwitchCase: 1 }],
-      'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
-      'semi': ['error', 'always'],
-      'comma-dangle': ['error', 'es5'],
-
-      // Other rules
+      ...tseslint.configs.disableTypeChecked.rules,
       'no-unused-vars': 'warn',
-      'no-console': 'warn',
-      'no-debugger': 'error',
-      'eqeqeq': 'warn',
-      'curly': ['warn', 'all'],
     },
   },
-  // Test files - relaxed rules
+
+  // Test files - Disable type checking and relax rules
   {
     files: ['tests/**/*.ts', 'tests/**/*.js', '**/*.test.ts', '**/*.test.js'],
+    ...tseslint.configs.disableTypeChecked,
     languageOptions: {
-      parser: typescriptParser,
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      ...tseslint.configs.disableTypeChecked.languageOptions,
       globals: {
-        ...globals.node,
-        ...globals.es2021,
         ...globals.jest,
       },
     },
-    plugins: {
-      '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
-      prettier: eslintPluginPrettier,
-    },
     rules: {
-      // Prettier integration
-      'prettier/prettier': 'error',
-
-      // Code style - now enforced
-      'indent': ['error', 2, { SwitchCase: 1 }],
-      'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
-      'semi': ['error', 'always'],
-      'comma-dangle': ['error', 'es5'],
-
-      // Relaxed rules for tests
+      ...tseslint.configs.disableTypeChecked.rules,
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
@@ -133,6 +105,7 @@ module.exports = [
       'no-console': 'off',
     },
   },
-  // Prettier config override to turn off conflicting rules
+
+  // Prettier config (last to override others)
   eslintConfigPrettier,
-];
+);
