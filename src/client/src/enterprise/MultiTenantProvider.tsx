@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, react-hooks/rules-of-hooks */
 import React, { createContext, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setCurrentTenant as setReduxCurrentTenant } from '../store/slices/authSlice';
@@ -65,9 +64,6 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([]);
   const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
-
-  // Allow unauthenticated access (e.g. Login page)
-  if (!isAuthenticated) { return <>{children}</>; }
 
   // Tenant management functions
   const switchTenant = async (tenantId: string): Promise<void> => {
@@ -179,6 +175,9 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
       bootstrap();
     }
   }, [isAuthenticated, availableTenants.length, user, dispatch]);
+
+  // Allow unauthenticated access (e.g. Login page)
+  if (!isAuthenticated) { return <>{children}</>; }
 
   const updateUserRole = async (userId: string, newRole: string): Promise<void> => {
     const updatedUsers = tenantUsers.map(user =>

@@ -18,25 +18,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+          cache: 'npm'
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Run unit tests
-        id: unit-test
-        run: |
-          npm test 2>&1 | tee unit-test-output.txt
-          # Extract passing unit test count from output
-          UNIT_PASSING_TESTS=$(grep "Tests:" unit-test-output.txt | grep -o "[0-9]\+ passed" | grep -o "[0-9]\+")
-          echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT
-          echo "Found $UNIT_PASSING_TESTS passing unit tests"
+        run: npm test
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        run: npm run test:e2e:playwright
-      - name: Generate Playwright report
-        if: always()
-        run: npx playwright show-report
+        run: npm run test:playwright
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,20 +42,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-test-results
-          path: test-results.json
+          path: test-results/results.json
           retention-days: 30
-      - name: Update README badge
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.actor != 'github-actions[bot]'
-        run: |
-          UNIT_PASSING_TESTS="${{ steps.unit-test.outputs.unit_passing_tests }}"
-          # Update the README.md with the new unit test count (E2E separate)
-          sed -i "s/Unit Tests: [0-9,]\+ passing/Unit Tests: $UNIT_PASSING_TESTS passing/" README.md
-          sed -i "s/badge\/unit-tests-[0-9]\+%20passing/badge\/unit-tests-$UNIT_PASSING_TESTS%20passing/" README.md
-      - name: Commit README update
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.actor != 'github-actions[bot]'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add README.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update test count badge: ${{ steps.unit-test.outputs.unit_passing_tests }} passing tests"
-          git push
