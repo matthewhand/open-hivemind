@@ -1,12 +1,13 @@
 [build]
-  command = "npm run build:serverless"
+  command = "pnpm install && pnpm run build:serverless"
   publish = "src/client/dist"
 
 [build.environment]
   NODE_VERSION = "20"
+  NPM_FLAGS = "--no-audit"
 
 [dev]
-  command = "npm run dev:frontend-only"
+  command = "pnpm run dev:frontend-only"
   publish = "src/client/dist"
 
 [[redirects]]
