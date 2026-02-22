@@ -1,4 +1,4 @@
-import { InputSanitizer, RateLimiter } from '../../src/utils/InputSanitizer';
+import { InputSanitizer, RateLimiter } from '@src/utils/InputSanitizer';
 
 describe('InputSanitizer', () => {
   describe('sanitizeMessage', () => {
@@ -175,7 +175,8 @@ describe('RateLimiter', () => {
     RateLimiter.checkLimit(identifier, 1, windowMs);
     expect(RateLimiter.checkLimit(identifier, 1, windowMs)).toBe(false);
 
-    jest.advanceTimersByTime(windowMs + 1);
+    // Using any to avoid TS error if jest is not fully typed in this env
+    (jest as any).advanceTimersByTime(windowMs + 1);
     expect(RateLimiter.checkLimit(identifier, 1, windowMs)).toBe(true);
   });
 
@@ -206,28 +207,26 @@ describe('RateLimiter', () => {
 
   test('should enforce MAX_ATTEMPTS_PER_IDENTIFIER', () => {
     const identifier = 'user-unbounded';
-    // We can't easily change MAX_ATTEMPTS_PER_IDENTIFIER because it's private and static
-    // and initialized once. But it defaults to 100.
     for (let i = 0; i < 150; i++) {
       RateLimiter.checkLimit(identifier, 200, 10000);
     }
     const stats = RateLimiter.getStats();
-    expect(stats.totalAttempts).toBe(100); // capped by MAX_ATTEMPTS_PER_IDENTIFIER
+    expect(stats.totalAttempts).toBe(100); // capped by default MAX_ATTEMPTS_PER_IDENTIFIER
   });
 
   test('should enforce MAX_IDENTIFIERS limit', () => {
     // We need to isolate this test because MAX_IDENTIFIERS is a static readonly property
     jest.isolateModules(() => {
       process.env.RATE_LIMITER_MAX_IDENTIFIERS = '5';
-      const { RateLimiter: IsolatedRateLimiter } = require('../../src/utils/InputSanitizer');
+      // Using root-relative path for require to be safe across environments
+      const { RateLimiter: IsolatedRateLimiter } = require('../../../src/utils/InputSanitizer');
 
       IsolatedRateLimiter.clearAll();
 
       // Add 5 identifiers
       for (let i = 1; i <= 5; i++) {
         IsolatedRateLimiter.checkLimit(`user-${i}`, 10, 60000);
-        // Advance time a bit to have distinct lastAttempt times
-        jest.advanceTimersByTime(1000);
+        (jest as any).advanceTimersByTime(1000);
       }
 
       expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(5);
@@ -237,18 +236,14 @@ describe('RateLimiter', () => {
 
       // enforceMaxIdentifiers removes Math.ceil(MAX_IDENTIFIERS * 0.1) entries
       // 5 * 0.1 = 0.5, ceil(0.5) = 1.
-      // So 1 entry should be removed. 5 - 1 + 1 (new one) = 5.
       expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(5);
 
-      // The oldest one (user-1) should have been removed
-      // In getRemainingAttempts, if it's not in the map, it returns maxAttempts
-      // But we can check stats or try to see if it's gone by checking if we can clear it and it doesn't affect count
       const initialCount = IsolatedRateLimiter.getStats().identifiersCount;
       IsolatedRateLimiter.clearLimit('user-1');
-      expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(initialCount); // Should still be same if user-1 was already gone
+      expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(initialCount);
 
       IsolatedRateLimiter.clearLimit('user-2');
-      expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(initialCount - 1); // Should decrease if user-2 was there
+      expect(IsolatedRateLimiter.getStats().identifiersCount).toBe(initialCount - 1);
     });
   });
 });
