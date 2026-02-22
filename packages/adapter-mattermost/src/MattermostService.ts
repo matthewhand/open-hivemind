@@ -218,7 +218,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
@@ -444,7 +444,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
@@ -482,7 +482,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }[] {
+  }> {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
       const serviceName = `mattermost-${name}`;
