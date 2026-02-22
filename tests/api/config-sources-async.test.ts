@@ -2,7 +2,6 @@
 import express from 'express';
 import request from 'supertest';
 import fs from 'fs';
-import path from 'path';
 
 // Mock dependencies before importing the router
 jest.mock('../../src/config/BotConfigurationManager', () => ({
@@ -66,22 +65,12 @@ describe('GET /sources Performance Optimization', () => {
   });
 
   it('should return config files and handle file I/O correctly', async () => {
-    // Setup a dummy config directory for the test
-    // We can't easily mock the internal require('fs') in the route handler
-    // without using jest.mock('fs') globally, which might affect other things.
-    // However, since we are in a test environment, we can just check if it returns 200.
-
-    // We rely on the fact that the route currently uses synchronous fs.readdirSync
-    // and we will change it to async.
+    // This test verifies that the /sources endpoint works correctly after
+    // being converted to use asynchronous file I/O.
 
     const response = await request(app).get('/api/config/sources');
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('configFiles');
     expect(Array.isArray(response.body.configFiles)).toBe(true);
-
-    // If we want to verify it's finding files, we might need to ensure the directory exists.
-    // The code looks for path.join(__dirname, '../../../config')
-    // __dirname in ts-node/jest might be different.
-    // Let's see what it returns.
   });
 });
