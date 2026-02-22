@@ -81,31 +81,6 @@ export const messageParser = {
 };
 
 /**
- * URL parsing utilities
- */
-export const urlParser = {
-  /**
-   * Extract URLs from text
-   */
-  extractUrls: (text: string): string[] => {
-    const urlRegex = /https?:\/\/[^\s]+/g;
-    return text.match(urlRegex) || [];
-  },
-
-  /**
-   * Validate URL format
-   */
-  isValidUrl: (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  },
-};
-
-/**
  * JSON parsing utilities with error handling
  */
 export const jsonParser = {
