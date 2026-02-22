@@ -1605,24 +1605,24 @@ router.put('/messaging', async (req, res) => {
 
     // Load existing file or start fresh
     let existing: Record<string, any> = {};
-    if (fs.existsSync(targetPath)) {
-      try {
-        existing = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
-      } catch {
-        /* ignore parse errors, start fresh */
-      }
+    try {
+      const content = await fs.promises.readFile(targetPath, 'utf-8');
+      existing = JSON.parse(content);
+    } catch {
+      /* ignore parse errors or missing file, start fresh */
     }
 
     // Merge updates
     const merged = { ...existing, ...updates };
 
     // Write back
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, JSON.stringify(merged, null, 2));
+    await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.promises.writeFile(targetPath, JSON.stringify(merged, null, 2));
 
     // Reload config (convict will pick up new values on next get, but we force load here)
     try {
-      messageConfig.loadFile(targetPath);
+      // Use load() with object to avoid synchronous file read in loadFile()
+      messageConfig.load(merged);
     } catch {
       /* validation may fail, ignore */
     }
