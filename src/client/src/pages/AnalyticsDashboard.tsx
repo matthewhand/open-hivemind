@@ -4,7 +4,6 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
-// import { toast } from 'react-hot-toast';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -36,7 +35,6 @@ const AnalyticsDashboard: React.FC = () => {
       setActivityData(data);
     } catch (error) {
       console.error('Failed to fetch analytics data:', error);
-      // toast.error('Failed to load analytics data');
     } finally {
       setIsLoading(false);
     }
