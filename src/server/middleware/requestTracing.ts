@@ -15,14 +15,8 @@
  * ```
  */
 
-import {
-  type NextFunction,
-  type NextFunction,
-  type Request,
-  type Request,
-  type Response,
-  type Response,
-} from 'express';
+import { randomUUID } from 'crypto';
+import { type NextFunction, type Request, type Response } from 'express';
 import { createLogger, type StructuredLogger } from '@src/common/StructuredLogger';
 
 /**

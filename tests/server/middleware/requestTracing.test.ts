@@ -2,15 +2,15 @@
  * Tests for Request Tracing Middleware
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import {
   createRequestTracingMiddleware,
-  requestTracing,
   errorTracing,
-  getTraceId,
-  getSpanId,
-  getRequestLogger,
   getRequestDuration,
+  getRequestLogger,
+  getSpanId,
+  getTraceId,
+  requestTracing,
   TracedRequest,
   TracedResponse,
 } from '@src/server/middleware/requestTracing';
@@ -22,7 +22,7 @@ jest.mock('@src/common/StructuredLogger', () => ({
     debug: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    withTraceId: jest.fn(function(this: any, traceId: string) {
+    withTraceId: jest.fn(function (this: any, traceId: string) {
       return { ...this, traceId };
     }),
   })),
@@ -78,11 +78,7 @@ describe('Request Tracing Middleware', () => {
 
   describe('requestTracing middleware', () => {
     it('should add traceId to request', () => {
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
       const tracedReq = mockRequest as TracedRequest;
       expect(tracedReq.traceId).toBeDefined();
@@ -91,11 +87,7 @@ describe('Request Tracing Middleware', () => {
 
     it('should add spanId to request when enabled', () => {
       const middleware = createRequestTracingMiddleware({ generateSpanId: true });
-      middleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       const tracedReq = mockRequest as TracedRequest;
       expect(tracedReq.spanId).toBeDefined();
@@ -103,22 +95,14 @@ describe('Request Tracing Middleware', () => {
     });
 
     it('should add logger to request', () => {
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
       const tracedReq = mockRequest as TracedRequest;
       expect(tracedReq.logger).toBeDefined();
     });
 
     it('should add startTime to request', () => {
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
       const tracedReq = mockRequest as TracedRequest;
       expect(tracedReq.startTime).toBeDefined();
@@ -127,38 +111,23 @@ describe('Request Tracing Middleware', () => {
 
     it('should use existing traceId from headers', () => {
       mockRequest.headers!['x-trace-id'] = 'existing-trace-123';
-      
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
       const tracedReq = mockRequest as TracedRequest;
       expect(tracedReq.traceId).toBe('existing-trace-123');
     });
 
     it('should call next()', () => {
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
     });
 
     it('should set trace header on response', () => {
-      requestTracing(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      requestTracing(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockResponse.setHeader).toHaveBeenCalledWith(
-        'X-Trace-Id',
-        expect.any(String)
-      );
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('X-Trace-Id', expect.any(String));
     });
   });
 
@@ -166,7 +135,7 @@ describe('Request Tracing Middleware', () => {
     it('should return traceId from traced request', () => {
       const tracedReq = mockRequest as TracedRequest;
       tracedReq.traceId = 'trace-456';
-      
+
       const traceId = getTraceId(tracedReq);
       expect(traceId).toBe('trace-456');
     });
@@ -181,7 +150,7 @@ describe('Request Tracing Middleware', () => {
     it('should return spanId from traced request', () => {
       const tracedReq = mockRequest as TracedRequest;
       tracedReq.spanId = 'span-789';
-      
+
       const spanId = getSpanId(tracedReq);
       expect(spanId).toBe('span-789');
     });
@@ -201,7 +170,7 @@ describe('Request Tracing Middleware', () => {
         warn: jest.fn(),
         error: jest.fn(),
       } as any;
-      
+
       const logger = getRequestLogger(tracedReq);
       expect(logger).toBeDefined();
     });
@@ -216,7 +185,7 @@ describe('Request Tracing Middleware', () => {
     it('should return duration in milliseconds', () => {
       const tracedReq = mockRequest as TracedRequest;
       tracedReq.startTime = Date.now() - 100; // 100ms ago
-      
+
       const duration = getRequestDuration(tracedReq);
       expect(duration).toBeGreaterThanOrEqual(100);
     });
@@ -240,12 +209,7 @@ describe('Request Tracing Middleware', () => {
         warn: jest.fn(),
       } as any;
 
-      errorTracing(
-        error,
-        tracedReq as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      errorTracing(error, tracedReq as Request, mockResponse as Response, mockNext);
 
       expect(tracedReq.logger.error).toHaveBeenCalled();
     });
@@ -262,12 +226,7 @@ describe('Request Tracing Middleware', () => {
         warn: jest.fn(),
       } as any;
 
-      errorTracing(
-        error,
-        tracedReq as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      errorTracing(error, tracedReq as Request, mockResponse as Response, mockNext);
 
       // errorTracing passes error to next() for default Express error handling
       expect(mockNext).toHaveBeenCalledWith(error);
@@ -295,12 +254,7 @@ describe('Request Tracing Middleware', () => {
         warn: jest.fn(),
       } as any;
 
-      errorTracing(
-        hivemindError,
-        tracedReq as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      errorTracing(hivemindError, tracedReq as Request, mockResponse as Response, mockNext);
 
       // Should call withTraceId on HivemindError
       expect(hivemindError.withTraceId).toHaveBeenCalledWith('trace-config');
