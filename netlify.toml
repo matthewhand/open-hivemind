@@ -7,7 +7,7 @@
 
 # Production context (main branch only)
 [context.production]
-  command = "pnpm run build:serverless"
+  command = "npm run build:serverless"
   publish = "src/client/dist"
 
 # Explicitly disable deploy previews for PRs
