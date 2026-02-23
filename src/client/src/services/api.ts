@@ -818,6 +818,14 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async getSystemInfo(): Promise<any> {
+    return this.request('/api/admin/system-info');
+  }
+
+  async getEnvOverrides(): Promise<any> {
+    return this.request('/api/admin/env-overrides');
+  }
 }
 
 export const apiService = new ApiService();
