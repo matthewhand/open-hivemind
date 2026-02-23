@@ -2,8 +2,15 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.get('/api/openapi', (req, res) => {
-  const format = String(req.query.format || 'json').toLowerCase();
+router.get(['/openapi', '/openapi.json', '/openapi.yaml'], (req, res) => {
+  let format = String(req.query.format || 'json').toLowerCase();
+
+  if (req.path.endsWith('.yaml') || req.path.endsWith('.yml')) {
+    format = 'yaml';
+  } else if (req.path.endsWith('.json')) {
+    format = 'json';
+  }
+
   const host = req.get('host') ?? 'localhost';
   const baseUrl = `${req.protocol}://${host}`;
   const spec = buildSpec(baseUrl);

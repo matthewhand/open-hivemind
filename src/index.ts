@@ -264,7 +264,7 @@ app.use('/api/secure-config', secureConfigRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/integrations', integrationsRouter);
-app.use('/api/openapi', openapiRouter);
+app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
 app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);

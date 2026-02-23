@@ -7,7 +7,7 @@ describe('OpenAPI route', () => {
 
   beforeEach(() => {
     app = express();
-    app.use('/webui', openapiRouter);
+    app.use('/webui/api', openapiRouter);
   });
 
   it('returns JSON spec by default', async () => {
