@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+// Note: This feature is duplicate of #261
 test.describe('MCP Servers Page', () => {
   test.beforeEach(async ({ page }) => {
     // Setup authentication
