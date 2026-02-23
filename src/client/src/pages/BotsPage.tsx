@@ -359,6 +359,12 @@ const BotsPage: React.FC = () => {
         </div>
       )}
 
+      {/* WIP Alert */}
+      <div className="alert alert-warning shadow-sm">
+        <Info className="w-5 h-5" />
+        <span>This page is currently a Work In Progress. Some features (like activity logs) may contain mock data.</span>
+      </div>
+
       {/* Header */}
       <PageHeader
         title="Bot Management"
