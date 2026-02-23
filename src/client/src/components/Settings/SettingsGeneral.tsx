@@ -16,6 +16,7 @@ interface GeneralConfig {
   defaultResponseTimeout: number;
   enableHealthChecks: boolean;
   healthCheckInterval: number;
+  advancedMode: boolean;
 }
 
 const SettingsGeneral: React.FC = () => {
@@ -32,6 +33,7 @@ const SettingsGeneral: React.FC = () => {
     defaultResponseTimeout: 30,
     enableHealthChecks: true,
     healthCheckInterval: 60,
+    advancedMode: false,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,6 +62,7 @@ const SettingsGeneral: React.FC = () => {
         defaultResponseTimeout: userSettings['limits.timeout'] || config.limits?.timeout?.value || 30,
         enableHealthChecks: userSettings['health.enabled'] ?? (config.health?.enabled?.value !== false),
         healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
+        advancedMode: userSettings['webui.advancedMode'] || false,
       });
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load settings' });
@@ -87,6 +90,7 @@ const SettingsGeneral: React.FC = () => {
           'app.description': settings.description,
           'logging.level': settings.logLevel,
           'logging.enabled': settings.enableLogging,
+          'webui.advancedMode': settings.advancedMode,
         }),
       });
 
@@ -321,6 +325,30 @@ const SettingsGeneral: React.FC = () => {
               <span>180</span>
               <span>240</span>
               <span>300</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Advanced Settings */}
+        <div className="card bg-base-200/50 p-4 border border-base-300">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <SettingsIcon className="w-4 h-4" />
+            Advanced Settings
+          </h6>
+
+          <div className="form-control">
+            <label className="label cursor-pointer py-1">
+              <span className="label-text text-sm">Enable Advanced Mode</span>
+              <Toggle
+                checked={settings.advancedMode}
+                onChange={(e) => handleChange('advancedMode', e.target.checked)}
+                size="sm"
+              />
+            </label>
+            <div className="label pt-0 pb-1">
+              <span className="label-text-alt text-base-content/50">
+                Unlocks experimental features and granular configuration options across the system.
+              </span>
             </div>
           </div>
         </div>
