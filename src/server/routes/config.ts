@@ -1743,6 +1743,50 @@ router.post('/llm-profiles', (req, res) => {
   }
 });
 
+// PUT /api/config/llm-profiles/:key - Update an LLM profile
+router.put('/llm-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const updates = req.body;
+
+    const allProfiles = getLlmProfiles();
+    const index = allProfiles.llm.findIndex((p) => p.key.toLowerCase() === key.toLowerCase());
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    // Merge updates
+    const updatedProfile = {
+      ...allProfiles.llm[index],
+      ...updates,
+      // Ensure the key remains consistent unless we want to support renaming here (which is complex)
+      // But let's allow the body to specify key if it matches, otherwise ignore or validate?
+      // For safety, let's keep the original key or ensure it matches.
+      // If we want to rename, we should likely use a different flow or handle it carefully.
+      // For now, force key to match params/original to avoid accidental duplicates.
+      key: allProfiles.llm[index].key,
+    };
+
+    if (!updatedProfile.name || typeof updatedProfile.name !== 'string') {
+      return res.status(400).json({ error: 'profile.name is required' });
+    }
+    if (!updatedProfile.provider || typeof updatedProfile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    allProfiles.llm[index] = updatedProfile;
+    saveLlmProfiles(allProfiles);
+    return res.json({ success: true, profile: updatedProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_UPDATE_ERROR',
+    });
+  }
+});
+
 // DELETE /api/config/llm-profiles/:key - Delete an LLM profile
 router.delete('/llm-profiles/:key', (req, res) => {
   try {
