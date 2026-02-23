@@ -19,6 +19,12 @@ jest.mock('@src/server/services/WebSocketService', () => ({
   },
 }));
 
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn(),
+  },
+}));
+
 const mockManagerInstance = {
   getAllBots: jest.fn(),
 };
@@ -26,6 +32,10 @@ const mockManagerInstance = {
 const mockWsInstance = {
   getMessageFlow: jest.fn(),
   getAllBotStats: jest.fn(),
+};
+
+const mockActivityLoggerInstance = {
+  getEvents: jest.fn(),
 };
 
 describe('dashboard activity route', () => {
@@ -38,9 +48,11 @@ describe('dashboard activity route', () => {
 
     const { BotConfigurationManager } = require('@src/config/BotConfigurationManager');
     const WebSocketService = require('@src/server/services/WebSocketService').default;
+    const { ActivityLogger } = require('../../src/server/services/ActivityLogger');
 
     (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockManagerInstance);
     (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWsInstance);
+    (ActivityLogger.getInstance as jest.Mock).mockReturnValue(mockActivityLoggerInstance);
   });
 
   it('returns activity data with filters and timeline', async () => {
@@ -52,7 +64,7 @@ describe('dashboard activity route', () => {
     const now = new Date();
     const earlier = new Date(now.getTime() - 60000);
 
-    mockWsInstance.getMessageFlow.mockReturnValue([
+    mockActivityLoggerInstance.getEvents.mockReturnValue([
       {
         id: '1',
         botName: 'AgentA',
@@ -103,7 +115,7 @@ describe('dashboard activity route', () => {
     ]);
 
     const ts = new Date().toISOString();
-    mockWsInstance.getMessageFlow.mockReturnValue([
+    mockActivityLoggerInstance.getEvents.mockReturnValue([
       {
         id: '1',
         botName: 'AgentA',
@@ -125,5 +137,11 @@ describe('dashboard activity route', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(1);
+
+    // Also verify getEvents was called with correct filter
+    expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(expect.objectContaining({
+      startTime: expect.any(Date),
+      endTime: expect.any(Date)
+    }));
   });
 });

@@ -4,6 +4,7 @@ import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
+import { ActivityLogger } from './ActivityLogger';
 
 const debug = Debug('app:WebSocketService');
 
@@ -152,6 +153,9 @@ export class WebSocketService {
     };
 
     this.messageFlow.push(messageEvent);
+
+    // Log to persistent storage
+    ActivityLogger.getInstance().log(messageEvent);
 
     // Per-bot message count
     const key = event.botName || 'unknown';
