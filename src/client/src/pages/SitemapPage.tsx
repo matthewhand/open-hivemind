@@ -30,7 +30,7 @@ const SitemapPage: React.FC = () => {
   const [accessFilter, setAccessFilter] = useState<string>('all');
 
   const breadcrumbItems = [
-    { label: 'Sitemap', href: '/uber/sitemap', isActive: true },
+    { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 
   const fetchSitemap = async () => {
@@ -87,13 +87,19 @@ const SitemapPage: React.FC = () => {
 
     if (url.url === '/') {
       category = 'Root';
-    } else if (url.url.startsWith('/uber')) {
+    } else if (url.url === '/dashboard' || url.url === '/activity') {
+      category = 'User Dashboard';
+    } else if (url.url.startsWith('/admin')) {
       if (url.url.includes('/bots')) { category = 'Bot Management'; }
+      else if (url.url.includes('/ai/')) { category = 'AI & Analytics'; }
       else if (url.url.includes('/mcp')) { category = 'MCP Servers'; }
-      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) { category = 'Monitoring'; }
-      else if (url.url.includes('/settings')) { category = 'Settings'; }
-      else { category = 'Main Dashboard'; }
-    } else if (url.url.startsWith('/webui') || url.url.startsWith('/admin')) {
+      else if (url.url.includes('/integrations')) { category = 'Integrations'; }
+      else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) { category = 'Monitoring & System'; }
+      else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration')) { category = 'Configuration'; }
+      else if (url.url.includes('/personas') || url.url.includes('/guards')) { category = 'Personas & Security'; }
+      else if (url.url.includes('/showcase') || url.url.includes('/static') || url.url.includes('/specs')) { category = 'Developer Tools'; }
+      else { category = 'Admin Dashboard'; }
+    } else if (url.url.startsWith('/webui')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
       category = 'System APIs';
