@@ -83,21 +83,27 @@ const MessageProvidersPage: React.FC = () => {
 
   const handleProviderSubmit = async (providerData: any) => {
     try {
+      // In edit mode, preserve the original key to avoid creating a new profile
+      const key = modalState.isEdit && modalState.provider?.id
+        ? modalState.provider.id
+        : providerData.name.toLowerCase().replace(/\s+/g, '-');
+
       const payload = {
-        key: providerData.name.toLowerCase().replace(/\s+/g, '-'), // Generate key from name
+        key,
         name: providerData.name,
         provider: providerData.type,
         config: providerData.config,
       };
 
       if (modalState.isEdit) {
-        if (modalState.provider?.id) {
-          await apiService.delete(`/api/config/message-profiles/${modalState.provider.id}`);
+        if (!modalState.provider?.id) {
+          alert('Cannot edit profile: missing profile ID');
+          return;
         }
-        await apiService.post('/api/config/message-profiles', payload);
-      } else {
-        await apiService.post('/api/config/message-profiles', payload);
+        // Delete old profile first, then create with updated data
+        await apiService.delete(`/api/config/message-profiles/${modalState.provider.id}`);
       }
+      await apiService.post('/api/config/message-profiles', payload);
 
       closeModal();
       fetchProfiles();
