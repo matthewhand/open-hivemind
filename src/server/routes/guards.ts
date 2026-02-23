@@ -123,12 +123,19 @@ router.put('/:id', (req: Request, res: Response) => {
 
     const currentGuard = guards[guardIndex];
 
-    // Update fields
+    // Update fields - only allow specific properties to prevent field injection
+    const allowedFields = ['name', 'description', 'enabled', 'config'] as const;
+    const sanitizedUpdates = Object.keys(updates)
+      .filter((key): key is (typeof allowedFields)[number] =>
+        allowedFields.includes(key as (typeof allowedFields)[number])
+      )
+      .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {} as Record<string, unknown>);
+
     const updatedGuard = {
       ...currentGuard,
-      ...updates,
+      ...sanitizedUpdates,
       id: currentGuard.id, // Prevent ID change
-      type: currentGuard.type // Prevent type change if deemed immutable, or allow it. Usually ID is the only immutable one.
+      type: currentGuard.type, // Prevent type change
     };
 
     webUIStorage.saveGuard(updatedGuard);

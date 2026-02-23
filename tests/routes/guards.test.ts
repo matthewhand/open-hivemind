@@ -152,5 +152,34 @@ describe('Guards Routes', () => {
 
       expect(response.status).toBe(404);
     });
+
+    it('should reject updates with disallowed fields (field injection protection)', async () => {
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100 },
+        }
+      ]);
+
+      const maliciousUpdates = {
+        id: 'hacked-id',
+        type: 'malicious-type',
+        unauthorizedField: 'malicious-value',
+        config: { maxRequests: 200 }
+      };
+
+      const response = await request(app)
+        .put('/api/guards/rate-limiter')
+        .send(maliciousUpdates);
+
+      expect(response.status).toBe(200);
+      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
+      expect(savedGuard.id).toBe('rate-limiter'); // Should preserve original ID
+      expect(savedGuard.type).toBe('rate'); // Should preserve original type
+      expect(savedGuard).not.toHaveProperty('unauthorizedField');
+    });
   });
 });
