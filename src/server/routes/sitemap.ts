@@ -15,6 +15,7 @@ interface SitemapUrl {
 
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 
   return [
@@ -36,7 +37,25 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'authenticated',
     },
 
-    // Dashboard pages
+    // User Dashboard pages
+    {
+      url: '/dashboard',
+      changefreq: 'daily',
+      priority: 0.9,
+      lastmod: now,
+      description: 'User Dashboard',
+      access: 'authenticated',
+    },
+    {
+      url: '/activity',
+      changefreq: 'hourly',
+      priority: 0.8,
+      lastmod: now,
+      description: 'User Activity Feed',
+      access: 'authenticated',
+    },
+
+    // Admin Dashboard pages
     {
       url: '/admin/overview',
       changefreq: 'daily',
@@ -76,7 +95,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'Bot Chat Interface',
+      description: 'Admin Chat Interface',
       access: 'authenticated',
     },
 
@@ -92,20 +111,20 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Integrations
     {
-      url: '/admin/integrations',
-      changefreq: 'weekly',
+      url: '/admin/integrations/llm',
+      changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
-      description: 'Integration Management',
-      access: 'owner',
+      description: 'LLM Provider Integration',
+      access: 'authenticated',
     },
     {
-      url: '/admin/integrations/llm',
-      changefreq: 'weekly',
+      url: '/admin/integrations/messaging',
+      changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
-      description: 'LLM Provider Configuration',
-      access: 'owner',
+      description: 'Messaging Provider Integration',
+      access: 'authenticated',
     },
 
     // MCP Server management (Owner-only)
@@ -158,7 +177,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'hourly',
       priority: 0.7,
       lastmod: now,
-      description: 'Real-time Activity Monitor',
+      description: 'Real-time Admin Activity Monitor',
       access: 'authenticated',
     },
     {
@@ -180,19 +199,19 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/system-management',
       changefreq: 'weekly',
-      priority: 0.8,
+      priority: 0.6,
       lastmod: now,
       description: 'System Management Tools',
       access: 'owner',
     },
 
-    // Settings and configuration
+    // Configuration
     {
       url: '/admin/settings',
       changefreq: 'monthly',
       priority: 0.6,
       lastmod: now,
-      description: 'System Settings and Configuration',
+      description: 'System Settings',
       access: 'owner',
     },
     {
@@ -205,11 +224,19 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     },
     {
       url: '/admin/config',
-      changefreq: 'weekly',
+      changefreq: 'monthly',
       priority: 0.6,
       lastmod: now,
-      description: 'General Configuration',
+      description: 'Global Configuration',
       access: 'owner',
+    },
+    {
+      url: '/admin/specs',
+      changefreq: 'weekly',
+      priority: 0.5,
+      lastmod: now,
+      description: 'Specifications Library',
+      access: 'authenticated',
     },
 
     // AI Features
@@ -218,7 +245,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'AI Intelligent Dashboard',
+      description: 'AI Intelligence Dashboard',
       access: 'authenticated',
     },
     {
@@ -226,7 +253,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.7,
       lastmod: now,
-      description: 'AI Insights Panel',
+      description: 'AI Generated Insights',
       access: 'authenticated',
     },
     {
@@ -240,7 +267,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/ai/anomalies',
       changefreq: 'hourly',
-      priority: 0.7,
+      priority: 0.8,
       lastmod: now,
       description: 'Anomaly Detection',
       access: 'authenticated',
@@ -248,7 +275,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/ai/chat',
       changefreq: 'daily',
-      priority: 0.8,
+      priority: 0.7,
       lastmod: now,
       description: 'Natural Language Interface',
       access: 'authenticated',
@@ -259,16 +286,6 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'Bot Training Dashboard',
-      access: 'authenticated',
-    },
-
-    // Specifications
-    {
-      url: '/admin/specs',
-      changefreq: 'weekly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'System Specifications',
       access: 'authenticated',
     },
 
@@ -295,18 +312,18 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.3,
       lastmod: now,
       description: 'DaisyUI Component Showcase',
-      access: 'public',
+      access: 'authenticated',
     },
     {
       url: '/admin/sitemap',
-      changefreq: 'daily',
-      priority: 0.5,
+      changefreq: 'weekly',
+      priority: 0.4,
       lastmod: now,
-      description: 'Site Map',
-      access: 'public',
+      description: 'Sitemap Page',
+      access: 'authenticated',
     },
 
-    // Legacy interfaces (redirects or legacy access)
+    // Legacy interfaces
     {
       url: '/webui',
       changefreq: 'monthly',
@@ -467,12 +484,17 @@ router.get('/sitemap', (req: Request, res: Response) => {
     </div>
     
     ${generateSectionHTML(
-      'Admin Dashboard',
+      'User Dashboard',
+      routes.filter((r) => r.url === '/dashboard' || r.url === '/activity'),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'Admin Interface',
       routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai')),
       baseUrl
     )}
     ${generateSectionHTML(
-      'AI Features',
+      'AI Intelligence Features',
       routes.filter((r) => r.url.startsWith('/admin/ai')),
       baseUrl
     )}
