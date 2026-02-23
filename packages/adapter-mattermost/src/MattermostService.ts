@@ -482,7 +482,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     serviceName: string;
     messengerService: IMessengerService;
     botConfig: any;
-  }[] {
+  }> {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
       const serviceName = `mattermost-${name}`;
