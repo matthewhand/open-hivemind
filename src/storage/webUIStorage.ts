@@ -12,6 +12,7 @@ interface WebUIConfig {
   llmProviders: any[];
   messengerProviders: any[];
   personas: any[];
+  guards: any[];
   lastUpdated: string;
 }
 
@@ -38,24 +39,57 @@ class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
-    try {
-      if (fs.existsSync(this.configFile)) {
-        const data = fs.readFileSync(this.configFile, 'utf8');
-        return JSON.parse(data);
-      }
-    } catch (error) {
-      console.error('Error loading web UI config:', error);
-    }
-
-    // Return default configuration
-    return {
+    let config: WebUIConfig = {
       agents: [],
       mcpServers: [],
       llmProviders: [],
       messengerProviders: [],
       personas: [],
+      guards: [],
       lastUpdated: new Date().toISOString(),
     };
+
+    try {
+      if (fs.existsSync(this.configFile)) {
+        const data = fs.readFileSync(this.configFile, 'utf8');
+        const loadedConfig = JSON.parse(data);
+        config = { ...config, ...loadedConfig };
+      }
+    } catch (error) {
+      console.error('Error loading web UI config:', error);
+    }
+
+    // Initialize default guards if empty or undefined
+    if (!config.guards || config.guards.length === 0) {
+      config.guards = [
+        {
+          id: 'access-control',
+          name: 'Access Control',
+          description: 'User and IP-based access restrictions',
+          type: 'access',
+          enabled: true,
+          config: { type: 'users', users: [], ips: [] },
+        },
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          description: 'Prevents spam and excessive requests',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100, windowMs: 60000 },
+        },
+        {
+          id: 'content-filter',
+          name: 'Content Filter',
+          description: 'Filters inappropriate content',
+          type: 'content',
+          enabled: false,
+          config: {},
+        },
+      ];
+    }
+
+    return config;
   }
 
   /**
@@ -251,6 +285,32 @@ class WebUIStorage {
     }
 
     config.messengerProviders = config.messengerProviders.filter((p: any) => p.id !== providerId);
+    this.saveConfig(config);
+  }
+
+  /**
+   * Get all guards
+   */
+  public getGuards(): any[] {
+    const config = this.loadConfig();
+    return config.guards;
+  }
+
+  /**
+   * Save a guard
+   */
+  public saveGuard(guard: any): void {
+    const config = this.loadConfig();
+    if (!config.guards) {
+      config.guards = [];
+    }
+
+    const existingIndex = config.guards.findIndex((g: any) => g.id === guard.id);
+    if (existingIndex >= 0) {
+      config.guards[existingIndex] = guard;
+    } else {
+      config.guards.push(guard);
+    }
     this.saveConfig(config);
   }
 }

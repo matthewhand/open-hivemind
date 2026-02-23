@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import { authenticate } from '../middleware/auth';
+import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
+import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
+import { authenticate } from '../middleware/auth';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -18,17 +18,39 @@ class SimpleMessage extends IMessage {
     this.content = content;
   }
 
-  getMessageId(): string { return 'generated-' + Date.now(); }
-  getTimestamp(): Date { return new Date(); }
-  setText(text: string): void { this.content = text; }
-  getChannelId(): string { return 'internal-ai-assist'; }
-  getAuthorId(): string { return 'system'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return []; }
-  mentionsUsers(userId: string): boolean { return false; }
-  isFromBot(): boolean { return this.role === 'assistant'; }
-  getAuthorName(): string { return this.role; }
+  getMessageId(): string {
+    return 'generated-' + Date.now();
+  }
+  getTimestamp(): Date {
+    return new Date();
+  }
+  setText(text: string): void {
+    this.content = text;
+  }
+  getChannelId(): string {
+    return 'internal-ai-assist';
+  }
+  getAuthorId(): string {
+    return 'system';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return [];
+  }
+  mentionsUsers(userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return this.role === 'assistant';
+  }
+  getAuthorName(): string {
+    return this.role;
+  }
 }
 
 // Define OpenWebUI provider locally as in getLlmProvider.ts
@@ -77,7 +99,9 @@ router.post('/generate', async (req, res) => {
 
     const profile = getLlmProfileByKey(providerKey);
     if (!profile) {
-      return res.status(404).json({ error: 'Configured AI Assistance provider profile not found.' });
+      return res
+        .status(404)
+        .json({ error: 'Configured AI Assistance provider profile not found.' });
     }
 
     let instance: ILlmProvider | undefined;
@@ -113,27 +137,26 @@ router.post('/generate', async (req, res) => {
     // Construct messages
     const messages: IMessage[] = [];
     if (systemPrompt) {
-        messages.push(new SimpleMessage('system', systemPrompt));
+      messages.push(new SimpleMessage('system', systemPrompt));
     }
 
     let result = '';
     if (instance.supportsChatCompletion()) {
-        result = await instance.generateChatCompletion(prompt, messages);
+      result = await instance.generateChatCompletion(prompt, messages);
     } else if (instance.supportsCompletion()) {
-        // Fallback for completion-only providers
-        const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
-        result = await instance.generateCompletion(fullPrompt);
+      // Fallback for completion-only providers
+      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+      result = await instance.generateCompletion(fullPrompt);
     } else {
-        return res.status(400).json({ error: 'Provider does not support generation.' });
+      return res.status(400).json({ error: 'Provider does not support generation.' });
     }
 
     return res.json({ result });
-
   } catch (error: any) {
     debug('Error in AI Assist generation:', error);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: error.message
+      message: error.message,
     });
   }
 });

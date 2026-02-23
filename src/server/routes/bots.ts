@@ -13,7 +13,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Bot name is required' });
     }
     await manager.addBot(config);
-    return res.status(201).json({ success: true, message: 'Bot created', bot: manager.getBot(config.name) });
+    return res
+      .status(201)
+      .json({ success: true, message: 'Bot created', bot: manager.getBot(config.name) });
   } catch (error: any) {
     return res.status(400).json({ error: error.message });
   }

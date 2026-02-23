@@ -298,9 +298,9 @@ export class DiscordMessage implements IMessage {
       // Try to get members from guild channel
       const guildChannel = channel as TextChannel & {
         members?:
-        | Collection<string, GuildMember>
-        | Array<GuildMember | string>
-        | Record<string, GuildMember | string>;
+          | Collection<string, GuildMember>
+          | Array<GuildMember | string>
+          | Record<string, GuildMember | string>;
       };
 
       const members = guildChannel.members;

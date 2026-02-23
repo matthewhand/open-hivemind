@@ -25,6 +25,7 @@ import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
+import guardsRouter from './routes/guards';
 import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
@@ -179,6 +180,7 @@ export class WebUIServer {
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
+    this.app.use('/api/guards', authenticateToken, guardsRouter);
     this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/mcp', authenticateToken, mcpRouter);
     this.app.use('/api/activity', authenticateToken, activityRouter);

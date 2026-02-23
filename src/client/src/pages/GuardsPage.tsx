@@ -39,35 +39,24 @@ const GuardsPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Build guards from various config sources
-      const guards: Guard[] = [
-        {
-          id: 'access-control',
-          name: 'Access Control',
-          description: 'User and IP-based access restrictions',
-          type: 'access',
-          enabled: true,
-          config: {},
-        },
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          description: 'Prevents spam and excessive requests',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 },
-        },
-        {
-          id: 'content-filter',
-          name: 'Content Filter',
-          description: 'Filters inappropriate content',
-          type: 'content',
-          enabled: false,
-          config: {},
-        },
-      ];
+      const response = await fetch(`${API_BASE}/guards`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch guards');
+      }
 
-      setGuards(guards);
+      const data = await response.json();
+      const fetchedGuards = data.guards || [];
+      setGuards(fetchedGuards);
+
+      // Find access control guard and update accessConfig
+      const accessGuard = fetchedGuards.find((g: any) => g.id === 'access-control');
+      if (accessGuard && accessGuard.config) {
+        // Ensure default values are preserved if config is partial
+        setAccessConfig(prev => ({
+          ...prev,
+          ...accessGuard.config
+        }));
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch guards';
       setError(message);
@@ -104,8 +93,29 @@ const GuardsPage: React.FC = () => {
     }
   };
 
-  const toggleGuard = (id: string) => {
-    setGuards(guards.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g));
+  const toggleGuard = async (id: string) => {
+    const guard = guards.find(g => g.id === id);
+    if (!guard) return;
+
+    // Optimistic update
+    const newEnabled = !guard.enabled;
+    setGuards(guards.map(g => g.id === id ? { ...g, enabled: newEnabled } : g));
+
+    try {
+      const response = await fetch(`${API_BASE}/guards/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newEnabled }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle guard');
+      }
+    } catch (err) {
+      // Revert on error
+      setGuards(guards.map(g => g.id === id ? { ...g, enabled: guard.enabled } : g));
+      setError(err instanceof Error ? err.message : 'Failed to toggle guard');
+    }
   };
 
   const addUser = () => {

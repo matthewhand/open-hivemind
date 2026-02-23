@@ -1,5 +1,5 @@
-import { AuthManager } from '../../src/auth/AuthManager';
 import bcrypt from 'bcrypt';
+import { AuthManager } from '../../src/auth/AuthManager';
 
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
@@ -52,7 +52,9 @@ describe('AuthManager Security Fix', () => {
     expect(bcrypt.hashSync).toHaveBeenCalledWith('mysecurepassword', 12);
 
     // Should NOT warn about generated password
-    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('Generated temporary admin password'));
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Generated temporary admin password')
+    );
   });
 
   it('should generate random password if ADMIN_PASSWORD is missing in production', () => {
@@ -76,8 +78,12 @@ describe('AuthManager Security Fix', () => {
     expect(generatedPassword).toMatch(/^[0-9a-f]{32}$/);
 
     // Verify warning was logged
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('WARNING: No ADMIN_PASSWORD environment variable found.'));
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`Generated temporary admin password: ${generatedPassword}`));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('WARNING: No ADMIN_PASSWORD environment variable found.')
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`Generated temporary admin password: ${generatedPassword}`)
+    );
   });
 
   it('should still use default password in test environment', () => {
