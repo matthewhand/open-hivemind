@@ -91,7 +91,10 @@ export class AnomalyDetectionService extends EventEmitter {
 
         // Broadcast via WebSocket
         const wsService = WebSocketService.getInstance();
-        const alert: Omit<AlertEvent, 'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'> = {
+        const alert: Omit<
+          AlertEvent,
+          'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'
+        > = {
           level:
             anomaly.severity === 'critical'
               ? 'critical'
@@ -106,7 +109,6 @@ export class AnomalyDetectionService extends EventEmitter {
             value: anomaly.value,
             expected: anomaly.expectedMean,
           },
-          status: 'active', // Added missing status property
         };
         wsService.recordAlert(alert);
 
