@@ -54,6 +54,7 @@ const SystemManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('alerts');
   const [isLoading, setIsLoading] = useState(false);
 
+
   // Backup Modal State
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [useEncryption, setUseEncryption] = useState(false);
@@ -62,10 +63,18 @@ const SystemManagement: React.FC = () => {
   // Performance Tab State
   const [apiStatus, setApiStatus] = useState<any>(null);
 
+
+  // Performance Tab State
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [envOverrides, setEnvOverrides] = useState<Record<string, string> | null>(null);
+  const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
+
+
   useEffect(() => {
     fetchSystemConfig();
     fetchBackupHistory();
   }, []);
+
 
   // Performance monitoring polling
   useEffect(() => {
@@ -82,6 +91,29 @@ const SystemManagement: React.FC = () => {
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
+
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchPerformanceData();
+    }
+  }, [activeTab]);
+
+  const fetchPerformanceData = async () => {
+    setIsPerformanceLoading(true);
+    try {
+      const [info, overrides] = await Promise.all([
+        apiService.getSystemInfo(),
+        apiService.getEnvOverrides()
+      ]);
+      setSystemInfo(info.systemInfo);
+      // Backend returns { success: true, data: { envVars: ... } }
+      setEnvOverrides(overrides.data?.envVars || overrides.envVars);
+    } catch (error) {
+      console.error('Failed to fetch performance data:', error);
+    } finally {
+      setIsPerformanceLoading(false);
+
     }
   };
 
@@ -140,14 +172,20 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleAlertAcknowledge = (alertId: string) => {
-    // API call to acknowledge alert
-    console.log('Acknowledge alert:', alertId);
+  const handleAlertAcknowledge = async (alertId: string) => {
+    try {
+      await apiService.acknowledgeAlert(alertId);
+    } catch (error) {
+      console.error('Failed to acknowledge alert:', error);
+    }
   };
 
-  const handleAlertResolve = (alertId: string) => {
-    // API call to resolve alert
-    console.log('Resolve alert:', alertId);
+  const handleAlertResolve = async (alertId: string) => {
+    try {
+      await apiService.resolveAlert(alertId);
+    } catch (error) {
+      console.error('Failed to resolve alert:', error);
+    }
   };
 
   const openBackupModal = () => {
@@ -246,7 +284,7 @@ const SystemManagement: React.FC = () => {
       metrics: [
         { label: 'Total Backups', value: backups.length, icon: '💾' },
         { label: 'Latest', value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None', icon: '📅' },
-        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '❌' },
+        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '➖' },
       ],
     },
     {
@@ -332,15 +370,6 @@ const SystemManagement: React.FC = () => {
           {/* Alert Management Tab */}
           {activeTab === 'alerts' && (
             <AlertPanel
-              alerts={alerts.map((alert, index) => ({
-                id: alert.id || `alert-${index}`,
-                type: (alert.level === 'critical' ? 'error' : alert.level) || 'info',
-                title: alert.title || 'System Alert',
-                message: alert.message || '',
-                timestamp: alert.timestamp || new Date().toISOString(),
-                source: 'System',
-                metadata: alert.metadata,
-              }))}
               onAcknowledge={handleAlertAcknowledge}
               onResolve={handleAlertResolve}
               maxAlerts={20}
@@ -548,6 +577,7 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
+
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
                 <button
                   className="btn btn-warning btn-sm"
@@ -577,9 +607,75 @@ const SystemManagement: React.FC = () => {
                     <div className="stat-title">Error Rate</div>
                     <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
                     <div className="stat-desc">endpoints reporting errors</div>
+
+                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={fetchPerformanceData}
+                  disabled={isPerformanceLoading}
+                >
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                </button>
+              </div>
+
+              {systemInfo && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="card bg-base-200">
+                    <div className="card-body p-4">
+                      <h4 className="font-bold mb-2">System Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Platform:</span>
+                          <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Node Version:</span>
+                          <span className="font-mono">{systemInfo.nodeVersion}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Uptime:</span>
+                          <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Process ID:</span>
+                          <span className="font-mono">{systemInfo.pid}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Memory Usage:</span>
+                          <span className="font-mono">
+                            {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card bg-base-200">
+                    <div className="card-body p-4">
+                      <h4 className="font-bold mb-2">Database Status</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="opacity-70">Connected:</span>
+                          <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
+                            {systemInfo.database.connected ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        {systemInfo.database.stats && (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="opacity-70">Pool Size:</span>
+                              <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
+                            </div>
+                            {/* Add more DB stats if available */}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               )}
+
 
               <div className="card bg-base-200">
                 <div className="card-body p-4">
@@ -618,12 +714,53 @@ const SystemManagement: React.FC = () => {
                         {!apiStatus?.endpoints?.length && (
                           <tr>
                             <td colSpan={5} className="text-center">No endpoint data available</td>
+
+              <div className="divider"></div>
+
+              <div>
+                <h4 className="font-bold mb-4">Environment Configuration (Read-Only)</h4>
+                <p className="text-sm text-neutral-content/70 mb-4">
+                  These settings are loaded from environment variables and take precedence over database configuration.
+                  To change them, update your `.env` file and restart the server.
+                </p>
+
+                {envOverrides ? (
+                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2">
+                    <table className="table table-xs w-full">
+                      <thead>
+                        <tr>
+                          <th>Variable</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(envOverrides).length > 0 ? (
+                          Object.entries(envOverrides).map(([key, value]) => (
+                            <tr key={key}>
+                              <td className="font-mono font-bold text-primary">{key}</td>
+                              <td className="font-mono break-all">{value}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={2} className="text-center py-4 opacity-50">
+                              No environment overrides detected.
+                            </td>
+
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
+
                 </div>
+
+                ) : (
+                  <div className="flex justify-center py-8">
+                    <span className="loading loading-dots loading-lg"></span>
+                  </div>
+                )}
+
               </div>
             </div>
           )}

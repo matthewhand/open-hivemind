@@ -18,7 +18,7 @@ export class GreetingStateManager {
   private state: GreetingState = {};
   private initialized = false;
 
-  private constructor() {
+  public constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');
   }
 

@@ -19,7 +19,9 @@ interface GreetingConfig {
 export class StartupGreetingService extends EventEmitter {
   private static instance: StartupGreetingService;
 
-  public constructor(@inject(GreetingStateManager) private greetingStateManager: GreetingStateManager) {
+  public constructor(
+    @inject(GreetingStateManager) private greetingStateManager: GreetingStateManager
+  ) {
     super();
     appLogger.info('StartupGreetingService initialized');
     this.greetingStateManager = GreetingStateManager.getInstance();

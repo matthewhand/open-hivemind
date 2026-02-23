@@ -777,6 +777,14 @@ class ApiService {
     });
   }
 
+  async acknowledgeAlert(alertId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/dashboard/api/alerts/${alertId}/acknowledge`, { method: 'POST' });
+  }
+
+  async resolveAlert(alertId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/dashboard/api/alerts/${alertId}/resolve`, { method: 'POST' });
+  }
+
   // Import/Export Backup Methods
   async listSystemBackups(): Promise<any[]> {
     const res = await this.request<{ success: boolean; data: any[] }>('/api/import-export/backups');
@@ -809,6 +817,14 @@ class ApiService {
     return this.request(`/api/import-export/backups/${backupId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getSystemInfo(): Promise<any> {
+    return this.request('/api/admin/system-info');
+  }
+
+  async getEnvOverrides(): Promise<any> {
+    return this.request('/api/admin/env-overrides');
   }
 }
 

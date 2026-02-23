@@ -35,11 +35,14 @@ export interface AlertEvent {
   id: string;
   timestamp: string;
   level: 'info' | 'warning' | 'error' | 'critical';
+  status: 'active' | 'acknowledged' | 'resolved';
   title: string;
   message: string;
   botName?: string;
   channelId?: string;
   metadata?: Record<string, any>;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
 }
 
 export class WebSocketService {
@@ -168,11 +171,14 @@ export class WebSocketService {
     }
   }
 
-  public recordAlert(alert: Omit<AlertEvent, 'id' | 'timestamp'>): void {
+  public recordAlert(
+    alert: Omit<AlertEvent, 'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'>
+  ): void {
     const alertEvent: AlertEvent = {
       ...alert,
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
+      status: 'active',
     };
 
     this.alerts.push(alertEvent);
@@ -208,6 +214,36 @@ export class WebSocketService {
 
   public getAlerts(limit = 50): AlertEvent[] {
     return this.alerts.slice(-limit);
+  }
+
+  public acknowledgeAlert(id: string): boolean {
+    const alert = this.alerts.find((a) => a.id === id);
+    if (alert) {
+      alert.status = 'acknowledged';
+      alert.acknowledgedAt = new Date().toISOString();
+
+      // Broadcast to connected clients
+      if (this.io && this.connectedClients > 0) {
+        this.io.emit('alert_update', alert);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public resolveAlert(id: string): boolean {
+    const alert = this.alerts.find((a) => a.id === id);
+    if (alert) {
+      alert.status = 'resolved';
+      alert.resolvedAt = new Date().toISOString();
+
+      // Broadcast to connected clients
+      if (this.io && this.connectedClients > 0) {
+        this.io.emit('alert_update', alert);
+      }
+      return true;
+    }
+    return false;
   }
 
   public getPerformanceMetrics(limit = 60): PerformanceMetric[] {

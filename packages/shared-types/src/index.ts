@@ -5,13 +5,30 @@
  * This package contains platform-agnostic contracts that all adapters implement.
  */
 
-export * from './IMessage';
-export * from './IMessengerService';
-export * from './IErrorTypes';
-export * from './ILlmProvider';
-export * from './IBotConfig';
-export * from './IServiceDependencies';
-export * from './IAdapterFactory';
+export { IMessage } from './IMessage';
+export type { IMessengerService } from './IMessengerService';
+export type {
+    IServiceDependencies,
+    IErrorTypes,
+    IErrorRecoveryStrategy,
+    IBaseError,
+    INetworkErrorConstructor,
+    IConfigErrorConstructor,
+    IValidationErrorConstructor,
+    IAuthErrorConstructor,
+    IWebSocketService,
+    IMetricsCollector,
+    IChannelRouter,
+    ILogger,
+    IStartupGreetingService,
+    IConfigAccessor,
+    IBotConfig,
+    GetBotConfigFn,
+    GetAllBotConfigsFn,
+    GetLlmProvidersFn,
+} from './IServiceDependencies';
+export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
+export type { ILlmProvider } from './ILlmProvider';
 export {
     BaseError,
     ValidationError,
