@@ -29,3 +29,12 @@ export type {
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
+export {
+    BaseError,
+    ValidationError,
+    NetworkError,
+    ApiError,
+    ConfigurationError,
+    defaultErrorFactory,
+    type IErrorFactory,
+} from './errors';
