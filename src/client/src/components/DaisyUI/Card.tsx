@@ -108,14 +108,17 @@ const CardBody: React.FC<CardBodyProps> = ({ children, className = '' }) => {
   }
   return <>{children}</>;
 };
+CardBody.displayName = 'Card.Body';
 
 const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', tag: Tag = 'h2' }) => {
   return <Tag className={`card-title ${className}`}>{children}</Tag>;
 };
+CardTitle.displayName = 'Card.Title';
 
 const CardActions: React.FC<CardActionsProps> = ({ children, className = '' }) => {
   return <div className={`card-actions justify-end ${className}`}>{children}</div>;
 };
+CardActions.displayName = 'Card.Actions';
 
 /**
  * A reusable DaisyUI Card component.
@@ -142,11 +145,11 @@ const CardBase: React.FC<CardProps> = ({
 }) => {
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
-  if (compact) {cardClasses += ' card-compact';}
-  if (side) {cardClasses += ' card-side';}
-  if (imageFull) {cardClasses += ' image-full';}
-  if (bgVariant) {cardClasses += ` bg-${bgVariant}`;}
-  if (borderVariant) {cardClasses += ` border border-${borderVariant}`;}
+  if (compact) { cardClasses += ' card-compact'; }
+  if (side) { cardClasses += ' card-side'; }
+  if (imageFull) { cardClasses += ' image-full'; }
+  if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
+  if (borderVariant) { cardClasses += ` border border-${borderVariant}`; }
 
   // Enhanced hover effects
   if (hover) {
@@ -156,7 +159,7 @@ const CardBase: React.FC<CardProps> = ({
     }
   }
 
-  if (className) {cardClasses += ` ${className}`;}
+  if (className) { cardClasses += ` ${className}`; }
 
 
   // If loading, show skeleton loaders
