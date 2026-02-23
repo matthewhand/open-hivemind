@@ -15,7 +15,6 @@ interface SitemapUrl {
 
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 
   return [
@@ -29,63 +28,107 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber',
+      url: '/admin',
       changefreq: 'daily',
       priority: 1.0,
       lastmod: now,
-      description: 'Main Dashboard - Uber Interface',
+      description: 'Main Dashboard - Admin Interface',
       access: 'public',
     },
 
-    // Dashboard pages
+    // User Dashboard pages
     {
-      url: '/uber/overview',
+      url: '/dashboard',
+      changefreq: 'daily',
+      priority: 0.9,
+      lastmod: now,
+      description: 'User Dashboard',
+      access: 'authenticated',
+    },
+    {
+      url: '/activity',
+      changefreq: 'daily',
+      priority: 0.8,
+      lastmod: now,
+      description: 'User Activity',
+      access: 'authenticated',
+    },
+
+    // Admin pages
+    {
+      url: '/admin/overview',
       changefreq: 'daily',
       priority: 0.9,
       lastmod: now,
       description: 'System Overview and Status',
-      access: 'public',
+      access: 'authenticated',
     },
 
     // Bot management
     {
-      url: '/uber/bots',
+      url: '/admin/bots',
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: now,
       description: 'Bot Management Hub',
-      access: 'public',
+      access: 'authenticated',
     },
     {
-      url: '/uber/bots/create',
+      url: '/admin/bots/create',
       changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
       description: 'Create New Bot Instance',
-      access: 'public',
+      access: 'authenticated',
     },
     {
-      url: '/uber/bots/templates',
+      url: '/admin/bots/templates',
       changefreq: 'weekly',
       priority: 0.7,
       lastmod: now,
       description: 'Bot Templates Gallery',
-      access: 'public',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/chat',
+      changefreq: 'daily',
+      priority: 0.7,
+      lastmod: now,
+      description: 'Bot Interaction Chat',
+      access: 'authenticated',
     },
 
     // Persona management
     {
-      url: '/uber/personas',
+      url: '/admin/personas',
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: now,
       description: 'AI Persona Management',
-      access: 'public',
+      access: 'authenticated',
+    },
+
+    // Integrations
+    {
+      url: '/admin/integrations/llm',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'LLM Provider Configuration',
+      access: 'owner',
+    },
+    {
+      url: '/admin/integrations/message',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Messaging Platform Integrations',
+      access: 'owner',
     },
 
     // MCP Server management (Owner-only)
     {
-      url: '/uber/mcp',
+      url: '/admin/mcp',
       changefreq: 'weekly',
       priority: 0.6,
       lastmod: now,
@@ -93,7 +136,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'owner',
     },
     {
-      url: '/uber/mcp/servers',
+      url: '/admin/mcp/servers',
       changefreq: 'weekly',
       priority: 0.6,
       lastmod: now,
@@ -101,7 +144,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'owner',
     },
     {
-      url: '/uber/mcp/tools',
+      url: '/admin/mcp/tools',
       changefreq: 'daily',
       priority: 0.6,
       lastmod: now,
@@ -111,7 +154,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Security and guards
     {
-      url: '/uber/guards',
+      url: '/admin/guards',
       changefreq: 'monthly',
       priority: 0.5,
       lastmod: now,
@@ -121,43 +164,141 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Monitoring and activity
     {
-      url: '/uber/monitoring',
+      url: '/admin/monitoring',
       changefreq: 'hourly',
       priority: 0.8,
       lastmod: now,
       description: 'System Monitoring Dashboard',
-      access: 'public',
+      access: 'authenticated',
     },
     {
-      url: '/uber/activity',
+      url: '/admin/activity',
       changefreq: 'hourly',
       priority: 0.7,
       lastmod: now,
       description: 'Real-time Activity Monitor',
-      access: 'public',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/monitoring-dashboard',
+      changefreq: 'hourly',
+      priority: 0.8,
+      lastmod: now,
+      description: 'Advanced Monitoring Dashboard',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/analytics',
+      changefreq: 'daily',
+      priority: 0.7,
+      lastmod: now,
+      description: 'System Analytics',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/system-management',
+      changefreq: 'daily',
+      priority: 0.8,
+      lastmod: now,
+      description: 'System Management',
+      access: 'owner',
     },
 
     // Settings and configuration
     {
-      url: '/uber/settings',
+      url: '/admin/settings',
       changefreq: 'monthly',
       priority: 0.6,
       lastmod: now,
-      description: 'System Settings and Configuration',
-      access: 'public',
+      description: 'System Settings',
+      access: 'owner',
+    },
+    {
+      url: '/admin/configuration',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Bot Configuration',
+      access: 'owner',
+    },
+    {
+      url: '/admin/config',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Advanced Config Editor',
+      access: 'owner',
+    },
+    {
+      url: '/admin/specs',
+      changefreq: 'weekly',
+      priority: 0.5,
+      lastmod: now,
+      description: 'API Specifications',
+      access: 'authenticated',
+    },
+
+    // AI Features
+    {
+      url: '/admin/ai/dashboard',
+      changefreq: 'daily',
+      priority: 0.8,
+      lastmod: now,
+      description: 'AI Intelligent Dashboard',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/ai/insights',
+      changefreq: 'daily',
+      priority: 0.7,
+      lastmod: now,
+      description: 'AI Insights Panel',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/ai/analytics',
+      changefreq: 'daily',
+      priority: 0.7,
+      lastmod: now,
+      description: 'Predictive Analytics',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/ai/anomalies',
+      changefreq: 'hourly',
+      priority: 0.8,
+      lastmod: now,
+      description: 'Anomaly Detection',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/ai/chat',
+      changefreq: 'daily',
+      priority: 0.7,
+      lastmod: now,
+      description: 'Natural Language Interface',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/ai/training',
+      changefreq: 'weekly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Bot Training Dashboard',
+      access: 'owner',
     },
 
     // Utilities
     {
-      url: '/uber/export',
+      url: '/admin/export',
       changefreq: 'monthly',
       priority: 0.5,
       lastmod: now,
       description: 'Data Export Tools',
-      access: 'public',
+      access: 'authenticated',
     },
     {
-      url: '/uber/static',
+      url: '/admin/static',
       changefreq: 'weekly',
       priority: 0.4,
       lastmod: now,
@@ -165,7 +306,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/showcase',
+      url: '/admin/showcase',
       changefreq: 'weekly',
       priority: 0.3,
       lastmod: now,
@@ -181,14 +322,6 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       lastmod: now,
       description: 'Legacy WebUI Interface',
       access: 'public',
-    },
-    {
-      url: '/admin',
-      changefreq: 'weekly',
-      priority: 0.5,
-      lastmod: now,
-      description: 'Admin Interface',
-      access: 'authenticated',
     },
 
     // Authentication
@@ -343,18 +476,28 @@ router.get('/sitemap', (req: Request, res: Response) => {
     
     ${generateSectionHTML(
       'Main Application',
-      routes.filter((r) => r.url.startsWith('/uber')),
+      routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai') && !r.url.startsWith('/admin/mcp')),
       baseUrl
     )}
     ${generateSectionHTML(
-      'Legacy Interfaces',
-      routes.filter((r) => r.url.startsWith('/webui') || r.url.startsWith('/admin')),
+      'AI Features',
+      routes.filter((r) => r.url.startsWith('/admin/ai')),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'MCP Servers',
+      routes.filter((r) => r.url.startsWith('/admin/mcp')),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'User Dashboard',
+      routes.filter((r) => r.url === '/dashboard' || r.url === '/activity'),
       baseUrl
     )}
     ${generateSectionHTML(
       'System Endpoints',
       routes.filter(
-        (r) => r.url.startsWith('/health') || r.url.startsWith('/api') || r.url === '/login'
+        (r) => r.url.startsWith('/health') || r.url.startsWith('/api') || r.url === '/login' || r.url === '/webui'
       ),
       baseUrl
     )}
