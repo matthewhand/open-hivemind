@@ -40,7 +40,9 @@ const MCPServersPage: React.FC = () => {
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [modalAlert, setModalAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/admin/mcp' },
@@ -158,13 +160,47 @@ const MCPServersPage: React.FC = () => {
       apiKey: '',
     });
     setIsEditing(false);
+    setModalAlert(null);
     setDialogOpen(true);
   };
 
   const handleEditServer = (server: MCPServer) => {
     setSelectedServer(server);
     setIsEditing(true);
+    setModalAlert(null);
     setDialogOpen(true);
+  };
+
+  const handleTestConnection = async () => {
+    if (!selectedServer?.url) {
+      setModalAlert({ type: 'error', message: 'Server URL is required' });
+      return;
+    }
+
+    try {
+      setIsTesting(true);
+      setModalAlert(null);
+      const response = await fetch('/api/admin/mcp-servers/test', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: selectedServer.name || 'Test Server',
+          serverUrl: selectedServer.url,
+          apiKey: selectedServer.apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Connection failed');
+      }
+
+      setModalAlert({ type: 'success', message: 'Connection successful!' });
+    } catch (err) {
+      setModalAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleSaveServer = async () => {
@@ -353,6 +389,14 @@ const MCPServersPage: React.FC = () => {
         title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
       >
         <div className="space-y-4">
+          {modalAlert && (
+            <Alert
+              status={modalAlert.type === 'success' ? 'success' : 'error'}
+              message={modalAlert.message}
+              onClose={() => setModalAlert(null)}
+            />
+          )}
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Server Name *</span>
@@ -406,6 +450,14 @@ const MCPServersPage: React.FC = () => {
         </div>
 
         <div className="modal-action">
+          <button
+            className="btn btn-ghost mr-auto"
+            onClick={handleTestConnection}
+            disabled={isTesting}
+          >
+            {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
+            Test Connection
+          </button>
           <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
             Cancel
           </button>
