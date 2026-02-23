@@ -752,9 +752,6 @@ const SystemManagement: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-
-                </div>
-
                 ) : (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
