@@ -19,6 +19,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [guardProfiles, setGuardProfiles] = useState<any[]>([]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -26,12 +27,28 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
         messageProvider: 'discord',
         llmProvider: '',
         persona: 'default',
+        mcpGuardProfile: '',
         guards: {
             accessControl: false,
             rateLimit: false,
             contentFilter: false,
         }
     });
+
+    useEffect(() => {
+        const fetchGuardProfiles = async () => {
+            try {
+                const response = await fetch('/api/admin/guard-profiles');
+                if (response.ok) {
+                    const data = await response.json();
+                    setGuardProfiles(data.data || []);
+                }
+            } catch (e) {
+                console.error('Failed to fetch guard profiles', e);
+            }
+        };
+        fetchGuardProfiles();
+    }, []);
 
     const getPersonaName = () => {
         if (formData.persona === 'default') return 'Default Assistant';
@@ -41,6 +58,11 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     const getLlmProviderName = () => {
         if (!formData.llmProvider) return 'System Default';
         return llmProfiles.find(p => p.key === formData.llmProvider)?.name || formData.llmProvider;
+    };
+
+    const getGuardProfileName = () => {
+        if (!formData.mcpGuardProfile) return 'None (Manual Config)';
+        return guardProfiles.find(p => p.id === formData.mcpGuardProfile)?.name || formData.mcpGuardProfile;
     };
 
     const steps = [
@@ -63,6 +85,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                 messageProvider: formData.messageProvider,
                 ...(formData.llmProvider ? { llmProvider: formData.llmProvider } : {}),
                 persona: formData.persona,
+                mcpGuardProfile: formData.mcpGuardProfile,
                 config: {
                     mcpGuard: { enabled: formData.guards.accessControl },
                     rateLimit: { enabled: formData.guards.rateLimit },
@@ -229,6 +252,25 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <p className="text-sm opacity-70 mb-4">Configure safety and operational guardrails for your bot.</p>
 
+                        <div className="form-control w-full mb-6">
+                            <label className="label"><span className="label-text font-bold">Guard Profile</span></label>
+                            <select
+                                className="select select-bordered w-full"
+                                value={formData.mcpGuardProfile}
+                                onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value })}
+                            >
+                                <option value="">No Profile (Use Manual Config)</option>
+                                {guardProfiles.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                            <label className="label">
+                                <span className="label-text-alt">Using a profile overrides manual settings below.</span>
+                            </label>
+                        </div>
+
+                        <div className="divider">Manual Overrides</div>
+
                         <div className="form-control">
                             <label className="label cursor-pointer justify-start gap-4">
                                 <input
@@ -236,6 +278,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     className="toggle toggle-primary"
                                     checked={formData.guards.accessControl}
                                     onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
+                                    disabled={!!formData.mcpGuardProfile}
                                 />
                                 <div className="flex flex-col">
                                     <span className="label-text font-bold">Access Control</span>
@@ -251,6 +294,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     className="toggle toggle-primary"
                                     checked={formData.guards.rateLimit}
                                     onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
+                                    disabled={!!formData.mcpGuardProfile}
                                 />
                                 <div className="flex flex-col">
                                     <span className="label-text font-bold">Rate Limiting</span>
@@ -266,6 +310,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     className="toggle toggle-primary"
                                     checked={formData.guards.contentFilter}
                                     onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}
+                                    disabled={!!formData.mcpGuardProfile}
                                 />
                                 <div className="flex flex-col">
                                     <span className="label-text font-bold">Content Filtering</span>
@@ -302,14 +347,21 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 <div className="divider my-0"></div>
                                 <div className="flex flex-col gap-1">
                                     <span className="opacity-70 text-sm">Guardrails:</span>
-                                    <div className="flex flex-wrap gap-2">
-                                        {!formData.guards.accessControl && !formData.guards.rateLimit && !formData.guards.contentFilter && (
-                                            <span className="badge badge-ghost">No Guardrails Enabled</span>
-                                        )}
-                                        {formData.guards.accessControl && <span className="badge badge-primary">Access Control</span>}
-                                        {formData.guards.rateLimit && <span className="badge badge-secondary">Rate Limiting</span>}
-                                        {formData.guards.contentFilter && <span className="badge badge-accent">Content Filter</span>}
-                                    </div>
+                                    {formData.mcpGuardProfile ? (
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold">Profile: {getGuardProfileName()}</span>
+                                            <span className="text-xs opacity-70">Manual settings overridden.</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2">
+                                            {!formData.guards.accessControl && !formData.guards.rateLimit && !formData.guards.contentFilter && (
+                                                <span className="badge badge-ghost">No Guardrails Enabled</span>
+                                            )}
+                                            {formData.guards.accessControl && <span className="badge badge-primary">Access Control</span>}
+                                            {formData.guards.rateLimit && <span className="badge badge-secondary">Rate Limiting</span>}
+                                            {formData.guards.contentFilter && <span className="badge badge-accent">Content Filter</span>}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

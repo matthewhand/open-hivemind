@@ -46,6 +46,9 @@ export class MCPService {
   }
 
   /**
+   * Connect to an MCP server and discover its tools
+   */
+  /**
    * Connects to an MCP server and discovers available tools.
    *
    * @param {MCPConfig} config - The server configuration containing URL and API key
@@ -100,6 +103,43 @@ export class MCPService {
       return mcpTools;
     } catch (error) {
       debug(`Error connecting to MCP server ${config.name}:`, error);
+      throw new Error(
+        `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Test connection to an MCP server without storing the client
+   */
+  public async testConnection(config: MCPConfig): Promise<boolean> {
+    try {
+      debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
+
+      // Dynamically require the MCP SDK
+      const { Client } = require('@modelcontextprotocol/sdk');
+
+      // Create a new client for this server
+      const client = new Client({
+        name: 'Open-Hivemind-Test',
+        version: '1.0.0',
+      });
+
+      // Connect to the server
+      await client.connect({
+        url: config.serverUrl,
+        apiKey: config.apiKey,
+      });
+
+      // Try to list tools to verify connection works
+      await client.listTools();
+
+      // If we got here, connection is successful
+      // Since SDK doesn't have disconnect, we just let it go out of scope
+
+      return true;
+    } catch (error) {
+      debug(`Error testing connection to MCP server ${config.name}:`, error);
       throw new Error(
         `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
       );

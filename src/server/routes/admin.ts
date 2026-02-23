@@ -9,6 +9,7 @@ import { webUIStorage } from '../../storage/webUIStorage';
 import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
 import activityRouter from './activity';
 import agentsRouter from './agents';
+import guardProfilesRouter from './guardProfiles';
 import mcpRouter from './mcp';
 
 const router = Router();
@@ -39,6 +40,7 @@ router.use('/api/admin', configRateLimit);
 router.use('/agents', agentsRouter);
 router.use('/mcp', mcpRouter);
 router.use('/activity', activityRouter);
+router.use('/guard-profiles', guardProfilesRouter);
 
 // Define the new route for tool usage guards
 router.get('/tool-usage-guards', (req: Request, res: Response) => {
