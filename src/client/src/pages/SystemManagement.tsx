@@ -94,6 +94,7 @@ const SystemManagement: React.FC = () => {
     }
   };
 
+
   useEffect(() => {
     if (activeTab === 'performance') {
       fetchPerformanceData();
@@ -612,9 +613,7 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="divider"></div>
-
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mt-8">
                 <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
                 <button
                   className="btn btn-sm btn-ghost"
@@ -760,7 +759,6 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
-
                           </tr>
                         )}
                       </tbody>
@@ -771,7 +769,6 @@ const SystemManagement: React.FC = () => {
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
-
               </div>
             </div>
           )}

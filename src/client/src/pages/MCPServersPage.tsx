@@ -40,6 +40,7 @@ const MCPServersPage: React.FC = () => {
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
@@ -165,6 +166,37 @@ const MCPServersPage: React.FC = () => {
     setSelectedServer(server);
     setIsEditing(true);
     setDialogOpen(true);
+  };
+
+  const handleTestConnection = async () => {
+    if (!selectedServer?.url) {
+      setAlert({ type: 'error', message: 'Server URL is required' });
+      return;
+    }
+
+    try {
+      setIsTesting(true);
+      const response = await fetch('/api/admin/mcp-servers/test', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: selectedServer.name || 'Test Server',
+          serverUrl: selectedServer.url,
+          apiKey: selectedServer.apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Connection failed');
+      }
+
+      setAlert({ type: 'success', message: 'Connection successful!' });
+    } catch (err) {
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleSaveServer = async () => {
@@ -406,6 +438,14 @@ const MCPServersPage: React.FC = () => {
         </div>
 
         <div className="modal-action">
+          <button
+            className="btn btn-ghost mr-auto"
+            onClick={handleTestConnection}
+            disabled={isTesting}
+          >
+            {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
+            Test Connection
+          </button>
           <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
             Cancel
           </button>
