@@ -35,6 +35,8 @@
       "@webhook/*": ["src/webhook/*"],
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
+      "@src/integrations/slack/*": ["packages/adapter-slack/src/*"],
+      "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
       "@src/*": ["src/*"],
       "@tests/*": ["tests/*"],
       "testUtils": ["./tests/testUtils"],
