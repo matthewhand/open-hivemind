@@ -9,6 +9,7 @@ import {
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
+import { applyRateLimiting } from '../middleware/rateLimiter';
 // Error handling imports
 import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
@@ -113,11 +114,8 @@ export class WebUIServer {
 
     this.app.use(cors(corsOptions));
 
-    // Rate limiting (basic implementation)
-    this.app.use('/api', (req, res, next) => {
-      // Basic rate limiting middleware
-      next();
-    });
+    // Rate limiting
+    this.app.use('/api', applyRateLimiting);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));

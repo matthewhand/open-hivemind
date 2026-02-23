@@ -228,7 +228,7 @@ function createRateLimitHandler(type: string) {
 
     logger.warn(`Rate limit exceeded for ${type}`, {
       ip: getClientKey(req),
-      path: req.path,
+      path: req.originalUrl,
       method: req.method,
       userAgent: req.headers['user-agent']?.substring(0, 100),
     });
@@ -348,7 +348,9 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
     return next();
   }
 
-  const path = req.path;
+  // Use baseUrl + path to get the full path including mount point
+  // This ensures correct matching regardless of where the middleware is mounted
+  const path = req.baseUrl ? req.baseUrl + req.path : req.path;
 
   // Apply different rate limiters based on route patterns
   if (path.startsWith('/api/config')) {
