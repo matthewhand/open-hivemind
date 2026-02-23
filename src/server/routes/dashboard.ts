@@ -8,6 +8,215 @@ type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
 const router = Router();
 
+// ----------------------------------------------------------------------------
+// AI Dashboard Interfaces & Mock Data
+// ----------------------------------------------------------------------------
+
+interface BehaviorPattern {
+  id: string;
+  name: string;
+  description: string;
+  frequency: number;
+  confidence: number;
+  trend: 'increasing' | 'decreasing' | 'stable';
+  segments: string[];
+  recommendedWidgets: string[];
+  priority: number;
+}
+
+interface DashboardRecommendation {
+  id: string;
+  type: 'widget' | 'layout' | 'theme' | 'settings';
+  title: string;
+  description: string;
+  confidence: number;
+  impact: 'high' | 'medium' | 'low';
+  reasoning: string;
+  preview?: Record<string, unknown>;
+  userFeedback?: 'liked' | 'disliked' | null;
+}
+
+interface UserSegment {
+  id: string;
+  name: string;
+  description: string;
+  criteria: {
+    behaviorPatterns: string[];
+    usageFrequency: 'daily' | 'weekly' | 'monthly';
+    featureUsage: string[];
+    engagementLevel: 'high' | 'medium' | 'low';
+  };
+  characteristics: {
+    preferredWidgets: string[];
+    optimalLayout: string;
+    themePreference: string;
+    notificationFrequency: number;
+  };
+  size: number;
+  confidence: number;
+}
+
+interface AIDashboardConfig {
+  enabled: boolean;
+  learningRate: number;
+  confidenceThreshold: number;
+  recommendationFrequency: number;
+  behaviorTracking: boolean;
+  personalization: boolean;
+  predictiveAnalytics: boolean;
+  autoOptimization: boolean;
+}
+
+let dashboardConfig: AIDashboardConfig = {
+  enabled: true,
+  learningRate: 0.1,
+  confidenceThreshold: 0.7,
+  recommendationFrequency: 30, // minutes
+  behaviorTracking: true,
+  personalization: true,
+  predictiveAnalytics: true,
+  autoOptimization: true,
+};
+
+const mockBehaviorPatterns: BehaviorPattern[] = [
+  {
+    id: 'pattern-001',
+    name: 'Performance Monitor',
+    description: 'User frequently checks performance metrics and system health',
+    frequency: 0.85,
+    confidence: 0.92,
+    trend: 'increasing',
+    segments: ['power-user', 'admin'],
+    recommendedWidgets: ['performance-monitor', 'system-health', 'resource-usage'],
+    priority: 1,
+  },
+  {
+    id: 'pattern-002',
+    name: 'Analytics Explorer',
+    description: 'User explores analytics data and trends regularly',
+    frequency: 0.73,
+    confidence: 0.88,
+    trend: 'stable',
+    segments: ['analyst', 'manager'],
+    recommendedWidgets: ['analytics-dashboard', 'trend-analysis', 'data-visualization'],
+    priority: 2,
+  },
+  {
+    id: 'pattern-003',
+    name: 'Quick Glancer',
+    description: 'User prefers quick overview with minimal interaction',
+    frequency: 0.62,
+    confidence: 0.79,
+    trend: 'decreasing',
+    segments: ['casual-user'],
+    recommendedWidgets: ['summary-cards', 'quick-stats', 'status-overview'],
+    priority: 3,
+  },
+];
+
+const mockUserSegments: UserSegment[] = [
+  {
+    id: 'segment-001',
+    name: 'Power Users',
+    description: 'Highly engaged users who use advanced features frequently',
+    criteria: {
+      behaviorPatterns: ['pattern-001', 'pattern-002'],
+      usageFrequency: 'daily',
+      featureUsage: ['advanced-analytics', 'performance-monitoring', 'system-config'],
+      engagementLevel: 'high',
+    },
+    characteristics: {
+      preferredWidgets: ['performance-monitor', 'analytics-dashboard', 'system-health'],
+      optimalLayout: 'grid-3x3',
+      themePreference: 'dark',
+      notificationFrequency: 5,
+    },
+    size: 150,
+    confidence: 0.89,
+  },
+  {
+    id: 'segment-002',
+    name: 'Casual Users',
+    description: 'Users who prefer simple, quick-access information',
+    criteria: {
+      behaviorPatterns: ['pattern-003'],
+      usageFrequency: 'weekly',
+      featureUsage: ['basic-stats', 'status-overview'],
+      engagementLevel: 'low',
+    },
+    characteristics: {
+      preferredWidgets: ['summary-cards', 'quick-stats', 'status-overview'],
+      optimalLayout: 'list-2x2',
+      themePreference: 'light',
+      notificationFrequency: 1,
+    },
+    size: 320,
+    confidence: 0.76,
+  },
+];
+
+// ----------------------------------------------------------------------------
+// AI Dashboard Endpoints
+// Note: These are mounted at /api/dashboard by server.ts, so paths are relative to that.
+// BUT, existing routes use /api/... internally too.
+// ----------------------------------------------------------------------------
+
+router.get('/api/ai/config', authenticateToken, (req, res) => {
+  res.json(dashboardConfig);
+});
+
+router.post('/api/ai/config', authenticateToken, (req, res) => {
+  dashboardConfig = { ...dashboardConfig, ...req.body };
+  res.json(dashboardConfig);
+});
+
+router.get('/api/ai/stats', authenticateToken, (req, res) => {
+  res.json({
+    learningProgress: 75,
+    behaviorPatternsCount: mockBehaviorPatterns.length,
+    userSegmentsCount: mockUserSegments.length,
+  });
+});
+
+router.get('/api/ai/segments', authenticateToken, (req, res) => {
+  res.json(mockUserSegments);
+});
+
+router.get('/api/ai/patterns', authenticateToken, (req, res) => {
+  res.json(mockBehaviorPatterns);
+});
+
+router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
+  const recommendations: DashboardRecommendation[] = [
+    {
+      id: `rec-1`,
+      type: 'widget',
+      title: `Add Performance Widget`,
+      description: `Based on your frequent usage of system stats`,
+      confidence: 0.85,
+      impact: 'high',
+      reasoning: 'You check system stats daily',
+      preview: { widgetId: 'performance-monitor', type: 'preview' },
+    },
+    {
+      id: `rec-2`,
+      type: 'layout',
+      title: 'Optimize Dashboard Layout',
+      description: `Switch to grid-3x3 layout`,
+      confidence: 0.90,
+      impact: 'medium',
+      reasoning: `Based on your Power Users usage pattern`,
+    },
+  ];
+  res.json(recommendations);
+});
+
+router.post('/api/ai/feedback', authenticateToken, (req, res) => {
+  const { recommendationId, feedback } = req.body;
+  console.log(`Received feedback for ${recommendationId}: ${feedback}`);
+  res.json({ success: true });
+});
+
 // Root route removed - dashboard is now served from public/index.html
 // This file only contains API endpoints
 
