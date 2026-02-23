@@ -52,7 +52,6 @@ jest.mock('../../src/mcp/MCPService', () => ({
       disconnectFromServer: jest.fn(),
       getConnectedServers: jest.fn(() => []),
       getToolsFromServer: jest.fn(() => []),
-      testConnection: jest.fn(),
     })),
   },
 }));
@@ -63,7 +62,7 @@ jest.mock('../../src/utils/envUtils', () => ({
 
 const app = express();
 app.use(express.json());
-app.use('/api/admin', adminRoutes);
+app.use(adminRoutes);
 
 describe('Admin Routes', () => {
   beforeEach(() => {
@@ -317,22 +316,6 @@ describe('Admin Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('Successfully disconnected');
-    });
-
-    test('POST /api/admin/mcp-servers/test should test connection', async () => {
-      const testData = {
-        name: 'Test Server',
-        serverUrl: 'http://localhost:3000',
-        apiKey: 'test-api-key',
-      };
-
-      const response = await request(app)
-        .post('/api/admin/mcp-servers/test')
-        .send(testData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Successfully tested connection');
     });
   });
 
