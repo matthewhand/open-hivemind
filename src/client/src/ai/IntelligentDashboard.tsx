@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector } from '../store/hooks';
-import { selectUser } from '../store/slices/authSlice';
+import { selectUser, selectToken } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   SparklesIcon,
@@ -10,27 +10,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
-interface UserBehavior {
-  userId: string;
-  sessionId: string;
-  timestamp: Date;
-  action: 'view' | 'click' | 'hover' | 'scroll' | 'resize' | 'filter' | 'sort';
-  target: string;
-  metadata: {
-    widgetType?: string;
-    duration?: number;
-    position?: { x: number; y: number };
-    value?: string | number | boolean | Record<string, unknown>;
-    previousValue?: string | number | boolean | Record<string, unknown>;
-  };
-  context: {
-    page: string;
-    viewport: { width: number; height: number };
-    device: 'desktop' | 'tablet' | 'mobile';
-    timezone: string;
-  };
-}
-
+// Interfaces match server
 interface BehaviorPattern {
   id: string;
   name: string;
@@ -97,115 +77,6 @@ interface IntelligentDashboardState {
   userFeedback: Record<string, 'liked' | 'disliked'>;
 }
 
-// Mock user behaviors for demonstration (prefixed to suppress lint - used for demo data)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _mockUserBehaviors: UserBehavior[] = [
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000),
-    action: 'view',
-    target: 'performance-widget',
-    metadata: { widgetType: 'line-chart', duration: 120 },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 3 * 60 * 1000),
-    action: 'click',
-    target: 'bot-status-widget',
-    metadata: { widgetType: 'status-indicator', position: { x: 150, y: 200 } },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 1 * 60 * 1000),
-    action: 'filter',
-    target: 'analytics-widget',
-    metadata: { widgetType: 'bar-chart', value: 'last-7-days', previousValue: 'last-24-hours' },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-];
-
-const mockBehaviorPatterns: BehaviorPattern[] = [
-  {
-    id: 'pattern-001',
-    name: 'Performance Monitor',
-    description: 'User frequently checks performance metrics and system health',
-    frequency: 0.85,
-    confidence: 0.92,
-    trend: 'increasing',
-    segments: ['power-user', 'admin'],
-    recommendedWidgets: ['performance-monitor', 'system-health', 'resource-usage'],
-    priority: 1,
-  },
-  {
-    id: 'pattern-002',
-    name: 'Analytics Explorer',
-    description: 'User explores analytics data and trends regularly',
-    frequency: 0.73,
-    confidence: 0.88,
-    trend: 'stable',
-    segments: ['analyst', 'manager'],
-    recommendedWidgets: ['analytics-dashboard', 'trend-analysis', 'data-visualization'],
-    priority: 2,
-  },
-  {
-    id: 'pattern-003',
-    name: 'Quick Glancer',
-    description: 'User prefers quick overview with minimal interaction',
-    frequency: 0.62,
-    confidence: 0.79,
-    trend: 'decreasing',
-    segments: ['casual-user'],
-    recommendedWidgets: ['summary-cards', 'quick-stats', 'status-overview'],
-    priority: 3,
-  },
-];
-
-const mockUserSegments: UserSegment[] = [
-  {
-    id: 'segment-001',
-    name: 'Power Users',
-    description: 'Highly engaged users who use advanced features frequently',
-    criteria: {
-      behaviorPatterns: ['pattern-001', 'pattern-002'],
-      usageFrequency: 'daily',
-      featureUsage: ['advanced-analytics', 'performance-monitoring', 'system-config'],
-      engagementLevel: 'high',
-    },
-    characteristics: {
-      preferredWidgets: ['performance-monitor', 'analytics-dashboard', 'system-health'],
-      optimalLayout: 'grid-3x3',
-      themePreference: 'dark',
-      notificationFrequency: 5,
-    },
-    size: 150,
-    confidence: 0.89,
-  },
-  {
-    id: 'segment-002',
-    name: 'Casual Users',
-    description: 'Users who prefer simple, quick-access information',
-    criteria: {
-      behaviorPatterns: ['pattern-003'],
-      usageFrequency: 'weekly',
-      featureUsage: ['basic-stats', 'status-overview'],
-      engagementLevel: 'low',
-    },
-    characteristics: {
-      preferredWidgets: ['summary-cards', 'quick-stats', 'status-overview'],
-      optimalLayout: 'list-2x2',
-      themePreference: 'light',
-      notificationFrequency: 1,
-    },
-    size: 320,
-    confidence: 0.76,
-  },
-];
-
 const defaultConfig: AIDashboardConfig = {
   enabled: true,
   learningRate: 0.1,
@@ -219,11 +90,12 @@ const defaultConfig: AIDashboardConfig = {
 
 export const IntelligentDashboard: React.FC = () => {
   const currentUser = useAppSelector(selectUser);
+  const token = useAppSelector(selectToken);
   const [config, setConfig] = useState<AIDashboardConfig>(defaultConfig);
   const [state, setState] = useState<IntelligentDashboardState>({
-    behaviorPatterns: mockBehaviorPatterns,
+    behaviorPatterns: [],
     recommendations: [],
-    userSegments: mockUserSegments,
+    userSegments: [],
     currentSegment: null,
     personalizedWidgets: [],
     learningProgress: 0,
@@ -233,125 +105,61 @@ export const IntelligentDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [confidenceLevel, setConfidenceLevel] = useState(0.75);
 
-  // Simulate AI learning and recommendation generation
-  useEffect(() => {
-    if (!config.enabled) { return; }
+  const fetchData = useCallback(async () => {
+      if (!token) return;
+      setIsLoading(true);
+      try {
+          const headers = { 'Authorization': `Bearer ${token}` };
 
-    const interval = setInterval(() => {
-      simulateLearning();
-    }, config.recommendationFrequency * 60 * 1000);
+          const [configRes, statsRes, segmentsRes, patternsRes, recsRes] = await Promise.all([
+              fetch('/api/dashboard/api/ai/config', { headers }),
+              fetch('/api/dashboard/api/ai/stats', { headers }),
+              fetch('/api/dashboard/api/ai/segments', { headers }),
+              fetch('/api/dashboard/api/ai/patterns', { headers }),
+              fetch('/api/dashboard/api/ai/recommendations', { headers })
+          ]);
 
-    // Initial learning
-    simulateLearning();
+          if (configRes.ok) setConfig(await configRes.json());
 
-    return () => clearInterval(interval);
-  }, [config]);
+          const stats = statsRes.ok ? await statsRes.json() : {};
+          const segments = segmentsRes.ok ? await segmentsRes.json() : [];
+          const patterns = patternsRes.ok ? await patternsRes.json() : [];
+          const recommendations = recsRes.ok ? await recsRes.json() : [];
 
-  const simulateLearning = useCallback(() => {
-    setIsLoading(true);
+          // Determine current segment (simple logic for now, or fetch from backend if endpoint existed)
+          const currentSegment = segments.length > 0 ? segments[0] : null;
 
-    // Simulate ML processing delay
-    setTimeout(() => {
-      const newRecommendations = generateRecommendations();
-      const currentSegment = identifyUserSegment();
-      const personalizedWidgets = generatePersonalizedWidgets();
-      const learningProgress = calculateLearningProgress();
+          // Generate personalized widgets based on patterns
+          const personalizedWidgets = patterns
+            .filter((p: BehaviorPattern) => p.confidence > confidenceLevel)
+            .flatMap((p: BehaviorPattern) => p.recommendedWidgets);
 
-      setState(prev => ({
-        ...prev,
-        recommendations: newRecommendations,
-        currentSegment,
-        personalizedWidgets,
-        learningProgress,
-        lastUpdate: new Date(),
-      }));
+          setState(prev => ({
+              ...prev,
+              behaviorPatterns: patterns,
+              recommendations: recommendations,
+              userSegments: segments,
+              currentSegment,
+              personalizedWidgets: [...new Set(personalizedWidgets)] as string[],
+              learningProgress: stats.learningProgress || 0,
+              lastUpdate: new Date()
+          }));
 
-      setIsLoading(false);
-    }, 1500);
-  }, [config]);
-
-  const generateRecommendations = (): DashboardRecommendation[] => {
-    const recommendations: DashboardRecommendation[] = [];
-
-    // Generate widget recommendations based on behavior patterns
-    state.behaviorPatterns.forEach(pattern => {
-      if (pattern.confidence > confidenceLevel) {
-        pattern.recommendedWidgets.forEach(widgetId => {
-          recommendations.push({
-            id: `rec-${widgetId}-${Date.now()}`,
-            type: 'widget',
-            title: `Add ${widgetId.replace('-', ' ')} Widget`,
-            description: `Based on your ${pattern.name.toLowerCase()} pattern`,
-            confidence: pattern.confidence,
-            impact: pattern.priority === 1 ? 'high' : pattern.priority === 2 ? 'medium' : 'low',
-            reasoning: pattern.description,
-            preview: { widgetId, type: 'preview' },
-          });
-        });
+      } catch (error) {
+          console.error("Failed to fetch dashboard data", error);
+      } finally {
+          setIsLoading(false);
       }
-    });
+  }, [token, confidenceLevel]);
 
-    // Generate layout recommendations
-    if (state.currentSegment) {
-      recommendations.push({
-        id: `rec-layout-${Date.now()}`,
-        type: 'layout',
-        title: 'Optimize Dashboard Layout',
-        description: `Switch to ${state.currentSegment.characteristics.optimalLayout} layout`,
-        confidence: state.currentSegment.confidence,
-        impact: 'medium',
-        reasoning: `Based on your ${state.currentSegment.name} usage pattern`,
-      });
+
+  useEffect(() => {
+    if (config.enabled && token) {
+      fetchData();
     }
+  }, [config.enabled, token, fetchData]);
 
-    // Generate theme recommendations
-    if (state.currentSegment) {
-      recommendations.push({
-        id: `rec-theme-${Date.now()}`,
-        type: 'theme',
-        title: 'Recommended Theme',
-        description: `Switch to ${state.currentSegment.characteristics.themePreference} theme`,
-        confidence: state.currentSegment.confidence,
-        impact: 'low',
-        reasoning: `Optimized for ${state.currentSegment.name} segment`,
-      });
-    }
-
-    return recommendations.slice(0, 5); // Limit to 5 recommendations
-  };
-
-  const identifyUserSegment = (): UserSegment | null => {
-    // Simple segment identification based on behavior patterns
-    const segment = state.userSegments.find(segment =>
-      segment.confidence > confidenceLevel &&
-      segment.criteria.behaviorPatterns.some(pattern =>
-        state.behaviorPatterns.find(p => p.id === pattern && p.confidence > confidenceLevel),
-      ),
-    );
-
-    return segment || null;
-  };
-
-  const generatePersonalizedWidgets = (): string[] => {
-    if (!state.currentSegment) { return []; }
-
-    return state.currentSegment.characteristics.preferredWidgets.filter(widget => {
-      const pattern = state.behaviorPatterns.find(p =>
-        p.recommendedWidgets.includes(widget) && p.confidence > confidenceLevel,
-      );
-      return pattern !== undefined;
-    });
-  };
-
-  const calculateLearningProgress = (): number => {
-    const totalPatterns = state.behaviorPatterns.length;
-    const highConfidencePatterns = state.behaviorPatterns.filter(p => p.confidence > confidenceLevel).length;
-    const segmentConfidence = state.currentSegment?.confidence || 0;
-
-    return Math.min(100, (highConfidencePatterns / totalPatterns) * 100 * segmentConfidence);
-  };
-
-  const handleRecommendationFeedback = (recommendationId: string, feedback: 'liked' | 'disliked') => {
+  const handleRecommendationFeedback = async (recommendationId: string, feedback: 'liked' | 'disliked') => {
     setState(prev => ({
       ...prev,
       userFeedback: {
@@ -360,22 +168,29 @@ export const IntelligentDashboard: React.FC = () => {
       },
     }));
 
-    // Simulate learning from feedback
-    setTimeout(() => {
-      console.log(`Learning from ${feedback} feedback for recommendation ${recommendationId}`);
-    }, 500);
+    if (token) {
+        try {
+            await fetch('/api/dashboard/api/ai/feedback', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ recommendationId, feedback })
+            });
+        } catch (e) {
+            console.error("Failed to send feedback", e);
+        }
+    }
   };
 
   const applyRecommendation = (recommendation: DashboardRecommendation) => {
     console.log('Applying recommendation:', recommendation);
-
-    // Simulate application
-    setTimeout(() => {
-      setState(prev => ({
+    // Simulate application or call API
+     setState(prev => ({
         ...prev,
         recommendations: prev.recommendations.filter(r => r.id !== recommendation.id),
       }));
-    }, 1000);
   };
 
   const adjustConfidenceLevel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -383,10 +198,19 @@ export const IntelligentDashboard: React.FC = () => {
   };
 
   const toggleFeature = (feature: keyof AIDashboardConfig) => {
-    setConfig(prev => ({
-      ...prev,
-      [feature]: !prev[feature],
-    }));
+    const newConfig = { ...config, [feature]: !config[feature] };
+    setConfig(newConfig);
+    // Persist config
+    if (token) {
+        fetch('/api/dashboard/api/ai/config', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newConfig)
+        }).catch(console.error);
+    }
   };
 
   if (!currentUser) {
@@ -415,6 +239,12 @@ export const IntelligentDashboard: React.FC = () => {
       animation="slide-up"
       className="w-full space-y-6"
     >
+       {/* WIP Banner */}
+       <div role="alert" className="alert alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <span>Warning: This AI Dashboard is currently Work In Progress (WIP). Data shown may be simulated.</span>
+      </div>
+
       {/* AI Dashboard Header */}
       <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
         <div className="card-body p-6">
@@ -440,7 +270,7 @@ export const IntelligentDashboard: React.FC = () => {
               </div>
               <button
                 className="btn btn-circle btn-ghost btn-sm"
-                onClick={simulateLearning}
+                onClick={fetchData}
                 disabled={isLoading}
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
