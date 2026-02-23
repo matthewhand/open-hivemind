@@ -75,6 +75,14 @@ const SystemManagement: React.FC = () => {
     fetchBackupHistory();
   }, []);
 
+  const fetchApiStatus = async () => {
+    try {
+      const status = await apiService.getApiEndpointsStatus();
+      setApiStatus(status);
+    } catch (error) {
+      console.error('Failed to fetch API status:', error);
+    }
+  };
 
   // Performance monitoring polling
   useEffect(() => {
@@ -84,13 +92,6 @@ const SystemManagement: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [activeTab]);
-
-  const fetchApiStatus = async () => {
-    try {
-      const status = await apiService.getApiEndpointsStatus();
-      setApiStatus(status);
-    } catch (error) {
-      console.error('Failed to fetch API status:', error);
 
 
   useEffect(() => {
@@ -113,7 +114,6 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch performance data:', error);
     } finally {
       setIsPerformanceLoading(false);
-
     }
   };
 
@@ -577,7 +577,6 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
                 <button
                   className="btn btn-warning btn-sm"
@@ -588,7 +587,7 @@ const SystemManagement: React.FC = () => {
               </div>
 
               {apiStatus && (
-                <div className="stats shadow w-full">
+                <div className="stats shadow w-full mb-6">
                   <div className="stat">
                     <div className="stat-title">Overall Status</div>
                     <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
@@ -607,8 +606,12 @@ const SystemManagement: React.FC = () => {
                     <div className="stat-title">Error Rate</div>
                     <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
                     <div className="stat-desc">endpoints reporting errors</div>
+                  </div>
+                </div>
+              )}
 
-                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">System Information</h3>
                 <button
                   className="btn btn-sm btn-ghost"
                   onClick={fetchPerformanceData}
@@ -671,11 +674,9 @@ const SystemManagement: React.FC = () => {
                         )}
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
-
 
               <div className="card bg-base-200">
                 <div className="card-body p-4">
@@ -714,6 +715,13 @@ const SystemManagement: React.FC = () => {
                         {!apiStatus?.endpoints?.length && (
                           <tr>
                             <td colSpan={5} className="text-center">No endpoint data available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
 
               <div className="divider"></div>
 
@@ -746,21 +754,16 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
-
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-
-                </div>
-
                 ) : (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
-
               </div>
             </div>
           )}
