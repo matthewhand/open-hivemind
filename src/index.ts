@@ -11,6 +11,7 @@ import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
+import anomalyRouter from '@src/server/routes/anomaly';
 import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
@@ -30,6 +31,7 @@ import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
@@ -264,6 +266,7 @@ app.use('/api/enterprise', enterpriseRouter);
 app.use('/api/secure-config', secureConfigRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
+app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
@@ -434,6 +437,10 @@ async function main() {
 
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
+
+  // Initialize AnomalyDetectionService
+  AnomalyDetectionService.getInstance();
+  appLogger.info('🔍 Anomaly Detection Service initialized');
 
   const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', {
