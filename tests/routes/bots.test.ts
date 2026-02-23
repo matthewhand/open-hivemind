@@ -35,7 +35,7 @@ describe('Bots Router', () => {
 
     // Re-require router to ensure it picks up the mock return value
     jest.isolateModules(() => {
-        botsRouter = require('../../src/server/routes/bots').default;
+      botsRouter = require('../../src/server/routes/bots').default;
     });
 
     app = express();
@@ -99,5 +99,121 @@ describe('Bots Router', () => {
     const res = await request(app).get('/api/bots/bot1/activity');
     expect(res.status).toBe(200);
     expect(res.body.data.activity).toEqual([]);
+  });
+
+  // Error case tests
+  describe('POST /api/bots', () => {
+    it('should create a bot successfully', async () => {
+      const newBot = { name: 'test-bot', messageProvider: 'discord', llmProvider: 'openai' };
+      mockManager.createBot.mockResolvedValue(newBot);
+
+      const res = await request(app).post('/api/bots').send(newBot);
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.bot).toEqual(newBot);
+      expect(mockManager.createBot).toHaveBeenCalledWith(expect.objectContaining(newBot));
+    });
+
+    it('should return 400 if name is missing', async () => {
+      const res = await request(app).post('/api/bots').send({ messageProvider: 'discord' });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Bot name is required');
+    });
+  });
+
+  describe('PUT /api/bots/:id', () => {
+    it('should update a bot successfully', async () => {
+      const updates = { persona: 'new-persona' };
+      const updatedBot = { id: 'test-bot', name: 'test-bot', ...updates };
+      mockManager.updateBot.mockResolvedValue(updatedBot);
+
+      const res = await request(app).put('/api/bots/test-bot').send(updates);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.bot).toEqual(updatedBot);
+      expect(mockManager.updateBot).toHaveBeenCalledWith('test-bot', updates);
+    });
+
+    it('should return 404 if bot not found', async () => {
+      mockManager.updateBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      const res = await request(app).put('/api/bots/unknown').send({});
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('DELETE /api/bots/:id', () => {
+    it('should delete a bot successfully', async () => {
+      mockManager.deleteBot.mockResolvedValue(undefined);
+
+      const res = await request(app).delete('/api/bots/test-bot');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(mockManager.deleteBot).toHaveBeenCalledWith('test-bot');
+    });
+
+    it('should return 404 if bot not found', async () => {
+      mockManager.deleteBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      const res = await request(app).delete('/api/bots/unknown');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/bots/:id/clone', () => {
+    it('should clone a bot successfully', async () => {
+      const clonedBot = { id: 'cloned-bot', name: 'cloned-bot' };
+      mockManager.cloneBot.mockResolvedValue(clonedBot);
+
+      const res = await request(app).post('/api/bots/test-bot/clone').send({ newName: 'cloned-bot' });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.bot).toEqual(clonedBot);
+      expect(mockManager.cloneBot).toHaveBeenCalledWith('test-bot', 'cloned-bot');
+    });
+
+    it('should return 400 if newName is missing', async () => {
+      const res = await request(app).post('/api/bots/test-bot/clone').send({});
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('New bot name is required');
+    });
+  });
+
+  describe('GET /api/bots/:id/history', () => {
+    it('should clamp limit to valid range (1-100)', async () => {
+      mockManager.getBotHistory.mockResolvedValue([]);
+
+      // Test negative value
+      const res1 = await request(app).get('/api/bots/bot1/history?limit=-5');
+      expect(mockManager.getBotHistory).toHaveBeenCalledWith('bot1', undefined, 1);
+
+      // Test value > 100
+      const res2 = await request(app).get('/api/bots/bot1/history?limit=500');
+      expect(mockManager.getBotHistory).toHaveBeenCalledWith('bot1', undefined, 100);
+    });
+
+    it('should return 404 if bot not found', async () => {
+      mockManager.getBotHistory.mockRejectedValue(new Error('Bot "unknown" not found'));
+      const res = await request(app).get('/api/bots/unknown/history');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/bots/:id/start', () => {
+    it('should return 404 if bot not found', async () => {
+      mockManager.startBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      const res = await request(app).post('/api/bots/unknown/start');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/bots/:id/stop', () => {
+    it('should return 404 if bot not found', async () => {
+      mockManager.stopBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      const res = await request(app).post('/api/bots/unknown/stop');
+      expect(res.status).toBe(404);
+    });
   });
 });

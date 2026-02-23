@@ -22,8 +22,7 @@ router.get('/', async (req, res) => {
       connected: statusMap.get(bot.id) || false,
       messageCount: 0, // TODO: Implement metrics
       errorCount: 0,   // TODO: Implement metrics
-      config: bot.config,
-      envOverrides: bot.envOverrides,
+      // Note: config and envOverrides intentionally excluded to avoid exposing sensitive data
     }));
 
     return res.json(result);
@@ -115,7 +114,7 @@ router.post('/:id/stop', async (req, res) => {
 router.get('/:id/history', async (req, res) => {
   try {
     const { id } = req.params;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
@@ -130,7 +129,7 @@ router.get('/:id/history', async (req, res) => {
 router.get('/:id/activity', async (req, res) => {
   try {
     const { id } = req.params;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
 
     // Mock activity logs for now as BotManager doesn't expose them directly
     // In a real implementation, this would query the activity database
