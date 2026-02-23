@@ -2,7 +2,6 @@
     "name": "@hivemind/provider-openswarm",
     "version": "1.0.0",
     "description": "OpenSwarm LLM provider for Open Hivemind",
-    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
