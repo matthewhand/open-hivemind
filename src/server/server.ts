@@ -25,6 +25,7 @@ import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
+import guardsRouter from './routes/guards';
 import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
@@ -190,6 +191,7 @@ export class WebUIServer {
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
+    this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {
