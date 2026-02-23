@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
 import { MessageFlowEvent } from './WebSocketService';
+
+const debug = Debug('app:ActivityLogger');
 
 export interface ActivityFilter {
   startTime?: Date;
@@ -22,7 +25,7 @@ export class ActivityLogger {
       try {
         fs.mkdirSync(configDir, { recursive: true });
       } catch (e) {
-        console.error('Failed to create config/user directory', e);
+        debug('Failed to create config/user directory: %O', e);
       }
     }
     this.logFile = path.join(configDir, 'activity.jsonl');
@@ -36,12 +39,12 @@ export class ActivityLogger {
   }
 
   public log(event: MessageFlowEvent): void {
-    try {
-      const line = JSON.stringify(event) + '\n';
-      fs.appendFileSync(this.logFile, line, 'utf8');
-    } catch (error) {
-      console.error('Failed to log activity:', error);
-    }
+    const line = JSON.stringify(event) + '\n';
+    fs.appendFile(this.logFile, line, 'utf8', (error) => {
+      if (error) {
+        debug('Failed to log activity: %O', error);
+      }
+    });
   }
 
   public getEvents(options: ActivityFilter = {}): MessageFlowEvent[] {
@@ -64,9 +67,9 @@ export class ActivityLogger {
           const eventTime = new Date(event.timestamp).getTime();
 
           if (options.startTime && eventTime < options.startTime.getTime()) {
-             // Since we scan from newest to oldest, if we hit a time before startTime,
-             // all remaining events are also before startTime.
-             break;
+            // Since we scan from newest to oldest, if we hit a time before startTime,
+            // all remaining events are also before startTime.
+            break;
           }
 
           if (options.endTime && eventTime > options.endTime.getTime()) {
@@ -78,7 +81,7 @@ export class ActivityLogger {
           }
 
           if (options.provider && event.provider !== options.provider) {
-             continue;
+            continue;
           }
 
           // Note: MessageFlowEvent doesn't strictly have llmProvider in definition in WebSocketService
@@ -103,7 +106,7 @@ export class ActivityLogger {
       return events.reverse();
 
     } catch (error) {
-      console.error('Failed to read activity log:', error);
+      debug('Failed to read activity log: %O', error);
       return [];
     }
   }
