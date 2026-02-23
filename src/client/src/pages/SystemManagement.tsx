@@ -4,6 +4,7 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
+import Modal from '../components/DaisyUI/Modal';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -53,15 +54,44 @@ const SystemManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('alerts');
   const [isLoading, setIsLoading] = useState(false);
 
+
+  // Backup Modal State
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [useEncryption, setUseEncryption] = useState(false);
+  const [encryptionKey, setEncryptionKey] = useState('');
+
+  // Performance Tab State
+  const [apiStatus, setApiStatus] = useState<any>(null);
+
+
   // Performance Tab State
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [envOverrides, setEnvOverrides] = useState<Record<string, string> | null>(null);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
+
   useEffect(() => {
     fetchSystemConfig();
     fetchBackupHistory();
   }, []);
+
+
+  // Performance monitoring polling
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
+  const fetchApiStatus = async () => {
+    try {
+      const status = await apiService.getApiEndpointsStatus();
+      setApiStatus(status);
+    } catch (error) {
+      console.error('Failed to fetch API status:', error);
+
 
   useEffect(() => {
     if (activeTab === 'performance') {
@@ -83,6 +113,7 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch performance data:', error);
     } finally {
       setIsPerformanceLoading(false);
+
     }
   };
 
@@ -157,13 +188,30 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleCreateBackup = async () => {
+  const openBackupModal = () => {
+    setUseEncryption(false);
+    setEncryptionKey('');
+    setShowBackupModal(true);
+  };
+
+  const confirmCreateBackup = async () => {
+    if (useEncryption && !encryptionKey) {
+      alert('Encryption key is required when encryption is enabled');
+      return;
+    }
+    if (useEncryption && encryptionKey.length < 8) {
+      alert('Encryption key must be at least 8 characters long');
+      return;
+    }
+
+    setShowBackupModal(false);
     setIsCreatingBackup(true);
     try {
       await apiService.createSystemBackup({
         name: `backup-${Date.now()}`,
         description: 'Manual backup from System Management',
-        encrypt: true // Default to encrypted
+        encrypt: useEncryption,
+        encryptionKey: useEncryption ? encryptionKey : undefined
       });
       alert('Backup created successfully');
       await fetchBackupHistory();
@@ -197,6 +245,17 @@ const SystemManagement: React.FC = () => {
       } catch (error) {
         console.error('Failed to delete backup:', error);
         alert('Failed to delete backup: ' + (error as Error).message);
+      }
+    }
+  };
+
+  const handleClearCache = async () => {
+    if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
+      try {
+        await apiService.clearCache();
+        alert('Cache cleared successfully');
+      } catch (error) {
+        alert('Failed to clear cache: ' + (error as Error).message);
       }
     }
   };
@@ -255,7 +314,7 @@ const SystemManagement: React.FC = () => {
           <div className="flex gap-4">
             <button
               className="btn btn-success"
-              onClick={handleCreateBackup}
+              onClick={openBackupModal}
               disabled={isCreatingBackup}
             >
               {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
@@ -518,6 +577,37 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
+
+                <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={handleClearCache}
+                >
+                  Clear System Cache
+                </button>
+              </div>
+
+              {apiStatus && (
+                <div className="stats shadow w-full">
+                  <div className="stat">
+                    <div className="stat-title">Overall Status</div>
+                    <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
+                      {apiStatus.overall.status.toUpperCase()}
+                    </div>
+                    <div className="stat-desc">{apiStatus.overall.message}</div>
+                  </div>
+
+                  <div className="stat">
+                    <div className="stat-title">Online Endpoints</div>
+                    <div className="stat-value">{apiStatus.overall.stats.online}</div>
+                    <div className="stat-desc">/ {apiStatus.overall.stats.total} total</div>
+                  </div>
+
+                  <div className="stat">
+                    <div className="stat-title">Error Rate</div>
+                    <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
+                    <div className="stat-desc">endpoints reporting errors</div>
+
                 <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
                 <button
                   className="btn btn-sm btn-ghost"
@@ -581,9 +671,49 @@ const SystemManagement: React.FC = () => {
                         )}
                       </div>
                     </div>
+
                   </div>
                 </div>
               )}
+
+
+              <div className="card bg-base-200">
+                <div className="card-body p-4">
+                  <h4 className="card-title text-sm">API Endpoints Status</h4>
+                  <div className="overflow-x-auto">
+                    <table className="table table-xs w-full">
+                      <thead>
+                        <tr>
+                          <th>Endpoint</th>
+                          <th>Status</th>
+                          <th>Response Time</th>
+                          <th>Failures</th>
+                          <th>Last Checked</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {apiStatus?.endpoints?.map((endpoint: any) => (
+                          <tr key={endpoint.id}>
+                            <td>
+                              <div className="font-bold">{endpoint.name}</div>
+                              <div className="text-xs opacity-50">{endpoint.url}</div>
+                            </td>
+                            <td>
+                              <div className={`badge ${
+                                endpoint.status === 'online' ? 'badge-success' :
+                                endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
+                              }`}>
+                                {endpoint.status}
+                              </div>
+                            </td>
+                            <td>{endpoint.responseTime}ms</td>
+                            <td>{endpoint.consecutiveFailures}</td>
+                            <td>{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
+                          </tr>
+                        ))}
+                        {!apiStatus?.endpoints?.length && (
+                          <tr>
+                            <td colSpan={5} className="text-center">No endpoint data available</td>
 
               <div className="divider"></div>
 
@@ -616,21 +746,82 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
+
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
+
+                </div>
+
                 ) : (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
+
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Backup Creation Modal */}
+      <Modal
+        isOpen={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        title="Create System Backup"
+        actions={[
+          {
+            label: 'Cancel',
+            onClick: () => setShowBackupModal(false),
+            variant: 'ghost'
+          },
+          {
+            label: 'Create Backup',
+            onClick: confirmCreateBackup,
+            variant: 'primary',
+            loading: isCreatingBackup
+          }
+        ]}
+      >
+        <div className="space-y-4">
+          <p>Create a new manual backup of the system configuration.</p>
+
+          <div className="form-control">
+            <label className="cursor-pointer label justify-start gap-4">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                checked={useEncryption}
+                onChange={(e) => setUseEncryption(e.target.checked)}
+              />
+              <span className="label-text">Encrypt Backup</span>
+            </label>
+          </div>
+
+          {useEncryption && (
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Encryption Key (Password)</span>
+              </label>
+              <input
+                type="password"
+                placeholder="Enter a strong password"
+                className="input input-bordered w-full"
+                value={encryptionKey}
+                onChange={(e) => setEncryptionKey(e.target.value)}
+              />
+              <label className="label">
+                <span className="label-text-alt text-warning">
+                  Important: This key will be required to restore the backup. Do not lose it.
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
