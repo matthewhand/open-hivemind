@@ -203,7 +203,7 @@ export class DiscordMessageSender {
         });
       } catch { }
       return message.id;
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (error instanceof ValidationError) {
         log(
           `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`
