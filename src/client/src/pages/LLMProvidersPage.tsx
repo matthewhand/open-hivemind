@@ -336,6 +336,7 @@ const LLMProvidersPage: React.FC = () => {
           ...modalState,
           providerType: 'llm',
         }}
+        existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
       />

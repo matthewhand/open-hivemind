@@ -195,6 +195,7 @@ const MessageProvidersPage: React.FC = () => {
           ...modalState,
           providerType: 'message',
         }}
+        existingProviders={globalProviders}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
       />
