@@ -91,6 +91,8 @@ const SystemManagement: React.FC = () => {
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
+    }
+  };
 
 
   useEffect(() => {
@@ -714,6 +716,13 @@ const SystemManagement: React.FC = () => {
                         {!apiStatus?.endpoints?.length && (
                           <tr>
                             <td colSpan={5} className="text-center">No endpoint data available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
 
               <div className="divider"></div>
 
@@ -752,9 +761,6 @@ const SystemManagement: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-
-                </div>
-
                 ) : (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
