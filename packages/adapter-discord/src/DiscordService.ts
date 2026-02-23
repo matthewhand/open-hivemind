@@ -33,7 +33,7 @@ const log = Debug('app:discordService');
 
 /**
  * DiscordService - High-level Discord integration service implementing IMessengerService
- * 
+ *
  * This service is fully decoupled from the main application through dependency injection.
  * All cross-cutting concerns (logging, metrics, WebSocket, channel routing) are injected
  * via IServiceDependencies.
@@ -62,7 +62,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
   /**
    * Create a new DiscordService instance with injected dependencies.
-   * 
+   *
    * @param deps - Service dependencies for cross-cutting concerns
    */
   public constructor(deps: IServiceDependencies) {

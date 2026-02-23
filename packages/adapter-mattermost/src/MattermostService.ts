@@ -117,7 +117,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService = container.resolve(StartupGreetingService);
+    const startupGreetingService = container.resolve<StartupGreetingService>(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 

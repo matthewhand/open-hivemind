@@ -14,7 +14,7 @@ export interface Bot {
 
 /**
  * DiscordBotManager - Manages multiple Discord bot instances
- * 
+ *
  * This class is decoupled from the main application through dependency injection.
  * Bot configurations are loaded via the injected dependencies.
  */

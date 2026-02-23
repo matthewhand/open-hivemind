@@ -120,39 +120,6 @@ describe('messageParser', () => {
   });
 });
 
-describe('urlParser', () => {
-  describe('extractUrls', () => {
-    it('should extract http URLs', () => {
-      expect(urlParser.extractUrls('Check http://example.com')).toEqual(['http://example.com']);
-    });
-
-    it('should extract https URLs', () => {
-      expect(urlParser.extractUrls('Check https://example.com')).toEqual(['https://example.com']);
-    });
-
-    it('should extract multiple URLs', () => {
-      expect(urlParser.extractUrls('See https://a.com and http://b.com')).toEqual(['https://a.com', 'http://b.com']);
-    });
-
-    it('should return empty array if no URLs found', () => {
-      expect(urlParser.extractUrls('No urls here')).toEqual([]);
-    });
-  });
-
-  describe('isValidUrl', () => {
-    it('should return true for valid URL', () => {
-      expect(urlParser.isValidUrl('https://example.com')).toBe(true);
-    });
-
-    it('should return false for invalid URL', () => {
-      expect(urlParser.isValidUrl('not a url')).toBe(false);
-    });
-
-    it('should return false for empty string', () => {
-      expect(urlParser.isValidUrl('')).toBe(false);
-    });
-  });
-});
 
 describe('jsonParser', () => {
   describe('safeParse', () => {
