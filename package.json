@@ -251,6 +251,8 @@
     "wrangler": "^4.34.0"
   },
   "overrides": {
-    "undici": "^6.23.0"
+    "undici": "^6.23.0",
+    "@types/node": "^20.19.33",
+    "uuid": "^9.0.1"
   }
 }
