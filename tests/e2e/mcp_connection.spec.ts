@@ -1,13 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('MCP Servers Page', () => {
-  test('Test Connection button works correctly', async ({ page }) => {
-    // Mock the MCP servers list
+test.describe('MCP Servers Page - Test Connection', () => {
+  test.beforeEach(async ({ page }) => {
+    // Mock successful authentication check if needed
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
+
+    // Mock MCP servers list
     await page.route('/api/admin/mcp-servers', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
+          success: true,
           data: {
             servers: [],
             configurations: []
@@ -15,58 +21,65 @@ test.describe('MCP Servers Page', () => {
         }),
       });
     });
+  });
 
-    // Navigate to the page
-    await page.goto('/admin/mcp/servers');
-
-    // Click Add Server button
-    await page.click('button:has-text("Add Server")');
-
-    // Verify modal is open
-    await expect(page.locator('.modal-box')).toBeVisible();
-
-    // Fill in the form
-    // Name is the first input in the modal
-    await page.locator('.modal-box input').first().fill('Test Server');
-    // URL is the second input (with placeholder)
-    await page.locator('.modal-box input[placeholder="mcp://server-host:port"]').fill('http://localhost:3000');
-
-    // Mock the Test Connection endpoint - Success
+  test('should verify connection success', async ({ page }) => {
+    // Mock the test connection endpoint for success
     await page.route('/api/admin/mcp-servers/test', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          message: 'Successfully tested connection to MCP server'
+          message: 'Successfully tested connection to MCP server',
         }),
       });
     });
 
+    await page.goto('/admin/mcp/servers');
+
+    // Click Add Server
+    await page.getByRole('button', { name: 'Add Server' }).click();
+
+    // Fill in details
+    await page.locator('input[type="text"]').first().fill('Test Server');
+    // The second input is likely the URL input based on order in code
+    // "Server Name *" is first, "Server URL *" is second
+    await page.locator('input[placeholder="mcp://server-host:port"]').fill('http://localhost:3000');
+
     // Click Test Connection
-    await page.click('button:has-text("Test Connection")');
+    await page.getByRole('button', { name: 'Test Connection' }).click();
 
     // Verify success message
-    await expect(page.locator('.alert-success')).toBeVisible();
-    await expect(page.locator('.alert-success')).toContainText('Connection successful');
+    await expect(page.getByText('Connection successful!')).toBeVisible();
+  });
 
-    // Mock the Test Connection endpoint - Failure
+  test('should verify connection failure', async ({ page }) => {
+    // Mock the test connection endpoint for failure
     await page.route('/api/admin/mcp-servers/test', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
         body: JSON.stringify({
-          error: 'Failed to connect',
-          message: 'Connection refused'
+          error: 'Connection failed',
+          message: 'Failed to connect to server',
         }),
       });
     });
 
-    // Click Test Connection again
-    await page.click('button:has-text("Test Connection")');
+    await page.goto('/admin/mcp/servers');
+
+    // Click Add Server
+    await page.getByRole('button', { name: 'Add Server' }).click();
+
+    // Fill in details
+    await page.locator('input[type="text"]').first().fill('Test Server');
+    await page.locator('input[placeholder="mcp://server-host:port"]').fill('http://localhost:3000');
+
+    // Click Test Connection
+    await page.getByRole('button', { name: 'Test Connection' }).click();
 
     // Verify error message
-    await expect(page.locator('.alert-error')).toBeVisible();
-    await expect(page.locator('.alert-error')).toContainText('Connection refused');
+    await expect(page.getByText('Failed to connect to server')).toBeVisible();
   });
 });

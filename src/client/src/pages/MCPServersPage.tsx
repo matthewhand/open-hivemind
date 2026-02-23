@@ -7,6 +7,8 @@ import {
   PlayIcon,
   StopIcon,
   ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -299,7 +301,7 @@ const MCPServersPage: React.FC = () => {
         </button>
       </div>
 
-      {alert && (
+      {alert && !dialogOpen && (
         <div className="mb-6">
           <Alert
             status={alert.type === 'success' ? 'success' : 'error'}
@@ -385,6 +387,13 @@ const MCPServersPage: React.FC = () => {
         title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
       >
         <div className="space-y-4">
+          {alert && (
+            <div className={`alert ${alert.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white mb-4 flex flex-row items-center gap-2 border-none`}>
+              {alert.type === 'success' ? <CheckCircleIcon className="w-6 h-6" /> : <ExclamationCircleIcon className="w-6 h-6" />}
+              <span>{alert.message}</span>
+            </div>
+          )}
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Server Name *</span>
