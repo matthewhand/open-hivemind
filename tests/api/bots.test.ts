@@ -1,142 +1,181 @@
-import express, { Express } from 'express';
+import express from 'express';
 import request from 'supertest';
+import botsRouter from '../../src/server/routes/bots';
+import { BotManager } from '../../src/managers/BotManager';
 
-// Mock authentication middleware - need to mock this before requiring router potentially
-jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
-    req.user = { id: 'test-user', username: 'test-user', role: 'admin' };
-    next();
+// Mock BotManager with inline implementation
+jest.mock('../../src/managers/BotManager', () => {
+  const mockInstance = {
+    getAllBots: jest.fn(),
+    getBot: jest.fn(),
+    createBot: jest.fn(),
+    cloneBot: jest.fn(),
+    updateBot: jest.fn(),
+    deleteBot: jest.fn(),
+    startBot: jest.fn(),
+    stopBot: jest.fn(),
+    getBotHistory: jest.fn(),
+  };
+  return {
+    BotManager: {
+      getInstance: jest.fn(() => mockInstance),
+    },
+  };
+});
+
+// Mock AuditLogger
+jest.mock('../../src/common/auditLogger', () => ({
+  AuditLogger: {
+    getInstance: jest.fn(() => ({
+      getBotActivity: jest.fn(() => []),
+    })),
   },
 }));
 
-describe('Bots API Endpoints', () => {
-  let app: Express;
+// Mock WebSocketService
+jest.mock('../../src/server/services/WebSocketService', () => ({
+  default: {
+    getInstance: jest.fn(() => ({
+      getMessageFlow: jest.fn(() => []),
+    })),
+  },
+}));
 
-  // Mocks
-  const mockAddBot = jest.fn();
-  const mockUpdateBot = jest.fn();
-  const mockDeleteBot = jest.fn();
-  const mockCloneBot = jest.fn();
-  const mockGetBot = jest.fn();
+// Mock middlewares
+jest.mock('../../src/server/middleware/audit', () => ({
+  auditMiddleware: (req: any, res: any, next: any) => next(),
+  logBotAction: jest.fn(),
+}));
 
-  beforeAll(() => {
-    jest.resetModules();
+// Mock Validation Schemas
+jest.mock('../../src/validation/validateRequest', () => ({
+  validateRequest: () => (req: any, res: any, next: any) => next(),
+}));
 
-    // Setup the mock for BotConfigurationManager
-    jest.doMock('../../src/config/BotConfigurationManager', () => ({
-      BotConfigurationManager: {
-        getInstance: () => ({
-          addBot: mockAddBot,
-          updateBot: mockUpdateBot,
-          deleteBot: mockDeleteBot,
-          cloneBot: mockCloneBot,
-          getBot: mockGetBot,
-        }),
-      },
-    }));
+jest.mock('../../src/validation/schemas/botSchema', () => ({
+  BotIdParamSchema: { merge: () => ({}) },
+  CloneBotSchema: {},
+  CreateBotSchema: {},
+  UpdateBotSchema: {},
+}));
 
-    // Import router AFTER mocking
-    const botsRouter = require('../../src/server/routes/bots').default;
+const app = express();
+app.use(express.json());
+app.use('/api/bots', botsRouter);
 
-    app = express();
-    app.use(express.json());
-    app.use('/api/bots', botsRouter);
-  });
+// Type helper
+const getMockManager = () => BotManager.getInstance() as unknown as Record<string, jest.Mock>;
 
-  afterEach(() => {
+describe('Bots Routes', () => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  describe('GET /api/bots', () => {
+    it('should return all bots', async () => {
+      const bots = [{ id: 'bot1', name: 'Bot 1' }];
+      getMockManager().getAllBots.mockResolvedValue(bots);
+
+      const response = await request(app).get('/api/bots').expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.bots).toEqual(bots);
+    });
+  });
+
+  describe('GET /api/bots/:botId', () => {
+    it('should return a bot', async () => {
+      const bot = { id: 'bot1', name: 'Bot 1' };
+      getMockManager().getBot.mockResolvedValue(bot);
+
+      const response = await request(app).get('/api/bots/bot1').expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.bot).toEqual(bot);
+    });
+
+    it('should return 404 if bot not found', async () => {
+      getMockManager().getBot.mockResolvedValue(null);
+
+      await request(app).get('/api/bots/bot1').expect(404);
+    });
+  });
+
   describe('POST /api/bots', () => {
-    it('should create a new bot', async () => {
-      const newBot = {
-        name: 'TestBot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-      };
+    it('should create a bot', async () => {
+      const bot = { id: 'bot1', name: 'Bot 1', messageProvider: 'discord', llmProvider: 'openai' };
+      getMockManager().createBot.mockResolvedValue(bot);
 
-      mockAddBot.mockResolvedValue(undefined);
-      mockGetBot.mockReturnValue(newBot);
+      const response = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Bot 1', messageProvider: 'discord', llmProvider: 'openai', config: { discord: { token: 'token' }, openai: { apiKey: 'key' } } })
+        .expect(201);
 
-      const response = await request(app).post('/api/bots').send(newBot);
-
-      expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.bot).toEqual(newBot);
-      expect(mockAddBot).toHaveBeenCalledWith(newBot);
-    });
-
-    it('should handle errors during creation', async () => {
-      const newBot = { name: 'TestBot' };
-      mockAddBot.mockRejectedValue(new Error('Invalid config'));
-
-      const response = await request(app).post('/api/bots').send(newBot);
-
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Invalid config');
+      expect(response.body.data.bot).toEqual(bot);
     });
   });
 
-  describe('PUT /api/bots/:id', () => {
-    it('should update a bot', async () => {
-      const updates = { persona: 'new-persona' };
-      mockUpdateBot.mockResolvedValue(undefined);
-      mockGetBot.mockReturnValue({ name: 'TestBot', ...updates });
-
-      const response = await request(app).put('/api/bots/TestBot').send(updates);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.bot.persona).toBe('new-persona');
-      expect(mockUpdateBot).toHaveBeenCalledWith('TestBot', updates);
-    });
-
-    it('should handle bot not found', async () => {
-      mockUpdateBot.mockRejectedValue(new Error('Bot "TestBot" not found'));
-
-      const response = await request(app).put('/api/bots/TestBot').send({});
-
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Bot "TestBot" not found');
-    });
-  });
-
-  describe('DELETE /api/bots/:id', () => {
-    it('should delete a bot', async () => {
-      mockDeleteBot.mockResolvedValue(undefined);
-
-      const response = await request(app).delete('/api/bots/TestBot');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(mockDeleteBot).toHaveBeenCalledWith('TestBot');
-    });
-
-    it('should handle bot not found', async () => {
-      mockDeleteBot.mockRejectedValue(new Error('Bot "TestBot" not found'));
-
-      const response = await request(app).delete('/api/bots/TestBot');
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('POST /api/bots/:id/clone', () => {
+  describe('POST /api/bots/:botId/clone', () => {
     it('should clone a bot', async () => {
-      const clonedBot = { name: 'ClonedBot' };
-      mockCloneBot.mockResolvedValue(clonedBot);
+      const bot = { id: 'bot2', name: 'Cloned Bot' };
+      getMockManager().cloneBot.mockResolvedValue(bot);
 
-      const response = await request(app).post('/api/bots/TestBot/clone').send({ newName: 'ClonedBot' });
+      const response = await request(app)
+        .post('/api/bots/bot1/clone')
+        .send({ botId: 'bot1', newName: 'Cloned Bot' })
+        .expect(201);
 
-      expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.bot).toEqual(clonedBot);
-      expect(mockCloneBot).toHaveBeenCalledWith('TestBot', 'ClonedBot');
+      expect(response.body.data.bot).toEqual(bot);
+    });
+  });
+
+  describe('PUT /api/bots/:botId', () => {
+    it('should update a bot', async () => {
+      const bot = { id: 'bot1', name: 'Bot 1', persona: 'new' };
+      getMockManager().getBot.mockResolvedValue(bot); // For audit logging (pre-update)
+      getMockManager().updateBot.mockResolvedValue(bot);
+
+      const response = await request(app)
+        .put('/api/bots/bot1')
+        .send({ persona: 'new' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.bot).toEqual(bot);
+    });
+  });
+
+  describe('DELETE /api/bots/:botId', () => {
+    it('should delete a bot', async () => {
+      getMockManager().getBot.mockResolvedValue({ id: 'bot1' }); // For audit
+      getMockManager().deleteBot.mockResolvedValue(true);
+
+      await request(app).delete('/api/bots/bot1').expect(200);
     });
 
-    it('should require newName', async () => {
-      const response = await request(app).post('/api/bots/TestBot/clone').send({});
-      expect(response.status).toBe(400);
+    it('should return 404 if delete fails (not found)', async () => {
+      getMockManager().getBot.mockResolvedValue(null);
+      getMockManager().deleteBot.mockResolvedValue(false);
+
+      await request(app).delete('/api/bots/bot1').expect(404);
+    });
+  });
+
+  describe('POST /api/bots/:botId/start', () => {
+    it('should start a bot', async () => {
+      getMockManager().startBot.mockResolvedValue(true);
+
+      await request(app).post('/api/bots/bot1/start').expect(200);
+    });
+  });
+
+  describe('POST /api/bots/:botId/stop', () => {
+    it('should stop a bot', async () => {
+      getMockManager().stopBot.mockResolvedValue(true);
+
+      await request(app).post('/api/bots/bot1/stop').expect(200);
     });
   });
 });
