@@ -593,11 +593,6 @@ export class BotConfigurationManager {
 
     this.applyUserOverrides(botName, config);
 
-    // Apply profiles after overrides, as they may depend on overridden profile keys
-    this.applyLlmProfile(config);
-    this.applyGuardrailProfile(config);
-    this.applyMcpServerProfile(config);
-
     return config;
   }
 
@@ -653,10 +648,14 @@ export class BotConfigurationManager {
     if (!config.mcpServers) {
       config.mcpServers = [];
     }
+
+    this.applyLlmProfile(config);
+    this.applyGuardrailProfile(config);
+    this.applyMcpServerProfile(config);
   }
 
   private applyLlmProfile(config: BotConfig): void {
-    const llmProfileName = config.llmProfile;
+    const llmProfileName = (config as { llmProfile?: string }).llmProfile as string | undefined;
     if (llmProfileName) {
       const profile = getLlmProfileByKey(llmProfileName);
       if (!profile) {
@@ -782,9 +781,8 @@ export class BotConfigurationManager {
   }
 
   private applyGuardrailProfile(config: BotConfig): void {
-    const profileName = config.mcpGuardProfile;
+    const profileName = (config as { mcpGuardProfile?: string }).mcpGuardProfile as string | undefined;
     if (!profileName) {
-      debug(`No guard profile specified for ${config.name}`);
       return;
     }
 
@@ -794,31 +792,20 @@ export class BotConfigurationManager {
       return;
     }
 
-    debug(`Applying guard profile "${profileName}" to ${config.name}`);
-
-    const mcpGuard = profile.guards.mcpGuard;
-    const allowed = Array.isArray(mcpGuard.allowedUsers)
-      ? mcpGuard.allowedUsers.filter(Boolean)
+    const allowed = Array.isArray(profile.mcpGuard.allowedUserIds)
+      ? profile.mcpGuard.allowedUserIds.filter(Boolean)
       : undefined;
 
     config.mcpGuard = {
-      enabled: Boolean(mcpGuard.enabled),
-      type: mcpGuard.type === 'custom' ? 'custom' : 'owner',
+      enabled: Boolean(profile.mcpGuard.enabled),
+      type: profile.mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
       allowedUserIds: allowed,
     } as McpGuardConfig;
-
-    if (profile.guards.rateLimit) {
-      config.rateLimit = { ...profile.guards.rateLimit };
-    }
-
-    if (profile.guards.contentFilter) {
-      config.contentFilter = { ...profile.guards.contentFilter };
-    }
   }
 
   private applyMcpServerProfile(config: BotConfig): void {
-    const profileName = config.mcpServerProfile;
+    const profileName = (config as { mcpServerProfile?: string }).mcpServerProfile as string | undefined;
     if (!profileName) {
       return;
     }
@@ -1028,6 +1015,35 @@ export class BotConfigurationManager {
   }
 
   /**
+   * Clone a bot configuration
+   */
+  public async cloneBot(name: string, newName: string): Promise<BotConfig> {
+    const originalBot = this.bots.get(name);
+    if (!originalBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    // Deep clone the configuration to avoid reference issues
+    const config = JSON.parse(JSON.stringify(originalBot));
+    config.name = newName;
+
+    // Remove internal properties if any (e.g., _updatedAt)
+    delete (config as any)._updatedAt;
+
+    // Add the new bot (this will validate and save it)
+    await this.addBot(config);
+
+    // Return the new bot config (reload happens inside addBot)
+    // Note: Since reload is synchronous/in-memory update in addBot -> reload -> loadConfiguration,
+    // this.bots should have the new bot.
+    const newBot = this.bots.get(newName);
+    if (!newBot) {
+        throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
+    }
+    return newBot;
+  }
+
+  /**
    * Update an existing bot configuration
    * For env-var bots, this creates/updates a JSON override file
    */
@@ -1073,6 +1089,37 @@ export class BotConfigurationManager {
     this.reload();
   }
 
+  /**
+   * Delete a bot configuration
+   */
+  public async deleteBot(name: string): Promise<void> {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      debug(`Deleted bot config for ${name} at ${filePath}`);
+    } else {
+      // Check if it's an environment variable bot
+      const envBotNames = this.discoverBotNamesFromEnv();
+      const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+      const canonicalName = canonical(name);
+
+      const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
+
+      if (foundInEnv) {
+        throw new Error(
+          `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
+        );
+      } else {
+        throw new Error(`Bot "${name}" not found`);
+      }
+    }
+
+    this.reload();
+  }
 
   /**
    * Reload configuration

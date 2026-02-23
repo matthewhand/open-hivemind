@@ -32,6 +32,11 @@ import {
   McpServerProfile,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProfile,
+} from '../../config/messageProfiles';
 // Import all convict config modules
 import messageConfig from '../../config/messageConfig';
 import ollamaConfig from '../../config/ollamaConfig';
@@ -1601,6 +1606,134 @@ router.post('/message-provider/test', async (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROVIDER_TEST_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-profiles - Get Message profile templates
+router.get('/message-profiles', (req, res) => {
+  try {
+    return res.json({
+      profiles: getMessageProfiles(),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_GET_ERROR',
+    });
+  }
+});
+
+// PUT /api/config/message-profiles - Update Message profile templates
+router.put('/message-profiles', (req, res) => {
+  try {
+    const payload = req.body;
+    const profiles = payload?.profiles;
+    if (!profiles || typeof profiles !== 'object') {
+      return res.status(400).json({ error: 'profiles must be an object' });
+    }
+
+    const messageProfiles = Array.isArray(profiles.message) ? profiles.message : null;
+    if (!messageProfiles) {
+      return res.status(400).json({ error: 'profiles.message must be an array' });
+    }
+
+    const validateProfile = (profile: any) => {
+      if (!profile || typeof profile !== 'object') {
+        return 'profile entries must be objects';
+      }
+      if (!profile.key || typeof profile.key !== 'string') {
+        return 'profile.key is required';
+      }
+      if (!profile.provider || typeof profile.provider !== 'string') {
+        return `profile.provider is required for ${profile.key}`;
+      }
+      if (profile.name && typeof profile.name !== 'string') {
+        return `profile.name must be a string for ${profile.key}`;
+      }
+      if (profile.description && typeof profile.description !== 'string') {
+        return `profile.description must be a string for ${profile.key}`;
+      }
+      if (profile.config && typeof profile.config !== 'object') {
+        return `profile.config must be an object for ${profile.key}`;
+      }
+      return null;
+    };
+
+    for (const profile of messageProfiles) {
+      const error = validateProfile(profile);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+    }
+
+    saveMessageProfiles({ message: messageProfiles });
+    return res.json({ success: true, profiles: { message: messageProfiles } });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_PUT_ERROR',
+    });
+  }
+});
+
+// POST /api/config/message-profiles - Create a Message profile
+router.post('/message-profiles', (req, res) => {
+  try {
+    const profile = req.body as MessageProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.provider || typeof profile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    const allProfiles = getMessageProfiles();
+    if (allProfiles.message.some((p) => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    const newProfile: MessageProfile = {
+      key: profile.key,
+      name: profile.name || profile.key,
+      description: profile.description,
+      provider: profile.provider,
+      config: profile.config || {},
+    };
+
+    allProfiles.message.push(newProfile);
+    saveMessageProfiles(allProfiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_POST_ERROR',
+    });
+  }
+});
+
+// DELETE /api/config/message-profiles/:key - Delete a Message profile
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const allProfiles = getMessageProfiles();
+    const index = allProfiles.message.findIndex((p) => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    allProfiles.message.splice(index, 1);
+    saveMessageProfiles(allProfiles);
+    return res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_DELETE_ERROR',
     });
   }
 });

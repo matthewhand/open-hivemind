@@ -4,16 +4,16 @@ import Debug from 'debug';
 
 const debug = Debug('app:messageProfiles');
 
-export interface MessageProviderProfile {
+export interface MessageProfile {
   key: string;
   name: string;
   description?: string;
-  provider: string; // 'slack', 'discord', 'telegram', 'webhook', 'mattermost'
+  provider: string; // Corresponds to MessageProviderType (e.g., 'discord', 'slack')
   config: Record<string, unknown>;
 }
 
 export interface MessageProfiles {
-  message: MessageProviderProfile[];
+  message: MessageProfile[];
 }
 
 const DEFAULT_MESSAGE_PROFILES: MessageProfiles = {
@@ -67,7 +67,7 @@ export const saveMessageProfiles = (profiles: MessageProfiles): void => {
   fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
 };
 
-export const getMessageProfileByKey = (key: string): MessageProviderProfile | undefined => {
+export const getMessageProfileByKey = (key: string): MessageProfile | undefined => {
   const normalized = key.trim().toLowerCase();
   return loadMessageProfiles().message.find(profile => profile.key.toLowerCase() === normalized);
 };

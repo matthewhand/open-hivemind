@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert } from '../components/DaisyUI';
+import { useBotProviders } from '../hooks/useBotProviders';
+import { Card, Button, Badge } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Plus as AddIcon,
@@ -9,246 +10,212 @@ import {
   CheckCircle as CheckIcon,
   XCircle as XIcon,
   AlertCircle as WarningIcon,
-  Edit as EditIcon,
-  Trash2 as DeleteIcon,
-  ChevronDown as ExpandIcon,
-  ChevronRight as CollapseIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
-import type { MessageProviderType } from '../types/bot';
+import type { MessageProviderType} from '../types/bot';
 import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
-import { apiService } from '../services/api';
 
 const MessageProvidersPage: React.FC = () => {
-  const { modalState, openAddModal, openEditModal, closeModal } = useModal();
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [defaultStatus, setDefaultStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const { modalState, openAddModal, closeModal } = useModal();
+  const [configuredProviders, setConfiguredProviders] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const fetchProviders = async () => {
+    try {
+      const response = await fetch('/api/config/message-profiles');
+      if (response.ok) {
+        const data = await response.json();
+        setConfiguredProviders(data.profiles.message || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch message profiles:', error);
+    }
+  };
 
   const breadcrumbItems = [
     { label: 'Admin', href: '/admin/overview' },
     { label: 'Providers', href: '/admin/providers' },
-    { label: 'Message Providers', href: '/admin/providers/message', isActive: true },
+    { label: 'Message Platforms', href: '/admin/providers/message', isActive: true },
   ];
 
-  const fetchProfiles = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [profilesRes, statusRes] = await Promise.all([
-        apiService.get('/api/config/message-profiles'),
-        apiService.get('/api/config/message-status'),
-      ]);
-
-      setProfiles((profilesRes as any).profiles?.message || []);
-      setDefaultStatus(statusRes);
-    } catch (err: any) {
-      console.error('Failed to fetch message profiles:', err);
-      setError(err.message || 'Failed to load configuration');
-    } finally {
-      setLoading(false);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+    case 'connected':
+      return <CheckIcon className="w-4 h-4 text-success" />;
+    case 'error':
+      return <XIcon className="w-4 h-4 text-error" />;
+    case 'testing':
+      return <WarningIcon className="w-4 h-4 text-warning" />;
+    default:
+      return <XIcon className="w-4 h-4 text-base-content/40" />;
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
-
-  const handleAddProfile = () => {
+  const handleAddProvider = (providerType: MessageProviderType) => {
+    // We pass the provider type to the modal state if needed, but openAddModal
+    // currently takes (context, type). We might need to adjust modal state handling
+    // or just open it. The modal allows selecting type anyway.
     openAddModal('global', 'message');
-  };
-
-  const handleEditProfile = (profile: any) => {
-    openEditModal('global', 'message', {
-      id: profile.key,
-      name: profile.name,
-      type: profile.provider,
-      config: profile.config,
-      enabled: true,
-    } as any);
-  };
-
-  const handleDeleteProfile = async (key: string) => {
-    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
-
-    try {
-      await apiService.delete(`/api/config/message-profiles/${key}`);
-      fetchProfiles();
-    } catch (err: any) {
-      alert(`Failed to delete profile: ${err.message}`);
-    }
   };
 
   const handleProviderSubmit = async (providerData: any) => {
     try {
-      // In edit mode, preserve the original key to avoid creating a new profile
-      const key = modalState.isEdit && modalState.provider?.id
-        ? modalState.provider.id
-        : providerData.name.toLowerCase().replace(/\s+/g, '-');
+      // Generate a key from name if not present (simple slug)
+      const key = providerData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
       const payload = {
         key,
         name: providerData.name,
-        provider: providerData.type,
+        provider: providerData.type, // Map 'type' to 'provider' for backend
         config: providerData.config,
       };
 
-      if (modalState.isEdit) {
-        if (!modalState.provider?.id) {
-          alert('Cannot edit profile: missing profile ID');
-          return;
-        }
-        // Delete old profile first, then create with updated data
-        await apiService.delete(`/api/config/message-profiles/${modalState.provider.id}`);
-      }
-      await apiService.post('/api/config/message-profiles', payload);
+      const response = await fetch('/api/config/message-profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      closeModal();
-      fetchProfiles();
-    } catch (err: any) {
-      alert(`Failed to save profile: ${err.message}`);
+      if (response.ok) {
+        await fetchProviders(); // Refresh list
+        closeModal();
+      } else {
+        const error = await response.json();
+        console.error('Failed to create provider:', error);
+        // Ideally show error to user
+      }
+    } catch (error) {
+      console.error('Error submitting provider:', error);
     }
   };
 
-  const getProviderIcon = (type: string) => {
-    const config = MESSAGE_PROVIDER_CONFIGS[type as MessageProviderType];
-    return config?.icon || <MessageIcon className="w-5 h-5" />;
-  };
-
-  const toggleExpand = (key: string) => {
-    setExpandedProfile(expandedProfile === key ? null : key);
-  };
+  const providerTypes = Object.keys(MESSAGE_PROVIDER_CONFIGS) as MessageProviderType[];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-4 mb-8 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <MessageIcon className="w-8 h-8 text-primary" />
-            Message Providers
-          </h1>
-          <p className="text-base-content/70">
-            Configure messaging platforms and connection templates.
-          </p>
-        </div>
-        <Button variant="primary" onClick={handleAddProfile}>
-          <AddIcon className="w-4 h-4 mr-2" />
-          Create Profile
-        </Button>
+      <div className="mt-4 mb-8">
+        <h1 className="text-4xl font-bold mb-2">Message Platforms</h1>
+        <p className="text-base-content/70">
+          Configure messaging platforms for your bots to connect and communicate
+        </p>
       </div>
 
-      {loading ? (
-        <div className="skeleton h-64 w-full"></div>
-      ) : error ? (
-        <Alert status="error" icon={<XIcon />} message={error} />
-      ) : (
-        <div className="space-y-8">
-          {/* Default / System Profile Check */}
-          <div className="collapse collapse-arrow bg-base-200 border border-base-300">
-            <input type="checkbox" defaultChecked />
-            <div className="collapse-title text-xl font-medium flex items-center gap-3">
-              <ConfigIcon className="w-5 h-5" />
-              System Default Configuration
-              {defaultStatus?.configured && <Badge variant="success" size="small">Active</Badge>}
-              {!defaultStatus?.configured && <Badge variant="warning" size="small">Not Configured</Badge>}
-            </div>
-            <div className="collapse-content">
-              <p className="text-sm opacity-70 mb-4">
-                This configuration is loaded from your environment variables (`.env`) and serves as the fallback.
-              </p>
-
-              {defaultStatus?.providers?.map((p: any) => (
-                <div key={p.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg mb-2">
-                  <div className="flex items-center gap-3">
-                    {getProviderIcon(p.type)}
-                    <div>
-                      <div className="font-bold">{p.name}</div>
-                      <div className="text-xs opacity-50 uppercase">{p.type}</div>
+      {/* Configured Providers */}
+      {configuredProviders.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Configured Platforms</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {configuredProviders.map((provider) => {
+              const config = MESSAGE_PROVIDER_CONFIGS[provider.provider as MessageProviderType] || MESSAGE_PROVIDER_CONFIGS.webhook;
+              return (
+                <Card key={provider.key} className="bg-base-100 shadow-lg border border-base-300">
+                  <div className="card-body">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="text-xl">{config.icon}</div>
+                        <h3 className="card-title text-lg">{provider.name}</h3>
+                      </div>
+                      <Badge variant="success" size="sm">Configured</Badge>
                     </div>
-                  </div>
-                  <Badge variant="neutral">Read-Only (.env)</Badge>
-                </div>
-              ))}
-
-              {(!defaultStatus?.providers || defaultStatus.providers.length === 0) && (
-                <div className="alert alert-warning text-sm">
-                  <WarningIcon className="w-4 h-4" />
-                  <span>No default message provider found in environment variables.</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="divider">Custom Profiles</div>
-
-          {/* Profiles List */}
-          {profiles.length === 0 ? (
-            <div className="text-center py-10 opacity-50 border-2 border-dashed border-base-300 rounded-xl">
-              <MessageIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <h3 className="font-bold text-lg">No Profiles Created</h3>
-              <p>Create a custom profile to configure messaging platforms.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {profiles.map((profile) => (
-                <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200">
-                  <div className="card-body p-4">
-                    <div className="flex items-start justify-between">
-
-                      <div className="flex items-center gap-4 cursor-pointer" onClick={() => toggleExpand(profile.key)}>
-                        <div className="p-3 bg-base-200 rounded-full">
-                          {getProviderIcon(profile.provider)}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">{profile.name} <span className="text-xs font-normal opacity-50 ml-2">({profile.key})</span></h3>
-                          <div className="flex items-center gap-2">
-                            <Badge style="outline" size="small">{profile.provider}</Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
-                          <EditIcon className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="btn-error text-white" onClick={() => handleDeleteProfile(profile.key)}>
-                          <DeleteIcon className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
-                          {expandedProfile === profile.key ? <ExpandIcon className="w-4 h-4" /> : <CollapseIcon className="w-4 h-4" />}
-                        </Button>
-                      </div>
+                    <p className="text-sm text-base-content/60 mb-4">{provider.description || config.description}</p>
+                    <div className="card-actions justify-end">
+                      {/* Edit functionality to be implemented */}
+                      <Button size="sm" variant="ghost" disabled>Edit</Button>
                     </div>
-
-                    {expandedProfile === profile.key && (
-                      <div className="mt-4 pt-4 border-t border-base-200">
-                        <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Configuration</h4>
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                          {Object.entries(profile.config || {}).map(([k, v]) => (
-                            <div key={k} className="bg-base-200/50 p-2 rounded text-sm">
-                              <span className="font-mono text-xs opacity-60 block">{k}</span>
-                              <span className="font-medium truncate block" title={String(v)}>
-                                {String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('secret') ? '••••••••' : String(v)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </Card>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
       )}
 
+      {/* Provider Types Grid */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Available Provider Types</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {providerTypes.map((type) => {
+            const config = MESSAGE_PROVIDER_CONFIGS[type];
+            const requiredFields = (config.fields || []).filter((f: any) => f.required);
+            const optionalFields = (config.fields || []).filter((f: any) => !f.required);
+
+            return (
+              <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
+                <div className="card-body">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">{config.icon}</div>
+                      <div>
+                        <h3 className="card-title text-lg">{config.displayName}</h3>
+                        <p className="text-sm text-base-content/60">{type}</p>
+                      </div>
+                    </div>
+                    <Badge variant="neutral" size="sm">
+                      {requiredFields.length} required
+                    </Badge>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-base-content/70 mb-4">
+                    {config.description}
+                  </p>
+
+                  {/* Required Fields */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {requiredFields.map((field: any) => (
+                        <Badge key={field.name} color="neutral" variant="secondary" className="btn-outline text-xs">
+                          {field.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Optional Fields */}
+                  {optionalFields.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {optionalFields.map((field: any) => (
+                          <Badge key={field.name} color="ghost" variant="secondary" className="btn-outline text-xs">
+                            {field.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="card-actions justify-end">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleAddProvider(type)}
+                      className="w-full"
+                    >
+                      <AddIcon className="w-4 h-4 mr-2" />
+                      Configure {config.displayName}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Configuration Guide */}
-      <Card className="bg-primary/5 border border-primary/20 mt-8">
+      <Card className="bg-primary/5 border border-primary/20">
         <div className="card-body">
           <h2 className="card-title text-xl mb-4">
             <ConfigIcon className="w-6 h-6 mr-2" />
@@ -305,7 +272,7 @@ const MessageProvidersPage: React.FC = () => {
           ...modalState,
           providerType: 'message',
         }}
-        existingProviders={profiles}
+        existingProviders={configuredProviders}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
       />
