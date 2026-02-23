@@ -27,7 +27,6 @@ import ProviderList from './ProviderList';
 import PersonaChip from './PersonaChip';
 import PersonaSelector from './PersonaSelector';
 import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
-import { getProviderSchema } from '../../provider-configs';
 
 interface BotCardProps {
   bot: BotInstance;

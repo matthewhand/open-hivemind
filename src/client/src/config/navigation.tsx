@@ -92,14 +92,7 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
 
-  {
-    id: 'integrations-webhook',
-    label: 'Webhook',
-    icon: <NavIcon><Plug className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/webhook',
-    visible: true,
-  },
-  // Settings, Webhook, Monitoring, Global Defaults all under SYSTEM
+  // Settings, Monitoring, Global Defaults all under SYSTEM
   {
     id: 'monitoring',
     label: 'Monitoring',
