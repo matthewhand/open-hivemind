@@ -12,6 +12,25 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
+/**
+ * Backend anomaly response type - matches the Anomaly interface from DatabaseManager.
+ * This provides type safety for the API response.
+ */
+interface BackendAnomaly {
+  id: string;
+  timestamp: string;
+  metric: string;
+  value: number;
+  expectedMean: number;
+  standardDeviation: number;
+  zScore: number;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  explanation: string;
+  resolved: boolean;
+  tenantId?: string;
+}
+
 export interface AnomalyConfig {
   enabled: boolean;
   algorithms: AnomalyAlgorithm[];
@@ -405,8 +424,8 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
   const fetchAnomalies = async () => {
     try {
       setIsLoading(true);
-      // Fetch active anomalies
-      const data = await apiService.get<any[]>('/api/anomalies');
+      // Fetch active anomalies with proper typing
+      const data = await apiService.get<BackendAnomaly[]>('/api/anomalies');
 
       if (data && data.length > 0) {
         // Map backend data to frontend AnomalyEvent
@@ -445,11 +464,17 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
           events: mappedEvents,
         }));
       } else {
-         // Keep mock data if no real data
-         console.log('No real anomalies found, using mock data');
+        // Keep mock data if no real data
+        console.log('No real anomalies found, using mock data');
       }
-    } catch (error) {
-      console.error('Failed to fetch anomalies', error);
+    } catch (error: unknown) {
+      // Handle authentication errors (401) - user should be redirected to login
+      if (error instanceof Error && error.message.includes('401')) {
+        console.warn('Authentication expired, please log in again');
+        // The apiService typically handles redirects, but we can add additional handling here
+      } else {
+        console.error('Failed to fetch anomalies', error);
+      }
     } finally {
       setIsLoading(false);
     }

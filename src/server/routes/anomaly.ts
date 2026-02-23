@@ -1,10 +1,27 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { DatabaseManager } from '../../database/DatabaseManager';
+import { DatabaseManager, type Anomaly } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
+
+/**
+ * Checks if an error is a database connection error.
+ */
+function isConnectionError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('connection') ||
+      message.includes('connect') ||
+      message.includes('database') ||
+      message.includes('sqlite') ||
+      message.includes('sql')
+    );
+  }
+  return false;
+}
 
 // GET /api/anomalies - Get active anomalies
 router.get('/', async (req, res) => {
@@ -23,7 +40,12 @@ router.get('/', async (req, res) => {
     res.json(anomalies);
   } catch (error) {
     debug('Error fetching active anomalies:', error);
-    res.status(500).json({ error: 'Failed to fetch active anomalies' });
+    // Return 503 for connection-related errors, 500 for other errors
+    if (isConnectionError(error)) {
+      res.status(503).json({ error: 'Database connection error' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch active anomalies' });
+    }
   }
 });
 
@@ -32,8 +54,8 @@ router.get('/history', async (req, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-        res.status(503).json({ error: 'Database not connected' });
-        return;
+      res.status(503).json({ error: 'Database not connected' });
+      return;
     }
 
     const tenantId = (req as any).user?.tenantId;
@@ -42,7 +64,12 @@ router.get('/history', async (req, res) => {
     res.json(anomalies);
   } catch (error) {
     debug('Error fetching anomaly history:', error);
-    res.status(500).json({ error: 'Failed to fetch anomaly history' });
+    // Return 503 for connection-related errors, 500 for other errors
+    if (isConnectionError(error)) {
+      res.status(503).json({ error: 'Database connection error' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch anomaly history' });
+    }
   }
 });
 
