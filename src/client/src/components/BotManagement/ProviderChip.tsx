@@ -129,6 +129,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
                 onClick={onEdit}
                 className="btn btn-xs btn-circle btn-ghost"
                 title="Edit provider"
+                aria-label={`Edit ${provider.name} provider`}
               >
                 <EditIcon className="w-3 h-3" />
               </button>
@@ -140,6 +141,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
                 onClick={onRemove}
                 className="btn btn-xs btn-circle btn-ghost"
                 title="Remove provider"
+                aria-label={`Remove ${provider.name} provider`}
               >
                 <XIcon className="w-3 h-3" />
               </button>
