@@ -2,6 +2,7 @@
     "name": "@hivemind/adapter-mattermost",
     "version": "1.0.0",
     "description": "Mattermost adapter for Open Hivemind",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
