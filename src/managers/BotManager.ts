@@ -152,9 +152,9 @@ export class BotManager extends EventEmitter {
   public async getAllBots(): Promise<BotInstance[]> {
     try {
       const configuredBots = this.botConfigManager.getAllBots();
-      const botInstances: BotInstance[] = [];
+      const botMap = new Map<string, BotInstance>();
 
-      // Add configured bots
+      // Add configured bots first
       for (const bot of configuredBots) {
         const botInstance: BotInstance = {
           // Use bot name as stable ID - random UUIDs break getBot() lookups
@@ -172,15 +172,16 @@ export class BotManager extends EventEmitter {
           mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
           envOverrides: checkBotEnvOverrides(bot.name),
         };
-        botInstances.push(botInstance);
+        botMap.set(botInstance.id, botInstance);
       }
 
-      // Add custom bots from web UI storage
+      // Add custom bots from web UI storage (overwriting configured bots with same ID)
       const customBots = webUIStorage.getAgents();
       for (const bot of customBots) {
-        botInstances.push(bot);
+        botMap.set(bot.id, bot);
       }
 
+      const botInstances = Array.from(botMap.values());
       debug(`Retrieved ${botInstances.length} bot instances`);
       return botInstances;
     } catch (error: HivemindError) {
@@ -299,31 +300,46 @@ export class BotManager extends EventEmitter {
         throw new Error('Source bot not found');
       }
 
-      // Create clone request
-      const cloneRequest: CreateBotRequest = {
-        name: newName,
-        messageProvider: sourceBot.messageProvider as 'discord' | 'slack' | 'mattermost',
-        llmProvider: (sourceBot.llmProvider || undefined) as
-          | 'openai'
-          | 'flowise'
-          | 'openwebui'
-          | 'openswarm'
-          | undefined,
-        config: sourceBot.config as CreateBotRequest['config'],
-        persona: sourceBot.persona,
-        systemInstruction: sourceBot.systemInstruction,
-        mcpServers: sourceBot.mcpServers,
-        mcpGuard: sourceBot.mcpGuard,
-      };
+      // Check if it's a custom bot
+      const customBots = webUIStorage.getAgents();
+      const isCustom = customBots.some(b => b.id === botId);
 
-      const clonedBot = await this.createBot(cloneRequest);
+      if (isCustom) {
+        // Clone as custom bot (existing logic)
+        const cloneRequest: CreateBotRequest = {
+          name: newName,
+          messageProvider: sourceBot.messageProvider as 'discord' | 'slack' | 'mattermost',
+          llmProvider: (sourceBot.llmProvider || undefined) as
+            | 'openai'
+            | 'flowise'
+            | 'openwebui'
+            | 'openswarm'
+            | undefined,
+          config: sourceBot.config as CreateBotRequest['config'],
+          persona: sourceBot.persona,
+          systemInstruction: sourceBot.systemInstruction,
+          mcpServers: sourceBot.mcpServers,
+          mcpGuard: sourceBot.mcpGuard,
+        };
 
-      debug(`Cloned bot ${sourceBot.name} (${botId}) to ${newName} (${clonedBot.id})`);
+        const clonedBot = await this.createBot(cloneRequest);
+        debug(`Cloned custom bot ${sourceBot.name} (${botId}) to ${newName} (${clonedBot.id})`);
+        this.emit('botCloned', { sourceBot, clonedBot });
+        return clonedBot;
+      } else {
+        // Clone as configured bot (file-based)
+        await this.botConfigManager.cloneBot(botId, newName);
 
-      // Emit event for real-time updates
-      this.emit('botCloned', { sourceBot, clonedBot });
+        // Retrieve the new configured bot instance
+        const clonedBot = await this.getBot(newName);
+        if (!clonedBot) {
+          throw new Error(`Failed to retrieve cloned configured bot "${newName}"`);
+        }
 
-      return clonedBot;
+        debug(`Cloned configured bot ${sourceBot.name} (${botId}) to ${newName}`);
+        this.emit('botCloned', { sourceBot, clonedBot });
+        return clonedBot;
+      }
     } catch (error: HivemindError) {
       debug('Error cloning bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
@@ -398,11 +414,26 @@ export class BotManager extends EventEmitter {
         return false;
       }
 
-      // Remove from web UI storage
-      webUIStorage.deleteAgent(botId);
+      // Check if it's a custom bot
+      const customBots = webUIStorage.getAgents();
+      const isCustom = customBots.some(b => b.id === botId);
 
-      // Remove secure configuration
-      await this.secureConfigManager.deleteConfig(`bot_${botId}`);
+      if (isCustom) {
+        // Remove from web UI storage
+        webUIStorage.deleteAgent(botId);
+        // Remove secure configuration
+        await this.secureConfigManager.deleteConfig(`bot_${botId}`);
+      } else {
+        // Assume it's a configured bot
+        try {
+          await this.botConfigManager.deleteBot(botId);
+          // Also try to remove secure config if it exists
+          await this.secureConfigManager.deleteConfig(`bot_${botId}`);
+        } catch (err: any) {
+          debug(`Failed to delete configured bot ${botId}: ${err.message}`);
+          throw err;
+        }
+      }
 
       debug(`Deleted bot: ${bot.name} (${botId})`);
 
