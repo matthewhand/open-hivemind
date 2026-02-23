@@ -2,6 +2,7 @@ import { Router } from 'express';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticateToken } from '../middleware/auth';
+import { ActivityLogger } from '../services/ActivityLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -80,7 +81,14 @@ router.get('/api/activity', authenticateToken, (req, res) => {
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const allEvents = ws.getMessageFlow(1000).map((event) => annotateEvent(event, botMap));
+    // Fetch events from persistent storage
+    const storedEvents = ActivityLogger.getInstance().getEvents({
+      startTime: from || undefined,
+      endTime: to || undefined,
+      limit: 5000,
+    });
+
+    const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
     const filteredEvents = allEvents.filter((event) => {
       if (botFilter.length && !botFilter.includes(event.botName)) {
         return false;
