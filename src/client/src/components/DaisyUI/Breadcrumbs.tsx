@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/solid';
 
 interface BreadcrumbItem {
   label: string;
@@ -14,7 +14,7 @@ interface BreadcrumbsProps {
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
   return (
-    <div className="text-sm breadcrumbs">
+    <nav className="text-sm breadcrumbs" aria-label="Breadcrumb">
       <ul>
         <li>
           <NavLink to="/" className="inline-flex items-center gap-2">
@@ -25,7 +25,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
         {items.map((item, index) => (
           <li key={index}>
             {item.isActive ? (
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-2" aria-current="page">
                 <ChevronRightIcon className="w-4 h-4" />
                 {item.label}
               </span>
@@ -38,7 +38,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   );
 };
 
