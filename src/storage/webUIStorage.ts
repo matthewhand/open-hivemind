@@ -39,72 +39,25 @@ class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
-    let config: WebUIConfig;
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        config = JSON.parse(data);
-      } else {
-        config = {
-          agents: [],
-          mcpServers: [],
-          llmProviders: [],
-          messengerProviders: [],
-          personas: [],
-          guards: [],
-          lastUpdated: new Date().toISOString(),
-        };
+        return JSON.parse(data);
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
-      // Return default configuration
-      config = {
-        agents: [],
-        mcpServers: [],
-        llmProviders: [],
-        messengerProviders: [],
-        personas: [],
-        guards: [],
-        lastUpdated: new Date().toISOString(),
-      };
     }
 
-    // Initialize guards if missing or empty
-    if (!config.guards || config.guards.length === 0) {
-      config.guards = [
-        {
-          id: 'access-control',
-          name: 'Access Control',
-          description: 'User and IP-based access restrictions',
-          type: 'access',
-          enabled: true,
-          config: { type: 'users', users: [], ips: [] },
-        },
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          description: 'Prevents spam and excessive requests',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 },
-        },
-        {
-          id: 'content-filter',
-          name: 'Content Filter',
-          description: 'Filters inappropriate content',
-          type: 'content',
-          enabled: false,
-          config: {},
-        },
-      ];
-    }
-
-    // Ensure guards are initialized in config object if it came from file without them
-    if (!config.guards) {
-       config.guards = [];
-    }
-
-    return config;
+    // Return default configuration
+    return {
+      agents: [],
+      mcpServers: [],
+      llmProviders: [],
+      messengerProviders: [],
+      personas: [],
+      guards: [],
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   /**
@@ -308,14 +261,67 @@ class WebUIStorage {
    */
   public getGuards(): any[] {
     const config = this.loadConfig();
+
+    // Initialize default guards if they don't exist or if guards array is missing
+    if (!config.guards || config.guards.length === 0) {
+      const defaultGuards = [
+        {
+          id: 'access-control',
+          name: 'Access Control',
+          description: 'User and IP-based access restrictions',
+          type: 'access',
+          enabled: true,
+          config: { type: 'users', users: [], ips: [] },
+        },
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          description: 'Prevents spam and excessive requests',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100, windowMs: 60000 },
+        },
+        {
+          id: 'content-filter',
+          name: 'Content Filter',
+          description: 'Filters inappropriate content',
+          type: 'content',
+          enabled: false,
+          config: {},
+        },
+      ];
+
+      // If guards is undefined, initialize it
+      if (!config.guards) {
+        config.guards = [];
+      }
+
+      // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+      for (const defaultGuard of defaultGuards) {
+        const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
+        if (!exists) {
+          config.guards.push(defaultGuard);
+        }
+      }
+
+      // Save the defaults back to storage only if we modified something
+      // But wait, getGuards() shouldn't necessarily save unless we want to persist defaults immediately.
+      // Let's persist them so they are consistent.
+      this.saveConfig(config);
+    }
+
     return config.guards;
   }
 
   /**
-   * Add or update a guard
+   * Save a guard
    */
   public saveGuard(guard: any): void {
     const config = this.loadConfig();
+    if (!config.guards) {
+      config.guards = [];
+    }
+
     const existingIndex = config.guards.findIndex((g: any) => g.id === guard.id);
 
     if (existingIndex >= 0) {
@@ -325,6 +331,22 @@ class WebUIStorage {
     }
 
     this.saveConfig(config);
+  }
+
+  /**
+   * Toggle a guard
+   */
+  public toggleGuard(id: string, enabled: boolean): void {
+    const config = this.loadConfig();
+    if (!config.guards) {
+      return;
+    }
+
+    const guard = config.guards.find((g: any) => g.id === id);
+    if (guard) {
+      guard.enabled = enabled;
+      this.saveConfig(config);
+    }
   }
 }
 

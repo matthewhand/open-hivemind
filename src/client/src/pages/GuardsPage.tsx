@@ -43,20 +43,16 @@ const GuardsPage: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch guards');
       }
+
       const data = await response.json();
+      const fetchedGuards = data.data?.guards || [];
 
-      if (data.success && data.guards) {
-        setGuards(data.guards);
+      setGuards(fetchedGuards);
 
-        // Update access config from the fetched data
-        const accessGuard = data.guards.find((g: Guard) => g.id === 'access-control');
-        if (accessGuard && accessGuard.config) {
-             setAccessConfig({
-                 type: accessGuard.config.type || 'users',
-                 users: accessGuard.config.users || [],
-                 ips: accessGuard.config.ips || []
-             });
-        }
+      // Update access config from fetched guard
+      const accessGuard = fetchedGuards.find((g: Guard) => g.id === 'access-control');
+      if (accessGuard && accessGuard.config) {
+        setAccessConfig(prev => ({ ...prev, ...accessGuard.config }));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch guards';
@@ -74,7 +70,6 @@ const GuardsPage: React.FC = () => {
     try {
       setSaving(true);
       setError(null);
-      setSuccess(null);
 
       const response = await fetch(`${API_BASE}/guards`, {
         method: 'POST',
@@ -96,29 +91,28 @@ const GuardsPage: React.FC = () => {
   };
 
   const toggleGuard = async (id: string) => {
-    // Optimistic update
-    const previousGuards = [...guards];
-    const guardToToggle = guards.find(g => g.id === id);
-    if (!guardToToggle) return;
-
-    const newEnabledState = !guardToToggle.enabled;
-
-    setGuards(guards.map(g => g.id === id ? { ...g, enabled: newEnabledState } : g));
-
     try {
-        const response = await fetch(`${API_BASE}/guards/${id}/toggle`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled: newEnabledState }),
-        });
+      const guard = guards.find(g => g.id === id);
+      if (!guard) { return; }
 
-        if (!response.ok) {
-            throw new Error('Failed to toggle guard');
-        }
+      const newEnabled = !guard.enabled;
+
+      // Optimistic update
+      setGuards(guards.map(g => g.id === id ? { ...g, enabled: newEnabled } : g));
+
+      const response = await fetch(`${API_BASE}/guards/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newEnabled }),
+      });
+
+      if (!response.ok) {
+        // Revert on failure
+        setGuards(guards.map(g => g.id === id ? { ...g, enabled: !newEnabled } : g));
+        throw new Error('Failed to toggle guard');
+      }
     } catch (err) {
-        // Revert on error
-        setGuards(previousGuards);
-        setError(err instanceof Error ? err.message : 'Failed to toggle guard');
+      setError(err instanceof Error ? err.message : 'Failed to toggle guard');
     }
   };
 
@@ -166,11 +160,6 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="alert alert-warning">
-        <AlertTriangle className="w-5 h-5" />
-        <span>Work in Progress: This page is currently under development. Some features may not be fully functional.</span>
-      </div>
-
       {/* Error Alert */}
       {error && (
         <div className="alert alert-error">

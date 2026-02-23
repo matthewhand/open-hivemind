@@ -1015,52 +1015,6 @@ export class BotConfigurationManager {
   }
 
   /**
-   * Delete a bot configuration file
-   */
-  public async deleteBot(name: string): Promise<void> {
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const botsDir = path.join(configDir, 'bots');
-    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-    const filePath = path.join(botsDir, `${safeName}.json`);
-
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Bot "${name}" does not have a configuration file or is environment-defined only`);
-    }
-
-    fs.unlinkSync(filePath);
-    this.reload();
-  }
-
-  /**
-   * Clone a bot configuration
-   */
-  public async cloneBot(name: string, newName: string): Promise<BotConfig> {
-    const originalBot = this.bots.get(name);
-    if (!originalBot) {
-      throw new Error(`Bot "${name}" not found`);
-    }
-
-    // Deep clone the configuration to avoid reference issues
-    const config = JSON.parse(JSON.stringify(originalBot));
-    config.name = newName;
-
-    // Remove internal properties if any (e.g., _updatedAt)
-    delete (config as any)._updatedAt;
-
-    // Add the new bot (this will validate and save it)
-    await this.addBot(config);
-
-    // Return the new bot config (reload happens inside addBot)
-    // Note: Since reload is synchronous/in-memory update in addBot -> reload -> loadConfiguration,
-    // this.bots should have the new bot.
-    const newBot = this.bots.get(newName);
-    if (!newBot) {
-        throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
-    }
-    return newBot;
-  }
-
-  /**
    * Update an existing bot configuration
    * For env-var bots, this creates/updates a JSON override file
    */
