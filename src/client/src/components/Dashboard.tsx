@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Alert,
   Badge,
@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setError(null);
       const [configData, statusData] = await Promise.all([
@@ -39,11 +39,11 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const getStatusColor = (botStatus: string) => {
     switch (botStatus.toLowerCase()) {
@@ -169,13 +169,21 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const activeBots = bots.filter(bot =>
-    status?.bots.find((_, i) => bots[i]?.name === bot.name)?.status === 'active',
-  ).length;
+  const activeBots = useMemo(() => {
+    if (!status?.bots) return 0;
+    // status.bots aligns with bots array based on rendering logic.
+    // Optimization: filtering directly on status array is O(N) vs O(N^2)
+    return status.bots.filter(b => b.status === 'active').length;
+  }, [status]);
 
-  const totalMessages = status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0;
-  const uptimeHours = status ? Math.floor(status.uptime / 3600) : 0;
-  const uptimeMinutes = status ? Math.floor((status.uptime % 3600) / 60) : 0;
+  const totalMessages = useMemo(
+    () => status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0,
+    [status]
+  );
+  const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
+  const uptimeMinutes = useMemo(() => (status ? Math.floor((status.uptime % 3600) / 60) : 0), [
+    status,
+  ]);
 
   return (
     <div className="min-h-screen bg-base-200">
