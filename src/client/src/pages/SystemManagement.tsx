@@ -91,8 +91,6 @@ const SystemManagement: React.FC = () => {
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
-    }
-  };
 
 
   useEffect(() => {
@@ -398,7 +396,7 @@ const SystemManagement: React.FC = () => {
                   />
                 </div>
 
-                 <div className="form-control">
+                <div className="form-control">
                   <label className="label">
                     <span className="label-text">Log Level</span>
                   </label>
@@ -462,7 +460,8 @@ const SystemManagement: React.FC = () => {
                       max="95"
                     />
                   </div>
-                   <div className="form-control">
+
+                  <div className="form-control">
                     <label className="label">
                       <span className="label-text">Memory Usage Threshold (%)</span>
                     </label>
@@ -612,15 +611,15 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-               <div className="flex justify-between items-center mt-6">
-                  <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
-                  <button
-                    className="btn btn-sm btn-ghost"
-                    onClick={fetchPerformanceData}
-                    disabled={isPerformanceLoading}
-                  >
-                    {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                  </button>
+              <div className="flex justify-between items-center mt-8">
+                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={fetchPerformanceData}
+                  disabled={isPerformanceLoading}
+                >
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                </button>
               </div>
 
               {systemInfo && (
@@ -721,11 +720,11 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={5} className="text-center">No endpoint data available</td>
                           </tr>
                         )}
-                        </tbody>
+                      </tbody>
                     </table>
+                  </div>
                 </div>
               </div>
-             </div>
 
               <div className="divider"></div>
 
@@ -758,7 +757,6 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
-
                           </tr>
                         )}
                       </tbody>
@@ -769,7 +767,6 @@ const SystemManagement: React.FC = () => {
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
-
               </div>
             </div>
           )}

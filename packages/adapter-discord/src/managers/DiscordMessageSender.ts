@@ -205,15 +205,16 @@ export class DiscordMessageSender {
       return message.id;
     } catch (error: any) {
       if (error instanceof ValidationError) {
+        const errorMessage = (error as Error).message;
         log(
-          `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`
+          `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${errorMessage}`
         );
         this.deps.logger.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
         try {
           webSocketService?.recordAlert({
             level: 'error',
             title: 'Discord sendMessage validation failed',
-            message: error.message,
+            message: errorMessage,
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'ValidationError' },
           });
