@@ -12,8 +12,8 @@ import { Breadcrumbs } from '../components/DaisyUI';
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
   const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers', isActive: true },
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers', isActive: true },
   ];
 
   const providerCategories = [
@@ -23,7 +23,7 @@ const ProvidersPage: React.FC = () => {
       icon: <MessageIcon className="w-12 h-12" />,
       color: 'primary',
       providers: ['Discord', 'Telegram', 'Slack', 'Webhook'],
-      action: () => navigate('/uber/providers/message'),
+      action: () => navigate('/admin/providers/message'),
       features: [
         'Real-time messaging integration',
         'Multi-platform support',
@@ -37,7 +37,7 @@ const ProvidersPage: React.FC = () => {
       icon: <LLMIcon className="w-12 h-12" />,
       color: 'secondary',
       providers: ['OpenAI', 'Anthropic', 'Ollama', 'Custom'],
-      action: () => navigate('/uber/providers/llm'),
+      action: () => navigate('/admin/providers/llm'),
       features: [
         'Multiple AI model support',
         'Fallback configuration',
@@ -84,7 +84,7 @@ const ProvidersPage: React.FC = () => {
                 <h3 className="text-sm font-semibold text-base-content/80 mb-3">Available Providers</h3>
                 <div className="flex flex-wrap gap-2">
                   {category.providers.map((provider) => (
-                    <Badge key={provider} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
+                    <Badge key={provider} color="neutral" variant="secondary" className="btn-outline text-xs">
                       {provider}
                     </Badge>
                   ))}

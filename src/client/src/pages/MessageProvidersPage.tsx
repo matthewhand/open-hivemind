@@ -21,9 +21,9 @@ const MessageProvidersPage: React.FC = () => {
   const [globalProviders, setGlobalProviders] = useState<any[]>([]);
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers' },
-    { label: 'Message Providers', href: '/uber/providers/message', isActive: true },
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers' },
+    { label: 'Message Providers', href: '/admin/providers/message', isActive: true },
   ];
 
   const getStatusIcon = (status: string) => {
@@ -67,6 +67,9 @@ const MessageProvidersPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {providerTypes.map((type) => {
             const config = MESSAGE_PROVIDER_CONFIGS[type];
+            const requiredFields = (config.fields || []).filter((f: any) => f.required);
+            const optionalFields = (config.fields || []).filter((f: any) => !f.required);
+
             return (
               <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
                 <div className="card-body">
@@ -75,12 +78,12 @@ const MessageProvidersPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">{config.icon}</div>
                       <div>
-                        <h3 className="card-title text-lg">{config.name}</h3>
+                        <h3 className="card-title text-lg">{config.displayName}</h3>
                         <p className="text-sm text-base-content/60">{type}</p>
                       </div>
                     </div>
                     <Badge variant="neutral" size="sm">
-                      {config.requiredFields.length} required
+                      {requiredFields.length} required
                     </Badge>
                   </div>
 
@@ -93,8 +96,8 @@ const MessageProvidersPage: React.FC = () => {
                   <div className="mb-4">
                     <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
                     <div className="flex flex-wrap gap-1">
-                      {config.requiredFields.map((field) => (
-                        <Badge key={field.key} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
+                      {requiredFields.map((field: any) => (
+                        <Badge key={field.name} color="neutral" variant="secondary" className="btn-outline text-xs">
                           {field.label}
                         </Badge>
                       ))}
@@ -102,12 +105,12 @@ const MessageProvidersPage: React.FC = () => {
                   </div>
 
                   {/* Optional Fields */}
-                  {config.optionalFields.length > 0 && (
+                  {optionalFields.length > 0 && (
                     <div className="mb-4">
                       <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
                       <div className="flex flex-wrap gap-1">
-                        {config.optionalFields.map((field) => (
-                          <Badge key={field.key} color="ghost" variant="secondary" className="btn-outline" className="text-xs">
+                        {optionalFields.map((field: any) => (
+                          <Badge key={field.name} color="ghost" variant="secondary" className="btn-outline text-xs">
                             {field.label}
                           </Badge>
                         ))}
