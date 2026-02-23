@@ -37,6 +37,8 @@
       "@types/*": ["src/types/*"],
       "@src/integrations/slack/*": ["packages/adapter-slack/src/*"],
       "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
+      "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
+      "@hivemind/shared-types/*": ["packages/shared-types/src/*"],
       "@src/*": ["src/*"],
       "@tests/*": ["tests/*"],
       "testUtils": ["./tests/testUtils"],
