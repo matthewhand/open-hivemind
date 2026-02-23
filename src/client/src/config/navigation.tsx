@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
-  LayoutDashboard, Bot, Users, Wrench, Shield,
-  Settings, Cog, Activity, Component, Plug, MessageSquare, Brain,
+  LayoutDashboard, Bot, Users, Shield,
+  Settings, Cog, Activity, Component, MessageSquare, Brain,
 } from 'lucide-react';
 import React from 'react';
 
