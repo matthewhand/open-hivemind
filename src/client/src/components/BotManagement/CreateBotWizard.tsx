@@ -129,7 +129,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                         </div>
 
                         <div className="form-control">
-                            <label className="label"><span className="label-text">Description <span className="text-base-content/50 text-xs">(optional)</span></span></label>
+                            <label className="label"><span className="label-text">What does this bot do?</span></label>
                             <textarea
                                 className="textarea textarea-bordered h-24"
                                 placeholder="What does this bot do?"
@@ -144,11 +144,19 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 <select
                                     className="select select-bordered w-full"
                                     value={formData.messageProvider}
-                                    onChange={e => setFormData({ ...formData, messageProvider: e.target.value })}
+                                    onChange={e => {
+                                        if (e.target.value === '___manage___') {
+                                            window.open('/admin/config', '_blank');
+                                            return;
+                                        }
+                                        setFormData({ ...formData, messageProvider: e.target.value });
+                                    }}
                                 >
                                     <option value="discord">Discord</option>
                                     <option value="slack">Slack</option>
                                     <option value="mattermost">Mattermost</option>
+                                    <option disabled>──────────</option>
+                                    <option value="___manage___">Add / Manage Providers...</option>
                                 </select>
                             </div>
 
@@ -159,12 +167,20 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 <select
                                     className="select select-bordered w-full"
                                     value={formData.llmProvider}
-                                    onChange={e => setFormData({ ...formData, llmProvider: e.target.value })}
+                                    onChange={e => {
+                                        if (e.target.value === '___manage___') {
+                                            window.open('/admin/config', '_blank');
+                                            return;
+                                        }
+                                        setFormData({ ...formData, llmProvider: e.target.value });
+                                    }}
                                 >
                                     <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider'}</option>
                                     {llmProfiles.map(p => (
                                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                                     ))}
+                                    <option disabled>──────────</option>
+                                    <option value="___manage___">Add / Manage Providers...</option>
                                 </select>
                             </div>
                         </div>
