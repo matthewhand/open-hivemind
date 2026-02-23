@@ -41,7 +41,7 @@ router.use('/mcp', mcpRouter);
 router.use('/activity', activityRouter);
 
 // Define the new route for tool usage guards
-router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
+router.get('/tool-usage-guards', (req: Request, res: Response) => {
   try {
     // Mock data for tool usage guards
     const guards = [
@@ -84,8 +84,8 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
   }
 });
 
-// POST /api/admin/tool-usage-guards - Create a new tool usage guard
-router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
+// POST /tool-usage-guards - Create a new tool usage guard
+router.post('/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
 
@@ -131,8 +131,8 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
   }
 });
 
-// PUT /api/admin/tool-usage-guards/:id - Update an existing tool usage guard
-router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+// PUT /tool-usage-guards/:id - Update an existing tool usage guard
+router.put('/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
@@ -179,56 +179,48 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
   }
 });
 
-// DELETE /api/admin/tool-usage-guards/:id - Delete a tool usage guard
-router.delete(
-  '/api/admin/tool-usage-guards/:id',
-  configRateLimit,
-  (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+// DELETE /tool-usage-guards/:id - Delete a tool usage guard
+router.delete('/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-      // In a real implementation, this would delete from database
-      // For now, just return success
+    // In a real implementation, this would delete from database
+    // For now, just return success
 
-      return res.json({
-        success: true,
-        message: 'Tool usage guard deleted successfully',
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        error: 'Failed to delete tool usage guard',
-        message: error.message || 'An error occurred while deleting tool usage guard',
-      });
-    }
+    return res.json({
+      success: true,
+      message: 'Tool usage guard deleted successfully',
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to delete tool usage guard',
+      message: error.message || 'An error occurred while deleting tool usage guard',
+    });
   }
-);
+});
 
-// POST /api/admin/tool-usage-guards/:id/toggle - Toggle tool usage guard active status
-router.post(
-  '/api/admin/tool-usage-guards/:id/toggle',
-  configRateLimit,
-  (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { isActive } = req.body;
+// POST /tool-usage-guards/:id/toggle - Toggle tool usage guard active status
+router.post('/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
 
-      // In a real implementation, this would update in database
-      // For now, just return success
+    // In a real implementation, this would update in database
+    // For now, just return success
 
-      return res.json({
-        success: true,
-        message: 'Tool usage guard status updated successfully',
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        error: 'Failed to update guard status',
-        message: error.message || 'An error occurred while updating guard status',
-      });
-    }
+    return res.json({
+      success: true,
+      message: 'Tool usage guard status updated successfully',
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to update guard status',
+      message: error.message || 'An error occurred while updating guard status',
+    });
   }
-);
-// POST /api/admin/llm-providers - Create a new LLM provider
-router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Response) => {
+});
+// POST /llm-providers - Create a new LLM provider
+router.post('/llm-providers', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -273,8 +265,8 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
   }
 });
 
-// PUT /api/admin/llm-providers/:id - Update an existing LLM provider
-router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+// PUT /llm-providers/:id - Update an existing LLM provider
+router.put('/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -315,8 +307,8 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/admin/llm-providers/:id - Delete an LLM provider
-router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+// DELETE /llm-providers/:id - Delete an LLM provider
+router.delete('/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -335,8 +327,8 @@ router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   }
 });
 
-// POST /api/admin/llm-providers/:id/toggle - Toggle LLM provider active status
-router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response) => {
+// POST /llm-providers/:id/toggle - Toggle LLM provider active status
+router.post('/llm-providers/:id/toggle', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -366,8 +358,8 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
   }
 });
 
-// POST /api/admin/messenger-providers - Create a new messenger provider
-router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
+// POST /messenger-providers - Create a new messenger provider
+router.post('/messenger-providers', (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
 
@@ -415,8 +407,8 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/admin/messenger-providers/:id - Update an existing messenger provider
-router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+// PUT /messenger-providers/:id - Update an existing messenger provider
+router.put('/messenger-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
@@ -469,8 +461,8 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
   }
 });
 
-// DELETE /api/admin/messenger-providers/:id - Delete a messenger provider
-router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+// DELETE /messenger-providers/:id - Delete a messenger provider
+router.delete('/messenger-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -489,8 +481,8 @@ router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response
   }
 });
 
-// POST /api/admin/messenger-providers/:id/toggle - Toggle messenger provider active status
-router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Response) => {
+// POST /messenger-providers/:id/toggle - Toggle messenger provider active status
+router.post('/messenger-providers/:id/toggle', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -520,46 +512,8 @@ router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Res
   }
 });
 
-// Get available LLM providers
-router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
-  try {
-    // Return provider *types* supported by this build (not user-configured instances)
-    const providers = ['openai', 'flowise', 'openwebui', 'ollama'];
-
-    return res.json({
-      success: true,
-      data: { providers },
-      message: 'LLM providers retrieved successfully',
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve LLM providers',
-      message: error.message || 'An error occurred while retrieving LLM providers',
-    });
-  }
-});
-
-// Get available messenger providers
-router.get('/api/admin/messenger-providers', (req: Request, res: Response) => {
-  try {
-    // Return provider *types* supported by this build (not user-configured instances)
-    const providers = ['discord', 'slack', 'mattermost', 'webhook'];
-
-    return res.json({
-      success: true,
-      data: { providers },
-      message: 'Messenger providers retrieved successfully',
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve messenger providers',
-      message: error.message || 'An error occurred while retrieving messenger providers',
-    });
-  }
-});
-
 // Get available personas
-router.get('/api/admin/personas', (req: Request, res: Response) => {
+router.get('/personas', (req: Request, res: Response) => {
   try {
     // Get personas from persistent storage
     const storedPersonas = webUIStorage.getPersonas();
@@ -600,7 +554,7 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
 });
 
 // Save a new persona
-router.post('/api/admin/personas', (req: Request, res: Response) => {
+router.post('/personas', (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
 
@@ -635,7 +589,7 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
 });
 
 // Update an existing persona
-router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
+router.put('/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -664,7 +618,7 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
 });
 
 // Delete a persona
-router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
+router.delete('/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
 
@@ -684,56 +638,52 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
 });
 
 // Connect to an MCP server
-router.post(
-  '/api/admin/mcp-servers/connect',
-  configRateLimit,
-  async (req: Request, res: Response) => {
-    try {
-      const { serverUrl, apiKey, name } = req.body;
+router.post('/mcp-servers/connect', configRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { serverUrl, apiKey, name } = req.body;
 
-      // Validation
-      if (!serverUrl || !name) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL and name are required',
-        });
-      }
-
-      // Validate URL format
-      try {
-        new URL(serverUrl);
-      } catch {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL must be a valid URL',
-        });
-      }
-
-      // Sanitize API key for storage
-      const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
-
-      const mcpService = MCPService.getInstance();
-      const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
-
-      // Save to persistent storage with sanitized API key
-      webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
-
-      return res.json({
-        success: true,
-        data: { tools },
-        message: `Successfully connected to MCP server: ${name}`,
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        error: 'Failed to connect to MCP server',
-        message: error.message || 'An error occurred while connecting to MCP server',
+    // Validation
+    if (!serverUrl || !name) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Server URL and name are required',
       });
     }
+
+    // Validate URL format
+    try {
+      new URL(serverUrl);
+    } catch {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Server URL must be a valid URL',
+      });
+    }
+
+    // Sanitize API key for storage
+    const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
+
+    const mcpService = MCPService.getInstance();
+    const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
+
+    // Save to persistent storage with sanitized API key
+    webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
+
+    return res.json({
+      success: true,
+      data: { tools },
+      message: `Successfully connected to MCP server: ${name}`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to connect to MCP server',
+      message: error.message || 'An error occurred while connecting to MCP server',
+    });
   }
-);
+});
 
 // Disconnect from an MCP server
-router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Response) => {
+router.post('/mcp-servers/disconnect', async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
 
@@ -764,7 +714,7 @@ router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Respo
 });
 
 // Get all connected MCP servers
-router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
+router.get('/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const servers = mcpService.getConnectedServers();
@@ -786,7 +736,7 @@ router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
 });
 
 // Get tools from a specific MCP server
-router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Response) => {
+router.get('/mcp-servers/:name/tools', async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
 
@@ -814,7 +764,7 @@ router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Respo
 });
 
 // Get environment variable overrides
-router.get('/api/admin/env-overrides', (req: Request, res: Response) => {
+router.get('/env-overrides', (req: Request, res: Response) => {
   try {
     const envVars = getRelevantEnvVars();
 
@@ -831,93 +781,7 @@ router.get('/api/admin/env-overrides', (req: Request, res: Response) => {
   }
 });
 
-// Get activity monitoring data
-router.get('/api/admin/activity/messages', (req: Request, res: Response) => {
-  try {
-    // In a real implementation, this would fetch from WebSocketService or database
-    // For now, we'll return mock data
-    const messages: any[] = [];
-
-    return res.json({
-      success: true,
-      data: { messages },
-      message: 'Activity messages retrieved successfully',
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve activity messages',
-      message: error.message || 'An error occurred while retrieving activity messages',
-    });
-  }
-});
-
-// Get performance metrics
-router.get('/api/admin/activity/metrics', (req: Request, res: Response) => {
-  try {
-    // In a real implementation, this would fetch from WebSocketService or database
-    // For now, we'll return mock data
-    const metrics: any[] = [];
-
-    return res.json({
-      success: true,
-      data: { metrics },
-      message: 'Performance metrics retrieved successfully',
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve performance metrics',
-      message: error.message || 'An error occurred while retrieving performance metrics',
-    });
-  }
-});
-
-// GET /api/admin/env-overrides - Get environment variable overrides
-router.get('/env-overrides', async (req: Request, res: Response) => {
-  try {
-    const envOverrides: Record<string, string> = {};
-
-    // Check for common environment variables that might override config
-    const envVarPatterns = [
-      /^DISCORD_/,
-      /^SLACK_/,
-      /^TELEGRAM_/,
-      /^MATTERMOST_/,
-      /^OPENAI_/,
-      /^FLOWISE_/,
-      /^OPENWEBUI_/,
-      /^MCP_/,
-      /^BOT_/,
-      /^AGENT_/,
-    ];
-
-    Object.keys(process.env).forEach((key) => {
-      if (envVarPatterns.some((pattern) => pattern.test(key))) {
-        const value = process.env[key];
-        if (value) {
-          // Redact sensitive values
-          if (
-            key.toLowerCase().includes('token') ||
-            key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret')
-          ) {
-            envOverrides[key] = `***${value.slice(-4)}`;
-          } else if (value.length > 20) {
-            envOverrides[key] = `${value.slice(0, 10)}...${value.slice(-4)}`;
-          } else {
-            envOverrides[key] = value;
-          }
-        }
-      }
-    });
-
-    return res.json({ envVars: envOverrides });
-  } catch (error) {
-    debug('Error fetching environment overrides:', error);
-    return res.status(500).json({ error: 'Failed to fetch environment overrides' });
-  }
-});
-
-// GET /api/admin/providers - Get available providers
+// GET /providers - Get available providers
 router.get('/providers', async (req: Request, res: Response) => {
   try {
     const messageProviders = [
@@ -985,7 +849,7 @@ router.get('/providers', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/system-info - Get system information
+// GET /system-info - Get system information
 router.get('/system-info', async (req: Request, res: Response) => {
   try {
     const dbManager = DatabaseManager.getInstance();
