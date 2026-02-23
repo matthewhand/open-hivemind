@@ -57,11 +57,23 @@ const openWebUI: ILlmProvider = {
   },
 };
 
+// Maximum prompt length to prevent memory exhaustion and expensive API calls
+const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
+const MAX_SYSTEM_PROMPT_LENGTH = 16000;
+
 router.post('/generate', async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Input validation for prompt sizes
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      return res.status(400).json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
+    }
+    if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+      return res.status(400).json({ error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters` });
     }
 
     const userConfig = UserConfigStore.getInstance();
@@ -110,18 +122,18 @@ router.post('/generate', async (req, res) => {
     // Construct messages
     const messages: IMessage[] = [];
     if (systemPrompt) {
-        messages.push(new SimpleMessage('system', systemPrompt));
+      messages.push(new SimpleMessage('system', systemPrompt));
     }
 
     let result = '';
     if (instance.supportsChatCompletion()) {
-        result = await instance.generateChatCompletion(prompt, messages);
+      result = await instance.generateChatCompletion(prompt, messages);
     } else if (instance.supportsCompletion()) {
-        // Fallback for completion-only providers
-        const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
-        result = await instance.generateCompletion(fullPrompt);
+      // Fallback for completion-only providers
+      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+      result = await instance.generateCompletion(fullPrompt);
     } else {
-        return res.status(400).json({ error: 'Provider does not support generation.' });
+      return res.status(400).json({ error: 'Provider does not support generation.' });
     }
 
     return res.json({ result });

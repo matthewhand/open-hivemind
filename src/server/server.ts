@@ -188,7 +188,6 @@ export class WebUIServer {
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
     this.app.use('/api/config', authenticateToken, configRouter);
-    this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/personas', authenticateToken, personasRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);

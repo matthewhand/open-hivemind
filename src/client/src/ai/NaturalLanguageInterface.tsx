@@ -460,7 +460,16 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         };
       } else {
         // Fallback to mock behavior if backend fails or not configured
-        console.warn('Backend AI Assist failed, falling back to mock:', res.statusText);
+        // Distinguish between error types for better user feedback
+        if (res.status === 401) {
+          console.warn('AI Assist: Authentication required - user may need to log in');
+        } else if (res.status === 400) {
+          const errorData = await res.json().catch(() => ({}));
+          console.warn('AI Assist: Configuration error:', errorData.error || res.statusText);
+        } else {
+          console.warn('AI Assist: Backend error, falling back to mock:', res.statusText);
+        }
+
         // Simulate NLP processing delay
         await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -470,7 +479,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
             text.toLowerCase().includes(example.toLowerCase()) ||
             example.toLowerCase().includes(text.toLowerCase()),
           ),
-        );
+        ) || null; // Convert undefined to null for type safety
 
         confidence = matchedIntent ? 0.85 : 0.3;
         intent = matchedIntent || {
@@ -494,7 +503,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
           text.toLowerCase().includes(example.toLowerCase()) ||
           example.toLowerCase().includes(text.toLowerCase()),
         ),
-      );
+      ) || null; // Convert undefined to null for type safety
 
       confidence = matchedIntent ? 0.85 : 0.3;
       intent = matchedIntent || {
@@ -508,15 +517,24 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
       responseText = generateResponse(text, matchedIntent, confidence);
     }
 
+    // Ensure intent is always defined (fallback to unknown if somehow null)
+    const finalIntent: NLIntent = intent || {
+      name: 'unknown',
+      description: 'Unknown command',
+      category: 'help' as const,
+      parameters: [],
+      examples: [],
+    };
+
     const command: NLCommand = {
       id: `cmd-${Date.now()}`,
       text,
       timestamp: new Date(),
-      intent: intent!,
+      intent: finalIntent,
       entities: entities,
       confidence,
       response: responseText,
-      actions: generateActions(text, intent, confidence),
+      actions: generateActions(text, finalIntent, confidence),
       status: status,
     };
 
