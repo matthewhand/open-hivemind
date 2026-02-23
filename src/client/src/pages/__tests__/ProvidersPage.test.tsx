@@ -56,7 +56,7 @@ describe('ProvidersPage', () => {
     const configureMessageButton = screen.getByText('Configure Message');
     fireEvent.click(configureMessageButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/uber/providers/message');
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/providers/message');
   });
 
   it('navigates to LLM providers config when clicked', () => {
@@ -65,7 +65,7 @@ describe('ProvidersPage', () => {
     const configureLLMButton = screen.getByText('Configure LLM');
     fireEvent.click(configureLLMButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/uber/providers/llm');
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/providers/llm');
   });
 
   it('renders features list for each category', () => {
