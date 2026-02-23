@@ -17,6 +17,12 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
+import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProviderProfile,
+} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
@@ -207,6 +213,99 @@ router.get('/bots', async (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOTS_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-profiles - Get Message profile templates
+router.get('/message-profiles', (req, res) => {
+  try {
+    return res.json({
+      profiles: getMessageProfiles(),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_GET_ERROR',
+    });
+  }
+});
+
+// POST /api/config/message-profiles - Create a Message profile
+router.post('/message-profiles', (req, res) => {
+  try {
+    const profile = req.body as MessageProviderProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    // Sanitize key to prevent path traversal and special characters
+    const sanitizedKey = profile.key.replace(/[^a-zA-Z0-9-_]/g, '');
+    if (sanitizedKey !== profile.key || sanitizedKey.length === 0) {
+      return res.status(400).json({ error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores' });
+    }
+    if (!profile.provider || typeof profile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    const allProfiles = getMessageProfiles();
+    if (allProfiles.message.some((p) => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    const newProfile: MessageProviderProfile = {
+      key: profile.key,
+      name: profile.name || profile.key,
+      description: profile.description,
+      provider: profile.provider,
+      config: profile.config || {},
+    };
+
+    allProfiles.message.push(newProfile);
+    saveMessageProfiles(allProfiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_POST_ERROR',
+    });
+  }
+});
+
+// DELETE /api/config/message-profiles/:key - Delete a Message profile
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const allProfiles = getMessageProfiles();
+    const index = allProfiles.message.findIndex((p) => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    allProfiles.message.splice(index, 1);
+    saveMessageProfiles(allProfiles);
+    return res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_DELETE_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-status - Message default summary
+router.get('/message-status', (req, res) => {
+  try {
+    const status = getMessageDefaultStatus();
+    return res.json(status);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_STATUS_GET_ERROR',
     });
   }
 });
@@ -598,44 +697,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
+            ...mergedBot.discord,
+            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+          }
           : undefined,
         slack: mergedBot.slack
           ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
+            ...mergedBot.slack,
+            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+            signingSecret: redactSensitiveInfo(
+              'SLACK_SIGNING_SECRET',
+              mergedBot.slack.signingSecret || ''
+            ),
+          }
           : undefined,
         openai: mergedBot.openai
           ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
+            ...mergedBot.openai,
+            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+          }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
+            ...mergedBot.flowise,
+            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+          }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
+            ...mergedBot.openwebui,
+            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+          }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
+            ...mergedBot.openswarm,
+            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+          }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1487,9 +1586,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-          (config as any).serverUrl ||
-          (config as any).url ||
-          ''
+        (config as any).serverUrl ||
+        (config as any).url ||
+        ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);
