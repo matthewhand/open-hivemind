@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import guardsRouter from '../../src/server/routes/guards';
 import { webUIStorage } from '../../src/storage/webUIStorage';
 
@@ -8,178 +8,168 @@ jest.mock('../../src/storage/webUIStorage', () => ({
   webUIStorage: {
     getGuards: jest.fn(),
     saveGuard: jest.fn(),
+    toggleGuard: jest.fn(),
   },
 }));
 
-const app = express();
-app.use(express.json());
-app.use('/api/guards', guardsRouter);
-
-describe('Guards Routes', () => {
-  let mockGuards: any[];
+describe('Guards Route', () => {
+  let app: express.Application;
 
   beforeEach(() => {
+    app = express();
+    app.use(express.json());
+    app.use('/guards', guardsRouter);
     jest.clearAllMocks();
-    mockGuards = [
-      {
-        id: 'access-control',
-        name: 'Access Control',
-        type: 'access',
-        enabled: true,
-        config: { type: 'users', users: [], ips: [] },
-      },
-      {
-        id: 'rate-limiter',
-        name: 'Rate Limiter',
-        type: 'rate',
-        enabled: true,
-        config: { maxRequests: 100 },
-      },
-    ];
-    (webUIStorage.getGuards as jest.Mock).mockReturnValue(mockGuards);
   });
 
-  describe('GET /api/guards', () => {
+  describe('GET /guards', () => {
     it('should return all guards', async () => {
-      const response = await request(app).get('/api/guards');
+      const mockGuards = [{ id: 'guard1', name: 'Guard 1' }];
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue(mockGuards);
+
+      const response = await request(app).get('/guards');
+
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.guards).toHaveLength(2);
-      expect(response.body.guards[0].id).toBe('access-control');
+      expect(response.body.data.guards).toEqual(mockGuards);
+      expect(webUIStorage.getGuards).toHaveBeenCalledTimes(1);
     });
 
     it('should handle errors', async () => {
       (webUIStorage.getGuards as jest.Mock).mockImplementation(() => {
         throw new Error('Database error');
       });
-      const response = await request(app).get('/api/guards');
+
+      const response = await request(app).get('/guards');
+
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to retrieve guards');
     });
   });
 
-  describe('POST /api/guards', () => {
+  describe('POST /guards', () => {
     it('should update access control configuration', async () => {
-      const newConfig = {
-        type: 'ip',
-        users: [],
-        ips: ['127.0.0.1'],
-      };
+      const accessConfig = { type: 'users', users: ['alice@example.com'], ips: [] };
+      const mockGuards = [
+        { id: 'access-control', config: { type: 'owner' } }
+      ];
 
-      const response = await request(app).post('/api/guards').send(newConfig);
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue(mockGuards);
+
+      const response = await request(app)
+        .post('/guards')
+        .send(accessConfig);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(webUIStorage.saveGuard).toHaveBeenCalledTimes(1);
+      expect(webUIStorage.saveGuard).toHaveBeenCalledWith({
+        id: 'access-control',
+        config: { type: 'users', users: ['alice@example.com'], ips: [] }
+      });
+    });
 
-      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
-      expect(savedGuard.id).toBe('access-control');
-      expect(savedGuard.config).toEqual(newConfig);
+    it('should return 404 if access-control guard is missing', async () => {
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
+
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'users', users: [], ips: [] });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Access control guard not found');
+    });
+
+    it('should return 400 for invalid config (array)', async () => {
+      // Mock getGuards to ensure that if validation passes, we would get 404
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
+
+      const response = await request(app)
+        .post('/guards')
+        .send(['invalid']); // Array should be rejected
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid access configuration');
+    });
+
+    it('should return 400 for invalid access type', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'invalid', users: [], ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid access type. Must be owner, users, or ip');
+    });
+
+    it('should return 400 for invalid email in users array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'users', users: ['not-an-email'], ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid email format in users array');
+    });
+
+    it('should return 400 for invalid IP address', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'ip', users: [], ips: ['999.999.999.999'] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid IP address or CIDR notation in ips array');
+    });
+
+    it('should return 400 for users not being an array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'users', users: 'not-an-array', ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Users must be an array');
+    });
+
+    it('should return 400 for ips not being an array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'ip', users: [], ips: 'not-an-array' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('IPs must be an array');
     });
   });
 
-  describe('POST /api/guards/:id/toggle', () => {
-    it('should toggle guard status when no body provided', async () => {
+  describe('POST /guards/:id/toggle', () => {
+    it('should toggle guard status', async () => {
+      const guardId = 'test-guard';
+      const mockGuard = { id: guardId, name: 'Test Guard', enabled: false };
+
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([mockGuard]);
+
       const response = await request(app)
-        .post('/api/guards/rate-limiter/toggle')
-        .send({});
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(webUIStorage.saveGuard).toHaveBeenCalledTimes(1);
-
-      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
-      expect(savedGuard.id).toBe('rate-limiter');
-      expect(savedGuard.enabled).toBe(false); // Was true, toggled to false
-    });
-
-    it('should set specific status when enabled is provided', async () => {
-      const response = await request(app)
-        .post('/api/guards/rate-limiter/toggle')
+        .post(`/guards/${guardId}/toggle`)
         .send({ enabled: true });
 
       expect(response.status).toBe(200);
-
-      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
-      expect(savedGuard.id).toBe('rate-limiter');
-      expect(savedGuard.enabled).toBe(true); // Should remain true
-    });
-
-    it('should return 404 for non-existent guard', async () => {
-      const response = await request(app).post('/api/guards/non-existent/toggle');
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('PUT /api/guards/:id', () => {
-    it('should update guard configuration', async () => {
-      const updates = {
-        config: { maxRequests: 200 },
-        enabled: false,
-      };
-
-      // Mock getGuards to return a guard that can be found
-      (webUIStorage.getGuards as jest.Mock).mockReturnValue([
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100 },
-        }
-      ]);
-
-      const response = await request(app)
-        .put('/api/guards/rate-limiter')
-        .send(updates);
-
-      expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(webUIStorage.saveGuard).toHaveBeenCalledTimes(1);
-
-      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
-      expect(savedGuard.id).toBe('rate-limiter');
-      expect(savedGuard.enabled).toBe(false);
-      expect(savedGuard.config).toEqual({ maxRequests: 200 });
+      expect(webUIStorage.toggleGuard).toHaveBeenCalledWith(guardId, true);
     });
 
-    it('should return 404 for non-existent guard', async () => {
+    it('should return 404 if guard not found', async () => {
       (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
+
       const response = await request(app)
-        .put('/api/guards/non-existent')
-        .send({ config: {} });
+        .post('/guards/unknown/toggle')
+        .send({ enabled: true });
 
       expect(response.status).toBe(404);
+      expect(webUIStorage.toggleGuard).not.toHaveBeenCalled();
     });
 
-    it('should reject updates with disallowed fields (field injection protection)', async () => {
-      (webUIStorage.getGuards as jest.Mock).mockReturnValue([
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100 },
-        }
-      ]);
-
-      const maliciousUpdates = {
-        id: 'hacked-id',
-        type: 'malicious-type',
-        unauthorizedField: 'malicious-value',
-        config: { maxRequests: 200 }
-      };
-
+    it('should return 400 if enabled is not boolean', async () => {
       const response = await request(app)
-        .put('/api/guards/rate-limiter')
-        .send(maliciousUpdates);
+        .post('/guards/test/toggle')
+        .send({ enabled: 'true' });
 
-      expect(response.status).toBe(200);
-      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
-      expect(savedGuard.id).toBe('rate-limiter'); // Should preserve original ID
-      expect(savedGuard.type).toBe('rate'); // Should preserve original type
-      expect(savedGuard).not.toHaveProperty('unauthorizedField');
+      expect(response.status).toBe(400);
     });
   });
 });

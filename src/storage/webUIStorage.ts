@@ -19,6 +19,7 @@ interface WebUIConfig {
 class WebUIStorage {
   private configDir: string;
   private configFile: string;
+  private guardsInitializationInProgress = false;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -39,72 +40,25 @@ class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
-    let config: WebUIConfig;
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        config = JSON.parse(data);
-      } else {
-        config = {
-          agents: [],
-          mcpServers: [],
-          llmProviders: [],
-          messengerProviders: [],
-          personas: [],
-          guards: [],
-          lastUpdated: new Date().toISOString(),
-        };
+        return JSON.parse(data);
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
-      // Return default configuration
-      config = {
-        agents: [],
-        mcpServers: [],
-        llmProviders: [],
-        messengerProviders: [],
-        personas: [],
-        guards: [],
-        lastUpdated: new Date().toISOString(),
-      };
     }
 
-    // Initialize guards if missing or empty
-    if (!config.guards || config.guards.length === 0) {
-      config.guards = [
-        {
-          id: 'access-control',
-          name: 'Access Control',
-          description: 'User and IP-based access restrictions',
-          type: 'access',
-          enabled: true,
-          config: { type: 'users', users: [], ips: [] },
-        },
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          description: 'Prevents spam and excessive requests',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 },
-        },
-        {
-          id: 'content-filter',
-          name: 'Content Filter',
-          description: 'Filters inappropriate content',
-          type: 'content',
-          enabled: false,
-          config: {},
-        },
-      ];
-    }
-
-    // Ensure guards are initialized in config object if it came from file without them
-    if (!config.guards) {
-       config.guards = [];
-    }
-
-    return config;
+    // Return default configuration
+    return {
+      agents: [],
+      mcpServers: [],
+      llmProviders: [],
+      messengerProviders: [],
+      personas: [],
+      guards: [],
+      lastUpdated: new Date().toISOString(),
+    };
   }
 
   /**
@@ -305,17 +259,85 @@ class WebUIStorage {
 
   /**
    * Get all guards
+   * Uses a flag to prevent race conditions during initialization
    */
   public getGuards(): any[] {
+    // Wait if initialization is already in progress
+    while (this.guardsInitializationInProgress) {
+      // Re-read config after initialization completes
+      const config = this.loadConfig();
+      if (config.guards && config.guards.length > 0) {
+        return config.guards;
+      }
+    }
+
     const config = this.loadConfig();
+
+    // Initialize default guards if they don't exist or if guards array is missing
+    if (!config.guards || config.guards.length === 0) {
+      // Set flag to prevent race conditions
+      this.guardsInitializationInProgress = true;
+
+      try {
+        const defaultGuards = [
+          {
+            id: 'access-control',
+            name: 'Access Control',
+            description: 'User and IP-based access restrictions',
+            type: 'access',
+            enabled: true,
+            config: { type: 'users', users: [], ips: [] },
+          },
+          {
+            id: 'rate-limiter',
+            name: 'Rate Limiter',
+            description: 'Prevents spam and excessive requests',
+            type: 'rate',
+            enabled: true,
+            config: { maxRequests: 100, windowMs: 60000 },
+          },
+          {
+            id: 'content-filter',
+            name: 'Content Filter',
+            description: 'Filters inappropriate content',
+            type: 'content',
+            enabled: false,
+            config: {},
+          },
+        ];
+
+        // If guards is undefined, initialize it with defaults
+        if (!config.guards) {
+          config.guards = defaultGuards;
+        } else {
+          // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          for (const defaultGuard of defaultGuards) {
+            const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
+            if (!exists) {
+              config.guards.push(defaultGuard);
+            }
+          }
+        }
+
+        // Save the defaults back to storage
+        this.saveConfig(config);
+      } finally {
+        this.guardsInitializationInProgress = false;
+      }
+    }
+
     return config.guards;
   }
 
   /**
-   * Add or update a guard
+   * Save a guard
    */
   public saveGuard(guard: any): void {
     const config = this.loadConfig();
+    if (!config.guards) {
+      config.guards = [];
+    }
+
     const existingIndex = config.guards.findIndex((g: any) => g.id === guard.id);
 
     if (existingIndex >= 0) {
@@ -325,6 +347,22 @@ class WebUIStorage {
     }
 
     this.saveConfig(config);
+  }
+
+  /**
+   * Toggle a guard
+   */
+  public toggleGuard(id: string, enabled: boolean): void {
+    const config = this.loadConfig();
+    if (!config.guards) {
+      return;
+    }
+
+    const guard = config.guards.find((g: any) => g.id === id);
+    if (guard) {
+      guard.enabled = enabled;
+      this.saveConfig(config);
+    }
   }
 }
 
