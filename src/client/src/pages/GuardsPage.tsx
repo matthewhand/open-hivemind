@@ -166,6 +166,11 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <div className="alert alert-warning">
+        <AlertTriangle className="w-5 h-5" />
+        <span>Work in Progress: This page is currently under development. Some features may not be fully functional.</span>
+      </div>
+
       {/* Error Alert */}
       {error && (
         <div className="alert alert-error">

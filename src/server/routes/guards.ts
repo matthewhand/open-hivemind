@@ -98,4 +98,59 @@ router.post('/:id/toggle', (req: Request, res: Response) => {
   }
 });
 
+// PUT /:id - Update guard configuration
+router.put('/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!updates || typeof updates !== 'object') {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Invalid configuration provided',
+      });
+    }
+
+    const guards = webUIStorage.getGuards();
+    const guardIndex = guards.findIndex((g) => g.id === id);
+
+    if (guardIndex === -1) {
+      return res.status(404).json({
+        error: 'Guard not found',
+        message: `Guard with ID ${id} not found`,
+      });
+    }
+
+    const currentGuard = guards[guardIndex];
+
+    // Update fields - only allow specific properties to prevent field injection
+    const allowedFields = ['name', 'description', 'enabled', 'config'] as const;
+    const sanitizedUpdates = Object.keys(updates)
+      .filter((key): key is (typeof allowedFields)[number] =>
+        allowedFields.includes(key as (typeof allowedFields)[number])
+      )
+      .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {} as Record<string, unknown>);
+
+    const updatedGuard = {
+      ...currentGuard,
+      ...sanitizedUpdates,
+      id: currentGuard.id, // Prevent ID change
+      type: currentGuard.type, // Prevent type change
+    };
+
+    webUIStorage.saveGuard(updatedGuard);
+
+    return res.json({
+      success: true,
+      message: 'Guard updated successfully',
+      guard: updatedGuard,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to update guard',
+      message: error.message || 'An error occurred while updating guard',
+    });
+  }
+});
+
 export default router;
