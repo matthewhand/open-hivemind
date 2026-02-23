@@ -766,6 +766,19 @@ class ApiService {
   }> {
     return this.request('/health/detailed');
   }
+
+  async getSystemInfo(): Promise<any> {
+    return this.request('/api/admin/system-info');
+  }
+
+  async getEnvOverrides(): Promise<{
+    success: boolean;
+    data: { envVars: Record<string, string> };
+    message: string;
+  }> {
+    return this.request('/api/admin/env-overrides');
+  }
+
   async getGlobalConfig(): Promise<Record<string, any>> {
     return this.request('/api/config/global');
   }

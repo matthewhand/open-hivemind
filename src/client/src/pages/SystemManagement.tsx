@@ -52,11 +52,31 @@ const SystemManagement: React.FC = () => {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [activeTab, setActiveTab] = useState('alerts');
   const [isLoading, setIsLoading] = useState(false);
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [envOverrides, setEnvOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchSystemConfig();
     fetchBackupHistory();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchSystemInfo();
+    }
+  }, [activeTab]);
+
+  const fetchSystemInfo = async () => {
+    try {
+      const info = await apiService.getSystemInfo();
+      setSystemInfo(info.systemInfo);
+
+      const overrides = await apiService.getEnvOverrides();
+      setEnvOverrides(overrides.data?.envVars || {});
+    } catch (error) {
+      console.error('Failed to fetch system info:', error);
+    }
+  };
 
   const fetchSystemConfig = async () => {
     try {
@@ -492,12 +512,80 @@ const SystemManagement: React.FC = () => {
           {/* Performance Tuning Tab */}
           {activeTab === 'performance' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold">Performance Tuning</h3>
-              <p className="text-neutral-content/70">
-                Performance settings are currently managed via environment variables and configuration files.
-                Adjusting these values requires a full system restart.
-              </p>
-              {/* Fallback info or moved to config tab */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">Performance Tuning</h3>
+                <button className="btn btn-sm btn-ghost" onClick={fetchSystemInfo}>
+                  Refresh
+                </button>
+              </div>
+
+              {systemInfo && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="card bg-base-200">
+                    <div className="card-body">
+                      <h4 className="card-title text-sm">System Information</h4>
+                      <div className="overflow-x-auto">
+                        <table className="table table-xs w-full">
+                          <tbody>
+                            <tr><th>Platform</th><td>{systemInfo.platform} ({systemInfo.arch})</td></tr>
+                            <tr><th>Node Version</th><td>{systemInfo.nodeVersion}</td></tr>
+                            <tr><th>Uptime</th><td>{Math.floor(systemInfo.uptime / 60)} minutes</td></tr>
+                            <tr><th>Memory Usage</th><td>{Math.round(systemInfo.memory?.rss / 1024 / 1024)} MB</td></tr>
+                            <tr><th>Environment</th><td>{systemInfo.environment}</td></tr>
+                            <tr><th>PID</th><td>{systemInfo.pid}</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="card bg-base-200">
+                    <div className="card-body">
+                      <h4 className="card-title text-sm">Database Status</h4>
+                      <div className="overflow-x-auto">
+                        <table className="table table-xs w-full">
+                          <tbody>
+                            <tr><th>Connected</th><td>{systemInfo.database?.connected ? 'Yes' : 'No'}</td></tr>
+                            {systemInfo.database?.stats && Object.entries(systemInfo.database.stats).map(([key, value]) => (
+                              <tr key={key}><th>{key}</th><td>{String(value)}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-lg font-semibold mb-2">Environment Overrides</h4>
+                <p className="text-sm text-neutral-content/70 mb-4">
+                  Configuration values overridden by environment variables. These values take precedence over UI settings.
+                </p>
+                <div className="overflow-x-auto bg-base-200 rounded-lg p-4">
+                  {Object.keys(envOverrides).length > 0 ? (
+                    <table className="table table-xs w-full">
+                      <thead>
+                        <tr>
+                          <th>Variable</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(envOverrides).map(([key, value]) => (
+                          <tr key={key}>
+                            <td className="font-mono">{key}</td>
+                            <td className="font-mono break-all">{value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="text-center py-4 text-neutral-content/50">
+                      No environment overrides detected.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -38,7 +38,7 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
-import { testMattermostConnection } from '@hivemind/adapter-mattermost';
+// testMattermostConnection import removed; will fetch dynamically to support ESM
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { BotManager } from '../../managers/BotManager';
@@ -1492,6 +1492,7 @@ router.post('/message-provider/test', async (req, res) => {
           ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
+      const { testMattermostConnection } = await import('@hivemind/adapter-mattermost');
       const result = await testMattermostConnection(serverUrl, token);
       return res.json(result);
     }

@@ -121,58 +121,6 @@ router.post('/chat', (req, res) => {
             code: 'DEMO_CHAT_ERROR',
         });
     }
-
-    if (!botName) {
-      res.status(400).json({ error: 'botName is required' });
-      return;
-    }
-
-    const demoService = DemoModeService.getInstance();
-
-    if (!demoService.isInDemoMode()) {
-      res.status(400).json({
-        error: 'Demo mode is not active. Configure credentials to use real services.',
-        code: 'DEMO_MODE_INACTIVE',
-      });
-      return;
-    }
-
-    // Add user message
-    const userMsg = demoService.addMessage(
-      channelId || 'demo-channel',
-      botName,
-      message,
-      'incoming',
-      userId || 'demo-user',
-      userName || 'Demo User'
-    );
-
-    // Generate bot response
-    const responseText = demoService.generateDemoResponse(message, botName);
-
-    // Add bot response
-    const botMsg = demoService.addMessage(
-      channelId || 'demo-channel',
-      botName,
-      responseText,
-      'outgoing',
-      botName,
-      botName
-    );
-
-    res.json({
-      success: true,
-      userMessage: userMsg,
-      botResponse: botMsg,
-      isDemo: true,
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_CHAT_ERROR',
-    });
-  }
 });
 
 /**

@@ -18,8 +18,9 @@ interface GreetingConfig {
 @singleton()
 export class StartupGreetingService extends EventEmitter {
   private static instance: StartupGreetingService;
+  private greetingStateManager: GreetingStateManager;
 
-  public constructor(@inject(GreetingStateManager) private greetingStateManager: GreetingStateManager) {
+  public constructor() {
     super();
     appLogger.info('StartupGreetingService initialized');
     this.greetingStateManager = GreetingStateManager.getInstance();
@@ -28,8 +29,7 @@ export class StartupGreetingService extends EventEmitter {
 
   public static getInstance(): StartupGreetingService {
     if (!StartupGreetingService.instance) {
-      const greetingStateManager = GreetingStateManager.getInstance();
-      StartupGreetingService.instance = new StartupGreetingService(greetingStateManager);
+      StartupGreetingService.instance = new StartupGreetingService();
     }
     return StartupGreetingService.instance;
   }
