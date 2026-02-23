@@ -25,7 +25,6 @@ import integrationsRouter from '@src/server/routes/integrations';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
 import secureConfigRouter from '@src/server/routes/secureConfig';
-import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
@@ -272,7 +271,6 @@ app.use('/api/personas', personasRouter);
 app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute); // Root health endpoint (for frontend polling)
-app.use(sitemapRouter); // Sitemap routes at root level
 
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));

@@ -40,7 +40,6 @@ const SystemSettings = lazy(() => import('../pages/SystemSettings'));
 const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
 const ConfigPage = lazy(() => import('../pages/ConfigPage'));
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
-const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
 const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
@@ -190,7 +189,6 @@ const AppRouter: React.FC = () => {
             }
           />
           <Route path="static" element={<StaticPagesPage />} />
-          <Route path="sitemap" element={<SitemapPage />} />
           <Route path="showcase" element={<DaisyUIShowcase />} />
           <Route path="specs" element={<SpecsPage />} />
           <Route path="specs/:id" element={<SpecDetailPage />} />

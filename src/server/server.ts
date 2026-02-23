@@ -29,7 +29,6 @@ import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
-import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 
 const debug = Debug('app:webui:server');
@@ -167,9 +166,6 @@ export class WebUIServer {
   private setupRoutes(): void {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
-
-    // Sitemap routes (no auth required)
-    this.app.use('/', sitemapRouter);
 
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
