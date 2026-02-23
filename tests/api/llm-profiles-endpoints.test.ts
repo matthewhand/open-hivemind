@@ -19,6 +19,14 @@ jest.mock('../../src/config/BotConfigurationManager', () => ({
   },
 }));
 
+jest.mock('../../src/managers/BotManager', () => ({
+  BotManager: {
+    getInstance: () => ({
+      getAllBots: jest.fn().mockResolvedValue([]),
+    }),
+  },
+}));
+
 jest.mock('../../src/server/middleware/audit', () => ({
   auditMiddleware: (req: any, res: any, next: any) => next(),
   logConfigChange: jest.fn(),
@@ -129,6 +137,50 @@ describe('LLM Profiles API Endpoints', () => {
         .expect(200);
 
       expect(mockSaveLlmProfiles).toHaveBeenCalled();
+    });
+
+    it('should reject empty name field', async () => {
+      const existingProfiles = {
+        llm: [
+          {
+            key: 'test-profile',
+            name: 'Test Profile',
+            provider: 'openai',
+            config: {},
+          },
+        ],
+      };
+      mockGetLlmProfiles.mockReturnValue(existingProfiles);
+
+      const response = await request(app)
+        .put('/api/config/llm-profiles/test-profile')
+        .send({ key: 'test-profile', name: '   ', provider: 'openai', config: {} })
+        .expect(400);
+
+      expect(response.body.error).toContain('name');
+      expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
+    });
+
+    it('should reject empty provider field', async () => {
+      const existingProfiles = {
+        llm: [
+          {
+            key: 'test-profile',
+            name: 'Test Profile',
+            provider: 'openai',
+            config: {},
+          },
+        ],
+      };
+      mockGetLlmProfiles.mockReturnValue(existingProfiles);
+
+      const response = await request(app)
+        .put('/api/config/llm-profiles/test-profile')
+        .send({ key: 'test-profile', name: 'Updated', provider: '', config: {} })
+        .expect(400);
+
+      expect(response.body.error).toContain('provider');
+      expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
     });
   });
 });

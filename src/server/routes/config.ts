@@ -1768,11 +1768,19 @@ router.put('/llm-profiles/:key', (req, res) => {
       key: allProfiles.llm[index].key,
     };
 
-    if (!updatedProfile.name || typeof updatedProfile.name !== 'string') {
-      return res.status(400).json({ error: 'profile.name is required' });
+    if (
+      !updatedProfile.name ||
+      typeof updatedProfile.name !== 'string' ||
+      updatedProfile.name.trim() === ''
+    ) {
+      return res.status(400).json({ error: 'profile.name is required and must not be empty' });
     }
-    if (!updatedProfile.provider || typeof updatedProfile.provider !== 'string') {
-      return res.status(400).json({ error: 'profile.provider is required' });
+    if (
+      !updatedProfile.provider ||
+      typeof updatedProfile.provider !== 'string' ||
+      updatedProfile.provider.trim() === ''
+    ) {
+      return res.status(400).json({ error: 'profile.provider is required and must not be empty' });
     }
 
     allProfiles.llm[index] = updatedProfile;

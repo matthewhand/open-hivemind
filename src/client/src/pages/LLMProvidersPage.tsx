@@ -124,8 +124,22 @@ const LLMProvidersPage: React.FC = () => {
           await apiService.put(`/api/config/llm-profiles/${oldKey}`, payload);
         } else {
           // Key changed (renamed), we must delete old and create new
+          // Store backup in case creation fails to prevent data loss
+          const backupProfile = profiles?.find((p) => p.key === oldKey);
           await apiService.delete(`/api/config/llm-profiles/${oldKey}`);
-          await apiService.post('/api/config/llm-profiles', payload);
+          try {
+            await apiService.post('/api/config/llm-profiles', payload);
+          } catch (createError: any) {
+            // Restore old profile if creation fails
+            if (backupProfile) {
+              try {
+                await apiService.post('/api/config/llm-profiles', backupProfile);
+              } catch (restoreError: any) {
+                console.error('Failed to restore profile after failed rename:', restoreError);
+              }
+            }
+            throw createError;
+          }
         }
       } else {
         await apiService.post('/api/config/llm-profiles', payload);
