@@ -46,14 +46,14 @@ export const hivemindNavItems: NavItem[] = [
     id: 'integrations-llm',
     label: 'LLM Providers',
     icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/llm',
+    path: '/admin/providers/llm',
     visible: true,
   },
   {
     id: 'integrations-message',
     label: 'Message Platforms',
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/message',
+    path: '/admin/providers/message',
     visible: true,
   },
   {

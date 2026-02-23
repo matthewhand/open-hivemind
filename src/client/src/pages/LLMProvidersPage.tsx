@@ -33,9 +33,9 @@ const LLMProvidersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Configuration', href: '/uber' },
-    { label: 'LLM Providers', href: '/admin/integrations/llm', isActive: true },
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers' },
+    { label: 'LLM Providers', href: '/admin/providers/llm', isActive: true },
   ];
 
   const fetchProfiles = useCallback(async () => {
