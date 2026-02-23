@@ -213,7 +213,7 @@ router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
 
 router.post('/api/ai/feedback', authenticateToken, (req, res) => {
   const { recommendationId, feedback } = req.body;
-  console.log(`Received feedback for ${recommendationId}: ${feedback}`);
+  // TODO: Store feedback in database for ML training when real implementation is added
   res.json({ success: true });
 });
 
