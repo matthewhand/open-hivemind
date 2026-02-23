@@ -111,4 +111,46 @@ describe('Guards Routes', () => {
       expect(response.status).toBe(404);
     });
   });
+
+  describe('PUT /api/guards/:id', () => {
+    it('should update guard configuration', async () => {
+      const updates = {
+        config: { maxRequests: 200 },
+        enabled: false,
+      };
+
+      // Mock getGuards to return a guard that can be found
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100 },
+        }
+      ]);
+
+      const response = await request(app)
+        .put('/api/guards/rate-limiter')
+        .send(updates);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(webUIStorage.saveGuard).toHaveBeenCalledTimes(1);
+
+      const savedGuard = (webUIStorage.saveGuard as jest.Mock).mock.calls[0][0];
+      expect(savedGuard.id).toBe('rate-limiter');
+      expect(savedGuard.enabled).toBe(false);
+      expect(savedGuard.config).toEqual({ maxRequests: 200 });
+    });
+
+    it('should return 404 for non-existent guard', async () => {
+      (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
+      const response = await request(app)
+        .put('/api/guards/non-existent')
+        .send({ config: {} });
+
+      expect(response.status).toBe(404);
+    });
+  });
 });
