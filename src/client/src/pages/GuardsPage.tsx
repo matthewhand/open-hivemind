@@ -19,6 +19,21 @@ interface Guard {
 
 const API_BASE = '/api';
 
+// Validation helpers
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+
+const validateEmail = (email: string): boolean => emailRegex.test(email);
+
+const validateIp = (ip: string): boolean => {
+  if (!ipRegex.test(ip)) return false;
+  const parts = ip.split('/')[0].split('.');
+  return parts.every(p => {
+    const num = parseInt(p, 10);
+    return num >= 0 && num <= 255;
+  });
+};
+
 const GuardsPage: React.FC = () => {
   const [guards, setGuards] = useState<Guard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +111,7 @@ const GuardsPage: React.FC = () => {
       if (!guard) { return; }
 
       const newEnabled = !guard.enabled;
+      const previousGuards = guards;
 
       // Optimistic update
       setGuards(guards.map(g => g.id === id ? { ...g, enabled: newEnabled } : g));
@@ -107,8 +123,8 @@ const GuardsPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        // Revert on failure
-        setGuards(guards.map(g => g.id === id ? { ...g, enabled: !newEnabled } : g));
+        // Revert on failure using previous state
+        setGuards(previousGuards);
         throw new Error('Failed to toggle guard');
       }
     } catch (err) {
@@ -117,12 +133,18 @@ const GuardsPage: React.FC = () => {
   };
 
   const addUser = () => {
-    if (!newUser.trim()) { return; }
+    const trimmed = newUser.trim();
+    if (!trimmed) { return; }
+    if (!validateEmail(trimmed)) {
+      setError('Invalid email format');
+      return;
+    }
     setAccessConfig({
       ...accessConfig,
-      users: [...accessConfig.users, newUser.trim()],
+      users: [...accessConfig.users, trimmed],
     });
     setNewUser('');
+    setError(null);
   };
 
   const removeUser = (user: string) => {
@@ -133,12 +155,18 @@ const GuardsPage: React.FC = () => {
   };
 
   const addIp = () => {
-    if (!newIp.trim()) { return; }
+    const trimmed = newIp.trim();
+    if (!trimmed) { return; }
+    if (!validateIp(trimmed)) {
+      setError('Invalid IP address or CIDR notation');
+      return;
+    }
     setAccessConfig({
       ...accessConfig,
-      ips: [...accessConfig.ips, newIp.trim()],
+      ips: [...accessConfig.ips, trimmed],
     });
     setNewIp('');
+    setError(null);
   };
 
   const removeIp = (ip: string) => {

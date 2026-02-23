@@ -49,7 +49,7 @@ describe('Guards Route', () => {
 
   describe('POST /guards', () => {
     it('should update access control configuration', async () => {
-      const accessConfig = { type: 'users', users: ['alice'], ips: [] };
+      const accessConfig = { type: 'users', users: ['alice@example.com'], ips: [] };
       const mockGuards = [
         { id: 'access-control', config: { type: 'owner' } }
       ];
@@ -64,7 +64,7 @@ describe('Guards Route', () => {
       expect(response.body.success).toBe(true);
       expect(webUIStorage.saveGuard).toHaveBeenCalledWith({
         id: 'access-control',
-        config: { type: 'users', users: ['alice'], ips: [] }
+        config: { type: 'users', users: ['alice@example.com'], ips: [] }
       });
     });
 
@@ -73,7 +73,7 @@ describe('Guards Route', () => {
 
       const response = await request(app)
         .post('/guards')
-        .send({ type: 'users' });
+        .send({ type: 'users', users: [], ips: [] });
 
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Access control guard not found');
@@ -89,6 +89,51 @@ describe('Guards Route', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid access configuration');
+    });
+
+    it('should return 400 for invalid access type', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'invalid', users: [], ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid access type. Must be owner, users, or ip');
+    });
+
+    it('should return 400 for invalid email in users array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'users', users: ['not-an-email'], ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid email format in users array');
+    });
+
+    it('should return 400 for invalid IP address', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'ip', users: [], ips: ['999.999.999.999'] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid IP address or CIDR notation in ips array');
+    });
+
+    it('should return 400 for users not being an array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'users', users: 'not-an-array', ips: [] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Users must be an array');
+    });
+
+    it('should return 400 for ips not being an array', async () => {
+      const response = await request(app)
+        .post('/guards')
+        .send({ type: 'ip', users: [], ips: 'not-an-array' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('IPs must be an array');
     });
   });
 

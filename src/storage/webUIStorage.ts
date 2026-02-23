@@ -19,6 +19,7 @@ interface WebUIConfig {
 class WebUIStorage {
   private configDir: string;
   private configFile: string;
+  private guardsInitializationInProgress = false;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -258,56 +259,71 @@ class WebUIStorage {
 
   /**
    * Get all guards
+   * Uses a flag to prevent race conditions during initialization
    */
   public getGuards(): any[] {
+    // Wait if initialization is already in progress
+    while (this.guardsInitializationInProgress) {
+      // Re-read config after initialization completes
+      const config = this.loadConfig();
+      if (config.guards && config.guards.length > 0) {
+        return config.guards;
+      }
+    }
+
     const config = this.loadConfig();
 
     // Initialize default guards if they don't exist or if guards array is missing
     if (!config.guards || config.guards.length === 0) {
-      const defaultGuards = [
-        {
-          id: 'access-control',
-          name: 'Access Control',
-          description: 'User and IP-based access restrictions',
-          type: 'access',
-          enabled: true,
-          config: { type: 'users', users: [], ips: [] },
-        },
-        {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          description: 'Prevents spam and excessive requests',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 },
-        },
-        {
-          id: 'content-filter',
-          name: 'Content Filter',
-          description: 'Filters inappropriate content',
-          type: 'content',
-          enabled: false,
-          config: {},
-        },
-      ];
+      // Set flag to prevent race conditions
+      this.guardsInitializationInProgress = true;
 
-      // If guards is undefined, initialize it
-      if (!config.guards) {
-        config.guards = [];
-      }
+      try {
+        const defaultGuards = [
+          {
+            id: 'access-control',
+            name: 'Access Control',
+            description: 'User and IP-based access restrictions',
+            type: 'access',
+            enabled: true,
+            config: { type: 'users', users: [], ips: [] },
+          },
+          {
+            id: 'rate-limiter',
+            name: 'Rate Limiter',
+            description: 'Prevents spam and excessive requests',
+            type: 'rate',
+            enabled: true,
+            config: { maxRequests: 100, windowMs: 60000 },
+          },
+          {
+            id: 'content-filter',
+            name: 'Content Filter',
+            description: 'Filters inappropriate content',
+            type: 'content',
+            enabled: false,
+            config: {},
+          },
+        ];
 
-      // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
-      for (const defaultGuard of defaultGuards) {
-        const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
-        if (!exists) {
-          config.guards.push(defaultGuard);
+        // If guards is undefined, initialize it with defaults
+        if (!config.guards) {
+          config.guards = defaultGuards;
+        } else {
+          // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          for (const defaultGuard of defaultGuards) {
+            const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
+            if (!exists) {
+              config.guards.push(defaultGuard);
+            }
+          }
         }
-      }
 
-      // Save the defaults back to storage only if we modified something
-      // But wait, getGuards() shouldn't necessarily save unless we want to persist defaults immediately.
-      // Let's persist them so they are consistent.
-      this.saveConfig(config);
+        // Save the defaults back to storage
+        this.saveConfig(config);
+      } finally {
+        this.guardsInitializationInProgress = false;
+      }
     }
 
     return config.guards;

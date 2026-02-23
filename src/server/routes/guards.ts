@@ -24,6 +24,22 @@ router.get('/', (req: Request, res: Response) => {
   }
 });
 
+// Email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// IP address or CIDR notation validation regex
+const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+
+/**
+ * Validate IP address octets are in valid range (0-255)
+ */
+const validateIpOctets = (ip: string): boolean => {
+  const parts = ip.split('/')[0].split('.');
+  return parts.every(p => {
+    const num = parseInt(p, 10);
+    return num >= 0 && num <= 255;
+  });
+};
+
 // POST / - Update access control guard config
 router.post('/', (req: Request, res: Response) => {
   try {
@@ -31,10 +47,56 @@ router.post('/', (req: Request, res: Response) => {
 
     // Validation
     if (!accessConfig || typeof accessConfig !== 'object' || Array.isArray(accessConfig)) {
-       return res.status(400).json({
+      return res.status(400).json({
         error: 'Validation error',
         message: 'Invalid access configuration',
       });
+    }
+
+    // Validate type field
+    if (!['owner', 'users', 'ip'].includes(accessConfig.type)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Invalid access type. Must be owner, users, or ip',
+      });
+    }
+
+    // Validate users array
+    if (accessConfig.users && !Array.isArray(accessConfig.users)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Users must be an array',
+      });
+    }
+
+    if (accessConfig.users) {
+      for (const user of accessConfig.users) {
+        if (typeof user !== 'string' || !emailRegex.test(user)) {
+          return res.status(400).json({
+            error: 'Validation error',
+            message: 'Invalid email format in users array',
+          });
+        }
+      }
+    }
+
+    // Validate ips array
+    if (accessConfig.ips && !Array.isArray(accessConfig.ips)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'IPs must be an array',
+      });
+    }
+
+    if (accessConfig.ips) {
+      for (const ip of accessConfig.ips) {
+        if (typeof ip !== 'string' || !ipRegex.test(ip) || !validateIpOctets(ip)) {
+          return res.status(400).json({
+            error: 'Validation error',
+            message: 'Invalid IP address or CIDR notation in ips array',
+          });
+        }
+      }
     }
 
     // Get existing guards to find the access-control guard
@@ -42,17 +104,18 @@ router.post('/', (req: Request, res: Response) => {
     const accessGuard = guards.find((g: any) => g.id === 'access-control');
 
     if (!accessGuard) {
-        // Should not happen if getGuards initializes defaults, but just in case
-        return res.status(404).json({
-            error: 'Not found',
-            message: 'Access control guard not found',
-        });
+      // Should not happen if getGuards initializes defaults, but just in case
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Access control guard not found',
+      });
     }
 
-    // Update the config
+    // Update the config with validated data only
     accessGuard.config = {
-        ...accessGuard.config,
-        ...accessConfig
+      type: accessConfig.type,
+      users: accessConfig.users || [],
+      ips: accessConfig.ips || []
     };
 
     // Save the updated guard
@@ -90,10 +153,10 @@ router.post('/:id/toggle', (req: Request, res: Response) => {
     const guard = guards.find((g: any) => g.id === id);
 
     if (!guard) {
-        return res.status(404).json({
-            error: 'Not found',
-            message: `Guard with ID ${id} not found`,
-        });
+      return res.status(404).json({
+        error: 'Not found',
+        message: `Guard with ID ${id} not found`,
+      });
     }
 
     webUIStorage.toggleGuard(id, enabled);
