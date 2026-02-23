@@ -75,6 +75,7 @@
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
   "license": "MIT",
+  "private": true,
   "dependencies": {
     "@discordjs/rest": "^2.0.0",
     "@discordjs/voice": "^0.17.0",
