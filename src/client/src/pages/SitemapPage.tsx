@@ -30,7 +30,7 @@ const SitemapPage: React.FC = () => {
   const [accessFilter, setAccessFilter] = useState<string>('all');
 
   const breadcrumbItems = [
-    { label: 'Sitemap', href: '/uber/sitemap', isActive: true },
+    { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 
   const fetchSitemap = async () => {
@@ -87,13 +87,23 @@ const SitemapPage: React.FC = () => {
 
     if (url.url === '/') {
       category = 'Root';
-    } else if (url.url.startsWith('/uber')) {
-      if (url.url.includes('/bots')) { category = 'Bot Management'; }
-      else if (url.url.includes('/mcp')) { category = 'MCP Servers'; }
-      else if (url.url.includes('/monitoring') || url.url.includes('/activity')) { category = 'Monitoring'; }
-      else if (url.url.includes('/settings')) { category = 'Settings'; }
-      else { category = 'Main Dashboard'; }
-    } else if (url.url.startsWith('/webui') || url.url.startsWith('/admin')) {
+    } else if (url.url.startsWith('/admin')) {
+      if (url.url.includes('/bots') || url.url.includes('/chat') || url.url.includes('/configuration') || url.url.includes('/config')) {
+        category = 'Bot Management';
+      } else if (url.url.includes('/mcp')) {
+        category = 'MCP Servers';
+      } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics') || url.url.includes('/system-management')) {
+        category = 'Monitoring';
+      } else if (url.url.includes('/ai') || url.url.includes('/personas')) {
+        category = 'AI Features';
+      } else if (url.url.includes('/settings') || url.url.includes('/specs') || url.url.includes('/integrations')) {
+        category = 'Settings';
+      } else if (url.url.includes('/export') || url.url.includes('/static') || url.url.includes('/showcase')) {
+        category = 'Utilities';
+      } else {
+        category = 'Main Dashboard';
+      }
+    } else if (url.url.startsWith('/webui')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
       category = 'System APIs';
