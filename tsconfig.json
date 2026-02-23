@@ -35,6 +35,10 @@
       "@webhook/*": ["src/webhook/*"],
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
+      "@src/integrations/slack/*": ["packages/adapter-slack/src/*"],
+      "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
+      "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
+      "@hivemind/shared-types/*": ["packages/shared-types/src/*"],
       "@src/*": ["src/*"],
       "@tests/*": ["tests/*"],
       "testUtils": ["./tests/testUtils"],
@@ -45,9 +49,7 @@
       "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
       "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
       "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
-      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"],
-      "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
-      "@hivemind/shared-types/*": ["packages/shared-types/src/*"]
+      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true

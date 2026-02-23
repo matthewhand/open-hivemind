@@ -1,17 +1,16 @@
 import { renderHook, act } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
 import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
-import { vi, describe, it, expect, afterEach } from 'vitest';
 
 describe('useKeyboardShortcuts', () => {
   afterEach(() => {
     // Clean up any elements added to the body
     document.body.innerHTML = '';
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should trigger action when correct key is pressed', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -23,7 +22,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should not trigger action when incorrect key is pressed', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -35,7 +34,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should trigger action with modifier keys', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 's', ctrlKey: true, action, description: 'Save' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -47,7 +46,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should not trigger action if modifier key is missing', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 's', ctrlKey: true, action, description: 'Save' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -59,7 +58,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should trigger action with multiple modifier keys', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'p', ctrlKey: true, shiftKey: true, action, description: 'Print' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -71,7 +70,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should ignore shortcuts when typing in input fields', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -87,7 +86,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should ignore shortcuts when typing in textarea', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -103,7 +102,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should ignore shortcuts when contentEditable is true', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
@@ -120,12 +119,12 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should call preventDefault and stopPropagation', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     renderHook(() => useKeyboardShortcuts(shortcuts));
 
-    const preventDefault = vi.fn();
-    const stopPropagation = vi.fn();
+    const preventDefault = jest.fn();
+    const stopPropagation = jest.fn();
 
     // Use a custom event to spy on preventDefault/stopPropagation
     const event = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
@@ -142,7 +141,7 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('should cleanup event listener on unmount', () => {
-    const action = vi.fn();
+    const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];
     const { unmount } = renderHook(() => useKeyboardShortcuts(shortcuts));
 
