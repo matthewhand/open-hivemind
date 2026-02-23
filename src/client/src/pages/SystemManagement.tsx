@@ -94,6 +94,7 @@ const SystemManagement: React.FC = () => {
     }
   };
 
+
   useEffect(() => {
     if (activeTab === 'performance') {
       fetchPerformanceData();
@@ -397,7 +398,7 @@ const SystemManagement: React.FC = () => {
                   />
                 </div>
 
-                <div className="form-control">
+                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Log Level</span>
                   </label>
@@ -461,8 +462,7 @@ const SystemManagement: React.FC = () => {
                       max="95"
                     />
                   </div>
-
-                  <div className="form-control">
+                   <div className="form-control">
                     <label className="label">
                       <span className="label-text">Memory Usage Threshold (%)</span>
                     </label>
@@ -578,6 +578,7 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
+
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
                 <button
                   className="btn btn-warning btn-sm"
@@ -611,15 +612,15 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center mt-8">
-                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={fetchPerformanceData}
-                  disabled={isPerformanceLoading}
-                >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                </button>
+               <div className="flex justify-between items-center mt-6">
+                  <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={fetchPerformanceData}
+                    disabled={isPerformanceLoading}
+                  >
+                    {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                  </button>
               </div>
 
               {systemInfo && (
@@ -670,13 +671,16 @@ const SystemManagement: React.FC = () => {
                               <span className="opacity-70">Pool Size:</span>
                               <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
                             </div>
+                            {/* Add more DB stats if available */}
                           </>
                         )}
                       </div>
                     </div>
+
                   </div>
                 </div>
               )}
+
 
               <div className="card bg-base-200">
                 <div className="card-body p-4">
@@ -700,9 +704,10 @@ const SystemManagement: React.FC = () => {
                               <div className="text-xs opacity-50">{endpoint.url}</div>
                             </td>
                             <td>
-                              <div className={`badge ${endpoint.status === 'online' ? 'badge-success' :
+                              <div className={`badge ${
+                                endpoint.status === 'online' ? 'badge-success' :
                                 endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
-                                }`}>
+                              }`}>
                                 {endpoint.status}
                               </div>
                             </td>
@@ -716,11 +721,11 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={5} className="text-center">No endpoint data available</td>
                           </tr>
                         )}
-                      </tbody>
+                        </tbody>
                     </table>
-                  </div>
                 </div>
               </div>
+             </div>
 
               <div className="divider"></div>
 
@@ -753,6 +758,7 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
+
                           </tr>
                         )}
                       </tbody>
@@ -763,6 +769,7 @@ const SystemManagement: React.FC = () => {
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
+
               </div>
             </div>
           )}

@@ -106,6 +106,7 @@ export class AnomalyDetectionService extends EventEmitter {
             value: anomaly.value,
             expected: anomaly.expectedMean,
           },
+          status: 'active', // Added missing status property
         };
         wsService.recordAlert(alert);
 
