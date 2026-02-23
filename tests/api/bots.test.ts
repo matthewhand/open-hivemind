@@ -1,32 +1,46 @@
 import express, { Express } from 'express';
 import request from 'supertest';
-import { BotManager } from '../../src/managers/BotManager';
-import { authenticateToken } from '../../src/server/middleware/auth';
-import botsRouter from '../../src/server/routes/bots';
 
-// Mock authentication middleware
+// Mock authentication middleware - need to mock this before requiring router potentially
 jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: jest.fn((req, res, next) => {
+  authenticateToken: (req: any, res: any, next: any) => {
     req.user = { id: 'test-user', username: 'test-user', role: 'admin' };
     next();
-  }),
-}));
-
-// Mock audit middleware
-jest.mock('../../src/server/middleware/audit', () => ({
-  auditMiddleware: jest.fn((req, res, next) => next()),
-  logBotAction: jest.fn(),
+  },
 }));
 
 describe('Bots API Endpoints', () => {
   let app: Express;
-  let botManager: BotManager;
 
-  beforeAll(async () => {
+  // Mocks
+  const mockAddBot = jest.fn();
+  const mockUpdateBot = jest.fn();
+  const mockDeleteBot = jest.fn();
+  const mockCloneBot = jest.fn();
+  const mockGetBot = jest.fn();
+
+  beforeAll(() => {
+    jest.resetModules();
+
+    // Setup the mock for BotConfigurationManager
+    jest.doMock('../../src/config/BotConfigurationManager', () => ({
+      BotConfigurationManager: {
+        getInstance: () => ({
+          addBot: mockAddBot,
+          updateBot: mockUpdateBot,
+          deleteBot: mockDeleteBot,
+          cloneBot: mockCloneBot,
+          getBot: mockGetBot,
+        }),
+      },
+    }));
+
+    // Import router AFTER mocking
+    const botsRouter = require('../../src/server/routes/bots').default;
+
     app = express();
     app.use(express.json());
     app.use('/api/bots', botsRouter);
-    botManager = BotManager.getInstance();
   });
 
   afterEach(() => {
@@ -34,41 +48,95 @@ describe('Bots API Endpoints', () => {
   });
 
   describe('POST /api/bots', () => {
-    it('should create a new bot with minimal payload (missing config)', async () => {
+    it('should create a new bot', async () => {
       const newBot = {
-        name: 'TestBotMinimal',
+        name: 'TestBot',
         messageProvider: 'discord',
-        llmProvider: 'openai', // Required when no default is configured
-        description: 'Created via test',
-        // config is intentionally missing
+        llmProvider: 'openai',
       };
+
+      mockAddBot.mockResolvedValue(undefined);
+      mockGetBot.mockReturnValue(newBot);
 
       const response = await request(app).post('/api/bots').send(newBot);
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.bot).toHaveProperty('id');
-      expect(response.body.data.bot.name).toBe('TestBotMinimal');
-      expect(response.body.data.bot.config).toEqual({}); // verify default empty object
+      expect(response.body.bot).toEqual(newBot);
+      expect(mockAddBot).toHaveBeenCalledWith(newBot);
     });
 
-    it('should create a new bot with full payload', async () => {
-      const newBot = {
-        name: 'TestBotFull',
-        messageProvider: 'discord',
-        llmProvider: 'openai', // Required when no default is configured
-        description: 'Created via test',
-        config: {
-          discord: { token: 'fake-token' },
-        },
-      };
+    it('should handle errors during creation', async () => {
+      const newBot = { name: 'TestBot' };
+      mockAddBot.mockRejectedValue(new Error('Invalid config'));
 
       const response = await request(app).post('/api/bots').send(newBot);
 
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid config');
+    });
+  });
+
+  describe('PUT /api/bots/:id', () => {
+    it('should update a bot', async () => {
+      const updates = { persona: 'new-persona' };
+      mockUpdateBot.mockResolvedValue(undefined);
+      mockGetBot.mockReturnValue({ name: 'TestBot', ...updates });
+
+      const response = await request(app).put('/api/bots/TestBot').send(updates);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.bot.persona).toBe('new-persona');
+      expect(mockUpdateBot).toHaveBeenCalledWith('TestBot', updates);
+    });
+
+    it('should handle bot not found', async () => {
+      mockUpdateBot.mockRejectedValue(new Error('Bot "TestBot" not found'));
+
+      const response = await request(app).put('/api/bots/TestBot').send({});
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Bot "TestBot" not found');
+    });
+  });
+
+  describe('DELETE /api/bots/:id', () => {
+    it('should delete a bot', async () => {
+      mockDeleteBot.mockResolvedValue(undefined);
+
+      const response = await request(app).delete('/api/bots/TestBot');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(mockDeleteBot).toHaveBeenCalledWith('TestBot');
+    });
+
+    it('should handle bot not found', async () => {
+      mockDeleteBot.mockRejectedValue(new Error('Bot "TestBot" not found'));
+
+      const response = await request(app).delete('/api/bots/TestBot');
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/bots/:id/clone', () => {
+    it('should clone a bot', async () => {
+      const clonedBot = { name: 'ClonedBot' };
+      mockCloneBot.mockResolvedValue(clonedBot);
+
+      const response = await request(app).post('/api/bots/TestBot/clone').send({ newName: 'ClonedBot' });
+
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.bot.name).toBe('TestBotFull');
-      expect(response.body.data.bot.config).toHaveProperty('discord');
+      expect(response.body.bot).toEqual(clonedBot);
+      expect(mockCloneBot).toHaveBeenCalledWith('TestBot', 'ClonedBot');
+    });
+
+    it('should require newName', async () => {
+      const response = await request(app).post('/api/bots/TestBot/clone').send({});
+      expect(response.status).toBe(400);
     });
   });
 });
