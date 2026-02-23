@@ -115,24 +115,32 @@ const LLMProvidersPage: React.FC = () => {
         config: providerData.config,
       };
 
-      if (modalState.isEdit) {
-        // Updating isn't directly supported by PUT /llm-profiles (it replaces ALL). 
-        // Real implementation should probably have a PATCH /llm-profiles/:key or we manipulate array locally and PUT all.
-        // For now, let's assume we re-fetch after simplified atomic operations if they existed, 
-        // BUT the backend only has bulk PUT or single POST.
+      if (modalState.isEdit && modalState.provider?.id) {
+        const oldKey = modalState.provider.id;
+        const newKey = payload.key;
 
-        // Strategy: We can't easily "edit" key if it changes.
-        // Let's rely on deleting old and creating new if key changed, or just updating list.
-        // Actually, backend has DELETE /:key and POST / (create). 
-        // To update, we might need to DELETE then POST if no specific update endpoint exists.
-        // Wait, review backend... found DELETE /:key and POST /. No specific single Item PUT.
-        // So we will delete old key and create new 
-
-        if (modalState.provider?.id) {
-          await apiService.delete(`/api/config/llm-profiles/${modalState.provider.id}`);
+        if (oldKey === newKey) {
+          // Same key, use PUT for atomic update
+          await apiService.put(`/api/config/llm-profiles/${oldKey}`, payload);
+        } else {
+          // Key changed (renamed), we must delete old and create new
+          // Store backup in case creation fails to prevent data loss
+          const backupProfile = profiles?.find((p) => p.key === oldKey);
+          await apiService.delete(`/api/config/llm-profiles/${oldKey}`);
+          try {
+            await apiService.post('/api/config/llm-profiles', payload);
+          } catch (createError: any) {
+            // Restore old profile if creation fails
+            if (backupProfile) {
+              try {
+                await apiService.post('/api/config/llm-profiles', backupProfile);
+              } catch (restoreError: any) {
+                console.error('Failed to restore profile after failed rename:', restoreError);
+              }
+            }
+            throw createError;
+          }
         }
-        await apiService.post('/api/config/llm-profiles', payload);
-
       } else {
         await apiService.post('/api/config/llm-profiles', payload);
       }
