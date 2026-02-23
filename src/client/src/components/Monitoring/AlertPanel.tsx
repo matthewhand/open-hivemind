@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useWebSocket } from '../../contexts/WebSocketContext';
 
 export interface Alert {
   id: string;
@@ -33,31 +32,20 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   maxAlerts = 50,
   className = '',
 }) => {
-  const { alerts: wsAlerts } = useWebSocket();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Combine prop alerts with WebSocket alerts
+  // Process prop alerts
   useEffect(() => {
-    const allAlerts = [...(propAlerts || []), ...wsAlerts.map((wsAlert, index) => ({
-      id: wsAlert.id || `ws-${index}`,
-      type: wsAlert.severity as Alert['type'] || 'info',
-      title: wsAlert.title || 'System Alert',
-      message: wsAlert.message || '',
-      timestamp: wsAlert.timestamp || new Date().toISOString(),
-      source: wsAlert.source || 'System',
-      acknowledged: false,
-      resolved: false,
-      metadata: wsAlert.metadata,
-    }))];
+    const allAlerts = propAlerts || [];
 
-    const sortedAlerts = allAlerts.sort((a, b) =>
+    const sortedAlerts = [...allAlerts].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     ).slice(0, maxAlerts);
 
     setAlerts(sortedAlerts);
-  }, [propAlerts, wsAlerts, maxAlerts]);
+  }, [propAlerts, maxAlerts]);
 
   const filteredAlerts = alerts.filter(alert => {
     const matchesFilter = filter === 'all' || alert.type === filter;
