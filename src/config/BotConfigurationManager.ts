@@ -341,15 +341,23 @@ export class BotConfigurationManager {
 
     // Auto-discover unique bot names from BOTS_ prefixes
     const discoveredBots = this.discoverBotNamesFromEnv();
+    const fileBots = this.discoverBotNamesFromFiles();
 
     // Merge explicit list with discovered list
-    const explicitBots = botsEnv ? botsEnv.split(',').map(n => n.trim()).filter(Boolean) : [];
+    const explicitBots = botsEnv ? botsEnv.split(',').map((n) => n.trim()).filter(Boolean) : [];
     const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
 
     // Deduplicate bots while preferring explicitly listed names from BOTS.
     const byCanonical = new Map<string, string>();
-    for (const name of discoveredBots) { byCanonical.set(canonical(name), name); }
-    for (const name of explicitBots) { byCanonical.set(canonical(name), name); }
+    for (const name of discoveredBots) {
+      byCanonical.set(canonical(name), name);
+    }
+    for (const name of fileBots) {
+      byCanonical.set(canonical(name), name);
+    }
+    for (const name of explicitBots) {
+      byCanonical.set(canonical(name), name);
+    }
     const allBotNames = Array.from(byCanonical.values());
 
     if (allBotNames.length > 0) {
@@ -368,6 +376,26 @@ export class BotConfigurationManager {
 
     // Validate configuration
     this.validateConfigurationInternal();
+  }
+
+  /**
+   * Auto-discover bot names by scanning config/bots directory
+   */
+  private discoverBotNamesFromFiles(): string[] {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+
+    if (!fs.existsSync(botsDir)) {
+      return [];
+    }
+
+    try {
+      const files = fs.readdirSync(botsDir);
+      return files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
+    } catch (e) {
+      debug(`Error reading bots directory: ${e}`);
+      return [];
+    }
   }
 
   /**
@@ -1036,11 +1064,6 @@ export class BotConfigurationManager {
    * Delete a bot configuration
    */
   public async deleteBot(name: string): Promise<void> {
-    const existingBot = this.bots.get(name);
-    if (!existingBot) {
-      throw new Error(`Bot "${name}" not found`);
-    }
-
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const botsDir = path.join(configDir, 'bots');
     const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
@@ -1050,10 +1073,22 @@ export class BotConfigurationManager {
       fs.unlinkSync(filePath);
       debug(`Deleted bot config for ${name} at ${filePath}`);
     } else {
-      throw new Error(`Cannot delete bot "${name}" defined by environment variables only.`);
+      // Check if it's an environment variable bot
+      const envBotNames = this.discoverBotNamesFromEnv();
+      const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+      const canonicalName = canonical(name);
+
+      const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
+
+      if (foundInEnv) {
+        throw new Error(
+          `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
+        );
+      } else {
+        throw new Error(`Bot "${name}" not found`);
+      }
     }
 
-    // Reload to apply changes
     this.reload();
   }
 
@@ -1061,46 +1096,49 @@ export class BotConfigurationManager {
    * Clone a bot configuration
    */
   public async cloneBot(name: string, newName: string): Promise<BotConfig> {
-    const existingBot = this.bots.get(name);
+    const existingBot = this.getBot(name);
     if (!existingBot) {
-      throw new Error(`Bot "${name}" not found`);
+      throw new Error(`Source bot "${name}" not found`);
     }
 
-    if (this.bots.has(newName)) {
+    const safeNewName = newName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+    // Check if target bot already exists
+    if (this.getBot(newName)) {
       throw new Error(`Bot "${newName}" already exists`);
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const botsDir = path.join(configDir, 'bots');
-    const safeName = newName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-    const filePath = path.join(botsDir, `${safeName}.json`);
+    const filePath = path.join(botsDir, `${safeNewName}.json`);
 
     if (fs.existsSync(filePath)) {
-      throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+      throw new Error(`Bot configuration file for "${newName}" already exists`);
     }
 
-    // Create new config based on resolved config of existing bot
+    // Create new config based on existing resolved config
     const newConfig = {
       ...existingBot,
       name: newName,
       _createdAt: new Date().toISOString(),
+      _updatedAt: new Date().toISOString(),
     };
 
+    // Ensure directory exists
     if (!fs.existsSync(botsDir)) {
       fs.mkdirSync(botsDir, { recursive: true });
     }
 
     fs.writeFileSync(filePath, JSON.stringify(newConfig, null, 2));
-    debug(`Cloned bot ${name} to ${newName} at ${filePath}`);
+    debug(`Cloned bot "${name}" to "${newName}" at ${filePath}`);
 
-    // Reload to pick up new bot
     this.reload();
 
-    const newBot = this.bots.get(newName);
+    // Return the new bot config (reload guarantees it's loaded)
+    const newBot = this.getBot(newName);
     if (!newBot) {
-      throw new Error('Failed to load cloned bot configuration');
+      throw new Error(`Failed to load cloned bot "${newName}"`);
     }
-
     return newBot;
   }
 
