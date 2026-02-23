@@ -109,5 +109,16 @@ describe('Personas Routes', () => {
       expect(response.body).toEqual(persona);
       expect(getMockManager().clonePersona).toHaveBeenCalledWith('p1', { name: 'Cloned Persona' });
     });
+
+    it('should return 404 if persona to clone not found', async () => {
+      getMockManager().clonePersona.mockImplementation(() => {
+        throw new Error('Persona with ID nonexistent not found');
+      });
+
+      await request(app)
+        .post('/api/personas/nonexistent/clone')
+        .send({ name: 'Cloned Persona' })
+        .expect(404);
+    });
   });
 });
