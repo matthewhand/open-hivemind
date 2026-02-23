@@ -497,6 +497,13 @@ class ApiService {
     });
   }
 
+  async clonePersona(id: string, overrides?: Partial<Persona>): Promise<Persona> {
+    return this.request<Persona>(`/api/personas/${id}/clone`, {
+      method: 'POST',
+      body: JSON.stringify(overrides),
+    });
+  }
+
   async deletePersona(id: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/api/personas/${id}`, {
       method: 'DELETE',
