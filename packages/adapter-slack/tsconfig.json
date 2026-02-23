@@ -1,7 +1,7 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "rootDir": "../../",
+        "rootDir": "src",
         "outDir": "dist",
         "declaration": true,
         "declarationMap": true,
@@ -28,17 +28,11 @@
             ],
             "@services/*": [
                 "../../src/services/*"
-            ],
-            "@integrations/*": [
-                "../../src/integrations/*"
-            ],
-            "@llm/*": [
-                "../../src/llm/*"
             ]
         }
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",

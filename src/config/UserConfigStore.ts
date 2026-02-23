@@ -27,7 +27,7 @@ export class UserConfigStore {
   } = {};
   private configPath: string;
 
-  public constructor() {
+  private constructor() {
     this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
     // Load config synchronously for now to avoid async issues in constructor
     try {

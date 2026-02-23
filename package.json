@@ -158,7 +158,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
-    "uuid": "^9.0.1",
+    "uuid": "^11.0.5",
     "uuidv4": "^6.2.13",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2"
@@ -204,7 +204,7 @@
     "@types/mocha": "^10.0.7",
     "@types/module-alias": "^2.0.4",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.18.6",
     "@types/node-fetch": "^2.6.11",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
@@ -250,5 +250,7 @@
     "vite": "^7.1.2",
     "wrangler": "^4.34.0"
   },
-  "overrides": {}
+  "overrides": {
+    "undici": "^6.23.0"
+  }
 }

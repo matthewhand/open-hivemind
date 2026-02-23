@@ -285,7 +285,7 @@ export class StartupDiagnostics {
     const port = process.env.PORT || '3028';
 
     if (!httpEnabled) {
-      startupLog.info('   ➖ HTTP server disabled via HTTP_ENABLED=false');
+      startupLog.info('   ❌ HTTP server disabled via HTTP_ENABLED=false');
       startupLog.warn('⚠️  WebUI and API endpoints are NOT available');
       return;
     }
@@ -304,7 +304,7 @@ export class StartupDiagnostics {
     });
 
     if (!authStatus.enabled) {
-      startupLog.error('⛔ SECURITY RISK: Authentication is DISABLED');
+      startupLog.error('❌ SECURITY RISK: Authentication is DISABLED');
       startupLog.error('   ⚠️  WebUI and API are publicly accessible without authentication!');
       startupLog.error('   🚨 This is NOT recommended for internet-facing deployments');
       startupLog.error(
@@ -485,7 +485,7 @@ export class StartupDiagnostics {
     flags.forEach((flag) => {
       const value = process.env[flag.key] || flag.default;
       const isActive = value === 'true' || value === '1';
-      const icon = isActive ? '✅' : '➖';
+      const icon = isActive ? '✅' : '❌';
       startupLog.debug(`   ${icon} ${flag.key}: ${value} (${flag.description})`);
     });
   }

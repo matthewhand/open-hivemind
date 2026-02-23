@@ -6,8 +6,8 @@ import { io } from 'socket.io-client';
 import type {
   MessageFlowEvent,
   PerformanceMetric,
+  AlertEvent,
 } from '../../../src/webui/services/WebSocketService';
-import type { AlertEvent } from '../types/Alert';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -83,33 +83,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     newSocket.on('alerts_broadcast', (data) => {
-      const incoming = data.alerts || [];
-      setAlerts((prev) => {
-        const merged = [...prev];
-        incoming.forEach((inc: AlertEvent) => {
-          const idx = merged.findIndex((a) => a.id === inc.id);
-          if (idx !== -1) {
-            merged[idx] = inc;
-          } else {
-            merged.push(inc);
-          }
-        });
-        return merged
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 50);
-      });
+      setAlerts(prev => [...prev, ...(data.alerts || [])].slice(-50));
     });
 
     newSocket.on('alert_update', (alert: AlertEvent) => {
-      setAlerts((prev) => {
-        const index = prev.findIndex((a) => a.id === alert.id);
-        if (index !== -1) {
-          const updated = [...prev];
-          updated[index] = alert;
-          return updated;
-        }
-        return [alert, ...prev].slice(0, 50);
-      });
+      setAlerts(prev => [alert, ...prev].slice(0, 50));
     });
 
     // Performance metrics

@@ -1,6 +1,9 @@
 import Debug from 'debug';
 import { Client, GatewayIntentBits } from 'discord.js';
-import type { IServiceDependencies, IBotConfig } from '@hivemind/shared-types';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import ProviderConfigManager from '@config/ProviderConfigManager';
+import { UserConfigStore } from '@config/UserConfigStore';
+import { ValidationError } from '../../../../src/types/errorClasses';
 
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
 const log = Debug('app:discordBotManager');
@@ -12,15 +15,8 @@ export interface Bot {
   config: any;
 }
 
-/**
- * DiscordBotManager - Manages multiple Discord bot instances
- * 
- * This class is decoupled from the main application through dependency injection.
- * Bot configurations are loaded via the injected dependencies.
- */
 export class DiscordBotManager {
   private bots: Bot[] = [];
-  private deps: IServiceDependencies;
 
   private static readonly intents = [
     SafeGatewayIntentBits.Guilds ?? 1 << 0,
@@ -29,64 +25,100 @@ export class DiscordBotManager {
     SafeGatewayIntentBits.GuildVoiceStates ?? 1 << 7,
   ];
 
-  constructor(deps: IServiceDependencies) {
-    this.deps = deps;
+  constructor() {
     this.loadBotsFromConfig();
   }
 
   private loadBotsFromConfig(): void {
-    const { getAllBotConfigs, isBotDisabled, discordConfig, errorTypes } = this.deps;
-    const { ConfigError } = errorTypes;
+    const configManager = BotConfigurationManager.getInstance();
+    const providerManager = ProviderConfigManager.getInstance();
+    const userConfigStore = UserConfigStore.getInstance();
 
-    // Get bot configurations from injected dependency
-    const botConfigs = getAllBotConfigs?.() || [];
+    const botConfigs = configManager.getDiscordBotConfigs();
+    const providers = providerManager
+      .getAllProviders('message')
+      .filter((p) => p.type === 'discord' && p.enabled);
 
-    // Filter to Discord bots only
-    const discordBots = botConfigs.filter(
-      (config) => config.messageProvider === 'discord' || config.discordBotToken || config.discord?.token
-    );
-
-    // Also check for legacy DISCORD_BOT_TOKEN environment variable
-    const legacyToken = process.env.DISCORD_BOT_TOKEN;
-    if (discordBots.length === 0 && legacyToken) {
-      log(
-        'Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)'
-      );
-      const tokens = legacyToken
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-      tokens.forEach((token, index) => {
-        const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
-        this.addBotToPool(token, name, {
-          name,
-          messageProvider: 'discord',
-          discord: { token },
-        } as IBotConfig);
-      });
-      return;
-    }
-
-    if (discordBots.length === 0) {
-      log('No Discord providers configured.');
-      return; // No tokens, no bots.
-    }
-
-    // Load bots from configurations
-    discordBots.forEach((botConfig) => {
-      // Check if bot is disabled
-      if (isBotDisabled?.(botConfig.name)) {
-        log(`Bot ${botConfig.name} is disabled in user config, skipping initialization.`);
+    if (providers.length === 0) {
+      // Fallback: Check for legacy DISCORD_BOT_TOKEN environment variable
+      const legacyToken = process.env.DISCORD_BOT_TOKEN;
+      if (legacyToken) {
+        log(
+          'Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)'
+        );
+        const tokens = legacyToken
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
+        tokens.forEach((token, index) => {
+          const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
+          this.addBotToPool(token, name, {
+            name,
+            messageProvider: 'discord',
+            discord: { token },
+          });
+        });
         return;
       }
 
-      const token = botConfig.discordBotToken || botConfig.discord?.token;
-      if (token) {
-        this.addBotToPool(token, botConfig.name, botConfig);
-      } else {
-        log(`Bot ${botConfig.name} has no Discord token. Skipping.`);
+      if (botConfigs.length === 0) {
+        log('No Discord providers configured.');
+        return; // No tokens, no bots.
       }
-    });
+    }
+
+    if (botConfigs.length > 0) {
+      // Mode A: Logical Bots Defined (Match to Providers)
+      botConfigs.forEach((botConfig) => {
+        // Check if bot is disabled in user config
+        if (userConfigStore.isBotDisabled(botConfig.name)) {
+          log(`Bot ${botConfig.name} is disabled in user config, skipping initialization.`);
+          return;
+        }
+
+        // Find matching provider by ID, or fallback to first/default
+        let provider = providers.find((p) => p.id === botConfig.messageProviderId);
+        if (!provider) {
+          // Heuristic: If only 1 provider exists, use it.
+          if (providers.length === 1) {
+            provider = providers[0];
+          }
+        }
+
+        if (provider && provider.config.token) {
+          this.addBotToPool(provider.config.token, botConfig.name, botConfig);
+        } else if (botConfig.discord?.token) {
+          // Legacy/Manual Mode: Bot config has token directly
+          this.addBotToPool(botConfig.discord.token, botConfig.name, botConfig);
+        } else {
+          log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
+        }
+      });
+    } else {
+      // Mode B: No Logical Bots (Ad-Hoc / Legacy Mode / Test Mode)
+      // Create one bot per Provider Instance
+      providers.forEach((provider, index) => {
+        if (provider.config.token) {
+          const name = provider.name || `Discord Bot ${index + 1}`;
+
+          // Check if bot is disabled in user config
+          if (userConfigStore.isBotDisabled(name)) {
+            log(`Bot ${name} is disabled in user config, skipping initialization.`);
+            return;
+          }
+
+          // Create a dummy bot config
+          const dummyConfig = {
+            name,
+            messageProvider: 'discord',
+            // Default to first available LLM or flowise as fallback
+            llmProvider: 'flowise',
+            ...provider.config,
+          };
+          this.addBotToPool(provider.config.token, name, dummyConfig);
+        }
+      });
+    }
   }
 
   private addBotToPool(token: string, name: string, config: any): void {
@@ -104,13 +136,10 @@ export class DiscordBotManager {
   }
 
   public async addBot(botConfig: any): Promise<void> {
-    const { errorTypes } = this.deps;
-    const { ConfigError } = errorTypes;
-
     const token = botConfig?.discord?.token || botConfig?.token;
     const name = botConfig?.name || `Bot${this.bots.length + 1}`;
     if (!token) {
-      throw new ConfigError('Discord addBot requires a token', 'DISCORD_ADDBOT_MISSING_TOKEN');
+      throw new ValidationError('Discord addBot requires a token', 'DISCORD_ADDBOT_MISSING_TOKEN');
     }
 
     const client = new Client({ intents: DiscordBotManager.intents });
@@ -139,9 +168,6 @@ export class DiscordBotManager {
    * Initializes all loaded bots (logs them in).
    */
   public async initializeBots(): Promise<void> {
-    const { errorTypes } = this.deps;
-    const { ConfigError } = errorTypes;
-
     if (!this.bots || this.bots.length === 0) {
       log('DiscordBotManager.initializeBots(): no Discord bots configured. Skipping.');
       return;
@@ -161,9 +187,9 @@ export class DiscordBotManager {
     if (invalidBots.length > 0) {
       log(
         `DiscordBotManager: found ${invalidBots.length} bot(s) with missing/empty tokens: ` +
-        invalidBots.map((b) => b.name).join(', ')
+          invalidBots.map((b) => b.name).join(', ')
       );
-      throw new ConfigError(
+      throw new ValidationError(
         'Cannot initialize DiscordService: One or more bot tokens are empty',
         'DISCORD_EMPTY_TOKENS_INIT'
       );
@@ -185,7 +211,7 @@ export class DiscordBotManager {
             }
             bot.config.BOT_ID = bot.botUserId;
             bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
-          } catch { }
+          } catch {}
           log(`Initialized ${bot.botUserName} OK`);
           resolve();
         });

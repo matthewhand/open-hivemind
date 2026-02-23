@@ -21,17 +21,26 @@ import { TOKENS } from './container';
  */
 export function registerServices(): void {
   // Configuration services - singletons
-  container.register(TOKENS.ConfigurationManager, {
-    useValue: ConfigurationManager.getInstance(),
-  });
+  container.register(
+    TOKENS.ConfigurationManager,
+    {
+      useValue: ConfigurationManager.getInstance(),
+    }
+  );
 
-  container.register(TOKENS.BotConfigurationManager, {
-    useValue: BotConfigurationManager.getInstance(),
-  });
+  container.register(
+    TOKENS.BotConfigurationManager,
+    {
+      useValue: BotConfigurationManager.getInstance(),
+    }
+  );
 
-  container.register(TOKENS.UserConfigStore, {
-    useValue: UserConfigStore.getInstance(),
-  });
+  container.register(
+    TOKENS.UserConfigStore,
+    {
+      useValue: UserConfigStore.getInstance(),
+    }
+  );
 
   container.register(
     TOKENS.SecureConfigManager,
@@ -49,13 +58,19 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
-  container.register(TOKENS.UserConfigStore, {
-    useValue: UserConfigStore.getInstance(),
-  });
+  container.register(
+    TOKENS.UserConfigStore,
+    {
+      useValue: UserConfigStore.getInstance(),
+    }
+  );
 
-  container.register(TOKENS.ProviderConfigManager, {
-    useValue: ProviderConfigManager.getInstance(),
-  });
+  container.register(
+    TOKENS.ProviderConfigManager,
+    {
+      useValue: ProviderConfigManager.getInstance(),
+    }
+  );
 
   console.log('✅ DI services registered');
 }

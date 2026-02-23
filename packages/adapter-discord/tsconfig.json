@@ -1,7 +1,7 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "rootDir": "./src",
+        "rootDir": "../../",
         "outDir": "dist",
         "declaration": true,
         "declarationMap": true,
@@ -10,6 +10,24 @@
         "paths": {
             "@hivemind/shared-types": [
                 "../shared-types/src"
+            ],
+            "@src/*": [
+                "../../src/*"
+            ],
+            "@config/*": [
+                "../../src/config/*"
+            ],
+            "@message/*": [
+                "../../src/message/*"
+            ],
+            "@types/*": [
+                "../../src/types/*"
+            ],
+            "@server/*": [
+                "../../src/server/*"
+            ],
+            "@services/*": [
+                "../../src/services/*"
             ]
         }
     },
@@ -19,18 +37,7 @@
     "exclude": [
         "node_modules",
         "dist",
-        "src/ui",
-        "src/**/*.test.ts",
-        "src/**/*.spec.ts",
-        "src/commands",
-        "src/fetchers",
-        "src/handlers",
-        "src/interaction",
-        "src/media",
-        "src/network",
-        "src/providers",
-        "src/utils",
-        "src/voice"
+        "src/ui"
     ],
     "references": [
         {

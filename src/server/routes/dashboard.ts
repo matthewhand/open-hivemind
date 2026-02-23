@@ -120,38 +120,6 @@ router.get('/api/activity', authenticateToken, (req, res) => {
   }
 });
 
-router.post('/api/alerts/:id/acknowledge', authenticateToken, (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.acknowledgeAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert acknowledged' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
-    }
-  } catch (error) {
-    console.error('Acknowledge alert error:', error);
-    res.status(500).json({ error: 'Failed to acknowledge alert' });
-  }
-});
-
-router.post('/api/alerts/:id/resolve', authenticateToken, (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.resolveAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert resolved' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
-    }
-  } catch (error) {
-    console.error('Resolve alert error:', error);
-    res.status(500).json({ error: 'Failed to resolve alert' });
-  }
-});
-
 export default router;
 
 function parseMultiParam(value: unknown): string[] {

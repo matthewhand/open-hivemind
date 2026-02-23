@@ -2,9 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { testMattermostConnection } from '@hivemind/adapter-mattermost';
-// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import discordConfig from '../../config/discordConfig';
@@ -41,6 +38,9 @@ import {
 import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
+import { testMattermostConnection } from '@hivemind/adapter-mattermost';
+// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
+import { testSlackConnection } from '@hivemind/adapter-slack';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -553,7 +553,7 @@ router.get('/', async (req, res) => {
       // Return demo bots in demo mode
       const demoBots = demoService.getDemoBots();
       return res.json({
-        bots: demoBots.map((bot) => ({
+        bots: demoBots.map(bot => ({
           ...bot,
           id: bot.id,
           name: bot.name,

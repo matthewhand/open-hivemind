@@ -1,20 +1,10 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { Collection, TextChannel, type GuildMember, type Message, type User } from 'discord.js';
-import type { IMessage } from '@hivemind/shared-types';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import { ErrorUtils, HivemindError } from '../../../src/types/errors';
 
 const debug = Debug('app:DiscordMessage');
-
-/**
- * Simple error utilities for the adapter package.
- * This replaces the dependency on @src/types/errors.
- */
-const ErrorUtils = {
-  getMessage: (error: unknown): string => {
-    if (error instanceof Error) return error.message;
-    return String(error);
-  },
-};
 
 /**
  * Discord-specific implementation of the IMessage interface.
@@ -183,7 +173,7 @@ export class DiscordMessage implements IMessage {
           // use debug to avoid noisy console during tests
           debug(`Message ${this.message.id} edited successfully.`);
         })
-        .catch((error: unknown) => {
+        .catch((error: HivemindError) => {
           debug(`Failed to edit message ${this.message.id}: ${ErrorUtils.getMessage(error)}`);
           throw error;
         });
@@ -222,7 +212,7 @@ export class DiscordMessage implements IMessage {
         return (channel as { topic?: string }).topic || null;
       }
       return null;
-    } catch (error: unknown) {
+    } catch (error: HivemindError) {
       debug('Error getting channel topic:', ErrorUtils.getMessage(error));
       return null;
     }
@@ -276,7 +266,7 @@ export class DiscordMessage implements IMessage {
       }
 
       return [];
-    } catch (error: unknown) {
+    } catch (error: HivemindError) {
       debug('Error getting user mentions:', ErrorUtils.getMessage(error));
       return [];
     }
@@ -298,9 +288,9 @@ export class DiscordMessage implements IMessage {
       // Try to get members from guild channel
       const guildChannel = channel as TextChannel & {
         members?:
-        | Collection<string, GuildMember>
-        | Array<GuildMember | string>
-        | Record<string, GuildMember | string>;
+          | Collection<string, GuildMember>
+          | Array<GuildMember | string>
+          | Record<string, GuildMember | string>;
       };
 
       const members = guildChannel.members;
@@ -344,7 +334,7 @@ export class DiscordMessage implements IMessage {
       }
 
       return [];
-    } catch (error: unknown) {
+    } catch (error: HivemindError) {
       debug('Error getting channel users:', ErrorUtils.getMessage(error));
       return [];
     }
@@ -485,7 +475,7 @@ export class DiscordMessage implements IMessage {
           this.message.reference.messageId
         );
         return new DiscordMessage(referencedMsg);
-      } catch (error: unknown) {
+      } catch (error: HivemindError) {
         // use debug instead of console.error to reduce test noise
         debug(`Failed to fetch referenced message: ${ErrorUtils.getMessage(error)}`);
         return null;
