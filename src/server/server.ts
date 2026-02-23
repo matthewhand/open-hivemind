@@ -20,6 +20,7 @@ import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
+import aiAssistRouter from './routes/ai-assist';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
@@ -181,6 +182,7 @@ export class WebUIServer {
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
     this.app.use('/api/config', authenticateToken, configRouter);
+    this.app.use('/api/ai-assist', authenticateToken, aiAssistRouter);
     this.app.use('/api/personas', authenticateToken, personasRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
