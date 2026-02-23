@@ -19,19 +19,19 @@ router.get('/status', (req, res) => {
     const demoService = DemoModeService.getInstance();
     const status = demoService.getDemoStatus();
 
-        res.json({
-            ...status,
-            message: status.isDemoMode
-                ? 'Running in demo mode - no real credentials configured'
-                : 'Running in production mode with real credentials',
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_STATUS_ERROR',
-        });
-    }
+    res.json({
+      ...status,
+      message: status.isDemoMode
+        ? 'Running in demo mode - no real credentials configured'
+        : 'Running in production mode with real credentials',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'DEMO_STATUS_ERROR',
+    });
+  }
 });
 
 /**
@@ -43,18 +43,18 @@ router.get('/bots', (req, res) => {
     const demoService = DemoModeService.getInstance();
     const bots = demoService.getDemoBots();
 
-        res.json({
-            bots,
-            count: bots.length,
-            isDemo: demoService.isInDemoMode(),
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_BOTS_ERROR',
-        });
-    }
+    res.json({
+      bots,
+      count: bots.length,
+      isDemo: demoService.isInDemoMode(),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'DEMO_BOTS_ERROR',
+    });
+  }
 });
 
 /**
@@ -65,61 +65,9 @@ router.post('/chat', (req, res) => {
   try {
     const { message, botName, channelId, userId, userName } = req.body;
 
-        if (!message) {
-            res.status(400).json({ error: 'message is required' });
-            return;
-        }
-
-        if (!botName) {
-            res.status(400).json({ error: 'botName is required' });
-            return;
-        }
-
-        const demoService = DemoModeService.getInstance();
-
-        if (!demoService.isInDemoMode()) {
-            res.status(400).json({
-                error: 'Demo mode is not active. Configure credentials to use real services.',
-                code: 'DEMO_MODE_INACTIVE',
-            });
-            return;
-        }
-
-        // Add user message
-        const userMsg = demoService.addMessage(
-            channelId || 'demo-channel',
-            botName,
-            message,
-            'incoming',
-            userId || 'demo-user',
-            userName || 'Demo User'
-        );
-
-        // Generate bot response
-        const responseText = demoService.generateDemoResponse(message, botName);
-
-        // Add bot response
-        const botMsg = demoService.addMessage(
-            channelId || 'demo-channel',
-            botName,
-            responseText,
-            'outgoing',
-            botName,
-            botName
-        );
-
-        res.json({
-            success: true,
-            userMessage: userMsg,
-            botResponse: botMsg,
-            isDemo: true,
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_CHAT_ERROR',
-        });
+    if (!message) {
+      res.status(400).json({ error: 'message is required' });
+      return;
     }
 
     if (!botName) {
@@ -184,17 +132,17 @@ router.get('/conversations', (req, res) => {
     const demoService = DemoModeService.getInstance();
     const conversations = demoService.getAllConversations();
 
-        res.json({
-            conversations,
-            count: conversations.length,
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_CONVERSATIONS_ERROR',
-        });
-    }
+    res.json({
+      conversations,
+      count: conversations.length,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'DEMO_CONVERSATIONS_ERROR',
+    });
+  }
 });
 
 /**
@@ -207,19 +155,19 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
     const demoService = DemoModeService.getInstance();
     const messages = demoService.getConversationHistory(channelId, botName);
 
-        res.json({
-            channelId,
-            botName,
-            messages,
-            count: messages.length,
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_CONVERSATION_HISTORY_ERROR',
-        });
-    }
+    res.json({
+      channelId,
+      botName,
+      messages,
+      count: messages.length,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'DEMO_CONVERSATION_HISTORY_ERROR',
+    });
+  }
 });
 
 /**
@@ -231,17 +179,17 @@ router.post('/reset', (req, res) => {
     const demoService = DemoModeService.getInstance();
     demoService.reset();
 
-        res.json({
-            success: true,
-            message: 'Demo mode reset - all conversations cleared',
-        });
-    } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        res.status(hivemindError.statusCode || 500).json({
-            error: hivemindError.message,
-            code: 'DEMO_RESET_ERROR',
-        });
-    }
+    res.json({
+      success: true,
+      message: 'Demo mode reset - all conversations cleared',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'DEMO_RESET_ERROR',
+    });
+  }
 });
 
 /**

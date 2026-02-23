@@ -208,29 +208,14 @@ export class RateLimiter {
   private static attempts = new Map<string, number[]>();
 
   // Bounded cache configuration
-  private static MAX_IDENTIFIERS = parseInt(
+  private static readonly MAX_IDENTIFIERS = parseInt(
     process.env.RATE_LIMITER_MAX_IDENTIFIERS || '10000',
     10
   );
-  private static MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(
+  private static readonly MAX_ATTEMPTS_PER_IDENTIFIER = parseInt(
     process.env.RATE_LIMITER_MAX_ATTEMPTS_PER_ID || '100',
     10
   );
-
-  /**
-   * Configure the rate limiter limits.
-   * Useful for testing eviction logic.
-   *
-   * @param options - Configuration options
-   */
-  static configure(options: { maxIdentifiers?: number; maxAttemptsPerIdentifier?: number }): void {
-    if (options.maxIdentifiers !== undefined) {
-      this.MAX_IDENTIFIERS = options.maxIdentifiers;
-    }
-    if (options.maxAttemptsPerIdentifier !== undefined) {
-      this.MAX_ATTEMPTS_PER_IDENTIFIER = options.maxAttemptsPerIdentifier;
-    }
-  }
 
   /**
    * Enforce max identifiers limit by removing oldest entries.

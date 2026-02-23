@@ -1,26 +1,20 @@
 import Debug from 'debug';
 import { type NewsChannel, type TextChannel, type ThreadChannel } from 'discord.js';
-import discordConfig from '@config/discordConfig';
-import messageConfig from '@config/messageConfig';
-import { pickBestChannel } from '@message/routing/ChannelRouter';
-import WebSocketService from '../../../../src/server/services/WebSocketService';
-import {
-  ConfigurationError,
-  NetworkError,
-  ValidationError,
-} from '../../../../src/types/errorClasses';
+import type { IServiceDependencies } from '@hivemind/shared-types';
 import { type DiscordBotManager } from './DiscordBotManager';
 
 const log = Debug('app:discordMessageSender');
 
 export class DiscordMessageSender {
   private botManager: DiscordBotManager;
+  private deps: IServiceDependencies;
   private messageRateLimit = new Map<string, number[]>();
   private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
   private readonly RATE_LIMIT_MAX = 3; // 3 messages per minute
 
-  constructor(botManager: DiscordBotManager) {
+  constructor(botManager: DiscordBotManager, deps: IServiceDependencies) {
     this.botManager = botManager;
+    this.deps = deps;
   }
 
   public async sendTyping(
@@ -34,11 +28,11 @@ export class DiscordMessageSender {
       const botInfo =
         (senderName && isSnowflake(senderName)
           ? bots.find(
-              (b) =>
-                b.botUserId === senderName ||
-                b.config?.BOT_ID === senderName ||
-                b.config?.discord?.clientId === senderName
-            )
+            (b) =>
+              b.botUserId === senderName ||
+              b.config?.BOT_ID === senderName ||
+              b.config?.discord?.clientId === senderName
+          )
           : bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
         bots[0];
 
@@ -70,6 +64,9 @@ export class DiscordMessageSender {
     threadId?: string,
     replyToMessageId?: string
   ): Promise<string> {
+    const { errorTypes, discordConfig, messageConfig, webSocketService, channelRouter } = this.deps;
+    const { ConfigError, ValidationError, NetworkError } = errorTypes;
+
     // Input validation for security
     if (!channelId || typeof channelId !== 'string') {
       throw new ValidationError('Invalid channelId provided', 'DISCORD_INVALID_CHANNEL_ID');
@@ -95,7 +92,7 @@ export class DiscordMessageSender {
 
     const bots = this.botManager.getAllBots();
     if (bots.length === 0) {
-      throw new ConfigurationError(
+      throw new ConfigError(
         'No Discord bot instances available',
         'DISCORD_NO_BOTS_AVAILABLE'
       );
@@ -112,11 +109,11 @@ export class DiscordMessageSender {
     const botInfo =
       (senderName && isSnowflake(senderName)
         ? bots.find(
-            (b) =>
-              b.botUserId === senderName ||
-              b.config?.BOT_ID === senderName ||
-              b.config?.discord?.clientId === senderName
-          )
+          (b) =>
+            b.botUserId === senderName ||
+            b.config?.BOT_ID === senderName ||
+            b.config?.discord?.clientId === senderName
+        )
         : bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
       bots[0];
     const effectiveSenderName = botInfo.botUserName;
@@ -128,26 +125,19 @@ export class DiscordMessageSender {
     // Feature-flagged channel routing: select best channel among candidates
     let selectedChannelId = channelId;
     try {
-      // Use string key to avoid TypeScript Path typing issues; messageConfig supports runtime keys
-      const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
-      if (enabled) {
-        // We need defaultChannel. DiscordService had it.
-        // We can ask botManager or just re-implement getter logic?
-        // Or pass it in?
-        // Let's reimplement reading from config here as it's just a config read.
-        // But DiscordService cached it.
-        // We can just read it from discordConfig.
+      const enabled = Boolean(messageConfig?.get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
+      if (enabled && channelRouter) {
         const defaultChannel =
-          (discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
+          (discordConfig?.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
 
         const candidates = Array.from(
           new Set([channelId, defaultChannel].filter(Boolean))
         ) as string[];
         if (candidates.length > 0) {
-          const picked = pickBestChannel(candidates, {
+          const picked = channelRouter.pickBestChannel?.(candidates, {
             provider: 'discord',
             botName: botInfo.botUserName,
-          });
+          }) ?? channelId;
           if (picked) {
             selectedChannelId = picked;
             log(
@@ -202,7 +192,7 @@ export class DiscordMessageSender {
       );
       // Emit outgoing message flow event
       try {
-        WebSocketService.getInstance().recordMessageFlow({
+        webSocketService?.recordMessageFlow({
           botName: botInfo.botUserName,
           provider: 'discord',
           channelId: selectedChannelId,
@@ -211,7 +201,7 @@ export class DiscordMessageSender {
           contentLength: (text || '').length,
           status: 'success',
         });
-      } catch {}
+      } catch { }
       return message.id;
     } catch (error: any) {
       if (error instanceof ValidationError) {
@@ -219,16 +209,16 @@ export class DiscordMessageSender {
         log(
           `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${errorMessage}`
         );
-        console.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
+        this.deps.logger.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
         try {
-          WebSocketService.getInstance().recordAlert({
+          webSocketService?.recordAlert({
             level: 'error',
             title: 'Discord sendMessage validation failed',
             message: errorMessage,
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'ValidationError' },
           });
-        } catch {}
+        } catch { }
         return '';
       }
 
@@ -241,16 +231,16 @@ export class DiscordMessageSender {
       log(
         `Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`
       );
-      console.error(`[${effectiveSenderName}] Discord send message network error:`, networkError);
+      this.deps.logger.error(`[${effectiveSenderName}] Discord send message network error:`, networkError);
       try {
-        WebSocketService.getInstance().recordAlert({
+        webSocketService?.recordAlert({
           level: 'error',
           title: 'Discord sendMessage failed',
           message: networkError.message,
           botName: botInfo.botUserName,
           metadata: { channelId: selectedChannelId, errorType: 'NetworkError' },
         });
-      } catch {}
+      } catch { }
       return '';
     }
   }
