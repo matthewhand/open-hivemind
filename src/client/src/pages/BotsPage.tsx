@@ -3,7 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
-import PageHeader from '../components/DaisyUI/PageHeader';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+import { PageContainer } from '../components/common/PageContainer';
 
 interface BotData {
   id: string;
@@ -20,6 +21,13 @@ interface BotData {
   envOverrides?: any;
 }
 
+interface BotsPageData {
+  bots: BotData[];
+  personas: any[];
+  llmProfiles: any[];
+  globalConfig: any;
+}
+
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { BotAvatar } from '../components/BotAvatar';
@@ -30,12 +38,7 @@ import { BotSettingsModal } from '../components/BotSettingsModal';
 const API_BASE = '/api';
 
 const BotsPage: React.FC = () => {
-  const [bots, setBots] = useState<BotData[]>([]);
-  const [personas, setPersonas] = useState<any[]>([]); // added personas state
-  const [llmProfiles, setLlmProfiles] = useState<any[]>([]); // added profiles state
-  const [globalConfig, setGlobalConfig] = useState<any>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Action specific states
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [previewBot, setPreviewBot] = useState<BotData | null>(null);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
@@ -60,11 +63,8 @@ const BotsPage: React.FC = () => {
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
+  // Page Data Fetching
+  const fetchPageData = useCallback(async (): Promise<BotsPageData> => {
       const [configResponse, globalResponse, personasResponse, profilesResponse] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/config/global`),
@@ -74,38 +74,44 @@ const BotsPage: React.FC = () => {
 
       if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
       const configData = await configResponse.json();
-      setBots(configData.bots || []);
 
+      let personas = [];
       if (personasResponse.ok) {
-        const personasData = await personasResponse.json();
-        setPersonas(personasData);
+        personas = await personasResponse.json();
       }
 
+      let llmProfiles = [];
       if (profilesResponse.ok) {
         const profilesData = await profilesResponse.json();
-        setLlmProfiles(profilesData.profiles?.llm || []);
+        llmProfiles = profilesData.profiles?.llm || [];
       }
 
+      let globalConfig: any = {};
       if (globalResponse.ok) {
         const globalData = await globalResponse.json();
-        const simplifiedConfig: any = {};
         // Flatten global config for easy key access
         Object.keys(globalData).forEach(key => {
-          simplifiedConfig[key] = globalData[key].values;
+          globalConfig[key] = globalData[key].values;
         });
-        setGlobalConfig(simplifiedConfig);
       }
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
+      return {
+          bots: configData.bots || [],
+          personas,
+          llmProfiles,
+          globalConfig
+      };
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, loading, error, refresh, setData } = usePageLifecycle<BotsPageData>({
+      fetchData: fetchPageData,
+      title: 'Bot Management'
+  });
+
+  const bots = data?.bots || [];
+  const personas = data?.personas || [];
+  const llmProfiles = data?.llmProfiles || [];
+  const globalConfig = data?.globalConfig || {};
 
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
@@ -183,7 +189,7 @@ const BotsPage: React.FC = () => {
 
       if (!res.ok) { throw new Error('Failed to update bot configuration'); }
 
-      await fetchData();
+      await refresh();
     } catch (err: any) {
       alert('Error updating bot: ' + err.message);
     } finally {
@@ -221,9 +227,9 @@ const BotsPage: React.FC = () => {
       setNewBotMessageProvider('');
       setNewBotLlmProvider('');
       setShowCreateModal(false);
-      await fetchData();
+      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create bot');
+      alert(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
       setActionLoading(null);
     }
@@ -243,9 +249,9 @@ const BotsPage: React.FC = () => {
         throw new Error(data.error || `Failed to ${action} bot`);
       }
 
-      await fetchData();
+      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${action} bot`);
+      alert(err instanceof Error ? err.message : `Failed to ${action} bot`);
     } finally {
       setActionLoading(null);
     }
@@ -266,9 +272,9 @@ const BotsPage: React.FC = () => {
       }
 
       setDeleteModal({ isOpen: false, bot: null });
-      await fetchData();
+      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete bot');
+      alert(err instanceof Error ? err.message : 'Failed to delete bot');
     } finally {
       setActionLoading(null);
     }
@@ -288,9 +294,9 @@ const BotsPage: React.FC = () => {
         throw new Error(data.error || 'Failed to clone bot');
       }
 
-      await fetchData();
+      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clone bot');
+      alert(err instanceof Error ? err.message : 'Failed to clone bot');
     } finally {
       setActionLoading(null);
     }
@@ -310,9 +316,9 @@ const BotsPage: React.FC = () => {
         throw new Error(data.error || 'Failed to update persona');
       }
 
-      await fetchData();
+      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update persona');
+      alert(err instanceof Error ? err.message : 'Failed to update persona');
     } finally {
       setActionLoading(null);
     }
@@ -337,36 +343,28 @@ const BotsPage: React.FC = () => {
 
 
   return (
-    <div className="space-y-6">
-      {/* Error Alert */}
-      {error && (
-        <div className="alert alert-error">
-          <AlertCircle className="w-5 h-5" />
-          <span>{error}</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>Dismiss</button>
-        </div>
-      )}
-
-      {/* Header */}
-      <PageHeader
-        title="Bot Management"
-        description="Manage your AI bot instances"
-        icon={Bot}
-        gradient="primary"
-        actions={
-          <>
-            <button onClick={fetchData} className="btn btn-ghost gap-2" disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
-            <button onClick={() => setShowCreateModal(true)} className="btn btn-primary gap-2">
-              <Plus className="w-4 h-4" /> Create Bot
-            </button>
-          </>
-        }
-      />
+    <PageContainer
+      title="Bot Management"
+      description="Manage your AI bot instances"
+      icon={Bot}
+      gradient="primary"
+      loading={loading}
+      error={error}
+      onRefresh={refresh}
+      actions={
+        <>
+          <button onClick={refresh} className="btn btn-ghost gap-2" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={() => setShowCreateModal(true)} className="btn btn-primary gap-2">
+            <Plus className="w-4 h-4" /> Create Bot
+          </button>
+        </>
+      }
+    >
 
       {/* Stats */}
-      <div className="stats stats-horizontal bg-base-200 w-full">
+      <div className="stats stats-horizontal bg-base-200 w-full mb-6">
         <div className="stat">
           <div className="stat-title">Total Bots</div>
           <div className="stat-value text-primary">{bots.length}</div>
@@ -388,12 +386,7 @@ const BotsPage: React.FC = () => {
       {/* DataTable */}
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body p-0">
-          {loading && bots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <span className="loading loading-bars loading-lg text-primary" />
-              <p className="text-base-content/50 animate-pulse">Loading bots...</p>
-            </div>
-          ) : bots.length === 0 ? (
+          {bots.length === 0 ? (
             <div className="text-center py-12">
               <Bot className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
               <h3 className="text-lg font-medium text-base-content/60">No bots configured</h3>
@@ -507,7 +500,7 @@ const BotsPage: React.FC = () => {
           onCancel={() => setShowCreateModal(false)}
           onSuccess={async () => {
             setShowCreateModal(false);
-            await fetchData();
+            await refresh();
           }}
           personas={personas}
           llmProfiles={llmProfiles}
@@ -681,7 +674,7 @@ const BotsPage: React.FC = () => {
           </div>
         )}
       </Modal >
-    </div >
+    </PageContainer>
   );
 };
 
