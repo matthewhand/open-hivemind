@@ -110,6 +110,44 @@ export class MCPService {
   }
 
   /**
+   * Test connection to an MCP server without storing the client
+   */
+  public async testConnection(config: MCPConfig): Promise<boolean> {
+    try {
+      debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
+
+      // Dynamically require the MCP SDK
+      const { Client } = require('@modelcontextprotocol/sdk');
+
+      // Create a new client for this server
+      const client = new Client({
+        name: 'Open-Hivemind-Test',
+        version: '1.0.0',
+      });
+
+      // Connect to the server
+      await client.connect({
+        url: config.serverUrl,
+        apiKey: config.apiKey,
+      });
+
+      // Try to list tools to verify connection works
+      await client.listTools();
+
+      // If we got here, connection is successful
+      // Since SDK doesn't have disconnect, we just let it go out of scope
+      // Ideally we would close the transport if accessible
+
+      return true;
+    } catch (error) {
+      debug(`Error testing connection to MCP server ${config.name}:`, error);
+      throw new Error(
+        `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
    * Disconnect from an MCP server
    */
   public async disconnectFromServer(serverName: string): Promise<void> {

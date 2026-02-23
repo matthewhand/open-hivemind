@@ -682,6 +682,47 @@ router.post('/mcp-servers/connect', configRateLimit, async (req: Request, res: R
   }
 });
 
+// Test connection to an MCP server
+router.post('/mcp-servers/test', configRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { serverUrl, apiKey, name } = req.body;
+
+    // Validation
+    if (!serverUrl) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Server URL is required',
+      });
+    }
+
+    // Validate URL format
+    try {
+      new URL(serverUrl);
+    } catch {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Server URL must be a valid URL',
+      });
+    }
+
+    const mcpService = MCPService.getInstance();
+    // Use a temporary name if not provided
+    const configName = name || `test-${Date.now()}`;
+
+    await mcpService.testConnection({ serverUrl, apiKey, name: configName });
+
+    return res.json({
+      success: true,
+      message: `Successfully tested connection to MCP server`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to connect to MCP server',
+      message: error.message || 'An error occurred while connecting to MCP server',
+    });
+  }
+});
+
 // Disconnect from an MCP server
 router.post('/mcp-servers/disconnect', async (req: Request, res: Response) => {
   try {
