@@ -87,20 +87,22 @@ const SitemapPage: React.FC = () => {
 
     if (url.url === '/') {
       category = 'Root';
-    } else if (url.url === '/dashboard' || url.url === '/activity') {
-      category = 'User Dashboard';
-    } else if (url.url.startsWith('/admin/ai')) {
-      category = 'AI Features';
     } else if (url.url.startsWith('/admin')) {
-      if (url.url.includes('/bots')) { category = 'Bot Management'; }
-      else if (url.url.includes('/mcp')) { category = 'MCP Servers'; }
-      else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) { category = 'Monitoring'; }
-      else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration')) { category = 'Settings'; }
-      else if (url.url.includes('/integrations')) { category = 'Integrations'; }
-      else if (url.url.includes('/specs')) { category = 'Specifications'; }
-      else if (url.url.includes('/chat')) { category = 'Communication'; }
-      else if (url.url.includes('/personas')) { category = 'Personas'; }
-      else { category = 'Main Dashboard'; }
+      if (url.url.includes('/bots') || url.url.includes('/personas')) {
+        category = 'Bot Management';
+      } else if (url.url.includes('/mcp')) {
+        category = 'MCP Servers';
+      } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) {
+        category = 'Monitoring & Analytics';
+      } else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration') || url.url.includes('/system-management')) {
+        category = 'System Management';
+      } else if (url.url.includes('/ai/')) {
+        category = 'AI Features';
+      } else if (url.url.includes('/integrations')) {
+        category = 'Integrations';
+      } else {
+        category = 'Main Dashboard';
+      }
     } else if (url.url.startsWith('/webui')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {

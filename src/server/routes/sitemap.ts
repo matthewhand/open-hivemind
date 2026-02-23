@@ -15,6 +15,7 @@ interface SitemapUrl {
 
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
+  // Try to determine the base URL dynamically, fallback to localhost
   const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 
@@ -33,29 +34,11 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 1.0,
       lastmod: now,
-      description: 'Main Admin Dashboard',
+      description: 'Admin Dashboard',
       access: 'authenticated',
     },
 
-    // User Dashboard pages
-    {
-      url: '/dashboard',
-      changefreq: 'daily',
-      priority: 0.9,
-      lastmod: now,
-      description: 'User Dashboard',
-      access: 'authenticated',
-    },
-    {
-      url: '/activity',
-      changefreq: 'hourly',
-      priority: 0.8,
-      lastmod: now,
-      description: 'User Activity Feed',
-      access: 'authenticated',
-    },
-
-    // Admin Dashboard pages
+    // Dashboard pages
     {
       url: '/admin/overview',
       changefreq: 'daily',
@@ -95,7 +78,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'Admin Chat Interface',
+      description: 'Interactive Chat Interface',
       access: 'authenticated',
     },
 
@@ -115,7 +98,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
-      description: 'LLM Provider Integration',
+      description: 'LLM Provider Configuration',
       access: 'authenticated',
     },
     {
@@ -123,7 +106,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
-      description: 'Messaging Provider Integration',
+      description: 'Messaging Platform Integrations',
       access: 'authenticated',
     },
 
@@ -177,7 +160,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'hourly',
       priority: 0.7,
       lastmod: now,
-      description: 'Real-time Admin Activity Monitor',
+      description: 'Real-time Activity Monitor',
       access: 'authenticated',
     },
     {
@@ -196,48 +179,6 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'System Analytics',
       access: 'authenticated',
     },
-    {
-      url: '/admin/system-management',
-      changefreq: 'weekly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'System Management Tools',
-      access: 'owner',
-    },
-
-    // Configuration
-    {
-      url: '/admin/settings',
-      changefreq: 'monthly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'System Settings',
-      access: 'owner',
-    },
-    {
-      url: '/admin/configuration',
-      changefreq: 'weekly',
-      priority: 0.7,
-      lastmod: now,
-      description: 'Bot Configuration',
-      access: 'authenticated',
-    },
-    {
-      url: '/admin/config',
-      changefreq: 'monthly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'Global Configuration',
-      access: 'owner',
-    },
-    {
-      url: '/admin/specs',
-      changefreq: 'weekly',
-      priority: 0.5,
-      lastmod: now,
-      description: 'Specifications Library',
-      access: 'authenticated',
-    },
 
     // AI Features
     {
@@ -245,7 +186,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'AI Intelligence Dashboard',
+      description: 'AI System Dashboard',
       access: 'authenticated',
     },
     {
@@ -253,7 +194,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.7,
       lastmod: now,
-      description: 'AI Generated Insights',
+      description: 'AI-driven Insights',
       access: 'authenticated',
     },
     {
@@ -275,7 +216,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/ai/chat',
       changefreq: 'daily',
-      priority: 0.7,
+      priority: 0.8,
       lastmod: now,
       description: 'Natural Language Interface',
       access: 'authenticated',
@@ -286,6 +227,40 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.6,
       lastmod: now,
       description: 'Bot Training Dashboard',
+      access: 'authenticated',
+    },
+
+    // Settings and configuration
+    {
+      url: '/admin/settings',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'System Settings',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/system-management',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'System Management Tools',
+      access: 'owner',
+    },
+    {
+      url: '/admin/configuration',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Bot Configuration',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/config',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'General Configuration',
       access: 'authenticated',
     },
 
@@ -315,11 +290,11 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'authenticated',
     },
     {
-      url: '/admin/sitemap',
+      url: '/admin/specs',
       changefreq: 'weekly',
-      priority: 0.4,
+      priority: 0.5,
       lastmod: now,
-      description: 'Sitemap Page',
+      description: 'Specifications Library',
       access: 'authenticated',
     },
 
@@ -484,18 +459,18 @@ router.get('/sitemap', (req: Request, res: Response) => {
     </div>
     
     ${generateSectionHTML(
-      'User Dashboard',
-      routes.filter((r) => r.url === '/dashboard' || r.url === '/activity'),
+      'Admin Dashboard',
+      routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai') && !r.url.includes('integrations')),
       baseUrl
     )}
     ${generateSectionHTML(
-      'Admin Interface',
-      routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai')),
-      baseUrl
-    )}
-    ${generateSectionHTML(
-      'AI Intelligence Features',
+      'AI Features',
       routes.filter((r) => r.url.startsWith('/admin/ai')),
+      baseUrl
+    )}
+    ${generateSectionHTML(
+      'Integrations',
+      routes.filter((r) => r.url.includes('integrations')),
       baseUrl
     )}
     ${generateSectionHTML(
