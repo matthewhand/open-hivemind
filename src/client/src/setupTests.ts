@@ -2,9 +2,21 @@
 import '@testing-library/jest-dom'; // Generic import works for both
 import { configure } from '@testing-library/react';
 // vi is specific to Vitest, use jest global which works in both (Vitest aliases jest to vi)
+import { TextEncoder, TextDecoder } from 'util';
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' });
+
+// Mock TextEncoder/TextDecoder
+global.TextEncoder = TextEncoder as any;
+global.TextDecoder = TextDecoder as any;
+
+// Mock HTMLDialogElement methods
+if (typeof HTMLDialogElement !== 'undefined') {
+  HTMLDialogElement.prototype.show = jest.fn();
+  HTMLDialogElement.prototype.showModal = jest.fn();
+  HTMLDialogElement.prototype.close = jest.fn();
+}
 
 // Mock IntersectionObserver
 (global as any).IntersectionObserver = jest.fn().mockImplementation(() => ({
