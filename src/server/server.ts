@@ -19,6 +19,7 @@ import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
+import aiAssistRouter from './routes/ai-assist';
 import botsRouter from './routes/bots';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
@@ -179,6 +180,7 @@ export class WebUIServer {
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
+    this.app.use('/api/ai-assist', authenticateToken, aiAssistRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
     this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/mcp', authenticateToken, mcpRouter);
@@ -186,7 +188,6 @@ export class WebUIServer {
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
     this.app.use('/api/config', authenticateToken, configRouter);
-    this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/personas', authenticateToken, personasRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
