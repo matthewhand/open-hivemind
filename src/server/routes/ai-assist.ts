@@ -4,7 +4,6 @@ import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import { authenticate } from '../middleware/auth';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
 
@@ -57,8 +56,6 @@ const openWebUI: ILlmProvider = {
     throw new Error('Non-chat completion not supported by OpenWebUI');
   },
 };
-
-router.use(authenticate);
 
 router.post('/generate', async (req, res) => {
   try {

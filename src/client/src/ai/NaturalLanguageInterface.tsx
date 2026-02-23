@@ -430,35 +430,94 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   const processNaturalLanguage = async (text: string): Promise<NLCommand> => {
     setIsProcessing(true);
 
-    // Simulate NLP processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    let responseText = '';
+    let confidence = 0.0;
+    let intent: NLIntent | null = null;
+    let entities: NLEntity[] = [];
+    const status: NLCommand['status'] = 'completed';
 
-    // Simple intent matching (in real implementation, this would use actual NLP)
-    const matchedIntent = mockIntents.find(intent =>
-      intent.examples.some(example =>
-        text.toLowerCase().includes(example.toLowerCase()) ||
-        example.toLowerCase().includes(text.toLowerCase()),
-      ),
-    );
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/ai-assist/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ prompt: text })
+      });
 
-    const confidence = matchedIntent ? 0.85 : 0.3;
+      if (res.ok) {
+        const data = await res.json();
+        responseText = data.result;
+        confidence = 1.0;
+        intent = {
+          name: 'chat',
+          description: 'Chat with AI',
+          category: 'help',
+          parameters: [],
+          examples: []
+        };
+      } else {
+        // Fallback to mock behavior if backend fails or not configured
+        console.warn('Backend AI Assist failed, falling back to mock:', res.statusText);
+        // Simulate NLP processing delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const command: NLCommand = {
-      id: `cmd-${Date.now()}`,
-      text,
-      timestamp: new Date(),
-      intent: matchedIntent || {
+        // Simple intent matching (in real implementation, this would use actual NLP)
+        const matchedIntent = mockIntents.find(intent =>
+          intent.examples.some(example =>
+            text.toLowerCase().includes(example.toLowerCase()) ||
+            example.toLowerCase().includes(text.toLowerCase()),
+          ),
+        );
+
+        confidence = matchedIntent ? 0.85 : 0.3;
+        intent = matchedIntent || {
+          name: 'unknown',
+          description: 'Unknown command',
+          category: 'help',
+          parameters: [],
+          examples: [],
+        };
+        entities = extractEntities(text);
+        responseText = generateResponse(text, matchedIntent, confidence);
+      }
+    } catch (error) {
+      console.error('Error calling AI Assist:', error);
+      // Simulate NLP processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Simple intent matching (in real implementation, this would use actual NLP)
+      const matchedIntent = mockIntents.find(intent =>
+        intent.examples.some(example =>
+          text.toLowerCase().includes(example.toLowerCase()) ||
+          example.toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+
+      confidence = matchedIntent ? 0.85 : 0.3;
+      intent = matchedIntent || {
         name: 'unknown',
         description: 'Unknown command',
         category: 'help',
         parameters: [],
         examples: [],
-      },
-      entities: extractEntities(text),
+      };
+      entities = extractEntities(text);
+      responseText = generateResponse(text, matchedIntent, confidence);
+    }
+
+    const command: NLCommand = {
+      id: `cmd-${Date.now()}`,
+      text,
+      timestamp: new Date(),
+      intent: intent!,
+      entities: entities,
       confidence,
-      response: generateResponse(text, matchedIntent, confidence),
-      actions: generateActions(text, matchedIntent, confidence),
-      status: 'completed',
+      response: responseText,
+      actions: generateActions(text, intent, confidence),
+      status: status,
     };
 
     setIsProcessing(false);
@@ -667,6 +726,15 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
       animation="slide-up"
       className="w-full space-y-6"
     >
+      {/* WIP Banner */}
+      <div className="alert alert-warning shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <div>
+          <h3 className="font-bold">Work in Progress</h3>
+          <div className="text-xs">This feature is currently under development. Backend connectivity is partial.</div>
+        </div>
+      </div>
+
       {/* Natural Language Interface Header */}
       <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
         <div className="card-body p-6">
