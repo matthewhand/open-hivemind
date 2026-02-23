@@ -611,7 +611,7 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mt-8">
                 <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
                 <button
                   className="btn btn-sm btn-ghost"

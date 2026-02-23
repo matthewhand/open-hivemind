@@ -6,6 +6,7 @@ const debug = Debug('app:DuplicateMessageDetector');
 
 interface MessageRecord {
   content: string;
+  normalizedContent: string;
   timestamp: number;
   channelId: string;
 }
@@ -80,8 +81,9 @@ export default class DuplicateMessageDetector {
       const normalizedContent = this.normalizeContent(content);
 
       // Check for duplicates in internal history (what WE sent recently)
+      // Optimized: Use pre-calculated normalized content to avoid re-normalizing on every check
       const isInternalDupe = recentHistory.some(
-        (msg) => this.normalizeContent(msg.content) === normalizedContent
+        (msg) => msg.normalizedContent === normalizedContent
       );
 
       // Check for duplicates in external history (what OTHERS sent recently)
@@ -195,6 +197,7 @@ export default class DuplicateMessageDetector {
       // Add new message
       history.push({
         content,
+        normalizedContent: this.normalizeContent(content),
         timestamp: now,
         channelId,
       });

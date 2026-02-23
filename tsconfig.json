@@ -45,7 +45,9 @@
       "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
       "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
       "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
-      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
+      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"],
+      "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
+      "@hivemind/shared-types/*": ["packages/shared-types/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
