@@ -10,13 +10,13 @@
   command = "pnpm run build:serverless"
   publish = "src/client/dist"
 
-# Explicitly disable deploy previews for PRs
+# Suppress builds for Pull Requests and Branch Deploys
+# exit 0 means "cancel build" (success status for the ignore command)
 [context.deploy-preview]
-  ignore = "exit 1"
+  ignore = "exit 0"
 
-# Explicitly disable branch deploys for non-main branches
 [context.branch-deploy]
-  ignore = "exit 1"
+  ignore = "exit 0"
 
 [dev]
   command = "npm run dev:frontend-only"
@@ -31,10 +31,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Suppress builds for Pull Requests and Branch Deploys
-[context.deploy-preview]
-  ignore = "exit 0"
-
-[context.branch-deploy]
-  ignore = "exit 0"
