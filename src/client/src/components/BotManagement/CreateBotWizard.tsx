@@ -129,10 +129,10 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                         </div>
 
                         <div className="form-control">
-                            <label className="label"><span className="label-text">What does this bot do?</span></label>
                             <textarea
                                 className="textarea textarea-bordered h-24"
                                 placeholder="What does this bot do?"
+                                aria-label="What does this bot do?"
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                             />
