@@ -1033,6 +1033,78 @@ export class BotConfigurationManager {
   }
 
   /**
+   * Delete a bot configuration
+   */
+  public async deleteBot(name: string): Promise<void> {
+    const existingBot = this.bots.get(name);
+    if (!existingBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      debug(`Deleted bot config for ${name} at ${filePath}`);
+    } else {
+      throw new Error(`Cannot delete bot "${name}" defined by environment variables only.`);
+    }
+
+    // Reload to apply changes
+    this.reload();
+  }
+
+  /**
+   * Clone a bot configuration
+   */
+  public async cloneBot(name: string, newName: string): Promise<BotConfig> {
+    const existingBot = this.bots.get(name);
+    if (!existingBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    if (this.bots.has(newName)) {
+      throw new Error(`Bot "${newName}" already exists`);
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = newName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+    }
+
+    // Create new config based on resolved config of existing bot
+    const newConfig = {
+      ...existingBot,
+      name: newName,
+      _createdAt: new Date().toISOString(),
+    };
+
+    if (!fs.existsSync(botsDir)) {
+      fs.mkdirSync(botsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(newConfig, null, 2));
+    debug(`Cloned bot ${name} to ${newName} at ${filePath}`);
+
+    // Reload to pick up new bot
+    this.reload();
+
+    const newBot = this.bots.get(newName);
+    if (!newBot) {
+      throw new Error('Failed to load cloned bot configuration');
+    }
+
+    return newBot;
+  }
+
+  /**
    * Reload configuration
    */
   public reload(): void {
