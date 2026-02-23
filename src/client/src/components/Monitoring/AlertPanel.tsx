@@ -42,13 +42,13 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   useEffect(() => {
     const allAlerts = [...(propAlerts || []), ...wsAlerts.map((wsAlert, index) => ({
       id: wsAlert.id || `ws-${index}`,
-      type: wsAlert.severity as Alert['type'] || 'info',
+      type: (wsAlert.level === 'critical' ? 'error' : wsAlert.level) as Alert['type'] || 'info',
       title: wsAlert.title || 'System Alert',
       message: wsAlert.message || '',
       timestamp: wsAlert.timestamp || new Date().toISOString(),
-      source: wsAlert.source || 'System',
-      acknowledged: false,
-      resolved: false,
+      source: wsAlert.botName || 'System',
+      acknowledged: wsAlert.status === 'acknowledged',
+      resolved: wsAlert.status === 'resolved',
       metadata: wsAlert.metadata,
     }))];
 
