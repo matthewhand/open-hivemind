@@ -82,11 +82,49 @@ const glowMap = {
   error: 'hover:shadow-error/20',
 };
 
+// Subcomponents interfaces
+interface CardBodyProps {
+  children?: ReactNode;
+  className?: string;
+}
+
+interface CardTitleProps {
+  children?: ReactNode;
+  className?: string;
+  tag?: 'h2' | 'h3' | 'div' | 'span' | 'h4' | 'h5' | 'h6';
+}
+
+interface CardActionsProps {
+  children?: ReactNode;
+  className?: string;
+}
+
+// Subcomponents definitions
+const CardBody: React.FC<CardBodyProps> = ({ children, className = '' }) => {
+  // If className is provided, we assume the user wants a specific wrapper, so we render a div.
+  // Otherwise, we render a fragment to avoid double padding since Card already wraps children in .card-body
+  if (className) {
+    return <div className={className}>{children}</div>;
+  }
+  return <>{children}</>;
+};
+CardBody.displayName = 'Card.Body';
+
+const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', tag: Tag = 'h2' }) => {
+  return <Tag className={`card-title ${className}`}>{children}</Tag>;
+};
+CardTitle.displayName = 'Card.Title';
+
+const CardActions: React.FC<CardActionsProps> = ({ children, className = '' }) => {
+  return <div className={`card-actions justify-end ${className}`}>{children}</div>;
+};
+CardActions.displayName = 'Card.Actions';
+
 /**
  * A reusable DaisyUI Card component.
  * Supports different styles, content sections, and states.
  */
-const Card: React.FC<CardProps> = ({
+const CardBase: React.FC<CardProps> = ({
   title,
   subtitle,
   children,
@@ -107,11 +145,11 @@ const Card: React.FC<CardProps> = ({
 }) => {
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
-  if (compact) {cardClasses += ' card-compact';}
-  if (side) {cardClasses += ' card-side';}
-  if (imageFull) {cardClasses += ' image-full';}
-  if (bgVariant) {cardClasses += ` bg-${bgVariant}`;}
-  if (borderVariant) {cardClasses += ` border border-${borderVariant}`;}
+  if (compact) { cardClasses += ' card-compact'; }
+  if (side) { cardClasses += ' card-side'; }
+  if (imageFull) { cardClasses += ' image-full'; }
+  if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
+  if (borderVariant) { cardClasses += ` border border-${borderVariant}`; }
 
   // Enhanced hover effects
   if (hover) {
@@ -121,7 +159,7 @@ const Card: React.FC<CardProps> = ({
     }
   }
 
-  if (className) {cardClasses += ` ${className}`;}
+  if (className) { cardClasses += ` ${className}`; }
 
 
   // If loading, show skeleton loaders
@@ -195,5 +233,16 @@ const Card: React.FC<CardProps> = ({
     </div>
   );
 };
+
+// Attach subcomponents with intersection type
+const Card = CardBase as React.FC<CardProps> & {
+  Body: typeof CardBody;
+  Title: typeof CardTitle;
+  Actions: typeof CardActions;
+};
+
+Card.Body = CardBody;
+Card.Title = CardTitle;
+Card.Actions = CardActions;
 
 export default Card;
