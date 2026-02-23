@@ -91,6 +91,8 @@ const SystemManagement: React.FC = () => {
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
+    }
+  };
 
 
   useEffect(() => {
