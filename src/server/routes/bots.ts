@@ -12,14 +12,13 @@ import { validateRequest } from '@src/validation/validateRequest';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { auditMiddleware, logBotAction, type AuditedRequest } from '../middleware/audit';
-import { authenticateToken } from '../middleware/auth';
 
 const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
 
-// Apply authentication and audit middleware
-router.use(authenticateToken);
+// Apply audit middleware only - authentication is handled at a higher level if enabled
+// This matches the pattern used in other routes like personas
 router.use(auditMiddleware);
 
 /**

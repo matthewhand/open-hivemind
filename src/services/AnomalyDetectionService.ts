@@ -103,7 +103,6 @@ export class AnomalyDetectionService extends EventEmitter {
                 : 'warning',
           title: `Anomaly Detected: ${anomaly.metric}`,
           message: anomaly.explanation,
-          status: 'active',
           metadata: {
             anomalyId: anomaly.id,
             zScore: anomaly.zScore,
