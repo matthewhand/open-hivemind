@@ -113,14 +113,20 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleAlertAcknowledge = (alertId: string) => {
-    // API call to acknowledge alert
-    console.log('Acknowledge alert:', alertId);
+  const handleAlertAcknowledge = async (alertId: string) => {
+    try {
+      await apiService.acknowledgeAlert(alertId);
+    } catch (error) {
+      console.error('Failed to acknowledge alert:', error);
+    }
   };
 
-  const handleAlertResolve = (alertId: string) => {
-    // API call to resolve alert
-    console.log('Resolve alert:', alertId);
+  const handleAlertResolve = async (alertId: string) => {
+    try {
+      await apiService.resolveAlert(alertId);
+    } catch (error) {
+      console.error('Failed to resolve alert:', error);
+    }
   };
 
   const handleCreateBackup = async () => {
@@ -277,15 +283,6 @@ const SystemManagement: React.FC = () => {
           {/* Alert Management Tab */}
           {activeTab === 'alerts' && (
             <AlertPanel
-              alerts={alerts.map((alert, index) => ({
-                id: alert.id || `alert-${index}`,
-                type: (alert.level === 'critical' ? 'error' : alert.level) || 'info',
-                title: alert.title || 'System Alert',
-                message: alert.message || '',
-                timestamp: alert.timestamp || new Date().toISOString(),
-                source: 'System',
-                metadata: alert.metadata,
-              }))}
               onAcknowledge={handleAlertAcknowledge}
               onResolve={handleAlertResolve}
               maxAlerts={20}
