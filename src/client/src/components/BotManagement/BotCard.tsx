@@ -404,6 +404,9 @@ const BotCard: React.FC<BotCardProps> = ({
         {/* Provider Configuration Modal */}
         <ProviderConfigModal
           modalState={providerModalState}
+          existingProviders={
+            providerModalState.providerType === 'message' ? bot.messageProviders : bot.llmProviders
+          }
           onClose={handleProviderModalClose}
           onSubmit={handleProviderSubmit}
         />

@@ -668,6 +668,7 @@ const IntegrationsPanel: React.FC = () => {
       {/* Provider Config Modal (LLM Profiles) */}
       <ProviderConfigModal
         modalState={providerModalState}
+        existingProviders={llmProfiles}
         onClose={() => setProviderModalState({ ...providerModalState, isOpen: false })}
         onSubmit={handleProfileSubmit}
       />
