@@ -91,7 +91,8 @@ const SystemManagement: React.FC = () => {
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
-
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'performance') {
@@ -577,7 +578,6 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
                 <button
                   className="btn btn-warning btn-sm"
@@ -607,7 +607,11 @@ const SystemManagement: React.FC = () => {
                     <div className="stat-title">Error Rate</div>
                     <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
                     <div className="stat-desc">endpoints reporting errors</div>
+                  </div>
+                </div>
+              )}
 
+              <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
                 <button
                   className="btn btn-sm btn-ghost"
@@ -666,16 +670,13 @@ const SystemManagement: React.FC = () => {
                               <span className="opacity-70">Pool Size:</span>
                               <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
                             </div>
-                            {/* Add more DB stats if available */}
                           </>
                         )}
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
-
 
               <div className="card bg-base-200">
                 <div className="card-body p-4">
@@ -699,10 +700,9 @@ const SystemManagement: React.FC = () => {
                               <div className="text-xs opacity-50">{endpoint.url}</div>
                             </td>
                             <td>
-                              <div className={`badge ${
-                                endpoint.status === 'online' ? 'badge-success' :
+                              <div className={`badge ${endpoint.status === 'online' ? 'badge-success' :
                                 endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
-                              }`}>
+                                }`}>
                                 {endpoint.status}
                               </div>
                             </td>
@@ -714,6 +714,13 @@ const SystemManagement: React.FC = () => {
                         {!apiStatus?.endpoints?.length && (
                           <tr>
                             <td colSpan={5} className="text-center">No endpoint data available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
 
               <div className="divider"></div>
 
@@ -746,21 +753,16 @@ const SystemManagement: React.FC = () => {
                             <td colSpan={2} className="text-center py-4 opacity-50">
                               No environment overrides detected.
                             </td>
-
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-
-                </div>
-
                 ) : (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
                 )}
-
               </div>
             </div>
           )}

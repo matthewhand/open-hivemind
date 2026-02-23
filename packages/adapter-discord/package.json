@@ -2,7 +2,6 @@
     "name": "@hivemind/adapter-discord",
     "version": "1.0.0",
     "description": "Discord adapter for Open Hivemind",
-    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
