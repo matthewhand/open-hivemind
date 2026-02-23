@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SlackMessageProvider } from '@hivemind/adapter-slack';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
 // DiscordMessageProvider imported dynamically to avoid ESM require error
