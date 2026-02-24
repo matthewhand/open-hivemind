@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -16,6 +16,7 @@ import {
 } from '../components/DaisyUI';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
+import SearchFilterBar from '../components/SearchFilterBar';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -310,33 +311,20 @@ const PersonasPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
-        <div className="w-full sm:w-1/2 md:w-1/3">
-          <Input
-            placeholder="Search personas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="w-4 h-4 text-base-content/50" />}
-            size="sm"
-            className="w-full"
-            suffix={
-              searchQuery ? (
-                <button onClick={() => setSearchQuery('')} className="btn btn-ghost btn-xs btn-circle">
-                  <X className="w-3 h-3" />
-                </button>
-              ) : null
-            }
-          />
-        </div>
-        <div className="w-full sm:w-1/3 md:w-1/4">
-          <Select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            options={categoryOptions}
-            size="sm"
-          />
-        </div>
-      </div>
+      <SearchFilterBar
+        searchPlaceholder="Search personas..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={[
+          {
+            key: 'category',
+            value: selectedCategory,
+            onChange: setSelectedCategory,
+            options: categoryOptions,
+            className: "w-full sm:w-1/3 md:w-1/4"
+          }
+        ]}
+      />
 
       {/* Persona List */}
       {loading ? (
