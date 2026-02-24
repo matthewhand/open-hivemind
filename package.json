@@ -20,6 +20,7 @@
     "build": "bash ./scripts/build-all.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
+    "build:netlify": "bash ./scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
@@ -158,7 +159,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
-    "uuid": "^11.0.5",
+    "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2"
   },
@@ -177,7 +178,7 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@netlify/functions": "^5.1.0",
-    "@playwright/test": "^1.56.0",
+    "@playwright/test": "^1.58.2",
     "@rollup/plugin-inject": "^5.0.5",
     "@tailwindcss/vite": "^4.2.0",
     "@testing-library/jest-dom": "^6.8.0",
@@ -251,6 +252,6 @@
   },
   "overrides": {
     "undici": "^6.23.0",
-    "uuid": "^11.0.5"
+    "uuid": "^11.1.0"
   }
 }

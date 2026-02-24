@@ -26,10 +26,9 @@ export class AuthMiddleware {
       const origin = req.get('origin');
 
       const isLocalhostIp =
-        clientIP === '127.0.0.1' ||
-        clientIP === '::1' ||
-        clientIP === '::ffff:127.0.0.1';
+        clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
 
+      // Strict check for host header to prevent host header injection
       const isLocalhostHost = host && (
         host === 'localhost' ||
         host.startsWith('localhost:') ||
@@ -37,6 +36,7 @@ export class AuthMiddleware {
         host.startsWith('127.0.0.1:')
       );
 
+      // Strict check for origin header
       const isLocalhostOrigin = origin && (
         origin === 'http://localhost' ||
         origin.startsWith('http://localhost:') ||

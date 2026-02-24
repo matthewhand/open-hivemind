@@ -193,7 +193,16 @@ const MCPServersPage: React.FC = () => {
         throw new Error(data.message || 'Connection failed');
       }
 
-      setAlert({ type: 'success', message: 'Connection successful!' });
+      const data = await response.json();
+      const toolCount = data.data?.toolCount || 0;
+      const tools = data.data?.tools || [];
+
+      const toolNames = tools.slice(0, 5).map((t: any) => t.name).join(', ');
+      const moreText = tools.length > 5 ? ` and ${tools.length - 5} more` : '';
+
+      const message = `Connection successful! Found ${toolCount} tools: ${toolNames}${moreText}`;
+
+      setAlert({ type: 'success', message });
     } catch (err) {
       setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
     } finally {
@@ -249,23 +258,22 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    if (window.confirm('Are you sure you want to disconnect this server?')) {
+    if (window.confirm('Are you sure you want to delete this server configuration? This action cannot be undone.')) {
       try {
-        const response = await fetch('/api/admin/mcp-servers/disconnect', {
-          method: 'POST',
+        const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
+          method: 'DELETE',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ name: serverId }),
         });
 
         if (!response.ok) {
           const data = await response.json();
-          throw new Error(data.message || 'Failed to disconnect server');
+          throw new Error(data.message || 'Failed to delete server');
         }
 
-        setAlert({ type: 'success', message: 'Server disconnected successfully' });
+        setAlert({ type: 'success', message: 'Server deleted successfully' });
         await fetchServers();
       } catch (err) {
-        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to disconnect server' });
+        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete server' });
       }
     }
   };

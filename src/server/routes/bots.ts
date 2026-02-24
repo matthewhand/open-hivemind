@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { BotManager, CreateBotRequest } from '../../managers/BotManager';
+import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 
 const router = Router();
 const manager = BotManager.getInstance();
