@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
 import BotChatBubbles from '../components/BotChatBubbles';
+import Indicator from '../components/DaisyUI/Indicator';
+import Badge from '../components/DaisyUI/Badge';
 
 /**
  * DaisyUI Component Showcase
@@ -20,7 +22,7 @@ const DaisyUIShowcase: React.FC = () => {
     // High-priority additions
     'skeleton', 'breadcrumbs', 'textarea', 'file-input', 'steps', 'stat',
     // Medium-priority additions
-    'chat', 'timeline', 'carousel', 'toast',
+    'chat', 'timeline', 'carousel', 'toast', 'indicator',
   ];
 
   return (
@@ -133,6 +135,42 @@ const DaisyUIShowcase: React.FC = () => {
                 <span className="loading loading-spinner"></span>
               </button>
             </div>
+          </Section>
+        </div>
+      )}
+
+      {/* ===== INDICATOR ===== */}
+      {activeTab === 'indicator' && (
+        <div className="space-y-8">
+          <Section title="Basic Indicator">
+            <div className="indicator">
+              <span className="indicator-item badge badge-secondary">new</span>
+              <div className="grid w-32 h-32 bg-base-300 place-items-center">content</div>
+            </div>
+          </Section>
+
+          <Section title="Indicator Positions">
+             <div className="flex flex-wrap gap-8">
+                <div className="indicator">
+                  <span className="indicator-item indicator-top indicator-start badge badge-secondary">top start</span>
+                  <div className="grid w-32 h-32 bg-base-300 place-items-center">content</div>
+                </div>
+                <div className="indicator">
+                  <span className="indicator-item indicator-middle indicator-center badge badge-secondary">middle center</span>
+                  <div className="grid w-32 h-32 bg-base-300 place-items-center">content</div>
+                </div>
+                 <div className="indicator">
+                  <span className="indicator-item indicator-bottom indicator-end badge badge-secondary">bottom end</span>
+                  <div className="grid w-32 h-32 bg-base-300 place-items-center">content</div>
+                </div>
+             </div>
+          </Section>
+
+          <Section title="Indicator Component Usage">
+             <p className="mb-4">Using the React Component:</p>
+             <Indicator item={<Badge variant="secondary">New</Badge>}>
+                <div className="grid w-32 h-32 bg-base-300 place-items-center">React Component</div>
+             </Indicator>
           </Section>
         </div>
       )}
