@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { MessageFlowEvent } from './WebSocketService';
+import { type MessageFlowEvent } from './WebSocketService';
 
 const debug = Debug('app:ActivityLogger');
 
