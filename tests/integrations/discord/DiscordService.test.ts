@@ -115,12 +115,12 @@ describe('DiscordService', () => {
       },
       // DiscordBotManager uses flattened accessors from IServiceDependencies
       getAllBotConfigs: jest.fn().mockReturnValue([
-          {
-            name: 'TestBot1',
-            messageProvider: 'discord',
-            discord: { token: 'test_token_1' },
-            llmProvider: 'flowise',
-          },
+        {
+          name: 'TestBot1',
+          messageProvider: 'discord',
+          discord: { token: 'test_token_1' },
+          llmProvider: 'flowise',
+        },
       ]),
       isBotDisabled: jest.fn().mockReturnValue(false),
 
@@ -134,8 +134,8 @@ describe('DiscordService', () => {
       },
       messageConfig: {
         get: jest.fn().mockImplementation((key) => {
-            if (key === 'MESSAGE_IGNORE_BOTS') return false;
-            return undefined;
+          if (key === 'MESSAGE_IGNORE_BOTS') return false;
+          return undefined;
         }),
       },
       discordConfig: {
@@ -256,12 +256,12 @@ describe('DiscordService', () => {
     ])('handles %s token validation during initialization', async (type, discordConfig) => {
       // Setup mock with invalid token override
       mockDeps.getAllBotConfigs = jest.fn().mockReturnValue([
-          {
-            name: 'TestBot1',
-            messageProvider: 'discord',
-            discord: discordConfig,
-            llmProvider: 'flowise',
-          },
+        {
+          name: 'TestBot1',
+          messageProvider: 'discord',
+          discord: discordConfig,
+          llmProvider: 'flowise',
+        },
       ]);
 
       // Re-instantiate service
