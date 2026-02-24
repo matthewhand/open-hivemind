@@ -18,6 +18,11 @@ import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
 import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProfile,
+} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
@@ -25,13 +30,7 @@ import {
   getMcpServerProfiles,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
-// Import all convict config modules
 import messageConfig from '../../config/messageConfig';
-import {
-  getMessageProfiles,
-  saveMessageProfiles,
-  type MessageProfile,
-} from '../../config/messageProfiles';
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
@@ -251,7 +250,7 @@ router.post('/message-profiles', (req, res) => {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
-    const newProfile: MessageProviderProfile = {
+    const newProfile: MessageProfile = {
       key: profile.key,
       name: profile.name || profile.key,
       description: profile.description,
