@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
+// Note: This test file and feature are considered a duplicate of PR #318.
 test.describe('Personas Search and Filter', () => {
   test.setTimeout(60000);
 
