@@ -352,6 +352,7 @@ const PersonasPage: React.FC = () => {
           description={personas.length === 0 ? "Create your first persona to get started" : "Try adjusting your search or filters"}
           actionLabel={personas.length === 0 ? "Create Persona" : "Clear Filters"}
           onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setSelectedCategory('all'); }}
+          variant={personas.length === 0 ? 'primary' : 'secondary'}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
