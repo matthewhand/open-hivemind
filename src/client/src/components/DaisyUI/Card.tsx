@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 
 // Define the props for the Card component
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * The title of the card
    */
@@ -142,6 +142,7 @@ const CardBase: React.FC<CardProps> = ({
   hover = false,
   glowColor,
   className = '',
+  ...props
 }) => {
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
@@ -165,7 +166,7 @@ const CardBase: React.FC<CardProps> = ({
   // If loading, show skeleton loaders
   if (loading) {
     return (
-      <div className={cardClasses}>
+      <div className={cardClasses} {...props}>
         {imageSrc && !imageOverlay && (
           <figure className="skeleton h-32 w-full"></figure>
         )}
@@ -182,7 +183,7 @@ const CardBase: React.FC<CardProps> = ({
   // If empty state content is provided, show it
   if (emptyState) {
     return (
-      <div className={cardClasses}>
+      <div className={cardClasses} {...props}>
         {imageSrc && !imageOverlay && (
           <figure>
             <img src={imageSrc} alt={imageAlt} />
@@ -197,7 +198,7 @@ const CardBase: React.FC<CardProps> = ({
 
   // Otherwise, render the full card
   return (
-    <div className={cardClasses}>
+    <div className={cardClasses} {...props}>
       {/* Image section - if imageFull, it's the background; if imageOverlay, it's part of the body; otherwise, it's a figure */}
       {imageSrc && imageFull && (
         <figure>

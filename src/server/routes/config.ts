@@ -240,11 +240,9 @@ router.post('/message-profiles', (req, res) => {
     // Sanitize key to prevent path traversal and special characters
     const sanitizedKey = profile.key.replace(/[^a-zA-Z0-9-_]/g, '');
     if (sanitizedKey !== profile.key || sanitizedKey.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores',
-        });
+      return res.status(400).json({
+        error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores',
+      });
     }
     if (!profile.provider || typeof profile.provider !== 'string') {
       return res.status(400).json({ error: 'profile.provider is required' });

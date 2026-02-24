@@ -792,13 +792,16 @@ export class BotConfigurationManager {
       return;
     }
 
-    const allowed = Array.isArray(profile.guards.mcpGuard.allowedUsers)
-      ? profile.guards.mcpGuard.allowedUsers.filter(Boolean)
+    // Access mcpGuard from profile.guards.mcpGuard
+    const mcpGuard = profile.guards?.mcpGuard || { enabled: false, type: 'owner' };
+
+    const allowed = Array.isArray(mcpGuard.allowedUsers)
+      ? mcpGuard.allowedUsers.filter(Boolean)
       : undefined;
 
     config.mcpGuard = {
-      enabled: Boolean(profile.guards.mcpGuard.enabled),
-      type: profile.guards.mcpGuard.type === 'custom' ? 'custom' : 'owner',
+      enabled: Boolean(mcpGuard.enabled),
+      type: mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
       allowedUserIds: allowed,
     } as McpGuardConfig;

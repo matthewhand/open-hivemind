@@ -14,6 +14,7 @@ const unitIntegrationProject = {
   moduleNameMapper: {
     uuid: require.resolve('uuid'),
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
+    '^@src/integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
     '^@src/(.*)$': '<rootDir>/src/$1',
     '^@command/(.*)$': '<rootDir>/src/command/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
@@ -23,7 +24,6 @@ const unitIntegrationProject = {
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@src/integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
     '^@src/integrations/mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
     '^@integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
     '^@integrations/mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
