@@ -18,11 +18,6 @@ import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
 import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
-import {
-  getMessageProfiles,
-  saveMessageProfiles,
-  type MessageProviderProfile,
-} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
@@ -238,7 +233,7 @@ router.get('/message-profiles', (req, res) => {
 // POST /api/config/message-profiles - Create a Message profile
 router.post('/message-profiles', (req, res) => {
   try {
-    const profile = req.body as MessageProviderProfile;
+    const profile = req.body as MessageProfile;
     if (!profile.key || typeof profile.key !== 'string') {
       return res.status(400).json({ error: 'profile.key is required' });
     }
@@ -516,6 +511,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
+    // Sanitize configName to prevent path traversal
+    if (
+      configName &&
+      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
+    ) {
+      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    }
+
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -543,7 +546,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      const match = configName.match(/^([a-z]+)-.+$/);
+      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
+      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);
