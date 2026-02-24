@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
+import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -39,7 +39,6 @@ const BotsPage: React.FC = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
   const [uiError, setUiError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -109,12 +108,6 @@ const BotsPage: React.FC = () => {
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
-
-  const filteredBots = bots.filter(bot =>
-    (bot.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ((bot as any).messageProvider || bot.provider || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (bot.llmProvider || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // Sync lifecycle error to UI error
   useEffect(() => {
@@ -410,20 +403,6 @@ const BotsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      {bots.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
-          <input
-            type="text"
-            placeholder="Search bots..."
-            className="input input-bordered w-full pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      )}
-
       {/* DataTable */}
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body p-0">
@@ -441,16 +420,9 @@ const BotsPage: React.FC = () => {
                 <Plus className="w-4 h-4 mr-2" /> Create Bot
               </button>
             </div>
-          ) : filteredBots.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="w-12 h-12 mx-auto text-base-content/20 mb-3" />
-              <p className="text-base-content/60 font-medium">No bots found</p>
-              <p className="text-base-content/40 text-sm mb-4">Try adjusting your search terms</p>
-              <button className="btn btn-ghost btn-sm" onClick={() => setSearchQuery('')}>Clear Search</button>
-            </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {filteredBots.map((bot) => (
+              {bots.map((bot) => (
                 <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
                   <div className="flex items-center gap-4">
                     <BotAvatar bot={bot} />
