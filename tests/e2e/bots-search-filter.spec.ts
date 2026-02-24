@@ -37,7 +37,7 @@ test.describe('Bots Search and Filter', () => {
       connected: false,
       messageCount: 0,
       errorCount: 0,
-    }
+    },
   ];
 
   test.beforeEach(async ({ page }) => {
@@ -46,25 +46,50 @@ test.describe('Bots Search and Filter', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ bots: mockBots })
+        body: JSON.stringify({ bots: mockBots }),
       });
     });
 
     // Mock other endpoints to prevent errors
     await page.route('*/**/api/config/global', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
     });
     await page.route('*/**/api/personas', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
     });
     await page.route('*/**/api/config/llm-profiles', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: { llm: [] } }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ profiles: { llm: [] } }),
+      });
     });
     await page.route('*/**/api/config/llm-status', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        }),
+      });
     });
     await page.route('*/**/api/admin/guard-profiles', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: [] }),
+      });
     });
   });
 
@@ -127,9 +152,8 @@ test.describe('Bots Search and Filter', () => {
     await assertNoErrors(errors, 'Bot search by llm provider');
   });
 
-
   test('shows empty state when no matches found', async ({ page }) => {
-     const errors = await setupTestWithErrorDetection(page);
+    const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
     const searchInput = page.locator('input[placeholder="Search bots..."]');

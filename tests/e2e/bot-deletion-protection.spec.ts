@@ -1,9 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  assertNoErrors,
-  navigateAndWaitReady,
-  setupTestWithErrorDetection,
-} from './test-utils';
+import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Bot Deletion Protection', () => {
   test.setTimeout(90000);
@@ -18,9 +14,9 @@ test.describe('Bot Deletion Protection', () => {
 
     // Catch-all for other API requests
     await page.route('**/api/**', async (route) => {
-        // const url = route.request().url();
-        // console.log(`Fallback mock for: ${url}`);
-        await route.fulfill({ status: 200, body: '{}', contentType: 'application/json' });
+      // const url = route.request().url();
+      // console.log(`Fallback mock for: ${url}`);
+      await route.fulfill({ status: 200, body: '{}', contentType: 'application/json' });
     });
 
     await page.route('**/api/config', async (route) => {
@@ -45,28 +41,56 @@ test.describe('Bot Deletion Protection', () => {
     });
 
     await page.route('**/api/config/global', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
     });
 
     await page.route('**/api/personas', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
     });
 
     await page.route('**/api/config/llm-profiles', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: { llm: [] } }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ profiles: { llm: [] } }),
+      });
     });
 
     await page.route('**/api/config/llm-status', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+        }),
+      });
     });
 
     // Mock activity and history to prevent 404s/errors
     await page.route(`**/api/bots/${BOT_ID}/activity?limit=20`, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { activity: [] } }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { activity: [] } }),
+      });
     });
 
     await page.route(`**/api/bots/${BOT_ID}/history?limit=20`, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { history: [] } }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { history: [] } }),
+      });
     });
 
     // Mock DELETE request
@@ -74,7 +98,11 @@ test.describe('Bot Deletion Protection', () => {
     await page.route(`**/api/bots/${BOT_ID}`, async (route) => {
       if (route.request().method() === 'DELETE') {
         deleteRequested = true;
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
       } else {
         await route.continue();
       }
@@ -129,8 +157,8 @@ test.describe('Bot Deletion Protection', () => {
     await expect(deleteConfirmButton).toBeEnabled();
 
     // 8. Perform Deletion
-    const deleteRequestPromise = page.waitForRequest(request =>
-      request.url().includes(`/api/bots/${BOT_ID}`) && request.method() === 'DELETE'
+    const deleteRequestPromise = page.waitForRequest(
+      (request) => request.url().includes(`/api/bots/${BOT_ID}`) && request.method() === 'DELETE'
     );
     await deleteConfirmButton.click();
     await deleteRequestPromise;

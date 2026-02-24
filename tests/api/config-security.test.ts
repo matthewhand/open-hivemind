@@ -1,8 +1,9 @@
-
+import fs from 'fs';
+import path from 'path';
 import express from 'express';
 import request from 'supertest';
-import path from 'path';
-import fs from 'fs';
+// Import the router after mocking
+import configRouter from '../../src/server/routes/config';
 
 // Mock audit middleware
 jest.mock('../../src/server/middleware/audit', () => ({
@@ -22,8 +23,8 @@ jest.mock('../../src/config/BotConfigurationManager', () => ({
     getInstance: () => ({
       getAllBots: () => [],
       getWarnings: () => [],
-    })
-  }
+    }),
+  },
 }));
 
 jest.mock('../../src/config/UserConfigStore', () => ({
@@ -31,18 +32,25 @@ jest.mock('../../src/config/UserConfigStore', () => ({
     getInstance: () => ({
       getGeneralSettings: () => ({}),
       setGeneralSettings: jest.fn(),
-    })
-  }
+    }),
+  },
 }));
 
 // Mock config files
 const configMocks = [
-  'messageConfig', 'llmConfig', 'discordConfig', 'slackConfig',
-  'openaiConfig', 'flowiseConfig', 'ollamaConfig', 'mattermostConfig',
-  'openWebUIConfig', 'webhookConfig'
+  'messageConfig',
+  'llmConfig',
+  'discordConfig',
+  'slackConfig',
+  'openaiConfig',
+  'flowiseConfig',
+  'ollamaConfig',
+  'mattermostConfig',
+  'openWebUIConfig',
+  'webhookConfig',
 ];
 
-configMocks.forEach(cfg => {
+configMocks.forEach((cfg) => {
   jest.mock(`../../src/config/${cfg}`, () => ({
     getSchema: () => ({ properties: {} }),
     getProperties: () => ({}),
@@ -79,12 +87,9 @@ jest.mock('fs', () => {
       mkdir: jest.fn().mockResolvedValue(undefined),
       readdir: jest.fn().mockResolvedValue([]),
       stat: jest.fn().mockResolvedValue({ size: 100, mtime: new Date() }),
-    }
+    },
   };
 });
-
-// Import the router after mocking
-import configRouter from '../../src/server/routes/config';
 
 describe('Config Route Path Traversal Vulnerability', () => {
   let app: express.Application;
@@ -101,12 +106,10 @@ describe('Config Route Path Traversal Vulnerability', () => {
     const maliciousConfigName = 'openai-../../../exploit';
     const payload = {
       configName: maliciousConfigName,
-      updates: { someKey: 'someValue' }
+      updates: { someKey: 'someValue' },
     };
 
-    const res = await request(app)
-      .put('/api/config/global')
-      .send(payload);
+    const res = await request(app).put('/api/config/global').send(payload);
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Invalid config name');
