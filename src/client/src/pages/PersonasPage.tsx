@@ -405,6 +405,9 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
+                  <Copy className="w-4 h-4 mr-1" /> Clone
+                </Button>
                 {!persona.isBuiltIn && (
                   <>
                     <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
@@ -419,11 +422,6 @@ const PersonasPage: React.FC = () => {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </>
-                )}
-                {persona.isBuiltIn && (
-                  <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)}>
-                    <Copy className="w-4 h-4 mr-1" /> Clone
-                  </Button>
                 )}
               </div>
             </Card>
