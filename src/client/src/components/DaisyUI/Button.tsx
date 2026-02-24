@@ -4,7 +4,7 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   /** The content to display inside the button */
   children: React.ReactNode;
   /** Color variant of the button */
-  variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'link';
+  variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'link' | 'info' | 'success' | 'warning' | 'error';
   /** Size of the button */
   size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Style variant - solid or outline */
