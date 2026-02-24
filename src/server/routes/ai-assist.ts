@@ -97,11 +97,9 @@ router.post('/generate', async (req, res) => {
         .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
     }
     if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
-      return res
-        .status(400)
-        .json({
-          error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
-        });
+      return res.status(400).json({
+        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
+      });
     }
 
     const userConfig = UserConfigStore.getInstance();

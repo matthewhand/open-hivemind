@@ -258,23 +258,22 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    if (window.confirm('Are you sure you want to disconnect this server?')) {
+    if (window.confirm('Are you sure you want to delete this server configuration? This action cannot be undone.')) {
       try {
-        const response = await fetch('/api/admin/mcp-servers/disconnect', {
-          method: 'POST',
+        const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
+          method: 'DELETE',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ name: serverId }),
         });
 
         if (!response.ok) {
           const data = await response.json();
-          throw new Error(data.message || 'Failed to disconnect server');
+          throw new Error(data.message || 'Failed to delete server');
         }
 
-        setAlert({ type: 'success', message: 'Server disconnected successfully' });
+        setAlert({ type: 'success', message: 'Server deleted successfully' });
         await fetchServers();
       } catch (err) {
-        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to disconnect server' });
+        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete server' });
       }
     }
   };

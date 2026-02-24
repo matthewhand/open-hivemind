@@ -20,6 +20,7 @@
     "build": "bash ./scripts/build-all.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
+    "build:netlify": "bash ./scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
@@ -158,7 +159,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
-    "uuid": "^11.0.5",
+    "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2"
   },

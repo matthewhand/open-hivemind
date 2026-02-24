@@ -27,11 +27,11 @@ const rateLimit = require('express-rate-limit').default;
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many configuration attempts, please try again later.',
-    standardHeaders: true,
-  });
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      message: 'Too many configuration attempts, please try again later.',
+      standardHeaders: true,
+    });
 
 // Apply rate limiting to sensitive configuration operations
 router.use('/', configRateLimit);
@@ -779,9 +779,6 @@ router.post('/mcp-servers/disconnect', async (req: Request, res: Response) => {
     const mcpService = MCPService.getInstance();
     await mcpService.disconnectFromServer(name);
 
-    // Remove from persistent storage
-    webUIStorage.deleteMcp(name);
-
     return res.json({
       success: true,
       message: `Successfully disconnected from MCP server: ${name}`,
@@ -790,6 +787,29 @@ router.post('/mcp-servers/disconnect', async (req: Request, res: Response) => {
     return res.status(500).json({
       error: 'Failed to disconnect from MCP server',
       message: error.message || 'An error occurred while disconnecting from MCP server',
+    });
+  }
+});
+
+// Delete an MCP server
+router.delete('/mcp-servers/:name', async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+
+    const mcpService = MCPService.getInstance();
+    await mcpService.disconnectFromServer(name);
+
+    // Remove from persistent storage
+    webUIStorage.deleteMcp(name);
+
+    return res.json({
+      success: true,
+      message: `Successfully deleted MCP server: ${name}`,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to delete MCP server',
+      message: error.message || 'An error occurred while deleting MCP server',
     });
   }
 });
