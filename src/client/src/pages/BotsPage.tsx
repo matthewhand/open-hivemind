@@ -56,6 +56,13 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  useEffect(() => {
+    if (deleteModal.isOpen) {
+      setDeleteConfirmation('');
+    }
+  }, [deleteModal.isOpen]);
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
@@ -543,12 +550,28 @@ const BotsPage: React.FC = () => {
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
           <p className="text-sm text-base-content/60">This action cannot be undone.</p>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">
+                Type <strong>{deleteModal.bot?.name}</strong> to confirm.
+              </span>
+            </label>
+            <input
+              type="text"
+              placeholder="Type bot name to confirm"
+              className="input input-bordered w-full"
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+            />
+          </div>
+
           <div className="flex justify-end gap-2 mt-6">
             <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id}
+              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
             >
               {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
             </button>
