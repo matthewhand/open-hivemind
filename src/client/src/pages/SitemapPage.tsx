@@ -30,7 +30,7 @@ const SitemapPage: React.FC = () => {
   const [accessFilter, setAccessFilter] = useState<string>('all');
 
   const breadcrumbItems = [
-    { label: 'Sitemap', href: '/uber/sitemap', isActive: true },
+    { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 
   const fetchSitemap = async () => {
@@ -87,13 +87,14 @@ const SitemapPage: React.FC = () => {
 
     if (url.url === '/') {
       category = 'Root';
-    } else if (url.url.startsWith('/uber')) {
+    } else if (url.url.startsWith('/admin')) {
       if (url.url.includes('/bots')) { category = 'Bot Management'; }
       else if (url.url.includes('/mcp')) { category = 'MCP Servers'; }
       else if (url.url.includes('/monitoring') || url.url.includes('/activity')) { category = 'Monitoring'; }
       else if (url.url.includes('/settings')) { category = 'Settings'; }
+      else if (url.url === '/admin') { category = 'Main Dashboard'; } // The /admin root
       else { category = 'Main Dashboard'; }
-    } else if (url.url.startsWith('/webui') || url.url.startsWith('/admin')) {
+    } else if (url.url.startsWith('/webui')) {
       category = 'Legacy Interfaces';
     } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
       category = 'System APIs';

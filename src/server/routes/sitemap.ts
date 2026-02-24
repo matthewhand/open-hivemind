@@ -28,18 +28,10 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       description: 'Open-Hivemind - Multi-Agent AI Platform',
       access: 'public',
     },
-    {
-      url: '/uber',
-      changefreq: 'daily',
-      priority: 1.0,
-      lastmod: now,
-      description: 'Main Dashboard - Uber Interface',
-      access: 'public',
-    },
 
     // Dashboard pages
     {
-      url: '/uber/overview',
+      url: '/admin/overview',
       changefreq: 'daily',
       priority: 0.9,
       lastmod: now,
@@ -49,7 +41,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Bot management
     {
-      url: '/uber/bots',
+      url: '/admin/bots',
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: now,
@@ -57,7 +49,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/bots/create',
+      url: '/admin/bots/create',
       changefreq: 'monthly',
       priority: 0.7,
       lastmod: now,
@@ -65,7 +57,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/bots/templates',
+      url: '/admin/bots/templates',
       changefreq: 'weekly',
       priority: 0.7,
       lastmod: now,
@@ -75,7 +67,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Persona management
     {
-      url: '/uber/personas',
+      url: '/admin/personas',
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: now,
@@ -85,7 +77,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // MCP Server management (Owner-only)
     {
-      url: '/uber/mcp',
+      url: '/admin/mcp',
       changefreq: 'weekly',
       priority: 0.6,
       lastmod: now,
@@ -93,7 +85,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'owner',
     },
     {
-      url: '/uber/mcp/servers',
+      url: '/admin/mcp/servers',
       changefreq: 'weekly',
       priority: 0.6,
       lastmod: now,
@@ -101,7 +93,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'owner',
     },
     {
-      url: '/uber/mcp/tools',
+      url: '/admin/mcp/tools',
       changefreq: 'daily',
       priority: 0.6,
       lastmod: now,
@@ -111,7 +103,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Security and guards
     {
-      url: '/uber/guards',
+      url: '/admin/guards',
       changefreq: 'monthly',
       priority: 0.5,
       lastmod: now,
@@ -121,7 +113,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Monitoring and activity
     {
-      url: '/uber/monitoring',
+      url: '/admin/monitoring',
       changefreq: 'hourly',
       priority: 0.8,
       lastmod: now,
@@ -129,7 +121,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/activity',
+      url: '/admin/activity',
       changefreq: 'hourly',
       priority: 0.7,
       lastmod: now,
@@ -139,7 +131,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Settings and configuration
     {
-      url: '/uber/settings',
+      url: '/admin/settings',
       changefreq: 'monthly',
       priority: 0.6,
       lastmod: now,
@@ -149,7 +141,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Utilities
     {
-      url: '/uber/export',
+      url: '/admin/export',
       changefreq: 'monthly',
       priority: 0.5,
       lastmod: now,
@@ -157,7 +149,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/static',
+      url: '/admin/static',
       changefreq: 'weekly',
       priority: 0.4,
       lastmod: now,
@@ -165,7 +157,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'public',
     },
     {
-      url: '/uber/showcase',
+      url: '/admin/showcase',
       changefreq: 'weekly',
       priority: 0.3,
       lastmod: now,
