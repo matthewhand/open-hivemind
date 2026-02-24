@@ -56,7 +56,6 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
@@ -510,11 +509,7 @@ const BotsPage: React.FC = () => {
             setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
           }}
           onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b: any) => {
-            setDeleteModal({ isOpen: true, bot: b });
-            setDeleteConfirmation('');
-            setSelectedBotForConfig(null);
-          }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
           onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
         />
       )}
@@ -547,32 +542,13 @@ const BotsPage: React.FC = () => {
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
-
-          <div className="alert alert-warning text-sm py-2 shadow-sm">
-            <AlertCircle className="w-4 h-4" />
-            <span>This action cannot be undone.</span>
-          </div>
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text">Type <strong>{deleteModal.bot?.name}</strong> to confirm</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              placeholder={deleteModal.bot?.name}
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              autoFocus
-            />
-          </div>
-
+          <p className="text-sm text-base-content/60">This action cannot be undone.</p>
           <div className="flex justify-end gap-2 mt-6">
             <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
+              disabled={actionLoading === deleteModal.bot?.id}
             >
               {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
             </button>
