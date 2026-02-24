@@ -20,6 +20,7 @@
     "build": "bash ./scripts/build-all.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
+    "build:netlify": "bash ./scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
