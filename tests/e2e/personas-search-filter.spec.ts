@@ -73,6 +73,7 @@ test.describe('Personas Search and Filter', () => {
     await expect(page.locator('text=Beta Coder')).not.toBeVisible();
     await expect(page.locator('text=Gamma Artist')).not.toBeVisible();
 
+    await page.screenshot({ path: 'verification-personas-search.png' });
     await assertNoErrors(errors, 'Persona search');
   });
 
