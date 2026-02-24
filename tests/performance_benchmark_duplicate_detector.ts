@@ -1,6 +1,5 @@
-
-import DuplicateMessageDetector from './src/message/helpers/processing/DuplicateMessageDetector';
 import messageConfig from './src/config/messageConfig';
+import DuplicateMessageDetector from './src/message/helpers/processing/DuplicateMessageDetector';
 
 // Mock config
 jest.mock('./src/config/messageConfig', () => ({
@@ -8,7 +7,7 @@ jest.mock('./src/config/messageConfig', () => ({
     if (key === 'MESSAGE_SUPPRESS_DUPLICATES') return true;
     if (key === 'MESSAGE_DUPLICATE_WINDOW_MS') return 300000;
     return null;
-  }
+  },
 }));
 
 async function runBenchmark() {
@@ -49,7 +48,7 @@ async function runBenchmark() {
   }
 
   const end = process.hrtime(start);
-  const timeInMs = (end[0] * 1000 + end[1] / 1e6);
+  const timeInMs = end[0] * 1000 + end[1] / 1e6;
 
   console.log(`Total time for ${iterations} iterations: ${timeInMs.toFixed(2)}ms`);
   console.log(`Average time per iteration: ${(timeInMs / iterations).toFixed(4)}ms`);

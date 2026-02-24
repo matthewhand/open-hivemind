@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { OpenAiService } from '../OpenAiService';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
+import type { OpenAiService } from '../OpenAiService';
 
 const debug = Debug('app:completeSentence');
 
