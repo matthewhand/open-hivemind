@@ -43,7 +43,6 @@ export default defineConfig({
           redux: ['@reduxjs/toolkit', 'react-redux'],
           router: ['react-router-dom'],
           charts: ['recharts'],
-          daisyui: ['daisyui'],
         },
       },
     },
