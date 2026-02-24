@@ -18,11 +18,6 @@ import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
 import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
-import {
-  getMessageProfiles,
-  saveMessageProfiles,
-  type MessageProfile,
-} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
@@ -30,8 +25,14 @@ import {
   getMcpServerProfiles,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
+// Import all convict config modules
 import messageConfig from '../../config/messageConfig';
-
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProviderProfile,
+  type MessageProfile, // Alias kept for compatibility if needed, otherwise just use MessageProviderProfile
+} from '../../config/messageProfiles';
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
@@ -233,18 +234,14 @@ router.get('/message-profiles', (req, res) => {
 // POST /api/config/message-profiles - Create a Message profile
 router.post('/message-profiles', (req, res) => {
   try {
-    const profile = req.body as MessageProfile;
+    const profile = req.body as MessageProviderProfile;
     if (!profile.key || typeof profile.key !== 'string') {
       return res.status(400).json({ error: 'profile.key is required' });
     }
     // Sanitize key to prevent path traversal and special characters
     const sanitizedKey = profile.key.replace(/[^a-zA-Z0-9-_]/g, '');
     if (sanitizedKey !== profile.key || sanitizedKey.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores',
-        });
+      return res.status(400).json({ error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores' });
     }
     if (!profile.provider || typeof profile.provider !== 'string') {
       return res.status(400).json({ error: 'profile.provider is required' });
@@ -255,7 +252,7 @@ router.post('/message-profiles', (req, res) => {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
-    const newProfile: MessageProfile = {
+    const newProfile: MessageProviderProfile = {
       key: profile.key,
       name: profile.name || profile.key,
       description: profile.description,
@@ -515,14 +512,6 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
-    // Sanitize configName to prevent path traversal
-    if (
-      configName &&
-      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
-    ) {
-      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
-    }
-
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -550,8 +539,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
-      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
+      const match = configName.match(/^([a-z]+)-.+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);

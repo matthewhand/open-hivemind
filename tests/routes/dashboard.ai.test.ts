@@ -27,7 +27,9 @@ describe('AI Dashboard Routes', () => {
 
   it('POST /api/dashboard/api/ai/config updates configuration', async () => {
     const newConfig = { enabled: false, learningRate: 0.5 };
-    const response = await request(app).post('/api/dashboard/api/ai/config').send(newConfig);
+    const response = await request(app)
+      .post('/api/dashboard/api/ai/config')
+      .send(newConfig);
 
     expect(response.status).toBe(200);
     expect(response.body.enabled).toBe(false);
@@ -64,7 +66,9 @@ describe('AI Dashboard Routes', () => {
 
   it('POST /api/dashboard/api/ai/feedback accepts feedback', async () => {
     const feedback = { recommendationId: 'rec-1', feedback: 'liked' };
-    const response = await request(app).post('/api/dashboard/api/ai/feedback').send(feedback);
+    const response = await request(app)
+      .post('/api/dashboard/api/ai/feedback')
+      .send(feedback);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

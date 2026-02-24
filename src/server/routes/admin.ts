@@ -27,14 +27,14 @@ const rateLimit = require('express-rate-limit').default;
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many configuration attempts, please try again later.',
-    standardHeaders: true,
-  });
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      message: 'Too many configuration attempts, please try again later.',
+      standardHeaders: true,
+    });
 
 // Apply rate limiting to sensitive configuration operations
-router.use('/', configRateLimit);
+router.use('/api/admin', configRateLimit);
 
 // Mount sub-routes
 router.use('/agents', agentsRouter);
@@ -221,7 +221,7 @@ router.post('/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res
     });
   }
 });
-// GET /llm-providers - Get all LLM providers
+// GET /llm-providers - Get all configured LLM providers
 router.get('/llm-providers', (req: Request, res: Response) => {
   try {
     const providers = webUIStorage.getLlmProviders();
@@ -377,7 +377,7 @@ router.post('/llm-providers/:id/toggle', (req: Request, res: Response) => {
   }
 });
 
-// GET /messenger-providers - Get all messenger providers
+// GET /messenger-providers - Get all configured messenger providers
 router.get('/messenger-providers', (req: Request, res: Response) => {
   try {
     const providers = webUIStorage.getMessengerProviders();

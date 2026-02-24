@@ -28,11 +28,11 @@ export class DiscordMessageSender {
       const botInfo =
         (senderName && isSnowflake(senderName)
           ? bots.find(
-              (b) =>
-                b.botUserId === senderName ||
-                b.config?.BOT_ID === senderName ||
-                b.config?.discord?.clientId === senderName
-            )
+            (b) =>
+              b.botUserId === senderName ||
+              b.config?.BOT_ID === senderName ||
+              b.config?.discord?.clientId === senderName
+          )
           : bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
         bots[0];
 
@@ -92,7 +92,10 @@ export class DiscordMessageSender {
 
     const bots = this.botManager.getAllBots();
     if (bots.length === 0) {
-      throw new ConfigError('No Discord bot instances available', 'DISCORD_NO_BOTS_AVAILABLE');
+      throw new ConfigError(
+        'No Discord bot instances available',
+        'DISCORD_NO_BOTS_AVAILABLE'
+      );
     }
 
     // Rate limiting check - delay instead of error
@@ -106,11 +109,11 @@ export class DiscordMessageSender {
     const botInfo =
       (senderName && isSnowflake(senderName)
         ? bots.find(
-            (b) =>
-              b.botUserId === senderName ||
-              b.config?.BOT_ID === senderName ||
-              b.config?.discord?.clientId === senderName
-          )
+          (b) =>
+            b.botUserId === senderName ||
+            b.config?.BOT_ID === senderName ||
+            b.config?.discord?.clientId === senderName
+        )
         : bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) ||
       bots[0];
     const effectiveSenderName = botInfo.botUserName;
@@ -131,11 +134,10 @@ export class DiscordMessageSender {
           new Set([channelId, defaultChannel].filter(Boolean))
         ) as string[];
         if (candidates.length > 0) {
-          const picked =
-            channelRouter.pickBestChannel?.(candidates, {
-              provider: 'discord',
-              botName: botInfo.botUserName,
-            }) ?? channelId;
+          const picked = channelRouter.pickBestChannel?.(candidates, {
+            provider: 'discord',
+            botName: botInfo.botUserName,
+          }) ?? channelId;
           if (picked) {
             selectedChannelId = picked;
             log(
@@ -199,17 +201,14 @@ export class DiscordMessageSender {
           contentLength: (text || '').length,
           status: 'success',
         });
-      } catch {}
+      } catch { }
       return message.id;
     } catch (error: unknown) {
       if (error instanceof ValidationError) {
         log(
           `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${(error as Error).message}`
         );
-        this.deps.logger.error(
-          `[${effectiveSenderName}] Discord send message validation error:`,
-          error
-        );
+        this.deps.logger.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
         try {
           webSocketService?.recordAlert({
             level: 'error',
@@ -218,7 +217,7 @@ export class DiscordMessageSender {
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'ValidationError' },
           });
-        } catch {}
+        } catch { }
         return '';
       }
 
@@ -231,10 +230,7 @@ export class DiscordMessageSender {
       log(
         `Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`
       );
-      this.deps.logger.error(
-        `[${effectiveSenderName}] Discord send message network error:`,
-        networkError
-      );
+      this.deps.logger.error(`[${effectiveSenderName}] Discord send message network error:`, networkError);
       try {
         webSocketService?.recordAlert({
           level: 'error',
@@ -243,7 +239,7 @@ export class DiscordMessageSender {
           botName: botInfo.botUserName,
           metadata: { channelId: selectedChannelId, errorType: 'NetworkError' },
         });
-      } catch {}
+      } catch { }
       return '';
     }
   }

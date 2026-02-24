@@ -40,11 +40,11 @@ interface Toast {
 }
 
 const STATUS_META: Record<NonNullable<UIBot['status']>, { variant: 'success' | 'neutral' | 'error' | 'warning'; label: string; icon: React.ReactNode }> = {
-  online: { variant: 'success', label: 'Online', icon: <CheckCircleIcon className="w-4 h-4" aria-hidden="true" /> },
+  online: { variant: 'success', label: 'Online', icon: <CheckCircleIcon className="w-4 h-4" /> },
   offline: { variant: 'neutral', label: 'Offline', icon: null },
-  error: { variant: 'error', label: 'Error', icon: <XCircleIcon className="w-4 h-4" aria-hidden="true" /> },
-  starting: { variant: 'warning', label: 'Starting', icon: <ClockIcon className="w-4 h-4" aria-hidden="true" /> },
-  processing: { variant: 'warning', label: 'Processing', icon: <ArrowPathIcon className="w-4 h-4" aria-hidden="true" /> },
+  error: { variant: 'error', label: 'Error', icon: <XCircleIcon className="w-4 h-4" /> },
+  starting: { variant: 'warning', label: 'Starting', icon: <ClockIcon className="w-4 h-4" /> },
+  processing: { variant: 'warning', label: 'Processing', icon: <ArrowPathIcon className="w-4 h-4" /> },
 };
 
 const BotManager: React.FC = () => {
@@ -291,14 +291,13 @@ const BotManager: React.FC = () => {
                 <Input
                   ref={searchInputRef}
                   placeholder="Search bots (/ to focus)"
-                  aria-label="Search bots"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
-                <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} size="sm" aria-label="Filter by status" options={[
+                <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} size="sm" options={[
                   { value: 'all', label: 'All Status' },
                   { value: 'online', label: 'Online' },
                   { value: 'offline', label: 'Offline' },
@@ -306,24 +305,24 @@ const BotManager: React.FC = () => {
                   { value: 'processing', label: 'Processing' },
                   { value: 'error', label: 'Error' },
                 ]} />
-                <Select value={filterMessageProvider} onChange={(e) => setFilterMessageProvider(e.target.value)} size="sm" aria-label="Filter by message provider" options={[
+                <Select value={filterMessageProvider} onChange={(e) => setFilterMessageProvider(e.target.value)} size="sm" options={[
                   { value: 'all', label: 'All Msg' },
                   { value: 'discord', label: 'Discord' },
                   { value: 'slack', label: 'Slack' },
                   { value: 'mattermost', label: 'Mattermost' },
                 ]} />
-                <Select value={filterLlmProvider} onChange={(e) => setFilterLlmProvider(e.target.value)} size="sm" aria-label="Filter by LLM provider" options={[
+                <Select value={filterLlmProvider} onChange={(e) => setFilterLlmProvider(e.target.value)} size="sm" options={[
                   { value: 'all', label: 'All LLM' },
                   { value: 'openai', label: 'OpenAI' },
                   { value: 'flowise', label: 'Flowise' },
                   { value: 'openwebui', label: 'OpenWebUI' },
                 ]} />
                 <Tooltip content="Select All">
-                  <Button size="sm" variant="ghost" className="btn-circle" onClick={selectAll} disabled={filteredBots.length === 0} aria-label="Select all bots">
+                  <Button size="sm" variant="ghost" className="btn-circle" onClick={selectAll} disabled={filteredBots.length === 0}>
                     <CheckAllIcon className="w-5 h-5" />
                   </Button>
                 </Tooltip>
-                {selectedBots.size > 0 && <Button size="sm" onClick={clearSelection} aria-label="Clear selection">Clear</Button>}
+                {selectedBots.size > 0 && <Button size="sm" onClick={clearSelection}>Clear</Button>}
               </div>
             </div>
             <p className="text-xs text-base-content/70">Keyboard: / focus • Ctrl+A select all • Esc clear</p>
@@ -342,7 +341,7 @@ const BotManager: React.FC = () => {
                   {mutationInFlight && <div className="absolute top-0 left-0 w-full h-1 bg-primary/20"><div className="h-full bg-primary w-1/2 animate-pulse"></div></div>}
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-semibold truncate flex-1" title={bot.name}>🤖 {bot.name}</h3>
-                    <Checkbox checked={isSelected} onChange={() => toggleSelection(bot.name)} aria-label={`Select bot ${bot.name}`} />
+                    <Checkbox checked={isSelected} onChange={() => toggleSelection(bot.name)} />
                   </div>
                   {renderStatusBadge(bot)}
                   <div className="flex gap-2 my-2">
@@ -352,12 +351,12 @@ const BotManager: React.FC = () => {
                   {bot.lastActivity && <p className="text-xs text-base-content/60">Last: {new Date(bot.lastActivity).toLocaleString()}</p>}
                   <div className="flex gap-2 mt-3">
                     <Tooltip content="Clone Bot">
-                      <Button size="sm" variant="ghost" className="btn-circle" onClick={() => openCloneDialog(bot.name)} disabled={mutationInFlight} aria-label={`Clone bot ${bot.name}`}>
+                      <Button size="sm" variant="ghost" className="btn-circle" onClick={() => openCloneDialog(bot.name)} disabled={mutationInFlight}>
                         <DocumentDuplicateIcon className="w-4 h-4" />
                       </Button>
                     </Tooltip>
                     <Tooltip content="Delete Bot">
-                      <Button size="sm" variant="ghost" className="btn-circle text-error" onClick={() => openDeleteDialog(bot.name)} disabled={mutationInFlight} aria-label={`Delete bot ${bot.name}`}>
+                      <Button size="sm" variant="ghost" className="btn-circle text-error" onClick={() => openDeleteDialog(bot.name)} disabled={mutationInFlight}>
                         <TrashIcon className="w-4 h-4" />
                       </Button>
                     </Tooltip>

@@ -12,6 +12,9 @@ export interface MessageProfile {
   config: Record<string, unknown>;
 }
 
+// Alias for backward compatibility if needed, or consistent naming
+export type MessageProviderProfile = MessageProfile;
+
 export interface MessageProfiles {
   message: MessageProfile[];
 }

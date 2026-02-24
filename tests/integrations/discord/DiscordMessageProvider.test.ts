@@ -90,13 +90,7 @@ jest.isolateModules(() => {
       }));
 
       const { DiscordService } = require('@hivemind/adapter-discord');
-      service = new DiscordService({
-        logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() } as any,
-        messageConfig: { get: jest.fn() } as any,
-        discordConfig: { get: jest.fn() } as any,
-        errorTypes: { ConfigError: class ConfigError extends Error { } } as any,
-      });
-      DiscordService.setInstance(service);
+      service = DiscordService.getInstance();
       await service.initialize();
 
       // Load Provider class from the same isolated module context
@@ -117,7 +111,7 @@ jest.isolateModules(() => {
     });
 
     afterEach(async () => {
-      if (service) await service.shutdown();
+      await service.shutdown();
     });
 
     it('should fetch messages from DiscordService', async () => {

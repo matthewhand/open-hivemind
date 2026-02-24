@@ -1,6 +1,6 @@
+import { SlackService } from '../SlackService';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
-import { SlackService } from '../SlackService';
 
 export class SlackMessageProvider implements IMessageProvider {
   private _slackService?: SlackService;

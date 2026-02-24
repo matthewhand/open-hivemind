@@ -1,8 +1,8 @@
 import {
-  SanitizationOptions,
-  sanitizeObject,
   sanitizeValue,
+  sanitizeObject,
   ValidationPatterns,
+  SanitizationOptions
 } from '@src/validation/inputValidator';
 
 describe('Input Validator', () => {
@@ -50,14 +50,12 @@ describe('Input Validator', () => {
     });
 
     it('should apply multiple options', () => {
-      expect(
-        sanitizeValue(' <P>TEST</P> ', {
-          trim: true,
-          lowercase: true,
-          stripHtml: true,
-          maxLength: 4,
-        })
-      ).toBe('test');
+      expect(sanitizeValue(' <P>TEST</P> ', {
+        trim: true,
+        lowercase: true,
+        stripHtml: true,
+        maxLength: 4
+      })).toBe('test');
     });
   });
 
@@ -86,26 +84,26 @@ describe('Input Validator', () => {
         user: {
           name: ' test ',
           details: {
-            bio: '<p>bio</p>',
-          },
-        },
+            bio: '<p>bio</p>'
+          }
+        }
       };
       const expected = {
         user: {
           name: 'test',
           details: {
-            bio: 'bio',
-          },
-        },
+            bio: 'bio'
+          }
+        }
       };
       expect(sanitizeObject(input, { trim: true, stripHtml: true })).toEqual(expected);
     });
 
     it('should sanitize keys', () => {
-      const input = { ' <b>key</b> ': 'value' };
-      // sanitizeObject sanitizes keys with stripHtml: true
-      const expected = { ' key ': 'value' };
-      expect(sanitizeObject(input)).toEqual(expected);
+        const input = { ' <b>key</b> ': 'value' };
+        // sanitizeObject sanitizes keys with stripHtml: true
+        const expected = { ' key ': 'value' };
+        expect(sanitizeObject(input)).toEqual(expected);
     });
   });
 
@@ -129,14 +127,14 @@ describe('Input Validator', () => {
     });
 
     it('should validate objectId', () => {
-      expect(ValidationPatterns.objectId.test('507f1f77bcf86cd799439011')).toBe(true);
-      expect(ValidationPatterns.objectId.test('invalid')).toBe(false);
+        expect(ValidationPatterns.objectId.test('507f1f77bcf86cd799439011')).toBe(true);
+        expect(ValidationPatterns.objectId.test('invalid')).toBe(false);
     });
 
     it('should validate uuid', () => {
-      // ValidationPatterns.uuid checks for v4
-      expect(ValidationPatterns.uuid.test('123e4567-e89b-42d3-a456-426614174000')).toBe(true);
-      expect(ValidationPatterns.uuid.test('invalid')).toBe(false);
+        // ValidationPatterns.uuid checks for v4
+        expect(ValidationPatterns.uuid.test('123e4567-e89b-42d3-a456-426614174000')).toBe(true);
+        expect(ValidationPatterns.uuid.test('invalid')).toBe(false);
     });
   });
 });

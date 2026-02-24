@@ -197,7 +197,7 @@ describe('RateLimiter', () => {
     expect(RateLimiter.checkLimit(id, 10, windowMs)).toBe(false);
 
     // Wait for window to expire
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await new Promise(resolve => setTimeout(resolve, 150));
 
     // Should be allowed again
     expect(RateLimiter.checkLimit(id, 10, windowMs)).toBe(true);

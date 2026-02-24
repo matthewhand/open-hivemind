@@ -128,9 +128,7 @@ describe('DuplicateMessageDetector', () => {
     expect(detector.isDuplicate(channelId, 'This is a long massage', externalHistory)).toBe(true);
 
     // "This is a totally different message" -> distance large
-    expect(
-      detector.isDuplicate(channelId, 'This is a totally different message', externalHistory)
-    ).toBe(false);
+    expect(detector.isDuplicate(channelId, 'This is a totally different message', externalHistory)).toBe(false);
   });
 
   it('should efficiently reject similar length but different content strings', () => {

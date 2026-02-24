@@ -9,6 +9,7 @@ export interface GuardrailProfile {
   id: string;
   name: string;
   description?: string;
+  mcpGuard?: McpGuardConfig; // For backward compatibility / easier access
   guards: {
     mcpGuard: McpGuardConfig;
     rateLimit?: {

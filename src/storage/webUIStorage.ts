@@ -16,11 +16,10 @@ interface WebUIConfig {
   lastUpdated: string;
 }
 
-export class WebUIStorage {
+class WebUIStorage {
   private configDir: string;
   private configFile: string;
   private guardsInitializationInProgress = false;
-  private configCache: WebUIConfig | null = null;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -41,22 +40,17 @@ export class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
-    if (this.configCache) {
-      return this.configCache;
-    }
-
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        this.configCache = JSON.parse(data);
-        return this.configCache!;
+        return JSON.parse(data);
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
     }
 
     // Return default configuration
-    const defaultConfig = {
+    return {
       agents: [],
       mcpServers: [],
       llmProviders: [],
@@ -65,9 +59,6 @@ export class WebUIStorage {
       guards: [],
       lastUpdated: new Date().toISOString(),
     };
-
-    this.configCache = defaultConfig;
-    return defaultConfig;
   }
 
   /**
@@ -78,7 +69,6 @@ export class WebUIStorage {
       config.lastUpdated = new Date().toISOString();
       this.ensureConfigDir();
       fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2));
-      this.configCache = config;
     } catch (error) {
       console.error('Error saving web UI config:', error);
       throw new Error(

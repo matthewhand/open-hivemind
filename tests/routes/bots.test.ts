@@ -166,9 +166,7 @@ describe('Bots Router', () => {
       const clonedBot = { id: 'cloned-bot', name: 'cloned-bot' };
       mockManager.cloneBot.mockResolvedValue(clonedBot);
 
-      const res = await request(app)
-        .post('/api/bots/test-bot/clone')
-        .send({ newName: 'cloned-bot' });
+      const res = await request(app).post('/api/bots/test-bot/clone').send({ newName: 'cloned-bot' });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);

@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationTemplateService } from '../../../../src/server/services/ConfigurationTemplateService';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
+import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Mock DatabaseManager
 jest.mock('../../../../src/database/DatabaseManager');
@@ -32,7 +32,7 @@ describe('ConfigurationTemplateService', () => {
     fs.mkdirSync(TEST_DIR, { recursive: true });
 
     service = ConfigurationTemplateService.getInstance(TEST_DIR);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50));
   });
 
   afterEach(async () => {
@@ -45,7 +45,7 @@ describe('ConfigurationTemplateService', () => {
   test('should load built-in templates on initialization', async () => {
     const templates = await service.getAllTemplates();
     expect(templates.length).toBeGreaterThan(0);
-    const discordBasic = templates.find((t) => t.id === 'discord-basic');
+    const discordBasic = templates.find(t => t.id === 'discord-basic');
     expect(discordBasic).toBeDefined();
     expect(discordBasic?.isBuiltIn).toBe(true);
   });
@@ -57,13 +57,13 @@ describe('ConfigurationTemplateService', () => {
       category: 'general' as const,
       tags: ['test'],
       config: {
-        name: 'My Bot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: { token: 'Bot valid-token' },
-        openai: { apiKey: 'sk-valid-key' },
+          name: 'My Bot',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          discord: { token: 'Bot valid-token' },
+          openai: { apiKey: 'sk-valid-key' }
       },
-      createdBy: 'user1',
+      createdBy: 'user1'
     };
 
     const template = await service.createTemplate(request);
@@ -79,47 +79,47 @@ describe('ConfigurationTemplateService', () => {
 
   test('should get all templates including created ones', async () => {
     const customTemplate = {
-      id: 'custom-1',
-      name: 'Custom Template',
-      description: 'Description',
-      category: 'general',
-      tags: ['custom'],
-      config: {},
-      isBuiltIn: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      usageCount: 0,
+        id: 'custom-1',
+        name: 'Custom Template',
+        description: 'Description',
+        category: 'general',
+        tags: ['custom'],
+        config: {},
+        isBuiltIn: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        usageCount: 0
     };
 
     fs.writeFileSync(path.join(TEST_DIR, 'custom-1.json'), JSON.stringify(customTemplate));
 
     const templates = await service.getAllTemplates();
-    const found = templates.find((t) => t.id === 'custom-1');
+    const found = templates.find(t => t.id === 'custom-1');
     expect(found).toBeDefined();
-    const builtin = templates.find((t) => t.isBuiltIn);
+    const builtin = templates.find(t => t.isBuiltIn);
     expect(builtin).toBeDefined();
   });
 
   test('should filter templates by category', async () => {
     const discordTmpl = {
-      id: 'discord-custom',
-      name: 'Discord Custom',
-      description: '...',
-      category: 'discord',
-      tags: [],
-      config: {},
-      isBuiltIn: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      usageCount: 0,
+        id: 'discord-custom',
+        name: 'Discord Custom',
+        description: '...',
+        category: 'discord',
+        tags: [],
+        config: {},
+        isBuiltIn: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        usageCount: 0
     };
     fs.writeFileSync(path.join(TEST_DIR, 'discord-custom.json'), JSON.stringify(discordTmpl));
 
     const discordTemplates = await service.getAllTemplates({ category: 'discord' });
     const generalTemplates = await service.getAllTemplates({ category: 'general' });
 
-    expect(discordTemplates.find((t) => t.id === 'discord-custom')).toBeDefined();
-    expect(generalTemplates.find((t) => t.id === 'discord-custom')).toBeUndefined();
+    expect(discordTemplates.find(t => t.id === 'discord-custom')).toBeDefined();
+    expect(generalTemplates.find(t => t.id === 'discord-custom')).toBeUndefined();
   });
 
   test('should handle malformed template files gracefully', async () => {
@@ -135,24 +135,24 @@ describe('ConfigurationTemplateService', () => {
       category: 'general' as const,
       tags: ['original'],
       config: {
-        name: 'Bot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: { token: 'Bot token' },
-        openai: { apiKey: 'sk-key' },
-      },
+          name: 'Bot',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          discord: { token: 'Bot token' },
+          openai: { apiKey: 'sk-key' }
+      }
     };
     const created = await service.createTemplate(request);
 
     const updateRequest = {
       description: 'Updated description',
       config: {
-        name: 'Bot Updated',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: { token: 'Bot token' },
-        openai: { apiKey: 'sk-key' },
-      },
+          name: 'Bot Updated',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          discord: { token: 'Bot token' },
+          openai: { apiKey: 'sk-key' }
+      }
     };
 
     const updated = await service.updateTemplate(created.id, updateRequest);
@@ -169,12 +169,12 @@ describe('ConfigurationTemplateService', () => {
       category: 'general' as const,
       tags: [],
       config: {
-        name: 'Bot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: { token: 'Bot token' },
-        openai: { apiKey: 'sk-key' },
-      },
+          name: 'Bot',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          discord: { token: 'Bot token' },
+          openai: { apiKey: 'sk-key' }
+      }
     };
     const created = await service.createTemplate(request);
 

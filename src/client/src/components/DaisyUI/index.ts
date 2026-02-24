@@ -10,7 +10,6 @@ export { default as Card } from './Card';
 export { default as Carousel } from './Carousel';
 export { default as Chat } from './Chat';
 export { default as Diff } from './Diff';
-export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
 export { default as Table } from './Table';
 export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, SkeletonAvatar, SkeletonTable, SkeletonStats, LoadingSkeletonCard } from './Loading';

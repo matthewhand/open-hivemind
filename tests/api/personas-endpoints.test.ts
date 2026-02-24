@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import { PersonaManager } from '../../src/managers/PersonaManager';
 import personasRouter from '../../src/server/routes/personas';
+import { PersonaManager } from '../../src/managers/PersonaManager';
 
 // Mock PersonaManager
 jest.mock('../../src/managers/PersonaManager', () => {
@@ -63,13 +63,7 @@ describe('Personas Routes', () => {
 
       const response = await request(app)
         .post('/api/personas')
-        .send({
-          name: 'New Persona',
-          description: 'Desc',
-          category: 'general',
-          systemPrompt: 'Prompt',
-          traits: [],
-        })
+        .send({ name: 'New Persona', description: 'Desc', category: 'general', systemPrompt: 'Prompt', traits: [] })
         .expect(201);
 
       expect(response.body).toEqual(persona);

@@ -34,7 +34,7 @@ const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
  */
 const validateIpOctets = (ip: string): boolean => {
   const parts = ip.split('/')[0].split('.');
-  return parts.every((p) => {
+  return parts.every(p => {
     const num = parseInt(p, 10);
     return num >= 0 && num <= 255;
   });
@@ -115,7 +115,7 @@ router.post('/', (req: Request, res: Response) => {
     accessGuard.config = {
       type: accessConfig.type,
       users: accessConfig.users || [],
-      ips: accessConfig.ips || [],
+      ips: accessConfig.ips || []
     };
 
     // Save the updated guard
@@ -125,6 +125,7 @@ router.post('/', (req: Request, res: Response) => {
       success: true,
       message: 'Access control saved successfully',
     });
+
   } catch (error: any) {
     debug('Error saving access control:', error);
     return res.status(500).json({
@@ -164,6 +165,7 @@ router.post('/:id/toggle', (req: Request, res: Response) => {
       success: true,
       message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
     });
+
   } catch (error: any) {
     debug('Error toggling guard:', error);
     return res.status(500).json({

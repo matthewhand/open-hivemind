@@ -31,7 +31,7 @@ describe('Health API Integration Tests', () => {
     // If we manually started the server, we need to close it if WebUIServer doesn't handle it in supertest context
     // Actually supertest manages its own server if we pass it the app, but here we explicitly start it.
     if (server && server.close) {
-      await new Promise((resolve) => server.close(resolve));
+        await new Promise(resolve => server.close(resolve));
     }
   });
 
@@ -61,19 +61,19 @@ describe('Health API Integration Tests', () => {
     });
 
     it('should include valid system information', async () => {
-      const response = await request(app).get('/api/health/detailed').expect(200);
+        const response = await request(app).get('/api/health/detailed').expect(200);
 
-      expect(response.body.system).toHaveProperty('platform');
-      expect(response.body.system).toHaveProperty('nodeVersion');
-      expect(response.body.system).toHaveProperty('arch');
+        expect(response.body.system).toHaveProperty('platform');
+        expect(response.body.system).toHaveProperty('nodeVersion');
+        expect(response.body.system).toHaveProperty('arch');
     });
 
     it('should include memory statistics', async () => {
-      const response = await request(app).get('/api/health/detailed').expect(200);
+        const response = await request(app).get('/api/health/detailed').expect(200);
 
-      expect(response.body.memory).toHaveProperty('used');
-      expect(response.body.memory).toHaveProperty('total');
-      expect(response.body.memory).toHaveProperty('percentage');
+        expect(response.body.memory).toHaveProperty('used');
+        expect(response.body.memory).toHaveProperty('total');
+        expect(response.body.memory).toHaveProperty('percentage');
     });
   });
 

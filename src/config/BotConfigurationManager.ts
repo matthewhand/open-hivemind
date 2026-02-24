@@ -1,7 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
@@ -792,15 +792,14 @@ export class BotConfigurationManager {
       return;
     }
 
-    const allowed = Array.isArray(profile.guards.mcpGuard.allowedUsers)
-      ? profile.guards.mcpGuard.allowedUsers.filter(Boolean)
+    const allowed = Array.isArray(profile.mcpGuard.allowedUsers)
+      ? profile.mcpGuard.allowedUsers.filter(Boolean)
       : undefined;
 
     config.mcpGuard = {
-      enabled: Boolean(profile.guards.mcpGuard.enabled),
-      type: profile.guards.mcpGuard.type === 'custom' ? 'custom' : 'owner',
+      enabled: Boolean(profile.mcpGuard.enabled),
+      type: profile.mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
-      allowedUserIds: allowed,
     } as McpGuardConfig;
   }
 
@@ -1038,7 +1037,7 @@ export class BotConfigurationManager {
     // this.bots should have the new bot.
     const newBot = this.bots.get(newName);
     if (!newBot) {
-      throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
+        throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
     }
     return newBot;
   }

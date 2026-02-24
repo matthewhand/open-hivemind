@@ -56,7 +56,7 @@ export class ActivityLogger {
       // Read file content
       // TODO: For production with large files, use readline or streams
       const content = fs.readFileSync(this.logFile, 'utf8');
-      const lines = content.split('\n').filter((line) => line.trim());
+      const lines = content.split('\n').filter(line => line.trim());
 
       const events: MessageFlowEvent[] = [];
 
@@ -104,6 +104,7 @@ export class ActivityLogger {
 
       // Return in chronological order (oldest to newest)
       return events.reverse();
+
     } catch (error) {
       debug('Failed to read activity log: %O', error);
       return [];
