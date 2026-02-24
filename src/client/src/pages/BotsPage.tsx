@@ -226,6 +226,7 @@ const BotsPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!deleteModal.bot) { return; }
+    if (deleteConfirmation !== deleteModal.bot.name) { return; }
 
     try {
       setActionLoading(deleteModal.bot.id);
@@ -451,11 +452,7 @@ const BotsPage: React.FC = () => {
           llmProfiles={llmProfiles}
           integrationOptions={{ message: getIntegrationOptions('message') }}
           onUpdateConfig={async (bot: any, key: string, value: any) => {
-            // Wrap update to refresh selected bot state if needed
             await handleUpdateConfig(bot, key as any, value);
-            // We might need to fetch the updated bot from the list to keep modal in sync?
-            // Since handleUpdateConfig updates state, the 'bot' prop from the list *should* update if we keyed it correctly.
-            // But 'selectedBotForConfig' is a separate state piece. We need to update it too.
             setSelectedBotForConfig(prev => prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null);
           }}
           onUpdatePersona={async (bot: any, pid: string) => {
