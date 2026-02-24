@@ -27,8 +27,7 @@ import BotChatBubbles from '../components/BotChatBubbles';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
-
-const API_BASE = '/api';
+import { apiService } from '../services/api';
 
 const BotsPage: React.FC = () => {
   // UI State
@@ -56,33 +55,31 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
-    const [configResponse, globalResponse, personasResponse, profilesResponse] = await Promise.all([
-      fetch(`${API_BASE}/config`, { signal }),
-      fetch(`${API_BASE}/config/global`, { signal }),
-      fetch(`${API_BASE}/personas`, { signal }),
-      fetch(`${API_BASE}/config/llm-profiles`, { signal }),
-    ]);
+    const configData = await apiService.getConfig();
 
-    if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
-    const configData = await configResponse.json();
+    let globalData: any = {};
+    let personas: any[] = [];
+    let llmProfiles: any[] = [];
 
-    let personas = [];
-    if (personasResponse.ok) {
-      personas = await personasResponse.json();
-    }
+    try {
+      globalData = await apiService.get<any>('/api/config/global', { signal });
+    } catch (e) { console.warn('Failed to fetch global config', e); }
 
-    let llmProfiles = [];
-    if (profilesResponse.ok) {
-      const profilesData = await profilesResponse.json();
+    try {
+      personas = await apiService.getPersonas();
+    } catch (e) { console.warn('Failed to fetch personas', e); }
+
+    try {
+      const profilesData = await apiService.getLlmProfiles();
       llmProfiles = profilesData.profiles?.llm || [];
-    }
+    } catch (e) { console.warn('Failed to fetch LLM profiles', e); }
 
     let globalConfig: any = {};
-    if (globalResponse.ok) {
-      const globalData = await globalResponse.json();
+    if (globalData) {
       Object.keys(globalData).forEach(key => {
         globalConfig[key] = globalData[key].values;
       });
@@ -125,13 +122,8 @@ const BotsPage: React.FC = () => {
       // Fetch activity logs
       const fetchActivity = async () => {
         try {
-          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/activity?limit=20`);
-          if (res.ok) {
-            const json = await res.json();
-            setActivityLogs(json.data?.activity || []);
-          } else {
-            setActivityLogs([]);
-          }
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`);
+          setActivityLogs(json.data?.activity || []);
         } catch (err) {
           console.error('Failed to fetch activity logs:', err);
           setActivityLogs([]);
@@ -144,13 +136,8 @@ const BotsPage: React.FC = () => {
       const fetchChatHistory = async () => {
         setChatLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/history?limit=20`);
-          if (res.ok) {
-            const json = await res.json();
-            setChatHistory(json.data?.history || []);
-          } else {
-            setChatHistory([]);
-          }
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`);
+          setChatHistory(json.data?.history || []);
         } catch (err) {
           console.error('Failed to fetch chat history:', err);
           setChatHistory([]);
@@ -187,13 +174,7 @@ const BotsPage: React.FC = () => {
       if (field === 'messageProvider') { payload.provider = value; }
       if (field === 'llmProvider') { payload.llmProvider = value; }
 
-      const res = await fetch(`${API_BASE}/bots/${bot.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) { throw new Error('Failed to update bot configuration'); }
+      await apiService.updateBot(bot.id, payload);
 
       await refetch();
     } catch (err: any) {
@@ -209,23 +190,15 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading('create');
-      const response = await fetch(`${API_BASE}/bots`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newBotName,
-          description: newBotDesc,
-          messageProvider: newBotMessageProvider,
-          ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
-          persona: newBotPersona,
-        }),
-      });
+      await apiService.createBot({
+        name: newBotName,
+        description: newBotDesc,
+        messageProvider: newBotMessageProvider,
+        llmProvider: newBotLlmProvider || undefined,
+        persona: newBotPersona,
+      } as any);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create bot');
-      }
-
+      await refetch();
       // Reset form
       setNewBotName('');
       setNewBotDesc('');
@@ -233,7 +206,6 @@ const BotsPage: React.FC = () => {
       setNewBotMessageProvider('');
       setNewBotLlmProvider('');
       setShowCreateModal(false);
-      await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
@@ -246,15 +218,7 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}/${action}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to ${action} bot`);
-      }
-
+      await apiService.post(`/api/bots/${bot.id}/${action}`);
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${action} bot`);
@@ -268,16 +232,10 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading(deleteModal.bot.id);
-      const response = await fetch(`${API_BASE}/bots/${deleteModal.bot.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete bot');
-      }
+      await apiService.deleteBot(deleteModal.bot.id);
 
       setDeleteModal({ isOpen: false, bot: null });
+      setDeleteConfirmation('');
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete bot');
@@ -289,17 +247,7 @@ const BotsPage: React.FC = () => {
   const handleClone = async (bot: BotData) => {
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}/clone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newName: `${bot.name} (Clone)` }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to clone bot');
-      }
-
+      await apiService.cloneBot(bot.id, `${bot.name} (Clone)`);
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clone bot');
@@ -311,17 +259,7 @@ const BotsPage: React.FC = () => {
   const handleUpdatePersona = async (bot: BotData, persona: string) => {
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update persona');
-      }
-
+      await apiService.updateBot(bot.id, { persona });
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update persona');
@@ -536,19 +474,35 @@ const BotsPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       < Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, bot: null })}
+        onClose={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}
         title="Delete Bot"
         size="sm"
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
           <p className="text-sm text-base-content/60">This action cannot be undone.</p>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">
+                Type <strong>{deleteModal.bot?.name}</strong> to confirm.
+              </span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              placeholder={deleteModal.bot?.name}
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+            />
+          </div>
+
           <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
+            <button className="btn btn-ghost" onClick={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}>Cancel</button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id}
+              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
             >
               {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
             </button>
