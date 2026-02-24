@@ -6,13 +6,25 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
-Open-Hivemind is a **multi-agent orchestration framework** for deploying a coordinated network of LLM-powered bots across Discord, Slack, and Mattermost. Each running bot behaves like a neuron in a shared digital consciousness: they share recent context, keep a unified voice, and can be independently tuned via personas, system instructions, and guarded access to external tools.
+**Open-Hivemind** is a multi-agent orchestration framework designed to deploy a coordinated network of LLM-powered bots across Discord, Slack, and Mattermost. Unlike traditional bots that simply react to commands, Open-Hivemind creates a living ecosystem of autonomous personas that can interact with each other and with users in a natural, human-like manner.
+
+Rather than running a single bot on a single platform, Open-Hivemind allows you to deploy **as many bots and personas as you want across as many messaging platforms as you want**. Each bot maintains its own unique identity and memory while sharing a common underlying intelligence.
+
+## Immersive, Human-Like Interaction
+
+Open-Hivemind bots are designed to simulate natural conversation dynamics. They are not guaranteed to respond to every message, making their engagement feel more organic and less robotic.
+
+*   **Probabilistic Response**: Bots evaluate each message to decide whether to reply. They don't just "listen" for keywords; they "feel" the conversation flow.
+*   **Smart Engagement**: While they may remain silent during general chatter, **directly addressing a bot** or **asking a question** significantly increases the likelihood of a response.
+*   **Contextual Stickiness**: Once a bot engages in a conversation, it tends to **stay engaged** for a short period, mimicking human attention spans.
+*   **Crowd Awareness**: If you have dozens of bots in a channel, they are aware of the "noise" level. To prevent chaos, unengaged bots will avoid joining an already overpopulated conversation, ensuring the chat remains readable.
 
 ## Core Functionality
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost.
-*   **Unified Voice**: Consistent identity across platforms.
-*   **Shared Context**: Maintain conversation history and context across interactions.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost simultaneously.
+*   **Unified Voice & Identity**: Consistent personas across platforms.
+*   **Dynamic Engagement Model**: Bots use probabilistic logic to decide when to speak, when to listen, and when to step back.
+*   **Shared Context**: Bots maintain conversation history and context across interactions.
 *   **WebUI Management**: Configure LLMs, personas, and bots via a user-friendly interface.
 *   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression.
 *   **Extensible**: Supports MCP servers and custom tool integrations.
