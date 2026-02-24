@@ -57,6 +57,7 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
@@ -123,7 +124,7 @@ const BotsPage: React.FC = () => {
       // Fetch activity logs
       const fetchActivity = async () => {
         try {
-          const json = await apiService.request<any>(`/api/bots/${previewBot.id}/activity?limit=20`);
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`);
           setActivityLogs(json.data?.activity || []);
         } catch (err) {
           console.error('Failed to fetch activity logs:', err);
@@ -137,7 +138,7 @@ const BotsPage: React.FC = () => {
       const fetchChatHistory = async () => {
         setChatLoading(true);
         try {
-          const json = await apiService.request<any>(`/api/bots/${previewBot.id}/history?limit=20`);
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`);
           setChatHistory(json.data?.history || []);
         } catch (err) {
           console.error('Failed to fetch chat history:', err);
@@ -186,30 +187,15 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading('create');
-      await apiService.createBot({
+      await apiService.post('/api/bots', {
         name: newBotName,
+        description: newBotDesc,
         messageProvider: newBotMessageProvider,
-        llmProvider: newBotLlmProvider,
-        config: undefined // Not used in this simple form
-        // Description and persona need to be handled if supported by apiService.createBot
-        // apiService.createBot takes { name, messageProvider, llmProvider, config }
-        // It seems apiService.createBot signature is a bit limited compared to raw fetch used before?
-        // raw fetch sent: { name, description, messageProvider, llmProvider, persona }
-        // Let's use apiService.request directly for full control if createBot is missing fields
+        ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
+        persona: newBotPersona,
       });
-      // Actually, looking at apiService.createBot, it sends what is passed + llmProvider.
-      // But let's check if we can pass extra fields. apiService.createBot types arguments.
-      // It takes "botData".
-      // Let's rely on apiService.post('/api/bots', ...) to be safe and consistent with previous code.
 
-       await apiService.post('/api/bots', {
-          name: newBotName,
-          description: newBotDesc,
-          messageProvider: newBotMessageProvider,
-          ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
-          persona: newBotPersona,
-        });
-
+      await refetch();
       // Reset form
       setNewBotName('');
       setNewBotDesc('');
@@ -217,7 +203,6 @@ const BotsPage: React.FC = () => {
       setNewBotMessageProvider('');
       setNewBotLlmProvider('');
       setShowCreateModal(false);
-      await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
@@ -245,7 +230,9 @@ const BotsPage: React.FC = () => {
     try {
       setActionLoading(deleteModal.bot.id);
       await apiService.deleteBot(deleteModal.bot.id);
+
       setDeleteModal({ isOpen: false, bot: null });
+      setDeleteConfirmation('');
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete bot');
@@ -476,7 +463,7 @@ const BotsPage: React.FC = () => {
             setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
           }}
           onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setDeleteConfirmation(''); setSelectedBotForConfig(null); }}
           onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
         />
       )}
@@ -503,19 +490,35 @@ const BotsPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       < Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, bot: null })}
+        onClose={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}
         title="Delete Bot"
         size="sm"
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
           <p className="text-sm text-base-content/60">This action cannot be undone.</p>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">
+                Type <strong>{deleteModal.bot?.name}</strong> to confirm.
+              </span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              placeholder={deleteModal.bot?.name}
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+            />
+          </div>
+
           <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
+            <button className="btn btn-ghost" onClick={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}>Cancel</button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id}
+              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
             >
               {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
             </button>
