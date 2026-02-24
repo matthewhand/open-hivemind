@@ -13,7 +13,7 @@ const collectedErrors: string[] = [];
  */
 export async function setupAuth(page: Page) {
   const fakeToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyIqIl0sImlhdCI6MTc3MTk2Nzk1MCwiZXhwIjo0OTI3NzI3OTUwfQ.xi-BZiZOeunw2K5YRngVXgfAfcSCQbjB5cva-u0ZPGw';
   const fakeUser = JSON.stringify({
     id: 'admin',
     username: 'admin',

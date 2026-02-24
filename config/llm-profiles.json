@@ -1,3 +1,12 @@
 {
-  "llm": []
+  "llm": [
+    {
+      "key": "test-profile",
+      "name": "Test Profile",
+      "provider": "openai",
+      "config": {
+        "apiKey": "sk-test"
+      }
+    }
+  ]
 }

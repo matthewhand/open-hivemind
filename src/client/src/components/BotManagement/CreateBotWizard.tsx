@@ -79,14 +79,26 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
         setLoading(true);
         setError(null);
         try {
+            const selectedProfile = llmProfiles.find(p => p.key === formData.llmProvider);
+            let actualLlmProvider = selectedProfile ? selectedProfile.provider : formData.llmProvider;
+            const llmProfileKey = selectedProfile ? selectedProfile.key : undefined;
+
+            // Fallback for demo profiles if lookup fails
+            if (!selectedProfile && typeof formData.llmProvider === 'string' && formData.llmProvider.startsWith('demo-')) {
+                if (formData.llmProvider.includes('openai')) actualLlmProvider = 'openai';
+                if (formData.llmProvider.includes('flowise')) actualLlmProvider = 'flowise';
+                if (formData.llmProvider.includes('openwebui')) actualLlmProvider = 'openwebui';
+            }
+
             const payload = {
                 name: formData.name,
                 description: formData.description,
                 messageProvider: formData.messageProvider,
-                ...(formData.llmProvider ? { llmProvider: formData.llmProvider } : {}),
+                ...(actualLlmProvider ? { llmProvider: actualLlmProvider } : {}),
                 persona: formData.persona,
                 mcpGuardProfile: formData.mcpGuardProfile,
                 config: {
+                    ...(llmProfileKey ? { llmProfile: llmProfileKey } : {}),
                     mcpGuard: { enabled: formData.guards.accessControl },
                     rateLimit: { enabled: formData.guards.rateLimit },
                     contentFilter: { enabled: formData.guards.contentFilter },
