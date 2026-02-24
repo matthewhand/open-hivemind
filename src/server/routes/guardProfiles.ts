@@ -1,11 +1,11 @@
 import { Router, type Request, type Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { authenticate, requireAdmin } from '../../auth/middleware';
 import {
   loadGuardrailProfiles,
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
-import { authenticate, requireAdmin } from '../../auth/middleware';
 
 const router = Router();
 
@@ -88,19 +88,35 @@ router.post('/', (req: Request, res: Response) => {
       name,
       description: description || '',
       guards: {
-        mcpGuard: guards.mcpGuard && typeof guards.mcpGuard === 'object' && ['owner', 'custom'].includes(guards.mcpGuard.type)
-          ? {
-            enabled: Boolean(guards.mcpGuard.enabled),
-            type: guards.mcpGuard.type,
-            ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers) ? { allowedUsers: guards.mcpGuard.allowedUsers } : {})
-          }
-          : { enabled: false, type: 'owner' },
-        rateLimit: guards.rateLimit && typeof guards.rateLimit === 'object'
-          ? { enabled: Boolean(guards.rateLimit.enabled), maxRequests: Number(guards.rateLimit.maxRequests) || 100, windowMs: Number(guards.rateLimit.windowMs) || 60000 }
-          : { enabled: false, maxRequests: 100, windowMs: 60000 },
-        contentFilter: guards.contentFilter && typeof guards.contentFilter === 'object'
-          ? { enabled: Boolean(guards.contentFilter.enabled), strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness) ? guards.contentFilter.strictness : 'low' }
-          : { enabled: false, strictness: 'low' },
+        mcpGuard:
+          guards.mcpGuard &&
+          typeof guards.mcpGuard === 'object' &&
+          ['owner', 'custom'].includes(guards.mcpGuard.type)
+            ? {
+                enabled: Boolean(guards.mcpGuard.enabled),
+                type: guards.mcpGuard.type,
+                ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers)
+                  ? { allowedUsers: guards.mcpGuard.allowedUsers }
+                  : {}),
+              }
+            : { enabled: false, type: 'owner' },
+        rateLimit:
+          guards.rateLimit && typeof guards.rateLimit === 'object'
+            ? {
+                enabled: Boolean(guards.rateLimit.enabled),
+                maxRequests: Number(guards.rateLimit.maxRequests) || 100,
+                windowMs: Number(guards.rateLimit.windowMs) || 60000,
+              }
+            : { enabled: false, maxRequests: 100, windowMs: 60000 },
+        contentFilter:
+          guards.contentFilter && typeof guards.contentFilter === 'object'
+            ? {
+                enabled: Boolean(guards.contentFilter.enabled),
+                strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
+                  ? guards.contentFilter.strictness
+                  : 'low',
+              }
+            : { enabled: false, strictness: 'low' },
       },
     };
 
@@ -138,24 +154,33 @@ router.put('/:id', (req: Request, res: Response) => {
     }
 
     // Merge updates with validation to prevent prototype pollution
-    const safeGuards = guards && typeof guards === 'object'
-      ? Object.keys(guards)
-        .filter(key => !['__proto__', 'constructor', 'prototype'].includes(key))
-        .reduce((acc, key) => {
-          const existingValue = profiles[profileIndex].guards[key as keyof typeof profiles[typeof profileIndex]['guards']];
-          const newValue = guards[key];
-          if (typeof newValue === 'object' && newValue !== null && typeof existingValue === 'object' && existingValue !== null) {
-            acc[key] = { ...existingValue, ...newValue };
-          } else {
-            acc[key] = newValue;
-          }
-          return acc;
-        }, {} as any)
-      : profiles[profileIndex].guards;
+    const safeGuards =
+      guards && typeof guards === 'object'
+        ? Object.keys(guards)
+            .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
+            .reduce((acc, key) => {
+              const existingValue =
+                profiles[profileIndex].guards[
+                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                ];
+              const newValue = guards[key];
+              if (
+                typeof newValue === 'object' &&
+                newValue !== null &&
+                typeof existingValue === 'object' &&
+                existingValue !== null
+              ) {
+                acc[key] = { ...existingValue, ...newValue };
+              } else {
+                acc[key] = newValue;
+              }
+              return acc;
+            }, {} as any)
+        : profiles[profileIndex].guards;
 
     const updatedProfile = {
       ...profiles[profileIndex],
-      name: (name && typeof name === 'string') ? name : profiles[profileIndex].name,
+      name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
       guards: safeGuards,
     };

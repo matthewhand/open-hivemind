@@ -1,5 +1,5 @@
-import { ConfigurationVersionService } from '../../../../src/server/services/ConfigurationVersionService';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { ConfigurationVersionService } from '../../../../src/server/services/ConfigurationVersionService';
 
 describe('ConfigurationVersionService Restore', () => {
   let service: ConfigurationVersionService;
@@ -32,7 +32,7 @@ describe('ConfigurationVersionService Restore', () => {
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: 'creator'
+      createdBy: 'creator',
     });
 
     // 2. Create a version (v1)
@@ -44,7 +44,7 @@ describe('ConfigurationVersionService Restore', () => {
       llmProvider: 'openai',
       isActive: true,
       createdAt: new Date(),
-      createdBy: 'creator'
+      createdBy: 'creator',
     });
 
     // 3. Restore v1 with a specific user
@@ -54,7 +54,9 @@ describe('ConfigurationVersionService Restore', () => {
     // 4. Verify audit log
     const audits = await dbManager.getBotConfigurationAudit(configId);
     // The audit log for restore has action 'UPDATE' and oldValues contains 'restoredFrom'
-    const restoreAudit = audits.find(a => a.action === 'UPDATE' && a.oldValues && a.oldValues.includes('restoredFrom'));
+    const restoreAudit = audits.find(
+      (a) => a.action === 'UPDATE' && a.oldValues && a.oldValues.includes('restoredFrom')
+    );
 
     expect(restoreAudit).toBeDefined();
     expect(restoreAudit?.performedBy).toBe(restoredBy);
