@@ -99,7 +99,7 @@ test.describe('Personas Search and Filter', () => {
   });
 
   test('shows empty state when no matches found and allows clearing', async ({ page }) => {
-     const errors = await setupTestWithErrorDetection(page);
+    const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/personas');
 
     const searchInput = page.locator('input[placeholder="Search personas..."]');

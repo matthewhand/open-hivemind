@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
 import {
   Alert,
   Badge,
   Button,
   Card,
   Input,
+  Select,
   Modal,
   PageHeader,
   StatsCards,
@@ -22,11 +23,26 @@ interface Persona extends ApiPersona {
   assignedBotIds: string[]; // Bot IDs are strings in API but let's check Bot type
 }
 
+const categoryOptions = [
+  { value: 'all', label: 'All Categories' },
+  { value: 'general', label: 'General' },
+  { value: 'customer_service', label: 'Customer Service' },
+  { value: 'creative', label: 'Creative' },
+  { value: 'technical', label: 'Technical' },
+  { value: 'educational', label: 'Educational' },
+  { value: 'entertainment', label: 'Entertainment' },
+  { value: 'professional', label: 'Professional' },
+];
+
 const PersonasPage: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // Bot type from API
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -42,10 +58,6 @@ const PersonasPage: React.FC = () => {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
-
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const fetchData = useCallback(async () => {
     try {
@@ -89,6 +101,17 @@ const PersonasPage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Derive filtered personas
+  const filteredPersonas = useMemo(() => {
+    return personas.filter(p => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [personas, searchQuery, selectedCategory]);
 
   const handleSavePersona = async () => {
     if (!personaName.trim()) { return; }
@@ -239,14 +262,6 @@ const PersonasPage: React.FC = () => {
     { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
   ];
 
-  const filteredPersonas = personas.filter(persona => {
-    const matchesSearch =
-      (persona.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (persona.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || persona.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   return (
     <div className="space-y-6">
       {/* Error Alert */}
@@ -295,33 +310,33 @@ const PersonasPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      {!loading && personas.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 bg-base-200/50 p-4 rounded-lg">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
-            <Input
-              placeholder="Search personas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
-          <select
-            className="select select-bordered w-full sm:w-auto"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            <option value="all">All Categories</option>
-            <option value="general">General</option>
-            <option value="customer_service">Customer Service</option>
-            <option value="creative">Creative</option>
-            <option value="technical">Technical</option>
-            <option value="educational">Educational</option>
-            <option value="entertainment">Entertainment</option>
-            <option value="professional">Professional</option>
-          </select>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
+        <div className="w-full sm:w-1/2 md:w-1/3">
+          <Input
+            placeholder="Search personas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            prefix={<Search className="w-4 h-4 text-base-content/50" />}
+            size="sm"
+            className="w-full"
+            suffix={
+              searchQuery ? (
+                <button onClick={() => setSearchQuery('')} className="btn btn-ghost btn-xs btn-circle">
+                  <X className="w-3 h-3" />
+                </button>
+              ) : null
+            }
+          />
         </div>
-      )}
+        <div className="w-full sm:w-1/3 md:w-1/4">
+          <Select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            options={categoryOptions}
+            size="sm"
+          />
+        </div>
+      </div>
 
       {/* Persona List */}
       {loading ? (
@@ -334,7 +349,7 @@ const PersonasPage: React.FC = () => {
           title="No personas found"
           description={personas.length === 0 ? "Create your first persona to get started" : "Try adjusting your search or filters"}
           actionLabel={personas.length === 0 ? "Create Persona" : "Clear Filters"}
-          onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setFilterCategory('all'); }}
+          onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setSelectedCategory('all'); }}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
