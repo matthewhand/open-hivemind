@@ -117,7 +117,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService = container.resolve(StartupGreetingService);
+    const startupGreetingService =
+      container.resolve<StartupGreetingService>(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }
 
@@ -218,7 +219,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch { }
+      } catch {}
 
       throw error;
     }
@@ -444,7 +445,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch { }
+    } catch {}
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {

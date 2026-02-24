@@ -7,6 +7,8 @@ import {
   PlayIcon,
   StopIcon,
   ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -18,6 +20,7 @@ interface MCPServer {
   description: string;
   toolCount: number;
   lastConnected?: string;
+  apiKey?: string;
 }
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -39,6 +42,7 @@ const MCPServersPage: React.FC = () => {
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
@@ -106,18 +110,43 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleServerAction = async (serverId: string, action: 'start' | 'stop' | 'restart') => {
-    try {
-      // Simulate API call
-      setAlert({ type: 'success', message: `Server ${action} action completed` });
+    if (action === 'restart') {
+      await handleServerAction(serverId, 'stop');
+      await handleServerAction(serverId, 'start');
+      return;
+    }
 
-      // Update server status
-      setServers(prev => prev.map(server =>
-        server.id === serverId
-          ? { ...server, status: action === 'start' ? 'running' : 'stopped' }
-          : server,
-      ));
+    try {
+      let response;
+      if (action === 'stop') {
+        response = await fetch('/api/admin/mcp-servers/disconnect', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name: serverId }),
+        });
+      } else {
+        const server = servers.find(s => s.id === serverId);
+        if (!server) {throw new Error('Server not found');}
+
+        response = await fetch('/api/admin/mcp-servers/connect', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            name: server.name,
+            serverUrl: server.url,
+          }),
+        });
+      }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || `Failed to ${action} server`);
+      }
+
+      setAlert({ type: 'success', message: `Server ${action} action completed` });
+      await fetchServers();
     } catch (error) {
-      setAlert({ type: 'error', message: `Failed to ${action} server` });
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : `Failed to ${action} server` });
     }
   };
 
@@ -129,6 +158,7 @@ const MCPServersPage: React.FC = () => {
       status: 'stopped',
       description: '',
       toolCount: 0,
+      apiKey: '',
     });
     setIsEditing(false);
     setDialogOpen(true);
@@ -138,6 +168,46 @@ const MCPServersPage: React.FC = () => {
     setSelectedServer(server);
     setIsEditing(true);
     setDialogOpen(true);
+  };
+
+  const handleTestConnection = async () => {
+    if (!selectedServer?.url) {
+      setAlert({ type: 'error', message: 'Server URL is required' });
+      return;
+    }
+
+    try {
+      setIsTesting(true);
+      const response = await fetch('/api/admin/mcp-servers/test', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: selectedServer.name || 'Test Server',
+          serverUrl: selectedServer.url,
+          apiKey: selectedServer.apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Connection failed');
+      }
+
+      const data = await response.json();
+      const toolCount = data.data?.toolCount || 0;
+      const tools = data.data?.tools || [];
+
+      const toolNames = tools.slice(0, 5).map((t: any) => t.name).join(', ');
+      const moreText = tools.length > 5 ? ` and ${tools.length - 5} more` : '';
+
+      const message = `Connection successful! Found ${toolCount} tools: ${toolNames}${moreText}`;
+
+      setAlert({ type: 'success', message });
+    } catch (err) {
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleSaveServer = async () => {
@@ -170,6 +240,7 @@ const MCPServersPage: React.FC = () => {
         body: JSON.stringify({
           name: selectedServer.name,
           serverUrl: selectedServer.url,
+          apiKey: selectedServer.apiKey,
         }),
       });
 
@@ -239,7 +310,7 @@ const MCPServersPage: React.FC = () => {
         </button>
       </div>
 
-      {alert && (
+      {alert && !dialogOpen && (
         <div className="mb-6">
           <Alert
             status={alert.type === 'success' ? 'success' : 'error'}
@@ -325,6 +396,13 @@ const MCPServersPage: React.FC = () => {
         title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
       >
         <div className="space-y-4">
+          {alert && (
+            <div className={`alert ${alert.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white mb-4 flex flex-row items-center gap-2 border-none`}>
+              {alert.type === 'success' ? <CheckCircleIcon className="w-6 h-6" /> : <ExclamationCircleIcon className="w-6 h-6" />}
+              <span>{alert.message}</span>
+            </div>
+          )}
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Server Name *</span>
@@ -354,6 +432,19 @@ const MCPServersPage: React.FC = () => {
 
           <div className="form-control w-full">
             <label className="label">
+              <span className="label-text">API Key (Optional)</span>
+            </label>
+            <input
+              type="password"
+              className="input input-bordered w-full"
+              value={selectedServer?.apiKey || ''}
+              onChange={(e) => setSelectedServer(prev => prev ? { ...prev, apiKey: e.target.value } : null)}
+              placeholder="Leave blank if not required or unchanged"
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
               <span className="label-text">Description</span>
             </label>
             <textarea
@@ -365,6 +456,14 @@ const MCPServersPage: React.FC = () => {
         </div>
 
         <div className="modal-action">
+          <button
+            className="btn btn-ghost mr-auto"
+            onClick={handleTestConnection}
+            disabled={isTesting}
+          >
+            {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
+            Test Connection
+          </button>
           <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
             Cancel
           </button>

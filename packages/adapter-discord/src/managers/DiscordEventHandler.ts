@@ -95,7 +95,7 @@ export class DiscordEventHandler {
           return;
         }
         TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
-      } catch { }
+      } catch {}
     });
 
     bot.client.on('messageCreate', async (message) => {
@@ -124,7 +124,7 @@ export class DiscordEventHandler {
             contentLength: (message.content || '').length,
             status: 'success',
           });
-        } catch { }
+        } catch {}
 
         let repliedMessage: any = null;
         try {

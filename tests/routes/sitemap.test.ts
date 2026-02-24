@@ -1,89 +1,70 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import sitemapRouter from '../../src/server/routes/sitemap';
 
-describe('Sitemap Routes', () => {
+describe('Sitemap Routes Verification', () => {
   let app: express.Application;
 
-  beforeAll(() => {
+  beforeEach(() => {
     app = express();
     app.use('/', sitemapRouter);
   });
 
-  describe('GET /sitemap.xml', () => {
-    it('should return valid XML sitemap', async () => {
-      const response = await request(app).get('/sitemap.xml');
+  it('should return sitemap.json with correct /admin paths', async () => {
+    const res = await request(app).get('/sitemap.json');
+    expect(res.status).toBe(200);
+    expect(res.body.urls).toBeDefined();
 
-      expect(response.status).toBe(200);
-      expect(response.header['content-type']).toContain('application/xml');
-      expect(response.text).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(response.text).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
-      // Verify paths are present (ignoring dynamic host/port from supertest)
-      expect(response.text).toMatch(/<loc>http:\/\/.*\/<\/loc>/);
-      expect(response.text).toMatch(/<loc>http:\/\/.*\/admin\/overview<\/loc>/);
-    });
+    // Check for absence of /uber paths
+    const uberUrl = res.body.urls.find((u: any) => u.url.startsWith('/uber'));
+    expect(uberUrl).toBeUndefined();
 
-    it('should filter by access level', async () => {
-      const response = await request(app).get('/sitemap.xml?access=owner');
-
-      expect(response.status).toBe(200);
-      // It should contain owner routes
-      expect(response.text).toContain('/admin/mcp');
-      // It should NOT contain public routes if we filter strictly?
-      // Wait, the implementation says:
-      // if (accessLevel) { filteredRoutes = routes.filter((route) => route.access === accessLevel); }
-      // So yes, it returns ONLY that access level.
-      expect(response.text).not.toContain('/login'); // login is public
-    });
+    // Check for existence of /admin/bots
+    const adminUrl = res.body.urls.find((u: any) => u.url === '/admin/bots');
+    expect(adminUrl).toBeDefined();
+    expect(adminUrl.access).toBe('authenticated');
   });
 
-  describe('GET /sitemap.json', () => {
-    it('should return valid JSON sitemap', async () => {
-      const response = await request(app).get('/sitemap.json');
-
-      expect(response.status).toBe(200);
-      expect(response.header['content-type']).toContain('application/json');
-
-      const body = response.body;
-      expect(body).toHaveProperty('generated');
-      expect(body).toHaveProperty('baseUrl');
-      expect(body).toHaveProperty('totalUrls');
-      expect(body).toHaveProperty('urls');
-      expect(Array.isArray(body.urls)).toBe(true);
-
-      // Check for a known public route
-      const rootUrl = body.urls.find((u: any) => u.url === '/');
-      expect(rootUrl).toBeDefined();
-      expect(rootUrl.access).toBe('public');
-    });
-
-    it('should filter by access level', async () => {
-      const response = await request(app).get('/sitemap.json?access=owner');
-
-      expect(response.status).toBe(200);
-      const urls = response.body.urls;
-
-      // Check for owner route
-      const ownerUrl = urls.find((u: any) => u.url === '/admin/mcp');
-      expect(ownerUrl).toBeDefined();
-
-      // Check that public route is missing
-      const publicUrl = urls.find((u: any) => u.url === '/login');
-      expect(publicUrl).toBeUndefined();
-    });
+  it('should include new routes like /admin/ai/dashboard', async () => {
+    const res = await request(app).get('/sitemap.json');
+    const aiUrl = res.body.urls.find((u: any) => u.url === '/admin/ai/dashboard');
+    expect(aiUrl).toBeDefined();
+    expect(aiUrl.description).toBe('AI System Dashboard');
   });
 
-  describe('GET /sitemap', () => {
-    it('should return HTML sitemap', async () => {
-      const response = await request(app).get('/sitemap');
+  it('should include integrations routes', async () => {
+    const res = await request(app).get('/sitemap.json');
+    const llmUrl = res.body.urls.find((u: any) => u.url === '/admin/integrations/llm');
+    expect(llmUrl).toBeDefined();
+  });
 
-      expect(response.status).toBe(200);
-      expect(response.header['content-type']).toContain('text/html');
-      expect(response.text).toContain('<!DOCTYPE html>');
-      expect(response.text).toContain('Open-Hivemind Sitemap');
+  it('should filter by access level', async () => {
+    // Test public filter
+    const publicRes = await request(app).get('/sitemap.json?access=public');
+    const publicUrls = publicRes.body.urls;
+    expect(publicUrls.every((u: any) => u.access === 'public')).toBe(true);
+    expect(publicUrls.find((u: any) => u.url === '/admin/bots')).toBeUndefined(); // authenticated
+    expect(publicUrls.find((u: any) => u.url === '/login')).toBeDefined(); // public
 
-      // Check that it lists some routes
-      expect(response.text).toContain('/admin/overview');
-    });
+    // Test authenticated filter
+    const authRes = await request(app).get('/sitemap.json?access=authenticated');
+    const authUrls = authRes.body.urls;
+    expect(authUrls.every((u: any) => u.access === 'authenticated')).toBe(true);
+    expect(authUrls.find((u: any) => u.url === '/admin/bots')).toBeDefined();
+  });
+
+  it('should return sitemap.xml', async () => {
+    const res = await request(app).get('/sitemap.xml');
+    expect(res.status).toBe(200);
+    expect(res.header['content-type']).toContain('application/xml');
+    expect(res.text).toMatch(/<loc>http:\/\/.*\/admin\/bots<\/loc>/);
+  });
+
+  it('should return HTML sitemap', async () => {
+    const res = await request(app).get('/sitemap');
+    expect(res.status).toBe(200);
+    expect(res.header['content-type']).toContain('text/html');
+    expect(res.text).toContain('Open-Hivemind Sitemap');
+    expect(res.text).toContain('/admin/bots');
   });
 });

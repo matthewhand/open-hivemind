@@ -15,6 +15,15 @@ describe('BotConfigurationManager', () => {
     originalEnv = process.env;
     process.env = {};
     mockFs.existsSync.mockReturnValue(false);
+    // Explicitly mock readdirSync to return empty array to avoid discovering bots from files (which fails if undefined)
+    // or from bleeding mocks
+    if (mockFs.readdirSync && jest.isMockFunction(mockFs.readdirSync)) {
+        mockFs.readdirSync.mockReturnValue([]);
+    } else {
+        // In case auto-mock didn't pick it up or it's different
+        (mockFs.readdirSync as any) = jest.fn().mockReturnValue([]);
+    }
+
     mockPath.join.mockImplementation((...args) => args.join('/'));
     
     // Reset singleton instance

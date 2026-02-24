@@ -63,6 +63,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       type: 'owner',
       allowedUserIds: [],
     },
+    mcpGuardProfile: '',
     isActive: true,
     discord: {},
     slack: {},
@@ -80,6 +81,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   }>({ messageProviders: [], llmProviders: [] });
   const [personas, setPersonas] = useState<any[]>([]);
   const [mcpServers, setMcpServers] = useState<any[]>([]);
+  const [guardProfiles, setGuardProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -112,6 +114,13 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       setProviders(providersData);
       setPersonas(personasData);
       setMcpServers(mcpData);
+
+      // Fetch guard profiles
+      const gpResponse = await fetch('/api/admin/guard-profiles');
+      if (gpResponse.ok) {
+        const gpData = await gpResponse.json();
+        setGuardProfiles(gpData.data || []);
+      }
     } catch (err) {
       console.error('Error loading options:', err);
     }
@@ -215,6 +224,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         type: 'owner',
         allowedUserIds: [],
       },
+      mcpGuardProfile: '',
       isActive: true,
       discord: {},
       slack: {},
@@ -240,6 +250,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       systemInstruction: bot.systemInstruction,
       mcpServers: bot.mcpServers,
       mcpGuard: bot.mcpGuard,
+      mcpGuardProfile: (bot as any).mcpGuardProfile || '',
       isActive: bot.isActive,
       discord: bot.discord || {},
       slack: bot.slack || {},
@@ -395,9 +406,28 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         </label>
       </div>
 
+      <div className="form-control w-full">
+        <label className="label">
+          <span className="label-text">Guard Profile</span>
+        </label>
+        <select
+          className="select select-bordered w-full"
+          value={botForm.mcpGuardProfile || ''}
+          onChange={(e) => setBotForm({ ...botForm, mcpGuardProfile: e.target.value })}
+        >
+          <option value="">No specific profile (Use manual config)</option>
+          {guardProfiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>{profile.name}</option>
+          ))}
+        </select>
+        <label className="label">
+          <span className="label-text-alt">Selecting a profile overrides manual guard settings</span>
+        </label>
+      </div>
+
       <div className="form-control">
         <label className="label cursor-pointer">
-          <span className="label-text">Enable MCP Tool Guard</span>
+          <span className="label-text">Enable Manual MCP Guard (Override)</span>
           <input
             type="checkbox"
             className="toggle toggle-primary"
@@ -406,6 +436,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
               ...botForm,
               mcpGuard: { ...botForm.mcpGuard!, enabled: e.target.checked },
             })}
+            disabled={!!botForm.mcpGuardProfile}
           />
         </label>
       </div>

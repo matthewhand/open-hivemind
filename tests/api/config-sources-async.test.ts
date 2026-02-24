@@ -1,7 +1,8 @@
-
+import fs from 'fs';
 import express from 'express';
 import request from 'supertest';
-import fs from 'fs';
+// Import the router after mocks
+import configRouter from '../../src/server/routes/config';
 
 // Mock dependencies before importing the router
 jest.mock('../../src/config/BotConfigurationManager', () => ({
@@ -44,16 +45,13 @@ jest.mock('../../src/config/llmConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/mattermostConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/messageConfig', () => ({
   get: jest.fn(),
-  getSchema: () => ({})
+  getSchema: () => ({}),
 }));
 jest.mock('../../src/config/ollamaConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/openaiConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/openWebUIConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/slackConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/webhookConfig', () => ({ getSchema: () => ({}) }));
-
-// Import the router after mocks
-import configRouter from '../../src/server/routes/config';
 
 describe('GET /sources Performance Optimization', () => {
   let app: express.Application;

@@ -27,7 +27,6 @@ import ProviderList from './ProviderList';
 import PersonaChip from './PersonaChip';
 import PersonaSelector from './PersonaSelector';
 import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
-import { getProviderSchema } from '../../provider-configs';
 
 interface BotCardProps {
   bot: BotInstance;
@@ -209,6 +208,7 @@ const BotCard: React.FC<BotCardProps> = ({
             <button
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-label="More Options"
             >
               <MoreIcon className="w-4 h-4" />
             </button>
@@ -254,6 +254,7 @@ const BotCard: React.FC<BotCardProps> = ({
               onClick={() => setShowPersonaSelector(!showPersonaSelector)}
               disabled={bot.status === BotStatus.ACTIVE}
               className="px-2"
+              aria-label="Edit Persona"
             >
               <EditIcon className="w-4 h-4" />
             </Button>
@@ -303,6 +304,7 @@ const BotCard: React.FC<BotCardProps> = ({
               disabled={bot.status === BotStatus.ACTIVE}
               className="px-2"
               data-testid="add-message-provider-btn"
+              aria-label="Add Message Provider"
             >
               <PlusIcon className="w-4 h-4" />
             </Button>
@@ -334,6 +336,7 @@ const BotCard: React.FC<BotCardProps> = ({
               disabled={bot.status === BotStatus.ACTIVE}
               className="px-2"
               data-testid="add-llm-provider-btn"
+              aria-label="Add LLM Provider"
             >
               <PlusIcon className="w-4 h-4" />
             </Button>
@@ -400,6 +403,9 @@ const BotCard: React.FC<BotCardProps> = ({
         {/* Provider Configuration Modal */}
         <ProviderConfigModal
           modalState={providerModalState}
+          existingProviders={
+            providerModalState.providerType === 'message' ? bot.messageProviders : bot.llmProviders
+          }
           onClose={handleProviderModalClose}
           onSubmit={handleProviderSubmit}
         />

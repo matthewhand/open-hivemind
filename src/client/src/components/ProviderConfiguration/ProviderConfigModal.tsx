@@ -16,12 +16,14 @@ import { X as XIcon } from 'lucide-react';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
+  existingProviders?: { name: string }[];
   onClose: () => void;
   onSubmit: (providerData: any) => void;
 }
 
 const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
+  existingProviders,
   onClose,
   onSubmit,
 }) => {
@@ -48,8 +50,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           : LLMProviderType.OPENAI;
 
         // Only update selectedType if it mismatch or just to be safe (safest to always reset on open/type change)
-        // But we need to handle if user changes type via tab. 
-        // Actually, this effect runs on [modalState.isOpen, modalState.providerType]. 
+        // But we need to handle if user changes type via tab.
+        // Actually, this effect runs on [modalState.isOpen, modalState.providerType].
         // If user clicks tab, only selectedType changes (which is not in deps? No, selectedType IS in deps).
         // Wait, if selectedType is in deps, setting it triggers effect loop?
         // Let's remove selectedType from deps if we set it?
@@ -65,19 +67,35 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           setSelectedType(newType);
         }
 
-        const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm');
+        const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm', existingProviders);
         setFormData({
           name: defaultName,
         });
         setErrors({});
       }
     }
-  }, [modalState.isOpen, modalState.provider, modalState.isEdit, selectedType, modalState.providerType]);
+  }, [modalState.isOpen, modalState.provider, modalState.isEdit, selectedType, modalState.providerType, existingProviders]);
 
-  const getDefaultName = (type: string, providerType: 'message' | 'llm'): string => {
+  const getDefaultName = (
+    type: string,
+    providerType: 'message' | 'llm',
+    currentExistingProviders?: { name: string }[],
+  ): string => {
     const configs = providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
     const config = (configs as any)[type];
-    return config?.name || 'New Provider';
+    const baseName = config?.displayName || config?.name || 'New Provider';
+
+    if (!currentExistingProviders || currentExistingProviders.length === 0) {
+      return `${baseName}-1`;
+    }
+
+    let counter = 1;
+    let newName = `${baseName}-${counter}`;
+    while (currentExistingProviders.some((p) => p.name === newName)) {
+      counter++;
+      newName = `${baseName}-${counter}`;
+    }
+    return newName;
   };
 
   const getCurrentConfig = (): ProviderTypeConfig => {

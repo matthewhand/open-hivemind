@@ -6,12 +6,13 @@
  */
 
 import type {
-    IAdapterFactory,
-    IAdapterConfig,
-    IServiceDependencies,
-    IMessengerService,
+  IAdapterConfig,
+  IAdapterFactory,
+  IMessengerService,
+  IServiceDependencies,
 } from '@hivemind/shared-types';
-import { DiscordService, Discord } from './DiscordService';
+import { Discord, DiscordService } from './DiscordService';
+
 export { DiscordService, Discord };
 export { default as DiscordMessage } from './DiscordMessage';
 export { testDiscordConnection } from './DiscordConnectionTest';
@@ -23,22 +24,22 @@ export type { Bot } from './managers/DiscordBotManager';
  * This is the recommended way to create DiscordService instances.
  */
 export const createDiscordService: IAdapterFactory = (
-    config: IAdapterConfig,
-    dependencies: IServiceDependencies
+  config: IAdapterConfig,
+  dependencies: IServiceDependencies
 ): IMessengerService => {
-    const service = new DiscordService(dependencies);
-    // Store the bot config for later use
-    (service as any)._botConfig = config.botConfig;
-    return service;
+  const service = new DiscordService(dependencies);
+  // Store the bot config for later use
+  (service as any)._botConfig = config.botConfig;
+  return service;
 };
 
 /**
  * Adapter module metadata
  */
 export const adapterMetadata = {
-    name: '@hivemind/adapter-discord',
-    version: '1.0.0',
-    platform: 'discord' as const,
+  name: '@hivemind/adapter-discord',
+  version: '1.0.0',
+  platform: 'discord' as const,
 };
 
 /**

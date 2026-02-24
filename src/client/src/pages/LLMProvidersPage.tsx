@@ -29,25 +29,30 @@ const LLMProvidersPage: React.FC = () => {
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [libraryStatus, setLibraryStatus] = useState<Record<string, { installed: boolean; package: string }>>({});
+  const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Configuration', href: '/uber' },
-    { label: 'LLM Providers', href: '/admin/integrations/llm', isActive: true },
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers' },
+    { label: 'LLM Providers', href: '/admin/providers/llm', isActive: true },
   ];
 
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesRes, statusRes] = await Promise.all([
+      const [profilesRes, statusRes, globalRes] = await Promise.all([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
+        apiService.get('/api/config/global'),
       ]);
 
       setProfiles((profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
+
+      const globalSettings = (globalRes as any)._userSettings?.values || {};
+      setWebuiIntelligenceProvider(globalSettings.webuiIntelligenceProvider || '');
 
       // Store library status deeply
       if ((statusRes as any).libraryStatus) {
@@ -90,6 +95,17 @@ const LLMProvidersPage: React.FC = () => {
     }
   };
 
+  const handleSaveGlobalSettings = async (providerKey: string) => {
+    try {
+      await apiService.put('/api/config/global', {
+        webuiIntelligenceProvider: providerKey,
+      });
+      setWebuiIntelligenceProvider(providerKey);
+    } catch (err: any) {
+      alert(`Failed to save settings: ${err.message}`);
+    }
+  };
+
   const handleProviderSubmit = async (providerData: any) => {
     try {
       const payload = {
@@ -99,24 +115,32 @@ const LLMProvidersPage: React.FC = () => {
         config: providerData.config,
       };
 
-      if (modalState.isEdit) {
-        // Updating isn't directly supported by PUT /llm-profiles (it replaces ALL). 
-        // Real implementation should probably have a PATCH /llm-profiles/:key or we manipulate array locally and PUT all.
-        // For now, let's assume we re-fetch after simplified atomic operations if they existed, 
-        // BUT the backend only has bulk PUT or single POST.
+      if (modalState.isEdit && modalState.provider?.id) {
+        const oldKey = modalState.provider.id;
+        const newKey = payload.key;
 
-        // Strategy: We can't easily "edit" key if it changes.
-        // Let's rely on deleting old and creating new if key changed, or just updating list.
-        // Actually, backend has DELETE /:key and POST / (create). 
-        // To update, we might need to DELETE then POST if no specific update endpoint exists.
-        // Wait, review backend... found DELETE /:key and POST /. No specific single Item PUT.
-        // So we will delete old key and create new 
-
-        if (modalState.provider?.id) {
-          await apiService.delete(`/api/config/llm-profiles/${modalState.provider.id}`);
+        if (oldKey === newKey) {
+          // Same key, use PUT for atomic update
+          await apiService.put(`/api/config/llm-profiles/${oldKey}`, payload);
+        } else {
+          // Key changed (renamed), we must delete old and create new
+          // Store backup in case creation fails to prevent data loss
+          const backupProfile = profiles?.find((p) => p.key === oldKey);
+          await apiService.delete(`/api/config/llm-profiles/${oldKey}`);
+          try {
+            await apiService.post('/api/config/llm-profiles', payload);
+          } catch (createError: any) {
+            // Restore old profile if creation fails
+            if (backupProfile) {
+              try {
+                await apiService.post('/api/config/llm-profiles', backupProfile);
+              } catch (restoreError: any) {
+                console.error('Failed to restore profile after failed rename:', restoreError);
+              }
+            }
+            throw createError;
+          }
         }
-        await apiService.post('/api/config/llm-profiles', payload);
-
       } else {
         await apiService.post('/api/config/llm-profiles', payload);
       }
@@ -180,6 +204,36 @@ const LLMProvidersPage: React.FC = () => {
         <Alert status="error" icon={<XIcon />} message={error} />
       ) : (
         <div className="space-y-8">
+          {/* WebUI Intelligence Settings */}
+          <Card className="bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body p-4">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <ZapIcon className="w-5 h-5 text-warning" />
+                WebUI Intelligence
+              </h3>
+              <p className="text-sm opacity-70 mb-4">
+                Select an LLM profile to power AI assistance features within the WebUI (e.g. generating bot names and
+                descriptions).
+              </p>
+              <div className="form-control w-full max-w-md">
+                <label className="label">
+                  <span className="label-text">AI Assistance Provider</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  value={webuiIntelligenceProvider}
+                  onChange={(e) => handleSaveGlobalSettings(e.target.value)}
+                >
+                  <option value="">None (Disabled)</option>
+                  {profiles.map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.name} ({p.provider})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </Card>
 
           {/* Default / System Profile Check */}
           <div className="collapse collapse-arrow bg-base-200 border border-base-300">
@@ -290,6 +344,7 @@ const LLMProvidersPage: React.FC = () => {
           ...modalState,
           providerType: 'llm',
         }}
+        existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
       />

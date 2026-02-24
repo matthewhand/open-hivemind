@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
-  LayoutDashboard, Bot, Users, Wrench, Shield,
-  Settings, Cog, Activity, Component, Plug, MessageSquare, Brain,
+  LayoutDashboard, Bot, Users, Shield,
+  Settings, Cog, Activity, Component, MessageSquare, Brain,
 } from 'lucide-react';
 import React from 'react';
 
@@ -46,14 +46,14 @@ export const hivemindNavItems: NavItem[] = [
     id: 'integrations-llm',
     label: 'LLM Providers',
     icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/llm',
+    path: '/admin/providers/llm',
     visible: true,
   },
   {
     id: 'integrations-message',
     label: 'Message Platforms',
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/message',
+    path: '/admin/providers/message',
     visible: true,
   },
   {
@@ -92,14 +92,7 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
 
-  {
-    id: 'integrations-webhook',
-    label: 'Webhook',
-    icon: <NavIcon><Plug className="w-4 h-4" /></NavIcon>,
-    path: '/admin/integrations/webhook',
-    visible: true,
-  },
-  // Settings, Webhook, Monitoring, Global Defaults all under SYSTEM
+  // Settings, Monitoring, Global Defaults all under SYSTEM
   {
     id: 'monitoring',
     label: 'Monitoring',

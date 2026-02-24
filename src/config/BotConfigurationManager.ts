@@ -1,7 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
@@ -341,15 +341,23 @@ export class BotConfigurationManager {
 
     // Auto-discover unique bot names from BOTS_ prefixes
     const discoveredBots = this.discoverBotNamesFromEnv();
+    const fileBots = this.discoverBotNamesFromFiles();
 
     // Merge explicit list with discovered list
-    const explicitBots = botsEnv ? botsEnv.split(',').map(n => n.trim()).filter(Boolean) : [];
+    const explicitBots = botsEnv ? botsEnv.split(',').map((n) => n.trim()).filter(Boolean) : [];
     const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
 
     // Deduplicate bots while preferring explicitly listed names from BOTS.
     const byCanonical = new Map<string, string>();
-    for (const name of discoveredBots) { byCanonical.set(canonical(name), name); }
-    for (const name of explicitBots) { byCanonical.set(canonical(name), name); }
+    for (const name of discoveredBots) {
+      byCanonical.set(canonical(name), name);
+    }
+    for (const name of fileBots) {
+      byCanonical.set(canonical(name), name);
+    }
+    for (const name of explicitBots) {
+      byCanonical.set(canonical(name), name);
+    }
     const allBotNames = Array.from(byCanonical.values());
 
     if (allBotNames.length > 0) {
@@ -368,6 +376,26 @@ export class BotConfigurationManager {
 
     // Validate configuration
     this.validateConfigurationInternal();
+  }
+
+  /**
+   * Auto-discover bot names by scanning config/bots directory
+   */
+  private discoverBotNamesFromFiles(): string[] {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+
+    if (!fs.existsSync(botsDir)) {
+      return [];
+    }
+
+    try {
+      const files = fs.readdirSync(botsDir);
+      return files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
+    } catch (e) {
+      debug(`Error reading bots directory: ${e}`);
+      return [];
+    }
   }
 
   /**
@@ -764,13 +792,16 @@ export class BotConfigurationManager {
       return;
     }
 
-    const allowed = Array.isArray(profile.mcpGuard.allowedUserIds)
-      ? profile.mcpGuard.allowedUserIds.filter(Boolean)
+    // Access mcpGuard from profile.guards.mcpGuard
+    const mcpGuard = profile.guards?.mcpGuard || { enabled: false, type: 'owner' };
+
+    const allowed = Array.isArray(mcpGuard.allowedUsers)
+      ? mcpGuard.allowedUsers.filter(Boolean)
       : undefined;
 
     config.mcpGuard = {
-      enabled: Boolean(profile.mcpGuard.enabled),
-      type: profile.mcpGuard.type === 'custom' ? 'custom' : 'owner',
+      enabled: Boolean(mcpGuard.enabled),
+      type: mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
       allowedUserIds: allowed,
     } as McpGuardConfig;
@@ -987,6 +1018,35 @@ export class BotConfigurationManager {
   }
 
   /**
+   * Clone a bot configuration
+   */
+  public async cloneBot(name: string, newName: string): Promise<BotConfig> {
+    const originalBot = this.bots.get(name);
+    if (!originalBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    // Deep clone the configuration to avoid reference issues
+    const config = JSON.parse(JSON.stringify(originalBot));
+    config.name = newName;
+
+    // Remove internal properties if any (e.g., _updatedAt)
+    delete (config as any)._updatedAt;
+
+    // Add the new bot (this will validate and save it)
+    await this.addBot(config);
+
+    // Return the new bot config (reload happens inside addBot)
+    // Note: Since reload is synchronous/in-memory update in addBot -> reload -> loadConfiguration,
+    // this.bots should have the new bot.
+    const newBot = this.bots.get(newName);
+    if (!newBot) {
+      throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
+    }
+    return newBot;
+  }
+
+  /**
    * Update an existing bot configuration
    * For env-var bots, this creates/updates a JSON override file
    */
@@ -1029,6 +1089,38 @@ export class BotConfigurationManager {
     debug(`Updated bot config for ${name} at ${filePath}`);
 
     // Reload to apply changes
+    this.reload();
+  }
+
+  /**
+   * Delete a bot configuration
+   */
+  public async deleteBot(name: string): Promise<void> {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      debug(`Deleted bot config for ${name} at ${filePath}`);
+    } else {
+      // Check if it's an environment variable bot
+      const envBotNames = this.discoverBotNamesFromEnv();
+      const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+      const canonicalName = canonical(name);
+
+      const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
+
+      if (foundInEnv) {
+        throw new Error(
+          `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
+        );
+      } else {
+        throw new Error(`Bot "${name}" not found`);
+      }
+    }
+
     this.reload();
   }
 

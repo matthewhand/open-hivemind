@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 import { useLlmStatus } from '../hooks/useLlmStatus';
+import AIAssistButton from '../components/AIAssistButton';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -81,6 +82,14 @@ const BotCreatePage: React.FC = () => {
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">Bot Name</span>
+                <AIAssistButton
+                  label="Generate Name"
+                  prompt={`Generate a creative name for a chat bot${
+                    formData.description ? ` that is described as: "${formData.description}"` : ''
+                  }.`}
+                  systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
+                  onSuccess={(result) => handleInputChange('name', result)}
+                />
               </label>
               <input
                 type="text"
@@ -95,6 +104,14 @@ const BotCreatePage: React.FC = () => {
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">Description</span>
+                <AIAssistButton
+                  label="Generate Description"
+                  prompt={`Generate a short, engaging description (max 2 sentences) for a chat bot${
+                    formData.name ? ` named "${formData.name}"` : ''
+                  }.`}
+                  systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
+                  onSuccess={(result) => handleInputChange('description', result)}
+                />
               </label>
               <textarea
                 className="textarea textarea-bordered h-24"

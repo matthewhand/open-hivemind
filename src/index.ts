@@ -11,6 +11,7 @@ import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
+import anomalyRouter from '@src/server/routes/anomaly';
 import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
@@ -19,6 +20,7 @@ import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
+import guardsRouter from '@src/server/routes/guards';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
@@ -30,6 +32,7 @@ import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
@@ -233,6 +236,9 @@ if (process.env.NODE_ENV !== 'development') {
   };
 
   app.get('/', serveDevHtml);
+  app.get('/login', serveDevHtml);
+  app.get('/dashboard', serveDevHtml);
+  app.get('/activity', serveDevHtml);
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
@@ -264,8 +270,10 @@ app.use('/api/enterprise', enterpriseRouter);
 app.use('/api/secure-config', secureConfigRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
+app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
-app.use('/api/openapi', openapiRouter);
+app.use('/api/guards', authenticateToken, guardsRouter);
+app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
 app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
@@ -434,6 +442,10 @@ async function main() {
 
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
+
+  // Initialize AnomalyDetectionService
+  AnomalyDetectionService.getInstance();
+  appLogger.info('🔍 Anomaly Detection Service initialized');
 
   const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', {
