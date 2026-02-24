@@ -46,51 +46,51 @@
  * ```
  */
 export abstract class BaseError extends Error {
-    /**
-     * Error code for programmatic error handling.
-     * This is a short, uppercase identifier for the error type.
-     */
-    public readonly code: string;
+  /**
+   * Error code for programmatic error handling.
+   * This is a short, uppercase identifier for the error type.
+   */
+  public readonly code: string;
 
-    /**
-     * Timestamp when the error was created.
-     * Useful for logging and debugging.
-     */
-    public readonly timestamp: Date;
+  /**
+   * Timestamp when the error was created.
+   * Useful for logging and debugging.
+   */
+  public readonly timestamp: Date;
 
-    /**
-     * Creates a new BaseError instance.
-     *
-     * @param message - Human-readable error message
-     * @param code - Error code for programmatic handling (defaults to 'UNKNOWN_ERROR')
-     */
-    constructor(message: string, code: string = 'UNKNOWN_ERROR') {
-        super(message);
-        this.name = this.constructor.name;
-        this.code = code;
-        this.timestamp = new Date();
+  /**
+   * Creates a new BaseError instance.
+   *
+   * @param message - Human-readable error message
+   * @param code - Error code for programmatic handling (defaults to 'UNKNOWN_ERROR')
+   */
+  constructor(message: string, code: string = 'UNKNOWN_ERROR') {
+    super(message);
+    this.name = this.constructor.name;
+    this.code = code;
+    this.timestamp = new Date();
 
-        // Maintains proper stack trace for where our error was thrown (only available on V8)
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, this.constructor);
-        }
+    // Maintains proper stack trace for where our error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
     }
+  }
 
-    /**
-     * Converts the error to a JSON-serializable object.
-     * Useful for logging and API responses.
-     *
-     * @returns A plain object representation of the error
-     */
-    toJSON(): Record<string, unknown> {
-        return {
-            name: this.name,
-            message: this.message,
-            code: this.code,
-            timestamp: this.timestamp.toISOString(),
-            stack: this.stack,
-        };
-    }
+  /**
+   * Converts the error to a JSON-serializable object.
+   * Useful for logging and API responses.
+   *
+   * @returns A plain object representation of the error
+   */
+  toJSON(): Record<string, unknown> {
+    return {
+      name: this.name,
+      message: this.message,
+      code: this.code,
+      timestamp: this.timestamp.toISOString(),
+      stack: this.stack,
+    };
+  }
 }
 
 /**
@@ -129,15 +129,15 @@ export abstract class BaseError extends Error {
  * ```
  */
 export class ValidationError extends BaseError {
-    /**
-     * Creates a new ValidationError instance.
-     *
-     * @param message - Human-readable description of the validation failure
-     * @param code - Error code for programmatic handling (defaults to 'VALIDATION_ERROR')
-     */
-    constructor(message: string, code: string = 'VALIDATION_ERROR') {
-        super(message, code);
-    }
+  /**
+   * Creates a new ValidationError instance.
+   *
+   * @param message - Human-readable description of the validation failure
+   * @param code - Error code for programmatic handling (defaults to 'VALIDATION_ERROR')
+   */
+  constructor(message: string, code: string = 'VALIDATION_ERROR') {
+    super(message, code);
+  }
 }
 
 /**
@@ -179,15 +179,15 @@ export class ValidationError extends BaseError {
  * ```
  */
 export class NetworkError extends BaseError {
-    /**
-     * Creates a new NetworkError instance.
-     *
-     * @param message - Human-readable description of the network failure
-     * @param code - Error code for programmatic handling (defaults to 'NETWORK_ERROR')
-     */
-    constructor(message: string, code: string = 'NETWORK_ERROR') {
-        super(message, code);
-    }
+  /**
+   * Creates a new NetworkError instance.
+   *
+   * @param message - Human-readable description of the network failure
+   * @param code - Error code for programmatic handling (defaults to 'NETWORK_ERROR')
+   */
+  constructor(message: string, code: string = 'NETWORK_ERROR') {
+    super(message, code);
+  }
 }
 
 /**
@@ -229,15 +229,15 @@ export class NetworkError extends BaseError {
  * ```
  */
 export class ApiError extends BaseError {
-    /**
-     * Creates a new ApiError instance.
-     *
-     * @param message - Human-readable description of the API failure
-     * @param code - Error code for programmatic handling (defaults to 'API_ERROR')
-     */
-    constructor(message: string, code: string = 'API_ERROR') {
-        super(message, code);
-    }
+  /**
+   * Creates a new ApiError instance.
+   *
+   * @param message - Human-readable description of the API failure
+   * @param code - Error code for programmatic handling (defaults to 'API_ERROR')
+   */
+  constructor(message: string, code: string = 'API_ERROR') {
+    super(message, code);
+  }
 }
 
 /**
@@ -280,15 +280,15 @@ export class ApiError extends BaseError {
  * ```
  */
 export class ConfigurationError extends BaseError {
-    /**
-     * Creates a new ConfigurationError instance.
-     *
-     * @param message - Human-readable description of the configuration issue
-     * @param code - Error code for programmatic handling (defaults to 'CONFIG_ERROR')
-     */
-    constructor(message: string, code: string = 'CONFIG_ERROR') {
-        super(message, code);
-    }
+  /**
+   * Creates a new ConfigurationError instance.
+   *
+   * @param message - Human-readable description of the configuration issue
+   * @param code - Error code for programmatic handling (defaults to 'CONFIG_ERROR')
+   */
+  constructor(message: string, code: string = 'CONFIG_ERROR') {
+    super(message, code);
+  }
 }
 
 /**
@@ -322,41 +322,41 @@ export class ConfigurationError extends BaseError {
  * ```
  */
 export interface IErrorFactory {
-    /**
-     * Creates a validation error instance.
-     *
-     * @param message - Error message
-     * @param code - Optional error code
-     * @returns A validation error instance
-     */
-    createValidationError(message: string, code?: string): ValidationError;
+  /**
+   * Creates a validation error instance.
+   *
+   * @param message - Error message
+   * @param code - Optional error code
+   * @returns A validation error instance
+   */
+  createValidationError(message: string, code?: string): ValidationError;
 
-    /**
-     * Creates a network error instance.
-     *
-     * @param message - Error message
-     * @param code - Optional error code
-     * @returns A network error instance
-     */
-    createNetworkError(message: string, code?: string): NetworkError;
+  /**
+   * Creates a network error instance.
+   *
+   * @param message - Error message
+   * @param code - Optional error code
+   * @returns A network error instance
+   */
+  createNetworkError(message: string, code?: string): NetworkError;
 
-    /**
-     * Creates an API error instance.
-     *
-     * @param message - Error message
-     * @param code - Optional error code
-     * @returns An API error instance
-     */
-    createApiError(message: string, code?: string): ApiError;
+  /**
+   * Creates an API error instance.
+   *
+   * @param message - Error message
+   * @param code - Optional error code
+   * @returns An API error instance
+   */
+  createApiError(message: string, code?: string): ApiError;
 
-    /**
-     * Creates a configuration error instance.
-     *
-     * @param message - Error message
-     * @param code - Optional error code
-     * @returns A configuration error instance
-     */
-    createConfigurationError(message: string, code?: string): ConfigurationError;
+  /**
+   * Creates a configuration error instance.
+   *
+   * @param message - Error message
+   * @param code - Optional error code
+   * @returns A configuration error instance
+   */
+  createConfigurationError(message: string, code?: string): ConfigurationError;
 }
 
 /**
@@ -375,19 +375,19 @@ export interface IErrorFactory {
  * ```
  */
 export const defaultErrorFactory: IErrorFactory = {
-    createValidationError(message: string, code?: string): ValidationError {
-        return new ValidationError(message, code);
-    },
+  createValidationError(message: string, code?: string): ValidationError {
+    return new ValidationError(message, code);
+  },
 
-    createNetworkError(message: string, code?: string): NetworkError {
-        return new NetworkError(message, code);
-    },
+  createNetworkError(message: string, code?: string): NetworkError {
+    return new NetworkError(message, code);
+  },
 
-    createApiError(message: string, code?: string): ApiError {
-        return new ApiError(message, code);
-    },
+  createApiError(message: string, code?: string): ApiError {
+    return new ApiError(message, code);
+  },
 
-    createConfigurationError(message: string, code?: string): ConfigurationError {
-        return new ConfigurationError(message, code);
-    },
+  createConfigurationError(message: string, code?: string): ConfigurationError {
+    return new ConfigurationError(message, code);
+  },
 };

@@ -203,7 +203,7 @@ router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
       type: 'layout',
       title: 'Optimize Dashboard Layout',
       description: `Switch to grid-3x3 layout`,
-      confidence: 0.90,
+      confidence: 0.9,
       impact: 'medium',
       reasoning: `Based on your Power Users usage pattern`,
     },
