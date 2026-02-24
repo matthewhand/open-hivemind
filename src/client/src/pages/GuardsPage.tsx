@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+// PR closed as duplicate of #312
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle } from 'lucide-react';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -37,8 +37,6 @@ const GuardsPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [isNew, setIsNew] = useState(false);
 
   // Helper for empty profile
@@ -107,16 +105,12 @@ const GuardsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteProfile = (profile: GuardrailProfile) => {
-    setDeleteConfirm({ id: profile.id, name: profile.name });
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteConfirm) return;
+  const handleDeleteProfile = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this profile?')) return;
 
     try {
-      setDeleting(true);
-      const response = await fetch(`${API_BASE}/guard-profiles/${deleteConfirm.id}`, {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/guard-profiles/${id}`, {
         method: 'DELETE',
       });
 
@@ -126,9 +120,7 @@ const GuardsPage: React.FC = () => {
       fetchProfiles();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete profile');
-    } finally {
-      setDeleting(false);
-      setDeleteConfirm(null);
+      setLoading(false);
     }
   };
 
@@ -207,7 +199,7 @@ const GuardsPage: React.FC = () => {
                     <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error">
+                    <button onClick={() => handleDeleteProfile(profile.id)} className="btn btn-ghost btn-xs btn-square text-error">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -227,18 +219,6 @@ const GuardsPage: React.FC = () => {
           ))}
         </div>
       )}
-
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={confirmDelete}
-        title="Delete Profile"
-        message={`Are you sure you want to delete profile "${deleteConfirm?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmVariant="error"
-        loading={deleting}
-      />
 
       {/* Edit Modal */}
       {editingProfile && (
