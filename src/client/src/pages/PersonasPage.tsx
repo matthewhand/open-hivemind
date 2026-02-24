@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, Filter } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -42,6 +42,10 @@ const PersonasPage: React.FC = () => {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const fetchData = useCallback(async () => {
     try {
@@ -282,6 +286,37 @@ const PersonasPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+          <input
+            type="text"
+            placeholder="Search personas..."
+            className="input input-bordered w-full pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-64 relative">
+          <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+          <select
+            className="select select-bordered w-full pl-10"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="all">All Categories</option>
+            <option value="general">General</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="creative">Creative</option>
+            <option value="technical">Technical</option>
+            <option value="educational">Educational</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="professional">Professional</option>
+          </select>
+        </div>
+      </div>
+
       {/* Persona List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -297,7 +332,14 @@ const PersonasPage: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {personas.map(persona => (
+          {personas
+            .filter(p => {
+              const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    p.description.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+              return matchesSearch && matchesCategory;
+            })
+            .map(persona => (
             <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
