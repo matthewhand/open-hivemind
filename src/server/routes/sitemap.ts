@@ -460,7 +460,12 @@ router.get('/sitemap', (req: Request, res: Response) => {
     
     ${generateSectionHTML(
       'Admin Dashboard',
-      routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai') && !r.url.includes('integrations')),
+      routes.filter(
+        (r) =>
+          r.url.startsWith('/admin') &&
+          !r.url.startsWith('/admin/ai') &&
+          !r.url.includes('integrations')
+      ),
       baseUrl
     )}
     ${generateSectionHTML(

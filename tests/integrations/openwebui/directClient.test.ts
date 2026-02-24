@@ -6,7 +6,7 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 const makeMessage = (text: string, role = 'user') =>
-  ({ getText: () => text, role } as { getText: () => string; role?: string });
+  ({ getText: () => text, role }) as { getText: () => string; role?: string };
 
 describe('generateChatCompletionDirect', () => {
   beforeEach(() => {
