@@ -7,9 +7,8 @@ interface EmptyStateProps {
     title: string;
     description: string;
     actionLabel?: string;
-    actionIcon?: LucideIcon;
     onAction?: () => void;
-    variant?: 'primary' | 'secondary' | 'accent' | 'noData' | 'noResults' | 'error';
+    variant?: 'primary' | 'secondary' | 'accent';
     className?: string;
 }
 
@@ -29,21 +28,6 @@ const variantStyles = {
     iconBg: 'bg-accent/15 text-accent group-hover:bg-accent/25',
     border: 'border-accent/20 hover:border-accent/40',
   },
-  noData: {
-    gradient: 'from-primary/5 via-primary/10 to-primary/5',
-    iconBg: 'bg-primary/15 text-primary group-hover:bg-primary/25',
-    border: 'border-primary/20 hover:border-primary/40',
-  },
-  noResults: {
-    gradient: 'from-secondary/5 via-secondary/10 to-secondary/5',
-    iconBg: 'bg-secondary/15 text-secondary group-hover:bg-secondary/25',
-    border: 'border-secondary/20 hover:border-secondary/40',
-  },
-  error: {
-    gradient: 'from-error/5 via-error/10 to-error/5',
-    iconBg: 'bg-error/15 text-error group-hover:bg-error/25',
-    border: 'border-error/20 hover:border-error/40',
-  },
 };
 
 /**
@@ -55,7 +39,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   actionLabel,
-  actionIcon: ActionIcon,
   onAction,
   variant = 'primary',
   className = '',
@@ -105,7 +88,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             onClick={onAction}
             className="gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow"
           >
-            {ActionIcon && <ActionIcon className="w-4 h-4" />}
             {actionLabel}
           </Button>
         )}
