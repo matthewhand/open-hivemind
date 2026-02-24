@@ -700,11 +700,13 @@ router.post('/mcp-servers/test', configRateLimit, async (req: Request, res: Resp
     // Use a temporary name if not provided
     const configName = name || `test-${Date.now()}`;
 
-    await mcpService.testConnection({ serverUrl, apiKey, name: configName });
+    const tools = await mcpService.testConnection({ serverUrl, apiKey, name: configName });
 
     return res.json({
       success: true,
       message: `Successfully tested connection to MCP server`,
+      toolCount: tools.length,
+      tools: tools,
     });
   } catch (error: any) {
     return res.status(500).json({
