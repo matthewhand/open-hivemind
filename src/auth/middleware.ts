@@ -19,15 +19,9 @@ export class AuthMiddleware {
    * Bypasses authentication for localhost requests
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const authHeader = Array.isArray(req.headers.authorization)
-        ? req.headers.authorization[0]
-        : req.headers.authorization;
-
-      // Check if request is from localhost - bypass authentication when no auth header provided
+    // Helper to check for localhost
+    const isLocalhostRequest = () => {
       const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
-
-      // Check for localhost IPs and common localhost hostnames
       const host = req.get('host');
       const origin = req.get('origin');
 
@@ -36,9 +30,6 @@ export class AuthMiddleware {
         clientIP === '::1' ||
         clientIP === '::ffff:127.0.0.1';
 
-      // Strict check for host header to prevent host header injection
-      // Must be exactly 'localhost' or start with 'localhost:' (for ports)
-      // Must be exactly '127.0.0.1' or start with '127.0.0.1:' (for ports)
       const isLocalhostHost = host && (
         host === 'localhost' ||
         host.startsWith('localhost:') ||
@@ -46,8 +37,6 @@ export class AuthMiddleware {
         host.startsWith('127.0.0.1:')
       );
 
-      // Strict check for origin header
-      // Must include protocol (http/https) and be exactly localhost/127.0.0.1 or with port
       const isLocalhostOrigin = origin && (
         origin === 'http://localhost' ||
         origin.startsWith('http://localhost:') ||
@@ -59,31 +48,42 @@ export class AuthMiddleware {
         origin.startsWith('https://127.0.0.1:')
       );
 
-      const isLocalhost = isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
+      // console.log('Auth Check:', { clientIP, host, origin, isLocalhostIp, isLocalhostHost, isLocalhostOrigin });
+      return isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
+    };
 
-      const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
+    const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
+    const isLocalhost = isLocalhostRequest();
+
+    const bypassAuth = () => {
+      debug(
+        `Bypassing authentication for localhost request: ${req.method} ${req.path}`
+      );
+      // Create a default admin user for localhost access
+      const defaultUser: User = {
+        id: 'localhost-admin',
+        username: 'localhost-admin',
+        email: 'admin@localhost',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+
+      (req as AuthMiddlewareRequest).user = defaultUser;
+      (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(
+        defaultUser.role
+      );
+      next();
+    };
+
+    try {
+      const authHeader = Array.isArray(req.headers.authorization)
+        ? req.headers.authorization[0]
+        : req.headers.authorization;
 
       if ((!authHeader || !authHeader.startsWith('Bearer ')) && isLocalhost && allowLocalBypass) {
-        debug(
-          `Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`
-        );
-        // Create a default admin user for localhost access
-        const defaultUser: User = {
-          id: 'localhost-admin',
-          username: 'localhost-admin',
-          email: 'admin@localhost',
-          role: 'admin',
-          // tenant_id: 'default',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-        };
-
-        (req as AuthMiddlewareRequest).user = defaultUser;
-        (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(
-          defaultUser.role
-        );
-        next();
+        bypassAuth();
         return;
       }
 
@@ -104,17 +104,22 @@ export class AuthMiddleware {
         throw new AuthenticationError('User not found', undefined, 'invalid_credentials');
       }
 
-      // Merge tenant_id from payload if not in user
       const userWithTenant = user;
 
       // Attach user, permissions, and tenant to request
       (req as AuthMiddlewareRequest).user = userWithTenant;
       (req as AuthMiddlewareRequest).permissions = payload.permissions;
-      // req.tenant_id = payload.tenant_id;
 
       debug(`Authenticated user: ${user.username} (role: ${user.role})`);
       next();
     } catch (error) {
+      // If validation fails BUT we are localhost and allow bypass, proceed as admin
+      if (isLocalhost && allowLocalBypass) {
+        debug('Authentication failed but localhost bypass is active. Proceeding as admin.');
+        bypassAuth();
+        return;
+      }
+
       debug('Authentication error:', error);
       // Pass error to Express error handler instead of throwing
       if (error instanceof AuthenticationError) {
