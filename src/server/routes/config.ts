@@ -22,7 +22,6 @@ import {
   getMessageProfiles,
   saveMessageProfiles,
   type MessageProfile,
-  type MessageProviderProfile,
 } from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
@@ -31,7 +30,6 @@ import {
   getMcpServerProfiles,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
-// Import all convict config modules
 import messageConfig from '../../config/messageConfig';
 
 import ollamaConfig from '../../config/ollamaConfig';
@@ -235,7 +233,7 @@ router.get('/message-profiles', (req, res) => {
 // POST /api/config/message-profiles - Create a Message profile
 router.post('/message-profiles', (req, res) => {
   try {
-    const profile = req.body as MessageProviderProfile;
+    const profile = req.body as MessageProfile;
     if (!profile.key || typeof profile.key !== 'string') {
       return res.status(400).json({ error: 'profile.key is required' });
     }
@@ -257,7 +255,7 @@ router.post('/message-profiles', (req, res) => {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
-    const newProfile: MessageProviderProfile = {
+    const newProfile: MessageProfile = {
       key: profile.key,
       name: profile.name || profile.key,
       description: profile.description,

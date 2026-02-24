@@ -34,7 +34,7 @@ const configRateLimit = isTestEnv
   });
 
 // Apply rate limiting to sensitive configuration operations
-router.use('/api/admin', configRateLimit);
+router.use('/', configRateLimit);
 
 // Mount sub-routes
 router.use('/agents', agentsRouter);
@@ -221,7 +221,7 @@ router.post('/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res
     });
   }
 });
-// GET /llm-providers - Get all configured LLM providers
+// GET /llm-providers - Get all LLM providers
 router.get('/llm-providers', (req: Request, res: Response) => {
   try {
     const providers = webUIStorage.getLlmProviders();
