@@ -50,21 +50,17 @@ describe('Guards Route', () => {
   describe('POST /guards', () => {
     it('should update access control configuration', async () => {
       const accessConfig = { type: 'users', users: ['alice@example.com'], ips: [] };
-      const mockGuards = [
-        { id: 'access-control', config: { type: 'owner' } }
-      ];
+      const mockGuards = [{ id: 'access-control', config: { type: 'owner' } }];
 
       (webUIStorage.getGuards as jest.Mock).mockReturnValue(mockGuards);
 
-      const response = await request(app)
-        .post('/guards')
-        .send(accessConfig);
+      const response = await request(app).post('/guards').send(accessConfig);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(webUIStorage.saveGuard).toHaveBeenCalledWith({
         id: 'access-control',
-        config: { type: 'users', users: ['alice@example.com'], ips: [] }
+        config: { type: 'users', users: ['alice@example.com'], ips: [] },
       });
     });
 
@@ -83,9 +79,7 @@ describe('Guards Route', () => {
       // Mock getGuards to ensure that if validation passes, we would get 404
       (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
 
-      const response = await request(app)
-        .post('/guards')
-        .send(['invalid']); // Array should be rejected
+      const response = await request(app).post('/guards').send(['invalid']); // Array should be rejected
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid access configuration');
@@ -144,9 +138,7 @@ describe('Guards Route', () => {
 
       (webUIStorage.getGuards as jest.Mock).mockReturnValue([mockGuard]);
 
-      const response = await request(app)
-        .post(`/guards/${guardId}/toggle`)
-        .send({ enabled: true });
+      const response = await request(app).post(`/guards/${guardId}/toggle`).send({ enabled: true });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -156,18 +148,14 @@ describe('Guards Route', () => {
     it('should return 404 if guard not found', async () => {
       (webUIStorage.getGuards as jest.Mock).mockReturnValue([]);
 
-      const response = await request(app)
-        .post('/guards/unknown/toggle')
-        .send({ enabled: true });
+      const response = await request(app).post('/guards/unknown/toggle').send({ enabled: true });
 
       expect(response.status).toBe(404);
       expect(webUIStorage.toggleGuard).not.toHaveBeenCalled();
     });
 
     it('should return 400 if enabled is not boolean', async () => {
-      const response = await request(app)
-        .post('/guards/test/toggle')
-        .send({ enabled: 'true' });
+      const response = await request(app).post('/guards/test/toggle').send({ enabled: 'true' });
 
       expect(response.status).toBe(400);
     });

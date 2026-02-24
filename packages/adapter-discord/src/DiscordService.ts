@@ -11,15 +11,15 @@ import {
   type ThreadChannel,
 } from 'discord.js';
 import type {
+  IBotConfig,
+  IChannelRouter,
+  IConfigAccessor,
+  IErrorTypes,
+  ILogger,
   IMessage,
   IMessengerService,
   IServiceDependencies,
-  IBotConfig,
-  IErrorTypes,
-  ILogger,
   IWebSocketService,
-  IChannelRouter,
-  IConfigAccessor,
 } from '@hivemind/shared-types';
 import DiscordMessage from './DiscordMessage';
 import { DiscordBotManager, type Bot } from './managers/DiscordBotManager';
@@ -194,7 +194,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
             ...(newBot.config.discord || {}),
             clientId: newBot.botUserId,
           };
-        } catch { }
+        } catch {}
         resolve();
       });
       newBot.client.login(newBot.config.token).catch(reject);
@@ -225,11 +225,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     );
   }
 
-  public async sendMessage(
-    channelId: string,
-    text: string,
-    senderName?: string
-  ): Promise<string> {
+  public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
     return this.messageSender.sendMessageToChannel(channelId, text, senderName);
   }
 
@@ -260,12 +256,9 @@ export class DiscordService extends EventEmitter implements IMessengerService {
       ) {
         throw new Error('Channel is not text-based or was not found');
       }
-      const cap =
-        (discordConfig?.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
+      const cap = (discordConfig?.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
       const limit =
-        typeof limitOverride === 'number' && limitOverride > 0
-          ? Math.min(limitOverride, cap)
-          : cap;
+        typeof limitOverride === 'number' && limitOverride > 0 ? Math.min(limitOverride, cap) : cap;
       const messages = await (channel as TextChannel).messages.fetch({ limit });
       const arr = Array.from(messages.values());
       // Enforce hard cap and reverse to oldest-first order (Discord returns newest-first)
@@ -289,7 +282,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
           botName: 'DiscordService',
           metadata: { channelId, errorType: 'NetworkError' },
         });
-      } catch { }
+      } catch {}
 
       return [];
     }
@@ -373,8 +366,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     const safeLlm = (
       cfg: any
     ): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
-      const llmProvider =
-        cfg?.LLM_PROVIDER ?? cfg?.llmProvider ?? cfg?.llm?.provider ?? undefined;
+      const llmProvider = cfg?.LLM_PROVIDER ?? cfg?.llmProvider ?? cfg?.llm?.provider ?? undefined;
 
       const llmModel = cfg?.OPENAI_MODEL ?? cfg?.openai?.model ?? cfg?.llm?.model ?? undefined;
 
@@ -425,13 +417,13 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
       const byId = cfgId
         ? this.botManager
-          .getAllBots()
-          .find(
-            (b) =>
-              b.botUserId === cfgId ||
-              b.config?.BOT_ID === cfgId ||
-              b.config?.discord?.clientId === cfgId
-          )
+            .getAllBots()
+            .find(
+              (b) =>
+                b.botUserId === cfgId ||
+                b.config?.BOT_ID === cfgId ||
+                b.config?.discord?.clientId === cfgId
+            )
         : undefined;
 
       const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
@@ -491,9 +483,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
       if (senderKey) {
         bot = bots.find(
           (b) =>
-            b.botUserName === senderKey ||
-            b.botUserId === senderKey ||
-            b.config?.name === senderKey
+            b.botUserName === senderKey || b.botUserId === senderKey || b.config?.name === senderKey
         );
       }
       if (!bot && bots.length > 0) {
@@ -555,10 +545,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
   public async leaveVoiceChannel(channelId: string): Promise<void> {
     if (!this.voiceManager) {
       const { ConfigError } = this.deps.errorTypes;
-      throw new ConfigError(
-        'Voice manager not initialized',
-        'DISCORD_VOICE_MANAGER_NOT_INIT'
-      );
+      throw new ConfigError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT');
     }
     this.voiceManager.leaveChannel(channelId);
     log(`Left voice channel ${channelId}`);
@@ -600,8 +587,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
           );
         },
 
-        getMessagesFromChannel: async (channelId: string) =>
-          this.getMessagesFromChannel(channelId),
+        getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
 
         sendPublicAnnouncement: async (channelId: string, announcement: any) =>
           this.sendPublicAnnouncement(channelId, announcement),
@@ -610,12 +596,10 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
         getDefaultChannel: () => this.getDefaultChannel(),
 
-        setMessageHandler: (handler) => { },
+        setMessageHandler: (handler) => {},
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
-        scoreChannel: this.scoreChannel
-          ? (cid, meta) => this.scoreChannel!(cid, meta)
-          : undefined,
+        scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined,
       };
 
       return {

@@ -1,12 +1,12 @@
 import type { IMessengerService } from './IMessengerService';
-import type { IServiceDependencies, IBotConfig } from './IServiceDependencies';
+import type { IBotConfig, IServiceDependencies } from './IServiceDependencies';
 
 /**
  * Configuration for creating an adapter instance.
  */
 export interface IAdapterConfig {
-    botName: string;
-    botConfig: IBotConfig;
+  botName: string;
+  botConfig: IBotConfig;
 }
 
 /**
@@ -14,8 +14,8 @@ export interface IAdapterConfig {
  * This is the primary way the main application creates adapter instances.
  */
 export type IAdapterFactory = (
-    config: IAdapterConfig,
-    dependencies: IServiceDependencies
+  config: IAdapterConfig,
+  dependencies: IServiceDependencies
 ) => IMessengerService;
 
 /**
@@ -23,14 +23,14 @@ export type IAdapterFactory = (
  * Each adapter package should export an object conforming to this interface.
  */
 export interface IAdapterModule {
-    /** Factory function to create service instances */
-    createService: IAdapterFactory;
-    /** Optional: Service class for direct instantiation (legacy support) */
-    ServiceClass?: new (deps: IServiceDependencies) => IMessengerService;
-    /** Optional: Adapter metadata */
-    metadata?: {
-        name: string;
-        version?: string;
-        platform: 'discord' | 'slack' | 'mattermost';
-    };
+  /** Factory function to create service instances */
+  createService: IAdapterFactory;
+  /** Optional: Service class for direct instantiation (legacy support) */
+  ServiceClass?: new (deps: IServiceDependencies) => IMessengerService;
+  /** Optional: Adapter metadata */
+  metadata?: {
+    name: string;
+    version?: string;
+    platform: 'discord' | 'slack' | 'mattermost';
+  };
 }

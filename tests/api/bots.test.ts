@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import botsRouter from '../../src/server/routes/bots';
 import { BotManager } from '../../src/managers/BotManager';
+import botsRouter from '../../src/server/routes/bots';
 
 // Mock BotManager with inline implementation
 jest.mock('../../src/managers/BotManager', () => {
@@ -108,7 +108,12 @@ describe('Bots Routes', () => {
 
       const response = await request(app)
         .post('/api/bots')
-        .send({ name: 'Bot 1', messageProvider: 'discord', llmProvider: 'openai', config: { discord: { token: 'token' }, openai: { apiKey: 'key' } } })
+        .send({
+          name: 'Bot 1',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          config: { discord: { token: 'token' }, openai: { apiKey: 'key' } },
+        })
         .expect(201);
 
       expect(response.body.success).toBe(true);

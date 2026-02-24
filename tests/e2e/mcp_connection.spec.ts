@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('MCP Servers Page - Test Connection', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,8 +16,8 @@ test.describe('MCP Servers Page - Test Connection', () => {
           success: true,
           data: {
             servers: [],
-            configurations: []
-          }
+            configurations: [],
+          },
         }),
       });
     });
