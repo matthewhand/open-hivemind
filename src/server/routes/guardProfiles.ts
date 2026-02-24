@@ -66,11 +66,19 @@ router.post('/', (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body;
 
-    if (!name || !guards) {
+    if (!name || typeof name !== 'string') {
       return res.status(400).json({
         success: false,
         error: 'Validation error',
-        message: 'Name and guards configuration are required',
+        message: 'Name is required and must be a string',
+      });
+    }
+
+    if (!guards || typeof guards !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        message: 'Guards configuration is required',
       });
     }
 
@@ -80,9 +88,19 @@ router.post('/', (req: Request, res: Response) => {
       name,
       description: description || '',
       guards: {
-        mcpGuard: guards.mcpGuard || { enabled: false, type: 'owner' },
-        rateLimit: guards.rateLimit || { enabled: false, maxRequests: 100, windowMs: 60000 },
-        contentFilter: guards.contentFilter || { enabled: false, strictness: 'low' },
+        mcpGuard: guards.mcpGuard && typeof guards.mcpGuard === 'object' && ['owner', 'custom'].includes(guards.mcpGuard.type)
+          ? {
+            enabled: Boolean(guards.mcpGuard.enabled),
+            type: guards.mcpGuard.type,
+            ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers) ? { allowedUsers: guards.mcpGuard.allowedUsers } : {})
+          }
+          : { enabled: false, type: 'owner' },
+        rateLimit: guards.rateLimit && typeof guards.rateLimit === 'object'
+          ? { enabled: Boolean(guards.rateLimit.enabled), maxRequests: Number(guards.rateLimit.maxRequests) || 100, windowMs: Number(guards.rateLimit.windowMs) || 60000 }
+          : { enabled: false, maxRequests: 100, windowMs: 60000 },
+        contentFilter: guards.contentFilter && typeof guards.contentFilter === 'object'
+          ? { enabled: Boolean(guards.contentFilter.enabled), strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness) ? guards.contentFilter.strictness : 'low' }
+          : { enabled: false, strictness: 'low' },
       },
     };
 
@@ -119,12 +137,27 @@ router.put('/:id', (req: Request, res: Response) => {
       });
     }
 
-    // Merge updates
+    // Merge updates with validation to prevent prototype pollution
+    const safeGuards = guards && typeof guards === 'object'
+      ? Object.keys(guards)
+        .filter(key => !['__proto__', 'constructor', 'prototype'].includes(key))
+        .reduce((acc, key) => {
+          const existingValue = profiles[profileIndex].guards[key as keyof typeof profiles[typeof profileIndex]['guards']];
+          const newValue = guards[key];
+          if (typeof newValue === 'object' && newValue !== null && typeof existingValue === 'object' && existingValue !== null) {
+            acc[key] = { ...existingValue, ...newValue };
+          } else {
+            acc[key] = newValue;
+          }
+          return acc;
+        }, {} as any)
+      : profiles[profileIndex].guards;
+
     const updatedProfile = {
       ...profiles[profileIndex],
-      name: name || profiles[profileIndex].name,
+      name: (name && typeof name === 'string') ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: guards ? { ...profiles[profileIndex].guards, ...guards } : profiles[profileIndex].guards,
+      guards: safeGuards,
     };
 
     profiles[profileIndex] = updatedProfile;
@@ -149,15 +182,16 @@ router.delete('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
-    const filteredProfiles = profiles.filter((p) => p.id !== id);
+    const profileExists = profiles.some((p) => p.id === id);
 
-    if (filteredProfiles.length === profiles.length) {
+    if (!profileExists) {
       return res.status(404).json({
         success: false,
         error: 'Profile not found',
       });
     }
 
+    const filteredProfiles = profiles.filter((p) => p.id !== id);
     saveGuardrailProfiles(filteredProfiles);
 
     return res.json({

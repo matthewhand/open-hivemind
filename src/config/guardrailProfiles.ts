@@ -110,7 +110,10 @@ export const loadGuardrailProfiles = (): GuardrailProfile[] => {
     // Migrate old format if necessary (key -> id, mcpGuard -> guards.mcpGuard)
     return parsed.map((p: any) => {
       if (p.key && !p.id) {
-        // Migration logic
+        // Migration logic - validate required fields
+        if (!p.name || typeof p.name !== 'string') {
+          throw new Error(`Invalid profile: name is required for migration of profile with key "${p.key}"`);
+        }
         return {
           id: p.key,
           name: p.name,
@@ -121,6 +124,10 @@ export const loadGuardrailProfiles = (): GuardrailProfile[] => {
             contentFilter: { enabled: false, strictness: 'low' },
           }
         };
+      }
+      // Validate new format profiles
+      if (!p.id || typeof p.id !== 'string' || !p.name || typeof p.name !== 'string' || !p.guards) {
+        throw new Error(`Invalid profile: id, name, and guards are required`);
       }
       return p;
     }) as GuardrailProfile[];
