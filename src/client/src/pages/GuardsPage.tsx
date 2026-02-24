@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
+import EmptyState from '../components/DaisyUI/EmptyState';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -192,6 +193,15 @@ const GuardsPage: React.FC = () => {
         <div className="flex items-center justify-center py-12">
           <span className="loading loading-spinner loading-lg" />
         </div>
+      ) : profiles.length === 0 ? (
+        <EmptyState
+          icon={Shield}
+          title="No Guard Profiles"
+          description="Create a guard profile to enforce security policies and access controls for your bots."
+          actionLabel="Create Profile"
+          onAction={handleCreate}
+          variant="noData"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {profiles.map(profile => (
