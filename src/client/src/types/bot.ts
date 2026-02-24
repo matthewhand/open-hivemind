@@ -268,35 +268,51 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     displayName: 'Slack',
     description: 'Connect to Slack workspaces',
     icon: '💬',
-    fields: [],
+    fields: [
+      { name: 'botToken', label: 'Bot User OAuth Token', type: 'password', required: true },
+      { name: 'appToken', label: 'App-Level Token', type: 'password', required: true },
+      { name: 'signingSecret', label: 'Signing Secret', type: 'password', required: true },
+    ],
   },
   discord: {
     type: MessageProviderType.DISCORD,
     displayName: 'Discord',
     description: 'Connect to Discord servers',
     icon: '🎮',
-    fields: [],
+    fields: [
+      { name: 'token', label: 'Bot Token', type: 'password', required: true },
+      { name: 'clientId', label: 'Client ID', type: 'text', required: true },
+    ],
   },
   telegram: {
     type: MessageProviderType.TELEGRAM,
     displayName: 'Telegram',
     description: 'Connect to Telegram groups',
     icon: '✈️',
-    fields: [],
+    fields: [
+      { name: 'token', label: 'Bot Token', type: 'password', required: true },
+    ],
   },
   webhook: {
     type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
     description: 'Generic webhook integration',
     icon: '🔗',
-    fields: [],
+    fields: [
+      { name: 'url', label: 'Webhook URL', type: 'text', required: true },
+      { name: 'secret', label: 'Secret', type: 'password', required: false },
+    ],
   },
   mattermost: {
     type: MessageProviderType.MATTERMOST,
     displayName: 'Mattermost',
     description: 'Connect to Mattermost instances',
     icon: '💻',
-    fields: [],
+    fields: [
+      { name: 'url', label: 'Server URL', type: 'text', required: true },
+      { name: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { name: 'teamId', label: 'Team ID', type: 'text', required: false },
+    ],
   },
 };
 
@@ -306,14 +322,20 @@ export const LLM_PROVIDER_CONFIGS = {
     displayName: 'OpenAI',
     description: 'GPT models from OpenAI',
     icon: '🤖',
-    fields: [],
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'gpt-4o' },
+    ],
   },
   anthropic: {
     type: LLMProviderType.ANTHROPIC,
     displayName: 'Anthropic',
     description: 'Claude models from Anthropic',
     icon: '🧠',
-    fields: [],
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'claude-3-opus-20240229' },
+    ],
   },
   ollama: {
     type: LLMProviderType.OLLAMA,

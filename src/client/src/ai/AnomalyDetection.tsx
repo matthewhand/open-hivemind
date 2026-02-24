@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import { apiService } from '../services/api';
 import {
   ExclamationTriangleIcon,
   ChartBarIcon,
@@ -10,6 +11,25 @@ import {
   ExclamationCircleIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+
+/**
+ * Backend anomaly response type - matches the Anomaly interface from DatabaseManager.
+ * This provides type safety for the API response.
+ */
+interface BackendAnomaly {
+  id: string;
+  timestamp: string;
+  metric: string;
+  value: number;
+  expectedMean: number;
+  standardDeviation: number;
+  zScore: number;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  explanation: string;
+  resolved: boolean;
+  tenantId?: string;
+}
 
 export interface AnomalyConfig {
   enabled: boolean;
@@ -394,8 +414,71 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
 
   // Initialize metrics
   useEffect(() => {
+    fetchAnomalies();
+  }, []);
+
+  useEffect(() => {
     updateMetrics();
   }, [state.events]);
+
+  const fetchAnomalies = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch active anomalies with proper typing
+      const data = await apiService.get<BackendAnomaly[]>('/api/anomalies');
+
+      if (data && data.length > 0) {
+        // Map backend data to frontend AnomalyEvent
+        const mappedEvents: AnomalyEvent[] = data.map(item => ({
+          id: item.id,
+          timestamp: new Date(item.timestamp),
+          metric: item.metric,
+          value: item.value,
+          expected: item.expectedMean,
+          deviation: item.zScore,
+          severity: item.severity,
+          type: 'point',
+          algorithm: 'Statistical',
+          confidence: 1,
+          explanation: item.explanation,
+          context: {
+            timeWindow: {
+              start: new Date(new Date(item.timestamp).getTime() - 3600000),
+              end: new Date(new Date(item.timestamp).getTime() + 3600000)
+            },
+            relatedMetrics: [],
+            baselineStats: {
+              mean: item.expectedMean,
+              stdDev: item.standardDeviation,
+              min: 0,
+              max: 0
+            }
+          },
+          status: item.resolved ? 'resolved' : 'new',
+          tags: [],
+          metadata: { zScore: item.zScore }
+        }));
+
+        setState(prev => ({
+          ...prev,
+          events: mappedEvents,
+        }));
+      } else {
+        // Keep mock data if no real data
+        console.log('No real anomalies found, using mock data');
+      }
+    } catch (error: unknown) {
+      // Handle authentication errors (401) - user should be redirected to login
+      if (error instanceof Error && error.message.includes('401')) {
+        console.warn('Authentication expired, please log in again');
+        // The apiService typically handles redirects, but we can add additional handling here
+      } else {
+        console.error('Failed to fetch anomalies', error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateMetrics = () => {
     const metrics: AnomalyMetrics = {
@@ -425,25 +508,17 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     setIsLoading(true);
     setState(prev => ({ ...prev, isDetecting: true }));
 
-    // Simulate detection process
+    // For now we just refresh data
+    await fetchAnomalies();
+
     setTimeout(() => {
-      const newEvents = generateMockAnomalies();
+      setIsLoading(false);
       setState(prev => ({
         ...prev,
-        events: [...prev.events, ...newEvents].slice(-100), // Keep last 100 events
         isDetecting: false,
-        lastDetection: new Date(),
+        lastDetection: new Date()
       }));
-
-      // Trigger callback for new anomalies
-      newEvents.forEach(event => {
-        if (onAnomalyDetected) {
-          onAnomalyDetected(event);
-        }
-      });
-
-      setIsLoading(false);
-    }, 2000);
+    }, 1000);
   };
 
   const toggleAlgorithm = (algorithmId: string) => {
@@ -500,6 +575,17 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       animation="slide-up"
       className="w-full space-y-6"
     >
+      {/* WIP Banner */}
+      <div className="alert alert-warning shadow-lg">
+        <ExclamationTriangleIcon className="w-6 h-6" />
+        <div>
+          <h3 className="font-bold">Work In Progress</h3>
+          <div className="text-xs">
+            This page is currently under active development. Real-time anomaly detection integration is partial.
+          </div>
+        </div>
+      </div>
+
       {/* Anomaly Detection Header */}
       <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
         <div className="card-body p-6">

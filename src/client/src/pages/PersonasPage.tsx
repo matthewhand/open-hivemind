@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -34,6 +34,7 @@ const PersonasPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
+  const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -41,6 +42,10 @@ const PersonasPage: React.FC = () => {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const fetchData = useCallback(async () => {
     try {
@@ -53,20 +58,6 @@ const PersonasPage: React.FC = () => {
       ]);
 
       const botList = configResponse.bots || [];
-      // Assign an ID if missing (API Bot type might not have ID exposed in ConfigResponse? 
-      // Actually ConfigResponse.bots doesn't have ID, it has name as key identifier in some contexts?
-      // Wait, BotManager.getAllBots returns BotInstance which HAS ID.
-      // But ConfigResponse bots is Bot[], which lacks ID in the interface definition in api.ts?
-      // Let's check api.ts again. 
-      // api.ts: export interface Bot { name: string; ... } NO ID!
-      // However, BotManager returns BotInstance which has ID.
-      // `apiService.getConfig` calls `/api/config`.
-      // `src/server/routes/config.ts` line 263 sends `sanitizedBots`.
-      // `sanitizedBots` map bot => ...bot. `bot` comes from `manager.getAllBots()`.
-      // `BotInstance` has `id`.
-      // So the runtime response HAS ID, but the TypeScript interface `Bot` in `api.ts` is missing it.
-      // I should cast or assume ID exists.
-
       const filledBots = botList.map((b: any) => ({
         ...b,
         id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
@@ -114,7 +105,14 @@ const PersonasPage: React.FC = () => {
         traits: [], // Traits not yet exposed in simple UI
       };
 
-      if (editingPersona) {
+      if (cloningPersonaId) {
+        savedPersona = await apiService.clonePersona(cloningPersonaId, {
+          name: personaName,
+          description: personaDescription,
+          category: personaCategory,
+          systemPrompt: personaPrompt,
+        });
+      } else if (editingPersona) {
         savedPersona = await apiService.updatePersona(editingPersona.id, personaData);
       } else {
         savedPersona = await apiService.createPersona(personaData);
@@ -155,6 +153,7 @@ const PersonasPage: React.FC = () => {
       setShowCreateModal(false);
       setShowEditModal(false);
       setEditingPersona(null);
+      setCloningPersonaId(null);
     } catch (err) {
       console.error(err);
       setError('Failed to save persona changes');
@@ -170,12 +169,24 @@ const PersonasPage: React.FC = () => {
     setPersonaPrompt('You are a helpful assistant.');
     setSelectedBotIds([]);
     setEditingPersona(null);
+    setCloningPersonaId(null);
     setShowCreateModal(true);
+  };
+
+  const openCloneModal = (persona: Persona) => {
+    setPersonaName(`Copy of ${persona.name}`);
+    setPersonaDescription(persona.description);
+    setPersonaCategory(persona.category);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds([]); // Don't copy assignments by default
+    setEditingPersona(null);
+    setCloningPersonaId(persona.id);
+    setShowCreateModal(true); // Reuse create modal
   };
 
   const openEditModal = (persona: Persona) => {
     if (persona.isBuiltIn) {
-      alert('Cannot edit built-in personas directly. Clone them instead (Not implemented yet).');
+      alert('Cannot edit built-in personas directly. Clone them instead.');
       return;
     }
     setPersonaName(persona.name);
@@ -184,6 +195,7 @@ const PersonasPage: React.FC = () => {
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds(persona.assignedBotIds);
     setEditingPersona(persona);
+    setCloningPersonaId(null);
     setShowEditModal(true);
   };
 
@@ -227,6 +239,14 @@ const PersonasPage: React.FC = () => {
     { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
   ];
 
+  const filteredPersonas = personas.filter(persona => {
+    const matchesSearch =
+      (persona.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (persona.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || persona.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="space-y-6">
       {/* Error Alert */}
@@ -240,7 +260,7 @@ const PersonasPage: React.FC = () => {
 
       {/* Header */}
       <PageHeader
-        title="Personas"
+        title="Personas (Beta)"
         description="Manage AI personalities and system prompts"
         icon={Sparkles}
         actions={
@@ -274,23 +294,52 @@ const PersonasPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Filters */}
+      {!loading && personas.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4 bg-base-200/50 p-4 rounded-lg">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
+            <Input
+              placeholder="Search personas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+          <select
+            className="select select-bordered w-full sm:w-auto"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
+            <option value="all">All Categories</option>
+            <option value="general">General</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="creative">Creative</option>
+            <option value="technical">Technical</option>
+            <option value="educational">Educational</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="professional">Professional</option>
+          </select>
+        </div>
+      )}
+
       {/* Persona List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : personas.length === 0 ? (
+      ) : filteredPersonas.length === 0 ? (
         <EmptyState
           icon={Sparkles}
           title="No personas found"
-          description="Create your first persona to get started"
-          actionLabel="Create Persona"
-          onAction={openCreateModal}
+          description={personas.length === 0 ? "Create your first persona to get started" : "Try adjusting your search or filters"}
+          actionLabel={personas.length === 0 ? "Create Persona" : "Clear Filters"}
+          onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setFilterCategory('all'); }}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {personas.map(persona => (
-            <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
+          {filteredPersonas.map(persona => (
+            <Card key={persona.id} data-testid="persona-card" className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
@@ -357,8 +406,8 @@ const PersonasPage: React.FC = () => {
                   </>
                 )}
                 {persona.isBuiltIn && (
-                  <Button variant="ghost" size="sm" disabled title="Built-in personas cannot be edited">
-                    <User className="w-4 h-4 mr-1" /> Built-in
+                  <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)}>
+                    <Copy className="w-4 h-4 mr-1" /> Clone
                   </Button>
                 )}
               </div>
@@ -371,7 +420,7 @@ const PersonasPage: React.FC = () => {
       <Modal
         isOpen={showCreateModal || showEditModal}
         onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
-        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : 'Create New Persona'}
+        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona')}
         size="lg"
       >
         <div className="space-y-4">
@@ -489,7 +538,7 @@ const PersonasPage: React.FC = () => {
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
             <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
-              {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : 'Create Persona')}
+              {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
             </Button>
           </div>
         </div>

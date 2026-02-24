@@ -19,11 +19,14 @@ import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
+import aiAssistRouter from './routes/ai-assist';
+import botsRouter from './routes/bots';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
+import guardsRouter from './routes/guards';
 import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
@@ -177,8 +180,11 @@ export class WebUIServer {
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
+    this.app.use('/api/ai-assist', authenticateToken, aiAssistRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
+    this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/mcp', authenticateToken, mcpRouter);
+    this.app.use('/api/guards', authenticateToken, guardsRouter);
     this.app.use('/api/activity', authenticateToken, activityRouter);
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
@@ -187,6 +193,7 @@ export class WebUIServer {
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
+    this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {

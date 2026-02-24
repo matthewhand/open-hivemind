@@ -1,47 +1,91 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import type { McpGuardConfig } from '@src/types/config';
 
 const debug = Debug('app:guardrailProfiles');
 
 export interface GuardrailProfile {
-  key: string;
+  id: string;
   name: string;
   description?: string;
-  mcpGuard: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds?: string[];
+  guards: {
+    mcpGuard: McpGuardConfig;
+    rateLimit?: {
+      enabled: boolean;
+      maxRequests: number;
+      windowMs: number;
+    };
+    contentFilter?: {
+      enabled: boolean;
+      strictness?: 'low' | 'medium' | 'high';
+    };
   };
 }
 
+// Keep legacy interface for backward compatibility if needed, but we'll try to migrate
+// Actually, let's just use the new interface.
+
 const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
   {
-    key: 'open',
+    id: 'open',
     name: 'Open',
     description: 'Allow MCP tools without restrictions',
-    mcpGuard: {
-      enabled: false,
-      type: 'owner',
+    guards: {
+      mcpGuard: {
+        enabled: false,
+        type: 'owner',
+      },
+      rateLimit: {
+        enabled: false,
+        maxRequests: 100,
+        windowMs: 60000,
+      },
+      contentFilter: {
+        enabled: false,
+        strictness: 'low',
+      },
     },
   },
   {
-    key: 'owner-only',
+    id: 'owner-only',
     name: 'Owner Only',
     description: 'Only the channel owner can use MCP tools',
-    mcpGuard: {
-      enabled: true,
-      type: 'owner',
+    guards: {
+      mcpGuard: {
+        enabled: true,
+        type: 'owner',
+      },
+      rateLimit: {
+        enabled: true,
+        maxRequests: 50,
+        windowMs: 60000,
+      },
+      contentFilter: {
+        enabled: true,
+        strictness: 'medium',
+      },
     },
   },
   {
-    key: 'custom-list',
-    name: 'Custom Allow List',
-    description: 'Only approved user IDs can use MCP tools',
-    mcpGuard: {
-      enabled: true,
-      type: 'custom',
-      allowedUserIds: [],
+    id: 'strict',
+    name: 'Strict Protection',
+    description: 'Strict rate limiting and content filtering',
+    guards: {
+      mcpGuard: {
+        enabled: true,
+        type: 'custom',
+        allowedUsers: [],
+      },
+      rateLimit: {
+        enabled: true,
+        maxRequests: 10,
+        windowMs: 60000,
+      },
+      contentFilter: {
+        enabled: true,
+        strictness: 'high',
+      },
     },
   },
 ];
@@ -55,17 +99,41 @@ export const loadGuardrailProfiles = (): GuardrailProfile[] => {
   const filePath = getProfilesPath();
   try {
     if (!fs.existsSync(filePath)) {
-      return DEFAULT_GUARDRAIL_PROFILES.map(profile => ({ ...profile, mcpGuard: { ...profile.mcpGuard } }));
+      return DEFAULT_GUARDRAIL_PROFILES;
     }
     const raw = fs.readFileSync(filePath, 'utf8');
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
       throw new Error('guardrail profiles must be an array');
     }
-    return parsed as GuardrailProfile[];
+
+    // Migrate old format if necessary (key -> id, mcpGuard -> guards.mcpGuard)
+    return parsed.map((p: any) => {
+      if (p.key && !p.id) {
+        // Migration logic - validate required fields
+        if (!p.name || typeof p.name !== 'string') {
+          throw new Error(`Invalid profile: name is required for migration of profile with key "${p.key}"`);
+        }
+        return {
+          id: p.key,
+          name: p.name,
+          description: p.description,
+          guards: {
+            mcpGuard: p.mcpGuard || { enabled: false, type: 'owner' },
+            rateLimit: { enabled: false, maxRequests: 100, windowMs: 60000 },
+            contentFilter: { enabled: false, strictness: 'low' },
+          }
+        };
+      }
+      // Validate new format profiles
+      if (!p.id || typeof p.id !== 'string' || !p.name || typeof p.name !== 'string' || !p.guards) {
+        throw new Error(`Invalid profile: id, name, and guards are required`);
+      }
+      return p;
+    }) as GuardrailProfile[];
   } catch (error) {
     debug('Failed to load guardrail profiles, using defaults:', error);
-    return DEFAULT_GUARDRAIL_PROFILES.map(profile => ({ ...profile, mcpGuard: { ...profile.mcpGuard } }));
+    return DEFAULT_GUARDRAIL_PROFILES;
   }
 };
 
@@ -80,7 +148,7 @@ export const saveGuardrailProfiles = (profiles: GuardrailProfile[]): void => {
 
 export const getGuardrailProfileByKey = (key: string): GuardrailProfile | undefined => {
   const normalized = key.trim().toLowerCase();
-  return loadGuardrailProfiles().find(profile => profile.key.toLowerCase() === normalized);
+  return loadGuardrailProfiles().find(profile => profile.id.toLowerCase() === normalized);
 };
 
 export const getGuardrailProfiles = (): GuardrailProfile[] => loadGuardrailProfiles();

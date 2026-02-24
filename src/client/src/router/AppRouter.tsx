@@ -43,6 +43,9 @@ const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
 const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
+const ProvidersPage = lazy(() => import('../pages/ProvidersPage'));
+const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'));
+const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 
@@ -124,6 +127,11 @@ const AppRouter: React.FC = () => {
           {/* Integrations Routes */}
           <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />
           <Route path="integrations/:type" element={<IntegrationsPage />} />
+
+          {/* Providers Routes */}
+          <Route path="providers" element={<ProvidersPage />} />
+          <Route path="providers/message" element={<MessageProvidersPage />} />
+          <Route path="providers/llm" element={<LLMProvidersPage />} />
 
           <Route path="personas" element={<PersonasPage />} />
 

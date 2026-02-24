@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { Client, GatewayIntentBits } from 'discord.js';
-import type { IServiceDependencies, IBotConfig } from '@hivemind/shared-types';
+import type { IBotConfig, IServiceDependencies } from '@hivemind/shared-types';
 
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
 const log = Debug('app:discordBotManager');
@@ -14,7 +14,7 @@ export interface Bot {
 
 /**
  * DiscordBotManager - Manages multiple Discord bot instances
- * 
+ *
  * This class is decoupled from the main application through dependency injection.
  * Bot configurations are loaded via the injected dependencies.
  */
@@ -43,7 +43,8 @@ export class DiscordBotManager {
 
     // Filter to Discord bots only
     const discordBots = botConfigs.filter(
-      (config) => config.messageProvider === 'discord' || config.discordBotToken || config.discord?.token
+      (config) =>
+        config.messageProvider === 'discord' || config.discordBotToken || config.discord?.token
     );
 
     // Also check for legacy DISCORD_BOT_TOKEN environment variable
@@ -161,7 +162,7 @@ export class DiscordBotManager {
     if (invalidBots.length > 0) {
       log(
         `DiscordBotManager: found ${invalidBots.length} bot(s) with missing/empty tokens: ` +
-        invalidBots.map((b) => b.name).join(', ')
+          invalidBots.map((b) => b.name).join(', ')
       );
       throw new ConfigError(
         'Cannot initialize DiscordService: One or more bot tokens are empty',
@@ -185,7 +186,7 @@ export class DiscordBotManager {
             }
             bot.config.BOT_ID = bot.botUserId;
             bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
-          } catch { }
+          } catch {}
           log(`Initialized ${bot.botUserName} OK`);
           resolve();
         });

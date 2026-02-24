@@ -183,6 +183,8 @@ export interface BotConfig {
   responseProfile?: string;
   /** MCP guardrail profile name */
   mcpGuardProfile?: string;
+  /** MCP server profile name */
+  mcpServerProfile?: string;
   /** Bot persona key */
   persona?: string;
   /** Bot system instruction/prompt */
@@ -191,6 +193,17 @@ export interface BotConfig {
   mcpServers?: McpServerConfig[];
   /** MCP tool usage guard configuration */
   mcpGuard?: McpGuardConfig;
+  /** Rate limiter configuration */
+  rateLimit?: {
+    enabled: boolean;
+    maxRequests?: number;
+    windowMs?: number;
+  };
+  /** Content filter configuration */
+  contentFilter?: {
+    enabled: boolean;
+    strictness?: 'low' | 'medium' | 'high';
+  };
   /** Discord-specific configuration */
   discord?: DiscordConfig;
   /** Slack-specific configuration */

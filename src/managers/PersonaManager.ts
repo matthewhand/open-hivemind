@@ -204,6 +204,28 @@ export class PersonaManager extends EventEmitter {
     return updated;
   }
 
+  public clonePersona(id: string, overrides?: Partial<CreatePersonaRequest>): Persona {
+    const existing = this.personas.get(id);
+    if (!existing) {
+      throw new Error(`Persona with ID ${id} not found`);
+    }
+
+    const newId = crypto.randomUUID();
+    const clonedPersona: Persona = {
+      ...existing,
+      ...overrides,
+      id: newId,
+      isBuiltIn: false, // Cloned personas are always custom
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.personas.set(newId, clonedPersona);
+    this.savePersonas();
+    this.emit('personaCreated', clonedPersona);
+    return clonedPersona;
+  }
+
   public deletePersona(id: string): boolean {
     const existing = this.personas.get(id);
     if (!existing) {

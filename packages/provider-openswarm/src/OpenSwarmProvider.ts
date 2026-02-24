@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { IMessage } from '@message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';

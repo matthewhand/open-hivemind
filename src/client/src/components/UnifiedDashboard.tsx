@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Alert,
   Badge,
@@ -15,9 +16,9 @@ import {
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity } from 'lucide-react';
+import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Info, Rocket } from 'lucide-react';
 
-type DashboardTab = 'overview' | 'performance';
+type DashboardTab = 'getting-started' | 'status' | 'performance';
 
 interface BotTableRow {
   id: string;
@@ -117,7 +118,7 @@ const UnifiedDashboard: React.FC = () => {
   const [environment, setEnvironment] = useState<string>('development');
   const [systemVersion, setSystemVersion] = useState<string>('1.0.0');
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [activeTab, setActiveTab] = useState<DashboardTab>('status');
   const [selectedBots, setSelectedBots] = useState<BotTableRow[]>([]);
 
   // Memoized callback to prevent infinite re-renders in DataTable
@@ -151,6 +152,12 @@ const UnifiedDashboard: React.FC = () => {
       setWarnings(configData.warnings || []);
       setEnvironment(configData.environment ?? (configData as any).system?.environment ?? 'development');
       setSystemVersion((configData as any).system?.version ?? '1.0.0');
+
+      // If no bots are configured, default to getting started
+      if (!configData.bots || configData.bots.length === 0) {
+        setActiveTab('getting-started');
+      }
+
       setError(null);
     } catch (err) {
       const message =
@@ -548,16 +555,28 @@ const UnifiedDashboard: React.FC = () => {
         aria-label="Dashboard sections"
       >
         <button
-          id="dashboard-tab-overview"
+          id="dashboard-tab-getting-started"
           role="tab"
-          data-testid="overview-tab"
-          className={`tab gap-2 ${activeTab === 'overview' ? 'tab-active' : ''}`}
-          aria-selected={activeTab === 'overview'}
-          aria-controls="dashboard-panel-overview"
-          onClick={() => setActiveTab('overview')}
+          data-testid="getting-started-tab"
+          className={`tab gap-2 ${activeTab === 'getting-started' ? 'tab-active' : ''}`}
+          aria-selected={activeTab === 'getting-started'}
+          aria-controls="dashboard-panel-getting-started"
+          onClick={() => setActiveTab('getting-started')}
+        >
+          <Rocket className="w-4 h-4" />
+          Getting Started
+        </button>
+        <button
+          id="dashboard-tab-status"
+          role="tab"
+          data-testid="status-tab"
+          className={`tab gap-2 ${activeTab === 'status' ? 'tab-active' : ''}`}
+          aria-selected={activeTab === 'status'}
+          aria-controls="dashboard-panel-status"
+          onClick={() => setActiveTab('status')}
         >
           <Activity className="w-4 h-4" />
-          Overview
+          Status
         </button>
         <button
           id="dashboard-tab-performance"
@@ -579,12 +598,122 @@ const UnifiedDashboard: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* Getting Started Tab */}
           <section
-            id="dashboard-panel-overview"
+            id="dashboard-panel-getting-started"
             role="tabpanel"
-            aria-labelledby="dashboard-tab-overview"
-            hidden={activeTab !== 'overview'}
-            className={activeTab === 'overview' ? 'space-y-6' : 'hidden'}
+            aria-labelledby="dashboard-tab-getting-started"
+            hidden={activeTab !== 'getting-started'}
+            className={activeTab === 'getting-started' ? 'space-y-6' : 'hidden'}
+          >
+            <div className="hero bg-base-200 rounded-2xl p-8">
+              <div className="hero-content text-center">
+                <div className="max-w-md">
+                  <h1 className="text-4xl font-bold">Welcome to Open Hivemind</h1>
+                  <p className="py-6">
+                    Let's get your multi-agent system up and running. Follow the steps below to configure your environment.
+                  </p>
+
+                  {bots.length === 0 && (
+                    <div className="alert alert-warning shadow-lg mb-6 text-left">
+                      <Info className="stroke-current flex-shrink-0 w-6 h-6" />
+                      <div>
+                        <h3 className="font-bold">No valid configuration found</h3>
+                        <div className="text-xs">
+                          You can start fresh below or <Link to="/admin/system-management" className="link link-primary">import a configuration from backup</Link>.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Step 1: LLM Configuration */}
+              <Card className="bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="card-body items-center text-center">
+                  <div className="badge badge-primary badge-lg mb-2">Step 1</div>
+                  <h2 className="card-title">Configure Intelligence</h2>
+                  <p className="text-sm text-base-content/70">
+                    Set up your Language Model (LLM) providers like OpenAI, Anthropic, or local models.
+                  </p>
+                  <div className="card-actions justify-end mt-4">
+                    <Link to="/admin/providers/llm" className="btn btn-outline btn-primary btn-sm">
+                      Manage LLMs
+                    </Link>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Step 2: Messaging Configuration */}
+              <Card className="bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="card-body items-center text-center">
+                  <div className="badge badge-primary badge-lg mb-2">Step 2</div>
+                  <h2 className="card-title">Connect Platforms</h2>
+                  <p className="text-sm text-base-content/70">
+                    Integrate with messaging platforms like Discord, Slack, or Mattermost.
+                  </p>
+                  <div className="card-actions justify-end mt-4">
+                    <Link to="/admin/providers/message" className="btn btn-outline btn-primary btn-sm">
+                      Manage Providers
+                    </Link>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Step 3: Bot Creation */}
+              <Card className="bg-base-100 shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary/20">
+                <div className="card-body items-center text-center">
+                  <div className="badge badge-primary badge-lg mb-2">Step 3</div>
+                  <h2 className="card-title">Launch Agent</h2>
+                  <p className="text-sm text-base-content/70">
+                    Combine intelligence and connectivity to deploy your first autonomous agent.
+                  </p>
+                  <div className="card-actions justify-end mt-4">
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="btn btn-primary btn-sm"
+                    >
+                      <PlusCircle className="w-4 h-4 mr-1" />
+                      Create Bot
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Quick Links / Resources */}
+            <div className="divider">Resources</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link to="/admin/system-management" className="card bg-base-100 shadow-sm hover:bg-base-200 transition-colors cursor-pointer">
+                <div className="card-body flex-row items-center gap-4 py-4">
+                  <HardDrive className="w-6 h-6 text-secondary" />
+                  <div>
+                    <h3 className="font-bold">System Management</h3>
+                    <p className="text-xs text-base-content/60">Backup, restore, and system health</p>
+                  </div>
+                </div>
+              </Link>
+              <Link to="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer" className="card bg-base-100 shadow-sm hover:bg-base-200 transition-colors cursor-pointer">
+                <div className="card-body flex-row items-center gap-4 py-4">
+                  <Info className="w-6 h-6 text-accent" />
+                  <div>
+                    <h3 className="font-bold">Documentation</h3>
+                    <p className="text-xs text-base-content/60">Learn more about configuration options</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </section>
+
+          {/* Status Tab (Formerly Overview) */}
+          <section
+            id="dashboard-panel-status"
+            role="tabpanel"
+            aria-labelledby="dashboard-tab-status"
+            hidden={activeTab !== 'status'}
+            className={activeTab === 'status' ? 'space-y-6' : 'hidden'}
           >
             {error && (
               <Alert

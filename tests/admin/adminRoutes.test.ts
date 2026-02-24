@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import request from 'supertest';
+// We need to import the router AFTER mocks
+import { adminRouter } from '../../src/admin/adminRoutes';
 
 // Mocks
 jest.mock('../../src/auth/middleware', () => ({
@@ -27,18 +29,15 @@ jest.mock('@integrations/slack/SlackService', () => ({
 }));
 
 jest.mock('@hivemind/adapter-discord', () => ({
-    Discord: {
-        DiscordService: {
-            getInstance: jest.fn().mockReturnValue({
-                addBot: jest.fn().mockResolvedValue(true),
-                getAllBots: jest.fn().mockReturnValue([]),
-            })
-        }
-    }
+  Discord: {
+    DiscordService: {
+      getInstance: jest.fn().mockReturnValue({
+        addBot: jest.fn().mockResolvedValue(true),
+        getAllBots: jest.fn().mockReturnValue([]),
+      }),
+    },
+  },
 }));
-
-// We need to import the router AFTER mocks
-import { adminRouter } from '../../src/admin/adminRoutes';
 
 const app = express();
 app.use(express.json());
@@ -52,19 +51,23 @@ describe('Admin Routes I/O Performance', () => {
   describe('GET /personas', () => {
     it('should load personas using asynchronous fs methods', async () => {
       // Mock fs.promises methods
-      const mockReadDirPromise = jest.spyOn(fs.promises, 'readdir').mockResolvedValue(['persona2.json'] as any);
-      const mockReadFilePromise = jest.spyOn(fs.promises, 'readFile').mockImplementation((p: any) => {
-        if (p.toString().endsWith('persona2.json')) {
-          return Promise.resolve(
-            JSON.stringify({
-              key: 'persona2',
-              name: 'Persona 2',
-              systemPrompt: 'You are persona 2',
-            })
-          );
-        }
-        return Promise.resolve('');
-      });
+      const mockReadDirPromise = jest
+        .spyOn(fs.promises, 'readdir')
+        .mockResolvedValue(['persona2.json'] as any);
+      const mockReadFilePromise = jest
+        .spyOn(fs.promises, 'readFile')
+        .mockImplementation((p: any) => {
+          if (p.toString().endsWith('persona2.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                key: 'persona2',
+                name: 'Persona 2',
+                systemPrompt: 'You are persona 2',
+              })
+            );
+          }
+          return Promise.resolve('');
+        });
       const mockAccessPromise = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
 
       const res = await request(app).get('/api/admin/personas');
@@ -77,7 +80,7 @@ describe('Admin Routes I/O Performance', () => {
       expect(mockReadDirPromise).toHaveBeenCalled();
       expect(mockReadFilePromise).toHaveBeenCalled();
       expect(mockAccessPromise).toHaveBeenCalled();
-      
+
       mockReadDirPromise.mockRestore();
       mockReadFilePromise.mockRestore();
       mockAccessPromise.mockRestore();
@@ -86,7 +89,9 @@ describe('Admin Routes I/O Performance', () => {
 
   it('should handle /slack-bots POST request', async () => {
     // Mock async implementation
-    jest.spyOn(fs.promises, 'readFile').mockResolvedValue(JSON.stringify({ slack: { instances: [] } }));
+    jest
+      .spyOn(fs.promises, 'readFile')
+      .mockResolvedValue(JSON.stringify({ slack: { instances: [] } }));
     jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);
 
@@ -97,9 +102,7 @@ describe('Admin Routes I/O Performance', () => {
     };
 
     const start = Date.now();
-    const response = await request(app)
-      .post('/api/admin/slack-bots')
-      .send(payload);
+    const response = await request(app).post('/api/admin/slack-bots').send(payload);
     const end = Date.now();
 
     expect(response.status).toBe(200);

@@ -1,11 +1,11 @@
 import { EventEmitter } from 'events';
-import { DiscordService } from './DiscordService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import ProviderConfigManager from '@config/ProviderConfigManager';
-import { UserConfigStore } from '@config/UserConfigStore';
 import discordConfig from '@config/discordConfig';
 import messageConfig from '@config/messageConfig';
+import ProviderConfigManager from '@config/ProviderConfigManager';
+import { UserConfigStore } from '@config/UserConfigStore';
 import WebSocketService from '../../../src/server/services/WebSocketService';
+import { DiscordService } from './DiscordService';
 
 // Mock dependencies
 jest.mock('@config/BotConfigurationManager');
@@ -24,11 +24,15 @@ jest.mock('./voice/voiceChannelManager', () => ({
   })),
 }));
 
-jest.mock('@services/StartupGreetingService', () => ({
-  default: {
-    emit: jest.fn(),
-  },
-}), { virtual: true });
+jest.mock(
+  '@services/StartupGreetingService',
+  () => ({
+    default: {
+      emit: jest.fn(),
+    },
+  }),
+  { virtual: true }
+);
 
 // Mock discord.js
 let eventHandlers: Record<string, Function[]> = {};
@@ -45,7 +49,7 @@ const mockClient = {
     await Promise.resolve();
     // Emit ready
     const handlers = eventHandlers['ready'] || [];
-    handlers.forEach(h => h());
+    handlers.forEach((h) => h());
     return 'token';
   }),
   on: jest.fn((event, handler) => {
@@ -132,10 +136,12 @@ describe('DiscordService', () => {
         type: 'discord',
         enabled: true,
         config: { token: 'test-token' },
-        name: 'Test Bot'
+        name: 'Test Bot',
       };
 
-      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([providerConfig]);
+      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
+        providerConfig,
+      ]);
 
       service = DiscordService.getInstance();
       await service.initialize();
@@ -146,25 +152,29 @@ describe('DiscordService', () => {
     });
 
     it('should handle multiple bots from BotConfigurationManager', async () => {
-       const botConfig = {
-         name: 'Bot 1',
-         messageProviderId: 'provider1',
-       };
-       const providerConfig = {
-         id: 'provider1',
-         type: 'discord',
-         enabled: true,
-         config: { token: 'token1' },
-       };
+      const botConfig = {
+        name: 'Bot 1',
+        messageProviderId: 'provider1',
+      };
+      const providerConfig = {
+        id: 'provider1',
+        type: 'discord',
+        enabled: true,
+        config: { token: 'token1' },
+      };
 
-       (BotConfigurationManager.getInstance().getDiscordBotConfigs as jest.Mock).mockReturnValue([botConfig]);
-       (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([providerConfig]);
+      (BotConfigurationManager.getInstance().getDiscordBotConfigs as jest.Mock).mockReturnValue([
+        botConfig,
+      ]);
+      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
+        providerConfig,
+      ]);
 
-       service = DiscordService.getInstance();
-       await service.initialize();
+      service = DiscordService.getInstance();
+      await service.initialize();
 
-       expect(service.getAllBots()).toHaveLength(1);
-       expect(service.getAllBots()[0].botUserName).toBe('Bot 1');
+      expect(service.getAllBots()).toHaveLength(1);
+      expect(service.getAllBots()[0].botUserName).toBe('Bot 1');
     });
   });
 
@@ -176,9 +186,11 @@ describe('DiscordService', () => {
         type: 'discord',
         enabled: true,
         config: { token: 'test-token' },
-        name: 'Test Bot'
+        name: 'Test Bot',
       };
-      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([providerConfig]);
+      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
+        providerConfig,
+      ]);
       service = DiscordService.getInstance();
       await service.initialize();
     });

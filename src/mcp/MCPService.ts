@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SlackMessageProvider } from '@hivemind/adapter-slack';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
 // DiscordMessageProvider imported dynamically to avoid ESM require error
@@ -46,8 +46,49 @@ export class MCPService {
   }
 
   /**
-   * Connect to an MCP server and discover its tools
+   * Test connection to an MCP server without storing the client
    */
+  public async testConnection(config: MCPConfig): Promise<MCPTool[]> {
+    try {
+      debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
+
+      // Dynamically require the MCP SDK
+      const { Client } = require('@modelcontextprotocol/sdk');
+
+      // Create a new client for this server
+      const client = new Client({
+        name: 'Open-Hivemind-Test',
+        version: '1.0.0',
+      });
+
+      // Connect to the server
+      await client.connect({
+        url: config.serverUrl,
+        apiKey: config.apiKey,
+      });
+
+      // Try to list tools to verify connection works
+      const tools = await client.listTools();
+
+      // Add server name to each tool for identification
+      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
+        ...tool,
+        serverName: config.name,
+      }));
+
+      // If we got here, connection is successful
+      // Since SDK doesn't have disconnect, we just let it go out of scope
+      // Ideally we would close the transport if accessible
+
+      return mcpTools;
+    } catch (error) {
+      debug(`Error testing connection to MCP server ${config.name}:`, error);
+      throw new Error(
+        `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   /**
    * Connects to an MCP server and discovers available tools.
    *
@@ -173,9 +214,6 @@ export class MCPService {
     return Array.from(this.clients.keys());
   }
 
-  /**
-   * Execute a tool from a connected MCP server
-   */
   /**
    * Executes a tool on a connected MCP server.
    *

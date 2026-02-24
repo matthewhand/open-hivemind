@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
+import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
 
 interface ConfigSchema {
   doc?: string;
@@ -55,21 +57,31 @@ const PROVIDER_ICONS: Record<string, any> = {
 const IntegrationsPanel: React.FC = () => {
   const [config, setConfig] = useState<GlobalConfig | null>(null);
   const [bots, setBots] = useState<any[]>([]);
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
+  const [advancedMode, setAdvancedMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Edit/Configure Modal State
+  // Edit/Configure Modal State (For Global Config)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedConfigName, setSelectedConfigName] = useState<string | null>(null);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
 
-  // New Integration Modal State
+  // New Integration Modal State (For Message Providers)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addCategory, setAddCategory] = useState<string>('llm');
   const [newIntegrationType, setNewIntegrationType] = useState<string>('');
   const [newIntegrationName, setNewIntegrationName] = useState<string>('');
   const [newConfigValues, setNewConfigValues] = useState<Record<string, any>>({});
+
+  // Profile Modal State (For LLM Profiles)
+  const [providerModalState, setProviderModalState] = useState<ProviderModalState>({
+    isOpen: false,
+    isEdit: false,
+    providerType: 'llm',
+    provider: null,
+  });
 
   useEffect(() => {
     fetchData();
@@ -78,18 +90,25 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configRes, botsRes] = await Promise.all([
+      const [configRes, botsRes, profilesRes] = await Promise.all([
         fetch('/api/config/global'),
         fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
+        fetch('/api/config/llm-profiles'),
       ]);
 
       if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
       const configData = await configRes.json();
       setConfig(configData);
+      setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
 
       if (botsRes.ok) {
         const botsData = await botsRes.json();
         setBots(botsData.bots || []);
+      }
+
+      if (profilesRes.ok) {
+        const profilesData = await profilesRes.json();
+        setLlmProfiles(profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
       setError(err.message);
@@ -110,8 +129,7 @@ const IntegrationsPanel: React.FC = () => {
   const getConnectedBots = (integrationName: string, category: string) => {
     return bots.filter(bot => {
       if (category === 'llm') { return bot.llmProvider === integrationName; }
-      if (category === 'message') { return bot.messageProvider === integrationName; } // Note: currently messageProvider is just type (e.g. 'discord'), not instance name yet. Assuming strict matching for dynamic, or fallback. 
-      // FUTURE: Update bots to store 'messageInstance' or similar. For now, match by type if it matches the integration name (e.g. 'discord')
+      if (category === 'message') { return bot.messageProvider === integrationName; }
       return bot.messageProvider === integrationName;
     });
   };
@@ -170,6 +188,53 @@ const IntegrationsPanel: React.FC = () => {
       setNewConfigValues({});
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProfileSubmit = async (providerData: any) => {
+    try {
+      setSaving(true);
+      const payload = {
+        key: providerData.name.toLowerCase().replace(/\s+/g, '-'),
+        name: providerData.name,
+        provider: providerData.type,
+        config: providerData.config,
+      };
+
+      if (providerModalState.isEdit && providerModalState.provider?.id) {
+        // Delete old profile first if name/key changed or just to be safe
+         await fetch(`/api/config/llm-profiles/${providerModalState.provider.id}`, { method: 'DELETE' });
+      }
+
+      const res = await fetch('/api/config/llm-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save profile');
+      }
+
+      await fetchData();
+      setProviderModalState({ ...providerModalState, isOpen: false });
+    } catch (err: any) {
+      alert(`Failed to save profile: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProfile = async (key: string) => {
+    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
+    try {
+      setSaving(true);
+      await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
+      await fetchData();
+    } catch (err: any) {
+      alert(`Failed to delete profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -258,8 +323,129 @@ const IntegrationsPanel: React.FC = () => {
     );
   };
 
+  const renderLLMSection = () => {
+    if (!config) return null;
+    const llmConfig = config['llm'];
+
+    return (
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4 border-b border-base-200 pb-2">
+          <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide text-base-content/70">
+            <CpuChipIcon className="w-5 h-5" />
+            LLM Providers
+            <div className="tooltip tooltip-right font-normal normal-case text-sm" data-tip="Manage AI models and API keys">
+              <AlertCircle className="w-4 h-4 cursor-help opacity-50 hover:opacity-100" />
+            </div>
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            onClick={() => setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', provider: null })}
+          >
+            <PlusIcon className="w-4 h-4" /> Add LLM Provider
+          </Button>
+        </div>
+
+        {/* Profiles List */}
+        {llmProfiles.length === 0 ? (
+          <div className="text-center py-8 opacity-50 border-2 border-dashed border-base-200 rounded-xl mb-6">
+            <Brain className="w-12 h-12 mx-auto mb-2 opacity-20" />
+            <p>No custom LLM profiles configured. Using defaults.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+            {llmProfiles.map(profile => {
+              const Icon = PROVIDER_ICONS[profile.provider] || Brain;
+              const connectedBots = getConnectedBots(profile.key, 'llm');
+              return (
+                <Card key={profile.key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
+                  <div className="card-body p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
+                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-[10px]">{profile.provider}</Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => setProviderModalState({
+                          isOpen: true,
+                          isEdit: true,
+                          providerType: 'llm',
+                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config }
+                        })}>
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" onClick={() => handleDeleteProfile(profile.key)}>
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-base-200">
+                      <p className="text-[10px] font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
+                        <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Global LLM Settings */}
+        {llmConfig && (
+          <div className="collapse collapse-arrow bg-base-200/50 border border-base-200">
+            <input type="checkbox" defaultChecked={false} />
+            <div className="collapse-title text-sm font-medium flex items-center gap-2">
+              <Plug className="w-4 h-4" /> Global Settings
+            </div>
+            <div className="collapse-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                 {/* Only allow editing existing config values, but filter for advanced */}
+                 <div className="flex items-center justify-between mb-2 col-span-full">
+                    <h3 className="font-bold text-sm">Default Configuration</h3>
+                    <Button variant="ghost" size="sm" className="btn-xs" onClick={() => openEditModal('llm')}>
+                      <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
+                    </Button>
+                 </div>
+
+                 {Object.entries(llmConfig.values).map(([key, value]) => {
+                   const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                   if (isAdvanced && !advancedMode) return null;
+
+                   return (
+                     <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
+                       <span className="text-xs font-mono opacity-70">{key}</span>
+                       <span className="font-bold text-sm">{String(value)}</span>
+                     </div>
+                   );
+                 })}
+
+                 {!advancedMode && (
+                   <div className="col-span-full text-center text-xs opacity-50 italic">
+                     Enable "Advanced Mode" in System Settings to see more options.
+                   </div>
+                 )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
   const renderSection = (title: string, category: string) => {
     if (!config) { return null; }
+
+    if (category === 'llm') {
+      return renderLLMSection();
+    }
 
     const baseProviders = PROVIDER_CATEGORIES[category] || [];
     const sectionItems = Object.keys(config).filter(key => {
@@ -362,7 +548,7 @@ const IntegrationsPanel: React.FC = () => {
       {renderSection('LLM Providers', 'llm')}
       {renderSection('Message Platforms', 'message')}
 
-      {/* Edit Modal */}
+      {/* Edit Modal (Global Config) */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -374,6 +560,11 @@ const IntegrationsPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
               {Object.entries(config[selectedConfigName].values).map(([key, value]) => {
                 const schema = config[selectedConfigName].schema[key] || {};
+
+                // Advanced Mode Filter for Global Config Modal
+                const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                if (isAdvanced && !advancedMode) return null;
+
                 return renderField(
                   key,
                   configValues[key] !== undefined ? configValues[key] : value,
@@ -383,6 +574,11 @@ const IntegrationsPanel: React.FC = () => {
               })}
             </div>
           )}
+           {!advancedMode && selectedConfigName === 'llm' && (
+             <div className="text-center text-xs opacity-50 italic mt-2">
+               Some settings are hidden. Enable "Advanced Mode" in System Settings to see them.
+             </div>
+           )}
         </div>
         <div className="modal-action border-t border-base-200 pt-4 mt-4">
           <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
@@ -390,7 +586,7 @@ const IntegrationsPanel: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Create Integration Modal */}
+      {/* Create Integration Modal (Message Platforms) */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -468,6 +664,14 @@ const IntegrationsPanel: React.FC = () => {
           </Button>
         </div>
       </Modal>
+
+      {/* Provider Config Modal (LLM Profiles) */}
+      <ProviderConfigModal
+        modalState={providerModalState}
+        existingProviders={llmProfiles}
+        onClose={() => setProviderModalState({ ...providerModalState, isOpen: false })}
+        onSubmit={handleProfileSubmit}
+      />
     </div>
   );
 };

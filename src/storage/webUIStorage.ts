@@ -12,12 +12,15 @@ interface WebUIConfig {
   llmProviders: any[];
   messengerProviders: any[];
   personas: any[];
+  guards: any[];
   lastUpdated: string;
 }
 
-class WebUIStorage {
+export class WebUIStorage {
   private configDir: string;
   private configFile: string;
+  private guardsInitializationInProgress = false;
+  private configCache: WebUIConfig | null = null;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -38,24 +41,33 @@ class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
+    if (this.configCache) {
+      return this.configCache;
+    }
+
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        return JSON.parse(data);
+        this.configCache = JSON.parse(data);
+        return this.configCache!;
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
     }
 
     // Return default configuration
-    return {
+    const defaultConfig = {
       agents: [],
       mcpServers: [],
       llmProviders: [],
       messengerProviders: [],
       personas: [],
+      guards: [],
       lastUpdated: new Date().toISOString(),
     };
+
+    this.configCache = defaultConfig;
+    return defaultConfig;
   }
 
   /**
@@ -66,6 +78,7 @@ class WebUIStorage {
       config.lastUpdated = new Date().toISOString();
       this.ensureConfigDir();
       fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2));
+      this.configCache = config;
     } catch (error) {
       console.error('Error saving web UI config:', error);
       throw new Error(
@@ -252,6 +265,114 @@ class WebUIStorage {
 
     config.messengerProviders = config.messengerProviders.filter((p: any) => p.id !== providerId);
     this.saveConfig(config);
+  }
+
+  /**
+   * Get all guards
+   * Uses a flag to prevent race conditions during initialization
+   */
+  public getGuards(): any[] {
+    // Wait if initialization is already in progress
+    while (this.guardsInitializationInProgress) {
+      // Re-read config after initialization completes
+      const config = this.loadConfig();
+      if (config.guards && config.guards.length > 0) {
+        return config.guards;
+      }
+    }
+
+    const config = this.loadConfig();
+
+    // Initialize default guards if they don't exist or if guards array is missing
+    if (!config.guards || config.guards.length === 0) {
+      // Set flag to prevent race conditions
+      this.guardsInitializationInProgress = true;
+
+      try {
+        const defaultGuards = [
+          {
+            id: 'access-control',
+            name: 'Access Control',
+            description: 'User and IP-based access restrictions',
+            type: 'access',
+            enabled: true,
+            config: { type: 'users', users: [], ips: [] },
+          },
+          {
+            id: 'rate-limiter',
+            name: 'Rate Limiter',
+            description: 'Prevents spam and excessive requests',
+            type: 'rate',
+            enabled: true,
+            config: { maxRequests: 100, windowMs: 60000 },
+          },
+          {
+            id: 'content-filter',
+            name: 'Content Filter',
+            description: 'Filters inappropriate content',
+            type: 'content',
+            enabled: false,
+            config: {},
+          },
+        ];
+
+        // If guards is undefined, initialize it with defaults
+        if (!config.guards) {
+          config.guards = defaultGuards;
+        } else {
+          // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          for (const defaultGuard of defaultGuards) {
+            const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
+            if (!exists) {
+              config.guards.push(defaultGuard);
+            }
+          }
+        }
+
+        // Save the defaults back to storage
+        this.saveConfig(config);
+      } finally {
+        this.guardsInitializationInProgress = false;
+      }
+    }
+
+    return config.guards;
+  }
+
+  /**
+   * Save a guard
+   */
+  public saveGuard(guard: any): void {
+    const config = this.loadConfig();
+    if (!config.guards) {
+      config.guards = [];
+    }
+
+    const existingIndex = config.guards.findIndex((g: any) => g.id === guard.id);
+
+    if (existingIndex >= 0) {
+      config.guards[existingIndex] = guard;
+    } else {
+      config.guards.push(guard);
+    }
+
+    this.saveConfig(config);
+  }
+
+  /**
+   * Toggle a guard
+   */
+  public toggleGuard(id: string, enabled: boolean): void {
+    const config = this.loadConfig();
+    if (!config.guards) {
+      return;
+    }
+
+    const guard = config.guards.find((g: any) => g.id === id);
+    if (guard) {
+      guard.enabled = enabled;
+      this.saveConfig(config);
+    }
   }
 }
 

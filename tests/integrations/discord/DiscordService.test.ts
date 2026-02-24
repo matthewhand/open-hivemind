@@ -16,45 +16,12 @@ jest.mock('debug', () => {
   });
 });
 
-// Safe Mocks - No external variable references in factory
-jest.mock('@config/BotConfigurationManager', () => ({
-  BotConfigurationManager: {
-    getInstance: jest.fn(),
-  },
-}));
-
-jest.mock('@config/ProviderConfigManager', () => ({
-  __esModule: true,
-  default: {
-    getInstance: jest.fn(),
-  },
-}));
-
-jest.mock('@config/UserConfigStore', () => ({
-  UserConfigStore: {
-    getInstance: jest.fn(),
-  },
-}));
-
-jest.mock('@config/messageConfig', () => ({
-  __esModule: true,
-  default: {
-    get: jest.fn(),
-  },
-}));
-
-jest.mock('@config/discordConfig', () => ({
-  get: jest.fn((key) => {
-    switch (key) {
-      case 'DISCORD_MESSAGE_HISTORY_LIMIT':
-        return 10;
-      case 'DISCORD_DEFAULT_CHANNEL_ID':
-        return 'test-channel-123';
-      default:
-        return undefined;
-    }
-  }),
-}));
+// Mock dependencies (no longer need to mock singletons, we inject manual mocks)
+jest.mock('@config/BotConfigurationManager', () => ({}));
+jest.mock('@config/ProviderConfigManager', () => ({}));
+jest.mock('@config/UserConfigStore', () => ({}));
+jest.mock('@config/messageConfig', () => ({}));
+jest.mock('@config/discordConfig', () => ({}));
 
 // Track created clients for event handler verification
 interface MockClient {
@@ -69,8 +36,6 @@ interface MockClient {
   listeners: (event: string) => Function[];
 }
 
-// Must be prefixed with 'mock' for jest.mock() access
-let mockClients: MockClient[] = [];
 let mockClientCounter = 0;
 
 // Mock discord.js with proper EventEmitter behavior
@@ -113,7 +78,6 @@ jest.mock('discord.js', () => {
         emit: (event: string, ...args: any[]) => internalEmitter.emit(event, ...args),
         listeners: (event: string) => internalEmitter.listeners(event) as Function[],
       };
-      mockClients.push(client);
       return client;
     }),
     GatewayIntentBits: {
@@ -132,79 +96,82 @@ jest.mock('discord.js', () => {
 describe('DiscordService', () => {
   let DiscordService: any;
   let service: any;
-  let mockGetDiscordBotConfigs: jest.Mock;
-  let mockGetAllProviders: jest.Mock;
-  let mockIsBotDisabled: jest.Mock;
-
-  // Helper to reset singleton and re-import
-  const resetServiceSingleton = () => {
-    // Reset the singleton instance via module internals
-    const dsModule = require('@hivemind/adapter-discord');
-    if (dsModule.Discord && dsModule.Discord.DiscordService) {
-      dsModule.Discord.DiscordService.instance = undefined;
-    }
-    // Also clear the bots array if instance exists
-    if (
-      dsModule.Discord &&
-      dsModule.Discord.DiscordService &&
-      dsModule.Discord.DiscordService.instance
-    ) {
-      dsModule.Discord.DiscordService.instance.bots = [];
-    }
-  };
-
-  // Helper to setup mocks after module reset
-  const setupMocks = () => {
-    const { BotConfigurationManager: MockBCM } = require('@config/BotConfigurationManager');
-    const MockPCM = require('@config/ProviderConfigManager').default;
-    const { UserConfigStore: MockUCS } = require('@config/UserConfigStore');
-    const MockMessageConfig = require('@config/messageConfig').default;
-
-    mockGetDiscordBotConfigs = jest.fn().mockReturnValue([
-      {
-        name: 'TestBot1',
-        messageProvider: 'discord',
-        discord: { token: 'test_token_1' },
-        llmProvider: 'flowise',
-      },
-    ]);
-
-    MockBCM.getInstance.mockReturnValue({
-      getDiscordBotConfigs: mockGetDiscordBotConfigs,
-      getSlackBotConfigs: jest.fn().mockReturnValue([]),
-      getMattermostBotConfigs: jest.fn().mockReturnValue([]),
-      getWarnings: jest.fn().mockReturnValue([]),
-      isLegacyMode: jest.fn().mockReturnValue(false),
-    });
-
-    mockGetAllProviders = jest.fn().mockReturnValue([]);
-    MockPCM.getInstance.mockReturnValue({
-      getAllProviders: mockGetAllProviders,
-    });
-
-    mockIsBotDisabled = jest.fn().mockReturnValue(false);
-    MockUCS.getInstance.mockReturnValue({
-      isBotDisabled: mockIsBotDisabled,
-      get: jest.fn(),
-      set: jest.fn(),
-    });
-
-    MockMessageConfig.get.mockReturnValue(undefined);
-  };
+  let mockDeps: any;
 
   beforeEach(() => {
     // Reset all state
     jest.resetModules();
-    mockDebugCaptures.length = 0; // Clear array without reassigning
-    mockClients = [];
+    mockDebugCaptures.length = 0;
     mockClientCounter = 0;
 
-    // Re-import and setup mocks
-    setupMocks();
+    // Prepare mock dependencies
+    mockDeps = {
+      botConfigManager: {
+        getDiscordBotConfigs: jest.fn().mockReturnValue([]), // Unused by DiscordBotManager directly now
+        getSlackBotConfigs: jest.fn().mockReturnValue([]),
+        getMattermostBotConfigs: jest.fn().mockReturnValue([]),
+        getWarnings: jest.fn().mockReturnValue([]),
+        isLegacyMode: jest.fn().mockReturnValue(false),
+      },
+      // DiscordBotManager uses flattened accessors from IServiceDependencies
+      getAllBotConfigs: jest.fn().mockReturnValue([
+        {
+          name: 'TestBot1',
+          messageProvider: 'discord',
+          discord: { token: 'test_token_1' },
+          llmProvider: 'flowise',
+        },
+      ]),
+      isBotDisabled: jest.fn().mockReturnValue(false),
+
+      providerConfigManager: {
+        getAllProviders: jest.fn().mockReturnValue([]),
+      },
+      userConfigStore: {
+        isBotDisabled: jest.fn().mockReturnValue(false),
+        get: jest.fn(),
+        set: jest.fn(),
+      },
+      messageConfig: {
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'MESSAGE_IGNORE_BOTS') return false;
+          return undefined;
+        }),
+      },
+      discordConfig: {
+        get: jest.fn((key) => {
+          if (key === 'DISCORD_MESSAGE_HISTORY_LIMIT') return 10;
+          if (key === 'DISCORD_DEFAULT_CHANNEL_ID') return 'test-channel-123';
+          return undefined;
+        }),
+      },
+      errorTypes: {
+        NetworkError: class extends Error {},
+        ConfigError: class extends Error {},
+      },
+      logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+      },
+      startupGreetingService: {
+        emit: jest.fn(),
+      },
+      channelRouter: {
+        computeScore: jest.fn().mockReturnValue(0),
+      },
+      webSocketService: {
+        recordAlert: jest.fn(),
+      },
+    };
 
     // Import DiscordService fresh
-    DiscordService = require('@hivemind/adapter-discord').DiscordService;
-    service = DiscordService.getInstance();
+    const { DiscordService: DS } = require('@hivemind/adapter-discord');
+    DiscordService = DS;
+
+    // Instantiate with dependency injection
+    service = new DiscordService(mockDeps);
   });
 
   afterEach(async () => {
@@ -215,9 +182,7 @@ describe('DiscordService', () => {
         // Ignore shutdown errors in cleanup
       }
     }
-    resetServiceSingleton();
-    mockClients = [];
-    mockDebugCaptures.length = 0; // Clear array without reassigning
+    mockDebugCaptures.length = 0;
   });
 
   describe('initialization', () => {
@@ -289,29 +254,18 @@ describe('DiscordService', () => {
       ['empty', { token: '' }],
       ['missing', {}],
     ])('handles %s token validation during initialization', async (type, discordConfig) => {
-      // Reset singleton for this test
-      resetServiceSingleton();
+      // Setup mock with invalid token override
+      mockDeps.getAllBotConfigs = jest.fn().mockReturnValue([
+        {
+          name: 'TestBot1',
+          messageProvider: 'discord',
+          discord: discordConfig,
+          llmProvider: 'flowise',
+        },
+      ]);
 
-      // Setup mock with invalid token
-      const { BotConfigurationManager: MockBCM } = require('@config/BotConfigurationManager');
-      MockBCM.getInstance.mockReturnValue({
-        getDiscordBotConfigs: jest.fn().mockReturnValue([
-          {
-            name: 'TestBot1',
-            messageProvider: 'discord',
-            discord: discordConfig,
-            llmProvider: 'flowise',
-          },
-        ]),
-        getSlackBotConfigs: jest.fn().mockReturnValue([]),
-        getMattermostBotConfigs: jest.fn().mockReturnValue([]),
-        getWarnings: jest.fn().mockReturnValue([]),
-        isLegacyMode: jest.fn().mockReturnValue(false),
-      });
-
-      // Re-import service
-      const FreshDiscordService = require('@hivemind/adapter-discord').DiscordService;
-      const freshService = FreshDiscordService.getInstance();
+      // Re-instantiate service
+      const freshService = new DiscordService(mockDeps);
 
       await freshService.initialize();
       expect(freshService.getAllBots()).toHaveLength(0);
@@ -321,12 +275,12 @@ describe('DiscordService', () => {
   describe('message handling', () => {
     it('sets and handles message handler correctly', async () => {
       // Configure mock to ignore bots for this test
-      const messageConfig = require('@config/messageConfig').default;
-      messageConfig.get.mockImplementation((key: string) => {
+      mockDeps.messageConfig.get = jest.fn((key: string) => {
         if (key === 'MESSAGE_IGNORE_BOTS') return true;
         if (key === 'MESSAGE_USERNAME_OVERRIDE') return 'Madgwick AI';
         return undefined;
       });
+      service = new DiscordService(mockDeps); // Refresh service with new config
 
       await service.initialize();
       const mockHandlerError = jest.fn().mockRejectedValue(new Error('Handler error'));
@@ -413,24 +367,14 @@ describe('DiscordService', () => {
       // Set legacy env var
       process.env.DISCORD_BOT_TOKEN = 'token1,token2';
 
-      // Reset singleton
-      resetServiceSingleton();
-
       // Setup mock with no bot configs (legacy mode)
-      const { BotConfigurationManager: MockBCM } = require('@config/BotConfigurationManager');
-      MockBCM.getInstance.mockReturnValue({
-        getDiscordBotConfigs: jest.fn().mockReturnValue([]),
-        getSlackBotConfigs: jest.fn().mockReturnValue([]),
-        getMattermostBotConfigs: jest.fn().mockReturnValue([]),
-        getWarnings: jest.fn().mockReturnValue([]),
-        isLegacyMode: jest.fn().mockReturnValue(false),
-      });
+      mockDeps.getAllBotConfigs = jest.fn().mockReturnValue([]);
 
-      // Re-import service
-      const FreshDiscordService = require('@hivemind/adapter-discord').DiscordService;
-      const freshService = FreshDiscordService.getInstance();
+      const freshService = new DiscordService(mockDeps);
 
+      await freshService.initialize();
       let bots = freshService.getAllBots();
+
       expect(bots).toHaveLength(2);
       expect(bots[0].config.token).toBe('token1');
       expect(bots[1].config.token).toBe('token2');

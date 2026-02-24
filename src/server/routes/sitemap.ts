@@ -15,6 +15,7 @@ interface SitemapUrl {
 
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
+  // Try to determine the base URL dynamically, fallback to localhost
   const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 
@@ -88,6 +89,24 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.8,
       lastmod: now,
       description: 'AI Persona Management',
+      access: 'authenticated',
+    },
+
+    // Integrations
+    {
+      url: '/admin/integrations/llm',
+      changefreq: 'monthly',
+      priority: 0.7,
+      lastmod: now,
+      description: 'LLM Provider Configuration',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/integrations/messaging',
+      changefreq: 'monthly',
+      priority: 0.7,
+      lastmod: now,
+      description: 'Messaging Platform Integrations',
       access: 'authenticated',
     },
 
@@ -169,39 +188,13 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       access: 'owner',
     },
 
-    // Settings and configuration
-    {
-      url: '/admin/settings',
-      changefreq: 'monthly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'System Settings',
-      access: 'owner',
-    },
-    {
-      url: '/admin/configuration',
-      changefreq: 'weekly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'Bot Configuration',
-      access: 'authenticated',
-    },
-    {
-      url: '/admin/config',
-      changefreq: 'weekly',
-      priority: 0.6,
-      lastmod: now,
-      description: 'General Configuration',
-      access: 'owner',
-    },
-
     // AI Features
     {
       url: '/admin/ai/dashboard',
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'Intelligent AI Dashboard',
+      description: 'AI System Dashboard',
       access: 'authenticated',
     },
     {
@@ -209,7 +202,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.7,
       lastmod: now,
-      description: 'AI Insights Panel',
+      description: 'AI-driven Insights',
       access: 'authenticated',
     },
     {
@@ -222,8 +215,8 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     },
     {
       url: '/admin/ai/anomalies',
-      changefreq: 'daily',
-      priority: 0.7,
+      changefreq: 'hourly',
+      priority: 0.8,
       lastmod: now,
       description: 'Anomaly Detection',
       access: 'authenticated',
@@ -231,15 +224,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/ai/chat',
       changefreq: 'daily',
-      priority: 0.7,
-      lastmod: now,
-      description: 'Natural Language Interface',
-      access: 'authenticated',
-    },
-    {
-      url: '/admin/ai/natural-language',
-      changefreq: 'daily',
-      priority: 0.7,
+      priority: 0.8,
       lastmod: now,
       description: 'Natural Language Interface',
       access: 'authenticated',
@@ -247,20 +232,44 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     {
       url: '/admin/ai/training',
       changefreq: 'weekly',
-      priority: 0.7,
+      priority: 0.6,
       lastmod: now,
       description: 'Bot Training Dashboard',
       access: 'authenticated',
     },
 
-    // Integrations
+    // Settings and configuration
     {
-      url: '/admin/integrations/llm',
-      changefreq: 'weekly',
+      url: '/admin/settings',
+      changefreq: 'monthly',
       priority: 0.6,
       lastmod: now,
-      description: 'LLM Integrations',
+      description: 'System Settings',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/system-management',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'System Management Tools',
       access: 'owner',
+    },
+    {
+      url: '/admin/configuration',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'Bot Configuration',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/config',
+      changefreq: 'monthly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'General Configuration',
+      access: 'authenticated',
     },
 
     // Utilities
@@ -286,7 +295,15 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.3,
       lastmod: now,
       description: 'DaisyUI Component Showcase',
-      access: 'public',
+      access: 'authenticated',
+    },
+    {
+      url: '/admin/specs',
+      changefreq: 'weekly',
+      priority: 0.5,
+      lastmod: now,
+      description: 'Specifications Library',
+      access: 'authenticated',
     },
     {
       url: '/admin/sitemap',
@@ -295,14 +312,6 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       lastmod: now,
       description: 'Application Sitemap',
       access: 'public',
-    },
-    {
-      url: '/admin/specs',
-      changefreq: 'weekly',
-      priority: 0.5,
-      lastmod: now,
-      description: 'Specifications List',
-      access: 'authenticated',
     },
 
     // Legacy interfaces
@@ -517,8 +526,8 @@ function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: strin
         <h2>${title}</h2>
         <div class="route-grid">
             ${routes
-              .map(
-                (route) => `
+      .map(
+        (route) => `
                 <div class="route-card">
                     <div class="route-url">
                         <a href="${baseUrl}${route.url}" target="_blank">${route.url}</a>
@@ -530,8 +539,8 @@ function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: strin
                     </div>
                 </div>
             `
-              )
-              .join('')}
+      )
+      .join('')}
         </div>
     </div>`;
 }

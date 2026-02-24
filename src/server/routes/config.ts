@@ -17,17 +17,21 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
+import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProfile,
+} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
-  getMcpServerProfileByKey,
   getMcpServerProfiles,
-  McpServerProfile,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
-// Import all convict config modules
 import messageConfig from '../../config/messageConfig';
+
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
@@ -207,6 +211,101 @@ router.get('/bots', async (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOTS_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-profiles - Get Message profile templates
+router.get('/message-profiles', (req, res) => {
+  try {
+    return res.json({
+      profiles: getMessageProfiles(),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_GET_ERROR',
+    });
+  }
+});
+
+// POST /api/config/message-profiles - Create a Message profile
+router.post('/message-profiles', (req, res) => {
+  try {
+    const profile = req.body as MessageProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    // Sanitize key to prevent path traversal and special characters
+    const sanitizedKey = profile.key.replace(/[^a-zA-Z0-9-_]/g, '');
+    if (sanitizedKey !== profile.key || sanitizedKey.length === 0) {
+      return res.status(400).json({
+        error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores',
+      });
+    }
+    if (!profile.provider || typeof profile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    const allProfiles = getMessageProfiles();
+    if (allProfiles.message.some((p) => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    const newProfile: MessageProfile = {
+      key: profile.key,
+      name: profile.name || profile.key,
+      description: profile.description,
+      provider: profile.provider,
+      config: profile.config || {},
+    };
+
+    allProfiles.message.push(newProfile);
+    saveMessageProfiles(allProfiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_POST_ERROR',
+    });
+  }
+});
+
+// DELETE /api/config/message-profiles/:key - Delete a Message profile
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const allProfiles = getMessageProfiles();
+    const index = allProfiles.message.findIndex((p) => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    allProfiles.message.splice(index, 1);
+    saveMessageProfiles(allProfiles);
+    return res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_DELETE_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-status - Message default summary
+router.get('/message-status', (req, res) => {
+  try {
+    const status = getMessageDefaultStatus();
+    return res.json(status);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_STATUS_GET_ERROR',
     });
   }
 });
@@ -414,6 +513,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
+    // Sanitize configName to prevent path traversal
+    if (
+      configName &&
+      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
+    ) {
+      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    }
+
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -441,7 +548,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      const match = configName.match(/^([a-z]+)-.+$/);
+      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
+      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);
@@ -598,44 +706,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
+            ...mergedBot.discord,
+            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+          }
           : undefined,
         slack: mergedBot.slack
           ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
+            ...mergedBot.slack,
+            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+            signingSecret: redactSensitiveInfo(
+              'SLACK_SIGNING_SECRET',
+              mergedBot.slack.signingSecret || ''
+            ),
+          }
           : undefined,
         openai: mergedBot.openai
           ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
+            ...mergedBot.openai,
+            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+          }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
+            ...mergedBot.flowise,
+            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+          }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
+            ...mergedBot.openwebui,
+            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+          }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
+            ...mergedBot.openswarm,
+            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+          }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1269,14 +1377,14 @@ router.put('/guardrails', (req, res) => {
         return res.status(400).json({ error: 'profile entries must be objects' });
       }
       const typed = profile as GuardrailProfile;
-      if (!typed.key || typeof typed.key !== 'string') {
-        return res.status(400).json({ error: 'profile.key is required' });
+      if (!typed.id || typeof typed.id !== 'string') {
+        return res.status(400).json({ error: 'profile.id is required' });
       }
       if (!typed.name || typeof typed.name !== 'string') {
         return res.status(400).json({ error: 'profile.name is required' });
       }
-      if (!typed.mcpGuard || typeof typed.mcpGuard !== 'object') {
-        return res.status(400).json({ error: `profile.mcpGuard is required for ${typed.key}` });
+      if (!typed.guards || typeof typed.guards !== 'object') {
+        return res.status(400).json({ error: `profile.guards is required for ${typed.id}` });
       }
     }
 
@@ -1295,19 +1403,19 @@ router.put('/guardrails', (req, res) => {
 router.post('/guardrails', (req, res) => {
   try {
     const profile = req.body as GuardrailProfile;
-    if (!profile.key || typeof profile.key !== 'string') {
-      return res.status(400).json({ error: 'profile.key is required' });
+    if (!profile.id || typeof profile.id !== 'string') {
+      return res.status(400).json({ error: 'profile.id is required' });
     }
     if (!profile.name || typeof profile.name !== 'string') {
       return res.status(400).json({ error: 'profile.name is required' });
     }
-    if (!profile.mcpGuard || typeof profile.mcpGuard !== 'object') {
-      return res.status(400).json({ error: 'profile.mcpGuard is required' });
+    if (!profile.guards || typeof profile.guards !== 'object') {
+      return res.status(400).json({ error: 'profile.guards is required' });
     }
 
     const profiles = getGuardrailProfiles();
-    if (profiles.some((p) => p.key === profile.key)) {
-      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    if (profiles.some((p) => p.id === profile.id)) {
+      return res.status(409).json({ error: `Profile with id '${profile.id}' already exists` });
     }
 
     profiles.push(profile);
@@ -1327,10 +1435,10 @@ router.delete('/guardrails/:key', (req, res) => {
   try {
     const key = req.params.key;
     const profiles = getGuardrailProfiles();
-    const index = profiles.findIndex((p) => p.key === key);
+    const index = profiles.findIndex((p) => p.id === key);
 
     if (index === -1) {
-      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+      return res.status(404).json({ error: `Profile with id '${key}' not found` });
     }
 
     profiles.splice(index, 1);
@@ -1487,9 +1595,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-          (config as any).serverUrl ||
-          (config as any).url ||
-          ''
+        (config as any).serverUrl ||
+        (config as any).url ||
+        ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);
@@ -1502,6 +1610,134 @@ router.post('/message-provider/test', async (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROVIDER_TEST_ERROR',
+    });
+  }
+});
+
+// GET /api/config/message-profiles - Get Message profile templates
+router.get('/message-profiles', (req, res) => {
+  try {
+    return res.json({
+      profiles: getMessageProfiles(),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_GET_ERROR',
+    });
+  }
+});
+
+// PUT /api/config/message-profiles - Update Message profile templates
+router.put('/message-profiles', (req, res) => {
+  try {
+    const payload = req.body;
+    const profiles = payload?.profiles;
+    if (!profiles || typeof profiles !== 'object') {
+      return res.status(400).json({ error: 'profiles must be an object' });
+    }
+
+    const messageProfiles = Array.isArray(profiles.message) ? profiles.message : null;
+    if (!messageProfiles) {
+      return res.status(400).json({ error: 'profiles.message must be an array' });
+    }
+
+    const validateProfile = (profile: any) => {
+      if (!profile || typeof profile !== 'object') {
+        return 'profile entries must be objects';
+      }
+      if (!profile.key || typeof profile.key !== 'string') {
+        return 'profile.key is required';
+      }
+      if (!profile.provider || typeof profile.provider !== 'string') {
+        return `profile.provider is required for ${profile.key}`;
+      }
+      if (profile.name && typeof profile.name !== 'string') {
+        return `profile.name must be a string for ${profile.key}`;
+      }
+      if (profile.description && typeof profile.description !== 'string') {
+        return `profile.description must be a string for ${profile.key}`;
+      }
+      if (profile.config && typeof profile.config !== 'object') {
+        return `profile.config must be an object for ${profile.key}`;
+      }
+      return null;
+    };
+
+    for (const profile of messageProfiles) {
+      const error = validateProfile(profile);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+    }
+
+    saveMessageProfiles({ message: messageProfiles });
+    return res.json({ success: true, profiles: { message: messageProfiles } });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_PUT_ERROR',
+    });
+  }
+});
+
+// POST /api/config/message-profiles - Create a Message profile
+router.post('/message-profiles', (req, res) => {
+  try {
+    const profile = req.body as MessageProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.provider || typeof profile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    const allProfiles = getMessageProfiles();
+    if (allProfiles.message.some((p) => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    const newProfile: MessageProfile = {
+      key: profile.key,
+      name: profile.name || profile.key,
+      description: profile.description,
+      provider: profile.provider,
+      config: profile.config || {},
+    };
+
+    allProfiles.message.push(newProfile);
+    saveMessageProfiles(allProfiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_POST_ERROR',
+    });
+  }
+});
+
+// DELETE /api/config/message-profiles/:key - Delete a Message profile
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const allProfiles = getMessageProfiles();
+    const index = allProfiles.message.findIndex((p) => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    allProfiles.message.splice(index, 1);
+    saveMessageProfiles(allProfiles);
+    return res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_DELETE_ERROR',
     });
   }
 });
@@ -1640,6 +1876,58 @@ router.post('/llm-profiles', (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_POST_ERROR',
+    });
+  }
+});
+
+// PUT /api/config/llm-profiles/:key - Update an LLM profile
+router.put('/llm-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const updates = req.body;
+
+    const allProfiles = getLlmProfiles();
+    const index = allProfiles.llm.findIndex((p) => p.key.toLowerCase() === key.toLowerCase());
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    // Merge updates
+    const updatedProfile = {
+      ...allProfiles.llm[index],
+      ...updates,
+      // Ensure the key remains consistent unless we want to support renaming here (which is complex)
+      // But let's allow the body to specify key if it matches, otherwise ignore or validate?
+      // For safety, let's keep the original key or ensure it matches.
+      // If we want to rename, we should likely use a different flow or handle it carefully.
+      // For now, force key to match params/original to avoid accidental duplicates.
+      key: allProfiles.llm[index].key,
+    };
+
+    if (
+      !updatedProfile.name ||
+      typeof updatedProfile.name !== 'string' ||
+      updatedProfile.name.trim() === ''
+    ) {
+      return res.status(400).json({ error: 'profile.name is required and must not be empty' });
+    }
+    if (
+      !updatedProfile.provider ||
+      typeof updatedProfile.provider !== 'string' ||
+      updatedProfile.provider.trim() === ''
+    ) {
+      return res.status(400).json({ error: 'profile.provider is required and must not be empty' });
+    }
+
+    allProfiles.llm[index] = updatedProfile;
+    saveLlmProfiles(allProfiles);
+    return res.json({ success: true, profile: updatedProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_UPDATE_ERROR',
     });
   }
 });

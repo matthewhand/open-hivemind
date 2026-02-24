@@ -590,23 +590,27 @@ textarea {
 }
 
 .alert-info {
-  background: linear-gradient(135deg, hsl(var(--in) / 0.15) 0%, hsl(var(--in) / 0.05) 100%);
-  border-color: hsl(var(--in) / 0.3);
+  background-color: oklch(var(--in));
+  color: oklch(var(--inc));
+  border-color: oklch(var(--in));
 }
 
 .alert-success {
-  background: linear-gradient(135deg, hsl(var(--su) / 0.15) 0%, hsl(var(--su) / 0.05) 100%);
-  border-color: hsl(var(--su) / 0.3);
+  background-color: oklch(var(--su));
+  color: oklch(var(--suc));
+  border-color: oklch(var(--su));
 }
 
 .alert-warning {
-  background: linear-gradient(135deg, hsl(var(--wa) / 0.15) 0%, hsl(var(--wa) / 0.05) 100%);
-  border-color: hsl(var(--wa) / 0.3);
+  background-color: oklch(var(--wa));
+  color: oklch(var(--wac));
+  border-color: oklch(var(--wa));
 }
 
 .alert-error {
-  background: linear-gradient(135deg, hsl(var(--er) / 0.15) 0%, hsl(var(--er) / 0.05) 100%);
-  border-color: hsl(var(--er) / 0.3);
+  background-color: oklch(var(--er));
+  color: oklch(var(--erc));
+  border-color: oklch(var(--er));
 }
 
 /* Dark mode visibility adjustment */

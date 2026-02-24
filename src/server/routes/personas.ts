@@ -71,6 +71,19 @@ router.post('/', async (req, res) => {
   }
 });
 
+// POST /api/personas/:id/clone
+router.post('/:id/clone', (req, res) => {
+  try {
+    const clonedPersona = manager.clonePersona(req.params.id, req.body);
+    return res.status(201).json(clonedPersona);
+  } catch (error: any) {
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 // PUT /api/personas/:id
 router.put('/:id', async (req, res) => {
   try {

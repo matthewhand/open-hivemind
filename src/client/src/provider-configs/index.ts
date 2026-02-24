@@ -6,7 +6,6 @@ export * from './schemas/openai';
 export * from './schemas/anthropic';
 export * from './schemas/ollama';
 export * from './schemas/telegram';
-export * from './schemas/webhook';
 export * from './schemas/mcp';
 
 // Registry of all available provider schemas
@@ -17,7 +16,6 @@ import { openAIProviderSchema } from './schemas/openai';
 import { anthropicProviderSchema } from './schemas/anthropic';
 import { ollamaProviderSchema } from './schemas/ollama';
 import { telegramProviderSchema } from './schemas/telegram';
-import { webhookProviderSchema } from './schemas/webhook';
 import { mcpProviderSchema } from './schemas/mcp';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
@@ -25,7 +23,6 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   discord: discordProviderSchema,
   slack: slackProviderSchema,
   telegram: telegramProviderSchema,
-  webhook: webhookProviderSchema,
 
   // LLM providers
   openai: openAIProviderSchema,

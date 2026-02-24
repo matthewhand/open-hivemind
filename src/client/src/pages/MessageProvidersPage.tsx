@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useModal } from '../hooks/useModal';
 import { useBotProviders } from '../hooks/useBotProviders';
 import { Card, Button, Badge } from '../components/DaisyUI';
@@ -18,12 +18,28 @@ import ProviderConfigModal from '../components/ProviderConfiguration/ProviderCon
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, closeModal } = useModal();
-  const [globalProviders, setGlobalProviders] = useState<any[]>([]);
+  const [configuredProviders, setConfiguredProviders] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const fetchProviders = async () => {
+    try {
+      const response = await fetch('/api/config/message-profiles');
+      if (response.ok) {
+        const data = await response.json();
+        setConfiguredProviders(data.profiles.message || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch message profiles:', error);
+    }
+  };
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/uber' },
-    { label: 'Providers', href: '/uber/providers' },
-    { label: 'Message Providers', href: '/uber/providers/message', isActive: true },
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers' },
+    { label: 'Message Platforms', href: '/admin/providers/message', isActive: true },
   ];
 
   const getStatusIcon = (status: string) => {
@@ -40,12 +56,43 @@ const MessageProvidersPage: React.FC = () => {
   };
 
   const handleAddProvider = (providerType: MessageProviderType) => {
+    // We pass the provider type to the modal state if needed, but openAddModal
+    // currently takes (context, type). We might need to adjust modal state handling
+    // or just open it. The modal allows selecting type anyway.
     openAddModal('global', 'message');
   };
 
-  const handleProviderSubmit = (providerData: any) => {
-    // For global provider management, we would store these globally
-    closeModal();
+  const handleProviderSubmit = async (providerData: any) => {
+    try {
+      // Generate a key from name if not present (simple slug)
+      const key = providerData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+      const payload = {
+        key,
+        name: providerData.name,
+        provider: providerData.type, // Map 'type' to 'provider' for backend
+        config: providerData.config,
+      };
+
+      const response = await fetch('/api/config/message-profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        await fetchProviders(); // Refresh list
+        closeModal();
+      } else {
+        const error = await response.json();
+        console.error('Failed to create provider:', error);
+        // Ideally show error to user
+      }
+    } catch (error) {
+      console.error('Error submitting provider:', error);
+    }
   };
 
   const providerTypes = Object.keys(MESSAGE_PROVIDER_CONFIGS) as MessageProviderType[];
@@ -55,11 +102,41 @@ const MessageProvidersPage: React.FC = () => {
       <Breadcrumbs items={breadcrumbItems} />
 
       <div className="mt-4 mb-8">
-        <h1 className="text-4xl font-bold mb-2">Message Providers</h1>
+        <h1 className="text-4xl font-bold mb-2">Message Platforms</h1>
         <p className="text-base-content/70">
           Configure messaging platforms for your bots to connect and communicate
         </p>
       </div>
+
+      {/* Configured Providers */}
+      {configuredProviders.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Configured Platforms</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {configuredProviders.map((provider) => {
+              const config = MESSAGE_PROVIDER_CONFIGS[provider.provider as MessageProviderType] || MESSAGE_PROVIDER_CONFIGS.webhook;
+              return (
+                <Card key={provider.key} className="bg-base-100 shadow-lg border border-base-300">
+                  <div className="card-body">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="text-xl">{config.icon}</div>
+                        <h3 className="card-title text-lg">{provider.name}</h3>
+                      </div>
+                      <Badge variant="success" size="sm">Configured</Badge>
+                    </div>
+                    <p className="text-sm text-base-content/60 mb-4">{provider.description || config.description}</p>
+                    <div className="card-actions justify-end">
+                      {/* Edit functionality to be implemented */}
+                      <Button size="sm" variant="ghost" disabled>Edit</Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Provider Types Grid */}
       <div className="mb-8">
@@ -67,6 +144,9 @@ const MessageProvidersPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {providerTypes.map((type) => {
             const config = MESSAGE_PROVIDER_CONFIGS[type];
+            const requiredFields = (config.fields || []).filter((f: any) => f.required);
+            const optionalFields = (config.fields || []).filter((f: any) => !f.required);
+
             return (
               <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
                 <div className="card-body">
@@ -75,12 +155,12 @@ const MessageProvidersPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">{config.icon}</div>
                       <div>
-                        <h3 className="card-title text-lg">{config.name}</h3>
+                        <h3 className="card-title text-lg">{config.displayName}</h3>
                         <p className="text-sm text-base-content/60">{type}</p>
                       </div>
                     </div>
                     <Badge variant="neutral" size="sm">
-                      {config.requiredFields.length} required
+                      {requiredFields.length} required
                     </Badge>
                   </div>
 
@@ -93,8 +173,8 @@ const MessageProvidersPage: React.FC = () => {
                   <div className="mb-4">
                     <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
                     <div className="flex flex-wrap gap-1">
-                      {config.requiredFields.map((field) => (
-                        <Badge key={field.key} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
+                      {requiredFields.map((field: any) => (
+                        <Badge key={field.name} color="neutral" variant="secondary" className="btn-outline text-xs">
                           {field.label}
                         </Badge>
                       ))}
@@ -102,12 +182,12 @@ const MessageProvidersPage: React.FC = () => {
                   </div>
 
                   {/* Optional Fields */}
-                  {config.optionalFields.length > 0 && (
+                  {optionalFields.length > 0 && (
                     <div className="mb-4">
                       <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
                       <div className="flex flex-wrap gap-1">
-                        {config.optionalFields.map((field) => (
-                          <Badge key={field.key} color="ghost" variant="secondary" className="btn-outline" className="text-xs">
+                        {optionalFields.map((field: any) => (
+                          <Badge key={field.name} color="ghost" variant="secondary" className="btn-outline text-xs">
                             {field.label}
                           </Badge>
                         ))}
@@ -124,7 +204,7 @@ const MessageProvidersPage: React.FC = () => {
                       className="w-full"
                     >
                       <AddIcon className="w-4 h-4 mr-2" />
-                      Configure {config.name}
+                      Configure {config.displayName}
                     </Button>
                   </div>
                 </div>
@@ -192,6 +272,7 @@ const MessageProvidersPage: React.FC = () => {
           ...modalState,
           providerType: 'message',
         }}
+        existingProviders={configuredProviders}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
       />
