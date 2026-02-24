@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -12,7 +12,6 @@ import {
   StatsCards,
   LoadingSpinner,
   EmptyState,
-  Select,
 } from '../components/DaisyUI';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
@@ -37,26 +36,12 @@ const PersonasPage: React.FC = () => {
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
   // Form State
   const [personaName, setPersonaName] = useState('');
   const [personaDescription, setPersonaDescription] = useState('');
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
-
-  const filteredPersonas = useMemo(() => {
-    return personas.filter(persona => {
-      const matchesSearch =
-        persona.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        persona.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || persona.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [personas, searchQuery, selectedCategory]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -297,42 +282,6 @@ const PersonasPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      {!loading && personas.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
-          <div className="flex-1">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-base-content/50" />
-              </div>
-              <Input
-                type="text"
-                placeholder="Search personas..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="w-full sm:w-48">
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              options={[
-                { label: 'All Categories', value: 'all' },
-                { label: 'General', value: 'general' },
-                { label: 'Customer Service', value: 'customer_service' },
-                { label: 'Creative', value: 'creative' },
-                { label: 'Technical', value: 'technical' },
-                { label: 'Educational', value: 'educational' },
-                { label: 'Entertainment', value: 'entertainment' },
-                { label: 'Professional', value: 'professional' },
-              ]}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Persona List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -346,26 +295,9 @@ const PersonasPage: React.FC = () => {
           actionLabel="Create Persona"
           onAction={openCreateModal}
         />
-      ) : filteredPersonas.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="inline-flex justify-center items-center w-16 h-16 rounded-full bg-base-200 mb-4">
-            <Search className="w-8 h-8 text-base-content/30" />
-          </div>
-          <h3 className="text-lg font-medium text-base-content/70">No matching personas found</h3>
-          <p className="text-base-content/50 max-w-sm mx-auto mt-2">
-            Try adjusting your search query or category filter
-          </p>
-          <Button
-            variant="ghost"
-            className="mt-4"
-            onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-          >
-            Clear Filters
-          </Button>
-        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map(persona => (
+          {personas.map(persona => (
             <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
