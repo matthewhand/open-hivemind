@@ -5,6 +5,7 @@ import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCi
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Input from '../components/DaisyUI/Input';
+import EmptyState from '../components/DaisyUI/EmptyState';
 
 interface BotData {
   id: string;
@@ -360,20 +361,23 @@ const BotsPage: React.FC = () => {
               <p className="text-base-content/50 animate-pulse">Loading bots...</p>
             </div>
           ) : bots.length === 0 ? (
-            <div className="text-center py-12">
-              <Bot className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-              <h3 className="text-lg font-medium text-base-content/60">No bots configured</h3>
-              <p className="text-base-content/50 mb-4">Create a bot configuration to get started</p>
-              <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-4 h-4 mr-2" /> Create Bot
-              </button>
-            </div>
+            <EmptyState
+              icon={Bot}
+              title="No bots configured"
+              description="Create a bot configuration to get started"
+              actionLabel={<><Plus className="w-4 h-4 mr-2" /> Create Bot</>}
+              onAction={() => setShowCreateModal(true)}
+              variant="primary"
+            />
           ) : filteredBots.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-              <h3 className="text-lg font-medium text-base-content/60">No bots found matching "{searchQuery}"</h3>
-              <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSearchQuery('')}>Clear Search</button>
-            </div>
+            <EmptyState
+              icon={Search}
+              title={`No bots found matching "${searchQuery}"`}
+              description="Try adjusting your search query"
+              actionLabel="Clear Search"
+              onAction={() => setSearchQuery('')}
+              variant="secondary"
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {filteredBots.map((bot) => (
