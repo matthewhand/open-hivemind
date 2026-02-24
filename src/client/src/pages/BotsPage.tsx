@@ -4,7 +4,7 @@ import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCi
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import Input from '../components/DaisyUI/Input';
+import { SearchFilterBar } from '../components/SearchFilterBar';
 
 interface BotData {
   id: string;
@@ -340,15 +340,11 @@ const BotsPage: React.FC = () => {
 
       {/* Search Input */}
       {bots.length > 0 && (
-        <div className="w-full">
-          <Input
-            placeholder="Search bots..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="w-4 h-4" />}
-            className="pl-10"
-          />
-        </div>
+        <SearchFilterBar
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search bots..."
+        />
       )}
 
       {/* DataTable */}
