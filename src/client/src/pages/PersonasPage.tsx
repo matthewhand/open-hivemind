@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search } from 'lucide-react';
 import {
   Alert,
   Badge,
   Button,
   Card,
   Input,
+  Select,
   Modal,
   PageHeader,
   StatsCards,
@@ -42,6 +43,10 @@ const PersonasPage: React.FC = () => {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const fetchData = useCallback(async () => {
     try {
@@ -235,6 +240,15 @@ const PersonasPage: React.FC = () => {
     { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
   ];
 
+  const filteredPersonas = personas.filter(persona => {
+    const matchesSearch = (
+      persona.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      persona.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const matchesCategory = selectedCategory === 'all' || persona.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="space-y-6">
       {/* Error Alert */}
@@ -282,6 +296,37 @@ const PersonasPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Filters */}
+      {!loading && personas.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
+            <Input
+              placeholder="Search personas..."
+              className="pl-10 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <Select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              options={[
+                { label: 'All Categories', value: 'all' },
+                { label: 'General', value: 'general' },
+                { label: 'Customer Service', value: 'customer_service' },
+                { label: 'Creative', value: 'creative' },
+                { label: 'Technical', value: 'technical' },
+                { label: 'Educational', value: 'educational' },
+                { label: 'Entertainment', value: 'entertainment' },
+                { label: 'Professional', value: 'professional' },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Persona List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -295,9 +340,18 @@ const PersonasPage: React.FC = () => {
           actionLabel="Create Persona"
           onAction={openCreateModal}
         />
+      ) : filteredPersonas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 bg-base-200/50 rounded-lg border border-dashed border-base-300">
+          <Search className="w-12 h-12 text-base-content/20 mb-4" />
+          <h3 className="text-lg font-medium text-base-content/70">No matching personas found</h3>
+          <p className="text-sm text-base-content/50 mb-4">Try adjusting your search or filters</p>
+          <Button variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
+            Clear Filters
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {personas.map(persona => (
+          {filteredPersonas.map(persona => (
             <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
