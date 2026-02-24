@@ -57,7 +57,7 @@
 - [ ] Collapse
 - [✅] Countdown
 - [ ] Diff
-- [✅] Indicator
+- [ ] Indicator
 - [✅] Progress
 - [✅] Stat
 - [✅] Table
@@ -93,7 +93,7 @@
 - [✅] Drawer
 - [ ] Footer
 - [✅] Hero
-- [✅] Indicator (duplicate - already covered)
+- [ ] Indicator (duplicate - already covered)
 - [ ] Stack
 
 #### **6. Navigation (7 components)**
