@@ -2,6 +2,7 @@
 import {
   LayoutDashboard, Bot, Users, Wrench, Shield,
   Settings, Cog, Activity, Component, Plug, MessageSquare, Brain,
+  Map,
 } from 'lucide-react';
 import React from 'react';
 
@@ -164,6 +165,13 @@ export const hivemindNavItems: NavItem[] = [
     label: 'UI Components',
     icon: <NavIcon><Component className="w-4 h-4" /></NavIcon>,
     path: '/admin/showcase',
+    visible: true,
+  },
+  {
+    id: 'sitemap',
+    label: 'Sitemap',
+    icon: <NavIcon><Map className="w-4 h-4" /></NavIcon>,
+    path: '/admin/sitemap',
     visible: true,
   },
 ];
