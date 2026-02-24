@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
+import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
+import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
 
@@ -17,17 +17,39 @@ class SimpleMessage extends IMessage {
     this.content = content;
   }
 
-  getMessageId(): string { return 'generated-' + Date.now(); }
-  getTimestamp(): Date { return new Date(); }
-  setText(text: string): void { this.content = text; }
-  getChannelId(): string { return 'internal-ai-assist'; }
-  getAuthorId(): string { return 'system'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return []; }
-  mentionsUsers(userId: string): boolean { return false; }
-  isFromBot(): boolean { return this.role === 'assistant'; }
-  getAuthorName(): string { return this.role; }
+  getMessageId(): string {
+    return 'generated-' + Date.now();
+  }
+  getTimestamp(): Date {
+    return new Date();
+  }
+  setText(text: string): void {
+    this.content = text;
+  }
+  getChannelId(): string {
+    return 'internal-ai-assist';
+  }
+  getAuthorId(): string {
+    return 'system';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return [];
+  }
+  mentionsUsers(userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return this.role === 'assistant';
+  }
+  getAuthorName(): string {
+    return this.role;
+  }
 }
 
 // Define OpenWebUI provider locally as in getLlmProvider.ts
@@ -70,10 +92,14 @@ router.post('/generate', async (req, res) => {
 
     // Input validation for prompt sizes
     if (prompt.length > MAX_PROMPT_LENGTH) {
-      return res.status(400).json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
+      return res
+        .status(400)
+        .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
     }
     if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
-      return res.status(400).json({ error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters` });
+      return res.status(400).json({
+        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
+      });
     }
 
     const userConfig = UserConfigStore.getInstance();
@@ -86,7 +112,9 @@ router.post('/generate', async (req, res) => {
 
     const profile = getLlmProfileByKey(providerKey);
     if (!profile) {
-      return res.status(404).json({ error: 'Configured AI Assistance provider profile not found.' });
+      return res
+        .status(404)
+        .json({ error: 'Configured AI Assistance provider profile not found.' });
     }
 
     let instance: ILlmProvider | undefined;
@@ -137,12 +165,11 @@ router.post('/generate', async (req, res) => {
     }
 
     return res.json({ result });
-
   } catch (error: any) {
     debug('Error in AI Assist generation:', error);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: error.message
+      message: error.message,
     });
   }
 });

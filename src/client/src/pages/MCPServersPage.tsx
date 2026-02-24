@@ -193,7 +193,9 @@ const MCPServersPage: React.FC = () => {
         throw new Error(data.message || 'Connection failed');
       }
 
-      setAlert({ type: 'success', message: 'Connection successful!' });
+      const data = await response.json();
+      const toolCount = data.data?.toolCount || 0;
+      setAlert({ type: 'success', message: `Connection successful! Found ${toolCount} tools.` });
     } catch (err) {
       setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
     } finally {

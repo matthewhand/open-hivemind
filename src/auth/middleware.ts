@@ -32,32 +32,30 @@ export class AuthMiddleware {
       const origin = req.get('origin');
 
       const isLocalhostIp =
-        clientIP === '127.0.0.1' ||
-        clientIP === '::1' ||
-        clientIP === '::ffff:127.0.0.1';
+        clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
 
       // Strict check for host header to prevent host header injection
       // Must be exactly 'localhost' or start with 'localhost:' (for ports)
       // Must be exactly '127.0.0.1' or start with '127.0.0.1:' (for ports)
-      const isLocalhostHost = host && (
-        host === 'localhost' ||
-        host.startsWith('localhost:') ||
-        host === '127.0.0.1' ||
-        host.startsWith('127.0.0.1:')
-      );
+      const isLocalhostHost =
+        host &&
+        (host === 'localhost' ||
+          host.startsWith('localhost:') ||
+          host === '127.0.0.1' ||
+          host.startsWith('127.0.0.1:'));
 
       // Strict check for origin header
       // Must include protocol (http/https) and be exactly localhost/127.0.0.1 or with port
-      const isLocalhostOrigin = origin && (
-        origin === 'http://localhost' ||
-        origin.startsWith('http://localhost:') ||
-        origin === 'https://localhost' ||
-        origin.startsWith('https://localhost:') ||
-        origin === 'http://127.0.0.1' ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin === 'https://127.0.0.1' ||
-        origin.startsWith('https://127.0.0.1:')
-      );
+      const isLocalhostOrigin =
+        origin &&
+        (origin === 'http://localhost' ||
+          origin.startsWith('http://localhost:') ||
+          origin === 'https://localhost' ||
+          origin.startsWith('https://localhost:') ||
+          origin === 'http://127.0.0.1' ||
+          origin.startsWith('http://127.0.0.1:') ||
+          origin === 'https://127.0.0.1' ||
+          origin.startsWith('https://127.0.0.1:'));
 
       const isLocalhost = isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
 

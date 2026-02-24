@@ -27,11 +27,11 @@ const rateLimit = require('express-rate-limit').default;
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many configuration attempts, please try again later.',
-    standardHeaders: true,
-  });
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+      message: 'Too many configuration attempts, please try again later.',
+      standardHeaders: true,
+    });
 
 // Apply rate limiting to sensitive configuration operations
 router.use('/', configRateLimit);
@@ -700,11 +700,15 @@ router.post('/mcp-servers/test', configRateLimit, async (req: Request, res: Resp
     // Use a temporary name if not provided
     const configName = name || `test-${Date.now()}`;
 
-    await mcpService.testConnection({ serverUrl, apiKey, name: configName });
+    const tools = await mcpService.testConnection({ serverUrl, apiKey, name: configName });
 
     return res.json({
       success: true,
       message: `Successfully tested connection to MCP server`,
+      data: {
+        tools,
+        toolCount: tools.length,
+      },
     });
   } catch (error: any) {
     return res.status(500).json({
