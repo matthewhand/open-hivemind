@@ -9,8 +9,9 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, Input } from '../components/DaisyUI';
 
 interface MCPServer {
   id: string;
@@ -44,6 +45,7 @@ const MCPServersPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/admin/mcp' },
@@ -99,6 +101,11 @@ const MCPServersPage: React.FC = () => {
   useEffect(() => {
     fetchServers();
   }, [fetchServers]);
+
+  const filteredServers = servers.filter(server =>
+    server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    server.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -311,74 +318,95 @@ const MCPServersPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {servers.map((server) => (
-          <div key={server.id} className="card bg-base-100 shadow-xl h-full">
-            <div className="card-body">
-              <div className="flex justify-between items-start mb-2">
-                <h2 className="card-title">
-                  {server.name}
-                </h2>
-                <div className={`badge ${getStatusColor(server.status)}`}>
-                  {server.status}
+      {/* Search Bar */}
+      {servers.length > 0 && (
+        <div className="mb-6 relative">
+          <Input
+            placeholder="Search servers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+            prefix={<MagnifyingGlassIcon className="w-4 h-4 text-base-content/50" />}
+          />
+        </div>
+      )}
+
+      {filteredServers.length === 0 && servers.length > 0 ? (
+        <div className="text-center py-12 bg-base-100 rounded-xl border border-base-200">
+          <MagnifyingGlassIcon className="w-12 h-12 mx-auto text-base-content/20 mb-3" />
+          <h3 className="text-lg font-medium text-base-content/60">No servers found matching "{searchQuery}"</h3>
+          <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSearchQuery('')}>Clear Search</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredServers.map((server) => (
+            <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
+              <div className="card-body">
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="card-title">
+                    {server.name}
+                  </h2>
+                  <div className={`badge ${getStatusColor(server.status)}`}>
+                    {server.status}
+                  </div>
                 </div>
-              </div>
 
-              <p className="text-sm text-base-content/70 mb-4">
-                {server.description}
-              </p>
+                <p className="text-sm text-base-content/70 mb-4 line-clamp-2" title={server.description}>
+                  {server.description}
+                </p>
 
-              <div className="text-sm space-y-2 mb-4">
-                <p><strong>URL:</strong> {server.url}</p>
-                <p><strong>Tools:</strong> {server.toolCount}</p>
-                {server.lastConnected && (
-                  <p className="text-base-content/50">
-                    Last connected: {new Date(server.lastConnected).toLocaleString()}
-                  </p>
-                )}
-              </div>
-
-              <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
-                <div className="flex gap-1">
-                  {server.status === 'running' ? (
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-error"
-                      onClick={() => handleServerAction(server.id, 'stop')}
-                      title="Stop Server"
-                    >
-                      <StopIcon className="w-5 h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-success"
-                      onClick={() => handleServerAction(server.id, 'start')}
-                      title="Start Server"
-                    >
-                      <PlayIcon className="w-5 h-5" />
-                    </button>
+                <div className="text-sm space-y-2 mb-4">
+                  <p className="truncate" title={server.url}><strong>URL:</strong> {server.url}</p>
+                  <p><strong>Tools:</strong> {server.toolCount}</p>
+                  {server.lastConnected && (
+                    <p className="text-base-content/50">
+                      Last connected: {new Date(server.lastConnected).toLocaleString()}
+                    </p>
                   )}
                 </div>
-                <div className="flex gap-1">
-                  <button
-                    className="btn btn-ghost btn-sm btn-circle"
-                    onClick={() => handleEditServer(server)}
-                    title="Edit Server"
-                  >
-                    <PencilIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-sm btn-circle text-error"
-                    onClick={() => handleDeleteServer(server.id)}
-                    title="Delete Server"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+
+                <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
+                  <div className="flex gap-1">
+                    {server.status === 'running' ? (
+                      <button
+                        className="btn btn-ghost btn-sm btn-circle text-error"
+                        onClick={() => handleServerAction(server.id, 'stop')}
+                        title="Stop Server"
+                      >
+                        <StopIcon className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-ghost btn-sm btn-circle text-success"
+                        onClick={() => handleServerAction(server.id, 'start')}
+                        title="Start Server"
+                      >
+                        <PlayIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle"
+                      onClick={() => handleEditServer(server)}
+                      title="Edit Server"
+                    >
+                      <PencilIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-error"
+                      onClick={() => handleDeleteServer(server.id)}
+                      title="Delete Server"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add/Edit Server Modal */}
       <Modal
