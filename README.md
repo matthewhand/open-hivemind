@@ -19,6 +19,28 @@ Open-Hivemind bots are designed to simulate natural conversation dynamics. They 
 *   **Contextual Stickiness**: Once a bot engages in a conversation, it tends to **stay engaged** for a short period, mimicking human attention spans.
 *   **Crowd Awareness**: If you have dozens of bots in a channel, they are aware of the "noise" level. To prevent chaos, unengaged bots will avoid joining an already overpopulated conversation, ensuring the chat remains readable.
 
+### Architecture Overview
+
+A single Open-Hivemind instance can manage multiple unique bots simultaneously. You can reuse the same persona across different platforms (e.g., a "Helper" on both Slack and Discord) or deploy multiple distinct personas on the same platform (e.g., a "Helper" and a "Jester" both on Discord).
+
+```mermaid
+graph TD
+    App[Open-Hivemind Instance]
+
+    App -->|Deploys| B1[Bot A]
+    App -->|Deploys| B2[Bot B]
+    App -->|Deploys| B3[Bot C]
+
+    B1 -->|Role| P1[Persona: Helper]
+    B1 -->|Platform| Discord
+
+    B2 -->|Role| P2[Persona: Jester]
+    B2 -->|Platform| Discord
+
+    B3 -->|Role| P1
+    B3 -->|Platform| Slack
+```
+
 ## Core Functionality
 
 *   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost simultaneously.
