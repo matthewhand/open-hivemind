@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import { BotManager, CreateBotRequest } from '../../managers/BotManager';
 
 const router = Router();
 const manager = BotManager.getInstance();
@@ -9,9 +9,9 @@ router.get('/', async (req, res) => {
   try {
     const bots = await manager.getAllBots();
     const statuses = await manager.getBotsStatus();
-    const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
+    const statusMap = new Map(statuses.map(s => [s.id, s.isRunning]));
 
-    const result = bots.map((bot) => ({
+    const result = bots.map(bot => ({
       id: bot.id,
       name: bot.name,
       provider: bot.messageProvider,
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
       status: bot.isActive ? 'active' : 'disabled',
       connected: statusMap.get(bot.id) || false,
       messageCount: 0, // TODO: Implement metrics
-      errorCount: 0, // TODO: Implement metrics
+      errorCount: 0,   // TODO: Implement metrics
       // Note: config and envOverrides intentionally excluded to avoid exposing sensitive data
     }));
 

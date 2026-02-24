@@ -302,7 +302,7 @@ export class BotManager extends EventEmitter {
 
       // Check if it's a custom bot
       const customBots = webUIStorage.getAgents();
-      const isCustom = customBots.some((b) => b.id === botId);
+      const isCustom = customBots.some(b => b.id === botId);
 
       if (isCustom) {
         // Clone as custom bot (existing logic)
@@ -416,7 +416,7 @@ export class BotManager extends EventEmitter {
 
       // Check if it's a custom bot
       const customBots = webUIStorage.getAgents();
-      const isCustom = customBots.some((b) => b.id === botId);
+      const isCustom = customBots.some(b => b.id === botId);
 
       if (isCustom) {
         // Remove from web UI storage

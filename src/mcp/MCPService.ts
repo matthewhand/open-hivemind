@@ -48,7 +48,7 @@ export class MCPService {
   /**
    * Test connection to an MCP server without storing the client
    */
-  public async testConnection(config: MCPConfig): Promise<MCPTool[]> {
+  public async testConnection(config: MCPConfig): Promise<boolean> {
     try {
       debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
 
@@ -68,19 +68,13 @@ export class MCPService {
       });
 
       // Try to list tools to verify connection works
-      const tools = await client.listTools();
-
-      // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
-        ...tool,
-        serverName: config.name,
-      }));
+      await client.listTools();
 
       // If we got here, connection is successful
       // Since SDK doesn't have disconnect, we just let it go out of scope
       // Ideally we would close the transport if accessible
 
-      return mcpTools;
+      return true;
     } catch (error) {
       debug(`Error testing connection to MCP server ${config.name}:`, error);
       throw new Error(
