@@ -1,7 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
@@ -1041,7 +1041,7 @@ export class BotConfigurationManager {
     // this.bots should have the new bot.
     const newBot = this.bots.get(newName);
     if (!newBot) {
-        throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
+      throw new Error(`Failed to retrieve cloned bot "${newName}" after creation`);
     }
     return newBot;
   }

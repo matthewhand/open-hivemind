@@ -62,7 +62,7 @@ jest.mock('../../src/utils/envUtils', () => ({
 
 const app = express();
 app.use(express.json());
-app.use(adminRoutes);
+app.use('/api/admin', adminRoutes);
 
 describe('Admin Routes', () => {
   beforeEach(() => {
