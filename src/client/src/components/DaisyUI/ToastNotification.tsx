@@ -168,8 +168,34 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
     }
   };
 
+  const getRole = () => {
+    switch (toast.type) {
+    case 'error':
+    case 'warning':
+      return 'alert';
+    case 'success':
+    case 'info':
+    default:
+      return 'status';
+    }
+  };
+
+  const getAriaLive = () => {
+    switch (toast.type) {
+    case 'error':
+    case 'warning':
+      return 'assertive';
+    case 'success':
+    case 'info':
+    default:
+      return 'polite';
+    }
+  };
+
   return (
     <div
+      role={getRole()}
+      aria-live={getAriaLive()}
       className={`
         alert ${getAlertClass()} shadow-lg max-w-md transform transition-all duration-300 ease-in-out
         ${isVisible && !isRemoving 

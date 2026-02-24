@@ -17,6 +17,12 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
+import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
+import {
+  getMessageProfiles,
+  saveMessageProfiles,
+  type MessageProfile,
+} from '../../config/messageProfiles';
 import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
@@ -24,17 +30,8 @@ import {
   getMcpServerProfiles,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
-// Import all convict config modules
 import messageConfig from '../../config/messageConfig';
-import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
-import {
-  getMessageProfiles,
-  getMessageProfiles,
-  saveMessageProfiles,
-  saveMessageProfiles,
-  type MessageProfile,
-  type MessageProviderProfile,
-} from '../../config/messageProfiles';
+
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
@@ -236,7 +233,7 @@ router.get('/message-profiles', (req, res) => {
 // POST /api/config/message-profiles - Create a Message profile
 router.post('/message-profiles', (req, res) => {
   try {
-    const profile = req.body as MessageProviderProfile;
+    const profile = req.body as MessageProfile;
     if (!profile.key || typeof profile.key !== 'string') {
       return res.status(400).json({ error: 'profile.key is required' });
     }
@@ -258,7 +255,7 @@ router.post('/message-profiles', (req, res) => {
       return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
     }
 
-    const newProfile: MessageProviderProfile = {
+    const newProfile: MessageProfile = {
       key: profile.key,
       name: profile.name || profile.key,
       description: profile.description,
@@ -518,6 +515,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
+    // Sanitize configName to prevent path traversal
+    if (
+      configName &&
+      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
+    ) {
+      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    }
+
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -545,7 +550,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      const match = configName.match(/^([a-z]+)-.+$/);
+      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
+      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);
@@ -702,44 +708,44 @@ router.get('/', async (req, res) => {
         connected: isDisabled ? false : mergedBot.connected !== false,
         discord: mergedBot.discord
           ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
+            ...mergedBot.discord,
+            token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
+          }
           : undefined,
         slack: mergedBot.slack
           ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
+            ...mergedBot.slack,
+            botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
+            appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
+            signingSecret: redactSensitiveInfo(
+              'SLACK_SIGNING_SECRET',
+              mergedBot.slack.signingSecret || ''
+            ),
+          }
           : undefined,
         openai: mergedBot.openai
           ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
+            ...mergedBot.openai,
+            apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
+          }
           : undefined,
         flowise: mergedBot.flowise
           ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
+            ...mergedBot.flowise,
+            apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
+          }
           : undefined,
         openwebui: mergedBot.openwebui
           ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
+            ...mergedBot.openwebui,
+            apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
+          }
           : undefined,
         openswarm: mergedBot.openswarm
           ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
+            ...mergedBot.openswarm,
+            apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
+          }
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
@@ -1591,9 +1597,9 @@ router.post('/message-provider/test', async (req, res) => {
     if (provider === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
-          (config as any).serverUrl ||
-          (config as any).url ||
-          ''
+        (config as any).serverUrl ||
+        (config as any).url ||
+        ''
       ).trim();
       const token = String((config as any).MATTERMOST_TOKEN || (config as any).token || '').trim();
       const result = await testMattermostConnection(serverUrl, token);

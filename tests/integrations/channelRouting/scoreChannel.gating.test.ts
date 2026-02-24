@@ -18,7 +18,7 @@ const meta = { foo: 'bar' };
  * Mock messageConfig.get to control the feature flag.
  */
 function mockFlag(enabled: boolean) {
-  jest.doMock('../../../src/config/messageConfig', () => {
+  jest.doMock('@config/messageConfig', () => {
     const api = {
       get: (key: string) => (key === 'MESSAGE_CHANNEL_ROUTER_ENABLED' ? enabled : undefined),
     };
@@ -30,7 +30,7 @@ function mockFlag(enabled: boolean) {
  * Mock ChannelRouter to observe delegation.
  */
 function mockChannelRouter(returnValue: number) {
-  jest.doMock('../../../src/message/routing/ChannelRouter', () => {
+  jest.doMock('@message/routing/ChannelRouter', () => {
     const router = {
       computeScore: jest.fn((_channel: string, _m?: Record<string, any>) => returnValue),
     };
@@ -55,9 +55,9 @@ function mockDiscordMinimal() {
   jest.doMock('@hivemind/adapter-discord', () => {
     // defer resolution to use already-mocked modules
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const messageConfig = require('../../../src/config/messageConfig').default;
+    const messageConfig = require('@config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const CR = require('../../../src/message/routing/ChannelRouter');
+    const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class DiscordService {
       public supportsChannelPrioritization = true;
@@ -76,11 +76,11 @@ function mockDiscordMinimal() {
  * dependencies we also stub them minimally to just expose scoreChannel in the same pattern.
  */
 function mockSlackMinimal() {
-  jest.doMock('../../../src/integrations/slack/SlackService', () => {
+  jest.doMock('@hivemind/adapter-slack', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const messageConfig = require('../../../src/config/messageConfig').default;
+    const messageConfig = require('@config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const CR = require('../../../src/message/routing/ChannelRouter');
+    const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class SlackService {
       public supportsChannelPrioritization = true;
@@ -95,11 +95,11 @@ function mockSlackMinimal() {
 }
 
 function mockMattermostMinimal() {
-  jest.doMock('../../../src/integrations/mattermost/MattermostService', () => {
+  jest.doMock('@hivemind/adapter-mattermost', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const messageConfig = require('../../../src/config/messageConfig').default;
+    const messageConfig = require('@config/messageConfig').default;
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const CR = require('../../../src/message/routing/ChannelRouter');
+    const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class MattermostService {
       public supportsChannelPrioritization = true;
@@ -115,14 +115,14 @@ function mockMattermostMinimal() {
 
 async function loadServices() {
   const dMod: any = await import('@hivemind/adapter-discord');
-  const sMod: any = await import('../../../src/integrations/slack/SlackService');
-  const mMod: any = await import('../../../src/integrations/mattermost/MattermostService');
+  const sMod: any = await import('@hivemind/adapter-slack');
+  const mMod: any = await import('@hivemind/adapter-mattermost');
 
   const DiscordService = dMod.default ?? dMod.DiscordService ?? dMod;
   const SlackService = sMod.default ?? sMod.SlackService ?? sMod;
   const MattermostService = mMod.default ?? mMod.MattermostService ?? mMod;
 
-  const crMod: any = await import('../../../src/message/routing/ChannelRouter');
+  const crMod: any = await import('@message/routing/ChannelRouter');
   const ChannelRouter = crMod.ChannelRouter ?? crMod.default ?? crMod;
 
   return { DiscordService, SlackService, MattermostService, ChannelRouter };
