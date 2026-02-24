@@ -221,6 +221,23 @@ router.post('/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res
     });
   }
 });
+// GET /llm-providers - Get all configured LLM providers
+router.get('/llm-providers', (req: Request, res: Response) => {
+  try {
+    const providers = webUIStorage.getLlmProviders();
+    return res.json({
+      success: true,
+      data: { providers },
+      message: 'LLM providers retrieved successfully',
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to retrieve LLM providers',
+      message: error.message || 'An error occurred while retrieving LLM providers',
+    });
+  }
+});
+
 // POST /llm-providers - Create a new LLM provider
 router.post('/llm-providers', configRateLimit, (req: Request, res: Response) => {
   try {
@@ -356,6 +373,23 @@ router.post('/llm-providers/:id/toggle', (req: Request, res: Response) => {
     return res.status(500).json({
       error: 'Failed to update provider status',
       message: error.message || 'An error occurred while updating provider status',
+    });
+  }
+});
+
+// GET /messenger-providers - Get all configured messenger providers
+router.get('/messenger-providers', (req: Request, res: Response) => {
+  try {
+    const providers = webUIStorage.getMessengerProviders();
+    return res.json({
+      success: true,
+      data: { providers },
+      message: 'Messenger providers retrieved successfully',
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to retrieve messenger providers',
+      message: error.message || 'An error occurred while retrieving messenger providers',
     });
   }
 });
