@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
+import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Input from '../components/DaisyUI/Input';
 
 interface BotData {
   id: string;
@@ -27,8 +28,7 @@ import BotChatBubbles from '../components/BotChatBubbles';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
-
-const API_BASE = '/api';
+import { apiService } from '../services/api';
 
 const BotsPage: React.FC = () => {
   // UI State
@@ -39,6 +39,7 @@ const BotsPage: React.FC = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
   const [uiError, setUiError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -56,40 +57,29 @@ const BotsPage: React.FC = () => {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
-    const [configResponse, globalResponse, personasResponse, profilesResponse] = await Promise.all([
-      fetch(`${API_BASE}/config`, { signal }),
-      fetch(`${API_BASE}/config/global`, { signal }),
-      fetch(`${API_BASE}/personas`, { signal }),
-      fetch(`${API_BASE}/config/llm-profiles`, { signal }),
+    const [configData, globalData, personasData, profilesData] = await Promise.all([
+      apiService.getConfig(),
+      apiService.getGlobalConfig(),
+      apiService.getPersonas(),
+      apiService.getLlmProfiles(),
     ]);
 
-    if (!configResponse.ok) { throw new Error('Failed to fetch bot config'); }
-    const configData = await configResponse.json();
+    const personas = personasData || [];
+    const llmProfiles = profilesData?.profiles?.llm || [];
 
-    let personas = [];
-    if (personasResponse.ok) {
-      personas = await personasResponse.json();
-    }
-
-    let llmProfiles = [];
-    if (profilesResponse.ok) {
-      const profilesData = await profilesResponse.json();
-      llmProfiles = profilesData.profiles?.llm || [];
-    }
-
-    let globalConfig: any = {};
-    if (globalResponse.ok) {
-      const globalData = await globalResponse.json();
+    const globalConfig: any = {};
+    if (globalData) {
       Object.keys(globalData).forEach(key => {
         globalConfig[key] = globalData[key].values;
       });
     }
 
     return {
-      bots: (configData.bots || []) as BotData[],
+      bots: (configData.bots || []) as unknown as BotData[],
       personas,
       llmProfiles,
       globalConfig
@@ -105,6 +95,15 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
+  const filteredBots = bots.filter(bot => {
+    const q = searchQuery.toLowerCase();
+    return (
+      bot.name.toLowerCase().includes(q) ||
+      (bot.provider || '').toLowerCase().includes(q) ||
+      ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
+      (bot.llmProvider || '').toLowerCase().includes(q)
+    );
+  });
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -125,13 +124,8 @@ const BotsPage: React.FC = () => {
       // Fetch activity logs
       const fetchActivity = async () => {
         try {
-          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/activity?limit=20`);
-          if (res.ok) {
-            const json = await res.json();
-            setActivityLogs(json.data?.activity || []);
-          } else {
-            setActivityLogs([]);
-          }
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`);
+          setActivityLogs(json.data?.activity || []);
         } catch (err) {
           console.error('Failed to fetch activity logs:', err);
           setActivityLogs([]);
@@ -144,13 +138,8 @@ const BotsPage: React.FC = () => {
       const fetchChatHistory = async () => {
         setChatLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/bots/${previewBot.id}/history?limit=20`);
-          if (res.ok) {
-            const json = await res.json();
-            setChatHistory(json.data?.history || []);
-          } else {
-            setChatHistory([]);
-          }
+          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`);
+          setChatHistory(json.data?.history || []);
         } catch (err) {
           console.error('Failed to fetch chat history:', err);
           setChatHistory([]);
@@ -179,22 +168,11 @@ const BotsPage: React.FC = () => {
   const handleUpdateConfig = async (bot: BotData, field: 'llmProvider' | 'messageProvider', value: string) => {
     try {
       setActionLoading(bot.id);
-      // Map field names: client uses 'messageProvider' (or 'provider' in BotData interface?)
-      // BotData has 'provider' for message, 'llmProvider' for LLM.
-      // API expects { provider: ..., llmProvider: ... }
+      const updates: any = {};
+      if (field === 'messageProvider') { updates.messageProvider = value; }
+      if (field === 'llmProvider') { updates.llmProvider = value; }
 
-      const payload: any = {};
-      if (field === 'messageProvider') { payload.provider = value; }
-      if (field === 'llmProvider') { payload.llmProvider = value; }
-
-      const res = await fetch(`${API_BASE}/bots/${bot.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) { throw new Error('Failed to update bot configuration'); }
-
+      await apiService.updateBot(bot.id, updates);
       await refetch();
     } catch (err: any) {
       alert('Error updating bot: ' + err.message);
@@ -209,23 +187,15 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading('create');
-      const response = await fetch(`${API_BASE}/bots`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newBotName,
-          description: newBotDesc,
-          messageProvider: newBotMessageProvider,
-          ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
-          persona: newBotPersona,
-        }),
+      await apiService.post('/api/bots', {
+        name: newBotName,
+        description: newBotDesc,
+        messageProvider: newBotMessageProvider,
+        ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
+        persona: newBotPersona,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create bot');
-      }
-
+      await refetch();
       // Reset form
       setNewBotName('');
       setNewBotDesc('');
@@ -233,7 +203,6 @@ const BotsPage: React.FC = () => {
       setNewBotMessageProvider('');
       setNewBotLlmProvider('');
       setShowCreateModal(false);
-      await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
@@ -246,15 +215,7 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}/${action}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to ${action} bot`);
-      }
-
+      await apiService.post(`/api/bots/${bot.id}/${action}`);
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${action} bot`);
@@ -268,16 +229,10 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading(deleteModal.bot.id);
-      const response = await fetch(`${API_BASE}/bots/${deleteModal.bot.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete bot');
-      }
+      await apiService.deleteBot(deleteModal.bot.id);
 
       setDeleteModal({ isOpen: false, bot: null });
+      setDeleteConfirmation('');
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete bot');
@@ -289,17 +244,7 @@ const BotsPage: React.FC = () => {
   const handleClone = async (bot: BotData) => {
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}/clone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newName: `${bot.name} (Clone)` }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to clone bot');
-      }
-
+      await apiService.cloneBot(bot.id, `${bot.name} (Clone)`);
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clone bot');
@@ -311,17 +256,7 @@ const BotsPage: React.FC = () => {
   const handleUpdatePersona = async (bot: BotData, persona: string) => {
     try {
       setActionLoading(bot.id);
-      const response = await fetch(`${API_BASE}/bots/${bot.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update persona');
-      }
-
+      await apiService.updateBot(bot.id, { persona });
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update persona');
@@ -403,6 +338,19 @@ const BotsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Input */}
+      {bots.length > 0 && (
+        <div className="w-full">
+          <Input
+            placeholder="Search bots..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            prefix={<Search className="w-4 h-4" />}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       {/* DataTable */}
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body p-0">
@@ -420,9 +368,15 @@ const BotsPage: React.FC = () => {
                 <Plus className="w-4 h-4 mr-2" /> Create Bot
               </button>
             </div>
+          ) : filteredBots.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-lg font-medium text-base-content/60">No bots found matching "{searchQuery}"</h3>
+              <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSearchQuery('')}>Clear Search</button>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {bots.map((bot) => (
+              {filteredBots.map((bot) => (
                 <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
                   <div className="flex items-center gap-4">
                     <BotAvatar bot={bot} />
@@ -509,7 +463,7 @@ const BotsPage: React.FC = () => {
             setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
           }}
           onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setDeleteConfirmation(''); setSelectedBotForConfig(null); }}
           onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
         />
       )}
@@ -536,19 +490,35 @@ const BotsPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       < Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, bot: null })}
+        onClose={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}
         title="Delete Bot"
         size="sm"
       >
         <div className="space-y-4">
           <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
           <p className="text-sm text-base-content/60">This action cannot be undone.</p>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">
+                Type <strong>{deleteModal.bot?.name}</strong> to confirm.
+              </span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              placeholder={deleteModal.bot?.name}
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+            />
+          </div>
+
           <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => setDeleteModal({ isOpen: false, bot: null })}>Cancel</button>
+            <button className="btn btn-ghost" onClick={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}>Cancel</button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id}
+              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
             >
               {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
             </button>

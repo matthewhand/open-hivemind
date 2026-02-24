@@ -5,7 +5,7 @@ import {
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;
@@ -117,21 +117,45 @@ const MCPToolsPage: React.FC = () => {
     return colors[category] || 'badge-ghost';
   };
 
-  const handleRunTool = async (tool: MCPTool) => {
-    // Basic prompt for arguments (in real app, use a modal form based on inputSchema)
-    const argsString = prompt(`Enter arguments for ${tool.name} (JSON format):`, '{}');
-    if (!argsString) return;
+  const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
+  const [runArgs, setRunArgs] = useState('{}');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
+  const handleOpenRunModal = (tool: MCPTool) => {
+    setSelectedTool(tool);
+    setRunArgs('{}');
+    setJsonError(null);
+  };
+
+  const handleCloseRunModal = () => {
+    if (isRunning) return;
+    setSelectedTool(null);
+    setRunArgs('{}');
+    setJsonError(null);
+  };
+
+  const handleExecuteTool = async () => {
+    if (!selectedTool) return;
+
+    let args = {};
     try {
-      const args = JSON.parse(argsString);
+      args = JSON.parse(runArgs);
+      setJsonError(null);
+    } catch (e) {
+      setJsonError('Invalid JSON format');
+      return;
+    }
 
-      const res = await fetch(`/api/mcp/servers/${tool.serverName}/call-tool`, {
+    setIsRunning(true);
+    try {
+      const res = await fetch(`/api/mcp/servers/${selectedTool.serverName}/call-tool`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          toolName: tool.name,
+          toolName: selectedTool.name,
           arguments: args,
         }),
       });
@@ -143,17 +167,22 @@ const MCPToolsPage: React.FC = () => {
 
       const json = await res.json();
       console.log('Tool execution result:', json);
-      setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
 
       // Update usage count
       setTools(prev => prev.map(t =>
-        t.id === tool.id
+        t.id === selectedTool.id
           ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
           : t,
       ));
+
+      handleCloseRunModal();
+      setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
     } catch (error: any) {
       console.error('Tool execution error:', error);
       setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
+      handleCloseRunModal();
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -295,7 +324,7 @@ const MCPToolsPage: React.FC = () => {
                 </button>
                 <button
                   className="btn btn-sm btn-primary"
-                  onClick={() => handleRunTool(tool)}
+                  onClick={() => handleOpenRunModal(tool)}
                   disabled={!tool.enabled}
                 >
                   <RunIcon className="w-4 h-4 mr-1" />
@@ -316,6 +345,67 @@ const MCPToolsPage: React.FC = () => {
             Try adjusting your search criteria or add more MCP servers
           </p>
         </div>
+      )}
+
+      {selectedTool && (
+        <Modal
+          isOpen={!!selectedTool}
+          onClose={handleCloseRunModal}
+          title={`Run Tool: ${selectedTool.name}`}
+          actions={[
+            {
+              label: 'Cancel',
+              onClick: handleCloseRunModal,
+              variant: 'ghost',
+              disabled: isRunning,
+            },
+            {
+              label: isRunning ? 'Running...' : 'Run Tool',
+              onClick: handleExecuteTool,
+              variant: 'primary',
+              loading: isRunning,
+              disabled: isRunning,
+            },
+          ]}
+        >
+          <div className="space-y-4">
+            <p className="text-base-content/70 text-sm">
+              {selectedTool.description}
+            </p>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Input Schema</span>
+              </label>
+              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                <pre className="p-4 overflow-x-auto">
+                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                </pre>
+              </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Arguments (JSON)</span>
+              </label>
+              <textarea
+                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                value={runArgs}
+                onChange={(e) => {
+                  setRunArgs(e.target.value);
+                  if (jsonError) setJsonError(null);
+                }}
+                placeholder="{}"
+                disabled={isRunning}
+              />
+              {jsonError && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{jsonError}</span>
+                </label>
+              )}
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -236,6 +236,9 @@ if (process.env.NODE_ENV !== 'development') {
   };
 
   app.get('/', serveDevHtml);
+  app.get('/login', serveDevHtml);
+  app.get('/dashboard', serveDevHtml);
+  app.get('/activity', serveDevHtml);
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);

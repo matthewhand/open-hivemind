@@ -178,7 +178,7 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@netlify/functions": "^5.1.0",
-    "@playwright/test": "^1.56.0",
+    "@playwright/test": "^1.58.2",
     "@rollup/plugin-inject": "^5.0.5",
     "@tailwindcss/vite": "^4.2.0",
     "@testing-library/jest-dom": "^6.8.0",
