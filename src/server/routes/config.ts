@@ -27,18 +27,16 @@ import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
-  getMcpServerProfileByKey,
   getMcpServerProfiles,
-  McpServerProfile,
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
+// Import all convict config modules
+import messageConfig from '../../config/messageConfig';
 import {
   getMessageProfiles,
   saveMessageProfiles,
   type MessageProfile,
 } from '../../config/messageProfiles';
-// Import all convict config modules
-import messageConfig from '../../config/messageConfig';
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
