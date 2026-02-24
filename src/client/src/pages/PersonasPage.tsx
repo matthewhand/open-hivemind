@@ -13,6 +13,7 @@ import {
   StatsCards,
   LoadingSpinner,
   EmptyState,
+  ToastNotification,
 } from '../components/DaisyUI';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
@@ -39,6 +40,9 @@ const PersonasPage: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const successToast = ToastNotification.useSuccessToast();
+  const errorToast = ToastNotification.useErrorToast();
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +116,16 @@ const PersonasPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [personas, searchQuery, selectedCategory]);
+
+  const handleCopyPrompt = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      successToast('Copied!', 'System prompt copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy', err);
+      errorToast('Error', 'Failed to copy to clipboard');
+    }
+  };
 
   const handleSavePersona = async () => {
     if (!personaName.trim()) { return; }
@@ -375,8 +389,17 @@ const PersonasPage: React.FC = () => {
                 <div className="bg-base-200/50 p-3 rounded-lg mb-3">
                   <div className="flex items-center justify-between mb-1">
                     <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
-                    <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
-                      <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                        onClick={() => handleCopyPrompt(persona.systemPrompt)}
+                        title="Copy System Prompt"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
+                        <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                      </div>
                     </div>
                   </div>
                   <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
