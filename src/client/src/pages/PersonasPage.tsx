@@ -13,7 +13,9 @@ import {
   StatsCards,
   LoadingSpinner,
   EmptyState,
+  ToastNotification,
 } from '../components/DaisyUI';
+import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
 
@@ -39,6 +41,9 @@ const PersonasPage: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const successToast = ToastNotification.useSuccessToast();
+  const errorToast = ToastNotification.useErrorToast();
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +117,16 @@ const PersonasPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [personas, searchQuery, selectedCategory]);
+
+  const handleCopyPrompt = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      successToast('Copied!', 'System prompt copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy', err);
+      errorToast('Error', 'Failed to copy to clipboard');
+    }
+  };
 
   const handleSavePersona = async () => {
     if (!personaName.trim()) { return; }
@@ -310,33 +325,20 @@ const PersonasPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
-        <div className="w-full sm:w-1/2 md:w-1/3">
-          <Input
-            placeholder="Search personas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="w-4 h-4 text-base-content/50" />}
-            size="sm"
-            className="w-full"
-            suffix={
-              searchQuery ? (
-                <button onClick={() => setSearchQuery('')} className="btn btn-ghost btn-xs btn-circle">
-                  <X className="w-3 h-3" />
-                </button>
-              ) : null
-            }
-          />
-        </div>
-        <div className="w-full sm:w-1/3 md:w-1/4">
-          <Select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            options={categoryOptions}
-            size="sm"
-          />
-        </div>
-      </div>
+      <SearchFilterBar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search personas..."
+        filters={[
+          {
+            key: 'category',
+            value: selectedCategory,
+            onChange: setSelectedCategory,
+            options: categoryOptions,
+            className: "w-full sm:w-1/3 md:w-1/4"
+          }
+        ]}
+      />
 
       {/* Persona List */}
       {loading ? (
@@ -376,8 +378,17 @@ const PersonasPage: React.FC = () => {
                 <div className="bg-base-200/50 p-3 rounded-lg mb-3">
                   <div className="flex items-center justify-between mb-1">
                     <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
-                    <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
-                      <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                        onClick={() => handleCopyPrompt(persona.systemPrompt)}
+                        title="Copy System Prompt"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
+                        <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                      </div>
                     </div>
                   </div>
                   <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
@@ -406,6 +417,9 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
+                  <Copy className="w-4 h-4 mr-1" /> Clone
+                </Button>
                 {!persona.isBuiltIn && (
                   <>
                     <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
@@ -420,11 +434,6 @@ const PersonasPage: React.FC = () => {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </>
-                )}
-                {persona.isBuiltIn && (
-                  <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)}>
-                    <Copy className="w-4 h-4 mr-1" /> Clone
-                  </Button>
                 )}
               </div>
             </Card>
