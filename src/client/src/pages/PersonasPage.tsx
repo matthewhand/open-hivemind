@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, Filter, X } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -343,29 +343,18 @@ const PersonasPage: React.FC = () => {
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : personas.length === 0 ? (
+      ) : filteredPersonas.length === 0 ? (
         <EmptyState
           icon={Sparkles}
           title="No personas found"
-          description="Create your first persona to get started"
-          actionLabel="Create Persona"
-          onAction={openCreateModal}
+          description={personas.length === 0 ? "Create your first persona to get started" : "Try adjusting your search or filters"}
+          actionLabel={personas.length === 0 ? "Create Persona" : "Clear Filters"}
+          onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setSelectedCategory('all'); }}
         />
-      ) : filteredPersonas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-base-100 rounded-lg border border-dashed border-base-300">
-          <div className="p-3 bg-base-200 rounded-full mb-3">
-            <Search className="w-6 h-6 text-base-content/40" />
-          </div>
-          <h3 className="text-lg font-medium">No matching personas found</h3>
-          <p className="text-sm text-base-content/60 mb-4">Try adjusting your search or filters</p>
-          <Button variant="ghost" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
-            Clear Filters
-          </Button>
-        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredPersonas.map(persona => (
-            <Card key={persona.id} className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
+            <Card key={persona.id} data-testid="persona-card" className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>

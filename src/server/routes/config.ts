@@ -31,6 +31,7 @@ import {
   updateMcpServerProfile,
 } from '../../config/mcpServerProfiles';
 import messageConfig from '../../config/messageConfig';
+
 import ollamaConfig from '../../config/ollamaConfig';
 import openaiConfig from '../../config/openaiConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
@@ -239,7 +240,9 @@ router.post('/message-profiles', (req, res) => {
     // Sanitize key to prevent path traversal and special characters
     const sanitizedKey = profile.key.replace(/[^a-zA-Z0-9-_]/g, '');
     if (sanitizedKey !== profile.key || sanitizedKey.length === 0) {
-      return res.status(400).json({ error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores' });
+      return res.status(400).json({
+        error: 'profile.key must contain only alphanumeric characters, hyphens, and underscores',
+      });
     }
     if (!profile.provider || typeof profile.provider !== 'string') {
       return res.status(400).json({ error: 'profile.provider is required' });
@@ -510,6 +513,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
+    // Sanitize configName to prevent path traversal
+    if (
+      configName &&
+      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
+    ) {
+      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    }
+
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -537,7 +548,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      const match = configName.match(/^([a-z]+)-.+$/);
+      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
+      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);

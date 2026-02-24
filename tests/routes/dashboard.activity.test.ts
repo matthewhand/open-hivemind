@@ -139,9 +139,11 @@ describe('dashboard activity route', () => {
     expect(response.body.events).toHaveLength(1);
 
     // Also verify getEvents was called with correct filter
-    expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(expect.objectContaining({
-      startTime: expect.any(Date),
-      endTime: expect.any(Date)
-    }));
+    expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: expect.any(Date),
+        endTime: expect.any(Date),
+      })
+    );
   });
 });

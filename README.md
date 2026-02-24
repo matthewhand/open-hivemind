@@ -6,16 +6,35 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
-Open-Hivemind is a **multi-agent orchestration framework** for deploying a coordinated network of LLM-powered bots across Discord, Slack, and Mattermost. Each running bot behaves like a neuron in a shared digital consciousness: they share recent context, keep a unified voice, and can be independently tuned via personas, system instructions, and guarded access to external tools.
+Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
+
+Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.
+
+## Why Open-Hivemind?
+
+Unlike standard chatbots that simply wait for a command and reply, Open-Hivemind agents are designed for **immersive, human-like interaction**. They possess a degree of autonomy and social awareness that makes them feel like active participants in a community rather than just tools.
+
+### 🧠 Selective Engagement
+Bots don't always respond. Just like a human, they "listen" to the conversation and decide whether to chime in based on probability, relevance, and their specific personality traits. They aren't just request-response machines; they have agency.
+
+### 🗣️ Natural Conversation Dynamics
+*   **Engagement:** While they may stay quiet in the background, directly addressing a bot or asking a question significantly increases the chance of a response.
+*   **Momentum:** Once a bot is "engaged" in a conversation, it tends to stay engaged, maintaining the flow of dialogue without needing to be constantly re-prompted.
+*   **Context Awareness:** They remember what was said previously, allowing for coherent, multi-turn discussions.
+
+### 🚦 Social Awareness & Crowd Control
+In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind implements "social anxiety" logic:
+*   **Avoid Overcrowding:** If a conversation is already populated by too many other bots or is moving too fast, a bot will be less likely to join in, preventing a "pile-on" effect.
+*   **Politeness:** Bots respect the flow of conversation and try not to interrupt or talk over one another excessively.
 
 ## Core Functionality
 
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost.
-*   **Unified Voice**: Consistent identity across platforms.
-*   **Shared Context**: Maintain conversation history and context across interactions.
-*   **WebUI Management**: Configure LLMs, personas, and bots via a user-friendly interface.
-*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression.
-*   **Extensible**: Supports MCP servers and custom tool integrations.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
+*   **Unified Voice**: Maintain consistent identities across different platforms.
+*   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
+*   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required.
+*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression ensure stability.
+*   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
 
 ## Installation & Quick Start
 

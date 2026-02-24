@@ -19,8 +19,8 @@ import ciRouter from '@src/server/routes/ci';
 import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
-import guardsRouter from '@src/server/routes/guards';
 import enterpriseRouter from '@src/server/routes/enterprise';
+import guardsRouter from '@src/server/routes/guards';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
@@ -236,6 +236,9 @@ if (process.env.NODE_ENV !== 'development') {
   };
 
   app.get('/', serveDevHtml);
+  app.get('/login', serveDevHtml);
+  app.get('/dashboard', serveDevHtml);
+  app.get('/activity', serveDevHtml);
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
