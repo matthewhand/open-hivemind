@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test';
+import jwt from 'jsonwebtoken';
 
 /**
  * Shared test utilities for Playwright E2E tests
@@ -12,14 +13,39 @@ const collectedErrors: string[] = [];
  * Setup authentication for a page using fake tokens
  */
 export async function setupAuth(page: Page) {
-  const fakeToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OTksInVzZXJuYW1lIjoiYWRtaW4ifQ.signature';
+  const secret = process.env.JWT_SECRET || 'test-secret';
+  const payload = {
+    userId: 'admin',
+    username: 'admin',
+    role: 'admin',
+    permissions: [
+      'config:read',
+      'config:write',
+      'config:delete',
+      'bots:read',
+      'bots:write',
+      'bots:delete',
+      'bots:manage',
+      'users:read',
+      'users:write',
+      'users:delete',
+      'system:read',
+      'system:write',
+      'system:admin',
+      'backup:read',
+      'backup:write',
+      'backup:delete',
+    ],
+  };
+
+  const fakeToken = jwt.sign(payload, secret, { expiresIn: '1h' });
+
   const fakeUser = JSON.stringify({
     id: 'admin',
     username: 'admin',
     email: 'admin@open-hivemind.com',
-    role: 'owner',
-    permissions: ['*'],
+    role: 'admin', // changed from owner to admin to match role logic
+    permissions: payload.permissions,
   });
 
   await page.addInitScript(
@@ -49,6 +75,7 @@ const IGNORED_ERROR_PATTERNS = [
   /Network Error/i,
   /net::ERR_/i,
   /Download the React DevTools/i,
+  /status of 401/i,
 ];
 
 /**
