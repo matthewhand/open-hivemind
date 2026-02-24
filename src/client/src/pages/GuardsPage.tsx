@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 interface McpGuardConfig {
@@ -33,8 +34,9 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  const showSuccess = useSuccessToast();
+  const showError = useErrorToast();
 
   const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
@@ -55,17 +57,16 @@ const GuardsPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await fetch(`${API_BASE}/guard-profiles`);
       if (!response.ok) throw new Error('Failed to fetch profiles');
       const result = await response.json();
       setProfiles(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch profiles');
+      showError(err instanceof Error ? err.message : 'Failed to fetch profiles');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     fetchProfiles();
@@ -74,13 +75,12 @@ const GuardsPage: React.FC = () => {
   const handleSaveProfile = async () => {
     if (!editingProfile) return;
     if (!editingProfile.name.trim()) {
-      setError('Profile name is required');
+      showError('Profile name is required');
       return;
     }
 
     try {
       setSaving(true);
-      setError(null);
 
       const url = isNew ? `${API_BASE}/guard-profiles` : `${API_BASE}/guard-profiles/${editingProfile.id}`;
       const method = isNew ? 'POST' : 'PUT';
@@ -96,11 +96,11 @@ const GuardsPage: React.FC = () => {
         throw new Error(data.message || 'Failed to save profile');
       }
 
-      setSuccess(`Profile ${isNew ? 'created' : 'updated'} successfully`);
+      showSuccess(`Profile ${isNew ? 'created' : 'updated'} successfully`);
       setEditingProfile(null);
       fetchProfiles();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save profile');
+      showError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
       setSaving(false);
     }
@@ -121,14 +121,27 @@ const GuardsPage: React.FC = () => {
 
       if (!response.ok) throw new Error('Failed to delete profile');
 
-      setSuccess('Profile deleted successfully');
+      showSuccess('Profile deleted successfully');
       setDeleteConfirm(null);
       fetchProfiles();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete profile');
+      showError(err instanceof Error ? err.message : 'Failed to delete profile');
       setLoading(false);
       setDeleteConfirm(null);
     }
+  };
+
+  const handleDuplicateProfile = (profile: GuardrailProfile) => {
+    // Create a deep copy of the profile
+    const duplicatedProfile: GuardrailProfile = JSON.parse(JSON.stringify(profile));
+
+    // Modify for new entry
+    duplicatedProfile.id = ''; // Ensure backend treats it as new
+    duplicatedProfile.name = `Copy of ${profile.name}`;
+    duplicatedProfile.description = profile.description ? `Copy of ${profile.description}` : '';
+
+    setEditingProfile(duplicatedProfile);
+    setIsNew(true);
   };
 
   const handleEdit = (profile: GuardrailProfile) => {
@@ -154,22 +167,6 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Notifications */}
-      {error && (
-        <div className="alert alert-error">
-          <AlertCircle className="w-5 h-5" />
-          <span>{error}</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>Dismiss</button>
-        </div>
-      )}
-      {success && (
-        <div className="alert alert-success">
-          <Check className="w-5 h-5" />
-          <span>{success}</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSuccess(null)}>Dismiss</button>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -203,6 +200,13 @@ const GuardsPage: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <h3 className="card-title text-lg">{profile.name}</h3>
                   <div className="flex gap-1">
+                    <button
+                      onClick={() => handleDuplicateProfile(profile)}
+                      className="btn btn-ghost btn-xs btn-square"
+                      title="Duplicate Profile"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
                     <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -239,7 +243,7 @@ const GuardsPage: React.FC = () => {
                 type="text"
                 className="input input-bordered"
                 value={editingProfile.name}
-                onChange={e => setEditingProfile({...editingProfile, name: e.target.value})}
+                onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
                 placeholder="e.g. Strict Production"
               />
             </div>
@@ -249,7 +253,7 @@ const GuardsPage: React.FC = () => {
               <textarea
                 className="textarea textarea-bordered h-20"
                 value={editingProfile.description}
-                onChange={e => setEditingProfile({...editingProfile, description: e.target.value})}
+                onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
                 placeholder="Describe what this profile enforces..."
               />
             </div>
