@@ -1368,14 +1368,14 @@ router.put('/guardrails', (req, res) => {
         return res.status(400).json({ error: 'profile entries must be objects' });
       }
       const typed = profile as GuardrailProfile;
-      if (!typed.key || typeof typed.key !== 'string') {
-        return res.status(400).json({ error: 'profile.key is required' });
+      if (!typed.id || typeof typed.id !== 'string') {
+        return res.status(400).json({ error: 'profile.id is required' });
       }
       if (!typed.name || typeof typed.name !== 'string') {
         return res.status(400).json({ error: 'profile.name is required' });
       }
-      if (!typed.mcpGuard || typeof typed.mcpGuard !== 'object') {
-        return res.status(400).json({ error: `profile.mcpGuard is required for ${typed.key}` });
+      if (!typed.guards || typeof typed.guards !== 'object') {
+        return res.status(400).json({ error: `profile.guards is required for ${typed.id}` });
       }
     }
 
@@ -1394,19 +1394,19 @@ router.put('/guardrails', (req, res) => {
 router.post('/guardrails', (req, res) => {
   try {
     const profile = req.body as GuardrailProfile;
-    if (!profile.key || typeof profile.key !== 'string') {
-      return res.status(400).json({ error: 'profile.key is required' });
+    if (!profile.id || typeof profile.id !== 'string') {
+      return res.status(400).json({ error: 'profile.id is required' });
     }
     if (!profile.name || typeof profile.name !== 'string') {
       return res.status(400).json({ error: 'profile.name is required' });
     }
-    if (!profile.mcpGuard || typeof profile.mcpGuard !== 'object') {
-      return res.status(400).json({ error: 'profile.mcpGuard is required' });
+    if (!profile.guards || typeof profile.guards !== 'object') {
+      return res.status(400).json({ error: 'profile.guards is required' });
     }
 
     const profiles = getGuardrailProfiles();
-    if (profiles.some((p) => p.key === profile.key)) {
-      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    if (profiles.some((p) => p.id === profile.id)) {
+      return res.status(409).json({ error: `Profile with id '${profile.id}' already exists` });
     }
 
     profiles.push(profile);
@@ -1426,10 +1426,10 @@ router.delete('/guardrails/:key', (req, res) => {
   try {
     const key = req.params.key;
     const profiles = getGuardrailProfiles();
-    const index = profiles.findIndex((p) => p.key === key);
+    const index = profiles.findIndex((p) => p.id === key);
 
     if (index === -1) {
-      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+      return res.status(404).json({ error: `Profile with id '${key}' not found` });
     }
 
     profiles.splice(index, 1);
