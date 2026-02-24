@@ -345,10 +345,12 @@ const PersonasPage: React.FC = () => {
         </div>
       ) : filteredPersonas.length === 0 ? (
         <EmptyState
+          variant={personas.length === 0 ? "noData" : "noResults"}
           icon={Sparkles}
-          title="No personas found"
+          title={personas.length === 0 ? "No personas found" : "No results found"}
           description={personas.length === 0 ? "Create your first persona to get started" : "Try adjusting your search or filters"}
           actionLabel={personas.length === 0 ? "Create Persona" : "Clear Filters"}
+          actionIcon={personas.length === 0 ? Plus : undefined}
           onAction={personas.length === 0 ? openCreateModal : () => { setSearchQuery(''); setSelectedCategory('all'); }}
         />
       ) : (
