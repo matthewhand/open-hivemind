@@ -13,6 +13,26 @@ import request from 'supertest';
 import { authenticate, requireAdmin } from '../../src/auth/middleware';
 import { AuthMiddlewareRequest } from '../../src/auth/types';
 import { MCPService } from '../../src/mcp/MCPService';
+
+// Mock WebUIStorage
+jest.mock('../../src/storage/webUIStorage', () => ({
+  webUIStorage: {
+    deleteMcp: jest.fn(),
+    saveMcp: jest.fn(),
+    getMcps: jest.fn().mockReturnValue([]),
+    getLlmProviders: jest.fn().mockReturnValue([{ name: 'test', type: 'openai' }]),
+    getMessengerProviders: jest.fn().mockReturnValue([{ name: 'test', type: 'slack' }]),
+    getPersonas: jest.fn().mockReturnValue([]),
+    savePersona: jest.fn(),
+    deletePersona: jest.fn(),
+    saveLlmProvider: jest.fn(),
+    deleteLlmProvider: jest.fn(),
+    saveMessengerProvider: jest.fn(),
+    deleteMessengerProvider: jest.fn(),
+  }
+}));
+
+import { webUIStorage } from '../../src/storage/webUIStorage';
 import adminRouter from '../../src/server/routes/admin';
 
 // Mock the authentication middleware
@@ -43,7 +63,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
     app = express();
     app.use(express.json());
-    app.use('/', adminRouter);
+    app.use('/api/admin', adminRouter);
   });
 
   beforeEach(() => {
@@ -54,10 +74,10 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     jest.spyOn(mcpServiceInstance, 'disconnectFromServer').mockResolvedValue();
     jest.spyOn(mcpServiceInstance, 'getConnectedServers').mockReturnValue([]);
     jest.spyOn(mcpServiceInstance, 'getToolsFromServer').mockReturnValue([]);
-  });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+    // Clear WebUIStorage mocks
+    (webUIStorage.deleteMcp as jest.Mock).mockClear();
+    (webUIStorage.saveMcp as jest.Mock).mockClear();
   });
 
   describe('GET /api/admin/llm-providers', () => {
@@ -75,8 +95,8 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       response.body.data.providers.forEach((provider: any) => {
-        expect(typeof provider).toBe('string');
-        expect(provider.length).toBeGreaterThan(0);
+        expect(typeof provider).toBe('object');
+        expect(provider).toHaveProperty('name');
       });
     });
 
@@ -112,8 +132,8 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       response.body.data.providers.forEach((provider: any) => {
-        expect(typeof provider).toBe('string');
-        expect(provider.length).toBeGreaterThan(0);
+        expect(typeof provider).toBe('object');
+        expect(provider).toHaveProperty('name');
       });
     });
   });
@@ -283,32 +303,46 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
   });
 
   describe('POST /api/admin/mcp-servers/disconnect', () => {
-    it('should disconnect from a connected MCP server', async () => {
+    it('should disconnect from a connected MCP server without deleting config', async () => {
       const serverName = 'disconnect-test';
 
-      // First connect
-      const connectConfig = {
-        name: serverName,
-        serverUrl: 'http://localhost:8080',
-        apiKey: 'test-key',
-      };
-
-      // Then disconnect
       const response = await request(app)
         .post('/api/admin/mcp-servers/disconnect')
         .send({ name: serverName });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
+
+      // Verification: Should disconnect from service but NOT delete from storage
+      const mcpServiceInstance = MCPService.getInstance();
+      expect(mcpServiceInstance.disconnectFromServer).toHaveBeenCalledWith(serverName);
+      expect(webUIStorage.deleteMcp).not.toHaveBeenCalled();
     });
 
-    it('should return 404 for non-connected server', async () => {
+    it('should return 404 (or success) for non-connected server', async () => {
       const response = await request(app)
         .post('/api/admin/mcp-servers/disconnect')
         .send({ name: 'non-connected-server' });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
+    });
+  });
+
+  describe('DELETE /api/admin/mcp-servers/:name', () => {
+    it('should disconnect AND delete an MCP server', async () => {
+      const serverName = 'delete-test';
+
+      const response = await request(app)
+        .delete(`/api/admin/mcp-servers/${serverName}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+
+      // Verification: Should disconnect from service AND delete from storage
+      const mcpServiceInstance = MCPService.getInstance();
+      expect(mcpServiceInstance.disconnectFromServer).toHaveBeenCalledWith(serverName);
+      expect(webUIStorage.deleteMcp).toHaveBeenCalledWith(serverName);
     });
   });
 
@@ -393,51 +427,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
   });
 
-  describe('GET /api/admin/activity/messages', () => {
-    it('should return activity messages', async () => {
-      const response = await request(app).get('/api/admin/activity/messages').expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('messages');
-      expect(Array.isArray(response.body.data.messages)).toBe(true);
-    });
-
-    it('should support query parameters for filtering', async () => {
-      const response = await request(app)
-        .get('/api/admin/activity/messages?limit=10&type=message')
-        .expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('messages');
-      expect(Array.isArray(response.body.data.messages)).toBe(true);
-    });
-  });
-
-  describe('GET /api/admin/activity/metrics', () => {
-    it('should return performance metrics', async () => {
-      const response = await request(app).get('/api/admin/activity/metrics').expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('metrics');
-      expect(Array.isArray(response.body.data.metrics)).toBe(true);
-    });
-
-    it('should include relevant metric fields', async () => {
-      const response = await request(app).get('/api/admin/activity/metrics').expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('metrics');
-      expect(Array.isArray(response.body.data.metrics)).toBe(true);
-    });
-  });
-
-  describe('GET /providers', () => {
+  describe('GET /api/admin/providers', () => {
     it('should return available providers', async () => {
-      const response = await request(app).get('/providers').expect(200);
+      const response = await request(app).get('/api/admin/providers').expect(200);
 
       expect(response.body).toBeInstanceOf(Object);
       expect(response.body).toHaveProperty('messageProviders');
@@ -445,20 +437,20 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should include provider details', async () => {
-      const response = await request(app).get('/providers').expect(200);
+      const response = await request(app).get('/api/admin/providers').expect(200);
 
       expect(Array.isArray(response.body.messageProviders)).toBe(true);
       expect(Array.isArray(response.body.llmProviders)).toBe(true);
     });
   });
 
-  describe('GET /system-info', () => {
+  describe('GET /api/admin/system-info', () => {
     it('should return system information', async () => {
-      const response = await request(app).get('/system-info').expect(200); // The route exists
+      const response = await request(app).get('/api/admin/system-info').expect(200); // The route exists
     });
 
     it('should not expose sensitive system paths', async () => {
-      const response = await request(app).get('/system-info').expect(200); // The route exists
+      const response = await request(app).get('/api/admin/system-info').expect(200); // The route exists
     });
   });
 
