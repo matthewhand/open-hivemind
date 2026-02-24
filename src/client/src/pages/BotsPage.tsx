@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
+import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Input from '../components/DaisyUI/Input';
 
 interface BotData {
   id: string;
@@ -38,6 +39,7 @@ const BotsPage: React.FC = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
   const [uiError, setUiError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -59,26 +61,17 @@ const BotsPage: React.FC = () => {
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
-    const configData = await apiService.getConfig();
+    const [configData, globalData, personasData, profilesData] = await Promise.all([
+      apiService.getConfig(),
+      apiService.getGlobalConfig(),
+      apiService.getPersonas(),
+      apiService.getLlmProfiles(),
+    ]);
 
-    let globalData: any = {};
-    let personas: any[] = [];
-    let llmProfiles: any[] = [];
+    const personas = personasData || [];
+    const llmProfiles = profilesData?.profiles?.llm || [];
 
-    try {
-      globalData = await apiService.get<any>('/api/config/global', { signal });
-    } catch (e) { console.warn('Failed to fetch global config', e); }
-
-    try {
-      personas = await apiService.getPersonas();
-    } catch (e) { console.warn('Failed to fetch personas', e); }
-
-    try {
-      const profilesData = await apiService.getLlmProfiles();
-      llmProfiles = profilesData.profiles?.llm || [];
-    } catch (e) { console.warn('Failed to fetch LLM profiles', e); }
-
-    let globalConfig: any = {};
+    const globalConfig: any = {};
     if (globalData) {
       Object.keys(globalData).forEach(key => {
         globalConfig[key] = globalData[key].values;
@@ -86,7 +79,7 @@ const BotsPage: React.FC = () => {
     }
 
     return {
-      bots: (configData.bots || []) as BotData[],
+      bots: (configData.bots || []) as unknown as BotData[],
       personas,
       llmProfiles,
       globalConfig
@@ -102,6 +95,15 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
+  const filteredBots = bots.filter(bot => {
+    const q = searchQuery.toLowerCase();
+    return (
+      bot.name.toLowerCase().includes(q) ||
+      (bot.provider || '').toLowerCase().includes(q) ||
+      ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
+      (bot.llmProvider || '').toLowerCase().includes(q)
+    );
+  });
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -166,16 +168,11 @@ const BotsPage: React.FC = () => {
   const handleUpdateConfig = async (bot: BotData, field: 'llmProvider' | 'messageProvider', value: string) => {
     try {
       setActionLoading(bot.id);
-      // Map field names: client uses 'messageProvider' (or 'provider' in BotData interface?)
-      // BotData has 'provider' for message, 'llmProvider' for LLM.
-      // API expects { provider: ..., llmProvider: ... }
+      const updates: any = {};
+      if (field === 'messageProvider') { updates.messageProvider = value; }
+      if (field === 'llmProvider') { updates.llmProvider = value; }
 
-      const payload: any = {};
-      if (field === 'messageProvider') { payload.provider = value; }
-      if (field === 'llmProvider') { payload.llmProvider = value; }
-
-      await apiService.updateBot(bot.id, payload);
-
+      await apiService.updateBot(bot.id, updates);
       await refetch();
     } catch (err: any) {
       alert('Error updating bot: ' + err.message);
@@ -190,13 +187,13 @@ const BotsPage: React.FC = () => {
 
     try {
       setActionLoading('create');
-      await apiService.createBot({
+      await apiService.post('/api/bots', {
         name: newBotName,
         description: newBotDesc,
         messageProvider: newBotMessageProvider,
-        llmProvider: newBotLlmProvider || undefined,
+        ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
         persona: newBotPersona,
-      } as any);
+      });
 
       await refetch();
       // Reset form
@@ -341,6 +338,19 @@ const BotsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Input */}
+      {bots.length > 0 && (
+        <div className="w-full">
+          <Input
+            placeholder="Search bots..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            prefix={<Search className="w-4 h-4" />}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       {/* DataTable */}
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body p-0">
@@ -358,9 +368,15 @@ const BotsPage: React.FC = () => {
                 <Plus className="w-4 h-4 mr-2" /> Create Bot
               </button>
             </div>
+          ) : filteredBots.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-lg font-medium text-base-content/60">No bots found matching "{searchQuery}"</h3>
+              <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSearchQuery('')}>Clear Search</button>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {bots.map((bot) => (
+              {filteredBots.map((bot) => (
                 <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
                   <div className="flex items-center gap-4">
                     <BotAvatar bot={bot} />
@@ -447,7 +463,7 @@ const BotsPage: React.FC = () => {
             setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
           }}
           onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setSelectedBotForConfig(null); }}
+          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setDeleteConfirmation(''); setSelectedBotForConfig(null); }}
           onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
         />
       )}

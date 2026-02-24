@@ -2,17 +2,14 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Alert,
-  Badge,
-  Card,
-  Rating,
   Hero,
   Button,
   SkeletonCard,
-  SkeletonList,
 } from './DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
 import QuickActions from './QuickActions';
+import DashboardBotCard from './DashboardBotCard';
 
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -45,7 +42,7 @@ const Dashboard: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const getStatusColor = (botStatus: string) => {
+  const getStatusColor = useCallback((botStatus: string) => {
     switch (botStatus.toLowerCase()) {
     case 'active':
       return 'success';
@@ -59,9 +56,9 @@ const Dashboard: React.FC = () => {
     default:
       return 'info';
     }
-  };
+  }, []);
 
-  const getProviderIcon = (provider: string) => {
+  const getProviderIcon = useCallback((provider: string) => {
     switch (provider.toLowerCase()) {
     case 'discord':
       return '💬';
@@ -74,13 +71,29 @@ const Dashboard: React.FC = () => {
     default:
       return '🤖';
     }
-  };
+  }, []);
 
-  const handleRatingChange = (botName: string, rating: number) => {
+  const handleRatingChange = useCallback((botName: string, rating: number) => {
     setBotRatings(prev => ({ ...prev, [botName]: rating }));
     setToastMessage(`Rated ${botName}: ${rating} stars`);
     setShowToast(true);
-  };
+  }, []);
+
+  const activeBots = useMemo(() => {
+    if (!status?.bots) return 0;
+    // status.bots aligns with bots array based on rendering logic.
+    // Optimization: filtering directly on status array is O(N) vs O(N^2)
+    return status.bots.filter(b => b.status === 'active').length;
+  }, [status]);
+
+  const totalMessages = useMemo(
+    () => status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0,
+    [status]
+  );
+  const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
+  const uptimeMinutes = useMemo(() => (status ? Math.floor((status.uptime % 3600) / 60) : 0), [
+    status,
+  ]);
 
   if (loading) {
     return (
@@ -169,22 +182,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const activeBots = useMemo(() => {
-    if (!status?.bots) return 0;
-    // status.bots aligns with bots array based on rendering logic.
-    // Optimization: filtering directly on status array is O(N) vs O(N^2)
-    return status.bots.filter(b => b.status === 'active').length;
-  }, [status]);
-
-  const totalMessages = useMemo(
-    () => status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0,
-    [status]
-  );
-  const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
-  const uptimeMinutes = useMemo(() => (status ? Math.floor((status.uptime % 3600) / 60) : 0), [
-    status,
-  ]);
-
   return (
     <div className="min-h-screen bg-base-200">
       {/* Toast Notification */}
@@ -199,12 +196,19 @@ const Dashboard: React.FC = () => {
 
       {/* Hero Section */}
       <Hero
-        title="🧠 Open-Hivemind Dashboard"
-        subtitle="Your AI Agent Swarm Control Center"
         backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
         className="min-h-[60vh]"
       >
         <div className="flex flex-col items-center space-y-6">
+          <div className="text-center">
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-4">
+              🧠 Open-Hivemind Dashboard
+            </h1>
+            <p className="text-xl text-white/90 drop-shadow-md">
+              Your AI Agent Swarm Control Center
+            </p>
+          </div>
+
           <Button variant="primary" size="lg" onClick={fetchData}>
             🔄 Refresh Dashboard
           </Button>
@@ -239,104 +243,17 @@ const Dashboard: React.FC = () => {
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {bots.map((bot, index) => {
-            const botStatusData = status?.bots[index];
-            const botStatus = botStatusData?.status || 'unknown';
-            const connected = botStatusData?.connected ?? false;
-            const messageCount = botStatusData?.messageCount ?? 0;
-            const errorCount = botStatusData?.errorCount ?? 0;
-
-            return (
-              <Card key={bot.name} className="shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="card-body">
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-3xl">
-                        {getProviderIcon(bot.messageProvider)}
-                      </div>
-                      <div>
-                        <h2 className="card-title text-lg font-bold">
-                          {bot.name}
-                        </h2>
-                        <p className="text-sm opacity-70">{bot.messageProvider}</p>
-                      </div>
-                    </div>
-                    <div className="dropdown dropdown-end">
-                      <label tabIndex={0} className="btn btn-ghost btn-sm">
-                        ⚙️
-                      </label>
-                      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a>🔧 Configure</a></li>
-                        <li><a>📊 View Logs</a></li>
-                        <li><a>🔄 Restart</a></li>
-                        <li><a>🔍 Debug</a></li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Status Badges */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge
-                      variant={getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'info'}
-                      className="text-xs font-semibold"
-                    >
-                      {botStatus.toUpperCase()}
-                    </Badge>
-                    {bot.llmProvider && (
-                      <Badge variant="secondary" className="text-xs">
-                        🧠 {bot.llmProvider.toUpperCase()}
-                      </Badge>
-                    )}
-                    <Badge variant="neutral" className="badge-outline text-xs">
-                      📱 {bot.messageProvider.toUpperCase()}
-                    </Badge>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="stat bg-base-200 rounded-lg p-3">
-                      <div className="stat-title text-xs">Messages</div>
-                      <div className="stat-value text-lg">{messageCount.toLocaleString()}</div>
-                    </div>
-                    <div className="stat bg-base-200 rounded-lg p-3">
-                      <div className="stat-title text-xs">Status</div>
-                      <div className={`stat-value text-lg ${connected ? 'text-success' : 'text-error'}`}>
-                        {connected ? '🟢' : '🔴'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {errorCount > 0 && (
-                    <div className="alert alert-error mb-4">
-                      <span>⚠️ {errorCount} errors detected</span>
-                    </div>
-                  )}
-
-                  {/* Rating */}
-                  <div className="mb-4">
-                    <p className="text-sm mb-2">Performance Rating:</p>
-                    <Rating
-                      value={botRatings[bot.name] || 0}
-                      onChange={(rating) => handleRatingChange(bot.name, rating)}
-                      size="sm"
-                      aria-label={`Rate ${bot.name} agent performance`}
-                    />
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="card-actions justify-between">
-                    <Button variant="ghost" size="sm">
-                      📊 Analytics
-                    </Button>
-                    <Button variant="primary" size="sm">
-                      💬 Interact
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+          {bots.map((bot, index) => (
+            <DashboardBotCard
+              key={bot.name}
+              bot={bot}
+              botStatusData={status?.bots[index]}
+              rating={botRatings[bot.name] || 0}
+              onRatingChange={handleRatingChange}
+              getProviderIcon={getProviderIcon}
+              getStatusColor={getStatusColor}
+            />
+          ))}
         </div>
 
         {/* System Status Footer */}
