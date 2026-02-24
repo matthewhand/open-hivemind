@@ -516,6 +516,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
+    // Sanitize configName to prevent path traversal
+    if (
+      configName &&
+      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
+    ) {
+      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    }
+
     // If no configName provided, store settings in user-config.json via UserConfigStore
     if (!configName) {
       const userConfigStore = UserConfigStore.getInstance();
@@ -543,7 +551,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      const match = configName.match(/^([a-z]+)-.+$/);
+      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
+      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
       if (match && schemaSources[match[1]]) {
         const type = match[1];
         debug(`Creating new dynamic config: ${configName} (type: ${type})`);
