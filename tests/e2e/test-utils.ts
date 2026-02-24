@@ -83,6 +83,17 @@ export function setupErrorCollection(page: Page): string[] {
     }
   });
 
+  page.on('response', (response) => {
+    if (response.status() === 401) {
+      const url = response.url();
+      // Only log API errors, ignore favicon/assets if any
+      if (url.includes('/api/')) {
+        errors.push(`[Network Error] 401 Unauthorized: ${url}`);
+        console.error(`🔴 Network Error: 401 Unauthorized: ${url}`);
+      }
+    }
+  });
+
   return errors;
 }
 
