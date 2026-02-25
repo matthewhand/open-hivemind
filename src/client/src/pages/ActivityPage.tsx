@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
 import {
   Alert,
@@ -32,7 +32,6 @@ const ActivityPage: React.FC = () => {
 
   // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
-  const filtersInitialized = useRef(false);
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -49,9 +48,8 @@ const ActivityPage: React.FC = () => {
       setData(result);
 
       // Store initial filters
-      if (!filtersInitialized.current && result.filters) {
+      if (!availableFilters && result.filters) {
         setAvailableFilters(result.filters);
-        filtersInitialized.current = true;
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
@@ -60,7 +58,7 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, availableFilters]);
 
   useEffect(() => {
     fetchActivity();
@@ -120,7 +118,7 @@ const ActivityPage: React.FC = () => {
     );
   }, [events, searchQuery]);
 
-  const timelineEvents = useMemo(() => filteredEvents.map(event => ({
+  const timelineEvents = filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -128,9 +126,9 @@ const ActivityPage: React.FC = () => {
     type: event.status === 'error' || event.status === 'timeout' ? 'error' as const :
       event.status === 'success' ? 'success' as const : 'info' as const,
     metadata: { ...event },
-  })), [filteredEvents]);
+  }));
 
-  const getStatusBadge = useCallback((status: string) => {
+  const getStatusBadge = (status: string) => {
     const variants: Record<string, 'success' | 'error' | 'warning' | 'primary'> = {
       success: 'success',
       error: 'error',
@@ -138,9 +136,9 @@ const ActivityPage: React.FC = () => {
       pending: 'primary',
     };
     return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
-  }, []);
+  };
 
-  const columns = useMemo(() => [
+  const columns = [
     {
       key: 'timestamp' as keyof ActivityEvent,
       title: 'Time',
@@ -184,9 +182,9 @@ const ActivityPage: React.FC = () => {
       width: '100px',
       render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
     },
-  ], [getStatusBadge]);
+  ];
 
-  const stats = useMemo(() => [
+  const stats = [
     {
       id: 'total',
       title: 'Total Events',
@@ -215,47 +213,23 @@ const ActivityPage: React.FC = () => {
       icon: '🤖',
       color: 'secondary' as const,
     },
-  ], [events, availableFilters?.agents?.length]);
+  ];
 
   // Construct filter options
-  const botOptions = useMemo(() => [
+  const botOptions = [
     { value: 'all', label: 'All Bots' },
     ...(availableFilters?.agents || []).map(agent => ({ value: agent, label: agent }))
-  ], [availableFilters?.agents]);
+  ];
 
-  const providerOptions = useMemo(() => [
+  const providerOptions = [
     { value: 'all', label: 'All Providers' },
     ...(availableFilters?.messageProviders || []).map(p => ({ value: p, label: p }))
-  ], [availableFilters?.messageProviders]);
+  ];
 
-  const llmOptions = useMemo(() => [
+  const llmOptions = [
     { value: 'all', label: 'All LLMs' },
     ...(availableFilters?.llmProviders || []).map(p => ({ value: p, label: p }))
-  ], [availableFilters?.llmProviders]);
-
-  const filterConfigs = useMemo(() => [
-    {
-      key: 'bot',
-      value: selectedBot,
-      onChange: setSelectedBot,
-      options: botOptions,
-      className: "w-full sm:w-1/4"
-    },
-    {
-      key: 'provider',
-      value: selectedProvider,
-      onChange: setSelectedProvider,
-      options: providerOptions,
-      className: "w-full sm:w-1/4"
-    },
-    {
-      key: 'llm',
-      value: selectedLlmProvider,
-      onChange: setSelectedLlmProvider,
-      options: llmOptions,
-      className: "w-full sm:w-1/4"
-    }
-  ], [selectedBot, botOptions, selectedProvider, providerOptions, selectedLlmProvider, llmOptions]);
+  ];
 
   return (
     <div className="space-y-6">
@@ -333,7 +307,29 @@ const ActivityPage: React.FC = () => {
         onSearchChange={setSearchQuery}
         searchPlaceholder="Filter activity..."
         className={loading ? 'opacity-50 pointer-events-none' : ''}
-        filters={filterConfigs}
+        filters={[
+          {
+            key: 'bot',
+            value: selectedBot,
+            onChange: setSelectedBot,
+            options: botOptions,
+            className: "w-full sm:w-1/4"
+          },
+          {
+            key: 'provider',
+            value: selectedProvider,
+            onChange: setSelectedProvider,
+            options: providerOptions,
+            className: "w-full sm:w-1/4"
+          },
+          {
+            key: 'llm',
+            value: selectedLlmProvider,
+            onChange: setSelectedLlmProvider,
+            options: llmOptions,
+            className: "w-full sm:w-1/4"
+          }
+        ]}
       />
 
       {/* Content */}
