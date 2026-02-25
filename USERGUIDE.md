@@ -106,6 +106,16 @@ Monitor real-time interactions and events across your bot ecosystem.
 *   **Export**: Download the activity log as a CSV file for offline analysis.
 *   **Timeline View**: Visualize the sequence of events over time.
 
+### [System Management](/admin/system-management)
+Comprehensive controls for system configuration, maintenance, and backups.
+
+![System Management](docs/screenshots/system-management-page.png)
+
+*   **Alert Management**: Monitor and resolve system-wide alerts and notifications.
+*   **System Configuration**: Fine-tune refresh intervals, logging levels, and resource thresholds.
+*   **Backups**: Create manual backups, schedule automatic ones, and restore from history.
+*   **Performance Tuning**: Clear caches, view API status, and inspect environment variables.
+
 ### [Settings](/admin/settings)
 General system configuration.
 *   **Rate Limits**: Adjust global message rate limits to prevent spam.
@@ -118,10 +128,14 @@ Configure incoming webhooks for external integrations.
 *   **Security**: Manage webhook secrets and verification.
 
 ### [Monitoring](/admin/monitoring)
-Deep dive into system performance.
-*   **Metrics**: detailed graphs of API usage, response times, and error rates.
-*   **Logs**: Searchable real-time system logs.
-*   **Health Checks**: Detailed status of all internal services and dependencies.
+A comprehensive dashboard for tracking system health, bot status, and real-time activity.
+
+![Monitoring Dashboard](docs/screenshots/monitoring-dashboard.png)
+
+*   **System Health**: Real-time metrics for CPU, Memory, and API endpoint status.
+*   **Bot Status**: Detailed connectivity and health scores for all configured bots.
+*   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
+*   **Performance Metrics**: Track response times and error rates across the ecosystem.
 
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.

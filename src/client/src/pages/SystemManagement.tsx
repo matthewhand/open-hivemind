@@ -3,8 +3,31 @@ import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
-import StatusCard from '../components/Monitoring/StatusCard';
 import Modal from '../components/DaisyUI/Modal';
+import {
+  PageHeader,
+  StatsCards,
+  DataTable,
+} from '../components/DaisyUI';
+import {
+  Save,
+  Database,
+  RefreshCw,
+  Trash2,
+  Archive,
+  Settings,
+  AlertTriangle,
+  CheckCircle,
+  Server,
+  HardDrive,
+  Cpu,
+  Activity,
+  Bell,
+  Shield,
+  Terminal,
+  Play,
+  RotateCcw,
+} from 'lucide-react';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -266,123 +289,181 @@ const SystemManagement: React.FC = () => {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
 
-  const systemMetricsCards = [
+  const stats = [
     {
-      title: 'Alert Management',
-      subtitle: 'Active system alerts',
-      status: alerts.some(a => a.level === 'error') ? 'error' :
-        alerts.some(a => a.level === 'warning') ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
-        { label: 'Warnings', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' },
-        { label: 'Info', value: alerts.filter(a => a.level === 'info').length, icon: 'ℹ️' },
-        { label: 'Total', value: alerts.length, icon: '✅' },
-      ],
+      id: 'alerts',
+      title: 'Alerts',
+      value: alerts.length,
+      description: `${alerts.filter(a => a.level === 'error' || a.level === 'critical').length} Critical/Error`,
+      icon: <Bell className="w-8 h-8" />,
+      color: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'error' : 'success' as const,
     },
     {
-      title: 'Backup Status',
-      subtitle: 'System recovery',
-      status: backups.length > 0 ? 'healthy' : 'warning',
-      metrics: [
-        { label: 'Total Backups', value: backups.length, icon: '💾' },
-        { label: 'Latest', value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None', icon: '📅' },
-        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '➖' },
-      ],
+      id: 'backups',
+      title: 'Backups',
+      value: backups.length,
+      description: backups.length > 0 ? 'Last: ' + new Date(backups[0].createdAt).toLocaleDateString() : 'No backups',
+      icon: <Database className="w-8 h-8" />,
+      color: 'info' as const,
     },
     {
-      title: 'System Resources',
-      subtitle: 'Current utilization',
-      status: currentMetric.cpuUsage > 80 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'CPU Usage', value: currentMetric.cpuUsage, unit: '%' },
-        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
-        { label: 'Connections', value: currentMetric.activeConnections, icon: '🔗' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-      ],
+      id: 'resources',
+      title: 'CPU / Memory',
+      value: `${currentMetric.cpuUsage}% / ${currentMetric.memoryUsage}%`,
+      icon: <Cpu className="w-8 h-8" />,
+      color: currentMetric.cpuUsage > 80 || currentMetric.memoryUsage > 85 ? 'warning' : 'primary' as const,
+    },
+    {
+      id: 'connections',
+      title: 'Connections',
+      value: currentMetric.activeConnections,
+      description: `${currentMetric.responseTime}ms Latency`,
+      icon: <Activity className="w-8 h-8" />,
+      color: 'secondary' as const,
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-base-200 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">System Management</h1>
-            <p className="text-lg text-neutral-content/70">
-              Manage system configuration, alerts, and backups
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <button
-              className="btn btn-success"
-              onClick={openBackupModal}
-              disabled={isCreatingBackup}
-            >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
-            </button>
-          </div>
+  const backupColumns = [
+    {
+      key: 'timestamp' as keyof BackupRecord,
+      title: 'Timestamp',
+      render: (value: string) => new Date(value).toLocaleString(),
+      sortable: true,
+    },
+    {
+      key: 'type' as keyof BackupRecord,
+      title: 'Type',
+      render: (value: string) => (
+        <span className={`badge ${value === 'manual' ? 'badge-info' : 'badge-neutral'}`}>
+          {value}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'size' as keyof BackupRecord,
+      title: 'Size',
+      sortable: true,
+    },
+    {
+      key: 'status' as keyof BackupRecord,
+      title: 'Status',
+      render: (value: string) => (
+        <span className="badge badge-success">
+          {value}
+        </span>
+      ),
+    },
+    {
+      key: 'description' as keyof BackupRecord,
+      title: 'Description',
+    },
+    {
+      key: 'id' as keyof BackupRecord,
+      title: 'Actions',
+      render: (_: string, record: BackupRecord) => (
+        <div className="flex gap-2">
+          <button
+            className="btn btn-xs btn-primary"
+            onClick={() => handleRestoreBackup(record.id)}
+            title="Restore"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+          <button
+            className="btn btn-xs btn-error"
+            onClick={() => handleDeleteBackup(record.id)}
+            title="Delete"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
         </div>
-      </div>
+      ),
+    },
+  ];
 
-      {/* System Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {systemMetricsCards.map((card, index) => (
-          <StatusCard
-            key={index}
-            title={card.title}
-            subtitle={card.subtitle}
-            status={card.status as any}
-            metrics={card.metrics}
-            compact={true}
+  const envColumns = [
+    {
+      key: 'key',
+      title: 'Variable',
+      render: (value: string) => <span className="font-mono font-bold text-primary">{value}</span>,
+      sortable: true,
+      filterable: true,
+    },
+    {
+      key: 'value',
+      title: 'Value',
+      render: (value: string) => <span className="font-mono break-all">{value}</span>,
+      filterable: true,
+    },
+  ];
+
+  const envData = envOverrides ? Object.entries(envOverrides).map(([key, value]) => ({ key, value })) : [];
+
+  return (
+    <div className="p-6">
+      <PageHeader
+        title="System Management"
+        description="Manage system configuration, alerts, and backups"
+        icon={Settings}
+        actions={
+          <button
+            className="btn btn-success gap-2"
+            onClick={openBackupModal}
+            disabled={isCreatingBackup}
+          >
+            {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : <Save className="w-4 h-4" />}
+            Create Backup
+          </button>
+        }
+      />
+
+      <StatsCards stats={stats} />
+
+      <div className="mt-8">
+        <div role="tablist" className="tabs tabs-boxed mb-6">
+          <a
+            role="tab"
+            className={`tab gap-2 ${activeTab === 'alerts' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('alerts')}
+          >
+            <Bell className="w-4 h-4" /> Alerts
+          </a>
+          <a
+            role="tab"
+            className={`tab gap-2 ${activeTab === 'config' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('config')}
+          >
+            <Settings className="w-4 h-4" /> Config
+          </a>
+          <a
+            role="tab"
+            className={`tab gap-2 ${activeTab === 'backups' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('backups')}
+          >
+            <Archive className="w-4 h-4" /> Backups
+          </a>
+          <a
+            role="tab"
+            className={`tab gap-2 ${activeTab === 'performance' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('performance')}
+          >
+            <Activity className="w-4 h-4" /> Performance
+          </a>
+        </div>
+
+        {activeTab === 'alerts' && (
+          <AlertPanel
+            onAcknowledge={handleAlertAcknowledge}
+            onResolve={handleAlertResolve}
+            maxAlerts={20}
           />
-        ))}
-      </div>
+        )}
 
-      {/* Management Tabs */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="tabs tabs-boxed mb-6">
-            <button
-              className={`tab ${activeTab === 'alerts' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('alerts')}
-            >
-              Alert Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('config')}
-            >
-              System Configuration
-            </button>
-            <button
-              className={`tab ${activeTab === 'backups' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('backups')}
-            >
-              Backup Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('performance')}
-            >
-              Performance Tuning
-            </button>
-          </div>
-
-          {/* Alert Management Tab */}
-          {activeTab === 'alerts' && (
-            <AlertPanel
-              onAcknowledge={handleAlertAcknowledge}
-              onResolve={handleAlertResolve}
-              maxAlerts={20}
-            />
-          )}
-
-          {/* System Configuration Tab */}
-          {activeTab === 'config' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold">System Configuration</h3>
-
+        {activeTab === 'config' && (
+          <div className="card bg-base-100 shadow-xl border border-base-200">
+            <div className="card-body">
+              <h3 className="card-title text-xl mb-4">System Configuration</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control">
                   <label className="label">
@@ -443,336 +524,225 @@ const SystemManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold">Alert Thresholds</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">CPU Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.cpu}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        cpu: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+              <div className="divider">Alert Thresholds</div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Memory Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.memory}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        memory: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">CPU Usage Threshold (%)</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={systemConfig.alertThresholds.cpu}
+                    onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      cpu: Number(e.target.value),
+                    })}
+                    min="50"
+                    max="95"
+                  />
+                </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Disk Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.disk}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        disk: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Memory Usage Threshold (%)</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={systemConfig.alertThresholds.memory}
+                    onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      memory: Number(e.target.value),
+                    })}
+                    min="50"
+                    max="95"
+                  />
+                </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Response Time Threshold (ms)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.responseTime}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        responseTime: Number(e.target.value),
-                      })}
-                      min="100"
-                      max="5000"
-                    />
-                  </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Disk Usage Threshold (%)</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={systemConfig.alertThresholds.disk}
+                    onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      disk: Number(e.target.value),
+                    })}
+                    min="50"
+                    max="95"
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Response Time Threshold (ms)</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={systemConfig.alertThresholds.responseTime}
+                    onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      responseTime: Number(e.target.value),
+                    })}
+                    min="100"
+                    max="5000"
+                  />
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Backup Management Tab */}
-          {activeTab === 'backups' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold">Backup History</h3>
+        {activeTab === 'backups' && (
+          <div className="card bg-base-100 shadow-xl border border-base-200">
+            <div className="card-body">
+              <h3 className="card-title text-xl mb-4">Backup History</h3>
+              <DataTable
+                data={backups}
+                columns={backupColumns}
+                searchable={true}
+                pagination={{ pageSize: 5 }}
+              />
+            </div>
+          </div>
+        )}
 
-              <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>Type</th>
-                      <th>Size</th>
-                      <th>Status</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {backups.map((backup) => (
-                      <tr key={backup.id}>
-                        <td>{new Date(backup.timestamp).toLocaleString()}</td>
-                        <td>
-                          <span className={`badge ${backup.type === 'manual' ? 'badge-info' : 'badge-neutral'}`}>
-                            {backup.type}
-                          </span>
-                        </td>
-                        <td>{backup.size}</td>
-                        <td>
-                          <span className="badge badge-success">
-                            {backup.status}
-                          </span>
-                        </td>
-                        <td>{backup.description}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button
-                              className="btn btn-xs btn-primary"
-                              onClick={() => handleRestoreBackup(backup.id)}
-                            >
-                              Restore
-                            </button>
-                            <button
-                              className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteBackup(backup.id)}
-                            >
-                              Delete
-                            </button>
+        {activeTab === 'performance' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold">System Performance & Monitoring</h3>
+              <button
+                className="btn btn-warning btn-sm gap-2"
+                onClick={handleClearCache}
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear System Cache
+              </button>
+            </div>
+
+            {apiStatus && (
+              <div className="stats shadow w-full border border-base-200">
+                <div className="stat">
+                  <div className="stat-title">Overall Status</div>
+                  <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
+                    {apiStatus.overall.status.toUpperCase()}
+                  </div>
+                  <div className="stat-desc">{apiStatus.overall.message}</div>
+                </div>
+
+                <div className="stat">
+                  <div className="stat-title">Online Endpoints</div>
+                  <div className="stat-value">{apiStatus.overall.stats.online}</div>
+                  <div className="stat-desc">/ {apiStatus.overall.stats.total} total</div>
+                </div>
+
+                <div className="stat">
+                  <div className="stat-title">Error Rate</div>
+                  <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
+                  <div className="stat-desc">endpoints reporting errors</div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mt-4">
+              <h3 className="text-lg font-semibold">System Details</h3>
+              <button
+                className="btn btn-sm btn-ghost gap-2"
+                onClick={fetchPerformanceData}
+                disabled={isPerformanceLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${isPerformanceLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+
+            {systemInfo && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="card bg-base-100 border border-base-200">
+                  <div className="card-body p-4">
+                    <h4 className="font-bold mb-2 flex items-center gap-2"><Server className="w-4 h-4" /> System Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Platform:</span>
+                        <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Node Version:</span>
+                        <span className="font-mono">{systemInfo.nodeVersion}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Uptime:</span>
+                        <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Process ID:</span>
+                        <span className="font-mono">{systemInfo.pid}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Memory Usage:</span>
+                        <span className="font-mono">
+                          {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-100 border border-base-200">
+                  <div className="card-body p-4">
+                    <h4 className="font-bold mb-2 flex items-center gap-2"><Database className="w-4 h-4" /> Database Status</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Connected:</span>
+                        <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
+                          {systemInfo.database.connected ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      {systemInfo.database.stats && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="opacity-70">Pool Size:</span>
+                            <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Performance Tuning Tab */}
-          {activeTab === 'performance' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-
-                <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
-                <button
-                  className="btn btn-warning btn-sm"
-                  onClick={handleClearCache}
-                >
-                  Clear System Cache
-                </button>
-              </div>
-
-              {apiStatus && (
-                <div className="stats shadow w-full">
-                  <div className="stat">
-                    <div className="stat-title">Overall Status</div>
-                    <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
-                      {apiStatus.overall.status.toUpperCase()}
+                        </>
+                      )}
                     </div>
-                    <div className="stat-desc">{apiStatus.overall.message}</div>
-                  </div>
-
-                  <div className="stat">
-                    <div className="stat-title">Online Endpoints</div>
-                    <div className="stat-value">{apiStatus.overall.stats.online}</div>
-                    <div className="stat-desc">/ {apiStatus.overall.stats.total} total</div>
-                  </div>
-
-                  <div className="stat">
-                    <div className="stat-title">Error Rate</div>
-                    <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
-                    <div className="stat-desc">endpoints reporting errors</div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center mt-8">
-                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={fetchPerformanceData}
-                  disabled={isPerformanceLoading}
-                >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                </button>
-              </div>
-
-              {systemInfo && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">System Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Platform:</span>
-                          <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Node Version:</span>
-                          <span className="font-mono">{systemInfo.nodeVersion}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Uptime:</span>
-                          <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Process ID:</span>
-                          <span className="font-mono">{systemInfo.pid}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Memory Usage:</span>
-                          <span className="font-mono">
-                            {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">Database Status</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Connected:</span>
-                          <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
-                            {systemInfo.database.connected ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                        {systemInfo.database.stats && (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="opacity-70">Pool Size:</span>
-                              <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
-                            </div>
-                            {/* Add more DB stats if available */}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              )}
-
-
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h4 className="card-title text-sm">API Endpoints Status</h4>
-                  <div className="overflow-x-auto">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Endpoint</th>
-                          <th>Status</th>
-                          <th>Response Time</th>
-                          <th>Failures</th>
-                          <th>Last Checked</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {apiStatus?.endpoints?.map((endpoint: any) => (
-                          <tr key={endpoint.id}>
-                            <td>
-                              <div className="font-bold">{endpoint.name}</div>
-                              <div className="text-xs opacity-50">{endpoint.url}</div>
-                            </td>
-                            <td>
-                              <div className={`badge ${
-                                endpoint.status === 'online' ? 'badge-success' :
-                                endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
-                              }`}>
-                                {endpoint.status}
-                              </div>
-                            </td>
-                            <td>{endpoint.responseTime}ms</td>
-                            <td>{endpoint.consecutiveFailures}</td>
-                            <td>{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
-                          </tr>
-                        ))}
-                        {!apiStatus?.endpoints?.length && (
-                          <tr>
-                            <td colSpan={5} className="text-center">No endpoint data available</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
                   </div>
                 </div>
               </div>
+            )}
 
-              <div className="divider"></div>
-
-              <div>
-                <h4 className="font-bold mb-4">Environment Configuration (Read-Only)</h4>
+            <div className="card bg-base-100 border border-base-200">
+              <div className="card-body">
+                <h4 className="card-title text-lg flex items-center gap-2">
+                  <Terminal className="w-5 h-5" /> Environment Configuration (Read-Only)
+                </h4>
                 <p className="text-sm text-neutral-content/70 mb-4">
                   These settings are loaded from environment variables and take precedence over database configuration.
-                  To change them, update your `.env` file and restart the server.
                 </p>
 
-                {envOverrides ? (
-                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Variable</th>
-                          <th>Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(envOverrides).length > 0 ? (
-                          Object.entries(envOverrides).map(([key, value]) => (
-                            <tr key={key}>
-                              <td className="font-mono font-bold text-primary">{key}</td>
-                              <td className="font-mono break-all">{value}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={2} className="text-center py-4 opacity-50">
-                              No environment overrides detected.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
+                {isPerformanceLoading && !envOverrides ? (
                   <div className="flex justify-center py-8">
                     <span className="loading loading-dots loading-lg"></span>
                   </div>
+                ) : (
+                  <DataTable
+                    data={envData}
+                    columns={envColumns}
+                    searchable={true}
+                    pagination={{ pageSize: 10 }}
+                  />
                 )}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Backup Creation Modal */}

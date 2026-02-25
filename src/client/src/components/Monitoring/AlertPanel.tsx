@@ -1,5 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  XCircle,
+  Check,
+  CheckCheck,
+  X,
+  Bell
+} from 'lucide-react';
 
 export interface Alert {
   id: string;
@@ -83,29 +93,13 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
       case 'error':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <XCircle className="w-6 h-6 shrink-0 text-current" />;
       case 'warning':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        );
+        return <AlertTriangle className="w-6 h-6 shrink-0 text-current" />;
       case 'success':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <CheckCircle className="w-6 h-6 shrink-0 text-current" />;
       default:
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <Info className="w-6 h-6 shrink-0 text-current" />;
     }
   };
 
@@ -121,10 +115,12 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   };
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${className}`}>
+    <div className={`card bg-base-100 shadow-xl border border-base-200 ${className}`}>
       <div className="card-body">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="card-title">Alerts & Notifications</h2>
+          <h2 className="card-title flex items-center gap-2">
+            <Bell className="w-5 h-5" /> Alerts & Notifications
+          </h2>
           <div className="flex gap-2">
             <div className="badge badge-error gap-2">
               {getAlertCountByType('error')} Errors
@@ -139,28 +135,28 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
         </div>
 
         {showFilters && (
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-between">
+            <div className="join">
               <button
-                className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                className={`join-item btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setFilter('all')}
               >
                 All ({alerts.filter(a => !a.resolved).length})
               </button>
               <button
-                className={`btn btn-sm ${filter === 'error' ? 'btn-error' : 'btn-ghost'}`}
+                className={`join-item btn btn-sm ${filter === 'error' ? 'btn-error' : 'btn-ghost'}`}
                 onClick={() => setFilter('error')}
               >
                 Errors ({getAlertCountByType('error')})
               </button>
               <button
-                className={`btn btn-sm ${filter === 'warning' ? 'btn-warning' : 'btn-ghost'}`}
+                className={`join-item btn btn-sm ${filter === 'warning' ? 'btn-warning' : 'btn-ghost'}`}
                 onClick={() => setFilter('warning')}
               >
                 Warnings ({getAlertCountByType('warning')})
               </button>
               <button
-                className={`btn btn-sm ${filter === 'info' ? 'btn-info' : 'btn-ghost'}`}
+                className={`join-item btn btn-sm ${filter === 'info' ? 'btn-info' : 'btn-ghost'}`}
                 onClick={() => setFilter('info')}
               >
                 Info ({getAlertCountByType('info')})
@@ -181,9 +177,9 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
 
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {filteredAlerts.length === 0 ? (
-            <div className="text-center py-8 text-neutral-content/50">
-              <div className="text-4xl mb-2">🔔</div>
-              <p>No alerts found</p>
+            <div className="text-center py-12 text-neutral-content/50 bg-base-200/50 rounded-box">
+              <Bell className="w-12 h-12 mx-auto mb-2 opacity-20" />
+              <p>No alerts found matching criteria</p>
             </div>
           ) : (
             filteredAlerts.map((alert) => (
@@ -213,28 +209,28 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                     <div className="flex gap-1">
                       {!alert.acknowledged && !alert.resolved && (
                         <button
-                          className="btn btn-xs btn-ghost"
+                          className="btn btn-xs btn-ghost btn-square"
                           onClick={() => handleAcknowledge(alert.id)}
                           title="Acknowledge"
                         >
-                          ✓
+                          <Check className="w-4 h-4" />
                         </button>
                       )}
                       {!alert.resolved && (
                         <button
-                          className="btn btn-xs btn-ghost"
+                          className="btn btn-xs btn-ghost btn-square"
                           onClick={() => handleResolve(alert.id)}
                           title="Resolve"
                         >
-                          ✓✓
+                          <CheckCheck className="w-4 h-4" />
                         </button>
                       )}
                       <button
-                        className="btn btn-xs btn-ghost"
+                        className="btn btn-xs btn-ghost btn-square"
                         onClick={() => handleDismiss(alert.id)}
                         title="Dismiss"
                       >
-                        ×
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

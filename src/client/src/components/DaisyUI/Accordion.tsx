@@ -5,7 +5,7 @@ export interface AccordionItem {
   id: string;
   title: string;
   content: React.ReactNode;
-  icon?: string;
+  icon?: string | React.ReactNode;
   disabled?: boolean;
   className?: string;
 }
