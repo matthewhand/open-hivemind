@@ -94,7 +94,7 @@ jest.isolateModules(() => {
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() } as any,
         messageConfig: { get: jest.fn() } as any,
         discordConfig: { get: jest.fn() } as any,
-        errorTypes: { ConfigError: class ConfigError extends Error { } } as any,
+        errorTypes: { ConfigError: class ConfigError extends Error {} } as any,
       });
       DiscordService.setInstance(service);
       await service.initialize();

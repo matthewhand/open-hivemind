@@ -60,13 +60,15 @@ test.describe('Guards Page', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             data: { ...data, id: 'new-profile-id' },
-            message: 'Profile created successfully'
+            message: 'Profile created successfully',
           }),
         });
       } else if (route.request().method() === 'GET') {
-         // Return the original + the new one if created
-         const profiles = createdProfile ? [...mockProfiles, { ...createdProfile, id: 'new-profile-id' }] : mockProfiles;
-         await route.fulfill({
+        // Return the original + the new one if created
+        const profiles = createdProfile
+          ? [...mockProfiles, { ...createdProfile, id: 'new-profile-id' }]
+          : mockProfiles;
+        await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({ data: profiles }),

@@ -25,6 +25,18 @@ Connect your bots to messaging services.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
 *   **Status**: Check connection health for each platform.
 
+### [MCP Servers](/admin/mcp/servers)
+Manage Model Context Protocol (MCP) servers to extend bot capabilities with tools.
+*   **Add Server**: Connect to an MCP server by providing its URL and API key.
+*   **Status**: Monitor connection status (Running/Stopped).
+*   **Tools**: View available tools provided by each server.
+
+![MCP Servers List](docs/screenshots/mcp-servers-list.png)
+
+*   **Configuration**: Add or edit server details including name and URL.
+
+![Add MCP Server Modal](docs/screenshots/mcp-add-server-modal.png)
+
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.
 *   **Create Bot**: Define a new bot with a unique name.

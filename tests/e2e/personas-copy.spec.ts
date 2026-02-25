@@ -16,7 +16,7 @@ test.describe('Personas Copy Functionality', () => {
           bots: [],
           warnings: [],
           legacyMode: false,
-          environment: 'test'
+          environment: 'test',
         }),
       });
     });
@@ -34,21 +34,21 @@ test.describe('Personas Copy Functionality', () => {
             systemPrompt: 'This is the unique system prompt to copy.',
             traits: [],
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
+            updatedAt: new Date().toISOString(),
+          },
         ]),
       });
     });
 
     // Mock other potential background requests to keep console clean
     await page.route('**/api/health/detailed', async (route) => {
-       await route.fulfill({ status: 200, body: '{}' });
+      await route.fulfill({ status: 200, body: '{}' });
     });
     await page.route('**/api/csrf-token', async (route) => {
-       await route.fulfill({ status: 200, body: JSON.stringify({ token: 'mock-csrf' }) });
+      await route.fulfill({ status: 200, body: JSON.stringify({ token: 'mock-csrf' }) });
     });
     await page.route('**/api/config/llm-status', async (route) => {
-        await route.fulfill({ status: 200, body: JSON.stringify({ defaultConfigured: true }) });
+      await route.fulfill({ status: 200, body: JSON.stringify({ defaultConfigured: true }) });
     });
 
     // Navigate to personas page

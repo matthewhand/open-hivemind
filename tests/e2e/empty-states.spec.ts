@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Empty States', () => {
@@ -6,37 +6,48 @@ test.describe('Empty States', () => {
     await setupAuth(page);
 
     // Mock common endpoints to prevent 404s/errors
-    await page.route('**/api/csrf-token', async route => {
+    await page.route('**/api/csrf-token', async (route) => {
       await route.fulfill({ json: { token: 'mock-token' } });
     });
 
     // Default mocks (can be overridden in specific tests)
-    await page.route('**/api/config/global', async route => {
+    await page.route('**/api/config/global', async (route) => {
       await route.fulfill({ json: {} });
     });
-    await page.route('**/api/config/llm-profiles', async route => {
+    await page.route('**/api/config/llm-profiles', async (route) => {
       await route.fulfill({ json: { profiles: { llm: [] } } });
     });
     // Mock LLM status used by hooks
-    await page.route('**/api/config/llm-status', async route => {
-      await route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } });
+    await page.route('**/api/config/llm-status', async (route) => {
+      await route.fulfill({
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
+      });
     });
     // Mock health check
-    await page.route('**/api/dashboard/api/status', async route => {
+    await page.route('**/api/dashboard/api/status', async (route) => {
       await route.fulfill({ json: { bots: [], uptime: 100 } });
     });
     // Mock health/status endpoints to prevent network errors
     await page.route('**/api/health', async (route) => route.fulfill({ json: { status: 'ok' } }));
-    await page.route('**/api/health/detailed', async (route) => route.fulfill({ json: { status: 'ok' } }));
-    await page.route('**/api/demo/status', async (route) => route.fulfill({ json: { active: false } }));
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({ json: { status: 'ok' } })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ json: { active: false } })
+    );
   });
 
   test('Bots Page shows empty state when no bots configured', async ({ page }) => {
     // Mock API to return no bots
-    await page.route('**/api/config', async route => {
+    await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: [] } });
     });
-    await page.route('**/api/personas', async route => {
+    await page.route('**/api/personas', async (route) => {
       await route.fulfill({ json: [] });
     });
 
@@ -51,25 +62,29 @@ test.describe('Empty States', () => {
 
   test('Bots Page shows search empty state', async ({ page }) => {
     // Mock with one bot
-    const mockBots = [{
-      id: 'bot1',
-      name: 'Test Bot',
-      provider: 'openai',
-      llmProvider: 'openai',
-      status: 'active',
-      connected: true,
-      messageCount: 0,
-      errorCount: 0
-    }];
+    const mockBots = [
+      {
+        id: 'bot1',
+        name: 'Test Bot',
+        provider: 'openai',
+        llmProvider: 'openai',
+        status: 'active',
+        connected: true,
+        messageCount: 0,
+        errorCount: 0,
+      },
+    ];
 
-    await page.route('**/api/config', async route => {
+    await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: mockBots } });
     });
-    await page.route('**/api/personas', route => route.fulfill({ json: [] }));
+    await page.route('**/api/personas', (route) => route.fulfill({ json: [] }));
 
     // Mock activity logs/history for the bot to avoid errors if it tries to fetch on load (though it shouldn't unless preview)
-    await page.route('**/api/bots/*/activity*', route => route.fulfill({ json: { activity: [] } }));
-    await page.route('**/api/bots/*/history*', route => route.fulfill({ json: { history: [] } }));
+    await page.route('**/api/bots/*/activity*', (route) =>
+      route.fulfill({ json: { activity: [] } })
+    );
+    await page.route('**/api/bots/*/history*', (route) => route.fulfill({ json: { history: [] } }));
 
     await page.goto('/admin/bots');
 
@@ -92,7 +107,7 @@ test.describe('Empty States', () => {
 
   test('Guards Page shows empty state when no profiles', async ({ page }) => {
     // Mock empty profiles
-    await page.route('**/api/admin/guard-profiles', async route => {
+    await page.route('**/api/admin/guard-profiles', async (route) => {
       await route.fulfill({ json: { data: [] } });
     });
 
@@ -100,16 +115,18 @@ test.describe('Empty States', () => {
 
     // Verify empty state
     await expect(page.getByText('No Guard Profiles')).toBeVisible();
-    await expect(page.getByText('Create a guard profile to enforce security policies')).toBeVisible();
+    await expect(
+      page.getByText('Create a guard profile to enforce security policies')
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'New Profile' })).toBeVisible();
   });
 
   test('Personas Page shows empty state when no personas', async ({ page }) => {
     // Mock empty personas
-    await page.route('**/api/personas', async route => {
+    await page.route('**/api/personas', async (route) => {
       await route.fulfill({ json: [] });
     });
-    await page.route('**/api/config', async route => {
+    await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: [] } });
     });
 
@@ -124,21 +141,23 @@ test.describe('Empty States', () => {
 
   test('Personas Page shows search empty state', async ({ page }) => {
     // Mock with one persona
-    const mockPersonas = [{
-      id: 'p1',
-      name: 'Test Persona',
-      description: 'A test persona',
-      category: 'general',
-      systemPrompt: 'You are a test.',
-      isBuiltIn: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }];
+    const mockPersonas = [
+      {
+        id: 'p1',
+        name: 'Test Persona',
+        description: 'A test persona',
+        category: 'general',
+        systemPrompt: 'You are a test.',
+        isBuiltIn: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
 
-    await page.route('**/api/personas', async route => {
+    await page.route('**/api/personas', async (route) => {
       await route.fulfill({ json: mockPersonas });
     });
-    await page.route('**/api/config', async route => {
+    await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: [] } });
     });
 
