@@ -10,6 +10,15 @@ The central hub for monitoring your bot ecosystem.
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
 
+### [Activity Feed](/admin/activity)
+A comprehensive view of all message processing events and system actions.
+![Activity Page](docs/screenshots/activity-page.png)
+
+*   **Real-time Filters**: Filter events by specific Bot, Message Platform, or LLM Provider.
+*   **Timeline View**: Switch between a detailed table and a visual timeline of events.
+*   **Export Data**: Download the current activity log as a CSV file for external analysis.
+*   **Performance Metrics**: View processing duration for each message interaction.
+
 ## Configuration
 
 ### [LLM Providers](/admin/providers/llm)

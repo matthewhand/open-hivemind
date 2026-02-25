@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
-import { 
-  Alert, 
-  Badge, 
-  Button, 
-  Card, 
-  DataTable, 
-  StatsCards, 
-  Timeline, 
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  StatsCards,
+  Timeline,
   Toggle,
   PageHeader,
   LoadingSpinner,
   EmptyState,
 } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
+import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -135,7 +135,7 @@ const ActivityPage: React.FC = () => {
       timeout: 'warning',
       pending: 'primary',
     };
-    return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
+    return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
   };
 
   const columns = [
@@ -166,14 +166,14 @@ const ActivityPage: React.FC = () => {
       title: 'Provider',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>,
+      render: (value: string) => <Badge variant="neutral" size="small">{value}</Badge>,
     },
     {
       key: 'llmProvider' as keyof ActivityEvent,
       title: 'LLM',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
+      render: (value: string) => <Badge variant="primary" size="small" style="outline">{value}</Badge>,
     },
     {
       key: 'processingTime' as keyof ActivityEvent,
@@ -209,7 +209,7 @@ const ActivityPage: React.FC = () => {
     {
       id: 'bots',
       title: 'Active Bots',
-      value: data?.filters?.agents?.length || 0,
+      value: availableFilters?.agents?.length || 0,
       icon: '🤖',
       color: 'secondary' as const,
     },
@@ -235,8 +235,8 @@ const ActivityPage: React.FC = () => {
     <div className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <Alert 
-          status="error" 
+        <Alert
+          status="error"
           message={error}
           onClose={() => setError(null)}
         />
@@ -251,16 +251,16 @@ const ActivityPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {/* View Toggle */}
             <div className="join">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'table' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('table')}
               >
                 <LayoutList className="w-4 h-4" /> Table
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('timeline')}
@@ -268,24 +268,24 @@ const ActivityPage: React.FC = () => {
                 <GitBranch className="w-4 h-4" /> Timeline
               </Button>
             </div>
-            
+
             {/* Auto Refresh Toggle */}
-            <Toggle 
+            <Toggle
               label="Auto"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
               size="sm"
             />
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={fetchActivity}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
