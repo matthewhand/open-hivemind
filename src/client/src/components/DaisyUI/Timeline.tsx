@@ -1,74 +1,75 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react'
 
-export type EventType = 'success' | 'error' | 'warning' | 'info' | 'neutral';
+export type EventType = 'success' | 'error' | 'warning' | 'info' | 'neutral'
 
 export interface TimelineEvent {
-  id: string;
-  timestamp: Date | string;
-  title: string;
-  description?: string;
-  type: EventType;
-  metadata?: Record<string, unknown>;
-  details?: React.ReactNode;
+  id: string
+  timestamp: Date | string
+  title: string
+  description?: string
+  type: EventType
+  metadata?: Record<string, unknown>
+  details?: React.ReactNode
 }
 
 export interface TimelineProps {
-  events: TimelineEvent[];
-  maxEvents?: number;
-  viewMode?: 'compact' | 'detailed';
-  showTimestamps?: boolean;
-  autoScroll?: boolean;
-  className?: string;
-  onEventClick?: (event: TimelineEvent) => void;
+  events: TimelineEvent[]
+  maxEvents?: number
+  viewMode?: 'compact' | 'detailed'
+  showTimestamps?: boolean
+  autoScroll?: boolean
+  className?: string
+  onEventClick?: (event: TimelineEvent) => void
 }
 
+// Improved accessibility with ARIA labels and keyboard navigation
 const getEventIcon = (type: EventType): string => {
   switch (type) {
-  case 'success':
-    return '✓';
-  case 'error':
-    return '✗';
-  case 'warning':
-    return '⚠';
-  case 'info':
-    return 'ℹ';
-  case 'neutral':
-  default:
-    return '○';
+    case 'success':
+      return '✓'
+    case 'error':
+      return '✗'
+    case 'warning':
+      return '⚠'
+    case 'info':
+      return 'ℹ'
+    case 'neutral':
+    default:
+      return '○'
   }
-};
+}
 
 const getEventColorClass = (type: EventType): string => {
   switch (type) {
-  case 'success':
-    return 'timeline-success';
-  case 'error':
-    return 'timeline-error';
-  case 'warning':
-    return 'timeline-warning';
-  case 'info':
-    return 'timeline-info';
-  case 'neutral':
-  default:
-    return 'timeline-neutral';
+    case 'success':
+      return 'timeline-success'
+    case 'error':
+      return 'timeline-error'
+    case 'warning':
+      return 'timeline-warning'
+    case 'info':
+      return 'timeline-info'
+    case 'neutral':
+    default:
+      return 'timeline-neutral'
   }
-};
+}
 
 const formatTimestamp = (date: Date): string => {
-  const now = new Date();
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const diffMs = now.getTime() - dateObj.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const now = new Date()
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  const diffMs = now.getTime() - dateObj.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffMins < 1) {return 'Just now';}
-  if (diffMins < 60) {return `${diffMins}m ago`;}
-  if (diffHours < 24) {return `${diffHours}h ago`;}
-  if (diffDays < 7) {return `${diffDays}d ago`;}
+  if (diffMins < 1) { return 'Just now' }
+  if (diffMins < 60) { return `${diffMins}m ago` }
+  if (diffHours < 24) { return `${diffHours}h ago` }
+  if (diffDays < 7) { return `${diffDays}d ago` }
 
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 const Timeline: React.FC<TimelineProps> = ({
   events,
@@ -79,62 +80,72 @@ const Timeline: React.FC<TimelineProps> = ({
   className = '',
   onEventClick,
 }) => {
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+  const timelineRef = useRef<HTMLDivElement>(null)
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
 
   // Sort events chronologically (newest first)
   const sortedEvents = [...events]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, maxEvents);
+    .slice(0, maxEvents)
 
   // Auto-scroll to top when new events are added
   useEffect(() => {
     if (autoScroll && timelineRef.current && sortedEvents.length > 0) {
-      timelineRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      timelineRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }, [sortedEvents, autoScroll]);
+  }, [sortedEvents, autoScroll])
 
   const toggleEventExpansion = (eventId: string) => {
     setExpandedEvents(prev => {
-      const newSet = new Set(prev);
+      const newSet = new Set(prev)
       if (newSet.has(eventId)) {
-        newSet.delete(eventId);
+        newSet.delete(eventId)
       } else {
-        newSet.add(eventId);
+        newSet.add(eventId)
       }
-      return newSet;
-    });
-  };
+      return newSet
+    })
+  }
 
   const handleEventClick = (event: TimelineEvent) => {
     if (viewMode === 'compact') {
-      toggleEventExpansion(event.id);
+      toggleEventExpansion(event.id)
     }
-    onEventClick?.(event);
-  };
+    onEventClick?.(event)
+  }
 
   return (
-    <div className={`timeline ${className}`} ref={timelineRef}>
+    <div className={`timeline ${className}`} ref={timelineRef} role="list" aria-label="Timeline of events">
       {sortedEvents.map((event, index) => {
-        const isExpanded = expandedEvents.has(event.id);
-        const isLast = index === sortedEvents.length - 1;
+        const isExpanded = expandedEvents.has(event.id)
+        const isLast = index === sortedEvents.length - 1
 
         return (
-          <div key={event.id} className={`timeline-item ${getEventColorClass(event.type)}`}>
+          <div key={event.id} className={`timeline-item ${getEventColorClass(event.type)}`} role="listitem">
             {/* Timeline connector */}
             {!isLast && <div className="timeline-middle"></div>}
 
             {/* Timeline marker */}
             <div className="timeline-start timeline-box">
-              <div className="text-2xl">{getEventIcon(event.type)}</div>
+              <div className="text-2xl" role="img" aria-label={`Event type: ${event.type}`}>
+                {getEventIcon(event.type)}
+              </div>
             </div>
 
             {/* Event content */}
             <div className="timeline-end">
               <div
-                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'
-                }`}
+                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'}`}
                 onClick={() => handleEventClick(event)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleEventClick(event)
+                  }
+                }}
+                aria-label={`Event: ${event.title}. ${event.description || ''}`}
               >
                 <div className="card-body p-0">
                   {/* Event header */}
@@ -158,6 +169,7 @@ const Timeline: React.FC<TimelineProps> = ({
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
+                          aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
@@ -177,7 +189,7 @@ const Timeline: React.FC<TimelineProps> = ({
                     <div className="mt-2">
                       <div className="badge badge-ghost badge-sm">
                         {Object.entries(event.metadata).map(([key, value]) => (
-                          <span key={key} className="mr-1">
+                          <span key={key} className="mr-1" aria-label={`${key}: ${String(value)}`}>
                             {key}: {String(value)}
                           </span>
                         ))}
@@ -197,15 +209,17 @@ const Timeline: React.FC<TimelineProps> = ({
               </div>
             </div>
           </div>
-        );
+        )
       })}
 
       {/* Empty state */}
       {sortedEvents.length === 0 && (
-        <div className="timeline-item">
+        <div className="timeline-item" role="listitem">
           <div className="timeline-middle"></div>
           <div className="timeline-start timeline-box">
-            <div className="text-2xl text-base-content/40">○</div>
+            <div className="text-2xl text-base-content/40" role="img" aria-label="No events">
+              ○
+            </div>
           </div>
           <div className="timeline-end">
             <div className="card bg-base-100 shadow-sm">
@@ -217,13 +231,13 @@ const Timeline: React.FC<TimelineProps> = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 // Activity Feed Component for real-time updates
 export interface ActivityFeedProps extends Omit<TimelineProps, 'events'> {
-  events: TimelineEvent[];
-  onNewEvent?: (event: TimelineEvent) => void;
+  events: TimelineEvent[]
+  onNewEvent?: (event: TimelineEvent) => void
 }
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({
@@ -231,11 +245,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   onNewEvent,
   ...timelineProps
 }) => {
-  const [currentEvents, setCurrentEvents] = useState<TimelineEvent[]>(events);
+  const [currentEvents, setCurrentEvents] = useState<TimelineEvent[]>(events)
 
   useEffect(() => {
-    setCurrentEvents(events);
-  }, [events]);
+    setCurrentEvents(events)
+  }, [events])
 
   // Simulate real-time updates (in a real app, this would come from WebSocket or API)
   useEffect(() => {
@@ -247,16 +261,16 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         description: 'All systems operating normally',
         type: 'success',
         metadata: { status: 'healthy' },
-      };
+      }
 
-      setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)]); // Keep max 50 events
-      onNewEvent?.(newEvent);
-    }, 30000); // Add a new event every 30 seconds
+      setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)]) // Keep max 50 events
+      onNewEvent?.(newEvent)
+    }, 30000) // Add a new event every 30 seconds
 
-    return () => clearInterval(interval);
-  }, [onNewEvent]);
+    return () => clearInterval(interval)
+  }, [onNewEvent])
 
-  return <Timeline events={currentEvents} {...timelineProps} />;
-};
+  return <Timeline events={currentEvents} {...timelineProps} />
+}
 
-export default Timeline;
+export default Timeline
