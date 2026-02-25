@@ -3,7 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
-import StatusCard from '../components/Monitoring/StatusCard';
+import {
+  Alert,
+  PageHeader,
+  StatsCards,
+  DataTable,
+  Button,
+  Select,
+  Card,
+  EmptyState
+} from '../components/DaisyUI';
+import {
+  BarChart,
+  RefreshCw,
+  MessageCircle,
+  Users,
+  Activity,
+  ArrowRight,
+  ArrowLeft,
+  Bot
+} from 'lucide-react';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -62,100 +81,130 @@ const AnalyticsDashboard: React.FC = () => {
     name: am.botName,
     messages: am.totalMessages,
     errors: am.errors,
-    successRate: am.totalMessages > 0 ? ((am.totalMessages - am.errors) / am.totalMessages * 100).toFixed(1) : '100.0',
-    avgResponse: am.events > 0 ? Math.round(Math.random() * 100 + 50) : 0 // Mocking response time per bot as it's not in agentMetrics yet
+    successRate: am.totalMessages > 0 ? ((am.totalMessages - am.errors) / am.totalMessages * 100).toFixed(1) + '%' : '100.0%',
+    provider: am.messageProvider,
+    llm: am.llmProvider
   })) || [];
 
   // Usage Metrics Cards
-  const usageMetricsCards = [
+  const stats = [
     {
+      id: 'total-messages',
       title: 'Total Messages',
-      subtitle: 'In selected range',
-      status: 'healthy',
-      metrics: [
-        { label: 'Messages', value: events.length.toLocaleString(), icon: '💬' },
-        { label: 'Throughput', value: currentMetric.messageRate.toFixed(1), unit: '/s' },
-        { label: 'Errors', value: activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0, icon: '❌' },
-      ],
+      value: events.length,
+      icon: <MessageCircle className="w-8 h-8" />,
+      color: 'primary' as const,
+      description: 'In selected range',
     },
     {
-      title: 'User Engagement',
-      subtitle: 'Active participants',
-      status: 'healthy',
-      metrics: [
-        { label: 'Active Users', value: uniqueUsers, icon: '👥' },
-        { label: 'Active Bots', value: activityData?.filters.agents.length || 0, icon: '🤖' },
-      ]
+      id: 'active-users',
+      title: 'Active Users',
+      value: uniqueUsers,
+      icon: <Users className="w-8 h-8" />,
+      color: 'secondary' as const,
+      description: 'Unique participants',
     },
     {
-      title: 'System Health',
-      subtitle: 'Performance',
-      status: currentMetric.errorRate > 2 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Availability', value: (100 - currentMetric.errorRate).toFixed(1), unit: '%' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-        { label: 'Connections', value: currentMetric.activeConnections, icon: '🔗' },
-      ],
+      id: 'error-rate',
+      title: 'Error Rate',
+      value: `${currentMetric.errorRate.toFixed(1)}%`,
+      icon: <Activity className="w-8 h-8" />,
+      color: currentMetric.errorRate > 5 ? 'error' as const : 'success' as const,
+      description: 'Current system error rate',
     },
+    {
+      id: 'active-bots',
+      title: 'Active Bots',
+      value: activityData?.filters.agents.length || 0,
+      icon: <Bot className="w-8 h-8" />,
+      color: 'accent' as const,
+    }
+  ];
+
+  const columns = [
+    {
+      key: 'name',
+      title: 'Bot Name',
+      sortable: true,
+      render: (value: string) => <span className="font-medium">{value}</span>
+    },
+    {
+      key: 'messages',
+      title: 'Messages',
+      sortable: true,
+    },
+    {
+      key: 'errors',
+      title: 'Errors',
+      sortable: true,
+      render: (value: number) => value > 0 ? <span className="text-error font-bold">{value}</span> : <span className="text-base-content/50">0</span>
+    },
+    {
+      key: 'successRate',
+      title: 'Success Rate',
+      sortable: true,
+      render: (value: string) => {
+        const rate = parseFloat(value);
+        return (
+          <span className={rate > 98 ? 'text-success' : rate > 90 ? 'text-warning' : 'text-error'}>
+            {value}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'provider',
+      title: 'Platform',
+      render: (value: string) => <span className="badge badge-ghost badge-sm">{value}</span>
+    },
+    {
+      key: 'llm',
+      title: 'LLM',
+      render: (value: string) => <span className="badge badge-outline badge-sm">{value}</span>
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
-      {/* WIP Banner */}
-      <div role="alert" className="alert alert-info mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span>This feature is in preview mode. Historical data availability may be limited as we improve our data retention capabilities.</span>
-      </div>
+    <div className="space-y-6">
+      <Alert
+        status="info"
+        message="This feature is in preview mode. Historical data availability may be limited as we improve our data retention capabilities."
+      />
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-              Analytics Dashboard
-            </h1>
-            <p className="text-lg text-neutral-content/70">
-              Usage metrics, user engagement, and performance analytics.
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <select
-              className="select select-bordered"
+      <PageHeader
+        title="Analytics Dashboard"
+        description="Usage metrics, user engagement, and performance analytics."
+        icon={BarChart}
+        actions={
+          <div className="flex gap-2">
+            <Select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-            </select>
-            <button
-              className="btn btn-primary"
+              options={[
+                { value: '1h', label: 'Last Hour' },
+                { value: '24h', label: 'Last 24 Hours' },
+                { value: '7d', label: 'Last 7 Days' },
+                { value: '30d', label: 'Last 30 Days' },
+              ]}
+              className="select-sm w-40"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : '🔄'} Refresh
-            </button>
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="ml-2">Refresh</span>
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {usageMetricsCards.map((card, index) => (
-          <StatusCard
-            key={index}
-            title={card.title}
-            subtitle={card.subtitle}
-            status={card.status as any}
-            metrics={card.metrics}
-            compact={true}
-          />
-        ))}
-      </div>
+      <StatsCards stats={stats} isLoading={isLoading && !activityData} />
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MetricChart
           title="Message Volume"
           data={messageVolumeData}
@@ -178,73 +227,77 @@ const AnalyticsDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Detailed Analytics Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4">Bot Performance</h2>
-            <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Bot Name</th>
-                    <th>Messages</th>
-                    <th>Errors</th>
-                    <th>Success Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {botStats.map((bot) => (
-                    <tr key={bot.name}>
-                      <td>{bot.name}</td>
-                      <td>{bot.messages}</td>
-                      <td>{bot.errors}</td>
-                      <td>
-                        <span className={`text-${parseFloat(bot.successRate) > 98 ? 'success' : 'warning'}`}>
-                          {bot.successRate}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {botStats.length === 0 && (
-                    <tr><td colSpan={4} className="text-center text-neutral-content/50">No bot activity found</td></tr>
-                  )}
-                </tbody>
-              </table>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Bot Performance Stats */}
+        <div className="col-span-1 lg:col-span-2">
+          <Card className="h-full bg-base-100">
+            <div className="card-body p-0">
+              <div className="p-4 border-b border-base-200">
+                <h2 className="card-title text-lg">Bot Performance</h2>
+              </div>
+              {botStats.length > 0 ? (
+                <DataTable
+                  data={botStats}
+                  columns={columns}
+                  pagination={{ pageSize: 5 }}
+                  searchable={false}
+                  className="p-4"
+                />
+              ) : (
+                <div className="p-8">
+                  <EmptyState
+                    title="No Bot Data"
+                    description="No interaction data available for the selected time range."
+                    variant="noData"
+                    icon={Bot}
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Real-time Event Stream */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4">Recent Activity Stream</h2>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {validMessageFlow.slice(0, 10).map((event, idx) => (
-                <div key={`${event.timestamp}-${idx}`} className="flex items-center gap-3 p-2 rounded bg-base-200">
-                  <span className="text-2xl">
-                    {event.messageType === 'incoming' ? '📥' : '📤'}
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {event.botName ? `${event.botName} (${event.provider})` : event.provider}
-                    </p>
-                    <div className="flex justify-between">
-                      <span className="text-xs opacity-70">
-                        {event.messageType === 'incoming' ? `User: ${event.userId}` : 'Response sent'}
-                      </span>
-                      <span className="text-xs text-neutral-content/60">
-                        {new Date(event.timestamp).toLocaleTimeString()}
-                      </span>
+        <div className="col-span-1">
+          <Card className="h-full bg-base-100">
+            <div className="card-body p-0 flex flex-col h-full">
+              <div className="p-4 border-b border-base-200">
+                <h2 className="card-title text-lg">Recent Activity Stream</h2>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[400px]">
+                {validMessageFlow.length > 0 ? (
+                  validMessageFlow.slice(0, 10).map((event, idx) => (
+                    <div key={`${event.timestamp}-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
+                      <div className={`p-2 rounded-full ${event.messageType === 'incoming' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
+                        {event.messageType === 'incoming' ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-semibold truncate">
+                            {event.botName || 'Unknown Bot'}
+                          </p>
+                          <span className="text-xs text-base-content/50 whitespace-nowrap ml-2">
+                            {new Date(event.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-base-content/70 truncate">
+                          via {event.provider}
+                        </p>
+                        <div className="mt-1 flex gap-2">
+                          <span className="badge badge-xs badge-ghost">{event.userId}</span>
+                        </div>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-base-content/50 py-8">
+                    <Activity className="w-8 h-8 mb-2 opacity-50" />
+                    <p className="text-sm">No recent activity</p>
                   </div>
-                </div>
-              ))}
-              {validMessageFlow.length === 0 && (
-                <p className="text-center text-neutral-content/50 py-4">No recent activity</p>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

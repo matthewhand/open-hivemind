@@ -144,10 +144,14 @@ Visual insights into your AI usage.
 *   **Model Performance**: Compare response times and quality across models.
 
 ### [Analytics](/admin/analytics)
-Historical data and trends.
-*   **Conversation Volume**: Track message volume over time.
+Historical data and trends regarding message volume and user engagement.
+
+![Analytics Dashboard](docs/screenshots/analytics-dashboard.png)
+
+*   **Conversation Volume**: Track message volume over time with customizable time ranges (Last Hour, 24 Hours, 7 Days, 30 Days).
 *   **User Engagement**: See active users and interaction frequency.
-*   **Topic Analysis**: (If enabled) High-level analysis of conversation topics.
+*   **Bot Performance**: Detailed table of bot metrics including message counts, errors, and success rates.
+*   **Real-time Stream**: Live feed of incoming and outgoing messages.
 
 ### [Anomaly Detection](/admin/ai/anomalies)
 Identify unusual patterns in bot behavior.
