@@ -2,18 +2,25 @@
 import React, { useState } from 'react';
 import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
 import {
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-import type { Bot } from '../services/api';
+  RefreshCw,
+  EyeOff,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Bot,
+  MessageCircle,
+  Smartphone,
+  Wrench,
+  Activity,
+  Zap,
+  Clock,
+  Server
+} from 'lucide-react';
+import type { Bot as BotType } from '../services/api';
 
 interface BotStatusCardProps {
-  bot: Bot;
+  bot: BotType;
   statusData?: {
     status: string;
     healthDetails?: Record<string, unknown>;
@@ -40,15 +47,15 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'error':
     case 'disconnected':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     case 'warning':
     case 'connecting':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -69,15 +76,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   };
 
   const getProviderIcon = (provider: string) => {
+    const className = 'w-6 h-6';
     switch (provider?.toLowerCase()) {
     case 'discord':
-      return '🤖';
+      return <Bot className={className} />;
     case 'slack':
-      return '💬';
+      return <MessageCircle className={className} />;
     case 'mattermost':
-      return '📱';
+      return <Smartphone className={className} />;
     default:
-      return '🔧';
+      return <Wrench className={className} />;
     }
   };
 
@@ -98,7 +106,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     if (!statusData) {return 0;}
 
     let score = 100;
-    if (statusData.status !== 'active') {score -= 30;}
+    if (statusData.status !== 'active' && statusData.status !== 'connected') {score -= 30;}
     if (statusData.errorCount && statusData.errorCount > 0) {score -= 20;}
     if (statusData.responseTime && statusData.responseTime > 2000) {score -= 15;}
     if (!statusData.connected) {score -= 25;}
@@ -117,11 +125,11 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   return (
     <>
       <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-        <Card.Body>
+        <div className="card-body">
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{getProviderIcon(bot.messageProvider)}</span>
+              <span className="text-primary">{getProviderIcon(bot.messageProvider)}</span>
               <h3 className="text-lg font-bold">{bot.name}</h3>
             </div>
             <div className="flex items-center gap-2">
@@ -163,7 +171,8 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 mb-4 text-center">
             <div>
-              <div className="text-xl font-bold text-primary">
+              <div className="text-xl font-bold text-primary flex justify-center items-center gap-1">
+                <MessageCircle className="w-4 h-4 opacity-50" />
                 {statusData?.messageCount || 0}
               </div>
               <div className="text-xs text-base-content/70">
@@ -171,7 +180,8 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-xl font-bold text-error">
+              <div className="text-xl font-bold text-error flex justify-center items-center gap-1">
+                <AlertCircle className="w-4 h-4 opacity-50" />
                 {statusData?.errorCount || 0}
               </div>
               <div className="text-xs text-base-content/70">
@@ -179,8 +189,8 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-xl font-bold text-success">
-                {statusData?.connected ? '✓' : '✗'}
+              <div className="text-xl font-bold text-success flex justify-center items-center gap-1">
+                {statusData?.connected ? <Zap className="w-4 h-4" /> : <EyeOff className="w-4 h-4 opacity-50" />}
               </div>
               <div className="text-xs text-base-content/70">
                 Connected
@@ -190,15 +200,15 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
 
           {/* Additional Info */}
           <div className="mb-4 space-y-1">
-            <p className="text-sm text-base-content/70">
-              Response Time: {formatResponseTime(statusData?.responseTime || 0)}
+            <p className="text-sm text-base-content/70 flex items-center gap-2">
+              <Clock className="w-3 h-3" /> Response Time: {formatResponseTime(statusData?.responseTime || 0)}
             </p>
-            <p className="text-sm text-base-content/70">
-              Uptime: {formatUptime(statusData?.uptime || 0)}
+            <p className="text-sm text-base-content/70 flex items-center gap-2">
+              <Activity className="w-3 h-3" /> Uptime: {formatUptime(statusData?.uptime || 0)}
             </p>
             {statusData?.lastActivity && (
-              <p className="text-sm text-base-content/70">
-                Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
+              <p className="text-sm text-base-content/70 flex items-center gap-2">
+                <Clock className="w-3 h-3" /> Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
               </p>
             )}
           </div>
@@ -208,10 +218,10 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             <Button
               size="sm"
               variant="secondary"
-              className="btn-outline flex items-center gap-2"
+              className="btn-outline flex items-center gap-2 flex-1"
               onClick={() => setDetailsOpen(true)}
             >
-              <Cog6ToothIcon className="w-4 h-4" />
+              <Info className="w-4 h-4" />
               Details
             </Button>
             <Button
@@ -227,11 +237,11 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               }}
               disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
-        </Card.Body>
+        </div>
       </Card>
 
       {/* Detailed Information Modal */}
@@ -242,10 +252,11 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
         <Modal.Body>
           <div className="space-y-2">
             {/* Basic Information */}
-            <Accordion defaultOpen>
+            <Accordion>
               <Accordion.Item value="basic">
                 <Accordion.Trigger>
                   <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4" />
                     <span>Basic Information</span>
                   </div>
                 </Accordion.Trigger>
@@ -275,9 +286,14 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             </Accordion>
 
             {/* Status Information */}
-            <Accordion defaultOpen>
+            <Accordion>
               <Accordion.Item value="status">
-                <Accordion.Trigger>Status Information</Accordion.Trigger>
+                <Accordion.Trigger>
+                    <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    <span>Status Information</span>
+                  </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     <div className="flex gap-4">
@@ -305,7 +321,12 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             {/* Performance Metrics */}
             <Accordion>
               <Accordion.Item value="performance">
-                <Accordion.Trigger>Performance Metrics</Accordion.Trigger>
+                <Accordion.Trigger>
+                   <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    <span>Performance Metrics</span>
+                  </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     <div className="flex gap-4">
@@ -339,7 +360,12 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             {statusData?.healthDetails && (
               <Accordion>
                 <Accordion.Item value="health">
-                  <Accordion.Trigger>Health Details</Accordion.Trigger>
+                  <Accordion.Trigger>
+                     <div className="flex items-center gap-2">
+                    <Server className="w-4 h-4" />
+                    <span>Health Details</span>
+                  </div>
+                  </Accordion.Trigger>
                   <Accordion.Content>
                     <div className="space-y-3">
                       {Object.entries(statusData.healthDetails).map(([key, value]) => (
@@ -359,7 +385,12 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             {/* Configuration */}
             <Accordion>
               <Accordion.Item value="config">
-                <Accordion.Trigger>Configuration</Accordion.Trigger>
+                <Accordion.Trigger>
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4" />
+                    <span>Configuration</span>
+                  </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     {bot.systemInstruction && (
