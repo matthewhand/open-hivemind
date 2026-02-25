@@ -117,11 +117,21 @@ Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.
 
-### [Monitoring](/admin/monitoring)
-Deep dive into system performance.
-*   **Metrics**: detailed graphs of API usage, response times, and error rates.
-*   **Logs**: Searchable real-time system logs.
-*   **Health Checks**: Detailed status of all internal services and dependencies.
+### [Monitoring Dashboard](/admin/monitoring-dashboard)
+Real-time system health and performance metrics with advanced diagnostics.
+
+![Monitoring Dashboard](docs/images/monitoring-dashboard-enhanced.png)
+
+*   **System Recovery Status**: Tracks the health of internal circuit breakers and system stability.
+    *   **Health**: Overall system state (Healthy, Degraded, Unhealthy).
+    *   **Circuit Breakers**: Number of active circuit breakers preventing cascading failures.
+    *   **Open Circuits**: Number of currently open circuits (failed services).
+    *   **Operation Status**: Detailed breakdown of successes and failures per operation (e.g., database, openai-api).
+*   **Error Intelligence**: Analyzes recent errors to identify patterns.
+    *   **Error Rate**: Frequency of errors over the last minute.
+    *   **Top Error Types**: Breakdown of the most common error categories (timeout, validation, auth).
+*   **Performance Metrics**: Live graphs for CPU Usage, Memory Usage, Message Rate, and Error Rate.
+*   **Alerts**: Real-time notifications for system warnings and critical events.
 
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
@@ -159,14 +169,10 @@ A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
 
-### [Export & System Data](/admin/export)
-Manage system backups, export configurations, and download API specifications.
-![Export Page](docs/images/export-page.png)
-
-*   **System Backups**: Create, restore, and delete full system backups.
-    ![Create Backup Modal](docs/images/create-backup-modal.png)
-*   **Configuration Export**: Export current bot and system configurations as JSON.
+### [Export](/admin/export)
+Download API specifications and system documentation.
 *   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
+*   **Documentation**: Access generated documentation resources.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.

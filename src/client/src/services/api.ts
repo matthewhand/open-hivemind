@@ -261,6 +261,41 @@ export interface ActivityResponse {
   }>;
 }
 
+// Interfaces for Health API
+export interface SystemErrorsResponse {
+  timestamp: string;
+  errors: {
+    total: number;
+    recent: number;
+    rate: number;
+    byType: Record<string, number>;
+    trends: {
+      lastMinute: number;
+      last5Minutes: number;
+      last15Minutes: number;
+    };
+  };
+  health: {
+    status: 'good' | 'fair' | 'poor' | 'critical';
+    recommendations: string[];
+  };
+}
+
+export interface SystemRecoveryResponse {
+  timestamp: string;
+  circuitBreakers: Array<{
+    operation: string;
+    state: 'closed' | 'open' | 'half-open';
+    failureCount: number;
+    successCount: number;
+    fallbacks: number;
+  }>;
+  health: {
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    recommendations: string[];
+  };
+}
+
 class ApiService {
   private csrfToken: string | null = null;
   private csrfTokenPromise: Promise<string> | null = null;
@@ -773,6 +808,15 @@ class ApiService {
   }> {
     return this.request('/health/detailed');
   }
+
+  async getSystemErrors(): Promise<SystemErrorsResponse> {
+    return this.request<SystemErrorsResponse>('/health/errors');
+  }
+
+  async getSystemRecovery(): Promise<SystemRecoveryResponse> {
+    return this.request<SystemRecoveryResponse>('/health/recovery');
+  }
+
   async getGlobalConfig(): Promise<Record<string, any>> {
     return this.request('/api/config/global');
   }

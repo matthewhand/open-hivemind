@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useRef } from 'react';
-import { Line, Bar, Area, Pie } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import {
+  LineChart, Line,
+  BarChart, Bar,
+  AreaChart, Area,
+  PieChart, Pie,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 export interface MetricData {
   timestamp: string;
@@ -64,44 +71,63 @@ const MetricChart: React.FC<MetricChartProps> = ({
     }
   }, [refreshInterval, onRefresh]);
 
-  const renderChart = () => {
-    const commonProps = {
-      data: chartData,
-      width: 800,
-      height: height - 50,
-      margin: { top: 5, right: 30, left: 20, bottom: 5 },
-    };
+  const renderCommonElements = () => (
+    <>
+      {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
+      <XAxis dataKey="time" hide={data.length > 20} interval="preserveStartEnd" />
+      <YAxis />
+      {showTooltip && <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--b1))', borderColor: 'hsl(var(--b3))' }} />}
+      {showLegend && <Legend />}
+    </>
+  );
 
+  const renderChart = () => {
     switch (type) {
     case 'bar':
       return (
-        <Bar {...commonProps}>
-          <Bar dataKey="value" fill={color} />
-        </Bar>
+        <ResponsiveContainer width="100%" height={height - 80}>
+          <BarChart data={chartData}>
+            {renderCommonElements()}
+            <Bar dataKey="value" fill={color} />
+          </BarChart>
+        </ResponsiveContainer>
       );
     case 'area':
       return (
-        <Area {...commonProps}>
-          <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.3} />
-        </Area>
+        <ResponsiveContainer width="100%" height={height - 80}>
+          <AreaChart data={chartData}>
+            {renderCommonElements()}
+            <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.3} />
+          </AreaChart>
+        </ResponsiveContainer>
       );
     case 'pie':
       return (
-        <Pie {...commonProps}>
-          <Pie
-            dataKey="value"
-            cx={commonProps.width / 2}
-            cy={commonProps.height / 2}
-            outerRadius={80}
-            fill={color}
-          />
-        </Pie>
+        <ResponsiveContainer width="100%" height={height - 80}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="label"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              fill={color}
+              label
+            />
+            {showTooltip && <Tooltip />}
+            {showLegend && <Legend />}
+          </PieChart>
+        </ResponsiveContainer>
       );
     default:
       return (
-        <Line {...commonProps}>
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} />
-        </Line>
+        <ResponsiveContainer width="100%" height={height - 80}>
+          <LineChart data={chartData}>
+            {renderCommonElements()}
+            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
       );
     }
   };
@@ -109,12 +135,16 @@ const MetricChart: React.FC<MetricChartProps> = ({
   const getLatestValue = () => {
     if (chartData.length === 0) {return '0';}
     const latest = chartData[chartData.length - 1];
-    return `${latest.value}${unit}`;
+    const val = Number(latest.value);
+    return `${(isNaN(val) ? 0 : val).toFixed(1)}${unit}`;
   };
 
   const getAverageValue = () => {
     if (chartData.length === 0) {return '0';}
-    const sum = chartData.reduce((acc, item) => acc + item.value, 0);
+    const sum = chartData.reduce((acc: number, item: any) => {
+      const val = Number(item.value);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
     return `${Math.round(sum / chartData.length)}${unit}`;
   };
 
@@ -125,8 +155,10 @@ const MetricChart: React.FC<MetricChartProps> = ({
 
     if (recent.length === 0 || older.length === 0) {return 'stable';}
 
-    const recentAvg = recent.reduce((acc, item) => acc + item.value, 0) / recent.length;
-    const olderAvg = older.reduce((acc, item) => acc + item.value, 0) / older.length;
+    const recentAvg = recent.reduce((acc, item) => acc + (Number(item.value) || 0), 0) / recent.length;
+    const olderAvg = older.reduce((acc, item) => acc + (Number(item.value) || 0), 0) / older.length;
+
+    if (olderAvg === 0) {return 'stable';}
 
     const diff = ((recentAvg - olderAvg) / olderAvg) * 100;
 
@@ -171,13 +203,11 @@ const MetricChart: React.FC<MetricChartProps> = ({
           </div>
         )}
 
-        <div className="w-full overflow-x-auto">
+        <div className="w-full h-64">
           {chartData.length > 0 ? (
-            <div className="flex justify-center">
-              {renderChart()}
-            </div>
+             renderChart()
           ) : (
-            <div className="flex items-center justify-center h-48 text-neutral-content/50">
+            <div className="flex items-center justify-center h-full text-neutral-content/50">
               <div className="text-center">
                 <div className="text-4xl mb-2">📊</div>
                 <p>No data available</p>
@@ -185,15 +215,6 @@ const MetricChart: React.FC<MetricChartProps> = ({
             </div>
           )}
         </div>
-
-        {showLegend && chartData.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }}></div>
-              <span className="text-sm text-neutral-content/70">{title}</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

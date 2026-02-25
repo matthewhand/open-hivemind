@@ -466,7 +466,7 @@ router.get('/errors', (req, res) => {
       total: metrics.errors,
       recent: recentErrors,
       rate: calculateErrorRate(recentErrors, 60),
-      byType: errorStats,
+      byType: errorStats.errorTypes,
       trends: {
         lastMinute: errorLogger.getRecentErrorCount(60000),
         last5Minutes: errorLogger.getRecentErrorCount(300000),

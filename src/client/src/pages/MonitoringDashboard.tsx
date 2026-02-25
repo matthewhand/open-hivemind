@@ -1,16 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService } from '../services/api';
+import { apiService, SystemErrorsResponse, SystemRecoveryResponse } from '../services/api';
 import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
+import { ShieldCheckIcon, ShieldExclamationIcon, LightBulbIcon, ExclamationTriangleIcon, HeartIcon } from '@heroicons/react/24/outline';
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [isLoading, setIsLoading] = useState(false);
+
+  // New state for enhanced diagnostics
+  const [recoveryStats, setRecoveryStats] = useState<SystemRecoveryResponse | null>(null);
+  const [errorStats, setErrorStats] = useState<SystemErrorsResponse | null>(null);
 
   useEffect(() => {
     connect();
@@ -18,6 +23,25 @@ const MonitoringDashboard: React.FC = () => {
       disconnect();
     };
   }, []);
+
+  const fetchDiagnostics = useCallback(async () => {
+    try {
+      const [recovery, errors] = await Promise.all([
+        apiService.getSystemRecovery(),
+        apiService.getSystemErrors()
+      ]);
+      setRecoveryStats(recovery);
+      setErrorStats(errors);
+    } catch (err) {
+      console.error('Failed to fetch system diagnostics:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDiagnostics();
+    const interval = setInterval(fetchDiagnostics, refreshInterval * 2); // Poll less frequently than metrics
+    return () => clearInterval(interval);
+  }, [fetchDiagnostics, refreshInterval]);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0,
@@ -34,9 +58,9 @@ const MonitoringDashboard: React.FC = () => {
       subtitle: 'Overall Status',
       status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
       metrics: [
-        { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
-        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
-        { label: 'Active', value: currentMetric.activeConnections, icon: '🔌' }
+        { label: 'CPU Load', value: Number(currentMetric.cpuUsage || 0).toFixed(1), unit: '%' },
+        { label: 'Memory', value: Number(currentMetric.memoryUsage || 0).toFixed(1), unit: '%' },
+        { label: 'Active', value: Number(currentMetric.activeConnections || 0), icon: '🔌' }
       ]
     },
     {
@@ -44,9 +68,9 @@ const MonitoringDashboard: React.FC = () => {
       subtitle: 'Traffic Analysis',
       status: 'healthy',
       metrics: [
-        { label: 'Rate', value: currentMetric.messageRate, unit: '/sec' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-        { label: 'Errors', value: currentMetric.errorRate, unit: '%' }
+        { label: 'Rate', value: Number(currentMetric.messageRate || 0).toFixed(1), unit: '/sec' },
+        { label: 'Latency', value: Number(currentMetric.responseTime || 0).toFixed(0), unit: 'ms' },
+        { label: 'Errors', value: Number(currentMetric.errorRate || 0).toFixed(2), unit: '%' }
       ]
     },
     {
@@ -65,11 +89,16 @@ const MonitoringDashboard: React.FC = () => {
       status: isConnected ? 'healthy' : 'error',
       metrics: [
         { label: 'WebSocket', value: isConnected ? 'Connected' : 'Disconnected', icon: isConnected ? '🟢' : '🔴' },
-        { label: 'API', value: 'Online', icon: '🟢' }, // detailed status could be fetched separately
+        { label: 'API', value: 'Online', icon: '🟢' },
         { label: 'Uptime', value: '99.9%', icon: '⏱️' }
       ]
     }
   ];
+
+  const safeNumber = (val: any) => {
+    const n = Number(val);
+    return isNaN(n) ? 0 : n;
+  };
 
   return (
     <div className="min-h-screen bg-base-200 p-6">
@@ -115,6 +144,127 @@ const MonitoringDashboard: React.FC = () => {
             isLoading={isLoading}
           />
         ))}
+      </div>
+
+      {/* System Diagnostics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Recovery Status Panel */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title flex items-center gap-2">
+              <ShieldCheckIcon className="w-6 h-6 text-secondary" />
+              System Recovery Status
+            </h2>
+            <div className="stats shadow w-full mt-4">
+              <div className="stat">
+                <div className="stat-title">Health</div>
+                <div className={`stat-value text-lg ${recoveryStats?.health?.status === 'healthy' ? 'text-success' : 'text-warning'}`}>
+                  {String(recoveryStats?.health?.status || 'UNKNOWN').toUpperCase()}
+                </div>
+              </div>
+              <div className="stat">
+                <div className="stat-title">Circuit Breakers</div>
+                <div className="stat-value text-lg">
+                  {safeNumber(recoveryStats?.circuitBreakers?.length)}
+                </div>
+              </div>
+              <div className="stat">
+                <div className="stat-title">Open Circuits</div>
+                <div className="stat-value text-lg text-error">
+                  {safeNumber(recoveryStats?.circuitBreakers?.filter(cb => cb.state === 'open').length)}
+                </div>
+              </div>
+            </div>
+
+            {recoveryStats?.health?.recommendations && recoveryStats.health.recommendations.length > 0 && (
+               <div className="alert alert-warning mt-4 text-sm py-2">
+                 <ExclamationTriangleIcon className="w-5 h-5" />
+                 <div>
+                   <h3 className="font-bold">Recommendations</h3>
+                   <ul className="list-disc pl-4">
+                     {recoveryStats.health.recommendations.map((rec, i) => <li key={i}>{String(rec)}</li>)}
+                   </ul>
+                 </div>
+               </div>
+            )}
+
+            <div className="overflow-x-auto mt-4">
+              <table className="table table-xs">
+                <thead>
+                  <tr>
+                    <th>Operation</th>
+                    <th>State</th>
+                    <th>Failures</th>
+                    <th>Successes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recoveryStats?.circuitBreakers?.map((cb, idx) => (
+                    <tr key={idx}>
+                      <td className="font-mono">{String(cb.operation)}</td>
+                      <td>
+                        <span className={`badge badge-sm ${cb.state === 'closed' ? 'badge-success' : cb.state === 'open' ? 'badge-error' : 'badge-warning'}`}>
+                          {String(cb.state)}
+                        </span>
+                      </td>
+                      <td>{safeNumber(cb.failureCount)}</td>
+                      <td>{safeNumber(cb.successCount)}</td>
+                    </tr>
+                  )) || <tr><td colSpan={4} className="text-center opacity-50">Loading recovery stats...</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Intelligence Panel */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title flex items-center gap-2">
+              <LightBulbIcon className="w-6 h-6 text-accent" />
+              Error Intelligence
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4 mt-2">
+               <div className="bg-base-200 rounded-lg p-3">
+                 <div className="text-xs opacity-70">Error Rate (1m)</div>
+                 <div className="text-xl font-bold">{safeNumber(errorStats?.errors?.rate).toFixed(2)} / sec</div>
+               </div>
+               <div className="bg-base-200 rounded-lg p-3">
+                 <div className="text-xs opacity-70">Total Errors</div>
+                 <div className="text-xl font-bold">{safeNumber(errorStats?.errors?.total)}</div>
+               </div>
+            </div>
+
+            {errorStats?.health?.recommendations && errorStats.health.recommendations.length > 0 && (
+               <div className="alert alert-info mt-4 text-sm py-2">
+                 <LightBulbIcon className="w-5 h-5" />
+                 <div>
+                   <h3 className="font-bold">System Insights</h3>
+                   <ul className="list-disc pl-4">
+                     {errorStats.health.recommendations.map((rec, i) => <li key={i}>{String(rec)}</li>)}
+                   </ul>
+                 </div>
+               </div>
+            )}
+
+            <h3 className="font-semibold mt-4 text-sm">Top Error Types</h3>
+            <div className="space-y-2 mt-2">
+              {Object.entries(errorStats?.errors?.byType || {}).slice(0, 5).map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between text-sm">
+                  <span className="font-mono bg-base-200 px-1 rounded">{String(type)}</span>
+                  <div className="flex items-center gap-2 w-1/2">
+                    <progress className="progress progress-error w-full" value={safeNumber(count)} max={safeNumber(errorStats?.errors?.total || 1)}></progress>
+                    <span className="w-8 text-right">{safeNumber(count)}</span>
+                  </div>
+                </div>
+              ))}
+              {(!errorStats || Object.keys(errorStats.errors?.byType || {}).length === 0) && (
+                <div className="text-center opacity-50 py-4 text-sm">No errors recorded recently.</div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts Row */}
