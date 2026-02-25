@@ -3,9 +3,6 @@ import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -31,8 +28,6 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -87,16 +82,7 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const filteredUrls = sitemapData?.urls.filter((url) => {
-    if (!searchTerm) return true;
-    const lowerSearch = searchTerm.toLowerCase();
-    return (
-      url.url.toLowerCase().includes(lowerSearch) ||
-      url.description.toLowerCase().includes(lowerSearch)
-    );
-  }) || [];
-
-  const groupedUrls = filteredUrls.reduce((acc, url) => {
+  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -168,148 +154,62 @@ const SitemapPage: React.FC = () => {
       </div>
 
       {/* Statistics and Controls */}
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="stats shadow">
-            <div className="stat">
-                <div className="stat-title">Total Pages</div>
-                <div className="stat-value">{filteredUrls.length}</div>
-                <div className="stat-desc">Of {sitemapData?.totalUrls || 0} total</div>
-            </div>
-            </div>
-
-            <div className="stats shadow">
-            <div className="stat">
-                <div className="stat-title">Generated</div>
-                <div className="stat-value text-sm">
-                {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-                </div>
-                <div className="stat-desc">
-                {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-                </div>
-            </div>
-            </div>
-
-            <div className="form-control w-full">
-                <label className="label">
-                    <span className="label-text">Access Level</span>
-                </label>
-                <select
-                    className="select select-bordered w-full"
-                    value={accessFilter}
-                    onChange={(e) => setAccessFilter(e.target.value)}
-                >
-                    <option value="all">All Pages</option>
-                    <option value="public">Public Only</option>
-                    <option value="authenticated">Authenticated</option>
-                    <option value="owner">Owner Only</option>
-                </select>
-            </div>
-             <div className="flex gap-2 items-end">
-                <button
-                    className="btn btn-outline flex-1"
-                    onClick={handleDownloadXml}
-                >
-                    <DownloadIcon className="w-5 h-5 mr-2" />
-                    XML
-                </button>
-                <button
-                    className="btn btn-outline"
-                    onClick={fetchSitemap}
-                    title="Refresh"
-                >
-                    <RefreshIcon className="w-5 h-5" />
-                </button>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Total Pages</div>
+            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
+          </div>
         </div>
 
-        {/* Search and View Toggle */}
-        <div className="flex gap-4 items-center bg-base-100 p-4 rounded-lg shadow">
-             <div className="relative flex-1">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-                <input
-                    type="text"
-                    placeholder="Search pages..."
-                    className="input input-bordered w-full pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Generated</div>
+            <div className="stat-value text-sm">
+              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
             </div>
-            <div className="join">
-                <button
-                    className={`join-item btn ${viewMode === 'grid' ? 'btn-active' : ''}`}
-                    onClick={() => setViewMode('grid')}
-                    title="Grid View"
-                >
-                    <Squares2X2Icon className="w-5 h-5" />
-                </button>
-                <button
-                    className={`join-item btn ${viewMode === 'list' ? 'btn-active' : ''}`}
-                    onClick={() => setViewMode('list')}
-                    title="List View"
-                >
-                    <ListBulletIcon className="w-5 h-5" />
-                </button>
+            <div className="stat-desc">
+              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
             </div>
+          </div>
+        </div>
+
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">Access Level</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={accessFilter}
+            onChange={(e) => setAccessFilter(e.target.value)}
+          >
+            <option value="all">All Pages</option>
+            <option value="public">Public Only</option>
+            <option value="authenticated">Authenticated</option>
+            <option value="owner">Owner Only</option>
+          </select>
+        </div>
+
+        <div className="flex gap-2 items-end">
+          <button
+            className="btn btn-outline flex-1"
+            onClick={handleDownloadXml}
+          >
+            <DownloadIcon className="w-5 h-5 mr-2" />
+            XML
+          </button>
+          <button
+            className="btn btn-outline"
+            onClick={fetchSitemap}
+            title="Refresh"
+          >
+            <RefreshIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className="overflow-x-auto bg-base-100 rounded-lg shadow mb-8">
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Page</th>
-                        <th>Access</th>
-                        <th>Priority</th>
-                        <th>Frequency</th>
-                        <th>Last Modified</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredUrls.map((url) => (
-                        <tr key={url.url}>
-                            <td>
-                                <div className="font-bold">{url.url}</div>
-                                <div className="text-sm opacity-50">{url.description}</div>
-                            </td>
-                            <td>
-                                <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                                    {url.access}
-                                </div>
-                            </td>
-                            <td>
-                                <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                                    {url.priority}
-                                </div>
-                            </td>
-                            <td>{url.changefreq}</td>
-                            <td>{new Date(url.lastmod).toLocaleDateString()}</td>
-                            <td>
-                                <button
-                                    className="btn btn-ghost btn-xs btn-circle"
-                                    onClick={() => handleOpenUrl(url.fullUrl)}
-                                    title="Open Page"
-                                >
-                                    <LaunchIcon className="w-4 h-4" />
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                    {filteredUrls.length === 0 && (
-                        <tr>
-                            <td colSpan={6} className="text-center py-8 text-base-content/50">
-                                No pages found matching your search.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-      ) : (
-      /* Grouped URLs Grid View */
-      Object.entries(groupedUrls).map(([category, urls]) => (
+      {/* Grouped URLs */}
+      {Object.entries(groupedUrls).map(([category, urls]) => (
         <div key={category} className="mb-8">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             {category}
@@ -356,13 +256,7 @@ const SitemapPage: React.FC = () => {
             ))}
           </div>
         </div>
-      )))}
-
-      {filteredUrls.length === 0 && viewMode === 'grid' && (
-         <div className="text-center py-8 text-base-content/50">
-            No pages found matching your search.
-        </div>
-      )}
+      ))}
 
       {/* Sitemap Links */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
