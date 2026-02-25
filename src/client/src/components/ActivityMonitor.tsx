@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Table } from './DaisyUI';
+import { Card, Badge, Button, Alert, Table, Loading } from './DaisyUI';
 import {
-  BoltIcon,
-  ServerIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline';
+  Zap,
+  Bot,
+  Users,
+  BarChart2,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Server
+} from 'lucide-react';
+import { apiService } from '../services/api';
+import type { ActivityEvent as ApiActivityEvent } from '../services/api';
 
 export interface ActivityEvent {
   id: string;
@@ -16,51 +24,61 @@ export interface ActivityEvent {
   duration?: number;
 }
 
-const mockEvents: ActivityEvent[] = [
-  {
-    id: '1',
-    timestamp: new Date(),
-    type: 'bot',
-    message: 'Bot configuration updated successfully',
-    severity: 'low',
-    duration: 120,
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 60000),
-    type: 'user',
-    message: 'User login from new device',
-    severity: 'medium',
-    duration: 300,
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 180000),
-    type: 'system',
-    message: 'Database backup completed',
-    severity: 'low',
-    duration: 5000,
-  },
-];
-
 const ActivityMonitor: React.FC = () => {
-  const [events, setEvents] = useState<ActivityEvent[]>(mockEvents);
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const fetchActivity = async () => {
+    try {
+        const response = await apiService.getActivity();
+
+        // Map API events to local structure
+        const mappedEvents: ActivityEvent[] = response.events.map(e => {
+            let type: ActivityEvent['type'] = 'system';
+            if (e.status === 'error' || e.status === 'timeout') {
+                type = 'error';
+            } else if (e.messageType === 'incoming') {
+                type = 'user';
+            } else if (e.messageType === 'outgoing') {
+                type = 'bot';
+            }
+
+            let severity: ActivityEvent['severity'] = 'low';
+            if (e.status === 'error') {severity = 'high';}
+            else if (e.status === 'timeout') {severity = 'medium';}
+
+            let message = '';
+            if (e.errorMessage) {
+                message = e.errorMessage;
+            } else {
+                message = `${e.botName} (${e.provider}) - ${e.messageType}`;
+            }
+
+            return {
+                id: e.id,
+                timestamp: new Date(e.timestamp),
+                type,
+                message,
+                severity,
+                duration: e.processingTime
+            };
+        });
+
+        setEvents(mappedEvents);
+    } catch (err) {
+        console.error("Failed to fetch activity", err);
+    }
+  };
 
   useEffect(() => {
+    fetchActivity();
+
     if (!isMonitoring) { return; }
 
     const interval = setInterval(() => {
-      const newEvent: ActivityEvent = {
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        type: (['bot', 'user', 'system', 'error'] as const)[Math.floor(Math.random() * 4)],
-        message: `System activity detected at ${new Date().toLocaleTimeString()}`,
-        severity: (['low', 'medium', 'high', 'critical'] as const)[Math.floor(Math.random() * 4)],
-        duration: Math.floor(Math.random() * 1000) + 50,
-      };
-      setEvents(prev => [newEvent, ...prev].slice(0, 50));
+      fetchActivity();
     }, 5000);
 
     return () => clearInterval(interval);
@@ -81,12 +99,13 @@ const ActivityMonitor: React.FC = () => {
   };
 
   const getTypeIcon = (type: string) => {
+    const className = "w-4 h-4";
     switch (type) {
-      case 'bot': return '🤖';
-      case 'user': return '👤';
-      case 'system': return '⚙️';
-      case 'error': return '❌';
-      default: return '📝';
+      case 'bot': return <Bot className={className} />;
+      case 'user': return <Users className={className} />;
+      case 'system': return <Server className={className} />;
+      case 'error': return <XCircle className={className} />;
+      default: return <Activity className={className} />;
     }
   };
 
@@ -100,7 +119,7 @@ const ActivityMonitor: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <BoltIcon className="w-8 h-8 text-info" />
+              <Activity className="w-8 h-8 text-info" />
               <div>
                 <h2 className="card-title text-2xl">Activity Monitor</h2>
                 <p className="text-sm opacity-70">Real-time system activity tracking</p>
@@ -125,28 +144,28 @@ const ActivityMonitor: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow">
           <div className="card-body text-center">
-            <BoltIcon className="w-8 h-8 mx-auto text-primary mb-2" />
+            <Zap className="w-8 h-8 mx-auto text-primary mb-2" />
             <div className="text-2xl font-bold">{events.length}</div>
             <p className="text-sm opacity-70">Total Events</p>
           </div>
         </Card>
         <Card className="shadow">
           <div className="card-body text-center">
-            <ServerIcon className="w-8 h-8 mx-auto text-info mb-2" />
+            <Bot className="w-8 h-8 mx-auto text-info mb-2" />
             <div className="text-2xl font-bold">{events.filter(e => e.type === 'bot').length}</div>
             <p className="text-sm opacity-70">Bot Activities</p>
           </div>
         </Card>
         <Card className="shadow">
           <div className="card-body text-center">
-            <UserGroupIcon className="w-8 h-8 mx-auto text-warning mb-2" />
+            <Users className="w-8 h-8 mx-auto text-warning mb-2" />
             <div className="text-2xl font-bold">{events.filter(e => e.type === 'user').length}</div>
             <p className="text-sm opacity-70">User Activities</p>
           </div>
         </Card>
         <Card className="shadow">
           <div className="card-body text-center">
-            <ChartBarIcon className="w-8 h-8 mx-auto text-success mb-2" />
+            <BarChart2 className="w-8 h-8 mx-auto text-success mb-2" />
             <div className="text-2xl font-bold">{recentEvents.length}</div>
             <p className="text-sm opacity-70">Last 5 min</p>
           </div>
@@ -210,28 +229,34 @@ const ActivityMonitor: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredEvents.slice(0, 20).map((event) => (
-                  <tr key={event.id}>
-                    <td className="text-sm opacity-70">
-                      {event.timestamp.toLocaleTimeString()}
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span>{getTypeIcon(event.type)}</span>
-                        <span className="capitalize">{event.type}</span>
-                      </div>
-                    </td>
-                    <td className="max-w-xs truncate">{event.message}</td>
-                    <td>
-                      <Badge variant={getSeverityColor(event.severity)} size="sm">
-                        {event.severity}
-                      </Badge>
-                    </td>
-                    <td className="text-sm">
-                      {event.duration ? `${event.duration}ms` : '-'}
-                    </td>
-                  </tr>
-                ))}
+                {filteredEvents.length === 0 ? (
+                    <tr>
+                        <td colSpan={5} className="text-center py-4 opacity-70">No activity recorded</td>
+                    </tr>
+                ) : (
+                    filteredEvents.slice(0, 20).map((event) => (
+                    <tr key={event.id}>
+                        <td className="text-sm opacity-70">
+                        {event.timestamp.toLocaleTimeString()}
+                        </td>
+                        <td>
+                        <div className="flex items-center gap-2">
+                            <span>{getTypeIcon(event.type)}</span>
+                            <span className="capitalize">{event.type}</span>
+                        </div>
+                        </td>
+                        <td className="max-w-xs truncate">{event.message}</td>
+                        <td>
+                        <Badge variant={getSeverityColor(event.severity)} size="sm">
+                            {event.severity}
+                        </Badge>
+                        </td>
+                        <td className="text-sm">
+                        {event.duration ? `${event.duration}ms` : '-'}
+                        </td>
+                    </tr>
+                    ))
+                )}
               </tbody>
             </Table>
           </div>
@@ -240,7 +265,7 @@ const ActivityMonitor: React.FC = () => {
 
       {isMonitoring && (
         <Alert variant="info" className="flex items-center gap-3">
-          <BoltIcon className="w-5 h-5 animate-pulse" />
+          <Activity className="w-5 h-5 animate-pulse" />
           <div>
             <p className="font-medium">Live monitoring active</p>
             <p className="text-sm opacity-70">Real-time events being captured</p>
