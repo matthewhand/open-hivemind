@@ -137,9 +137,15 @@ Download API specifications and system documentation.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
-*   **Page Hierarchy**: See all available pages and their relationships.
+*   **Page Hierarchy**: See all available pages and their relationships, grouped by category in the default Grid View.
+*   **Search & Filter**: Quickly find pages by searching for paths or descriptions.
+*   **List View**: Switch to a detailed table view to see priority, change frequency, and last modification dates.
 *   **Access Control**: Filter pages by public, authenticated, or owner access levels.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
+
+![Sitemap Grid View](docs/images/sitemap-grid-view.png)
+
+![Sitemap Table View](docs/images/sitemap-table-view.png)
 
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
