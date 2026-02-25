@@ -163,8 +163,22 @@ export interface McpGuardConfig {
   type: McpGuardType;
   /** List of allowed user IDs (for userlist type) */
   allowedUsers?: string[];
+  /** List of allowed MCP tools (by name) */
+  allowedTools?: string[];
   /** Additional guard settings */
   settings?: Record<string, unknown>;
+}
+
+/**
+ * Content filter configuration
+ */
+export interface ContentFilterConfig {
+  /** Whether content filter is enabled */
+  enabled: boolean;
+  /** Strictness level */
+  strictness?: 'low' | 'medium' | 'high';
+  /** List of specific blocked terms/phrases */
+  blockedTerms?: string[];
 }
 
 /**
@@ -200,10 +214,7 @@ export interface BotConfig {
     windowMs?: number;
   };
   /** Content filter configuration */
-  contentFilter?: {
-    enabled: boolean;
-    strictness?: 'low' | 'medium' | 'high';
-  };
+  contentFilter?: ContentFilterConfig;
   /** Discord-specific configuration */
   discord?: DiscordConfig;
   /** Slack-specific configuration */
