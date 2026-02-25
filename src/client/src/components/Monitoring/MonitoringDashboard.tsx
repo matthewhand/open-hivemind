@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Alert, Button, Loading } from '../DaisyUI';
+import PageHeader from '../DaisyUI/PageHeader';
+import StatsCards from '../DaisyUI/StatsCards';
 import {
-  ArrowPathIcon,
-  ChartBarIcon,
-  HeartIcon,
-  CpuChipIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
+  RefreshCw,
+  ChartBar,
+  Heart,
+  Cpu,
+  Clock,
+  Activity,
+} from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from '../ActivityMonitor';
@@ -133,23 +136,59 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const overallStatus = getOverallHealthStatus();
 
   const tabs = [
-    { icon: <HeartIcon className="w-5 h-5" />, label: 'System Health' },
-    { icon: <CpuChipIcon className="w-5 h-5" />, label: 'Bot Status' },
-    { icon: <ClockIcon className="w-5 h-5" />, label: 'Activity Monitor' },
+    { icon: <Heart className="w-5 h-5" />, label: 'System Health' },
+    { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
+    { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
+  ];
+
+  const stats = [
+    {
+      id: 'system-health',
+      title: 'System Health',
+      value: getOverallHealthStatus(),
+      icon: <Heart className="w-8 h-8" />,
+      color: getHealthColor(getOverallHealthStatus()) as any,
+    },
+    {
+      id: 'active-bots',
+      title: 'Active Bots',
+      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
+      description: 'Connected / Total',
+      icon: <Cpu className="w-8 h-8" />,
+      color: 'primary' as const,
+    },
+    {
+      id: 'error-rate',
+      title: 'Error Rate',
+      value: `${bots.length > 0
+          ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
+          : 0}%`,
+      description: 'Bots with errors',
+      icon: <Activity className="w-8 h-8" />,
+      color: 'error' as const,
+    },
+    {
+      id: 'response-time',
+      title: 'Response Time',
+      value: `${bots.length > 0
+          ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
+          : 0}ms`,
+      description: 'Average',
+      icon: <Clock className="w-8 h-8" />,
+      color: 'info' as const,
+    }
   ];
 
   return (
     <div className="flex-1">
       {/* Header */}
-      <div className="bg-base-200 shadow-sm">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <ChartBarIcon className="w-6 h-6" />
-            <h1 className="text-xl font-bold">System Monitoring Dashboard</h1>
-          </div>
-
+      <PageHeader
+        title="System Monitoring Dashboard"
+        description="Real-time monitoring of system health, bots, and activity"
+        icon={ChartBar}
+        actions={
           <div className="flex items-center gap-4">
-            <Badge variant={getHealthColor(overallStatus) as any} size="lg">
+             <Badge variant={getHealthColor(overallStatus) as any} size="lg">
               Overall: {overallStatus}
             </Badge>
             <span className="text-sm text-base-content/70">
@@ -161,84 +200,18 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               onClick={handleRefresh}
               disabled={loading}
             >
-              {loading ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <ArrowPathIcon className="w-5 h-5" />
-              )}
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Overall Health Summary */}
-      <div className="p-6 bg-base-100">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                System Health
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {getOverallHealthStatus()}
-              </h2>
-              <Badge variant={getHealthColor(getOverallHealthStatus()) as any} size="sm">
-                {getOverallHealthStatus()}
-              </Badge>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Active Bots
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.filter(bot => bot.statusData?.connected).length}/{bots.length}
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Connected / Total
-              </p>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Error Rate
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.length > 0
-                  ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
-                  : 0}%
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Bots with errors
-              </p>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Response Time
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.length > 0
-                  ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
-                  : 0}ms
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Average
-              </p>
-            </Card.Body>
-          </Card>
-        </div>
-      </div>
+      <StatsCards stats={stats} />
 
       {/* Tab Navigation */}
-      <div className="bg-base-200 border-b border-base-300">
+      <div className="bg-base-200 border-b border-base-300 mt-6">
         <div role="tablist" className="tabs tabs-boxed bg-transparent">
           {tabs.map((tab, index) => (
             <a
