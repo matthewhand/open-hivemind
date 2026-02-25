@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { ProviderRegistry } from '../../registry/ProviderRegistry';
+import { IMessageProvider } from '../../registry/IMessageProvider';
 import { testMattermostConnection } from '@hivemind/adapter-mattermost';
-// testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
-import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import discordConfig from '../../config/discordConfig';
@@ -184,7 +184,7 @@ router.get('/bots', async (req, res) => {
 
       const redacted = redactObject(mergedBot as Record<string, unknown>);
 
-      return {
+      const botObj: any = {
         ...redacted,
         id: bot.id,
         name: bot.name,
@@ -547,18 +547,48 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-      // Validate config name strictly to allow only alphanumeric characters, hyphens, and underscores
-      const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
-      if (match && schemaSources[match[1]]) {
-        const type = match[1];
-        debug(`Creating new dynamic config: ${configName} (type: ${type})`);
+      // Try to find schema in registry if not in schemaSources
+      const registry = ProviderRegistry.getInstance();
+      // Check if configName corresponds to a provider ID
+      const provider = registry.getProvider(configName);
+      let schema = null;
+
+      if (provider) {
+         const meta = provider.getMetadata();
+         if (meta.configSchema) {
+            schema = meta.configSchema;
+            // Add to schemaSources for future use
+             const convict = require('convict');
+             schemaSources[configName] = convict(schema);
+         }
+      }
+
+      if (!schema) {
+          // Check for pattern type-name
+          const match = configName.match(/^([a-z]+)-[a-zA-Z0-9-_]+$/);
+          if (match) {
+             const type = match[1];
+             if (schemaSources[type]) {
+                schema = schemaSources[type].getSchema();
+             } else {
+                const p = registry.getProvider(type);
+                if (p && p.getMetadata().configSchema) {
+                    schema = p.getMetadata().configSchema;
+                }
+             }
+          }
+      }
+
+      if (schema) {
+        debug(`Creating new dynamic config: ${configName}`);
         const convict = require('convict');
-        config = convict(schemaSources[type].getSchema());
+        config = convict(schema);
         globalConfigs[configName] = config;
         createdNew = true;
       } else {
+         const validTypes = [...Object.keys(schemaSources), ...registry.getAllProviders().map(p => p.id)];
         return res.status(400).json({
-          error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}`,
+          error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${validTypes.join(', ')}`,
         });
       }
     }
@@ -695,7 +725,7 @@ router.get('/', async (req, res) => {
       };
 
       const isDisabled = userConfigStore.isBotDisabled(mergedBot.name);
-      return {
+      const botObj: any = {
         ...mergedBot,
         // Use name as the ID since that's what the bots API expects
         id: mergedBot.id || mergedBot.name,
@@ -703,49 +733,32 @@ router.get('/', async (req, res) => {
         status: isDisabled ? 'disabled' : mergedBot.status || 'active',
         // If disabled, set connected to false
         connected: isDisabled ? false : mergedBot.connected !== false,
-        discord: mergedBot.discord
-          ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
-          : undefined,
-        slack: mergedBot.slack
-          ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
-          : undefined,
-        openai: mergedBot.openai
-          ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
-          : undefined,
-        flowise: mergedBot.flowise
-          ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
-          : undefined,
-        openwebui: mergedBot.openwebui
-          ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
-          : undefined,
-        openswarm: mergedBot.openswarm
-          ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
-          : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
+
+      // Dynamic redaction based on registry
+      const registry = ProviderRegistry.getInstance();
+      const providers = registry.getAllProviders();
+
+      providers.forEach((p) => {
+        if (botObj[p.id]) {
+          const meta = p.getMetadata();
+          const sensitive = meta.sensitiveFields || [];
+          const section = { ...botObj[p.id] }; // Copy to avoid mutation
+
+          sensitive.forEach((field) => {
+            if (section[field]) {
+              section[field] = redactSensitiveInfo(
+                `${p.id.toUpperCase()}_${field.toUpperCase()}`,
+                section[field]
+              );
+            }
+          });
+          botObj[p.id] = section;
+        }
+      });
+
+      return botObj;
     });
 
     return res.json({
@@ -1562,12 +1575,12 @@ router.get('/llm-status', async (req, res) => {
 // POST /api/config/message-provider/test - Test message provider connectivity
 router.post('/message-provider/test', async (req, res) => {
   try {
-    const provider = String(req.body?.provider || '')
+    const providerId = String(req.body?.provider || '')
       .trim()
       .toLowerCase();
     const config = req.body?.config as Record<string, unknown> | undefined;
 
-    if (!provider) {
+    if (!providerId) {
       return res.status(400).json({ error: 'provider is required' });
     }
 
@@ -1575,23 +1588,20 @@ router.post('/message-provider/test', async (req, res) => {
       return res.status(400).json({ error: 'config is required' });
     }
 
-    if (provider === 'discord') {
-      const rawToken = String((config as any).DISCORD_BOT_TOKEN || (config as any).token || '');
-      const token = rawToken.split(',')[0]?.trim() || '';
-      const { testDiscordConnection } = await import('@hivemind/adapter-discord');
-      const result = await testDiscordConnection(token);
-      return res.json(result);
+    const registry = ProviderRegistry.getInstance();
+    const provider = registry.getProvider(providerId);
+
+    if (provider && provider.type === 'message') {
+        try {
+           const result = await (provider as IMessageProvider).testConnection(config);
+           return res.json(result);
+        } catch (e) {
+           return res.json({ ok: false, error: String(e) });
+        }
     }
 
-    if (provider === 'slack') {
-      const token = String(
-        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || ''
-      ).trim();
-      const result = await testSlackConnection(token);
-      return res.json(result);
-    }
-
-    if (provider === 'mattermost') {
+    // Fallback for Mattermost which might not be in registry yet
+    if (providerId === 'mattermost') {
       const serverUrl = String(
         (config as any).MATTERMOST_SERVER_URL ||
           (config as any).serverUrl ||
@@ -1603,7 +1613,7 @@ router.post('/message-provider/test', async (req, res) => {
       return res.json(result);
     }
 
-    return res.status(400).json({ error: `Unsupported provider "${provider}"` });
+    return res.status(400).json({ error: `Unsupported provider "${providerId}"` });
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({

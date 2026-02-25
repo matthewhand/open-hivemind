@@ -40,6 +40,14 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
+import { ProviderRegistry } from './registry/ProviderRegistry';
+import { SlackProvider } from './integrations/slack/SlackProvider';
+import { DiscordProvider } from './integrations/discord/DiscordProvider';
+import { MattermostProvider } from './integrations/mattermost/MattermostProvider';
+import { OpenSwarmProvider } from './integrations/openswarm/OpenSwarmProvider';
+import { OpenAIProvider } from './llm/providers/OpenAIProvider';
+import { FlowiseProvider } from './llm/providers/FlowiseProvider';
+import { OpenWebUIProvider } from './llm/providers/OpenWebUIProvider';
 
 require('dotenv/config');
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
@@ -424,6 +432,34 @@ async function startBot(messengerService: any) {
 async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
+
+  // Register Integrations
+  try {
+    const registry = ProviderRegistry.getInstance();
+    registry.register(new SlackProvider());
+    registry.register(new DiscordProvider());
+    registry.register(new MattermostProvider());
+    registry.register(new OpenSwarmProvider());
+    registry.register(new OpenAIProvider());
+    registry.register(new FlowiseProvider());
+    registry.register(new OpenWebUIProvider());
+
+    // Refresh message providers to load configuration
+    const messageProviders = registry.getMessageProviders();
+    await Promise.all(
+      messageProviders.map((p) => {
+        if (p.refresh) return p.refresh();
+        return Promise.resolve();
+      })
+    );
+
+    appLogger.info('🧩 Registered providers', {
+      count: registry.getAllProviders().length,
+      types: registry.getAllProviders().map((p) => p.id),
+    });
+  } catch (e) {
+    appLogger.warn('Failed to register some providers', { error: String(e) });
+  }
 
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();

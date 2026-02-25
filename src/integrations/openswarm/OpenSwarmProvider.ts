@@ -1,58 +1,55 @@
-import axios from 'axios';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { LLMResponse } from '@llm/interfaces/LLMResponse';
+import { SwarmInstaller } from './SwarmInstaller';
+import { IToolInstaller } from '../../registry/IToolInstaller';
+import { ProviderMetadata } from '../../registry/IProvider';
 
-export class OpenSwarmProvider implements ILlmProvider {
-  name = 'openswarm';
+export class OpenSwarmProvider implements IToolInstaller {
+  id = 'openswarm';
+  label = 'OpenSwarm';
+  type = 'tool' as const;
 
-  private baseUrl: string;
-  private apiKey: string;
+  private installer: SwarmInstaller;
 
   constructor() {
-    this.baseUrl = process.env.OPENSWARM_BASE_URL || 'http://localhost:8000/v1';
-    this.apiKey = process.env.OPENSWARM_API_KEY || 'dummy-key';
+    this.installer = new SwarmInstaller();
   }
 
-  supportsChatCompletion(): boolean {
-    return true;
+  getMetadata(): ProviderMetadata {
+    return {
+      id: 'openswarm',
+      label: 'OpenSwarm',
+      docsUrl: 'https://github.com/hivemind/open-swarm',
+      helpText: 'OpenSwarm is a tool orchestration platform.',
+      sensitiveFields: ['apiKey'],
+    };
   }
 
-  supportsCompletion(): boolean {
-    return true;
+  async getStatus(): Promise<any> {
+    const pythonAvailable = await this.installer.checkPython();
+    const swarmInstalled = await this.installer.checkSwarmInstalled();
+    return {
+      pythonAvailable,
+      swarmInstalled,
+      webUIUrl: this.getWebUIUrl(),
+    };
   }
 
-  async generateChatCompletion(
-    userMessage: string,
-    historyMessages: any[],
-    metadata?: Record<string, any>
-  ): Promise<string> {
-    try {
-      const teamName = metadata?.team || metadata?.model || 'default-team';
-
-      const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: teamName,
-          messages: [...historyMessages, { role: 'user', content: userMessage }],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 15000,
-        }
-      );
-
-      return response.data.choices[0]?.message?.content || 'No response';
-    } catch (error: any) {
-      console.error('OpenSwarm API error:', error.message);
-      return `Error: ${error.message}`;
-    }
+  async checkPrerequisites(): Promise<boolean> {
+    return this.installer.checkPython();
   }
 
-  async generateCompletion(prompt: string): Promise<string> {
-    const content = await this.generateChatCompletion(prompt, [], {});
-    return content;
+  async isInstalled(): Promise<boolean> {
+    return this.installer.checkSwarmInstalled();
+  }
+
+  async install(): Promise<{ success: boolean; message: string }> {
+    return this.installer.installSwarm();
+  }
+
+  async start(port?: number): Promise<{ success: boolean; message: string }> {
+    return this.installer.startSwarm(port);
+  }
+
+  getWebUIUrl(): string {
+    return this.installer.getSwarmWebUIUrl();
   }
 }
