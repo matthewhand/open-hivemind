@@ -1,20 +1,28 @@
 import { Router, type Request, type Response } from 'express';
-import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
+import { toolRegistry } from '../integrations/ToolRegistry';
 
-export const installer = new SwarmInstaller();
 const swarmRouter = Router();
+
+function getInstaller() {
+  const installer = toolRegistry.get('openswarm');
+  if (!installer) {
+    throw new Error('OpenSwarm installer not found in registry');
+  }
+  return installer;
+}
 
 // Check system requirements
 swarmRouter.get('/check', async (_req: Request, res: Response) => {
   try {
-    const pythonAvailable = await installer.checkPython();
-    const swarmInstalled = await installer.checkSwarmInstalled();
+    const installer = getInstaller();
+    const result = await installer.checkPrerequisites();
+    const installed = await installer.isInstalled();
 
     res.json({
       ok: true,
-      pythonAvailable,
-      swarmInstalled,
-      webUIUrl: installer.getSwarmWebUIUrl(),
+      pythonAvailable: result.ok,
+      swarmInstalled: installed,
+      webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
@@ -24,8 +32,9 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
 // Install OpenSwarm
 swarmRouter.post('/install', async (_req: Request, res: Response) => {
   try {
-    const result = await installer.installSwarm();
-    res.json({ ok: result.success, message: result.message });
+    const installer = getInstaller();
+    const result = await installer.install();
+    res.json({ ok: result.ok, message: result.message });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
   }
@@ -34,6 +43,11 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
 // Start OpenSwarm server
 swarmRouter.post('/start', async (req: Request, res: Response) => {
   try {
+    const installer = getInstaller();
+    if (!installer.start) {
+      return res.status(400).json({ ok: false, error: 'Start not supported by this installer' });
+    }
+
     const rawPort = req.body.port;
     let port = 8000;
 
@@ -53,8 +67,8 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
       }
     }
 
-    const result = await installer.startSwarm(port);
-    return res.json({ ok: result.success, message: result.message });
+    const result = await installer.start(port);
+    return res.json({ ok: result.ok, message: result.message });
   } catch (error: any) {
     return res.status(500).json({ ok: false, error: error.message });
   }

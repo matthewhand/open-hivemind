@@ -40,6 +40,7 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
+import { registerProviders } from './server/initProviders';
 
 require('dotenv/config');
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
@@ -442,6 +443,9 @@ async function main() {
 
   // Initialize the StartupGreetingService
   await StartupGreetingService.initialize();
+
+  // Initialize and register providers
+  registerProviders();
 
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();

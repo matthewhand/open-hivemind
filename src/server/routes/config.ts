@@ -6,8 +6,8 @@ import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 // testDiscordConnection import removed from @hivemind/adapter-discord; will fetch dynamically
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
+import { providerRegistry } from '../../config/ProviderRegistry';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import discordConfig from '../../config/discordConfig';
 import flowiseConfig from '../../config/flowiseConfig';
 import {
   getGuardrailProfiles,
@@ -41,7 +41,6 @@ import {
   updateResponseProfile,
   type ResponseProfile,
 } from '../../config/responseProfileManager';
-import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
@@ -62,8 +61,6 @@ const router = Router();
 const schemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  discord: discordConfig,
-  slack: slackConfig,
   openai: openaiConfig,
   flowise: flowiseConfig,
   ollama: ollamaConfig,
@@ -74,6 +71,19 @@ const schemaSources: Record<string, any> = {
 
 // Map of all active config instances
 const globalConfigs: Record<string, any> = { ...schemaSources };
+
+export function registerConfigSchema(id: string, schema: any) {
+  debug(`Registering config schema for ${id}`);
+  schemaSources[id] = schema;
+  if (!globalConfigs[id]) {
+    try {
+      const convict = require('convict');
+      globalConfigs[id] = convict(schema);
+    } catch (e) {
+      console.error(`Failed to initialize config for ${id}`, e);
+    }
+  }
+}
 
 // Helper to load dynamic configs from files
 const loadDynamicConfigs = () => {
@@ -146,13 +156,23 @@ function redactValue(value: unknown): string {
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
-function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<string, unknown> {
+function redactObject(
+  obj: Record<string, unknown>,
+  parentKey = '',
+  sensitiveFields: string[] = []
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = parentKey ? `${parentKey}.${key}` : key;
+    const isSensitive = isSensitiveKey(key) || sensitiveFields.includes(key);
+
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = redactObject(value as Record<string, unknown>, fullKey);
-    } else if (isSensitiveKey(key) && value) {
+      result[key] = redactObject(
+        value as Record<string, unknown>,
+        fullKey,
+        sensitiveFields
+      );
+    } else if (isSensitive && value) {
       result[key] = {
         isRedacted: true,
         redactedValue: redactValue(value),
@@ -567,8 +587,13 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Determine target file
     let targetFile = '';
-    // If it's one of the base sources, use its standard file, else use dynamic name
-    if (schemaSources[configName] && !createdNew) {
+
+    // Check if it is a registered provider
+    const provider = providerRegistry.get(configName);
+    if (provider) {
+      targetFile = `providers/${configName}.json`;
+    } else if (schemaSources[configName] && !createdNew) {
+      // Legacy/Core configs
       switch (configName) {
         case 'message':
           targetFile = 'providers/message.json';
@@ -576,17 +601,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
         case 'llm':
           targetFile = 'providers/llm.json';
           break;
-        case 'discord':
-          targetFile = 'providers/discord.json';
-          break;
-        case 'slack':
-          targetFile = 'providers/slack.json';
-          break;
         case 'openai':
           targetFile = 'providers/openai.json';
           break;
         case 'flowise':
           targetFile = 'providers/flowise.json';
+          break;
+        case 'ollama':
+          targetFile = 'providers/ollama.json';
           break;
         case 'mattermost':
           targetFile = 'providers/mattermost.json';
@@ -695,7 +717,7 @@ router.get('/', async (req, res) => {
       };
 
       const isDisabled = userConfigStore.isBotDisabled(mergedBot.name);
-      return {
+      const botResult = {
         ...mergedBot,
         // Use name as the ID since that's what the bots API expects
         id: mergedBot.id || mergedBot.name,
@@ -703,23 +725,6 @@ router.get('/', async (req, res) => {
         status: isDisabled ? 'disabled' : mergedBot.status || 'active',
         // If disabled, set connected to false
         connected: isDisabled ? false : mergedBot.connected !== false,
-        discord: mergedBot.discord
-          ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
-          : undefined,
-        slack: mergedBot.slack
-          ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
-          : undefined,
         openai: mergedBot.openai
           ? {
               ...mergedBot.openai,
@@ -746,6 +751,20 @@ router.get('/', async (req, res) => {
           : undefined,
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
+
+      // Generic redaction for registered providers
+      providerRegistry.getAll().forEach((provider) => {
+        const meta = provider.getMetadata();
+        const id = meta.id;
+        if ((botResult as any)[id]) {
+          (botResult as any)[id] = redactObject(
+            (botResult as any)[id],
+            '',
+            meta.sensitiveFields
+          );
+        }
+      });
+      return botResult;
     });
 
     return res.json({

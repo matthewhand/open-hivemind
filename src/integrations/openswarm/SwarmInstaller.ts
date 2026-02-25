@@ -2,14 +2,40 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { IToolInstaller, IToolInstallerCheckResult } from '../../types/IToolInstaller';
 
 const execAsync = promisify(exec);
 
-export class SwarmInstaller {
+export class SwarmInstaller implements IToolInstaller {
+  id = 'openswarm';
+  name = 'OpenSwarm';
   private installPath: string;
 
   constructor() {
     this.installPath = path.join(process.cwd(), 'open-swarm');
+  }
+
+  async checkPrerequisites(): Promise<IToolInstallerCheckResult> {
+    const python = await this.checkPython();
+    return { ok: python, message: python ? 'Python available' : 'Python not found' };
+  }
+
+  async isInstalled(): Promise<boolean> {
+    return this.checkSwarmInstalled();
+  }
+
+  async install(): Promise<IToolInstallerCheckResult> {
+    const res = await this.installSwarm();
+    return { ok: res.success, message: res.message };
+  }
+
+  async start(port = 8000): Promise<IToolInstallerCheckResult> {
+    const res = await this.startSwarm(port);
+    return { ok: res.success, message: res.message };
+  }
+
+  getWebUIUrl(): string {
+    return this.getSwarmWebUIUrl();
   }
 
   async checkPython(): Promise<boolean> {
