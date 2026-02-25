@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, AlertTriangle, Save, Copy } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import SearchFilterBar from '../components/SearchFilterBar';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -37,7 +35,6 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -169,56 +166,46 @@ const GuardsPage: React.FC = () => {
     });
   };
 
-  const filteredProfiles = useMemo(() => {
-    return profiles.filter(profile =>
-      profile.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (profile.description && profile.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [profiles, searchQuery]);
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <PageHeader
-        title="Guard Profiles"
-        description="Manage security and access control profiles for bots"
-        icon={Shield}
-        actions={
-          <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost gap-2" disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
-            <button onClick={handleCreate} className="btn btn-primary gap-2">
-              <Plus className="w-4 h-4" /> New Profile
-            </button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-500 rounded-lg">
+            <Shield className="w-6 h-6 text-white" />
           </div>
-        }
-      />
-
-      <SearchFilterBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search profiles..."
-        className="mb-6"
-      />
+          <div>
+            <h1 className="text-2xl font-bold">Guard Profiles</h1>
+            <p className="text-base-content/60">Manage security and access control profiles for bots</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={fetchProfiles} className="btn btn-ghost gap-2" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={handleCreate} className="btn btn-primary gap-2">
+            <Plus className="w-4 h-4" /> New Profile
+          </button>
+        </div>
+      </div>
 
       {loading && !editingProfile ? (
         <div className="flex items-center justify-center py-12">
           <span className="loading loading-spinner loading-lg" />
         </div>
-      ) : filteredProfiles.length === 0 ? (
+      ) : profiles.length === 0 ? (
         <EmptyState
           icon={Shield}
-          title={searchQuery ? "No matching profiles" : "No Guard Profiles"}
-          description={searchQuery ? "Try adjusting your search terms" : "Create a guard profile to enforce security policies and access controls for your bots."}
-          actionLabel={searchQuery ? undefined : "New Profile"}
-          actionIcon={searchQuery ? undefined : Plus}
-          onAction={searchQuery ? undefined : handleCreate}
-          variant={searchQuery ? "noResults" : "noData"}
+          title="No Guard Profiles"
+          description="Create a guard profile to enforce security policies and access controls for your bots."
+          actionLabel="New Profile"
+          actionIcon={Plus}
+          onAction={handleCreate}
+          variant="noData"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfiles.map(profile => (
+          {profiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
@@ -256,172 +243,162 @@ const GuardsPage: React.FC = () => {
       )}
 
       {/* Edit Modal */}
-      <Modal
-        isOpen={!!editingProfile}
-        onClose={() => setEditingProfile(null)}
-        title={isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}
-        size="lg"
-        actions={[
-            {
-                label: 'Cancel',
-                onClick: () => setEditingProfile(null),
-                variant: 'ghost',
-                disabled: saving
-            },
-            {
-                label: saving ? 'Saving...' : 'Save Profile',
-                onClick: handleSaveProfile,
-                variant: 'primary',
-                loading: saving,
-                disabled: saving
-            }
-        ]}
-      >
-        {editingProfile && (
-            <div className="space-y-6">
-                <div className="form-control">
-                <label className="label"><span className="label-text">Profile Name</span></label>
-                <input
-                    type="text"
-                    className="input input-bordered"
-                    value={editingProfile.name}
-                    onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
-                    placeholder="e.g. Strict Production"
-                />
-                </div>
+      {editingProfile && (
+        <div className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-4xl">
+            <h3 className="font-bold text-lg mb-6">{isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}</h3>
 
-                <div className="form-control">
-                <label className="label"><span className="label-text">Description</span></label>
-                <textarea
-                    className="textarea textarea-bordered h-20"
-                    value={editingProfile.description}
-                    onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
-                    placeholder="Describe what this profile enforces..."
-                />
-                </div>
-
-                <div className="divider">Guardrails</div>
-
-                <div className="grid grid-cols-1 gap-6">
-                {/* Access Control */}
-                <div className="collapse collapse-arrow bg-base-200">
-                    <input type="checkbox" defaultChecked={editingProfile.guards.mcpGuard.enabled} />
-                    <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                    <Shield className="w-5 h-5" /> Access Control
-                    <input
-                        type="checkbox"
-                        className="toggle toggle-primary ml-auto z-10"
-                        checked={editingProfile.guards.mcpGuard.enabled}
-                        onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                        onClick={e => e.stopPropagation()}
-                    />
-                    </div>
-                    <div className="collapse-content bg-base-100 pt-4">
-                    <div className="form-control">
-                        <label className="label"><span className="label-text">Type</span></label>
-                        <select
-                        className="select select-bordered"
-                        value={editingProfile.guards.mcpGuard.type}
-                        onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
-                        disabled={!editingProfile.guards.mcpGuard.enabled}
-                        >
-                        <option value="owner">Owner Only</option>
-                        <option value="custom">Custom Allowed Users</option>
-                        </select>
-                    </div>
-                    {editingProfile.guards.mcpGuard.type === 'custom' && (
-                        <div className="form-control mt-4">
-                        <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                        <input
-                            id="allowed-users"
-                            type="text"
-                            className="input input-bordered"
-                            value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                            onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                            disabled={!editingProfile.guards.mcpGuard.enabled}
-                        />
-                        </div>
-                    )}
-                    </div>
-                </div>
-
-                {/* Rate Limit */}
-                <div className="collapse collapse-arrow bg-base-200">
-                    <input type="checkbox" defaultChecked={editingProfile.guards.rateLimit?.enabled} />
-                    <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                    <RefreshCw className="w-5 h-5" /> Rate Limiter
-                    <input
-                        type="checkbox"
-                        className="toggle toggle-warning ml-auto z-10"
-                        checked={editingProfile.guards.rateLimit?.enabled || false}
-                        onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                        onClick={e => e.stopPropagation()}
-                    />
-                    </div>
-                    <div className="collapse-content bg-base-100 pt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-control">
-                        <label className="label"><span className="label-text">Max Requests</span></label>
-                        <input
-                            type="number"
-                            className="input input-bordered"
-                            value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                            onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
-                            disabled={!editingProfile.guards.rateLimit?.enabled}
-                        />
-                        </div>
-                        <div className="form-control">
-                        <label className="label"><span className="label-text">Window (ms)</span></label>
-                        <input
-                            type="number"
-                            className="input input-bordered"
-                            value={editingProfile.guards.rateLimit?.windowMs || 60000}
-                            onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
-                            disabled={!editingProfile.guards.rateLimit?.enabled}
-                        />
-                        </div>
-                    </div>
-                    </div>
-                </div>
-
-                {/* Content Filter */}
-                <div className="collapse collapse-arrow bg-base-200">
-                    <input type="checkbox" defaultChecked={editingProfile.guards.contentFilter?.enabled} />
-                    <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" /> Content Filter
-                    <input
-                        type="checkbox"
-                        className="toggle toggle-error ml-auto z-10"
-                        checked={editingProfile.guards.contentFilter?.enabled || false}
-                        onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                        onClick={e => e.stopPropagation()}
-                    />
-                    </div>
-                    <div className="collapse-content bg-base-100 pt-4">
-                    <div className="form-control">
-                        <label className="label"><span className="label-text">Strictness</span></label>
-                        <div className="flex gap-4">
-                        {['low', 'medium', 'high'].map(level => (
-                            <label key={level} className="label cursor-pointer gap-2">
-                            <input
-                                type="radio"
-                                name="strictness"
-                                className="radio radio-error"
-                                checked={editingProfile.guards.contentFilter?.strictness === level}
-                                onChange={() => updateGuard('contentFilter', { strictness: level })}
-                                disabled={!editingProfile.guards.contentFilter?.enabled}
-                            />
-                            <span className="label-text capitalize">{level}</span>
-                            </label>
-                        ))}
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </div>
+            <div className="form-control mb-4">
+              <label className="label"><span className="label-text">Profile Name</span></label>
+              <input
+                type="text"
+                className="input input-bordered"
+                value={editingProfile.name}
+                onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
+                placeholder="e.g. Strict Production"
+              />
             </div>
-        )}
-      </Modal>
+
+            <div className="form-control mb-6">
+              <label className="label"><span className="label-text">Description</span></label>
+              <textarea
+                className="textarea textarea-bordered h-20"
+                value={editingProfile.description}
+                onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
+                placeholder="Describe what this profile enforces..."
+              />
+            </div>
+
+            <div className="divider">Guardrails</div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {/* Access Control */}
+              <div className="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" defaultChecked />
+                <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                  <Shield className="w-5 h-5" /> Access Control
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary ml-auto z-10"
+                    checked={editingProfile.guards.mcpGuard.enabled}
+                    onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="collapse-content bg-base-100 pt-4">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Type</span></label>
+                    <select
+                      className="select select-bordered"
+                      value={editingProfile.guards.mcpGuard.type}
+                      onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
+                      disabled={!editingProfile.guards.mcpGuard.enabled}
+                    >
+                      <option value="owner">Owner Only</option>
+                      <option value="custom">Custom Allowed Users</option>
+                    </select>
+                  </div>
+                  {editingProfile.guards.mcpGuard.type === 'custom' && (
+                    <div className="form-control mt-4">
+                      <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
+                      <input
+                        id="allowed-users"
+                        type="text"
+                        className="input input-bordered"
+                        value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
+                        onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        disabled={!editingProfile.guards.mcpGuard.enabled}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Rate Limit */}
+              <div className="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" />
+                <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" /> Rate Limiter
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-warning ml-auto z-10"
+                    checked={editingProfile.guards.rateLimit?.enabled || false}
+                    onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="collapse-content bg-base-100 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Max Requests</span></label>
+                      <input
+                        type="number"
+                        className="input input-bordered"
+                        value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                        onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
+                        disabled={!editingProfile.guards.rateLimit?.enabled}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Window (ms)</span></label>
+                      <input
+                        type="number"
+                        className="input input-bordered"
+                        value={editingProfile.guards.rateLimit?.windowMs || 60000}
+                        onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
+                        disabled={!editingProfile.guards.rateLimit?.enabled}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Filter */}
+              <div className="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" />
+                <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Content Filter
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-error ml-auto z-10"
+                    checked={editingProfile.guards.contentFilter?.enabled || false}
+                    onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+                <div className="collapse-content bg-base-100 pt-4">
+                  <div className="form-control">
+                    <label className="label"><span className="label-text">Strictness</span></label>
+                    <div className="flex gap-4">
+                      {['low', 'medium', 'high'].map(level => (
+                        <label key={level} className="label cursor-pointer gap-2">
+                          <input
+                            type="radio"
+                            name="strictness"
+                            className="radio radio-error"
+                            checked={editingProfile.guards.contentFilter?.strictness === level}
+                            onChange={() => updateGuard('contentFilter', { strictness: level })}
+                            disabled={!editingProfile.guards.contentFilter?.enabled}
+                          />
+                          <span className="label-text capitalize">{level}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => setEditingProfile(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveProfile} disabled={saving}>
+                {saving ? <span className="loading loading-spinner" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={!!deleteConfirm}
