@@ -38,25 +38,39 @@ interface CsrfTokenEntry {
 // Global token store (use Redis in production)
 const tokenStore = new Map<string, CsrfTokenEntry>();
 
+let cleanupInterval: NodeJS.Timeout | null = null;
+
 /**
  * Clean up expired tokens periodically
  */
-setInterval(
-  () => {
-    const now = Date.now();
-    let expiredCount = 0;
-    for (const [key, entry] of tokenStore.entries()) {
-      if (now - entry.createdAt > defaultConfig.tokenExpiration) {
-        tokenStore.delete(key);
-        expiredCount++;
+function startCleanupInterval() {
+  if (cleanupInterval) return;
+  cleanupInterval = setInterval(
+    () => {
+      const now = Date.now();
+      let expiredCount = 0;
+      for (const [key, entry] of tokenStore.entries()) {
+        if (now - entry.createdAt > defaultConfig.tokenExpiration) {
+          tokenStore.delete(key);
+          expiredCount++;
+        }
       }
-    }
-    if (expiredCount > 0) {
-      debug('Cleaned up expired CSRF tokens:', expiredCount);
-    }
-  },
-  60 * 60 * 1000
-); // Clean up every hour
+      if (expiredCount > 0) {
+        debug('Cleaned up expired CSRF tokens:', expiredCount);
+      }
+    },
+    60 * 60 * 1000
+  ); // Clean up every hour
+}
+
+startCleanupInterval();
+
+export function stopTokenCleanup() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
 
 /**
  * Generate a cryptographically secure CSRF token
@@ -66,13 +80,56 @@ export function generateCsrfToken(): string {
 }
 
 /**
- * Get session identifier for token storage
- * Uses IP + User-Agent as a simple session identifier
+ * Helper to parse cookies from header
  */
-function getSessionId(req: Request): string {
-  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-  const userAgent = req.get('user-agent') || 'unknown';
-  return crypto.createHash('sha256').update(`${ip}:${userAgent}`).digest('hex').substring(0, 16);
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  const list: Record<string, string> = {};
+  if (!cookieHeader) return list;
+
+  cookieHeader.split(';').forEach(function(cookie) {
+    let [name, ...rest] = cookie.split('=');
+    name = name?.trim();
+    if (!name) return;
+    const value = rest.join('=').trim();
+    if (!value) return;
+    list[name] = decodeURIComponent(value);
+  });
+
+  return list;
+}
+
+/**
+ * Get session identifier for token storage
+ * Uses a secure random session ID stored in a cookie
+ */
+export function getSessionId(req: Request, res: Response): string {
+  const cookieName = `${defaultConfig.cookieName}_sid`;
+
+  // Try to get from req.cookies (if cookie-parser is used)
+  let sid = req.cookies?.[cookieName];
+
+  // If not found, try to parse from header directly
+  if (!sid && req.headers.cookie) {
+    const cookies = parseCookies(req.headers.cookie);
+    sid = cookies[cookieName];
+  }
+
+  // If still not found, generate new one and set cookie
+  if (!sid) {
+    sid = crypto.randomBytes(16).toString('hex');
+    res.cookie(cookieName, sid, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: defaultConfig.tokenExpiration,
+      path: '/',
+    });
+    // Also append to req.cookies so subsequent calls in same request can find it (if needed)
+    if (!req.cookies) req.cookies = {};
+    req.cookies[cookieName] = sid;
+  }
+
+  return sid;
 }
 
 /**
@@ -127,7 +184,7 @@ function validateToken(sessionId: string, providedToken: string): boolean {
  * 3. Middleware validates token before allowing the request
  *
  * Security considerations:
- * - Tokens are bound to session (IP + User-Agent)
+ * - Tokens are bound to session (via secure cookie)
  * - Tokens expire after 24 hours
  * - Constant-time comparison prevents timing attacks
  * - Tokens are cryptographically random
@@ -149,7 +206,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  const sessionId = getSessionId(req);
+  const sessionId = getSessionId(req, res);
   const providedToken = req.get(defaultConfig.headerName) || req.body?._csrf;
 
   if (!providedToken) {
@@ -198,7 +255,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
  * The token is stored in an httpOnly cookie and returned in the response body
  */
 export function csrfTokenHandler(req: Request, res: Response): void {
-  const sessionId = getSessionId(req);
+  const sessionId = getSessionId(req, res);
   const token = generateCsrfToken();
 
   // Store token for this session
