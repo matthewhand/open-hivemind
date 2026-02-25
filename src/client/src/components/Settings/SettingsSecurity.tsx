@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Button, Input, Toggle } from '../DaisyUI';
-import { Shield, Plus, Trash2 } from 'lucide-react';
+import { Shield, Lock, Activity, Globe, Plus, Trash2 } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -27,11 +28,9 @@ const SettingsSecurity: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/global');
-      if (!response.ok) {throw new Error('Failed to fetch settings');}
-      const data = await response.json();
-      
+      const data = await apiService.getGlobalConfig();
       const config = data.config || {};
+
       setSettings(prev => ({
         ...prev,
         enableAuthentication: config.auth?.enabled?.value !== false,
@@ -42,6 +41,7 @@ const SettingsSecurity: React.FC = () => {
       }));
     } catch (error) {
       console.error('Failed to load security settings:', error);
+      setAlert({ type: 'error', message: 'Failed to load security settings' });
     } finally {
       setLoading(false);
     }
@@ -74,23 +74,20 @@ const SettingsSecurity: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setAlert(null);
     try {
-      const response = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          'auth.enabled': settings.enableAuthentication,
-          'rateLimit.enabled': settings.enableRateLimit,
-          'rateLimit.maxRequests': settings.rateLimitMax,
-          'rateLimit.windowMs': settings.rateLimitWindow * 1000,
-        }),
+      await apiService.updateGlobalConfig({
+        'auth.enabled': settings.enableAuthentication,
+        'rateLimit.enabled': settings.enableRateLimit,
+        'rateLimit.maxRequests': settings.rateLimitMax,
+        'rateLimit.windowMs': settings.rateLimitWindow * 1000,
       });
       
-      if (!response.ok) {throw new Error('Failed to save settings');}
-      setAlert({ type: 'success', message: 'Security settings saved!' });
+      setAlert({ type: 'success', message: 'Security settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
+      console.error('Failed to save security settings:', error);
+      setAlert({ type: 'error', message: 'Failed to save. Check permissions.' });
     } finally {
       setIsSaving(false);
     }
@@ -99,18 +96,18 @@ const SettingsSecurity: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Shield className="w-5 h-5 text-primary" />
+      <div className="flex items-center gap-3 mb-2">
+        <Shield className="w-6 h-6 text-primary" />
         <div>
-          <h5 className="text-lg font-bold">Security Settings</h5>
-          <p className="text-sm text-base-content/70">Configure authentication and security policies</p>
+          <h2 className="text-xl font-bold">Security Policies</h2>
+          <p className="text-sm text-base-content/70">Configure authentication and access control</p>
         </div>
       </div>
 
@@ -124,198 +121,151 @@ const SettingsSecurity: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Authentication */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-primary rounded-full"></span>
-            Authentication
-          </h6>
+        <div className="card bg-base-100 border border-base-200 shadow-sm">
+          <div className="card-body p-5">
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <Lock className="w-4 h-4 text-primary" />
+              Access Control
+            </h3>
 
-          <div className="space-y-3">
-            <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">Enable authentication</span>
+            <div className="form-control mb-4">
+              <label className="label cursor-pointer justify-start gap-4">
                 <Toggle
                   checked={settings.enableAuthentication}
                   onChange={(e) => handleChange('enableAuthentication', e.target.checked)}
-                  size="sm"
+                  color="primary"
                 />
+                <span className="label-text font-medium">Require Authentication</span>
               </label>
             </div>
 
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-medium">Session Timeout (seconds)</span>
               </label>
               <Input
                 type="number"
                 value={settings.sessionTimeout}
                 onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
                 disabled={!settings.enableAuthentication}
-                min={300}
-                max={86400}
-                size="sm"
+                className="input-bordered"
               />
             </div>
 
             <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">Two-factor authentication</span>
+              <label className="label cursor-pointer justify-start gap-4">
                 <Toggle
                   checked={settings.enableTwoFactor}
                   onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
                   disabled={!settings.enableAuthentication}
-                  size="sm"
                 />
+                <span className="label-text font-medium">Enable Two-Factor Auth (MFA)</span>
               </label>
             </div>
           </div>
         </div>
 
         {/* Rate Limiting */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-warning rounded-full"></span>
-            Rate Limiting
-          </h6>
+        <div className="card bg-base-100 border border-base-200 shadow-sm">
+          <div className="card-body p-5">
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <Activity className="w-4 h-4 text-warning" />
+              Rate Limiting
+            </h3>
 
-          <div className="space-y-3">
-            <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">Enable rate limiting</span>
+            <div className="form-control mb-4">
+              <label className="label cursor-pointer justify-start gap-4">
                 <Toggle
                   checked={settings.enableRateLimit}
                   onChange={(e) => handleChange('enableRateLimit', e.target.checked)}
-                  size="sm"
+                  color="warning"
                 />
+                <span className="label-text font-medium">Enable Rate Limiting</span>
               </label>
             </div>
 
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Time Window (seconds)</span>
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-medium">Window Duration (seconds)</span>
               </label>
               <Input
                 type="number"
                 value={settings.rateLimitWindow}
                 onChange={(e) => handleChange('rateLimitWindow', parseInt(e.target.value))}
                 disabled={!settings.enableRateLimit}
-                min={10}
-                max={3600}
-                size="sm"
+                className="input-bordered"
               />
             </div>
 
             <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Max Requests per Window</span>
+              <label className="label">
+                <span className="label-text font-medium">Max Requests per Window</span>
               </label>
               <Input
                 type="number"
                 value={settings.rateLimitMax}
                 onChange={(e) => handleChange('rateLimitMax', parseInt(e.target.value))}
                 disabled={!settings.enableRateLimit}
-                min={10}
-                max={10000}
-                size="sm"
+                className="input-bordered"
               />
             </div>
           </div>
         </div>
 
-        {/* CORS */}
-        <div className="card bg-base-200/50 p-4 lg:col-span-2">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-accent rounded-full"></span>
-            CORS Configuration
-          </h6>
+        {/* CORS Configuration */}
+        <div className="card bg-base-100 border border-base-200 shadow-sm lg:col-span-2">
+          <div className="card-body p-5">
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <Globe className="w-4 h-4 text-info" />
+              Cross-Origin Resource Sharing (CORS)
+            </h3>
 
-          <div className="flex gap-2 mb-3">
-            <Input
-              value={newOrigin}
-              onChange={(e) => setNewOrigin(e.target.value)}
-              placeholder="https://example.com"
-              size="sm"
-              className="flex-grow"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleAddOrigin}
-              disabled={!newOrigin}
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {settings.corsOrigins.map((origin, index) => (
-              <div key={index} className="badge badge-lg gap-2 bg-base-300">
-                {origin}
-                <button 
-                  onClick={() => handleRemoveOrigin(origin)}
-                  className="hover:text-error"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-            {settings.corsOrigins.length === 0 && (
-              <span className="text-base-content/50 text-sm italic">No origins configured</span>
-            )}
-          </div>
-        </div>
-
-        {/* Security Features */}
-        <div className="card bg-base-200/50 p-4 lg:col-span-2">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-success rounded-full"></span>
-            Security Features
-          </h6>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">Security headers</span>
-                <Toggle
-                  checked={settings.enableSecurityHeaders}
-                  onChange={(e) => handleChange('enableSecurityHeaders', e.target.checked)}
-                  size="sm"
-                />
-              </label>
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={newOrigin}
+                onChange={(e) => setNewOrigin(e.target.value)}
+                placeholder="https://example.com"
+                className="flex-grow input-bordered"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddOrigin()}
+              />
+              <Button
+                variant="secondary"
+                onClick={handleAddOrigin}
+                disabled={!newOrigin}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Origin
+              </Button>
             </div>
 
-            <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">Audit logging</span>
-                <Toggle
-                  checked={settings.enableAuditLogging}
-                  onChange={(e) => handleChange('enableAuditLogging', e.target.checked)}
-                  size="sm"
-                />
-              </label>
-            </div>
-
-            <div className="form-control">
-              <label className="label cursor-pointer py-1">
-                <span className="label-text text-sm">API key auth</span>
-                <Toggle
-                  checked={settings.enableApiKeyAuth}
-                  onChange={(e) => handleChange('enableApiKeyAuth', e.target.checked)}
-                  size="sm"
-                />
-              </label>
+            <div className="flex flex-wrap gap-2 min-h-[50px] bg-base-200/50 p-4 rounded-lg border border-base-200">
+              {settings.corsOrigins.map((origin, index) => (
+                <div key={index} className="badge badge-lg gap-2 bg-base-100 border border-base-300 shadow-sm">
+                  {origin}
+                  <button
+                    onClick={() => handleRemoveOrigin(origin)}
+                    className="hover:text-error transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {settings.corsOrigins.length === 0 && (
+                <span className="text-base-content/50 text-sm italic">No allowed origins configured</span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-6 border-t border-base-200">
         <Button
           variant="primary"
           onClick={handleSave}
           disabled={isSaving}
           loading={isSaving}
+          className="gap-2"
         >
           {isSaving ? 'Saving...' : 'Save Security Settings'}
         </Button>

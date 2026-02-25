@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
+import { MessageSquare, Bot, Users, Zap, Clock, AlertTriangle } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -28,16 +29,7 @@ const SettingsMessaging: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/messaging');
-      if (!response.ok) {
-        // If endpoint doesn't exist, show env var notice
-        setAlert({
-          type: 'warning',
-          message: 'Messaging config API not available. Settings shown are defaults. Configure via environment variables.',
-        });
-        return;
-      }
-      const data = await response.json();
+      const data = await apiService.getMessagingConfig();
 
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
@@ -47,7 +39,8 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
       });
-    } catch {
+    } catch (err) {
+      console.error('Failed to load messaging settings:', err);
       setAlert({
         type: 'warning',
         message: 'Could not load messaging settings. Using defaults.',
@@ -67,24 +60,21 @@ const SettingsMessaging: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setAlert(null);
     try {
-      const response = await fetch('/api/config/messaging', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
-          MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
-          MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
-          MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
-          MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
-          MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
-        }),
+      await apiService.updateMessagingConfig({
+        MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
+        MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+        MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
+        MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
+        MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
+        MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
       });
 
-      if (!response.ok) { throw new Error('Failed to save settings'); }
-      setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
+      setAlert({ type: 'success', message: 'Messaging settings saved successfully!' });
       setTimeout(() => setAlert(null), 5000);
-    } catch {
+    } catch (err) {
+      console.error('Failed to save messaging settings:', err);
       setAlert({
         type: 'error',
         message: 'Failed to save. These settings require environment variables to persist.',
@@ -97,17 +87,17 @@ const SettingsMessaging: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <MessageSquare className="w-5 h-5 text-primary" />
+      <div className="flex items-center gap-3 mb-2">
+        <MessageSquare className="w-6 h-6 text-primary" />
         <div>
-          <h5 className="text-lg font-bold">Messaging Behavior</h5>
+          <h2 className="text-xl font-bold">Messaging Behavior</h2>
           <p className="text-sm text-base-content/70">Configure how bots decide when to respond</p>
         </div>
       </div>
@@ -120,223 +110,158 @@ const SettingsMessaging: React.FC = () => {
         />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Response Mode */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-primary rounded-full"></span>
-            Response Mode
-          </h6>
+        <div className="card bg-base-100 border border-base-200 shadow-sm">
+          <div className="card-body p-5">
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              Response Mode
+            </h3>
 
-          <div className="form-control mb-4">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Only When Spoken To</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Bot only replies when directly mentioned, replied to, or wakeword used
-                </p>
-              </div>
-              <Toggle
-                checked={settings.onlyWhenSpokenTo}
-                onChange={(e) => handleChange('onlyWhenSpokenTo', e.target.checked)}
-                color="primary"
-              />
-            </label>
-          </div>
-
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Grace Window</span>
-              <span className="badge badge-ghost font-mono text-xs">
-                {settings.graceWindowMs >= 60000
-                  ? `${Math.round(settings.graceWindowMs / 60000)}m`
-                  : `${Math.round(settings.graceWindowMs / 1000)}s`}
-              </span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="600000"
-              step="30000"
-              value={settings.graceWindowMs}
-              onChange={(e) => handleChange('graceWindowMs', parseInt(e.target.value))}
-              className="range range-sm range-primary"
-              disabled={!settings.onlyWhenSpokenTo}
-            />
-            <p className="text-xs text-base-content/60 mt-1">
-              After speaking, bot can reply freely for this duration
-            </p>
-          </div>
-        </div>
-
-        {/* Bot-to-Bot */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <Bot className="w-4 h-4" />
-            Bot-to-Bot Interaction
-          </h6>
-
-          <div className="form-control">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Allow Bot-to-Bot Replies</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Allow spontaneous replies to other bots (not just direct mentions)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.allowBotToBot}
-                onChange={(e) => handleChange('allowBotToBot', e.target.checked)}
-                color="secondary"
-              />
-            </label>
-          </div>
-
-          {settings.allowBotToBot && (
-            <div className="alert alert-warning mt-3 py-2">
-              <Zap className="w-4 h-4" />
-              <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
+            <div className="form-control mb-6">
+              <label className="label cursor-pointer justify-start gap-4">
+                <Toggle
+                  checked={settings.onlyWhenSpokenTo}
+                  onChange={(e) => handleChange('onlyWhenSpokenTo', e.target.checked)}
+                  color="primary"
+                />
+                <div>
+                  <span className="label-text font-medium">Only When Spoken To</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Bot only replies when mentioned or replied to directly
+                  </p>
+                </div>
+              </label>
             </div>
-          )}
+
+            <h3 className="card-title text-base flex items-center gap-2 mb-2 pt-4 border-t border-base-200">
+              <Clock className="w-4 h-4 text-secondary" />
+              Conversation Grace Window
+            </h3>
+
+            <div className="form-control mb-2">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium opacity-80">Duration</span>
+                <span className="badge badge-ghost font-mono text-xs">
+                  {settings.graceWindowMs >= 60000
+                    ? `${Math.round(settings.graceWindowMs / 60000)}m`
+                    : `${Math.round(settings.graceWindowMs / 1000)}s`}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="600000"
+                step="30000"
+                value={settings.graceWindowMs}
+                onChange={(e) => handleChange('graceWindowMs', parseInt(e.target.value))}
+                className="range range-sm range-secondary"
+                disabled={!settings.onlyWhenSpokenTo}
+              />
+              <div className="flex justify-between text-xs px-1 mt-1 opacity-50">
+                <span>0</span>
+                <span>5m</span>
+                <span>10m</span>
+              </div>
+              <p className="text-xs text-base-content/60 mt-2">
+                After speaking, bot can reply freely for this duration without being mentioned again.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Unsolicited Replies */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Unsolicited Replies
-          </h6>
+        {/* Unsolicited & Bot-to-Bot */}
+        <div className="card bg-base-100 border border-base-200 shadow-sm">
+          <div className="card-body p-5">
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <Bot className="w-4 h-4 text-accent" />
+              Advanced Interactions
+            </h3>
 
-          <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Reply to @mentions (others)</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Join conversations where others are mentioned
-                </p>
+            <div className="form-control mb-4">
+              <label className="label cursor-pointer justify-start gap-4">
+                <Toggle
+                  checked={settings.allowBotToBot}
+                  onChange={(e) => handleChange('allowBotToBot', e.target.checked)}
+                  color="accent"
+                />
+                <div>
+                  <span className="label-text font-medium">Bot-to-Bot Replies</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Allow bots to reply to other bots spontaneously
+                  </p>
+                </div>
+              </label>
+              {settings.allowBotToBot && (
+                <div className="alert alert-warning text-xs py-2 mt-2 flex gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>Collision avoidance active to prevent loops</span>
+                </div>
+              )}
+            </div>
+
+            <div className="divider my-2"></div>
+
+            <h3 className="card-title text-base flex items-center gap-2 mb-4">
+              <Users className="w-4 h-4 text-info" />
+              Unsolicited Replies
+            </h3>
+
+            <div className="form-control mb-3">
+              <label className="label cursor-pointer justify-start gap-4">
+                <Toggle
+                  checked={settings.unsolicitedAddressed}
+                  onChange={(e) => handleChange('unsolicitedAddressed', e.target.checked)}
+                  disabled={settings.onlyWhenSpokenTo}
+                />
+                <span className="label-text font-medium">Reply when others mentioned</span>
+              </label>
+            </div>
+
+            <div className="form-control mb-4">
+              <label className="label cursor-pointer justify-start gap-4">
+                <Toggle
+                  checked={settings.unsolicitedUnaddressed}
+                  onChange={(e) => handleChange('unsolicitedUnaddressed', e.target.checked)}
+                  disabled={settings.onlyWhenSpokenTo}
+                />
+                <span className="label-text font-medium">Reply to general chatter</span>
+              </label>
+            </div>
+
+            <div className="form-control">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium opacity-80">Base Probability</span>
+                <span className="badge badge-info font-mono">{settings.baseChance.toFixed(0)}%</span>
               </div>
-              <Toggle
-                checked={settings.unsolicitedAddressed}
-                onChange={(e) => handleChange('unsolicitedAddressed', e.target.checked)}
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={settings.baseChance}
+                onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
+                className="range range-info range-sm"
                 disabled={settings.onlyWhenSpokenTo}
               />
-            </label>
-          </div>
-
-          <div className="form-control">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Reply to general messages</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Spontaneously join unaddressed conversations
-                </p>
-              </div>
-              <Toggle
-                checked={settings.unsolicitedUnaddressed}
-                onChange={(e) => handleChange('unsolicitedUnaddressed', e.target.checked)}
-                disabled={settings.onlyWhenSpokenTo}
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* Probability */}
-        <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-accent rounded-full"></span>
-            Response Probability
-          </h6>
-
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Base Chance</span>
-              <span className="badge badge-accent font-mono">{settings.baseChance.toFixed(0)}%</span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={settings.baseChance}
-              onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
-              className="range range-accent"
-              disabled={settings.onlyWhenSpokenTo}
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>0%</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100%</span>
+              <p className="text-xs text-base-content/60 mt-2">
+                Chance to intervene in a conversation unsolicited.
+              </p>
             </div>
-            <p className="text-xs text-base-content/60 mt-2">
-              Chance to reply to unsolicited messages that look like opportunities
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Environment Variables Reference */}
-      <div className="collapse collapse-arrow bg-base-200/30">
-        <input type="checkbox" />
-        <div className="collapse-title text-sm font-medium">
-          Environment Variables Reference
-        </div>
-        <div className="collapse-content">
-          <div className="overflow-x-auto">
-            <table className="table table-xs">
-              <thead>
-                <tr>
-                  <th>Setting</th>
-                  <th>Environment Variable</th>
-                  <th>Current</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-xs">
-                <tr>
-                  <td>Only When Spoken To</td>
-                  <td>MESSAGE_ONLY_WHEN_SPOKEN_TO</td>
-                  <td>{settings.onlyWhenSpokenTo ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Allow Bot-to-Bot</td>
-                  <td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td>
-                  <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Unsolicited Addressed</td>
-                  <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
-                  <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Unsolicited Unaddressed</td>
-                  <td>MESSAGE_UNSOLICITED_UNADDRESSED</td>
-                  <td>{settings.unsolicitedUnaddressed ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Base Chance</td>
-                  <td>MESSAGE_UNSOLICITED_BASE_CHANCE</td>
-                  <td>{(settings.baseChance / 100).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Grace Window</td>
-                  <td>MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS</td>
-                  <td>{settings.graceWindowMs}ms</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-6 border-t border-base-200">
         <Button
+          variant="primary"
           onClick={handleSave}
           disabled={isSaving}
-          variant="primary"
           loading={isSaving}
+          className="gap-2"
         >
-          {isSaving ? 'Saving...' : 'Save Settings'}
+          {isSaving ? 'Saving...' : 'Save Messaging Settings'}
         </Button>
       </div>
     </div>

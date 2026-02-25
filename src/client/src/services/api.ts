@@ -784,6 +784,17 @@ class ApiService {
     });
   }
 
+  async getMessagingConfig(): Promise<Record<string, any>> {
+    return this.request('/api/config/messaging');
+  }
+
+  async updateMessagingConfig(updates: Record<string, any>): Promise<{ success: boolean; message: string }> {
+    return this.request('/api/config/messaging', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
   async acknowledgeAlert(alertId: string): Promise<{ success: boolean; message: string }> {
     return this.request(`/api/dashboard/api/alerts/${alertId}/acknowledge`, { method: 'POST' });
   }

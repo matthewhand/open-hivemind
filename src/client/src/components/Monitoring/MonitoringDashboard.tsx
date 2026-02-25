@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Alert, Button, Loading, PageHeader, StatsCards } from '../DaisyUI';
+import { Card, Badge, Alert, Button, Loading } from '../DaisyUI';
 import {
-  RotateCw,
-  BarChart2,
-  Heart,
-  Cpu,
-  Clock,
-  Activity,
-  AlertTriangle,
-} from 'lucide-react';
+  ArrowPathIcon,
+  ChartBarIcon,
+  HeartIcon,
+  CpuChipIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from '../ActivityMonitor';
@@ -135,79 +133,112 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const overallStatus = getOverallHealthStatus();
 
   const tabs = [
-    { icon: <Heart className="w-5 h-5" />, label: 'System Health' },
-    { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
-    { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-  ];
-
-  // StatsCards data construction
-  const activeBotsCount = bots.filter(bot => bot.statusData?.connected).length;
-  const errorRate = bots.length > 0
-    ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
-    : 0;
-  const avgResponseTime = bots.length > 0
-    ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
-    : 0;
-
-  const stats = [
-    {
-      id: 'system-health',
-      title: 'System Health',
-      value: getOverallHealthStatus(),
-      icon: <Activity className="w-8 h-8" />,
-      color: getHealthColor(overallStatus) as any,
-    },
-    {
-      id: 'active-bots',
-      title: 'Active Bots',
-      value: `${activeBotsCount}/${bots.length}`,
-      description: 'Connected / Total',
-      icon: <Cpu className="w-8 h-8" />,
-      color: 'primary' as const,
-    },
-    {
-      id: 'error-rate',
-      title: 'Error Rate',
-      value: `${errorRate}%`,
-      description: 'Bots with errors',
-      icon: <AlertTriangle className="w-8 h-8" />,
-      color: errorRate > 0 ? 'error' as const : 'success' as const,
-    },
-    {
-      id: 'avg-response',
-      title: 'Avg Response',
-      value: `${avgResponseTime}ms`,
-      description: 'Average latency',
-      icon: <Clock className="w-8 h-8" />,
-      color: 'info' as const,
-    },
+    { icon: <HeartIcon className="w-5 h-5" />, label: 'System Health' },
+    { icon: <CpuChipIcon className="w-5 h-5" />, label: 'Bot Status' },
+    { icon: <ClockIcon className="w-5 h-5" />, label: 'Activity Monitor' },
   ];
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="flex-1">
       {/* Header */}
-      <PageHeader
-        title="System Monitoring Dashboard"
-        description={`Real-time system metrics and bot status. Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={BarChart2}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-             <RotateCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-             Refresh
-          </Button>
-        }
-      />
+      <div className="bg-base-200 shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <ChartBarIcon className="w-6 h-6" />
+            <h1 className="text-xl font-bold">System Monitoring Dashboard</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Badge variant={getHealthColor(overallStatus) as any} size="lg">
+              Overall: {overallStatus}
+            </Badge>
+            <span className="text-sm text-base-content/70">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </span>
+            <Button
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <ArrowPathIcon className="w-5 h-5" />
+              )}
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Overall Health Summary */}
-      <StatsCards stats={stats} isLoading={loading && !systemMetrics} />
+      <div className="p-6 bg-base-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
+                System Health
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
+                {getOverallHealthStatus()}
+              </h2>
+              <Badge variant={getHealthColor(getOverallHealthStatus()) as any} size="sm">
+                {getOverallHealthStatus()}
+              </Badge>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
+                Active Bots
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
+                {bots.filter(bot => bot.statusData?.connected).length}/{bots.length}
+              </h2>
+              <p className="text-sm text-base-content/70">
+                Connected / Total
+              </p>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
+                Error Rate
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
+                {bots.length > 0
+                  ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
+                  : 0}%
+              </h2>
+              <p className="text-sm text-base-content/70">
+                Bots with errors
+              </p>
+            </Card.Body>
+          </Card>
+
+          <Card>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
+                Response Time
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
+                {bots.length > 0
+                  ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
+                  : 0}ms
+              </h2>
+              <p className="text-sm text-base-content/70">
+                Average
+              </p>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
 
       {/* Tab Navigation */}
-      <div className="bg-base-200 border-b border-base-300 rounded-lg">
+      <div className="bg-base-200 border-b border-base-300">
         <div role="tablist" className="tabs tabs-boxed bg-transparent">
           {tabs.map((tab, index) => (
             <a

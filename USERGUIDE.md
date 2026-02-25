@@ -107,10 +107,15 @@ Monitor real-time interactions and events across your bot ecosystem.
 *   **Timeline View**: Visualize the sequence of events over time.
 
 ### [Settings](/admin/settings)
-General system configuration.
-*   **Rate Limits**: Adjust global message rate limits to prevent spam.
-*   **Logging**: Configure log levels and retention policies.
-*   **Updates**: Check for system updates.
+Configure your Hivemind instance, including general preferences, messaging behavior, and security policies.
+
+![Settings - General](docs/screenshots/settings-general.png)
+
+*   **General Configuration**: Manage instance name, description, timezone, theme, and system logging.
+*   **Messaging Behavior**: Control how bots decide to respond (e.g., only when spoken to, unsolicited replies).
+    ![Settings - Messaging](docs/screenshots/settings-messaging.png)
+*   **Security Policies**: Set up authentication, rate limiting, and CORS.
+    ![Settings - Security](docs/screenshots/settings-security.png)
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
