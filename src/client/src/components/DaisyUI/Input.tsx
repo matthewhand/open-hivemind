@@ -71,8 +71,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {suffix && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="text-base-content/60 sm:text-sm">{suffix}</span>
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center pr-3">
+            <span className="pointer-events-auto text-base-content/60 sm:text-sm">{suffix}</span>
           </div>
         )}
         {loading && (
