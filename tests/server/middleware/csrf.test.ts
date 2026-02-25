@@ -4,6 +4,8 @@ import {
   csrfProtection,
   csrfTokenHandler,
   generateCsrfToken,
+  stopTokenCleanup,
+  getSessionId,
 } from '../../../src/server/middleware/csrf';
 
 describe('CSRF Middleware', () => {
@@ -27,6 +29,10 @@ describe('CSRF Middleware', () => {
       locals: {},
     };
     mockNext = jest.fn();
+  });
+
+  afterAll(() => {
+    stopTokenCleanup();
   });
 
   describe('generateCsrfToken', () => {
@@ -184,6 +190,37 @@ describe('CSRF Middleware', () => {
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockRes.status).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getSessionId', () => {
+    it('should generate different session IDs for requests with same IP/UA but no cookies', () => {
+      // Create fresh request objects to avoid shared state via shallow copy of properties like cookies
+      const req1 = { ...mockReq, cookies: {}, headers: { ...mockReq.headers } } as Request;
+      const res1 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
+
+      const req2 = { ...mockReq, cookies: {}, headers: { ...mockReq.headers } } as Request;
+      const res2 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
+
+      const sid1 = getSessionId(req1, res1);
+      const sid2 = getSessionId(req2, res2);
+
+      expect(sid1).not.toBe(sid2);
+      expect(res1.cookie).toHaveBeenCalled();
+      expect(res2.cookie).toHaveBeenCalled();
+    });
+
+    it('should preserve session ID when cookie is present', () => {
+      const req1 = { ...mockReq, cookies: {}, headers: { ...mockReq.headers } } as Request;
+      const res1 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
+      const sid1 = getSessionId(req1, res1);
+
+      const req2 = { ...mockReq, cookies: { '_csrf_sid': sid1 }, headers: { ...mockReq.headers } } as unknown as Request;
+      const res2 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
+      const sid2 = getSessionId(req2, res2);
+
+      expect(sid2).toBe(sid1);
+      expect(res2.cookie).not.toHaveBeenCalled();
     });
   });
 });
