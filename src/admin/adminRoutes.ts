@@ -65,7 +65,9 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
     });
 
     const results = await Promise.all(promises);
-    const out: any[] = results.filter((item) => item !== null);
+    const out: { key: string; name: string; systemPrompt: string }[] = results.filter(
+      (item): item is { key: string; name: string; systemPrompt: string } => item !== null
+    );
 
     return out.length ? out : fallback;
   } catch (e) {
@@ -79,7 +81,7 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
     const slack = SlackService.getInstance();
     const slackBots = slack.getBotNames();
     const slackInfo = slackBots.map((name: string) => {
-      const cfg: any = slack.getBotConfig(name) || {};
+      const cfg = slack.getBotConfig(name) || {};
       return {
         provider: 'slack',
         name,
@@ -88,9 +90,13 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
       };
     });
     let discordBots: string[] = [];
-    let discordInfo: any[] = [];
+    let discordInfo: { provider: string; name: string }[] = [];
     try {
-      const ds = (Discord as any).DiscordService.getInstance();
+      // Use unknown casting to bypass strict type checks for dynamic property access
+      const DiscordModule = Discord as unknown as {
+        DiscordService: { getInstance: () => any };
+      };
+      const ds = DiscordModule.DiscordService.getInstance();
       const bots = (ds.getAllBots?.() || []) as IBotInfo[];
       discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
       discordInfo = bots.map((b) => ({
@@ -187,7 +193,9 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     // Persist to config/providers/messengers.json for demo persistence
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any = { slack: { instances: [] } };
+    let cfg: {
+      slack?: { mode?: string; instances?: any[] };
+    } = { slack: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
@@ -227,7 +235,10 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
         },
         llm,
       };
-      await (slack as any).addBot?.(instanceCfg);
+      // Cast slack to unknown to access addBot which might be dynamically added or not in type def
+      await (slack as unknown as { addBot: (cfg: typeof instanceCfg) => Promise<void> }).addBot?.(
+        instanceCfg
+      );
     } catch (e) {
       debug('Runtime addBot failed (continue, config was persisted):', e);
     }
@@ -271,7 +282,9 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any = { discord: { instances: [] } };
+    let cfg: {
+      discord?: { instances?: any[] };
+    } = { discord: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
@@ -296,7 +309,10 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
 
     // Try runtime add
     try {
-      const ds = (Discord as any).DiscordService.getInstance();
+      const DiscordModule = Discord as unknown as {
+        DiscordService: { getInstance: () => any };
+      };
+      const ds = DiscordModule.DiscordService.getInstance();
       const instanceCfg = { name: name || '', token, llm };
       await ds.addBot?.(instanceCfg);
       logAdminAction(
@@ -335,7 +351,10 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any;
+    let cfg: {
+      slack?: { mode?: string; instances?: any[] };
+      discord?: { instances?: any[] };
+    };
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
@@ -354,7 +373,9 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       for (const inst of instances) {
         const nm = inst.name || '';
         if (!nm || !existing.has(nm)) {
-          await (slack as any).addBot?.({
+          // Cast slack to unknown to access addBot
+          const slackAny = slack as unknown as { addBot: (cfg: any) => Promise<void> };
+          await slackAny.addBot?.({
             name: nm || `Bot${Date.now()}`,
             slack: {
               botToken: inst.token,
@@ -370,11 +391,13 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     }
 
     try {
-      const ds = (Discord as any).DiscordService.getInstance();
+      const DiscordModule = Discord as unknown as {
+        DiscordService: { getInstance: () => any };
+      };
+      const ds = DiscordModule.DiscordService.getInstance();
+      const allBots = (ds.getAllBots?.() || []) as any[];
       const have = new Set(
-        ((ds.getAllBots?.() || []) as any[]).map(
-          (b) => b?.config?.discord?.token || b?.config?.token
-        )
+        allBots.map((b) => b?.config?.discord?.token || b?.config?.token)
       );
       const instances = cfg.discord?.instances || [];
       for (const inst of instances) {
