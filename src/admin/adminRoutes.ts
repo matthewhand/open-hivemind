@@ -94,10 +94,12 @@ adminRouter.get('/status', (_req: Request, res: Response) => {
     try {
       // Use unknown casting to bypass strict type checks for dynamic property access
       const DiscordModule = Discord as unknown as {
-        DiscordService: { getInstance: () => any };
+        DiscordService: { getInstance: () => unknown };
       };
-      const ds = DiscordModule.DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+      const ds = DiscordModule.DiscordService.getInstance() as {
+        getAllBots?: () => IBotInfo[];
+      };
+      const bots = ds.getAllBots?.() || [];
       discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
       discordInfo = bots.map((b) => ({
         provider: 'discord',
@@ -194,13 +196,16 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: {
-      slack?: { mode?: string; instances?: any[] };
+      slack?: {
+        mode?: string;
+        instances?: { name: string; token: string; signingSecret: string; llm?: string }[];
+      };
     } = { slack: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
+    } catch (e) {
+      if ((e as { code?: string }).code === 'ENOENT') {
         // File doesn't exist yet, start with empty config
       } else {
         debug('Failed reading messengers.json', e);
@@ -251,15 +256,16 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       `Created Slack bot ${name} with token and configuration`
     );
     return res.json({ ok: true });
-  } catch (e: any) {
+  } catch (e) {
+    const message = (e as Error)?.message || String(e);
     logAdminAction(
       req,
       'CREATE_SLACK_BOT',
       `slack-bots/${req.body?.name || 'unknown'}`,
       'failure',
-      `Failed to create Slack bot: ${e?.message || String(e)}`
+      `Failed to create Slack bot: ${message}`
     );
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -283,13 +289,13 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: {
-      discord?: { instances?: any[] };
+      discord?: { instances?: { name: string; token: string; llm?: string }[] };
     } = { discord: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
+    } catch (e) {
+      if ((e as { code?: string }).code === 'ENOENT') {
         // File doesn't exist yet, start with empty config
       } else {
         debug('Failed reading messengers.json', e);
@@ -310,9 +316,11 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
     // Try runtime add
     try {
       const DiscordModule = Discord as unknown as {
-        DiscordService: { getInstance: () => any };
+        DiscordService: { getInstance: () => unknown };
       };
-      const ds = DiscordModule.DiscordService.getInstance();
+      const ds = DiscordModule.DiscordService.getInstance() as {
+        addBot?: (config: { name: string; token: string; llm?: string }) => Promise<void>;
+      };
       const instanceCfg = { name: name || '', token, llm };
       await ds.addBot?.(instanceCfg);
       logAdminAction(
@@ -334,15 +342,16 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
     );
     return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
-  } catch (e: any) {
+  } catch (e) {
+    const message = (e as Error)?.message || String(e);
     logAdminAction(
       req,
       'CREATE_DISCORD_BOT',
       `discord-bots/${req.body?.name || 'unnamed'}`,
       'failure',
-      `Failed to create Discord bot: ${e?.message || String(e)}`
+      `Failed to create Discord bot: ${message}`
     );
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -352,14 +361,17 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
     let cfg: {
-      slack?: { mode?: string; instances?: any[] };
-      discord?: { instances?: any[] };
+      slack?: {
+        mode?: string;
+        instances?: { name: string; token: string; signingSecret: string; llm?: string }[];
+      };
+      discord?: { instances?: { name: string; token: string; llm?: string }[] };
     };
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
+    } catch (e) {
+      if ((e as { code?: string }).code === 'ENOENT') {
         return res.status(400).json({ ok: false, error: 'messengers.json not found' });
       }
       throw e;
@@ -374,7 +386,12 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
         const nm = inst.name || '';
         if (!nm || !existing.has(nm)) {
           // Cast slack to unknown to access addBot
-          const slackAny = slack as unknown as { addBot: (cfg: any) => Promise<void> };
+          const slackAny = slack as unknown as {
+            addBot: (cfg: {
+              name: string;
+              slack: { botToken: string; signingSecret: string; mode: string };
+            }) => Promise<void>;
+          };
           await slackAny.addBot?.({
             name: nm || `Bot${Date.now()}`,
             slack: {
@@ -392,13 +409,14 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
 
     try {
       const DiscordModule = Discord as unknown as {
-        DiscordService: { getInstance: () => any };
+        DiscordService: { getInstance: () => unknown };
       };
-      const ds = DiscordModule.DiscordService.getInstance();
-      const allBots = (ds.getAllBots?.() || []) as any[];
-      const have = new Set(
-        allBots.map((b) => b?.config?.discord?.token || b?.config?.token)
-      );
+      const ds = DiscordModule.DiscordService.getInstance() as {
+        getAllBots?: () => IBotInfo[];
+        addBot?: (config: { name: string; token: string }) => Promise<void>;
+      };
+      const allBots = ds.getAllBots?.() || [];
+      const have = new Set(allBots.map((b) => b?.config?.discord?.token || b?.config?.token));
       const instances = cfg.discord?.instances || [];
       for (const inst of instances) {
         if (inst.token && !have.has(inst.token)) {
@@ -418,14 +436,15 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
     return res.json({ ok: true, addedSlack, addedDiscord });
-  } catch (e: any) {
+  } catch (e) {
+    const message = (e as Error)?.message || String(e);
     logAdminAction(
       req,
       'RELOAD_BOTS',
       'bots/reload',
       'failure',
-      `Failed to reload bots: ${e?.message || String(e)}`
+      `Failed to reload bots: ${message}`
     );
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+    return res.status(500).json({ ok: false, error: message });
   }
 });
