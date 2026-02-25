@@ -42,13 +42,13 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           prefix={<Search className="w-4 h-4 text-base-content/50" />}
-          className="pl-10 w-full"
+          className="pl-10 pr-10 w-full"
           size="sm"
           suffix={
             searchValue ? (
               <button
                 onClick={handleClearSearch}
-                className="btn btn-ghost btn-xs btn-circle"
+                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10"
                 aria-label="Clear search"
               >
                 <X className="w-3 h-3" />
