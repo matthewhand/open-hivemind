@@ -1,15 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
+import { Card, Badge, Button, Modal, Accordion, Progress } from './DaisyUI';
 import {
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
+  RefreshCw,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  MessageCircle,
+  Hash,
+  MessageSquare,
+  Wrench,
+  Bot as BotIcon
+} from 'lucide-react';
 import type { Bot } from '../services/api';
 
 interface BotStatusCardProps {
@@ -40,15 +44,15 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'error':
     case 'disconnected':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     case 'warning':
     case 'connecting':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -69,15 +73,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   };
 
   const getProviderIcon = (provider: string) => {
+    const className = "w-6 h-6";
     switch (provider?.toLowerCase()) {
     case 'discord':
-      return '🤖';
+      return <BotIcon className={className} />;
     case 'slack':
-      return '💬';
+      return <Hash className={className} />;
     case 'mattermost':
-      return '📱';
+      return <MessageSquare className={className} />;
     default:
-      return '🔧';
+      return <Wrench className={className} />;
     }
   };
 
@@ -116,33 +121,35 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
 
   return (
     <>
-      <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+      <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg border border-base-200">
         <Card.Body>
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{getProviderIcon(bot.messageProvider)}</span>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-base-200 rounded-lg">
+                {getProviderIcon(bot.messageProvider)}
+              </div>
               <h3 className="text-lg font-bold">{bot.name}</h3>
             </div>
             <div className="flex items-center gap-2">
-              {getStatusIcon(statusData?.status || 'unknown')}
-              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
-                {statusData?.status || 'unknown'}
+              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm" className="gap-1 pl-1">
+                {getStatusIcon(statusData?.status || 'unknown')}
+                <span className="capitalize">{statusData?.status || 'unknown'}</span>
               </Badge>
             </div>
           </div>
 
           {/* Provider and LLM Info */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <Badge variant="primary" size="sm">
-              Provider: {bot.messageProvider}
+            <Badge variant="ghost" size="sm" className="bg-base-200">
+              {bot.messageProvider}
             </Badge>
-            <Badge variant="secondary" size="sm">
-              LLM: {bot.llmProvider}
+            <Badge variant="primary" size="sm" className="bg-primary/10 text-primary border-primary/20">
+              {bot.llmProvider}
             </Badge>
             {bot.persona && (
-              <Badge variant="accent" size="sm">
-                Persona: {bot.persona}
+              <Badge variant="accent" size="sm" className="bg-accent/10 text-accent border-accent/20">
+                {bot.persona}
               </Badge>
             )}
           </div>
@@ -153,71 +160,70 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               <span className="text-sm text-base-content/70">
                 Health Score
               </span>
-              <span className="text-sm font-medium">
+              <span className={`text-sm font-bold ${
+                healthScore >= 80 ? 'text-success' : healthScore >= 60 ? 'text-warning' : 'text-error'
+              }`}>
                 {healthScore}%
               </span>
             </div>
-            <Progress value={healthScore} variant={getHealthVariant(healthScore)} size="md" />
+            <Progress value={healthScore} variant={getHealthVariant(healthScore)} size="sm" />
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+          <div className="grid grid-cols-3 gap-4 mb-4 text-center divide-x divide-base-200">
             <div>
-              <div className="text-xl font-bold text-primary">
+              <div className="text-xl font-bold text-base-content">
                 {statusData?.messageCount || 0}
               </div>
-              <div className="text-xs text-base-content/70">
-                Messages
+              <div className="text-xs text-base-content/60 font-medium uppercase tracking-wider mt-1">
+                Msgs
               </div>
             </div>
             <div>
-              <div className="text-xl font-bold text-error">
+              <div className={`text-xl font-bold ${(statusData?.errorCount || 0) > 0 ? 'text-error' : 'text-base-content'}`}>
                 {statusData?.errorCount || 0}
               </div>
-              <div className="text-xs text-base-content/70">
+              <div className="text-xs text-base-content/60 font-medium uppercase tracking-wider mt-1">
                 Errors
               </div>
             </div>
             <div>
-              <div className="text-xl font-bold text-success">
-                {statusData?.connected ? '✓' : '✗'}
+              <div className={`text-xl font-bold ${statusData?.connected ? 'text-success' : 'text-error'}`}>
+                {statusData?.connected ? 'ON' : 'OFF'}
               </div>
-              <div className="text-xs text-base-content/70">
-                Connected
+              <div className="text-xs text-base-content/60 font-medium uppercase tracking-wider mt-1">
+                Status
               </div>
             </div>
           </div>
 
           {/* Additional Info */}
-          <div className="mb-4 space-y-1">
-            <p className="text-sm text-base-content/70">
-              Response Time: {formatResponseTime(statusData?.responseTime || 0)}
-            </p>
-            <p className="text-sm text-base-content/70">
-              Uptime: {formatUptime(statusData?.uptime || 0)}
-            </p>
-            {statusData?.lastActivity && (
-              <p className="text-sm text-base-content/70">
-                Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
-              </p>
-            )}
+          <div className="mb-4 space-y-2 bg-base-200/50 p-3 rounded-lg text-sm">
+            <div className="flex justify-between">
+              <span className="text-base-content/60">Response Time</span>
+              <span className="font-mono">{formatResponseTime(statusData?.responseTime || 0)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/60">Uptime</span>
+              <span className="font-mono">{formatUptime(statusData?.uptime || 0)}</span>
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-auto">
             <Button
               size="sm"
               variant="secondary"
-              className="btn-outline flex items-center gap-2"
+              className="btn-outline flex-1 flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
             >
-              <Cog6ToothIcon className="w-4 h-4" />
+              <Settings className="w-4 h-4" />
               Details
             </Button>
             <Button
               size="sm"
-              variant="secondary"
-              className="btn-outline flex items-center gap-2"
+              variant="ghost"
+              className="btn-square"
               onClick={() => {
                 setLoading(true);
                 setTimeout(() => {
@@ -226,9 +232,9 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                 }, 1000);
               }}
               disabled={loading}
+              title="Refresh"
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
-              Refresh
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </Card.Body>
@@ -237,7 +243,10 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
       {/* Detailed Information Modal */}
       <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)}>
         <Modal.Header>
-          Bot Details - {bot.name}
+          <div className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Bot Details - {bot.name}
+          </div>
         </Modal.Header>
         <Modal.Body>
           <div className="space-y-2">
@@ -284,18 +293,20 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                       <span className="text-sm font-semibold min-w-[120px]">Status:</span>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(statusData?.status || 'unknown')}
-                        <span className="text-sm">{statusData?.status || 'Unknown'}</span>
+                        <span className="text-sm capitalize">{statusData?.status || 'Unknown'}</span>
                       </div>
                     </div>
                     <div className="flex gap-4">
                       <span className="text-sm font-semibold min-w-[120px]">Connected:</span>
-                      <span className="text-sm">
+                      <span className={`text-sm ${statusData?.connected ? 'text-success' : 'text-error'}`}>
                         {statusData?.connected ? 'Yes' : 'No'}
                       </span>
                     </div>
                     <div className="flex gap-4">
                       <span className="text-sm font-semibold min-w-[120px]">Health Score:</span>
-                      <span className="text-sm">{healthScore}%</span>
+                      <span className={`text-sm font-bold ${
+                        healthScore >= 80 ? 'text-success' : healthScore >= 60 ? 'text-warning' : 'text-error'
+                      }`}>{healthScore}%</span>
                     </div>
                   </div>
                 </Accordion.Content>
@@ -320,13 +331,13 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                     </div>
                     <div className="flex gap-4">
                       <span className="text-sm font-semibold min-w-[120px]">Response Time:</span>
-                      <span className="text-sm">
+                      <span className="text-sm font-mono">
                         {formatResponseTime(statusData?.responseTime || 0)}
                       </span>
                     </div>
                     <div className="flex gap-4">
                       <span className="text-sm font-semibold min-w-[120px]">Uptime:</span>
-                      <span className="text-sm">
+                      <span className="text-sm font-mono">
                         {formatUptime(statusData?.uptime || 0)}
                       </span>
                     </div>
@@ -365,7 +376,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                     {bot.systemInstruction && (
                       <div>
                         <p className="text-sm font-semibold mb-2">System Instruction:</p>
-                        <p className="text-sm italic bg-base-200 p-3 rounded-lg">
+                        <p className="text-sm italic bg-base-200 p-3 rounded-lg border border-base-300">
                           {bot.systemInstruction}
                         </p>
                       </div>
@@ -373,9 +384,9 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
                     {bot.mcpServers && (
                       <div>
                         <p className="text-sm font-semibold mb-2">MCP Servers:</p>
-                        <p className="text-sm">
+                        <div className="badge badge-outline">
                           {Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1} server(s) configured
-                        </p>
+                        </div>
                       </div>
                     )}
                   </div>
