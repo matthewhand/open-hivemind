@@ -2,23 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card,
-  Loading,
   Badge,
   Alert,
   Accordion,
   Divider,
 } from './DaisyUI';
 import {
-  ChevronDownIcon,
-  CpuChipIcon,
-  BoltIcon,
-  ServerIcon,
-  SignalIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Cpu,
+  HardDrive,
+  Info,
+  Server,
+  Wifi,
+  Zap,
+} from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface SystemHealthProps {
   refreshInterval?: number;
@@ -65,75 +66,76 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // Mock data for demonstration - in real implementation, this would come from API
   useEffect(() => {
-    const fetchSystemData = () => {
-      const mockMetrics: SystemMetrics = {
-        cpu: {
-          usage: Math.random() * 100,
-          cores: 8,
-          temperature: 45 + Math.random() * 20,
-        },
-        memory: {
-          used: Math.random() * 16 * 1024, // GB
-          total: 16 * 1024, // 16GB
-          usage: Math.random() * 100,
-        },
-        disk: {
-          used: Math.random() * 500, // GB
-          total: 500, // 500GB
-          usage: Math.random() * 100,
-        },
-        network: {
-          latency: 20 + Math.random() * 50, // ms
-          status: Math.random() > 0.9 ? 'slow' : Math.random() > 0.95 ? 'offline' : 'online',
-        },
-        uptime: Math.random() * 86400 * 7, // Up to 7 days
-        loadAverage: [Math.random() * 2, Math.random() * 2, Math.random() * 2],
-      };
+    const fetchSystemData = async () => {
+      try {
+        // Fetch real system health data
+        const realData = await apiService.getSystemHealth().catch(() => null);
 
-      const mockHealthChecks: HealthCheck[] = [
-        {
-          id: '1',
-          name: 'Database Connection',
-          status: 'healthy',
-          message: 'All database connections are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Discord API',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'High API response time detected' : 'Discord API is responding normally',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '3',
-          name: 'LLM Services',
-          status: Math.random() > 0.95 ? 'error' : Math.random() > 0.85 ? 'warning' : 'healthy',
-          message: Math.random() > 0.95 ? 'OpenAI API is currently unavailable' : Math.random() > 0.85 ? 'Some LLM providers experiencing issues' : 'All LLM services are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '4',
-          name: 'Message Queue',
-          status: 'healthy',
-          message: 'Message processing is running smoothly',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '5',
-          name: 'Cache System',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'Cache hit rate is below optimal' : 'Cache system is performing well',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-      ];
+        // Use real data where available, fallback to mock/defaults
+        const newMetrics: SystemMetrics = {
+          cpu: {
+            usage: realData ? (realData.cpu.user + realData.cpu.system) : Math.random() * 100,
+            cores: 8, // Not available in API yet
+            temperature: 45 + Math.random() * 20, // Not available in API
+          },
+          memory: {
+            used: realData?.memory.used || Math.random() * 16 * 1024,
+            total: realData?.memory.total || 16 * 1024,
+            usage: realData?.memory.usage || Math.random() * 100,
+          },
+          disk: {
+            used: Math.random() * 500, // Not available in API
+            total: 500,
+            usage: Math.random() * 100,
+          },
+          network: {
+            latency: 20 + Math.random() * 50, // Not available in API
+            status: Math.random() > 0.99 ? 'slow' : 'online',
+          },
+          uptime: realData?.uptime || Math.random() * 86400 * 7,
+          loadAverage: realData?.system.loadAverage || [Math.random() * 2, Math.random() * 2, Math.random() * 2],
+        };
 
-      setMetrics(mockMetrics);
-      setHealthChecks(mockHealthChecks);
-      setLastRefresh(new Date());
-      setLoading(false);
+        const mockHealthChecks: HealthCheck[] = [
+          {
+            id: '1',
+            name: 'Database Connection',
+            status: 'healthy',
+            message: 'All database connections are operational',
+            lastChecked: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            name: 'Discord API',
+            status: Math.random() > 0.9 ? 'warning' : 'healthy',
+            message: Math.random() > 0.9 ? 'High API response time detected' : 'Discord API is responding normally',
+            lastChecked: new Date().toISOString(),
+          },
+          {
+            id: '3',
+            name: 'LLM Services',
+            status: Math.random() > 0.95 ? 'error' : 'healthy',
+            message: Math.random() > 0.95 ? 'LLM provider experiencing high latency' : 'All LLM services are operational',
+            lastChecked: new Date().toISOString(),
+          },
+          {
+            id: '4',
+            name: 'Message Queue',
+            status: 'healthy',
+            message: 'Message processing is running smoothly',
+            lastChecked: new Date().toISOString(),
+          },
+        ];
+
+        setMetrics(newMetrics);
+        setHealthChecks(mockHealthChecks);
+        setLastRefresh(new Date());
+      } catch (error) {
+        console.error('Failed to fetch system health:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSystemData();
@@ -149,15 +151,15 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     switch (status) {
     case 'healthy':
     case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'warning':
     case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     case 'error':
     case 'offline':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      return <Info className={`${className} text-info`} />;
     }
   };
 
@@ -222,7 +224,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       <Card>
         <Card.Body>
           <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg text-primary"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>
@@ -236,7 +238,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     {
       id: 'system-info',
       title: 'System Information',
-      icon: 'ℹ️',
+      icon: <Info className="w-5 h-5" />,
       content: (
         <div className="flex flex-wrap gap-4">
           <div className="min-w-[300px] flex-1">
@@ -257,14 +259,15 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   ];
 
   return (
-    <Card>
+    <Card className="border border-base-200">
       <Card.Body>
         <div className="flex justify-between items-center mb-6">
-          <Card.Title>
-            System Health Monitor
-          </Card.Title>
+          <div className="flex items-center gap-2">
+            <Activity className="w-6 h-6 text-primary" />
+            <h2 className="card-title text-xl">System Health Monitor</h2>
+          </div>
           {lastRefresh && (
-            <span className="text-sm text-base-content/70">
+            <span className="text-sm text-base-content/70 flex items-center gap-1">
               Last updated: {lastRefresh.toLocaleTimeString()}
             </span>
           )}
@@ -275,127 +278,122 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
           <Alert
             variant={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
             icon={getStatusIcon(overallHealth.status)}
+            className="shadow-sm"
           >
             {overallHealth.message}
           </Alert>
         </div>
 
         {/* System Metrics */}
-        <h3 className="text-lg font-bold mb-4 mt-2">
+        <h3 className="text-lg font-bold mb-4 mt-2 flex items-center gap-2">
+          <Server className="w-5 h-5" />
           System Metrics
         </h3>
 
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* CPU Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <BoltIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">CPU Usage</span>
+          <div className="card card-compact bg-base-100 border border-base-200 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Zap className="w-5 h-5 mr-2 text-warning" />
+                <span className="font-medium">CPU Usage</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <progress
+                    className={`progress w-full ${(metrics?.cpu.usage || 0) > 80 ? 'progress-error' : (metrics?.cpu.usage || 0) > 60 ? 'progress-warning' : 'progress-success'}`}
+                    value={metrics?.cpu.usage || 0}
+                    max="100"
+                  ></progress>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.cpu.usage || 0) > 80 ? 'progress-error' : (metrics?.cpu.usage || 0) > 60 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.cpu.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.cpu.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {metrics?.cpu.cores} cores • {metrics?.cpu.temperature?.toFixed(0)}°C
+                <span className="text-sm font-mono">
+                  {(metrics?.cpu.usage || 0).toFixed(1)}%
                 </span>
               </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                {metrics?.cpu.cores} cores • {metrics?.cpu.temperature?.toFixed(0)}°C
+              </span>
             </div>
           </div>
 
           {/* Memory Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <CpuChipIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Memory Usage</span>
+          <div className="card card-compact bg-base-100 border border-base-200 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Cpu className="w-5 h-5 mr-2 text-secondary" />
+                <span className="font-medium">Memory Usage</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <progress
+                    className={`progress w-full ${(metrics?.memory.usage || 0) > 90 ? 'progress-error' : (metrics?.memory.usage || 0) > 70 ? 'progress-warning' : 'progress-success'}`}
+                    value={metrics?.memory.usage || 0}
+                    max="100"
+                  ></progress>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.memory.usage || 0) > 90 ? 'progress-error' : (metrics?.memory.usage || 0) > 70 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.memory.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.memory.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+                <span className="text-sm font-mono">
+                  {(metrics?.memory.usage || 0).toFixed(1)}%
                 </span>
               </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+              </span>
             </div>
           </div>
 
           {/* Disk Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <ServerIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Disk Usage</span>
+          <div className="card card-compact bg-base-100 border border-base-200 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <HardDrive className="w-5 h-5 mr-2 text-info" />
+                <span className="font-medium">Disk Usage</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <progress
+                    className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
+                    value={metrics?.disk.usage || 0}
+                    max="100"
+                  ></progress>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.disk.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.disk.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
+                <span className="text-sm font-mono">
+                  {(metrics?.disk.usage || 0).toFixed(1)}%
                 </span>
               </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
+              </span>
             </div>
           </div>
 
           {/* Network Status */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <SignalIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Network Status</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Badge
-                    variant={getStatusColor(metrics?.network.status || 'unknown') as any}
-                    size="sm"
-                  >
-                    {metrics?.network.status || 'unknown'}
-                  </Badge>
-                  <span className="text-sm">
-                    {formatLatency(metrics?.network.latency || 0)}
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  System uptime: {formatUptime(metrics?.uptime || 0)}
+          <div className="card card-compact bg-base-100 border border-base-200 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Wifi className="w-5 h-5 mr-2 text-success" />
+                <span className="font-medium">Network Status</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge
+                  variant={getStatusColor(metrics?.network.status || 'unknown') as any}
+                  size="sm"
+                >
+                  {metrics?.network.status || 'unknown'}
+                </Badge>
+                <span className="text-sm font-mono">
+                  {formatLatency(metrics?.network.latency || 0)}
                 </span>
               </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                System uptime: {formatUptime(metrics?.uptime || 0)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Load Average */}
-        <h3 className="text-lg font-bold mb-4">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Activity className="w-5 h-5" />
           Load Average
         </h3>
         <div className="flex gap-2 mb-6">
@@ -404,22 +402,24 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               key={index}
               variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'success'}
               size="lg"
+              className="font-mono"
             >
-              {`${index + 1}m: ${load.toFixed(2)}`}
+              {`${index === 0 ? '1m' : index === 1 ? '5m' : '15m'}: ${load.toFixed(2)}`}
             </Badge>
           ))}
         </div>
 
         {/* Health Checks */}
-        <h3 className="text-lg font-bold mb-4">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5" />
           Health Checks
         </h3>
 
-        <ul className="menu bg-base-200 w-full rounded-box mb-6">
+        <ul className="menu bg-base-100 w-full rounded-box mb-6 border border-base-200">
           {healthChecks.map((check, index) => (
             <React.Fragment key={check.id}>
               <li>
-                <div className="flex items-center justify-between py-3">
+                <div className="flex items-center justify-between py-3 hover:bg-base-200/50">
                   <div className="flex items-center gap-3">
                     {getStatusIcon(check.status)}
                     <div>

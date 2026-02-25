@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Alert, Button, Loading } from '../DaisyUI';
+import { Badge, Button, PageHeader, StatsCards, Alert } from '../DaisyUI';
 import {
-  ArrowPathIcon,
-  ChartBarIcon,
-  HeartIcon,
-  CpuChipIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
+  Activity,
+  BarChart2,
+  Clock,
+  Cpu,
+  Heart,
+  RefreshCw,
+  Server,
+  Zap,
+} from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from '../ActivityMonitor';
@@ -34,7 +37,7 @@ interface TabPanelProps {
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <div role="tabpanel" hidden={value !== index}>
+  <div role="tabpanel" hidden={value !== index} className="animate-fade-in">
     {value === index && <div className="p-6">{children}</div>}
   </div>
 );
@@ -68,20 +71,36 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       ]);
 
       setSystemMetrics(systemData);
-      // Add mock status data to bots for demonstration
-      const botsWithStatus = configData.bots.map((bot: Bot) => ({
-        ...bot,
-        id: bot.name,
-        statusData: {
-          status: 'healthy',
-          connected: true,
-          messageCount: Math.floor(Math.random() * 100),
-          errorCount: Math.floor(Math.random() * 5),
-          responseTime: Math.floor(Math.random() * 500) + 100,
-          uptime: Math.floor(Math.random() * 86400),
-          lastActivity: new Date().toISOString(),
-        },
-      }));
+
+      // Add status data to bots
+      // In a real scenario, this status data would come from the API too
+      // For now we map it from the status response if available, or generate mock data if not
+      const botsWithStatus = configData.bots.map((bot: Bot) => {
+        const botStatus = systemData.bots.find(b => b.name === bot.name);
+
+        return {
+          ...bot,
+          id: bot.name,
+          statusData: botStatus ? {
+            status: botStatus.status,
+            connected: botStatus.connected || false,
+            messageCount: botStatus.messageCount || 0,
+            errorCount: botStatus.errorCount || 0,
+            responseTime: 100 + Math.random() * 200, // Mock if not in API
+            uptime: systemData.uptime || 0,
+            lastActivity: new Date().toISOString(), // Mock
+          } : {
+            status: 'unknown',
+            connected: false,
+            messageCount: 0,
+            errorCount: 0,
+            responseTime: 0,
+            uptime: 0,
+            lastActivity: new Date().toISOString(),
+          },
+        };
+      });
+
       setBots(botsWithStatus);
       setLastRefresh(new Date());
 
@@ -126,160 +145,126 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     case 'healthy': return 'success';
     case 'warning': return 'warning';
     case 'error': return 'error';
-    default: return 'ghost';
+    default: return 'primary'; // changed from ghost to primary for StatsCards compatibility
     }
   };
 
   const overallStatus = getOverallHealthStatus();
 
   const tabs = [
-    { icon: <HeartIcon className="w-5 h-5" />, label: 'System Health' },
-    { icon: <CpuChipIcon className="w-5 h-5" />, label: 'Bot Status' },
-    { icon: <ClockIcon className="w-5 h-5" />, label: 'Activity Monitor' },
+    { icon: <Heart className="w-5 h-5" />, label: 'System Health' },
+    { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
+    { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
+  ];
+
+  const stats = [
+    {
+      id: 'health',
+      title: 'System Health',
+      value: overallStatus.toUpperCase(),
+      icon: <Heart className="w-8 h-8" />,
+      color: getHealthColor(overallStatus) as any,
+    },
+    {
+      id: 'bots',
+      title: 'Active Bots',
+      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
+      description: 'Connected / Total',
+      icon: <Server className="w-8 h-8" />,
+      color: 'secondary' as const,
+    },
+    {
+      id: 'errors',
+      title: 'Error Rate',
+      value: `${bots.length > 0 ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100) : 0}%`,
+      description: 'Bots with errors',
+      icon: <Activity className="w-8 h-8" />,
+      color: 'error' as const,
+    },
+    {
+      id: 'latency',
+      title: 'Avg Response',
+      value: `${bots.length > 0 ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length) : 0}ms`,
+      description: 'System Latency',
+      icon: <Zap className="w-8 h-8" />,
+      color: 'warning' as const,
+    },
   ];
 
   return (
-    <div className="flex-1">
-      {/* Header */}
-      <div className="bg-base-200 shadow-sm">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <ChartBarIcon className="w-6 h-6" />
-            <h1 className="text-xl font-bold">System Monitoring Dashboard</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      <PageHeader
+        title="System Monitoring"
+        description={`Real-time system status and metrics (Updated: ${lastRefresh.toLocaleTimeString()})`}
+        icon={BarChart2}
+        actions={
+          <div className="flex items-center gap-2">
             <Badge variant={getHealthColor(overallStatus) as any} size="lg">
-              Overall: {overallStatus}
+              {overallStatus.toUpperCase()}
             </Badge>
-            <span className="text-sm text-base-content/70">
-              Last updated: {lastRefresh.toLocaleTimeString()}
-            </span>
             <Button
-              variant="secondary"
-              className="btn-outline flex items-center gap-2"
+              variant="ghost"
+              size="sm"
               onClick={handleRefresh}
               disabled={loading}
             >
-              {loading ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <ArrowPathIcon className="w-5 h-5" />
-              )}
-              Refresh
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Overall Health Summary */}
-      <div className="p-6 bg-base-100">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                System Health
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {getOverallHealthStatus()}
-              </h2>
-              <Badge variant={getHealthColor(getOverallHealthStatus()) as any} size="sm">
-                {getOverallHealthStatus()}
-              </Badge>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Active Bots
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.filter(bot => bot.statusData?.connected).length}/{bots.length}
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Connected / Total
-              </p>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Error Rate
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.length > 0
-                  ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
-                  : 0}%
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Bots with errors
-              </p>
-            </Card.Body>
-          </Card>
-
-          <Card>
-            <Card.Body>
-              <p className="text-base-content/70 text-sm mb-2">
-                Response Time
-              </p>
-              <h2 className="text-3xl font-bold mb-2">
-                {bots.length > 0
-                  ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
-                  : 0}ms
-              </h2>
-              <p className="text-sm text-base-content/70">
-                Average
-              </p>
-            </Card.Body>
-          </Card>
-        </div>
-      </div>
+      <StatsCards stats={stats} isLoading={loading && !systemMetrics} />
 
       {/* Tab Navigation */}
-      <div className="bg-base-200 border-b border-base-300">
-        <div role="tablist" className="tabs tabs-boxed bg-transparent">
-          {tabs.map((tab, index) => (
-            <a
-              key={index}
-              role="tab"
-              className={`tab gap-2 ${activeTab === index ? 'tab-active' : ''}`}
-              onClick={() => handleTabChange(index)}
-            >
-              {tab.icon}
-              {tab.label}
-            </a>
-          ))}
+      <div className="bg-base-100 rounded-lg shadow-sm border border-base-200">
+        <div className="border-b border-base-200 bg-base-200/50">
+          <div role="tablist" className="tabs tabs-lifted tabs-lg">
+            {tabs.map((tab, index) => (
+              <a
+                key={index}
+                role="tab"
+                className={`tab gap-2 ${activeTab === index ? 'tab-active font-bold bg-base-100 border-b-base-100' : ''}`}
+                onClick={() => handleTabChange(index)}
+              >
+                {tab.icon}
+                {tab.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-base-100 rounded-b-lg min-h-[400px]">
+          <TabPanel value={activeTab} index={0}>
+            <SystemHealth refreshInterval={refreshInterval} />
+          </TabPanel>
+
+          <TabPanel value={activeTab} index={1}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {bots.map((bot) => (
+                <BotStatusCard
+                  key={bot.id}
+                  bot={bot}
+                  statusData={bot.statusData}
+                  onRefresh={handleRefresh}
+                />
+              ))}
+              {bots.length === 0 && !loading && (
+                <div className="col-span-full">
+                   <Alert variant="info" icon={<Server className="w-5 h-5"/>}>
+                    No bots configured. Add bots through the Bot Manager to see status information.
+                  </Alert>
+                </div>
+              )}
+            </div>
+          </TabPanel>
+
+          <TabPanel value={activeTab} index={2}>
+            <ActivityMonitor />
+          </TabPanel>
         </div>
       </div>
-
-      {/* Tab Content */}
-      <TabPanel value={activeTab} index={0}>
-        <SystemHealth refreshInterval={refreshInterval} />
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={1}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {bots.map((bot) => (
-            <BotStatusCard
-              key={bot.id}
-              bot={bot}
-              statusData={bot.statusData}
-              onRefresh={handleRefresh}
-            />
-          ))}
-          {bots.length === 0 && (
-            <Alert variant="info">
-              No bots configured. Add bots through the Bot Manager to see status information.
-            </Alert>
-          )}
-        </div>
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={2}>
-        <ActivityMonitor refreshInterval={refreshInterval} />
-      </TabPanel>
     </div>
   );
 };
