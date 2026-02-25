@@ -51,4 +51,94 @@ test.describe('Documentation Screenshots', () => {
     // Screenshot Create Bot Modal
     await page.screenshot({ path: 'docs/images/create-bot-modal.png', fullPage: true });
   });
+
+  test('Capture Activity Page and Event Details', async ({ page }) => {
+    // Setup authentication and error detection
+    await setupTestWithErrorDetection(page);
+
+    // Mock the activity API
+    await page.route('**/api/dashboard/api/activity', async (route) => {
+      const mockEvents = [
+        {
+          id: '1',
+          timestamp: new Date().toISOString(),
+          botName: 'CustomerSupport',
+          provider: 'discord',
+          llmProvider: 'openai',
+          status: 'success',
+          processingTime: 1250,
+          contentLength: 450,
+          messageType: 'incoming',
+        },
+        {
+          id: '2',
+          timestamp: new Date(Date.now() - 60000).toISOString(),
+          botName: 'SalesBot',
+          provider: 'slack',
+          llmProvider: 'anthropic',
+          status: 'pending',
+          messageType: 'outgoing',
+        },
+        {
+          id: '3',
+          timestamp: new Date(Date.now() - 120000).toISOString(),
+          botName: 'TechHelper',
+          provider: 'discord',
+          llmProvider: 'local',
+          status: 'error',
+          processingTime: 5000,
+          errorMessage: 'Connection timeout to LLM provider',
+          messageType: 'incoming',
+        },
+        {
+            id: '4',
+            timestamp: new Date(Date.now() - 180000).toISOString(),
+            botName: 'CustomerSupport',
+            provider: 'discord',
+            llmProvider: 'openai',
+            status: 'success',
+            processingTime: 800,
+            contentLength: 120,
+            messageType: 'outgoing',
+        }
+      ];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          events: mockEvents,
+          filters: {
+            agents: ['CustomerSupport', 'SalesBot', 'TechHelper'],
+            messageProviders: ['discord', 'slack'],
+            llmProviders: ['openai', 'anthropic', 'local'],
+          },
+          timeline: [],
+          agentMetrics: []
+        }),
+      });
+    });
+
+    // Navigate to Activity page
+    await navigateAndWaitReady(page, '/admin/activity');
+
+    // Wait for content
+    await page.waitForSelector('h1:has-text("Activity Feed")');
+    // Wait for at least one row
+    await page.waitForSelector('table tbody tr');
+
+    // Screenshot Activity Page
+    await page.screenshot({ path: 'docs/images/activity-page.png', fullPage: true });
+
+    // Click on the first row to open details
+    await page.locator('table tbody tr').first().click();
+
+    // Wait for modal
+    const modal = page.locator('.modal-box, [role="dialog"]').last();
+    await expect(modal).toBeVisible();
+    await page.waitForTimeout(500); // Animation
+
+    // Screenshot Details Modal
+    await page.screenshot({ path: 'docs/images/activity-details-modal.png', fullPage: true });
+  });
 });

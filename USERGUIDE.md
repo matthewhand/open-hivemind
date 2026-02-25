@@ -77,6 +77,15 @@ Deep dive into system performance.
 *   **Logs**: Searchable real-time system logs.
 *   **Health Checks**: Detailed status of all internal services and dependencies.
 
+### [Activity Feed](/admin/activity)
+Real-time view of all message flows and events.
+*   **Event Log**: A chronological list of all bot interactions.
+*   **Filtering**: Filter events by Status (Success, Error, etc.).
+*   **Event Details**: Click on any event to view full JSON payloads and metadata.
+
+![Activity Page](./docs/images/activity-page.png)
+![Event Details](./docs/images/activity-details-modal.png)
+
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.

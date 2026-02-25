@@ -13,6 +13,7 @@ import {
   PageHeader,
   LoadingSpinner,
   EmptyState,
+  Modal,
 } from '../components/DaisyUI';
 
 interface ActivityEvent {
@@ -22,6 +23,11 @@ interface ActivityEvent {
   provider: string;
   llmProvider: string;
   status: 'success' | 'error' | 'timeout' | 'pending';
+  processingTime?: number;
+  contentLength?: number;
+  errorMessage?: string;
+  messageType?: 'incoming' | 'outgoing';
+  // Legacy fields fallback
   duration?: number;
   inputLength?: number;
   outputLength?: number;
@@ -46,6 +52,8 @@ const ActivityPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -117,7 +125,6 @@ const ActivityPage: React.FC = () => {
       key: 'status' as keyof ActivityEvent,
       title: 'Status',
       sortable: true,
-      filterable: true,
       width: '100px',
       render: (value: string) => getStatusBadge(value),
     },
@@ -136,13 +143,25 @@ const ActivityPage: React.FC = () => {
       render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
-      key: 'duration' as keyof ActivityEvent,
-      title: 'Duration',
+      key: 'processingTime' as keyof ActivityEvent,
+      title: 'Time (ms)',
       sortable: true,
       width: '100px',
       render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
     },
+    {
+      key: 'contentLength' as keyof ActivityEvent,
+      title: 'Size',
+      sortable: true,
+      width: '80px',
+      render: (value: number) => value ? <span className="font-mono">{value}B</span> : '-',
+    },
   ];
+
+  const filteredEvents = events.filter(event => {
+    if (statusFilter !== 'all' && event.status !== statusFilter) return false;
+    return true;
+  });
 
   const stats = [
     {
@@ -193,6 +212,18 @@ const ActivityPage: React.FC = () => {
         icon={Clock}
         actions={
           <div className="flex items-center gap-2">
+            <select
+              className="select select-bordered select-sm"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="success">Success</option>
+              <option value="error">Error</option>
+              <option value="timeout">Timeout</option>
+              <option value="pending">Pending</option>
+            </select>
+
             {/* View Toggle */}
             <div className="join">
               <Button 
@@ -255,12 +286,14 @@ const ActivityPage: React.FC = () => {
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={events}
+              data={filteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
               searchable={true}
               exportable={true}
+              onRowClick={(record) => setSelectedEvent(record)}
+              className="cursor-pointer"
             />
           ) : (
             <div className="p-4">
@@ -274,6 +307,61 @@ const ActivityPage: React.FC = () => {
           )}
         </Card>
       )}
+
+      {/* Event Details Modal */}
+      <Modal
+        isOpen={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        title="Event Details"
+        size="lg"
+      >
+        {selectedEvent && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-bold text-sm mb-1">Timestamp</h4>
+                <p className="font-mono text-sm">{new Date(selectedEvent.timestamp).toLocaleString()}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1">Status</h4>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(selectedEvent.status)}
+                  {selectedEvent.processingTime && (
+                    <span className="text-sm opacity-70">({selectedEvent.processingTime}ms)</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1">Bot</h4>
+                <p>{selectedEvent.botName}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1">Providers</h4>
+                <div className="flex gap-2">
+                  <Badge variant="neutral" size="sm">{selectedEvent.provider}</Badge>
+                  <Badge variant="primary" size="sm" style="outline">{selectedEvent.llmProvider}</Badge>
+                </div>
+              </div>
+            </div>
+
+            {selectedEvent.errorMessage && (
+              <Alert status="error" message={selectedEvent.errorMessage} />
+            )}
+
+            <div className="divider text-xs opacity-50">Raw Data</div>
+
+            <div className="mockup-code bg-base-300 text-base-content p-4 rounded-lg overflow-x-auto max-h-96">
+              <pre className="text-xs font-mono">
+                {JSON.stringify(selectedEvent, null, 2)}
+              </pre>
+            </div>
+
+            <div className="modal-action">
+              <Button onClick={() => setSelectedEvent(null)}>Close</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
