@@ -3,6 +3,9 @@ import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -28,6 +31,8 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -82,7 +87,16 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
+  const filteredUrls = sitemapData?.urls.filter((url) => {
+    if (!searchTerm) return true;
+    const lowerSearch = searchTerm.toLowerCase();
+    return (
+      url.url.toLowerCase().includes(lowerSearch) ||
+      url.description.toLowerCase().includes(lowerSearch)
+    );
+  }) || [];
+
+  const groupedUrls = filteredUrls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -116,99 +130,60 @@ const SitemapPage: React.FC = () => {
     return acc;
   }, {} as Record<string, SitemapUrl[]>) || {};
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
-        <p className="mt-2">Loading sitemap...</p>
-      </div>
-    );
-  }
+  const renderTableView = () => (
+    <div className="overflow-x-auto bg-base-100 rounded-lg shadow border border-base-200 mb-8">
+      <table className="table w-full">
+        <thead>
+          <tr className="bg-base-200">
+            <th>URL</th>
+            <th>Description</th>
+            <th>Access</th>
+            <th>Priority</th>
+            <th>Last Mod</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredUrls.map((url) => (
+            <tr key={url.url} className="hover">
+              <td className="font-mono font-bold text-sm">{url.url}</td>
+              <td className="text-sm max-w-xs truncate" title={url.description}>{url.description}</td>
+              <td>
+                <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                  {url.access}
+                </div>
+              </td>
+              <td>
+                <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                  {url.priority}
+                </div>
+              </td>
+              <td className="text-xs font-mono">{new Date(url.lastmod).toLocaleDateString()}</td>
+              <td>
+                <button
+                  className="btn btn-ghost btn-xs btn-circle"
+                  onClick={() => handleOpenUrl(url.fullUrl)}
+                  title="Open Page"
+                >
+                  <LaunchIcon className="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          ))}
+          {filteredUrls.length === 0 && (
+            <tr>
+              <td colSpan={6} className="text-center py-8 text-base-content/60">
+                No pages found matching "{searchTerm}"
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <Breadcrumbs items={breadcrumbItems} />
-        <div className="mt-4">
-          <Alert status="error" message={`Error loading sitemap: ${error}`} />
-          <button className="btn btn-primary mt-4" onClick={fetchSitemap}>
-            <RefreshIcon className="w-5 h-5 mr-2" />
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-4 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          🗺️ Dynamic Sitemap
-        </h1>
-        <p className="text-base-content/70">
-          Complete navigation structure and page hierarchy
-        </p>
-      </div>
-
-      {/* Statistics and Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Total Pages</div>
-            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
-          </div>
-        </div>
-
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Generated</div>
-            <div className="stat-value text-sm">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-            </div>
-            <div className="stat-desc">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-            </div>
-          </div>
-        </div>
-
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text">Access Level</span>
-          </label>
-          <select
-            className="select select-bordered w-full"
-            value={accessFilter}
-            onChange={(e) => setAccessFilter(e.target.value)}
-          >
-            <option value="all">All Pages</option>
-            <option value="public">Public Only</option>
-            <option value="authenticated">Authenticated</option>
-            <option value="owner">Owner Only</option>
-          </select>
-        </div>
-
-        <div className="flex gap-2 items-end">
-          <button
-            className="btn btn-outline flex-1"
-            onClick={handleDownloadXml}
-          >
-            <DownloadIcon className="w-5 h-5 mr-2" />
-            XML
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={fetchSitemap}
-            title="Refresh"
-          >
-            <RefreshIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Grouped URLs */}
+  const renderGridView = () => (
+    <>
       {Object.entries(groupedUrls).map(([category, urls]) => (
         <div key={category} className="mb-8">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -257,8 +232,148 @@ const SitemapPage: React.FC = () => {
           </div>
         </div>
       ))}
+      {filteredUrls.length === 0 && (
+         <div className="text-center py-12 text-base-content/60 bg-base-200 rounded-lg mb-8">
+           <MagnifyingGlassIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+           <p>No pages found matching "{searchTerm}"</p>
+         </div>
+      )}
+    </>
+  );
 
-      {/* Sitemap Links */}
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading sitemap...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Breadcrumbs items={breadcrumbItems} />
+        <div className="mt-4">
+          <Alert status="error" message={`Error loading sitemap: ${error}`} />
+          <button className="btn btn-primary mt-4" onClick={fetchSitemap}>
+            <RefreshIcon className="w-5 h-5 mr-2" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          🗺️ Dynamic Sitemap
+        </h1>
+        <p className="text-base-content/70">
+          Complete navigation structure and page hierarchy
+        </p>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Total Pages</div>
+            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
+          </div>
+        </div>
+        <div className="stats shadow lg:col-span-3">
+           <div className="stat">
+            <div className="stat-title">Last Generated</div>
+            <div className="stat-value text-lg">
+               {sitemapData ? new Date(sitemapData.generated).toLocaleString() : 'N/A'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Controls Toolbar */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-6 items-end justify-between bg-base-100 p-4 rounded-lg shadow-sm border border-base-200">
+         {/* Search & Filter */}
+         <div className="flex flex-col md:flex-row flex-1 gap-2 w-full">
+            <div className="join w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Search pages..."
+                className="input input-bordered join-item w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button className="btn join-item btn-square">
+                  <MagnifyingGlassIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <select
+              className="select select-bordered"
+              value={accessFilter}
+              onChange={(e) => setAccessFilter(e.target.value)}
+            >
+              <option value="all">All Access</option>
+              <option value="public">Public</option>
+              <option value="authenticated">Authenticated</option>
+              <option value="owner">Owner</option>
+            </select>
+         </div>
+
+         {/* View & Actions */}
+         <div className="flex gap-2">
+           <div className="join mr-2">
+             <button
+               className={`btn join-item ${viewMode === 'grid' ? 'btn-active' : ''}`}
+               onClick={() => setViewMode('grid')}
+               title="Grid View"
+             >
+               <Squares2X2Icon className="w-5 h-5" />
+             </button>
+             <button
+               className={`btn join-item ${viewMode === 'list' ? 'btn-active' : ''}`}
+               onClick={() => setViewMode('list')}
+               title="List View"
+             >
+               <ListBulletIcon className="w-5 h-5" />
+             </button>
+           </div>
+
+           <button
+            className="btn btn-outline"
+            onClick={handleDownloadXml}
+            title="Download XML"
+           >
+            <DownloadIcon className="w-5 h-5" />
+           </button>
+
+           <button
+            className="btn btn-outline btn-square"
+            onClick={fetchSitemap}
+            title="Refresh"
+          >
+            <RefreshIcon className="w-5 h-5" />
+          </button>
+         </div>
+      </div>
+
+      {/* Filter Stats */}
+      {(searchTerm || accessFilter !== 'all') && (
+        <div className="mb-4 text-sm text-base-content/70">
+          Showing {filteredUrls.length} result{filteredUrls.length !== 1 ? 's' : ''}
+          {searchTerm && <span> matching "<strong>{searchTerm}</strong>"</span>}
+          {accessFilter !== 'all' && <span> with access "<strong>{accessFilter}</strong>"</span>}
+        </div>
+      )}
+
+      {viewMode === 'grid' ? renderGridView() : renderTableView()}
+
+      {/* Sitemap Links Footer */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
         <h3 className="text-lg font-bold mb-2">
           Sitemap Formats
