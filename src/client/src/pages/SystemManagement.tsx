@@ -4,7 +4,9 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
-import Modal from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useToast } from '../components/DaisyUI/ToastNotification';
+import { RefreshCw, Trash2, RotateCcw } from 'lucide-react';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -34,6 +36,7 @@ interface BackupRecord {
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
+  const { addToast } = useToast();
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     refreshInterval: 5000,
     logLevel: 'info',
@@ -55,16 +58,27 @@ const SystemManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  // Backup Modal State
+  // Modal States
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [useEncryption, setUseEncryption] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
 
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'primary' | 'error' | 'warning';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Performance Tab State
   const [apiStatus, setApiStatus] = useState<any>(null);
-
-
-  // Performance Tab State
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [envOverrides, setEnvOverrides] = useState<Record<string, string> | null>(null);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
@@ -113,6 +127,7 @@ const SystemManagement: React.FC = () => {
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
     } catch (error) {
       console.error('Failed to fetch performance data:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to fetch performance data' });
     } finally {
       setIsPerformanceLoading(false);
 
@@ -136,6 +151,7 @@ const SystemManagement: React.FC = () => {
       }));
     } catch (error) {
       console.error('Failed to fetch system config:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to fetch system config' });
     }
   };
 
@@ -156,6 +172,7 @@ const SystemManagement: React.FC = () => {
       setBackups(mappedBackups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
       console.error('Failed to fetch backup history:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to fetch backup history' });
     }
   };
 
@@ -167,8 +184,10 @@ const SystemManagement: React.FC = () => {
 
       // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
+      addToast({ type: 'success', title: 'Saved', message: 'Configuration updated' });
     } catch (error) {
       console.error('Failed to update configuration:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to update configuration' });
     } finally {
       setIsLoading(false);
     }
@@ -177,16 +196,20 @@ const SystemManagement: React.FC = () => {
   const handleAlertAcknowledge = async (alertId: string) => {
     try {
       await apiService.acknowledgeAlert(alertId);
+      addToast({ type: 'success', title: 'Acknowledged', message: 'Alert acknowledged' });
     } catch (error) {
       console.error('Failed to acknowledge alert:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to acknowledge alert' });
     }
   };
 
   const handleAlertResolve = async (alertId: string) => {
     try {
       await apiService.resolveAlert(alertId);
+      addToast({ type: 'success', title: 'Resolved', message: 'Alert resolved' });
     } catch (error) {
       console.error('Failed to resolve alert:', error);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to resolve alert' });
     }
   };
 
@@ -198,11 +221,11 @@ const SystemManagement: React.FC = () => {
 
   const confirmCreateBackup = async () => {
     if (useEncryption && !encryptionKey) {
-      alert('Encryption key is required when encryption is enabled');
+      addToast({ type: 'warning', title: 'Validation', message: 'Encryption key is required when encryption is enabled' });
       return;
     }
     if (useEncryption && encryptionKey.length < 8) {
-      alert('Encryption key must be at least 8 characters long');
+      addToast({ type: 'warning', title: 'Validation', message: 'Encryption key must be at least 8 characters long' });
       return;
     }
 
@@ -215,51 +238,72 @@ const SystemManagement: React.FC = () => {
         encrypt: useEncryption,
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
-      alert('Backup created successfully');
+      addToast({ type: 'success', title: 'Success', message: 'Backup created successfully' });
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
-      alert('Failed to create backup: ' + (error as Error).message);
+      addToast({ type: 'error', title: 'Error', message: 'Failed to create backup: ' + (error as Error).message });
     } finally {
       setIsCreatingBackup(false);
     }
   };
 
-  const handleRestoreBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
-      try {
-        await apiService.restoreSystemBackup(backupId);
-        alert('System restored successfully. Reloading...');
-        setTimeout(() => window.location.reload(), 2000);
-      } catch (error) {
-        console.error('Failed to restore backup:', error);
-        alert('Failed to restore backup: ' + (error as Error).message);
+  const handleRestoreBackup = (backupId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Restore Backup',
+      message: 'Are you sure you want to restore this backup? This will overwrite current configuration.',
+      variant: 'warning',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.restoreSystemBackup(backupId);
+          addToast({ type: 'success', title: 'Success', message: 'System restored successfully. Reloading...' });
+          setTimeout(() => window.location.reload(), 2000);
+        } catch (error) {
+          console.error('Failed to restore backup:', error);
+          addToast({ type: 'error', title: 'Error', message: 'Failed to restore backup: ' + (error as Error).message });
+        }
       }
-    }
+    });
   };
 
-  const handleDeleteBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to delete this backup?')) {
-      try {
-        await apiService.deleteSystemBackup(backupId);
-        alert('Backup deleted');
-        setBackups(prev => prev.filter(backup => backup.id !== backupId));
-      } catch (error) {
-        console.error('Failed to delete backup:', error);
-        alert('Failed to delete backup: ' + (error as Error).message);
+  const handleDeleteBackup = (backupId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Backup',
+      message: 'Are you sure you want to delete this backup?',
+      variant: 'error',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.deleteSystemBackup(backupId);
+          addToast({ type: 'success', title: 'Deleted', message: 'Backup deleted' });
+          setBackups(prev => prev.filter(backup => backup.id !== backupId));
+        } catch (error) {
+          console.error('Failed to delete backup:', error);
+          addToast({ type: 'error', title: 'Error', message: 'Failed to delete backup: ' + (error as Error).message });
+        }
       }
-    }
+    });
   };
 
-  const handleClearCache = async () => {
-    if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
-      try {
-        await apiService.clearCache();
-        alert('Cache cleared successfully');
-      } catch (error) {
-        alert('Failed to clear cache: ' + (error as Error).message);
+  const handleClearCache = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Clear Cache',
+      message: 'Are you sure you want to clear the system cache? This may temporarily impact performance.',
+      variant: 'warning',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.clearCache();
+          addToast({ type: 'success', title: 'Success', message: 'Cache cleared successfully' });
+        } catch (error) {
+          addToast({ type: 'error', title: 'Error', message: 'Failed to clear cache: ' + (error as Error).message });
+        }
       }
-    }
+    });
   };
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
@@ -521,7 +565,15 @@ const SystemManagement: React.FC = () => {
           {/* Backup Management Tab */}
           {activeTab === 'backups' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold">Backup History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">Backup History</h3>
+                <button
+                  className="btn btn-sm btn-ghost gap-2"
+                  onClick={fetchBackupHistory}
+                >
+                  <RefreshCw className="w-4 h-4" /> Refresh
+                </button>
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="table table-zebra w-full">
@@ -554,16 +606,16 @@ const SystemManagement: React.FC = () => {
                         <td>
                           <div className="flex gap-2">
                             <button
-                              className="btn btn-xs btn-primary"
+                              className="btn btn-xs btn-primary gap-1"
                               onClick={() => handleRestoreBackup(backup.id)}
                             >
-                              Restore
+                              <RotateCcw className="w-3 h-3" /> Restore
                             </button>
                             <button
-                              className="btn btn-xs btn-error"
+                              className="btn btn-xs btn-error gap-1"
                               onClick={() => handleDeleteBackup(backup.id)}
                             >
-                              Delete
+                              <Trash2 className="w-3 h-3" /> Delete
                             </button>
                           </div>
                         </td>
@@ -626,59 +678,31 @@ const SystemManagement: React.FC = () => {
 
               {systemInfo && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">System Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Platform:</span>
-                          <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Node Version:</span>
-                          <span className="font-mono">{systemInfo.nodeVersion}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Uptime:</span>
-                          <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Process ID:</span>
-                          <span className="font-mono">{systemInfo.pid}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Memory Usage:</span>
-                          <span className="font-mono">
-                            {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <StatusCard
+                    title="System Information"
+                    subtitle="Host and Runtime Details"
+                    status="healthy"
+                    metrics={[
+                        { label: 'Platform', value: `${systemInfo.platform} (${systemInfo.arch})` },
+                        { label: 'Node Version', value: systemInfo.nodeVersion },
+                        { label: 'Uptime', value: `${Math.floor(systemInfo.uptime / 60)}m` },
+                        { label: 'Memory (RSS)', value: `${Math.round(systemInfo.memory.rss / 1024 / 1024)} MB` },
+                    ]}
+                    isLoading={false}
+                  />
 
-                  <div className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">Database Status</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="opacity-70">Connected:</span>
-                          <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
-                            {systemInfo.database.connected ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                        {systemInfo.database.stats && (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="opacity-70">Pool Size:</span>
-                              <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
-                            </div>
-                            {/* Add more DB stats if available */}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                  </div>
+                  <StatusCard
+                    title="Database Status"
+                    subtitle="Connection and Pool Stats"
+                    status={systemInfo.database.connected ? 'healthy' : 'error'}
+                    metrics={[
+                        { label: 'Connected', value: systemInfo.database.connected ? 'Yes' : 'No', icon: systemInfo.database.connected ? '✅' : '❌' },
+                        ...(systemInfo.database.stats ? [
+                            { label: 'Pool Size', value: systemInfo.database.stats.poolSize || 'N/A' }
+                        ] : [])
+                    ]}
+                    isLoading={false}
+                  />
                 </div>
               )}
 
@@ -830,6 +854,16 @@ const SystemManagement: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmVariant={confirmModal.variant as any || 'primary'}
+      />
     </div>
   );
 };

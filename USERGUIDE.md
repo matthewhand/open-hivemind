@@ -171,12 +171,17 @@ Manage system backups, export configurations, and access API documentation.
 ![Create Backup Modal](docs/images/create-backup-modal.png)
 
 ### [Sitemap](/admin/sitemap)
-View the complete navigation structure of the application.
-*   **Page Hierarchy**: See all available pages and their relationships.
-*   **Search & Filter**: Find specific pages by URL or description, and filter by access level.
-*   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
+Visualize and manage the application's navigation structure.
+![Sitemap Dashboard](docs/images/sitemap-dashboard.png)
 
-![Sitemap Page](docs/screenshots/sitemap-page.png)
+*   **Statistics**: Get a quick overview of total pages breakdown by access level (Public, Authenticated, Owner).
+*   **Visualization**: Toggle between **Grid View** (card-based) and **List View** (compact table) to explore the hierarchy.
+*   **Export**:
+    *   **Export CSV**: Download a detailed report of all pages for audits.
+    *   **XML**: Get the SEO-compatible XML sitemap.
+*   **Search & Filter**: Quickly find pages by URL or access level.
+
+![Sitemap List View](docs/images/sitemap-list-view.png)
 
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
