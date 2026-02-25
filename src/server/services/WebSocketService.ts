@@ -283,10 +283,7 @@ export class WebSocketService {
   > {
     const metricsService = BotMetricsService.getInstance();
     const allMetrics = metricsService.getAllMetrics();
-    const out: Record<
-      string,
-      { messageCount: number; errors: string[]; errorCount: number }
-    > = {};
+    const out: Record<string, { messageCount: number; errors: string[]; errorCount: number }> = {};
 
     // Merge in-memory errors with persistent metrics
     const botNames = new Set([...this.botErrors.keys(), ...Object.keys(allMetrics)]);
