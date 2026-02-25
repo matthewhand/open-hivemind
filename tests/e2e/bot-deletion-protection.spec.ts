@@ -18,9 +18,9 @@ test.describe('Bot Deletion Protection', () => {
 
     // Catch-all for other API requests
     await page.route('**/api/**', async (route) => {
-        // const url = route.request().url();
-        // console.log(`Fallback mock for: ${url}`);
-        await route.fulfill({ status: 200, body: '{}', contentType: 'application/json' });
+      // const url = route.request().url();
+      // console.log(`Fallback mock for: ${url}`);
+      await route.fulfill({ status: 200, body: '{}', contentType: 'application/json' });
     });
 
     await page.route('**/api/config', async (route) => {
