@@ -42,6 +42,24 @@ test.describe('MCP Servers Screenshots', () => {
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
+    // Mock MCP server test/tools endpoint
+    await page.route('/api/admin/mcp-servers/test', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            toolCount: 2,
+            tools: [
+              { name: 'read_file', description: 'Reads a file from the filesystem' },
+              { name: 'write_file', description: 'Writes a file to the filesystem' },
+            ],
+          },
+        }),
+      });
+    });
+
     // Mock MCP servers list
     await page.route('/api/admin/mcp-servers', async (route) => {
       await route.fulfill({
@@ -95,14 +113,31 @@ test.describe('MCP Servers Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
+    // Capture Tools Modal
+    // Click "View Tools" on the first server (Filesystem Server)
+    await page.getByTitle('View Tools').first().click();
+
+    // Wait for modal to be visible
+    const toolsModal = page.locator('.modal-box').filter({ hasText: 'Tools: Filesystem Server' });
+    await expect(toolsModal).toBeVisible();
+
+    // Take screenshot of the tools modal
+    await page.screenshot({ path: 'docs/screenshots/mcp-tools-modal.png' });
+
+    // Close the tools modal
+    await toolsModal.getByText('Close').click();
+    await expect(toolsModal).not.toBeVisible();
+
+    // Capture Add Server Modal
     // Click "Add Server" button
-    // Note: use .first() to avoid conflict with the button inside the hidden modal
+    // Note: use .first() to avoid conflict with the button inside the hidden modal if any
     await page.getByRole('button', { name: 'Add Server' }).first().click();
 
     // Wait for modal to be visible
-    await expect(page.locator('.modal-box')).toBeVisible();
+    const addServerModal = page.locator('.modal-box').filter({ hasText: 'Add MCP Server' });
+    await expect(addServerModal).toBeVisible();
 
-    // Take screenshot of the modal
+    // Take screenshot of the add server modal
     await page.screenshot({ path: 'docs/screenshots/mcp-add-server-modal.png' });
   });
 });

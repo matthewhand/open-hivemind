@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search } from 'lucide-react';
+import { Server, Search, Wrench, RefreshCw, XCircle } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -22,6 +22,13 @@ interface MCPServer {
   toolCount: number;
   lastConnected?: string;
   apiKey?: string;
+  error?: string;
+}
+
+interface MCPTool {
+  name: string;
+  description?: string;
+  inputSchema?: any;
 }
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -45,6 +52,12 @@ const MCPServersPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Tools Modal State
+  const [toolsModalOpen, setToolsModalOpen] = useState(false);
+  const [viewingTools, setViewingTools] = useState<MCPTool[]>([]);
+  const [viewingServerName, setViewingServerName] = useState('');
+  const [loadingTools, setLoadingTools] = useState(false);
 
   // Search and Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,6 +147,9 @@ const MCPServersPage: React.FC = () => {
       return;
     }
 
+    // Reset error state for this server
+    setServers(prev => prev.map(s => s.id === serverId ? { ...s, error: undefined } : s));
+
     try {
       let response;
       if (action === 'stop') {
@@ -164,7 +180,42 @@ const MCPServersPage: React.FC = () => {
       setAlert({ type: 'success', message: `Server ${action} action completed` });
       await fetchServers();
     } catch (error) {
-      setAlert({ type: 'error', message: error instanceof Error ? error.message : `Failed to ${action} server` });
+      const message = error instanceof Error ? error.message : `Failed to ${action} server`;
+      setAlert({ type: 'error', message });
+      // Update local state to show error on the card
+      setServers(prev => prev.map(s => s.id === serverId ? { ...s, status: 'error', error: message } : s));
+    }
+  };
+
+  const handleViewTools = async (server: MCPServer) => {
+    setViewingServerName(server.name);
+    setToolsModalOpen(true);
+    setLoadingTools(true);
+    setViewingTools([]);
+
+    try {
+      // Re-using the test endpoint to fetch tools for a specific config
+      const response = await fetch('/api/admin/mcp-servers/test', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: server.name,
+          serverUrl: server.url,
+          apiKey: server.apiKey, // Assuming this might be available or undefined
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tools');
+      }
+
+      const data = await response.json();
+      setViewingTools(data.data?.tools || []);
+    } catch (err) {
+      setViewingTools([]);
+      setAlert({ type: 'error', message: 'Failed to load tools' });
+    } finally {
+      setLoadingTools(false);
     }
   };
 
@@ -338,28 +389,46 @@ const MCPServersPage: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServers.map((server) => (
-          <div key={server.id} className="card bg-base-100 shadow-xl h-full">
+          <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="card-title">
+                <h2 className="card-title text-lg flex items-center gap-2">
                   {server.name}
+                  {server.status === 'error' && (
+                    <div className="tooltip tooltip-error" data-tip={server.error}>
+                      <XCircle className="w-5 h-5 text-error" />
+                    </div>
+                  )}
                 </h2>
                 <div className={`badge ${getStatusColor(server.status)}`}>
                   {server.status}
                 </div>
               </div>
 
-              <p className="text-sm text-base-content/70 mb-4">
+              <p className="text-sm text-base-content/70 mb-4 line-clamp-2" title={server.description}>
                 {server.description}
               </p>
 
               <div className="text-sm space-y-2 mb-4">
-                <p><strong>URL:</strong> {server.url}</p>
-                <p><strong>Tools:</strong> {server.toolCount}</p>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold w-12">URL:</span>
+                  <span className="font-mono text-xs bg-base-200 px-1 rounded truncate flex-1" title={server.url}>
+                    {server.url}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold w-12">Tools:</span>
+                  <span>{server.toolCount}</span>
+                </div>
                 {server.lastConnected && (
-                  <p className="text-base-content/50">
-                    Last connected: {new Date(server.lastConnected).toLocaleString()}
+                  <p className="text-xs text-base-content/50 mt-2">
+                    Synced: {new Date(server.lastConnected).toLocaleString()}
                   </p>
+                )}
+                {server.status === 'error' && server.error && (
+                  <div className="alert alert-error text-xs py-1 px-2 mt-2 rounded">
+                    <span>{server.error}</span>
+                  </div>
                 )}
               </div>
 
@@ -367,7 +436,7 @@ const MCPServersPage: React.FC = () => {
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
                     <button
-                      className="btn btn-ghost btn-sm btn-circle text-error"
+                      className="btn btn-ghost btn-sm btn-square text-error"
                       onClick={() => handleServerAction(server.id, 'stop')}
                       title="Stop Server"
                     >
@@ -375,26 +444,44 @@ const MCPServersPage: React.FC = () => {
                     </button>
                   ) : (
                     <button
-                      className="btn btn-ghost btn-sm btn-circle text-success"
+                      className="btn btn-ghost btn-sm btn-square text-success"
                       onClick={() => handleServerAction(server.id, 'start')}
                       title="Start Server"
                     >
                       <PlayIcon className="w-5 h-5" />
                     </button>
                   )}
+                  {server.status === 'stopped' && (
+                    <button
+                      className="btn btn-ghost btn-sm btn-square"
+                      onClick={() => handleServerAction(server.id, 'start')}
+                      title="Retry Connection"
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                    </button>
+                  )}
+                  {(server.status === 'running' || server.toolCount > 0) && (
+                    <button
+                      className="btn btn-ghost btn-sm btn-square"
+                      onClick={() => handleViewTools(server)}
+                      title="View Tools"
+                    >
+                      <Wrench className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <button
-                    className="btn btn-ghost btn-sm btn-circle"
+                    className="btn btn-ghost btn-sm btn-square"
                     onClick={() => handleEditServer(server)}
-                    title="Edit Server"
+                    title="Edit Configuration"
                   >
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
-                    className="btn btn-ghost btn-sm btn-circle text-error"
+                    className="btn btn-ghost btn-sm btn-square text-error"
                     onClick={() => handleDeleteServer(server.id)}
-                    title="Delete Server"
+                    title="Delete Configuration"
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>
@@ -545,6 +632,37 @@ const MCPServersPage: React.FC = () => {
           <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
           </button>
+        </div>
+      </Modal>
+
+      {/* Tools View Modal */}
+      <Modal
+        isOpen={toolsModalOpen}
+        onClose={() => setToolsModalOpen(false)}
+        title={`Tools: ${viewingServerName}`}
+      >
+        <div className="space-y-4">
+          {loadingTools ? (
+             <div className="flex justify-center py-8">
+               <span className="loading loading-spinner loading-lg"></span>
+             </div>
+          ) : viewingTools.length === 0 ? (
+            <div className="text-center py-8 text-base-content/60">
+              No tools found for this server.
+            </div>
+          ) : (
+            <div className="overflow-y-auto max-h-96 space-y-3">
+              {viewingTools.map((tool, idx) => (
+                <div key={idx} className="bg-base-200 p-3 rounded-lg">
+                  <h3 className="font-bold text-sm mb-1">{tool.name}</h3>
+                  <p className="text-xs text-base-content/70">{tool.description || 'No description provided'}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="modal-action">
+          <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
         </div>
       </Modal>
     </div>
