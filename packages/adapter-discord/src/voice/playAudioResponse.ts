@@ -9,7 +9,6 @@ import {
   type DiscordGatewayAdapterCreator,
 } from '@discordjs/voice';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
-// Fix: Added missing import for DiscordGatewayAdapterCreator
 import discordConfig from '@config/discordConfig';
 
 const debug = Debug('app:playAudioResponse');
@@ -37,14 +36,16 @@ export async function playAudioResponse(
       throw new Error('User is not in a voice channel.');
     }
 
-    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
-    const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
+    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string;
+    const audioFilePath = path.join(audioDirectory, fileName);
     debug(`Playing audio file: ${audioFilePath}`);
 
     const connection = joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator, // Fix: Correct type casting
+      // Cast required due to version mismatch in discord-api-types between discord.js and @discordjs/voice.
+      // discord.js uses a newer version with 'IsGuest' flag in GuildMemberFlags, which is missing in @discordjs/voice.
+      adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
     });
 
     connection.on('stateChange', (oldState, newState) => {
@@ -68,7 +69,7 @@ export async function playAudioResponse(
 
     player.on('error', (error) => {
       debug(`Error during audio playback: ${error.message}`);
-      debug(error.stack); // Improvement: log stack trace for better debugging
+      debug(error.stack);
       connection.destroy();
       throw error;
     });
