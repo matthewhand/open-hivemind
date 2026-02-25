@@ -20,6 +20,7 @@ import { createErrorResponse } from '@src/utils/errorResponse';
 // Routing
 import messageConfig from '@config/messageConfig';
 import slackConfig from '@config/slackConfig';
+import type { IProvider, ProviderMetadata } from '@hivemind/shared-types';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
@@ -51,7 +52,7 @@ const RETRY_CONFIG = {
  * SlackService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
-export class SlackService extends EventEmitter implements IMessengerService {
+export class SlackService extends EventEmitter implements IMessengerService, IProvider {
   private static instance: SlackService | undefined;
   private botManagers: Map<string, SlackBotManager> = new Map();
   private signatureVerifiers: Map<string, SlackSignatureVerifier> = new Map();
@@ -1188,6 +1189,64 @@ export class SlackService extends EventEmitter implements IMessengerService {
       bots: botMetrics,
       globalMetrics: metrics.getMetrics(),
     };
+  }
+
+  public getMetadata(): ProviderMetadata {
+    return {
+      id: 'slack',
+      name: 'Slack',
+      type: 'messenger',
+      configSchema: slackConfig.getSchema(),
+      sensitiveFields: [
+        'botToken',
+        'signingSecret',
+        'appToken',
+        'SLACK_BOT_TOKEN',
+        'SLACK_SIGNING_SECRET',
+        'SLACK_APP_TOKEN',
+      ],
+      docsUrl: 'https://api.slack.com/apps',
+      helpText:
+        'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.',
+    };
+  }
+
+  public async getStatus(): Promise<any> {
+    const slackBots = this.getBotNames();
+    const slackInfo = slackBots.map((name: string) => {
+      const cfg: any = this.getBotConfig(name) || {};
+      return {
+        provider: 'slack',
+        name,
+        defaultChannel: cfg?.slack?.defaultChannelId || '',
+        mode: cfg?.slack?.mode || 'socket',
+        connected: this.botManagers.has(name),
+      };
+    });
+    return {
+      ok: true,
+      bots: slackInfo,
+      count: slackInfo.length,
+    };
+  }
+
+  public async refresh(): Promise<void> {
+    debug('Refreshing Slack configuration...');
+    // Re-run initialization logic to pick up new bots from file/env
+    this.initializeFromConfiguration();
+    // Also check legacy config
+    this.initializeLegacyConfiguration();
+    debug('Slack configuration refreshed.');
+  }
+
+  public getConfig(): any {
+    return slackConfig;
+  }
+
+  public async updateConfig(data: any): Promise<void> {
+    slackConfig.load(data);
+    slackConfig.validate({ allowed: 'warn' });
+    await this.refresh();
   }
 }
 

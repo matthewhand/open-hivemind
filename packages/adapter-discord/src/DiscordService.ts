@@ -18,6 +18,8 @@ import type {
   ILogger,
   IMessage,
   IMessengerService,
+  IProvider,
+  ProviderMetadata,
   IServiceDependencies,
   IWebSocketService,
 } from '@hivemind/shared-types';
@@ -38,7 +40,7 @@ const log = Debug('app:discordService');
  * All cross-cutting concerns (logging, metrics, WebSocket, channel routing) are injected
  * via IServiceDependencies.
  */
-export class DiscordService extends EventEmitter implements IMessengerService {
+export class DiscordService extends EventEmitter implements IMessengerService, IProvider {
   private static instance: DiscordService | undefined;
   private deps: IServiceDependencies;
   public botManager: DiscordBotManager;
@@ -608,6 +610,66 @@ export class DiscordService extends EventEmitter implements IMessengerService {
         botConfig: bot.config,
       };
     });
+  }
+
+  public getMetadata(): ProviderMetadata {
+    return {
+      id: 'discord',
+      name: 'Discord',
+      type: 'messenger',
+      configSchema: this.deps.discordConfig?.getSchema ? this.deps.discordConfig.getSchema() : {},
+      sensitiveFields: ['token', 'DISCORD_BOT_TOKEN'],
+      docsUrl: 'https://discord.com/developers/applications',
+      helpText: 'Create a Discord application, add a bot, and copy the bot token.',
+    };
+  }
+
+  public async getStatus(): Promise<any> {
+    const bots = this.getAllBots();
+    const discordInfo = bots.map((b) => ({
+      provider: 'discord',
+      name: b.botUserName || b.config?.name || 'discord',
+      connected: b.client?.isReady(),
+    }));
+    return {
+      ok: true,
+      bots: discordInfo,
+      count: discordInfo.length,
+    };
+  }
+
+  public async refresh(): Promise<void> {
+    try {
+      const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+      const messengersPath = path.join(configDir, 'messengers.json');
+      if (fs.existsSync(messengersPath)) {
+        const content = await fs.promises.readFile(messengersPath, 'utf8');
+        const cfg = JSON.parse(content);
+        const instances = cfg.discord?.instances || [];
+
+        const existingTokens = new Set(this.getAllBots().map((b) => b.config.token));
+
+        for (const inst of instances) {
+          if (inst.token && !existingTokens.has(inst.token)) {
+            await this.addBot({ name: inst.name || '', token: inst.token });
+          }
+        }
+      }
+    } catch (e) {
+      log('Failed to refresh Discord bots', e);
+    }
+  }
+
+  public getConfig(): any {
+    return this.deps.discordConfig;
+  }
+
+  public async updateConfig(data: any): Promise<void> {
+    if (this.deps.discordConfig) {
+      this.deps.discordConfig.load(data);
+      this.deps.discordConfig.validate({ allowed: 'warn' });
+      await this.refresh();
+    }
   }
 }
 

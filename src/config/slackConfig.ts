@@ -95,6 +95,11 @@ const slackConfig = convict({
     default: 'https://university.example.com/report-issue',
     env: 'REPORT_ISSUE_URL',
   },
+  instances: {
+    doc: 'List of Slack bot instances',
+    format: Array,
+    default: [],
+  },
 });
 
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');

@@ -7,8 +7,6 @@ import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import discordConfig from '../../config/discordConfig';
-import flowiseConfig from '../../config/flowiseConfig';
 import {
   getGuardrailProfiles,
   saveGuardrailProfiles,
@@ -17,7 +15,6 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
-import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
@@ -31,9 +28,6 @@ import {
   saveMessageProfiles,
   type MessageProfile,
 } from '../../config/messageProfiles';
-import ollamaConfig from '../../config/ollamaConfig';
-import openaiConfig from '../../config/openaiConfig';
-import openWebUIConfig from '../../config/openWebUIConfig';
 import {
   createResponseProfile,
   deleteResponseProfile,
@@ -41,9 +35,7 @@ import {
   updateResponseProfile,
   type ResponseProfile,
 } from '../../config/responseProfileManager';
-import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -54,26 +46,16 @@ import {
 } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
+import { ProviderRegistry } from '../../registries/ProviderRegistry';
 
 const debug = Debug('app:server:routes:config');
 const router = Router();
 
 // Map of base config types to their convict objects (used as schema sources)
-const schemaSources: Record<string, any> = {
-  message: messageConfig,
-  llm: llmConfig,
-  discord: discordConfig,
-  slack: slackConfig,
-  openai: openaiConfig,
-  flowise: flowiseConfig,
-  ollama: ollamaConfig,
-  mattermost: mattermostConfig,
-  openwebui: openWebUIConfig,
-  webhook: webhookConfig,
-};
+const schemaSources: Record<string, any> = {};
 
 // Map of all active config instances
-const globalConfigs: Record<string, any> = { ...schemaSources };
+const globalConfigs: Record<string, any> = {};
 
 // Helper to load dynamic configs from files
 const loadDynamicConfigs = () => {
@@ -115,8 +97,30 @@ const loadDynamicConfigs = () => {
   }
 };
 
-// Initial load
-loadDynamicConfigs();
+// Initialize Config System from Registry
+export function initializeConfigSystem() {
+  const registry = ProviderRegistry.getInstance();
+  const providers = registry.getAll();
+
+  for (const provider of providers) {
+    const meta = provider.getMetadata();
+    // If provider exposes a config object (convict instance), use it
+    if (typeof provider.getConfig === 'function') {
+      try {
+        const config = provider.getConfig();
+        if (config) {
+          globalConfigs[meta.id] = config;
+          schemaSources[meta.id] = config;
+        }
+      } catch (e) {
+        debug(`Failed to get config for ${meta.id}`, e);
+      }
+    }
+  }
+
+  // Load dynamic configs after populating base schemas
+  loadDynamicConfigs();
+}
 
 // Apply audit middleware to all config routes (except in test)
 if (process.env.NODE_ENV !== 'test') {
@@ -131,7 +135,10 @@ router.get('/ping', (req, res) => {
 // Sensitive key patterns for redaction
 const SENSITIVE_PATTERNS = [/token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i];
 
-function isSensitiveKey(key: string): boolean {
+function isSensitiveKey(key: string, sensitiveFields?: string[]): boolean {
+  if (sensitiveFields && sensitiveFields.includes(key)) {
+    return true;
+  }
   return SENSITIVE_PATTERNS.some((pattern) => pattern.test(key));
 }
 
@@ -146,13 +153,21 @@ function redactValue(value: unknown): string {
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
-function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<string, unknown> {
+function redactObject(
+  obj: Record<string, unknown>,
+  sensitiveFields?: string[],
+  parentKey = ''
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = parentKey ? `${parentKey}.${key}` : key;
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = redactObject(value as Record<string, unknown>, fullKey);
-    } else if (isSensitiveKey(key) && value) {
+      result[key] = redactObject(
+        value as Record<string, unknown>,
+        sensitiveFields,
+        fullKey
+      );
+    } else if (isSensitiveKey(key, sensitiveFields) && value) {
       result[key] = {
         isRedacted: true,
         redactedValue: redactValue(value),
@@ -171,6 +186,7 @@ router.get('/bots', async (req, res) => {
     const botManager = BotManager.getInstance();
     const bots = await botManager.getAllBots();
     const manager = BotConfigurationManager.getInstance();
+    const registry = ProviderRegistry.getInstance();
 
     // Redact sensitive values before sending to frontend
     // Map BotInstance (runtime) back to the flat structure expected by the frontend
@@ -182,7 +198,20 @@ router.get('/bots', async (req, res) => {
         ...(bot.config || {}),
       };
 
-      const redacted = redactObject(mergedBot as Record<string, unknown>);
+      const sensitiveFields = new Set<string>();
+      if (bot.messageProvider) {
+        const p = registry.get(bot.messageProvider);
+        p?.getMetadata().sensitiveFields?.forEach((f) => sensitiveFields.add(f));
+      }
+      if (bot.llmProvider) {
+        const p = registry.get(bot.llmProvider);
+        p?.getMetadata().sensitiveFields?.forEach((f) => sensitiveFields.add(f));
+      }
+
+      const redacted = redactObject(
+        mergedBot as Record<string, unknown>,
+        Array.from(sensitiveFields)
+      );
 
       return {
         ...redacted,
@@ -193,7 +222,7 @@ router.get('/bots', async (req, res) => {
         isActive: bot.isActive,
         source: bot.source || (bot.config && Object.keys(bot.config).length > 0 ? 'db' : 'env'),
         // Ensure config is also present as a property for newer UI components
-        config: redactObject(bot.config || {}),
+        config: redactObject(bot.config || {}, Array.from(sensitiveFields)),
         errorCount: 0, // Placeholder as BotInstance currently doesn't track error counts in this view
         messageCount: 0, // Placeholder
         connected: bot.isActive, // Simplified connected status

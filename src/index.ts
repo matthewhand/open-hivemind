@@ -16,7 +16,7 @@ import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
 import ciRouter from '@src/server/routes/ci';
-import webuiConfigRouter from '@src/server/routes/config';
+import webuiConfigRouter, { initializeConfigSystem } from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
@@ -32,6 +32,8 @@ import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { ProviderRegistry } from '@src/registries/ProviderRegistry';
+import { registerStaticProviders } from '@src/registries/registerProviders';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -425,6 +427,12 @@ async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 
+  // Register static providers (configs, tools)
+  registerStaticProviders();
+
+  // Initialize config system (schema sources, global configs)
+  initializeConfigSystem();
+
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
@@ -484,9 +492,13 @@ async function main() {
       return messageProviders.includes(providerName.toLowerCase());
     });
 
-    // Register messenger services with ShutdownCoordinator
+    // Register messenger services with ShutdownCoordinator and ProviderRegistry
+    const registry = ProviderRegistry.getInstance();
     for (const service of messengerServices) {
       shutdownCoordinator.registerMessengerService(service);
+      if (service && typeof service.getMetadata === 'function') {
+        registry.register(service);
+      }
     }
 
     if (filteredMessengers.length > 0) {

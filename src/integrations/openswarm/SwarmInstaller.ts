@@ -2,14 +2,56 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import type { IToolInstaller, ProviderMetadata } from '@hivemind/shared-types';
 
 const execAsync = promisify(exec);
 
-export class SwarmInstaller {
+export class SwarmInstaller implements IToolInstaller {
   private installPath: string;
 
   constructor() {
     this.installPath = path.join(process.cwd(), 'open-swarm');
+  }
+
+  public getMetadata(): ProviderMetadata {
+    return {
+      id: 'openswarm',
+      name: 'OpenSwarm',
+      type: 'tool',
+      docsUrl: 'https://github.com/openswarm/openswarm',
+      helpText: 'OpenSwarm is an open-source swarm intelligence framework.',
+    };
+  }
+
+  public async getStatus(): Promise<any> {
+    const python = await this.checkPython();
+    const installed = await this.checkSwarmInstalled();
+    return {
+      ok: true,
+      pythonAvailable: python,
+      swarmInstalled: installed,
+      webUIUrl: this.getSwarmWebUIUrl(),
+    };
+  }
+
+  public async checkPrerequisites(): Promise<{ success: boolean; message?: string }> {
+    const python = await this.checkPython();
+    return {
+      success: python,
+      message: python ? 'Python available' : 'Python not found',
+    };
+  }
+
+  public async checkInstalled(): Promise<boolean> {
+    return this.checkSwarmInstalled();
+  }
+
+  public async install(): Promise<{ success: boolean; message: string }> {
+    return this.installSwarm();
+  }
+
+  public async start(port?: number): Promise<{ success: boolean; message: string }> {
+    return this.startSwarm(port);
   }
 
   async checkPython(): Promise<boolean> {

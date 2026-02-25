@@ -38,3 +38,5 @@ export {
   defaultErrorFactory,
   type IErrorFactory,
 } from './errors';
+export type { IProvider, ProviderMetadata } from './IProvider';
+export type { IToolInstaller } from './IToolInstaller';
