@@ -60,6 +60,10 @@ const BotsPage: React.FC = () => {
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
+  // Clone Modal State
+  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [cloneName, setCloneName] = useState('');
+
   // Define data fetching logic
   const fetchPageData = useCallback(async (signal: AbortSignal) => {
     const [configData, globalData, personasData, profilesData] = await Promise.all([
@@ -243,11 +247,20 @@ const BotsPage: React.FC = () => {
     }
   };
 
-  const handleClone = async (bot: BotData) => {
+  const handleClone = (bot: BotData) => {
+    setCloneName(`${bot.name} (Clone)`);
+    setCloneModal({ isOpen: true, bot });
+  };
+
+  const handleCloneSubmit = async () => {
+    if (!cloneModal.bot || !cloneName.trim()) { return; }
+
     try {
-      setActionLoading(bot.id);
-      await apiService.cloneBot(bot.id, `${bot.name} (Clone)`);
+      setActionLoading(cloneModal.bot.id);
+      await apiService.cloneBot(cloneModal.bot.id, cloneName);
       await refetch();
+      setCloneModal({ isOpen: false, bot: null });
+      setCloneName('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clone bot');
     } finally {
@@ -427,6 +440,15 @@ const BotsPage: React.FC = () => {
 
                     <div className="divider divider-horizontal mx-1 h-8"></div>
 
+                    {/* Clone Button */}
+                    <button
+                      className="btn btn-sm btn-square btn-ghost"
+                      onClick={() => handleClone(bot)}
+                      title="Duplicate Bot"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+
                     {/* Settings Button (Opens Modal) */}
                     <button
                       className="btn btn-sm btn-square btn-ghost"
@@ -484,6 +506,48 @@ const BotsPage: React.FC = () => {
           defaultLlmConfigured={defaultLlmConfigured}
         />
       </Modal >
+
+      {/* Clone Bot Modal */}
+      <Modal
+        isOpen={cloneModal.isOpen}
+        onClose={() => { setCloneModal({ isOpen: false, bot: null }); setCloneName(''); }}
+        title="Duplicate Bot"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p>Enter a name for the new bot cloned from <strong>{cloneModal.bot?.name}</strong>.</p>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">New Bot Name</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={cloneName}
+              onChange={(e) => setCloneName(e.target.value)}
+              placeholder="New Bot Name"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              className="btn btn-ghost"
+              onClick={() => { setCloneModal({ isOpen: false, bot: null }); setCloneName(''); }}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleCloneSubmit}
+              disabled={actionLoading === cloneModal.bot?.id || !cloneName.trim()}
+            >
+              {actionLoading === cloneModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Clone Bot'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       < Modal

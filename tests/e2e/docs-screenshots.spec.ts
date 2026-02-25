@@ -6,6 +6,41 @@ test.describe('Documentation Screenshots', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
+    // Mock API to ensure consistent data for screenshots
+    await page.route('**/api/config', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          json: {
+            bots: [
+              {
+                id: 'bot-1',
+                name: 'My Helper Bot',
+                description: 'A helpful assistant',
+                provider: 'discord',
+                llmProvider: 'openai',
+                persona: 'default',
+                status: 'active',
+                connected: true,
+                messageCount: 123,
+                errorCount: 0
+              }
+            ],
+            warnings: [],
+            legacyMode: false,
+            environment: 'production'
+          }
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.route('**/api/config/global', async route => route.fulfill({ json: {} }));
+    await page.route('**/api/personas', async route => route.fulfill({ json: [] }));
+    await page.route('**/api/config/llm-profiles', async route => route.fulfill({ json: { profiles: { llm: [] } } }));
+    await page.route('**/api/health/detailed', async route => route.fulfill({ json: { status: 'ok' } }));
+
     // Navigate to Bots page
     await navigateAndWaitReady(page, '/admin/bots');
 
@@ -20,11 +55,11 @@ test.describe('Documentation Screenshots', () => {
     await createButton.click();
 
     // Wait for modal
-    const modal = page.locator('.modal-box, [role="dialog"]').first();
+    const modal = page.locator('dialog[open]');
     await expect(modal).toBeVisible();
 
     // Fill in dummy data for better visual
-    await modal.locator('input').first().fill('My Helper Bot');
+    await modal.locator('input').first().fill('My New Bot');
 
     // Attempt to select providers based on observed UI (Basics tab: Message Provider, LLM Provider)
     const selects = modal.locator('select');
@@ -50,5 +85,21 @@ test.describe('Documentation Screenshots', () => {
 
     // Screenshot Create Bot Modal
     await page.screenshot({ path: 'docs/images/create-bot-modal.png', fullPage: true });
+
+    // Close Create Modal
+    await modal.getByLabel('Close modal').click();
+    await expect(modal).not.toBeVisible();
+
+    // Open Clone Bot Modal
+    // Find the Duplicate button (using title attribute as it is an icon button)
+    const duplicateButton = page.locator('button[title="Duplicate Bot"]').first();
+    await duplicateButton.click();
+
+    // Wait for Clone Modal
+    const cloneModal = page.locator('dialog[open]').filter({ hasText: 'Duplicate Bot' }).first();
+    await expect(cloneModal).toBeVisible();
+
+    // Screenshot Clone Bot Modal
+    await page.screenshot({ path: 'docs/images/clone-bot-modal.png' });
   });
 });
