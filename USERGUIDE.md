@@ -20,10 +20,15 @@ Manage connections to Large Language Model providers.
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
+*   **Manage Connections**: View, edit, and delete configured message providers.
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
 *   **Status**: Check connection health for each platform.
+
+![Message Platforms](docs/screenshots/message-providers-page.png)
+
+![Add Message Provider](docs/screenshots/message-provider-modal.png)
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.
@@ -51,13 +56,8 @@ Define the personality and behavior of your bots.
 ### [Guards](/admin/guards)
 Set up safety and security boundaries.
 *   **Content Filters**: Block specific words or phrases.
-*   **Rate Limiting**: Control request frequency to prevent abuse.
-*   **Access Control**: Restrict bot usage to specific users or owners.
-*   **Guard Profiles**: Create reusable profiles combining these settings.
-
-![Guard Profiles List](docs/screenshots/guard-profiles-list.png)
-
-![Create Guard Profile](docs/screenshots/guard-profile-modal.png)
+*   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
+*   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
 
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.

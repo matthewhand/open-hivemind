@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, AlertTriangle, Copy, Save } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import SearchFilterBar from '../components/SearchFilterBar';
-import Button from '../components/DaisyUI/Button';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -38,7 +35,6 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -170,56 +166,28 @@ const GuardsPage: React.FC = () => {
     });
   };
 
-  const filteredProfiles = useMemo(() => {
-    if (!searchQuery) return profiles;
-    const lowerQuery = searchQuery.toLowerCase();
-    return profiles.filter(p =>
-      (p.name?.toLowerCase() || '').includes(lowerQuery) ||
-      (p.description?.toLowerCase() || '').includes(lowerQuery)
-    );
-  }, [profiles, searchQuery]);
-
-  const modalActions = [
-    {
-      label: 'Cancel',
-      onClick: () => setEditingProfile(null),
-      variant: 'ghost' as const,
-      disabled: saving,
-    },
-    {
-      label: 'Save Profile',
-      onClick: handleSaveProfile,
-      variant: 'primary' as const,
-      loading: saving,
-      disabled: saving,
-    },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <PageHeader
-        title="Guard Profiles"
-        description="Manage security and access control profiles for bots"
-        icon={Shield}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={fetchProfiles} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleCreate}>
-              <Plus className="w-4 h-4 mr-2" /> New Profile
-            </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-500 rounded-lg">
+            <Shield className="w-6 h-6 text-white" />
           </div>
-        }
-      />
-
-      {/* Search & Filter */}
-      <SearchFilterBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search profiles..."
-      />
+          <div>
+            <h1 className="text-2xl font-bold">Guard Profiles</h1>
+            <p className="text-base-content/60">Manage security and access control profiles for bots</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={fetchProfiles} className="btn btn-ghost gap-2" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={handleCreate} className="btn btn-primary gap-2">
+            <Plus className="w-4 h-4" /> New Profile
+          </button>
+        </div>
+      </div>
 
       {loading && !editingProfile ? (
         <div className="flex items-center justify-center py-12">
@@ -235,18 +203,9 @@ const GuardsPage: React.FC = () => {
           onAction={handleCreate}
           variant="noData"
         />
-      ) : filteredProfiles.length === 0 ? (
-        <EmptyState
-          icon={Shield}
-          title="No Matches Found"
-          description={`No profiles match your search for "${searchQuery}"`}
-          actionLabel="Clear Search"
-          onAction={() => setSearchQuery('')}
-          variant="noResults"
-        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfiles.map(profile => (
+          {profiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
@@ -284,31 +243,26 @@ const GuardsPage: React.FC = () => {
       )}
 
       {/* Edit Modal */}
-      <Modal
-        isOpen={!!editingProfile}
-        onClose={() => setEditingProfile(null)}
-        title={isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}
-        size="lg"
-        actions={modalActions}
-        closable={!saving}
-      >
-        {editingProfile && (
-          <div className="space-y-6">
-            <div className="form-control">
+      {editingProfile && (
+        <div className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-4xl">
+            <h3 className="font-bold text-lg mb-6">{isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}</h3>
+
+            <div className="form-control mb-4">
               <label className="label"><span className="label-text">Profile Name</span></label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className="input input-bordered"
                 value={editingProfile.name}
                 onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
                 placeholder="e.g. Strict Production"
               />
             </div>
 
-            <div className="form-control">
+            <div className="form-control mb-6">
               <label className="label"><span className="label-text">Description</span></label>
               <textarea
-                className="textarea textarea-bordered h-20 w-full"
+                className="textarea textarea-bordered h-20"
                 value={editingProfile.description}
                 onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
                 placeholder="Describe what this profile enforces..."
@@ -317,7 +271,7 @@ const GuardsPage: React.FC = () => {
 
             <div className="divider">Guardrails</div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-6">
               {/* Access Control */}
               <div className="collapse collapse-arrow bg-base-200">
                 <input type="checkbox" defaultChecked />
@@ -335,7 +289,7 @@ const GuardsPage: React.FC = () => {
                   <div className="form-control">
                     <label className="label"><span className="label-text">Type</span></label>
                     <select
-                      className="select select-bordered w-full"
+                      className="select select-bordered"
                       value={editingProfile.guards.mcpGuard.type}
                       onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
@@ -350,7 +304,7 @@ const GuardsPage: React.FC = () => {
                       <input
                         id="allowed-users"
                         type="text"
-                        className="input input-bordered w-full"
+                        className="input input-bordered"
                         value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
                         onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                         disabled={!editingProfile.guards.mcpGuard.enabled}
@@ -379,7 +333,7 @@ const GuardsPage: React.FC = () => {
                       <label className="label"><span className="label-text">Max Requests</span></label>
                       <input
                         type="number"
-                        className="input input-bordered w-full"
+                        className="input input-bordered"
                         value={editingProfile.guards.rateLimit?.maxRequests || 100}
                         onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
@@ -389,7 +343,7 @@ const GuardsPage: React.FC = () => {
                       <label className="label"><span className="label-text">Window (ms)</span></label>
                       <input
                         type="number"
-                        className="input input-bordered w-full"
+                        className="input input-bordered"
                         value={editingProfile.guards.rateLimit?.windowMs || 60000}
                         onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
@@ -434,9 +388,17 @@ const GuardsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => setEditingProfile(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveProfile} disabled={saving}>
+                {saving ? <span className="loading loading-spinner" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Profile
+              </button>
+            </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={!!deleteConfirm}

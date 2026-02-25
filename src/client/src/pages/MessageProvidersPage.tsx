@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '../hooks/useModal';
-import { useBotProviders } from '../hooks/useBotProviders';
-import { Card, Button, Badge } from '../components/DaisyUI';
+import { Card, Button, Badge, PageHeader, EmptyState } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Plus as AddIcon,
@@ -10,56 +9,68 @@ import {
   CheckCircle as CheckIcon,
   XCircle as XIcon,
   AlertCircle as WarningIcon,
+  Edit2,
+  Trash2,
+  RefreshCw,
 } from 'lucide-react';
-import { Breadcrumbs } from '../components/DaisyUI';
 import type { MessageProviderType} from '../types/bot';
 import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 
 const MessageProvidersPage: React.FC = () => {
-  const { modalState, openAddModal, closeModal } = useModal();
+  const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const [configuredProviders, setConfiguredProviders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProviders();
-  }, []);
-
-  const fetchProviders = async () => {
+  const fetchProviders = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/config/message-profiles');
       if (response.ok) {
         const data = await response.json();
-        setConfiguredProviders(data.profiles.message || []);
+        setConfiguredProviders(data.profiles?.message || []);
       }
     } catch (error) {
       console.error('Failed to fetch message profiles:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
-    { label: 'Providers', href: '/admin/providers' },
-    { label: 'Message Platforms', href: '/admin/providers/message', isActive: true },
-  ];
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-    case 'connected':
-      return <CheckIcon className="w-4 h-4 text-success" />;
-    case 'error':
-      return <XIcon className="w-4 h-4 text-error" />;
-    case 'testing':
-      return <WarningIcon className="w-4 h-4 text-warning" />;
-    default:
-      return <XIcon className="w-4 h-4 text-base-content/40" />;
-    }
-  };
+  useEffect(() => {
+    fetchProviders();
+  }, [fetchProviders]);
 
   const handleAddProvider = (providerType: MessageProviderType) => {
-    // We pass the provider type to the modal state if needed, but openAddModal
-    // currently takes (context, type). We might need to adjust modal state handling
-    // or just open it. The modal allows selecting type anyway.
     openAddModal('global', 'message');
+  };
+
+  const handleEditProvider = (provider: any) => {
+    openEditModal('global', 'message', {
+      id: provider.key,
+      name: provider.name,
+      type: provider.provider,
+      config: provider.config,
+      enabled: true,
+    } as any);
+  };
+
+  const handleDeleteProvider = async (key: string) => {
+    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
+
+    try {
+      const response = await fetch(`/api/config/message-profiles/${key}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchProviders();
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete provider: ${error.message || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`Failed to delete provider: ${err.message}`);
+    }
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -74,44 +85,82 @@ const MessageProvidersPage: React.FC = () => {
         config: providerData.config,
       };
 
-      const response = await fetch('/api/config/message-profiles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      if (modalState.isEdit && modalState.provider?.id) {
+        const oldKey = modalState.provider.id;
 
-      if (response.ok) {
-        await fetchProviders(); // Refresh list
-        closeModal();
+        if (oldKey === key) {
+           // Same key, simple update
+           const response = await fetch(`/api/config/message-profiles/${oldKey}`, {
+             method: 'PUT',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(payload),
+           });
+           if (!response.ok) throw new Error('Failed to update provider');
+        } else {
+           // Key change: create new then delete old to prevent data loss
+           const createResponse = await fetch('/api/config/message-profiles', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(payload),
+           });
+
+           if (!createResponse.ok) {
+             const error = await createResponse.json();
+             throw new Error(error.message || 'Failed to create new provider during rename');
+           }
+
+           // Only delete old if creation succeeded
+           const deleteResponse = await fetch(`/api/config/message-profiles/${oldKey}`, { method: 'DELETE' });
+           if (!deleteResponse.ok) {
+             console.error('Failed to delete old provider after rename');
+             // Consider informing user, but operation was mostly successful (duplicate exists now)
+           }
+        }
       } else {
-        const error = await response.json();
-        console.error('Failed to create provider:', error);
-        // Ideally show error to user
+        // Create new
+        const response = await fetch('/api/config/message-profiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to create provider');
+        }
       }
-    } catch (error) {
+
+      await fetchProviders(); // Refresh list
+      closeModal();
+    } catch (error: any) {
       console.error('Error submitting provider:', error);
+      alert(error.message || 'An error occurred');
     }
   };
 
   const providerTypes = Object.keys(MESSAGE_PROVIDER_CONFIGS) as MessageProviderType[];
 
   return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-4 mb-8">
-        <h1 className="text-4xl font-bold mb-2">Message Platforms</h1>
-        <p className="text-base-content/70">
-          Configure messaging platforms for your bots to connect and communicate
-        </p>
-      </div>
+    <div className="p-6 space-y-8">
+      <PageHeader
+        title="Message Platforms"
+        description="Configure messaging platforms for your bots to connect and communicate"
+        icon={MessageIcon}
+        actions={
+          <Button variant="ghost" size="sm" onClick={fetchProviders} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+        }
+      />
 
       {/* Configured Providers */}
-      {configuredProviders.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Configured Platforms</h2>
+      <div>
+        <h2 className="text-2xl font-semibold mb-4">Configured Platforms</h2>
+        {loading ? (
+           <div className="flex justify-center py-8"><span className="loading loading-spinner loading-lg"></span></div>
+        ) : configuredProviders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {configuredProviders.map((provider) => {
               const config = MESSAGE_PROVIDER_CONFIGS[provider.provider as MessageProviderType] || MESSAGE_PROVIDER_CONFIGS.webhook;
@@ -125,27 +174,38 @@ const MessageProvidersPage: React.FC = () => {
                       </div>
                       <Badge variant="success" size="sm">Configured</Badge>
                     </div>
-                    <p className="text-sm text-base-content/60 mb-4">{provider.description || config.description}</p>
-                    <div className="card-actions justify-end">
-                      {/* Edit functionality to be implemented */}
-                      <Button size="sm" variant="ghost" disabled>Edit</Button>
+                    <p className="text-sm text-base-content/60 mb-4 h-10 line-clamp-2">{provider.description || config.description}</p>
+                    <div className="card-actions justify-end gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => handleEditProvider(provider)}>
+                        <Edit2 className="w-4 h-4" /> Edit
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-error" onClick={() => handleDeleteProvider(provider.key)}>
+                        <Trash2 className="w-4 h-4" /> Delete
+                      </Button>
                     </div>
                   </div>
                 </Card>
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <EmptyState
+            icon={MessageIcon}
+            title="No Platforms Configured"
+            description="Select a provider below to start configuring your first messaging platform."
+            variant="noData"
+          />
+        )}
+      </div>
+
+      <div className="divider">Available Providers</div>
 
       {/* Provider Types Grid */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Available Provider Types</h2>
+      <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {providerTypes.map((type) => {
             const config = MESSAGE_PROVIDER_CONFIGS[type];
             const requiredFields = (config.fields || []).filter((f: any) => f.required);
-            const optionalFields = (config.fields || []).filter((f: any) => !f.required);
 
             return (
               <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
@@ -159,41 +219,12 @@ const MessageProvidersPage: React.FC = () => {
                         <p className="text-sm text-base-content/60">{type}</p>
                       </div>
                     </div>
-                    <Badge variant="neutral" size="sm">
-                      {requiredFields.length} required
-                    </Badge>
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-base-content/70 mb-4">
+                  <p className="text-sm text-base-content/70 mb-4 h-12 line-clamp-2">
                     {config.description}
                   </p>
-
-                  {/* Required Fields */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {requiredFields.map((field: any) => (
-                        <Badge key={field.name} color="neutral" variant="secondary" className="btn-outline text-xs">
-                          {field.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Optional Fields */}
-                  {optionalFields.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {optionalFields.map((field: any) => (
-                          <Badge key={field.name} color="ghost" variant="secondary" className="btn-outline text-xs">
-                            {field.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Actions */}
                   <div className="card-actions justify-end">
@@ -215,7 +246,7 @@ const MessageProvidersPage: React.FC = () => {
       </div>
 
       {/* Configuration Guide */}
-      <Card className="bg-primary/5 border border-primary/20">
+      <Card className="bg-primary/5 border border-primary/20 mt-8">
         <div className="card-body">
           <h2 className="card-title text-xl mb-4">
             <ConfigIcon className="w-6 h-6 mr-2" />
