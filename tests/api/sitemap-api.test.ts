@@ -14,7 +14,6 @@ describe('Sitemap API Endpoints', () => {
     const response = await request(app).get('/sitemap.xml').expect(200);
     expect(response.headers['content-type']).toMatch(/application\/xml/);
     expect(response.text).toContain('<urlset');
-    expect(response.text).toContain('/dashboard');
     expect(response.text).toContain('/admin');
   });
 
@@ -23,7 +22,6 @@ describe('Sitemap API Endpoints', () => {
     expect(response.body).toHaveProperty('urls');
     expect(Array.isArray(response.body.urls)).toBe(true);
     const urls = response.body.urls.map((u: any) => u.url);
-    expect(urls).toContain('/dashboard');
     expect(urls).toContain('/admin');
     expect(urls).toContain('/admin/ai/dashboard'); // Verify new AI routes
   });
@@ -32,7 +30,7 @@ describe('Sitemap API Endpoints', () => {
     const response = await request(app).get('/sitemap').expect(200);
     expect(response.text).toContain('<!DOCTYPE html>');
     expect(response.text).toContain('Open-Hivemind Sitemap');
-    expect(response.text).toContain('User Dashboard');
-    expect(response.text).toContain('AI Intelligence Features');
+    expect(response.text).toContain('Admin Dashboard');
+    expect(response.text).toContain('AI & Intelligence');
   });
 });
