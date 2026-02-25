@@ -826,6 +826,32 @@ class ApiService {
     });
   }
 
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const token = localStorage.getItem('auth_tokens');
+    const headers: Record<string, string> = {};
+
+    if (token) {
+      try {
+        const tokens = JSON.parse(token);
+        if (tokens.accessToken) {
+          headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+        }
+      } catch (e) {
+        console.error('Failed to parse auth token', e);
+      }
+    }
+
+    const response = await fetch(buildUrl(`/api/import-export/backups/${backupId}/download`), {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('Download failed');
+    }
+
+    return response.blob();
+  }
+
   async getSystemInfo(): Promise<any> {
     return this.request('/api/admin/system-info');
   }

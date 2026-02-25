@@ -159,10 +159,16 @@ A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
 
-### [Export](/admin/export)
-Download API specifications and system documentation.
-*   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
-*   **Documentation**: Access generated documentation resources.
+### [Export & System Data](/admin/export)
+Manage system backups, export configurations, and access API documentation.
+![Export Page](docs/images/export-page.png)
+
+*   **System Backups**: Create, download, restore, and delete full system backups.
+    *   **Create Backup**: Generate a snapshot of your current configuration (bots, personas, profiles).
+    *   **Restore**: Revert the system to a previous state from a backup file.
+*   **API Specifications**: Download the OpenAPI specification in JSON or YAML format for integration.
+
+![Create Backup Modal](docs/images/create-backup-modal.png)
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
