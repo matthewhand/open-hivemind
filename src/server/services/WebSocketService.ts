@@ -5,6 +5,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
 import { ActivityLogger } from './ActivityLogger';
+import { BotMetricsService } from './BotMetricsService';
 
 const debug = Debug('app:WebSocketService');
 
@@ -62,7 +63,6 @@ export class WebSocketService {
   private lastCpuUsage = process.cpuUsage();
   private lastHrTime = process.hrtime.bigint();
   // per-bot stats
-  private botMessageCounts = new Map<string, number>();
   private botErrors = new Map<string, string[]>();
   // API monitoring
   private apiMonitorService: ApiMonitorService;
@@ -159,7 +159,7 @@ export class WebSocketService {
 
     // Per-bot message count
     const key = event.botName || 'unknown';
-    this.botMessageCounts.set(key, (this.botMessageCounts.get(key) || 0) + 1);
+    BotMetricsService.getInstance().incrementMessageCount(key);
 
     // Keep only last 1000 messages
     if (this.messageFlow.length > 1000) {
@@ -204,6 +204,8 @@ export class WebSocketService {
     // Update error rate if this is an error
     if (alert.level === 'error' || alert.level === 'critical') {
       this.updateErrorRate();
+      const key = alertEvent.botName || 'unknown';
+      BotMetricsService.getInstance().incrementErrorCount(key);
     }
 
     // Broadcast to connected clients
@@ -262,17 +264,40 @@ export class WebSocketService {
     return [...this.errorRateHistory];
   }
 
-  public getBotStats(botName: string): { messageCount: number; errors: string[] } {
+  public getBotStats(botName: string): {
+    messageCount: number;
+    errors: string[];
+    errorCount: number;
+  } {
+    const metrics = BotMetricsService.getInstance().getMetrics(botName);
     return {
-      messageCount: this.botMessageCounts.get(botName) || 0,
+      messageCount: metrics.messageCount,
       errors: [...(this.botErrors.get(botName) || [])],
+      errorCount: metrics.errorCount,
     };
   }
 
-  public getAllBotStats(): Record<string, { messageCount: number; errors: string[] }> {
-    const out: Record<string, { messageCount: number; errors: string[] }> = {};
-    for (const [name, count] of this.botMessageCounts.entries()) {
-      out[name] = { messageCount: count, errors: [...(this.botErrors.get(name) || [])] };
+  public getAllBotStats(): Record<
+    string,
+    { messageCount: number; errors: string[]; errorCount: number }
+  > {
+    const metricsService = BotMetricsService.getInstance();
+    const allMetrics = metricsService.getAllMetrics();
+    const out: Record<
+      string,
+      { messageCount: number; errors: string[]; errorCount: number }
+    > = {};
+
+    // Merge in-memory errors with persistent metrics
+    const botNames = new Set([...this.botErrors.keys(), ...Object.keys(allMetrics)]);
+
+    for (const name of botNames) {
+      const metrics = metricsService.getMetrics(name);
+      out[name] = {
+        messageCount: metrics.messageCount,
+        errors: [...(this.botErrors.get(name) || [])],
+        errorCount: metrics.errorCount,
+      };
     }
     return out;
   }
@@ -471,7 +496,7 @@ export class WebSocketService {
       const stats = Object.entries(statsObj).map(([name, s]) => ({
         name,
         messageCount: s.messageCount,
-        errorCount: s.errors.length,
+        errorCount: s.errorCount,
       }));
       this.io.emit('bot_stats_broadcast', {
         stats,
@@ -822,7 +847,6 @@ export class WebSocketService {
     }
 
     // Clean up per-bot statistics to prevent memory leaks
-    this.botMessageCounts.clear();
     this.botErrors.clear();
 
     debug('WebSocket service shut down');

@@ -266,7 +266,7 @@ router.get('/api/status', authenticateToken, (req, res) => {
         status: 'active',
         connected: isProviderConnected(bot),
         messageCount: ws.getBotStats(bot.name).messageCount,
-        errorCount: ws.getBotStats(bot.name).errors.length,
+        errorCount: ws.getBotStats(bot.name).errorCount,
       }));
 
     res.json({ bots: status, uptime: process.uptime() });
@@ -438,7 +438,7 @@ function buildTimeline(events: AnnotatedEvent[]) {
 
 function buildAgentMetrics(
   events: AnnotatedEvent[],
-  botStats: Record<string, { messageCount: number; errors: string[] }>
+  botStats: Record<string, { messageCount: number; errors: string[]; errorCount: number }>
 ) {
   const metrics = new Map<
     string,
