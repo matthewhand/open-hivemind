@@ -51,4 +51,95 @@ test.describe('Documentation Screenshots', () => {
     // Screenshot Create Bot Modal
     await page.screenshot({ path: 'docs/images/create-bot-modal.png', fullPage: true });
   });
+
+  test('Capture Activity Page and Event Details', async ({ page }) => {
+    // Setup authentication and error detection
+    await setupTestWithErrorDetection(page);
+
+    // Mock API response
+    await page.route('**/api/dashboard/api/activity', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          events: [
+            {
+              id: 'evt-001',
+              timestamp: new Date().toISOString(),
+              botName: 'SupportBot',
+              provider: 'discord',
+              llmProvider: 'openai',
+              status: 'success',
+              processingTime: 1250,
+              contentLength: 450,
+              messageType: 'incoming',
+              channelId: '123456',
+              userId: 'user-001'
+            },
+            {
+              id: 'evt-002',
+              timestamp: new Date(Date.now() - 5000).toISOString(),
+              botName: 'CodingHelper',
+              provider: 'slack',
+              llmProvider: 'anthropic',
+              status: 'error',
+              processingTime: 500,
+              contentLength: 120,
+              errorMessage: 'Rate limit exceeded',
+              messageType: 'outgoing',
+              channelId: 'general',
+              userId: 'user-002'
+            },
+            {
+              id: 'evt-003',
+              timestamp: new Date(Date.now() - 15000).toISOString(),
+              botName: 'ReviewBot',
+              provider: 'github',
+              llmProvider: 'google',
+              status: 'success',
+              processingTime: 3200,
+              contentLength: 850,
+              messageType: 'incoming',
+              channelId: 'pr-123',
+              userId: 'user-003'
+            }
+          ],
+          filters: {
+            agents: ['SupportBot', 'CodingHelper', 'ReviewBot'],
+            messageProviders: ['discord', 'slack', 'github'],
+            llmProviders: ['openai', 'anthropic', 'google']
+          },
+          timeline: [],
+          agentMetrics: []
+        })
+      });
+    });
+
+    // Navigate to Activity Page
+    await navigateAndWaitReady(page, '/admin/activity');
+
+    // Wait for content
+    await page.waitForSelector('h1:has-text("Activity Feed")');
+    // Wait for table rows
+    await page.waitForSelector('table tbody tr');
+
+    // Screenshot Activity Page
+    await page.screenshot({ path: 'docs/images/activity-page.png', fullPage: true });
+
+    // Click the first row to open details
+    // We target the first row explicitly
+    await page.locator('table tbody tr').first().click();
+
+    // Wait for modal
+    // Using dialog[open]
+    const modal = page.locator('dialog[open]').last();
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText('Event Details');
+
+    // Wait a bit for animation
+    await page.waitForTimeout(500);
+
+    // Screenshot Modal
+    await page.screenshot({ path: 'docs/images/activity-details-modal.png', fullPage: true });
+  });
 });
