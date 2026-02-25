@@ -2,8 +2,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -35,6 +38,7 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -133,11 +137,8 @@ const GuardsPage: React.FC = () => {
   };
 
   const handleDuplicateProfile = (profile: GuardrailProfile) => {
-    // Create a deep copy of the profile
     const duplicatedProfile: GuardrailProfile = JSON.parse(JSON.stringify(profile));
-
-    // Modify for new entry
-    duplicatedProfile.id = ''; // Ensure backend treats it as new
+    duplicatedProfile.id = '';
     duplicatedProfile.name = `Copy of ${profile.name}`;
     duplicatedProfile.description = profile.description ? `Copy of ${profile.description}` : '';
 
@@ -166,32 +167,38 @@ const GuardsPage: React.FC = () => {
     });
   };
 
+  const filteredProfiles = profiles.filter(profile =>
+    profile.name.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-500 rounded-lg">
-            <Shield className="w-6 h-6 text-white" />
+    <div className="space-y-6">
+      <PageHeader
+        title="Guard Profiles"
+        description="Manage security and access control profiles for bots"
+        icon={Shield}
+        actions={
+          <div className="flex gap-2">
+            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button onClick={handleCreate} className="btn btn-primary btn-sm">
+              <Plus className="w-4 h-4 mr-2" />
+              New Profile
+            </button>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Guard Profiles</h1>
-            <p className="text-base-content/60">Manage security and access control profiles for bots</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={fetchProfiles} className="btn btn-ghost gap-2" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-          </button>
-          <button onClick={handleCreate} className="btn btn-primary gap-2">
-            <Plus className="w-4 h-4" /> New Profile
-          </button>
-        </div>
-      </div>
+        }
+      />
+
+      <SearchFilterBar
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        searchPlaceholder="Search profiles..."
+      />
 
       {loading && !editingProfile ? (
         <div className="flex items-center justify-center py-12">
-          <span className="loading loading-spinner loading-lg" />
+          <LoadingSpinner size="lg" />
         </div>
       ) : profiles.length === 0 ? (
         <EmptyState
@@ -203,9 +210,18 @@ const GuardsPage: React.FC = () => {
           onAction={handleCreate}
           variant="noData"
         />
+      ) : filteredProfiles.length === 0 ? (
+        <EmptyState
+          icon={Shield}
+          title="No Matches Found"
+          description="Try adjusting your search criteria."
+          variant="noResults"
+          actionLabel="Clear Search"
+          onAction={() => setSearchValue('')}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {profiles.map(profile => (
+          {filteredProfiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
@@ -244,10 +260,26 @@ const GuardsPage: React.FC = () => {
 
       {/* Edit Modal */}
       {editingProfile && (
-        <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-4xl">
-            <h3 className="font-bold text-lg mb-6">{isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}</h3>
-
+        <Modal
+          isOpen={!!editingProfile}
+          onClose={() => setEditingProfile(null)}
+          title={isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}
+          size="lg"
+          actions={[
+            {
+              label: 'Cancel',
+              onClick: () => setEditingProfile(null),
+              variant: 'ghost',
+            },
+            {
+              label: isNew ? 'Create Profile' : 'Save Changes',
+              onClick: handleSaveProfile,
+              variant: 'primary',
+              loading: saving,
+              disabled: saving || !editingProfile.name.trim(),
+            },
+          ]}
+        >
             <div className="form-control mb-4">
               <label className="label"><span className="label-text">Profile Name</span></label>
               <input
@@ -388,16 +420,7 @@ const GuardsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setEditingProfile(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveProfile} disabled={saving}>
-                {saving ? <span className="loading loading-spinner" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Profile
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       <ConfirmModal
