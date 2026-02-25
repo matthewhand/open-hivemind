@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search, Wrench } from 'lucide-react';
+import { Server, Search } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -22,7 +22,6 @@ interface MCPServer {
   toolCount: number;
   lastConnected?: string;
   apiKey?: string;
-  tools?: any[];
 }
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -42,7 +41,6 @@ const MCPServersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
-  const [viewToolsServer, setViewToolsServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -77,7 +75,6 @@ const MCPServersPage: React.FC = () => {
         description: server.description || '',
         toolCount: server.tools?.length || 0,
         lastConnected: server.lastConnected,
-        tools: server.tools || [],
       }));
 
       // Also include stored configurations that might not be connected
@@ -92,7 +89,6 @@ const MCPServersPage: React.FC = () => {
           status: 'stopped' as const,
           description: '',
           toolCount: 0,
-          tools: [],
         };
       }).filter(Boolean);
 
@@ -388,15 +384,6 @@ const MCPServersPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <div className="tooltip" data-tip="View Tools">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle"
-                      onClick={() => setViewToolsServer(server)}
-                      title="View Tools"
-                    >
-                      <Wrench className="w-5 h-5" />
-                    </button>
-                  </div>
                   <button
                     className="btn btn-ghost btn-sm btn-circle"
                     onClick={() => handleEditServer(server)}
@@ -557,38 +544,6 @@ const MCPServersPage: React.FC = () => {
           </button>
           <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
-          </button>
-        </div>
-      </Modal>
-
-      {/* View Tools Modal */}
-      <Modal
-        isOpen={!!viewToolsServer}
-        onClose={() => setViewToolsServer(null)}
-        title={`Tools: ${viewToolsServer?.name}`}
-      >
-        <div className="space-y-4">
-          {viewToolsServer?.tools && viewToolsServer.tools.length > 0 ? (
-            <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2">
-              {viewToolsServer.tools.map((tool: any, idx: number) => (
-                <div key={idx} className="bg-base-200 rounded-lg p-3">
-                  <div className="font-bold text-sm mb-1 font-mono text-primary">{tool.name}</div>
-                  {tool.description && (
-                    <div className="text-xs text-base-content/70">{tool.description}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-8 text-center text-base-content/50">
-              <Wrench className="w-12 h-12 mx-auto mb-2 opacity-20" />
-              <p>No tools available for this server.</p>
-            </div>
-          )}
-        </div>
-        <div className="modal-action">
-          <button className="btn btn-primary" onClick={() => setViewToolsServer(null)}>
-            Close
           </button>
         </div>
       </Modal>
