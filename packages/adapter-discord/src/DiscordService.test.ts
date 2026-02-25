@@ -24,16 +24,6 @@ jest.mock('./voice/voiceChannelManager', () => ({
   })),
 }));
 
-jest.mock(
-  '@services/StartupGreetingService',
-  () => ({
-    default: {
-      emit: jest.fn(),
-    },
-  }),
-  { virtual: true }
-);
-
 // Mock discord.js
 let eventHandlers: Record<string, Function[]> = {};
 
@@ -95,16 +85,39 @@ jest.mock('discord.js', () => {
   };
 });
 
+// Setup mock dependencies for injection
+const mockDeps: any = {
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
+  errorTypes: {
+    NetworkError: class extends Error {},
+    ConfigError: class extends Error {},
+  },
+  webSocketService: {
+    recordMessageFlow: jest.fn(),
+    recordAlert: jest.fn(),
+  },
+  configAccessor: {},
+  channelRouter: {},
+  messageConfig: messageConfig,
+  discordConfig: discordConfig,
+  startupGreetingService: {
+    emit: jest.fn(),
+  },
+  getAllBotConfigs: jest.fn().mockReturnValue([]),
+  isBotDisabled: jest.fn().mockReturnValue(false),
+};
+
 describe('DiscordService', () => {
   let service: DiscordService;
 
   beforeEach(() => {
     eventHandlers = {};
     jest.clearAllMocks();
-
-    // Reset singleton instance
-    // @ts-ignore
-    DiscordService.instance = undefined;
 
     // Setup default mocks
     (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue({
@@ -116,10 +129,7 @@ describe('DiscordService', () => {
     (UserConfigStore.getInstance as jest.Mock).mockReturnValue({
       isBotDisabled: jest.fn().mockReturnValue(false),
     });
-    (WebSocketService.getInstance as jest.Mock).mockReturnValue({
-      recordMessageFlow: jest.fn(),
-      recordAlert: jest.fn(),
-    });
+    // WebSocketService mock is handled via mockDeps
 
     // Mock configs
     (messageConfig.get as jest.Mock).mockReturnValue(false);
@@ -133,17 +143,16 @@ describe('DiscordService', () => {
     it('should initialize with a single bot from ProviderConfigManager', async () => {
       const providerConfig = {
         id: 'provider1',
+        messageProvider: 'discord',
         type: 'discord',
         enabled: true,
-        config: { token: 'test-token' },
+        discord: { token: 'test-token' },
         name: 'Test Bot',
       };
 
-      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
-        providerConfig,
-      ]);
+      (mockDeps.getAllBotConfigs as jest.Mock).mockReturnValue([providerConfig]);
 
-      service = DiscordService.getInstance();
+      service = new DiscordService(mockDeps);
       await service.initialize();
 
       expect(service.getAllBots()).toHaveLength(1);
@@ -154,23 +163,13 @@ describe('DiscordService', () => {
     it('should handle multiple bots from BotConfigurationManager', async () => {
       const botConfig = {
         name: 'Bot 1',
-        messageProviderId: 'provider1',
-      };
-      const providerConfig = {
-        id: 'provider1',
-        type: 'discord',
-        enabled: true,
-        config: { token: 'token1' },
+        messageProvider: 'discord',
+        discord: { token: 'token1' },
       };
 
-      (BotConfigurationManager.getInstance().getDiscordBotConfigs as jest.Mock).mockReturnValue([
-        botConfig,
-      ]);
-      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
-        providerConfig,
-      ]);
+      (mockDeps.getAllBotConfigs as jest.Mock).mockReturnValue([botConfig]);
 
-      service = DiscordService.getInstance();
+      service = new DiscordService(mockDeps);
       await service.initialize();
 
       expect(service.getAllBots()).toHaveLength(1);
@@ -183,15 +182,13 @@ describe('DiscordService', () => {
       // Setup a ready bot
       const providerConfig = {
         id: 'provider1',
-        type: 'discord',
+        messageProvider: 'discord',
         enabled: true,
-        config: { token: 'test-token' },
+        discord: { token: 'test-token' },
         name: 'Test Bot',
       };
-      (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
-        providerConfig,
-      ]);
-      service = DiscordService.getInstance();
+      (mockDeps.getAllBotConfigs as jest.Mock).mockReturnValue([providerConfig]);
+      service = new DiscordService(mockDeps);
       await service.initialize();
     });
 
