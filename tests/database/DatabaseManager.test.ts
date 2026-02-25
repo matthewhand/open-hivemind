@@ -282,4 +282,41 @@ describe('DatabaseManager', () => {
       expect(metrics[0].botName).toBe('TestBot');
     });
   });
+
+  describe('AI Feedback', () => {
+    beforeEach(async () => {
+      await dbManager.connect();
+    });
+
+    it('should store AI feedback', async () => {
+      mockRun.mockResolvedValueOnce({ lastID: 1 });
+
+      const feedback = {
+        recommendationId: 'rec-1',
+        feedback: 'liked',
+        metadata: { userId: 'user-1' },
+      };
+
+      const id = await dbManager.storeAIFeedback(feedback);
+
+      expect(id).toBe(1);
+      expect(mockRun).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO ai_feedback'),
+        expect.arrayContaining(['rec-1', 'liked', JSON.stringify({ userId: 'user-1' })])
+      );
+    });
+
+    it('should handle errors when storing AI feedback', async () => {
+      mockRun.mockRejectedValueOnce(new Error('Insert failed'));
+
+      const feedback = {
+        recommendationId: 'rec-1',
+        feedback: 'liked',
+      };
+
+      await expect(dbManager.storeAIFeedback(feedback)).rejects.toThrow(
+        'Failed to store AI feedback'
+      );
+    });
+  });
 });

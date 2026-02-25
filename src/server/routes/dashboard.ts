@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticateToken } from '../middleware/auth';
@@ -211,10 +212,16 @@ router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
   res.json(recommendations);
 });
 
-router.post('/api/ai/feedback', authenticateToken, (req, res) => {
-  const { recommendationId, feedback } = req.body;
-  // TODO: Store feedback in database for ML training when real implementation is added
-  res.json({ success: true });
+router.post('/api/ai/feedback', authenticateToken, async (req, res) => {
+  const { recommendationId, feedback, metadata } = req.body;
+  try {
+    const db = DatabaseManager.getInstance();
+    await db.storeAIFeedback({ recommendationId, feedback, metadata });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error storing AI feedback:', error);
+    res.status(500).json({ error: 'Failed to store feedback' });
+  }
 });
 
 // Root route removed - dashboard is now served from public/index.html
