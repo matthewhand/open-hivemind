@@ -91,12 +91,10 @@ describe('MCPServersPage', () => {
     });
 
     // Find the "Start" button (PlayIcon)
-    // Since we don't have aria-labels or predictable text on the icon button,
-    // we look for the button with title "Start Server"
-    const startButton = screen.getByTitle('Start Server');
+    const connectButton = screen.getByRole('button', { name: /Connect Test Server/i });
 
     await act(async () => {
-      fireEvent.click(startButton);
+      fireEvent.click(connectButton);
     });
 
     // Check if the correct API was called

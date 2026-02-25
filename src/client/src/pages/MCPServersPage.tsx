@@ -444,6 +444,7 @@ const MCPServersPage: React.FC = () => {
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-error tooltip"
                       data-tip="Disconnect"
+                      aria-label={`Disconnect ${server.name}`}
                       onClick={() => handleServerAction(server.id, 'stop')}
                     >
                       <StopIcon className="w-5 h-5" />
@@ -452,6 +453,7 @@ const MCPServersPage: React.FC = () => {
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-success tooltip"
                       data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
+                      aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
                       onClick={() => handleServerAction(server.id, 'start')}
                     >
                         {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
@@ -461,6 +463,7 @@ const MCPServersPage: React.FC = () => {
                      <button
                         className="btn btn-ghost btn-sm btn-circle tooltip"
                         data-tip="View Tools"
+                        aria-label={`View Tools for ${server.name}`}
                         onClick={() => handleViewTools(server)}
                      >
                         <WrenchScrewdriverIcon className="w-5 h-5" />
@@ -471,6 +474,7 @@ const MCPServersPage: React.FC = () => {
                   <button
                     className="btn btn-ghost btn-sm btn-circle tooltip"
                     data-tip="Edit Configuration"
+                    aria-label={`Edit ${server.name}`}
                     onClick={() => handleEditServer(server)}
                   >
                     <PencilIcon className="w-5 h-5" />
@@ -478,6 +482,7 @@ const MCPServersPage: React.FC = () => {
                   <button
                     className="btn btn-ghost btn-sm btn-circle text-error tooltip"
                     data-tip="Delete"
+                    aria-label={`Delete ${server.name}`}
                     onClick={() => handleDeleteServer(server.id)}
                   >
                     <TrashIcon className="w-5 h-5" />
