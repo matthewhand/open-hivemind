@@ -44,6 +44,7 @@
     "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --watch",
     "test:playwright": "node ./node_modules/.bin/playwright test",
     "playwright:serve": "RUNTIME_BUILD_ON_START=true NODE_ENV=production bash ./scripts/start-runtime.sh",
+    "generate-docs": "mkdir -p docs/screenshots && npx playwright test tests/e2e/screenshot-mcp.spec.ts --project=chromium",
     "ncu": "ncu",
     "dev:only": "npm run dev",
     "dev:only:backend": "npm run dev:backend",
