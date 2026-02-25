@@ -29,24 +29,24 @@ export class AuthMiddleware {
         clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
 
       // Strict check for host header to prevent host header injection
-      const isLocalhostHost = host && (
-        host === 'localhost' ||
-        host.startsWith('localhost:') ||
-        host === '127.0.0.1' ||
-        host.startsWith('127.0.0.1:')
-      );
+      const isLocalhostHost =
+        host &&
+        (host === 'localhost' ||
+          host.startsWith('localhost:') ||
+          host === '127.0.0.1' ||
+          host.startsWith('127.0.0.1:'));
 
       // Strict check for origin header
-      const isLocalhostOrigin = origin && (
-        origin === 'http://localhost' ||
-        origin.startsWith('http://localhost:') ||
-        origin === 'https://localhost' ||
-        origin.startsWith('https://localhost:') ||
-        origin === 'http://127.0.0.1' ||
-        origin.startsWith('http://127.0.0.1:') ||
-        origin === 'https://127.0.0.1' ||
-        origin.startsWith('https://127.0.0.1:')
-      );
+      const isLocalhostOrigin =
+        origin &&
+        (origin === 'http://localhost' ||
+          origin.startsWith('http://localhost:') ||
+          origin === 'https://localhost' ||
+          origin.startsWith('https://localhost:') ||
+          origin === 'http://127.0.0.1' ||
+          origin.startsWith('http://127.0.0.1:') ||
+          origin === 'https://127.0.0.1' ||
+          origin.startsWith('https://127.0.0.1:'));
 
       // console.log('Auth Check:', { clientIP, host, origin, isLocalhostIp, isLocalhostHost, isLocalhostOrigin });
       return isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
@@ -56,9 +56,7 @@ export class AuthMiddleware {
     const isLocalhost = isLocalhostRequest();
 
     const bypassAuth = () => {
-      debug(
-        `Bypassing authentication for localhost request: ${req.method} ${req.path}`
-      );
+      debug(`Bypassing authentication for localhost request: ${req.method} ${req.path}`);
       // Create a default admin user for localhost access
       const defaultUser: User = {
         id: 'localhost-admin',

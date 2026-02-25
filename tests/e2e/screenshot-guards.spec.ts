@@ -39,7 +39,10 @@ test.describe('Guards Page Screenshots', () => {
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
     await page.route('/api/admin/mcp-servers', async (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+      route.fulfill({
+        status: 200,
+        json: { success: true, data: { servers: [], configurations: [] } },
+      })
     );
 
     // Mock Guard Profiles
@@ -53,22 +56,24 @@ test.describe('Guards Page Screenshots', () => {
             {
               id: '1',
               name: 'Standard Production',
-              description: 'Default security profile for production bots. Includes rate limiting and content filtering.',
+              description:
+                'Default security profile for production bots. Includes rate limiting and content filtering.',
               guards: {
                 mcpGuard: { enabled: true, type: 'owner' },
                 rateLimit: { enabled: true, maxRequests: 50, windowMs: 60000 },
-                contentFilter: { enabled: true, strictness: 'medium' }
-              }
+                contentFilter: { enabled: true, strictness: 'medium' },
+              },
             },
             {
               id: '2',
               name: 'Strict Security',
-              description: 'High security profile for sensitive bots. Restricted access and strict content filtering.',
+              description:
+                'High security profile for sensitive bots. Restricted access and strict content filtering.',
               guards: {
                 mcpGuard: { enabled: true, type: 'custom', allowedUsers: ['admin-1', 'auditor'] },
                 rateLimit: { enabled: true, maxRequests: 10, windowMs: 60000 },
-                contentFilter: { enabled: true, strictness: 'high' }
-              }
+                contentFilter: { enabled: true, strictness: 'high' },
+              },
             },
             {
               id: '3',
@@ -77,10 +82,10 @@ test.describe('Guards Page Screenshots', () => {
               guards: {
                 mcpGuard: { enabled: false, type: 'owner' },
                 rateLimit: { enabled: false, maxRequests: 1000, windowMs: 60000 },
-                contentFilter: { enabled: false, strictness: 'low' }
-              }
-            }
-          ]
+                contentFilter: { enabled: false, strictness: 'low' },
+              },
+            },
+          ],
         }),
       });
     });

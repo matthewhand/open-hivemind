@@ -57,7 +57,7 @@ test.describe('Activity Page Screenshots', () => {
           messageType: 'incoming',
           contentLength: 50,
           processingTime: 120,
-          status: 'success'
+          status: 'success',
         },
         {
           id: '2',
@@ -70,7 +70,7 @@ test.describe('Activity Page Screenshots', () => {
           messageType: 'incoming',
           contentLength: 120,
           processingTime: 2500,
-          status: 'timeout'
+          status: 'timeout',
         },
         {
           id: '3',
@@ -83,7 +83,7 @@ test.describe('Activity Page Screenshots', () => {
           messageType: 'outgoing',
           contentLength: 200,
           processingTime: 450,
-          status: 'success'
+          status: 'success',
         },
         {
           id: '4',
@@ -96,7 +96,7 @@ test.describe('Activity Page Screenshots', () => {
           messageType: 'incoming',
           contentLength: 800,
           processingTime: 8000,
-          status: 'success'
+          status: 'success',
         },
       ];
 
@@ -108,10 +108,10 @@ test.describe('Activity Page Screenshots', () => {
           filters: {
             agents: ['SupportBot', 'SalesBot', 'CodingAssistant'],
             messageProviders: ['discord', 'slack', 'mattermost'],
-            llmProviders: ['openai', 'anthropic', 'ollama']
+            llmProviders: ['openai', 'anthropic', 'ollama'],
           },
           timeline: [],
-          agentMetrics: []
+          agentMetrics: [],
         }),
       });
     });

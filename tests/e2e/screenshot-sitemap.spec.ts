@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Sitemap Screenshots', () => {
@@ -47,7 +47,7 @@ test.describe('Sitemap Screenshots', () => {
               priority: 1.0,
               lastmod: new Date().toISOString(),
               description: 'The main dashboard and overview page.',
-              access: 'public'
+              access: 'public',
             },
             {
               url: '/admin/bots',
@@ -56,7 +56,7 @@ test.describe('Sitemap Screenshots', () => {
               priority: 0.9,
               lastmod: new Date().toISOString(),
               description: 'Manage AI bot instances and configurations.',
-              access: 'authenticated'
+              access: 'authenticated',
             },
             {
               url: '/admin/mcp/servers',
@@ -65,7 +65,7 @@ test.describe('Sitemap Screenshots', () => {
               priority: 0.8,
               lastmod: new Date().toISOString(),
               description: 'Configure and monitor MCP servers.',
-              access: 'owner'
+              access: 'owner',
             },
             {
               url: '/login',
@@ -74,7 +74,7 @@ test.describe('Sitemap Screenshots', () => {
               priority: 0.5,
               lastmod: new Date().toISOString(),
               description: 'User authentication page.',
-              access: 'public'
+              access: 'public',
             },
             {
               url: '/admin/settings',
@@ -83,10 +83,10 @@ test.describe('Sitemap Screenshots', () => {
               priority: 0.7,
               lastmod: new Date().toISOString(),
               description: 'System-wide settings and configuration.',
-              access: 'owner'
-            }
-          ]
-        })
+              access: 'owner',
+            },
+          ],
+        }),
       });
     });
   });

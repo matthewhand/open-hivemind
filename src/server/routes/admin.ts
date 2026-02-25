@@ -7,6 +7,7 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import activityRouter from './activity';
 import agentsRouter from './agents';
 import guardProfilesRouter from './guardProfiles';
@@ -696,6 +697,14 @@ router.post('/mcp-servers/test', configRateLimit, async (req: Request, res: Resp
       });
     }
 
+    // Security Check: SSRF Protection
+    if (!(await isSafeUrl(serverUrl))) {
+      return res.status(403).json({
+        error: 'Security Warning',
+        message: 'Target URL is blocked for security reasons (private/local network access).',
+      });
+    }
+
     const mcpService = MCPService.getInstance();
     // Use a temporary name if not provided
     const configName = name || `test-${Date.now()}`;
@@ -738,6 +747,14 @@ router.post('/mcp-servers/connect', configRateLimit, async (req: Request, res: R
       return res.status(400).json({
         error: 'Validation error',
         message: 'Server URL must be a valid URL',
+      });
+    }
+
+    // Security Check: SSRF Protection
+    if (!(await isSafeUrl(serverUrl))) {
+      return res.status(403).json({
+        error: 'Security Warning',
+        message: 'Target URL is blocked for security reasons (private/local network access).',
       });
     }
 

@@ -5,20 +5,21 @@ import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
+import { vi } from 'vitest';
 
-// Mock apiService
-jest.mock('../../services/api', () => ({
+// Mock apiService using Vitest
+vi.mock('../../services/api', () => ({
   apiService: {
-    getConfig: jest.fn(),
-    getStatus: jest.fn(),
-    getPersonas: jest.fn(),
-    getLlmProfiles: jest.fn(),
-    createBot: jest.fn(),
+    getConfig: vi.fn(),
+    getStatus: vi.fn(),
+    getPersonas: vi.fn(),
+    getLlmProfiles: vi.fn(),
+    createBot: vi.fn(),
   },
 }));
 
 // Mock DaisyUI components - provide minimal implementations for testing
-jest.mock('../DaisyUI', () => ({
+vi.mock('../DaisyUI', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div className="alert">{children}</div>,
   Badge: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
   Button: ({ children, onClick, disabled, className }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) => (
@@ -34,35 +35,37 @@ jest.mock('../DaisyUI', () => ({
   ProgressBar: () => <div className="progress-bar">Progress</div>,
   StatsCards: () => <div className="stats-cards">Stats</div>,
   ToastNotification: {
-    useSuccessToast: () => jest.fn(),
-    useErrorToast: () => jest.fn(),
+    useSuccessToast: () => vi.fn(),
+    useErrorToast: () => vi.fn(),
     Notifications: () => <div>Notifications</div>,
   },
   LoadingSpinner: () => <div className="loading-spinner">Loading...</div>,
 }));
 
 // Mock CreateBotWizard
-jest.mock('../BotManagement/CreateBotWizard', () => ({
+vi.mock('../BotManagement/CreateBotWizard', () => ({
   CreateBotWizard: () => <div data-testid="create-bot-wizard">Create Bot Wizard</div>,
 }));
 
 describe('UnifiedDashboard', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Mock HTMLDialogElement methods
-    HTMLDialogElement.prototype.showModal = jest.fn();
-    HTMLDialogElement.prototype.close = jest.fn();
+    if (typeof HTMLDialogElement !== 'undefined') {
+        HTMLDialogElement.prototype.showModal = vi.fn();
+        HTMLDialogElement.prototype.close = vi.fn();
+    }
   });
 
   it('renders "Getting Started" tab by default when no bots are configured', async () => {
-    (apiService.getConfig as jest.Mock).mockResolvedValue({
+    (apiService.getConfig as any).mockResolvedValue({
       bots: [],
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as jest.Mock).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as jest.Mock).mockResolvedValue([]);
-    (apiService.getLlmProfiles as jest.Mock).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
+    (apiService.getPersonas as any).mockResolvedValue([]);
+    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -81,17 +84,17 @@ describe('UnifiedDashboard', () => {
 
   it('renders "Status" tab by default when bots are configured', async () => {
     const mockBots = [{ name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai' }];
-    (apiService.getConfig as jest.Mock).mockResolvedValue({
+    (apiService.getConfig as any).mockResolvedValue({
       bots: mockBots,
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as jest.Mock).mockResolvedValue({
+    (apiService.getStatus as any).mockResolvedValue({
       bots: [{ name: 'TestBot', status: 'active', connected: true }],
       uptime: 100,
     });
-    (apiService.getPersonas as jest.Mock).mockResolvedValue([]);
-    (apiService.getLlmProfiles as jest.Mock).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.getPersonas as any).mockResolvedValue([]);
+    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -110,14 +113,14 @@ describe('UnifiedDashboard', () => {
   });
 
   it('allows switching tabs', async () => {
-    (apiService.getConfig as jest.Mock).mockResolvedValue({
+    (apiService.getConfig as any).mockResolvedValue({
       bots: [],
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as jest.Mock).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as jest.Mock).mockResolvedValue([]);
-    (apiService.getLlmProfiles as jest.Mock).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
+    (apiService.getPersonas as any).mockResolvedValue([]);
+    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>

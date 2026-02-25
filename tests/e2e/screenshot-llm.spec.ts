@@ -27,7 +27,10 @@ test.describe('LLM Providers Screenshots', () => {
       })
     );
     await page.route('/api/config/global', async (route) =>
-      route.fulfill({ status: 200, json: { _userSettings: { values: { webuiIntelligenceProvider: 'gpt-4-turbo' } } } })
+      route.fulfill({
+        status: 200,
+        json: { _userSettings: { values: { webuiIntelligenceProvider: 'gpt-4-turbo' } } },
+      })
     );
 
     // Mock LLM Profiles
@@ -36,38 +39,38 @@ test.describe('LLM Providers Screenshots', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-            profiles: {
-                llm: [
-                    {
-                        key: 'gpt-4-turbo',
-                        name: 'GPT-4 Turbo',
-                        provider: 'openai',
-                        config: {
-                            apiKey: 'sk-proj-********************',
-                            model: 'gpt-4-turbo-preview',
-                            temperature: 0.7
-                        }
-                    },
-                    {
-                        key: 'claude-3-opus',
-                        name: 'Claude 3 Opus',
-                        provider: 'anthropic',
-                        config: {
-                            apiKey: 'sk-ant-********************',
-                            model: 'claude-3-opus-20240229',
-                        }
-                    },
-                    {
-                        key: 'local-mistral',
-                        name: 'Local Mistral',
-                        provider: 'ollama',
-                        config: {
-                            baseUrl: 'http://localhost:11434',
-                            model: 'mistral:latest',
-                        }
-                    }
-                ]
-            }
+          profiles: {
+            llm: [
+              {
+                key: 'gpt-4-turbo',
+                name: 'GPT-4 Turbo',
+                provider: 'openai',
+                config: {
+                  apiKey: 'sk-proj-********************',
+                  model: 'gpt-4-turbo-preview',
+                  temperature: 0.7,
+                },
+              },
+              {
+                key: 'claude-3-opus',
+                name: 'Claude 3 Opus',
+                provider: 'anthropic',
+                config: {
+                  apiKey: 'sk-ant-********************',
+                  model: 'claude-3-opus-20240229',
+                },
+              },
+              {
+                key: 'local-mistral',
+                name: 'Local Mistral',
+                provider: 'ollama',
+                config: {
+                  baseUrl: 'http://localhost:11434',
+                  model: 'mistral:latest',
+                },
+              },
+            ],
+          },
         }),
       });
     });

@@ -36,6 +36,17 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 
 describe('Admin Routes - MCP Test', () => {
+  const originalEnv = process.env;
+
+  beforeAll(() => {
+    process.env = { ...originalEnv };
+    process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });

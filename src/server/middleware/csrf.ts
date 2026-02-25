@@ -86,7 +86,7 @@ function parseCookies(cookieHeader: string | undefined): Record<string, string> 
   const list: Record<string, string> = {};
   if (!cookieHeader) return list;
 
-  cookieHeader.split(';').forEach(function(cookie) {
+  cookieHeader.split(';').forEach(function (cookie) {
     let [name, ...rest] = cookie.split('=');
     name = name?.trim();
     if (!name) return;
