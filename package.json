@@ -73,7 +73,8 @@
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
     "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
     "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
-    "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src"
+    "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src",
+    "@hivemind/shared-types": "dist/packages/shared-types/src"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",

@@ -20,6 +20,8 @@ import type {
   IMessengerService,
   IServiceDependencies,
   IWebSocketService,
+  IProvider,
+  ProviderMetadata,
 } from '@hivemind/shared-types';
 import DiscordMessage from './DiscordMessage';
 import { DiscordBotManager, type Bot } from './managers/DiscordBotManager';
@@ -38,7 +40,7 @@ const log = Debug('app:discordService');
  * All cross-cutting concerns (logging, metrics, WebSocket, channel routing) are injected
  * via IServiceDependencies.
  */
-export class DiscordService extends EventEmitter implements IMessengerService {
+export class DiscordService extends EventEmitter implements IMessengerService, IProvider {
   private static instance: DiscordService | undefined;
   private deps: IServiceDependencies;
   public botManager: DiscordBotManager;
@@ -608,6 +610,36 @@ export class DiscordService extends EventEmitter implements IMessengerService {
         botConfig: bot.config,
       };
     });
+  }
+
+  public getMetadata(): ProviderMetadata {
+    return {
+      id: 'discord',
+      name: 'Discord',
+      type: 'messenger',
+      docsUrl: 'https://discord.com/developers/applications',
+      helpText: 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.',
+      sensitiveFields: ['token', 'secret', 'password'],
+    };
+  }
+
+  public async getStatus(): Promise<any> {
+    const bots = this.botManager.getAllBots();
+    const botInfo = bots.map((b) => ({
+      provider: 'discord',
+      name: b.botUserName || b.config?.name || 'discord',
+      connected: !!b.client?.user,
+    }));
+    return {
+      ok: true,
+      bots: botInfo.map((b) => b.name),
+      details: botInfo,
+      count: bots.length,
+    };
+  }
+
+  public async refresh(): Promise<void> {
+    await this.botManager.initializeBots();
   }
 }
 

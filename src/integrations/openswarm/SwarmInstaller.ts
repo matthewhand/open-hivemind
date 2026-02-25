@@ -2,14 +2,51 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import type { IToolInstaller, IProvider, ProviderMetadata } from '@hivemind/shared-types';
 
 const execAsync = promisify(exec);
 
-export class SwarmInstaller {
+export class SwarmInstaller implements IToolInstaller, IProvider {
   private installPath: string;
 
   constructor() {
     this.installPath = path.join(process.cwd(), 'open-swarm');
+  }
+
+  getMetadata(): ProviderMetadata {
+      return {
+          id: 'openswarm',
+          name: 'OpenSwarm',
+          type: 'tool',
+          helpText: 'Autonomous AI Swarm features.'
+      };
+  }
+
+  async getStatus(): Promise<any> {
+      return {
+          installed: await this.isInstalled()
+      };
+  }
+
+  // Generic Alias
+  async checkPrerequisites(): Promise<boolean> {
+      return this.checkPython();
+  }
+
+  async isInstalled(): Promise<boolean> {
+      return this.checkSwarmInstalled();
+  }
+
+  async install(): Promise<{ success: boolean; message: string }> {
+      return this.installSwarm();
+  }
+
+  async start(port?: number): Promise<{ success: boolean; message: string }> {
+      return this.startSwarm(port);
+  }
+
+  getWebUIUrl(): string {
+      return this.getSwarmWebUIUrl();
   }
 
   async checkPython(): Promise<boolean> {

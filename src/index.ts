@@ -40,8 +40,13 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
+import { registerProviders } from '@src/registries/registerProviders';
+import { ProviderRegistry } from '@src/registries/ProviderRegistry';
 
 require('dotenv/config');
+
+// Register providers early so configs are available
+registerProviders();
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
 // In development (ts-node) we instead leverage tsconfig "paths" via tsconfig-paths/register
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
@@ -447,6 +452,8 @@ async function main() {
   AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
+  appLogger.info('📚 Provider Registry initialized');
+
   const llmProviders = await getLlmProvider();
   appLogger.info('🤖 Resolved LLM providers', {
     providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
@@ -484,9 +491,11 @@ async function main() {
       return messageProviders.includes(providerName.toLowerCase());
     });
 
-    // Register messenger services with ShutdownCoordinator
+    // Register messenger services with ShutdownCoordinator and ProviderRegistry
+    const registry = ProviderRegistry.getInstance();
     for (const service of messengerServices) {
       shutdownCoordinator.registerMessengerService(service);
+      registry.registerInstance(service);
     }
 
     if (filteredMessengers.length > 0) {

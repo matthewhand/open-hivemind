@@ -1,20 +1,30 @@
 import { Router, type Request, type Response } from 'express';
-import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
+import { ProviderRegistry } from '@src/registries/ProviderRegistry';
+import type { IToolInstaller } from '@hivemind/shared-types';
 
-export const installer = new SwarmInstaller();
 const swarmRouter = Router();
+
+function getInstaller(): IToolInstaller {
+    const registry = ProviderRegistry.getInstance();
+    const entry = registry.get('openswarm');
+    if (!entry || !entry.instance) {
+        throw new Error('OpenSwarm installer not available');
+    }
+    return entry.instance as unknown as IToolInstaller;
+}
 
 // Check system requirements
 swarmRouter.get('/check', async (_req: Request, res: Response) => {
   try {
-    const pythonAvailable = await installer.checkPython();
-    const swarmInstalled = await installer.checkSwarmInstalled();
+    const installer = getInstaller();
+    const pythonAvailable = await installer.checkPrerequisites();
+    const swarmInstalled = await installer.isInstalled();
 
     res.json({
       ok: true,
       pythonAvailable,
       swarmInstalled,
-      webUIUrl: installer.getSwarmWebUIUrl(),
+      webUIUrl: installer.getWebUIUrl(),
     });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
@@ -24,7 +34,8 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
 // Install OpenSwarm
 swarmRouter.post('/install', async (_req: Request, res: Response) => {
   try {
-    const result = await installer.installSwarm();
+    const installer = getInstaller();
+    const result = await installer.install();
     res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
@@ -34,11 +45,11 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
 // Start OpenSwarm server
 swarmRouter.post('/start', async (req: Request, res: Response) => {
   try {
+    const installer = getInstaller();
     const rawPort = req.body.port;
     let port = 8000;
 
     if (rawPort !== undefined && rawPort !== null && rawPort !== '') {
-      // Basic validation: must be a number or a string that looks like a number
       if (
         typeof rawPort !== 'number' &&
         (typeof rawPort !== 'string' || !/^\d+$/.test(String(rawPort).trim()))
@@ -53,7 +64,7 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
       }
     }
 
-    const result = await installer.startSwarm(port);
+    const result = await installer.start(port);
     return res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
     return res.status(500).json({ ok: false, error: error.message });

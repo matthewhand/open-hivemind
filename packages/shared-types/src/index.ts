@@ -29,6 +29,8 @@ export type {
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
+export type { IProvider, ProviderMetadata } from './IProvider';
+export type { IToolInstaller } from './IToolInstaller';
 export {
   BaseError,
   ValidationError,

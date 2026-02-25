@@ -22,6 +22,7 @@ import messageConfig from '@config/messageConfig';
 import slackConfig from '@config/slackConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IProvider, ProviderMetadata } from '@hivemind/shared-types';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import { SlackBotFacade, type ISlackBotFacade } from './modules/ISlackBotFacade';
 import { SlackEventBus, type ISlackEventBus } from './modules/ISlackEventBus';
@@ -51,7 +52,7 @@ const RETRY_CONFIG = {
  * SlackService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
-export class SlackService extends EventEmitter implements IMessengerService {
+export class SlackService extends EventEmitter implements IMessengerService, IProvider {
   private static instance: SlackService | undefined;
   private botManagers: Map<string, SlackBotManager> = new Map();
   private signatureVerifiers: Map<string, SlackSignatureVerifier> = new Map();
@@ -1188,6 +1189,53 @@ export class SlackService extends EventEmitter implements IMessengerService {
       bots: botMetrics,
       globalMetrics: metrics.getMetrics(),
     };
+  }
+
+  public getMetadata(): ProviderMetadata {
+    return {
+      id: 'slack',
+      name: 'Slack',
+      type: 'messenger',
+      docsUrl: 'https://api.slack.com/apps',
+      helpText: 'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.',
+      sensitiveFields: ['token', 'secret', 'password'],
+    };
+  }
+
+  public async getStatus(): Promise<any> {
+    const slackBots = this.getBotNames();
+    const slackInfo = slackBots.map((name: string) => {
+      const cfg: any = this.getBotConfig(name) || {};
+      return {
+        provider: 'slack',
+        name,
+        defaultChannel: cfg?.slack?.defaultChannelId || '',
+        mode: cfg?.slack?.mode || 'socket',
+        connected: this.botManagers.has(name)
+      };
+    });
+
+    return {
+      ok: true,
+      bots: slackBots,
+      details: slackInfo,
+      count: slackBots.length
+    };
+  }
+
+  public async refresh(): Promise<void> {
+    // Reload configuration logic
+    // Currently reload logic is in adminRoutes, calling addBot if missing.
+    // Ideally this service should handle re-reading its config.
+    // For now, we can implement a basic reload that re-reads config files if possible,
+    // or just rely on the caller to call addBot.
+    // The adminRoutes reload implementation calls addBot for missing instances.
+    // Moving that logic here would be cleaner but might require access to config files which are in src/config.
+    // BotConfigurationManager handles config reloading.
+    // SlackService listens to BotConfigurationManager? No.
+    // We will leave this empty or implement simple re-check if feasible.
+    // Since initializeFromConfiguration reads from BotConfigurationManager, we can call it again?
+    this.initializeFromConfiguration();
   }
 }
 
