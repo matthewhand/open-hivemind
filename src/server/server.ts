@@ -21,7 +21,7 @@ import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
 import botsRouter from './routes/bots';
-import configRouter from './routes/config';
+import configRouter from './routes/webuiConfig';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';

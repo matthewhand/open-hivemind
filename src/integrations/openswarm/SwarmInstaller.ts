@@ -2,14 +2,33 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { IToolInstaller } from '../../types/IToolInstaller';
 
 const execAsync = promisify(exec);
 
-export class SwarmInstaller {
+export class SwarmInstaller implements IToolInstaller {
+  public readonly id = 'openswarm';
+  public readonly label = 'OpenSwarm';
   private installPath: string;
 
   constructor() {
     this.installPath = path.join(process.cwd(), 'open-swarm');
+  }
+
+  async checkPrerequisites(): Promise<boolean> {
+    return this.checkPython();
+  }
+
+  async install(): Promise<{ success: boolean; message: string }> {
+    return this.installSwarm();
+  }
+
+  async start(port = 8000): Promise<{ success: boolean; message: string }> {
+    return this.startSwarm(port);
+  }
+
+  async checkInstalled(): Promise<boolean> {
+    return this.checkSwarmInstalled();
   }
 
   async checkPython(): Promise<boolean> {
@@ -91,7 +110,7 @@ export class SwarmInstaller {
     }
   }
 
-  getSwarmWebUIUrl(): string {
+  getWebUIUrl(): string {
     return process.env.OPENSWARM_WEBUI_URL || 'http://localhost:8002';
   }
 }

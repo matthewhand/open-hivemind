@@ -1,44 +1,60 @@
 import { Router, type Request, type Response } from 'express';
-import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
+import { ProviderRegistry } from '../registries/ProviderRegistry';
+import { IToolInstaller } from '../types/IToolInstaller';
 
-export const installer = new SwarmInstaller();
 const swarmRouter = Router();
+
+// Helper to get installer
+function getInstaller(): IToolInstaller | undefined {
+    const registry = ProviderRegistry.getInstance();
+    // Assuming 'openswarm' is the ID for SwarmInstaller as registered in initProviders
+    return registry.getInstaller('openswarm');
+}
 
 // Check system requirements
 swarmRouter.get('/check', async (_req: Request, res: Response) => {
   try {
-    const pythonAvailable = await installer.checkPython();
-    const swarmInstalled = await installer.checkSwarmInstalled();
+    const installer = getInstaller();
+    if (!installer) return res.status(500).json({ ok: false, error: 'Swarm installer not found' });
 
-    res.json({
+    const pythonAvailable = await installer.checkPrerequisites();
+    const swarmInstalled = await installer.checkInstalled();
+
+    return res.json({
       ok: true,
       pythonAvailable,
       swarmInstalled,
-      webUIUrl: installer.getSwarmWebUIUrl(),
+      webUIUrl: installer.getWebUIUrl(),
     });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 
 // Install OpenSwarm
 swarmRouter.post('/install', async (_req: Request, res: Response) => {
   try {
-    const result = await installer.installSwarm();
-    res.json({ ok: result.success, message: result.message });
+    const installer = getInstaller();
+    if (!installer) return res.status(500).json({ ok: false, error: 'Swarm installer not found' });
+
+    const result = await installer.install();
+    return res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 
 // Start OpenSwarm server
 swarmRouter.post('/start', async (req: Request, res: Response) => {
   try {
+    const installer = getInstaller();
+    if (!installer) return res.status(500).json({ ok: false, error: 'Swarm installer not found' });
+
     const rawPort = req.body.port;
     let port = 8000;
 
     if (rawPort !== undefined && rawPort !== null && rawPort !== '') {
-      // Basic validation: must be a number or a string that looks like a number
+      // Basic validation
       if (
         typeof rawPort !== 'number' &&
         (typeof rawPort !== 'string' || !/^\d+$/.test(String(rawPort).trim()))
@@ -53,7 +69,7 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
       }
     }
 
-    const result = await installer.startSwarm(port);
+    const result = await installer.start(port);
     return res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
     return res.status(500).json({ ok: false, error: error.message });
