@@ -71,7 +71,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {suffix && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 z-10">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <span className="text-base-content/60 sm:text-sm">{suffix}</span>
           </div>
         )}
