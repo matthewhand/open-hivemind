@@ -10,7 +10,14 @@ import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:getLlmProvider');
 
-function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProvider {
+interface CachedProvider {
+  instance: ILlmProvider;
+  configHash: string;
+}
+
+const providerCache = new Map<string, CachedProvider>();
+
+function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmProvider {
   const metrics = MetricsCollector.getInstance();
 
   return {
@@ -22,8 +29,9 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       metadata?: Record<string, any>
-    ) => {
+    ): Promise<string> => {
       const response = await provider.generateChatCompletion(
         userMessage,
         historyMessages,
@@ -34,7 +42,7 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
       }
       return response;
     },
-    generateCompletion: async (userMessage: string) => {
+    generateCompletion: async (userMessage: string): Promise<string> => {
       const response = await provider.generateCompletion(userMessage);
       if (response) {
         metrics.recordLlmTokenUsage(response.length);
@@ -51,8 +59,9 @@ const openWebUI: ILlmProvider = {
   generateChatCompletion: async (
     userMessage: string,
     historyMessages: IMessage[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: Record<string, any>
-  ) => {
+  ): Promise<string> => {
     if (openWebUIImport.generateChatCompletion.length === 3) {
       const result = await openWebUIImport.generateChatCompletion(
         userMessage,
@@ -74,12 +83,22 @@ export function getLlmProvider(): ILlmProvider[] {
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
+  const activeProviderIds = new Set<string>();
   const llmProviders: ILlmProvider[] = [];
 
   if (configuredProviders.length > 0) {
     // New System: Use configured instances
     for (const config of configuredProviders) {
       try {
+        const configHash = JSON.stringify(config.config || {});
+        const cached = providerCache.get(config.id);
+
+        if (cached && cached.configHash === configHash) {
+          llmProviders.push(cached.instance);
+          activeProviderIds.add(config.id);
+          continue;
+        }
+
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
@@ -102,7 +121,10 @@ export function getLlmProvider(): ILlmProvider[] {
         if (instance) {
           // We could attach the instance ID to the provider object if we extend the interface
           // We wrap it to count tokens
-          llmProviders.push(withTokenCounting(instance, config.id));
+          const wrappedInstance = withTokenCounting(instance, config.id);
+          providerCache.set(config.id, { instance: wrappedInstance, configHash });
+          llmProviders.push(wrappedInstance);
+          activeProviderIds.add(config.id);
         }
       } catch (error) {
         debug(`Failed to initialize provider ${config.name}: ${error}`);
@@ -125,6 +147,16 @@ export function getLlmProvider(): ILlmProvider[] {
     if (legacyTypes.length > 0 && legacyTypes[0] !== '') {
       debug(`Fallback to legacy LLM_PROVIDER env var: ${legacyTypes.join(',')}`);
       for (const type of legacyTypes) {
+        const legacyId = `legacy-${type}`;
+        const configHash = 'legacy-env';
+
+        const cached = providerCache.get(legacyId);
+        if (cached && cached.configHash === configHash) {
+          llmProviders.push(cached.instance);
+          activeProviderIds.add(legacyId);
+          continue;
+        }
+
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
           case 'openai':
@@ -139,7 +171,10 @@ export function getLlmProvider(): ILlmProvider[] {
             break;
         }
         if (instance) {
-          llmProviders.push(withTokenCounting(instance, 'legacy'));
+          const wrappedInstance = withTokenCounting(instance, 'legacy');
+          providerCache.set(legacyId, { instance: wrappedInstance, configHash });
+          llmProviders.push(wrappedInstance);
+          activeProviderIds.add(legacyId);
         }
       }
     }
@@ -148,9 +183,29 @@ export function getLlmProvider(): ILlmProvider[] {
   if (llmProviders.length === 0) {
     // If still empty, default to OpenAI (legacy default)
     debug('No providers configured, defaulting to OpenAI (Legacy default)');
+    const defaultId = 'default-openai';
+    const configHash = 'default';
 
-    const { OpenAiProvider } = require('@hivemind/provider-openai');
-    llmProviders.push(withTokenCounting(new OpenAiProvider(), 'default'));
+    const cached = providerCache.get(defaultId);
+    if (cached && cached.configHash === configHash) {
+      llmProviders.push(cached.instance);
+      activeProviderIds.add(defaultId);
+    } else {
+      const { OpenAiProvider } = require('@hivemind/provider-openai');
+      const instance = new OpenAiProvider();
+      const wrappedInstance = withTokenCounting(instance, 'default');
+      providerCache.set(defaultId, { instance: wrappedInstance, configHash });
+      llmProviders.push(wrappedInstance);
+      activeProviderIds.add(defaultId);
+    }
+  }
+
+  // Prune cache
+  for (const key of providerCache.keys()) {
+    if (!activeProviderIds.has(key)) {
+      providerCache.delete(key);
+      debug(`Removed stale provider from cache: ${key}`);
+    }
   }
 
   return llmProviders;
