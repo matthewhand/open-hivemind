@@ -352,6 +352,17 @@ export class AuthManager {
   }
 
   /**
+   * Get user by ID with password hash (internal use only)
+   */
+  public getUserWithHash(userId: string): User | null {
+    const user = this.users.get(userId);
+    if (user) {
+      return { ...user };
+    }
+    return null;
+  }
+
+  /**
    * Get all users (admin only)
    */
   public getAllUsers(): User[] {
