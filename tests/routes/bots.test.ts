@@ -71,9 +71,9 @@ describe('Bots Router', () => {
     // Mock WebSocketService responses
     mockWsService.getBotStats.mockImplementation((name: string) => {
       if (name === 'Bot 1') {
-        return { messageCount: 10, errors: ['error1', 'error2'] };
+        return { messageCount: 10, errors: ['error1', 'error2'], errorCount: 2 };
       } else {
-        return { messageCount: 0, errors: [] };
+        return { messageCount: 0, errors: [], errorCount: 0 };
       }
     });
 
