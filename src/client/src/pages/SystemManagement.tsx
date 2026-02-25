@@ -3,8 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
-import StatusCard from '../components/Monitoring/StatusCard';
-import Modal from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import {
+  Settings,
+  Save,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Server,
+  HardDrive,
+  Activity,
+  Database,
+  Cpu,
+  Archive,
+  Download,
+  RotateCcw,
+  Shield,
+  Clock,
+  Info
+} from 'lucide-react';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -34,6 +55,9 @@ interface BackupRecord {
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
+  const showSuccess = useSuccessToast();
+  const showError = useErrorToast();
+
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     refreshInterval: 5000,
     logLevel: 'info',
@@ -54,27 +78,26 @@ const SystemManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('alerts');
   const [isLoading, setIsLoading] = useState(false);
 
-
   // Backup Modal State
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [useEncryption, setUseEncryption] = useState(false);
   const [encryptionKey, setEncryptionKey] = useState('');
 
+  // Delete/Restore Confirmations
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null);
+  const [confirmClearCache, setConfirmClearCache] = useState(false);
+
   // Performance Tab State
   const [apiStatus, setApiStatus] = useState<any>(null);
-
-
-  // Performance Tab State
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [envOverrides, setEnvOverrides] = useState<Record<string, string> | null>(null);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
-
 
   useEffect(() => {
     fetchSystemConfig();
     fetchBackupHistory();
   }, []);
-
 
   // Performance monitoring polling
   useEffect(() => {
@@ -94,7 +117,6 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     if (activeTab === 'performance') {
       fetchPerformanceData();
@@ -108,14 +130,14 @@ const SystemManagement: React.FC = () => {
         apiService.getSystemInfo(),
         apiService.getEnvOverrides()
       ]);
+      await fetchApiStatus(); // Also refresh API status
       setSystemInfo(info.systemInfo);
-      // Backend returns { success: true, data: { envVars: ... } }
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
     } catch (error) {
       console.error('Failed to fetch performance data:', error);
+      showError('Failed to fetch performance data');
     } finally {
       setIsPerformanceLoading(false);
-
     }
   };
 
@@ -124,11 +146,9 @@ const SystemManagement: React.FC = () => {
       const globalConfig = await apiService.getGlobalConfig();
       const userSettings = globalConfig._userSettings?.values || {};
 
-      // Merge user settings with defaults
       setSystemConfig(prev => ({
         ...prev,
         ...userSettings,
-        // Ensure nested objects are merged correctly if present
         alertThresholds: {
           ...prev.alertThresholds,
           ...(userSettings.alertThresholds || {}),
@@ -142,14 +162,13 @@ const SystemManagement: React.FC = () => {
   const fetchBackupHistory = async () => {
     try {
       const backupList = await apiService.listSystemBackups();
-      // Map API response to local interface
       const mappedBackups: BackupRecord[] = backupList.map((b: any) => ({
         id: b.id,
         name: b.name,
         timestamp: b.createdAt,
         size: b.size ? `${(b.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown',
         type: b.description?.includes('automatic') ? 'automatic' : 'manual',
-        status: 'success', // Assuming listed backups are successful unless marked otherwise
+        status: 'success',
         description: b.description || 'System backup',
         createdAt: b.createdAt
       }));
@@ -164,11 +183,11 @@ const SystemManagement: React.FC = () => {
     try {
       const updatedConfig = { ...systemConfig, [key]: value };
       setSystemConfig(updatedConfig);
-
-      // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
+      showSuccess('Configuration updated');
     } catch (error) {
       console.error('Failed to update configuration:', error);
+      showError('Failed to update configuration');
     } finally {
       setIsLoading(false);
     }
@@ -198,11 +217,11 @@ const SystemManagement: React.FC = () => {
 
   const confirmCreateBackup = async () => {
     if (useEncryption && !encryptionKey) {
-      alert('Encryption key is required when encryption is enabled');
+      showError('Encryption key is required when encryption is enabled');
       return;
     }
     if (useEncryption && encryptionKey.length < 8) {
-      alert('Encryption key must be at least 8 characters long');
+      showError('Encryption key must be at least 8 characters long');
       return;
     }
 
@@ -215,50 +234,52 @@ const SystemManagement: React.FC = () => {
         encrypt: useEncryption,
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
-      alert('Backup created successfully');
+      showSuccess('Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
-      alert('Failed to create backup: ' + (error as Error).message);
+      showError('Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
     }
   };
 
-  const handleRestoreBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
-      try {
-        await apiService.restoreSystemBackup(backupId);
-        alert('System restored successfully. Reloading...');
-        setTimeout(() => window.location.reload(), 2000);
-      } catch (error) {
-        console.error('Failed to restore backup:', error);
-        alert('Failed to restore backup: ' + (error as Error).message);
-      }
+  const handleRestoreBackup = async () => {
+    if (!confirmRestoreId) return;
+    try {
+      await apiService.restoreSystemBackup(confirmRestoreId);
+      showSuccess('System restored successfully. Reloading...');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      console.error('Failed to restore backup:', error);
+      showError('Failed to restore backup: ' + (error as Error).message);
+    } finally {
+      setConfirmRestoreId(null);
     }
   };
 
-  const handleDeleteBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to delete this backup?')) {
-      try {
-        await apiService.deleteSystemBackup(backupId);
-        alert('Backup deleted');
-        setBackups(prev => prev.filter(backup => backup.id !== backupId));
-      } catch (error) {
-        console.error('Failed to delete backup:', error);
-        alert('Failed to delete backup: ' + (error as Error).message);
-      }
+  const handleDeleteBackup = async () => {
+    if (!confirmDeleteId) return;
+    try {
+      await apiService.deleteSystemBackup(confirmDeleteId);
+      showSuccess('Backup deleted');
+      setBackups(prev => prev.filter(backup => backup.id !== confirmDeleteId));
+    } catch (error) {
+      console.error('Failed to delete backup:', error);
+      showError('Failed to delete backup: ' + (error as Error).message);
+    } finally {
+      setConfirmDeleteId(null);
     }
   };
 
   const handleClearCache = async () => {
-    if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
-      try {
-        await apiService.clearCache();
-        alert('Cache cleared successfully');
-      } catch (error) {
-        alert('Failed to clear cache: ' + (error as Error).message);
-      }
+    try {
+      await apiService.clearCache();
+      showSuccess('Cache cleared successfully');
+    } catch (error) {
+      showError('Failed to clear cache: ' + (error as Error).message);
+    } finally {
+      setConfirmClearCache(false);
     }
   };
 
@@ -266,122 +287,112 @@ const SystemManagement: React.FC = () => {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
 
-  const systemMetricsCards = [
+  const stats = [
     {
-      title: 'Alert Management',
-      subtitle: 'Active system alerts',
-      status: alerts.some(a => a.level === 'error') ? 'error' :
-        alerts.some(a => a.level === 'warning') ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
-        { label: 'Warnings', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' },
-        { label: 'Info', value: alerts.filter(a => a.level === 'info').length, icon: 'ℹ️' },
-        { label: 'Total', value: alerts.length, icon: '✅' },
-      ],
+      id: 'alerts',
+      title: 'Alerts',
+      value: alerts.length,
+      icon: <AlertTriangle className="w-8 h-8" />,
+      color: alerts.some(a => a.level === 'error') ? 'error' : alerts.some(a => a.level === 'warning') ? 'warning' : 'success',
+      description: `${alerts.filter(a => a.level === 'error').length} Critical, ${alerts.filter(a => a.level === 'warning').length} Warning`
     },
     {
-      title: 'Backup Status',
-      subtitle: 'System recovery',
-      status: backups.length > 0 ? 'healthy' : 'warning',
-      metrics: [
-        { label: 'Total Backups', value: backups.length, icon: '💾' },
-        { label: 'Latest', value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None', icon: '📅' },
-        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '➖' },
-      ],
+      id: 'backups',
+      title: 'Latest Backup',
+      value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None',
+      icon: <Archive className="w-8 h-8" />,
+      color: backups.length > 0 ? 'primary' : 'warning',
+      description: `${backups.length} total backups`
     },
     {
-      title: 'System Resources',
-      subtitle: 'Current utilization',
-      status: currentMetric.cpuUsage > 80 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'CPU Usage', value: currentMetric.cpuUsage, unit: '%' },
-        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
-        { label: 'Connections', value: currentMetric.activeConnections, icon: '🔗' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-      ],
+      id: 'cpu',
+      title: 'CPU Usage',
+      value: `${currentMetric.cpuUsage}%`,
+      icon: <Cpu className="w-8 h-8" />,
+      color: currentMetric.cpuUsage > 80 ? 'warning' : 'success'
     },
+    {
+      id: 'memory',
+      title: 'Memory',
+      value: `${currentMetric.memoryUsage}%`,
+      icon: <HardDrive className="w-8 h-8" />,
+      color: currentMetric.memoryUsage > 85 ? 'warning' : 'success'
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">System Management</h1>
-            <p className="text-lg text-neutral-content/70">
-              Manage system configuration, alerts, and backups
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <button
-              className="btn btn-success"
-              onClick={openBackupModal}
-              disabled={isCreatingBackup}
-            >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="System Management"
+        description="Manage system configuration, alerts, backups and performance"
+        icon={Settings}
+        actions={
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={openBackupModal}
+            disabled={isCreatingBackup}
+          >
+            {isCreatingBackup ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4" />}
+            Create Backup
+          </button>
+        }
+      />
 
-      {/* System Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {systemMetricsCards.map((card, index) => (
-          <StatusCard
-            key={index}
-            title={card.title}
-            subtitle={card.subtitle}
-            status={card.status as any}
-            metrics={card.metrics}
-            compact={true}
-          />
-        ))}
-      </div>
+      {/* Stats Cards */}
+      <StatsCards stats={stats} />
 
       {/* Management Tabs */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="tabs tabs-boxed mb-6">
-            <button
-              className={`tab ${activeTab === 'alerts' ? 'tab-active' : ''}`}
+      <div className="card bg-base-100 shadow-sm border border-base-200">
+        <div className="border-b border-base-200">
+          <div role="tablist" className="tabs tabs-lifted tabs-lg pt-2 px-2">
+            <a
+              role="tab"
+              className={`tab ${activeTab === 'alerts' ? 'tab-active font-bold' : ''}`}
               onClick={() => setActiveTab('alerts')}
             >
-              Alert Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
+              <AlertTriangle className="w-4 h-4 mr-2" /> Alerts
+            </a>
+            <a
+              role="tab"
+              className={`tab ${activeTab === 'config' ? 'tab-active font-bold' : ''}`}
               onClick={() => setActiveTab('config')}
             >
-              System Configuration
-            </button>
-            <button
-              className={`tab ${activeTab === 'backups' ? 'tab-active' : ''}`}
+              <Settings className="w-4 h-4 mr-2" /> Configuration
+            </a>
+            <a
+              role="tab"
+              className={`tab ${activeTab === 'backups' ? 'tab-active font-bold' : ''}`}
               onClick={() => setActiveTab('backups')}
             >
-              Backup Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
+              <Archive className="w-4 h-4 mr-2" /> Backups
+            </a>
+            <a
+              role="tab"
+              className={`tab ${activeTab === 'performance' ? 'tab-active font-bold' : ''}`}
               onClick={() => setActiveTab('performance')}
             >
-              Performance Tuning
-            </button>
+              <Activity className="w-4 h-4 mr-2" /> Performance
+            </a>
           </div>
+        </div>
 
+        <div className="card-body p-6 bg-base-100 rounded-b-box">
           {/* Alert Management Tab */}
           {activeTab === 'alerts' && (
             <AlertPanel
               onAcknowledge={handleAlertAcknowledge}
               onResolve={handleAlertResolve}
               maxAlerts={20}
+              className="shadow-none border border-base-200"
             />
           )}
 
           {/* System Configuration Tab */}
           {activeTab === 'config' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold">System Configuration</h3>
+            <div className="space-y-6 animate-fade-in">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Settings className="w-5 h-5" /> System Configuration
+              </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-control">
@@ -443,8 +454,12 @@ const SystemManagement: React.FC = () => {
                 </div>
               </div>
 
+              <div className="divider"></div>
+
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold">Alert Thresholds</h4>
+                <h4 className="text-lg font-semibold flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Alert Thresholds
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
@@ -520,10 +535,12 @@ const SystemManagement: React.FC = () => {
 
           {/* Backup Management Tab */}
           {activeTab === 'backups' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold">Backup History</h3>
+            <div className="space-y-6 animate-fade-in">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Archive className="w-5 h-5" /> Backup History
+              </h3>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto border border-base-200 rounded-lg">
                 <table className="table table-zebra w-full">
                   <thead>
                     <tr>
@@ -544,31 +561,41 @@ const SystemManagement: React.FC = () => {
                             {backup.type}
                           </span>
                         </td>
-                        <td>{backup.size}</td>
+                        <td className="font-mono">{backup.size}</td>
                         <td>
-                          <span className="badge badge-success">
-                            {backup.status}
+                          <span className="badge badge-success gap-1">
+                            <CheckCircle className="w-3 h-3" /> {backup.status}
                           </span>
                         </td>
                         <td>{backup.description}</td>
                         <td>
                           <div className="flex gap-2">
                             <button
-                              className="btn btn-xs btn-primary"
-                              onClick={() => handleRestoreBackup(backup.id)}
+                              className="btn btn-xs btn-outline btn-primary"
+                              onClick={() => setConfirmRestoreId(backup.id)}
+                              title="Restore"
                             >
-                              Restore
+                              <RotateCcw className="w-3 h-3" />
                             </button>
                             <button
-                              className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteBackup(backup.id)}
+                              className="btn btn-xs btn-outline btn-error"
+                              onClick={() => setConfirmDeleteId(backup.id)}
+                              title="Delete"
                             >
-                              Delete
+                              <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                         </td>
                       </tr>
                     ))}
+                    {backups.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="text-center py-8 text-base-content/60">
+                          <Archive className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          No backups found. Create one to get started.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -577,72 +604,78 @@ const SystemManagement: React.FC = () => {
 
           {/* Performance Tuning Tab */}
           {activeTab === 'performance' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
               <div className="flex justify-between items-center">
-
-                <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  <Activity className="w-5 h-5" /> System Performance
+                </h3>
                 <button
                   className="btn btn-warning btn-sm"
-                  onClick={handleClearCache}
+                  onClick={() => setConfirmClearCache(true)}
                 >
-                  Clear System Cache
+                  <Trash2 className="w-4 h-4 mr-2" /> Clear System Cache
                 </button>
               </div>
 
               {apiStatus && (
-                <div className="stats shadow w-full">
-                  <div className="stat">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="stat bg-base-200 rounded-box">
                     <div className="stat-title">Overall Status</div>
-                    <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
+                    <div className={`stat-value text-2xl ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
                       {apiStatus.overall.status.toUpperCase()}
                     </div>
                     <div className="stat-desc">{apiStatus.overall.message}</div>
                   </div>
 
-                  <div className="stat">
+                  <div className="stat bg-base-200 rounded-box">
                     <div className="stat-title">Online Endpoints</div>
-                    <div className="stat-value">{apiStatus.overall.stats.online}</div>
+                    <div className="stat-value text-2xl">{apiStatus.overall.stats.online}</div>
                     <div className="stat-desc">/ {apiStatus.overall.stats.total} total</div>
                   </div>
 
-                  <div className="stat">
+                  <div className="stat bg-base-200 rounded-box">
                     <div className="stat-title">Error Rate</div>
-                    <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
+                    <div className="stat-value text-2xl text-error">{apiStatus.overall.stats.error}</div>
                     <div className="stat-desc">endpoints reporting errors</div>
                   </div>
                 </div>
               )}
 
               <div className="flex justify-between items-center mt-8">
-                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Info className="w-5 h-5" /> System Details
+                </h3>
                 <button
                   className="btn btn-sm btn-ghost"
                   onClick={fetchPerformanceData}
                   disabled={isPerformanceLoading}
                 >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isPerformanceLoading ? 'animate-spin' : ''}`} />
+                  Refresh
                 </button>
               </div>
 
               {systemInfo && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="card bg-base-200">
+                  <div className="card bg-base-200 border border-base-300">
                     <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">System Information</h4>
+                      <h4 className="font-bold mb-2 flex items-center gap-2">
+                        <Server className="w-4 h-4" /> Server Info
+                      </h4>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between border-b border-base-300 pb-1">
                           <span className="opacity-70">Platform:</span>
                           <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between border-b border-base-300 pb-1">
                           <span className="opacity-70">Node Version:</span>
                           <span className="font-mono">{systemInfo.nodeVersion}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between border-b border-base-300 pb-1">
                           <span className="opacity-70">Uptime:</span>
                           <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between border-b border-base-300 pb-1">
                           <span className="opacity-70">Process ID:</span>
                           <span className="font-mono">{systemInfo.pid}</span>
                         </div>
@@ -656,38 +689,37 @@ const SystemManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="card bg-base-200">
+                  <div className="card bg-base-200 border border-base-300">
                     <div className="card-body p-4">
-                      <h4 className="font-bold mb-2">Database Status</h4>
+                      <h4 className="font-bold mb-2 flex items-center gap-2">
+                        <Database className="w-4 h-4" /> Database Status
+                      </h4>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between border-b border-base-300 pb-1">
                           <span className="opacity-70">Connected:</span>
-                          <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
+                          <span className={`font-bold ${systemInfo.database.connected ? 'text-success' : 'text-error'}`}>
                             {systemInfo.database.connected ? 'Yes' : 'No'}
                           </span>
                         </div>
                         {systemInfo.database.stats && (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="opacity-70">Pool Size:</span>
-                              <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
-                            </div>
-                            {/* Add more DB stats if available */}
-                          </>
+                          <div className="flex justify-between">
+                            <span className="opacity-70">Pool Size:</span>
+                            <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
+                          </div>
                         )}
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
 
-
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h4 className="card-title text-sm">API Endpoints Status</h4>
+              <div className="card border border-base-200 overflow-hidden">
+                <div className="card-body p-0">
+                  <div className="p-4 border-b border-base-200 bg-base-200/50">
+                    <h4 className="font-bold text-sm">API Endpoints Status</h4>
+                  </div>
                   <div className="overflow-x-auto">
-                    <table className="table table-xs w-full">
+                    <table className="table table-sm w-full">
                       <thead>
                         <tr>
                           <th>Endpoint</th>
@@ -702,24 +734,24 @@ const SystemManagement: React.FC = () => {
                           <tr key={endpoint.id}>
                             <td>
                               <div className="font-bold">{endpoint.name}</div>
-                              <div className="text-xs opacity-50">{endpoint.url}</div>
+                              <div className="text-xs opacity-50 font-mono">{endpoint.url}</div>
                             </td>
                             <td>
-                              <div className={`badge ${
+                              <div className={`badge badge-sm ${
                                 endpoint.status === 'online' ? 'badge-success' :
                                 endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
                               }`}>
                                 {endpoint.status}
                               </div>
                             </td>
-                            <td>{endpoint.responseTime}ms</td>
+                            <td className="font-mono">{endpoint.responseTime}ms</td>
                             <td>{endpoint.consecutiveFailures}</td>
-                            <td>{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
+                            <td className="text-xs">{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
                           </tr>
                         ))}
                         {!apiStatus?.endpoints?.length && (
                           <tr>
-                            <td colSpan={5} className="text-center">No endpoint data available</td>
+                            <td colSpan={5} className="text-center py-4">No endpoint data available</td>
                           </tr>
                         )}
                       </tbody>
@@ -731,14 +763,16 @@ const SystemManagement: React.FC = () => {
               <div className="divider"></div>
 
               <div>
-                <h4 className="font-bold mb-4">Environment Configuration (Read-Only)</h4>
-                <p className="text-sm text-neutral-content/70 mb-4">
-                  These settings are loaded from environment variables and take precedence over database configuration.
-                  To change them, update your `.env` file and restart the server.
-                </p>
+                <h4 className="font-bold mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5" /> Environment Configuration (Read-Only)
+                </h4>
+                <div className="alert alert-info shadow-sm mb-4">
+                  <Info className="w-5 h-5" />
+                  <span className="text-sm">These settings are loaded from environment variables and take precedence. To change them, update your .env file and restart.</span>
+                </div>
 
                 {envOverrides ? (
-                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2">
+                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2 border border-base-content/10">
                     <table className="table table-xs w-full">
                       <thead>
                         <tr>
@@ -766,7 +800,7 @@ const SystemManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-center py-8">
-                    <span className="loading loading-dots loading-lg"></span>
+                    <span className="loading loading-dots loading-lg text-primary"></span>
                   </div>
                 )}
               </div>
@@ -795,9 +829,9 @@ const SystemManagement: React.FC = () => {
         ]}
       >
         <div className="space-y-4">
-          <p>Create a new manual backup of the system configuration.</p>
+          <p className="text-base-content/80">Create a new manual backup of the system configuration.</p>
 
-          <div className="form-control">
+          <div className="form-control bg-base-200 p-3 rounded-lg">
             <label className="cursor-pointer label justify-start gap-4">
               <input
                 type="checkbox"
@@ -805,12 +839,12 @@ const SystemManagement: React.FC = () => {
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}
               />
-              <span className="label-text">Encrypt Backup</span>
+              <span className="label-text font-medium">Encrypt Backup</span>
             </label>
           </div>
 
           {useEncryption && (
-            <div className="form-control w-full">
+            <div className="form-control w-full animate-fade-in">
               <label className="label">
                 <span className="label-text">Encryption Key (Password)</span>
               </label>
@@ -822,14 +856,46 @@ const SystemManagement: React.FC = () => {
                 onChange={(e) => setEncryptionKey(e.target.value)}
               />
               <label className="label">
-                <span className="label-text-alt text-warning">
-                  Important: This key will be required to restore the backup. Do not lose it.
+                <span className="label-text-alt text-warning flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Important: This key will be required to restore the backup.
                 </span>
               </label>
             </div>
           )}
         </div>
       </Modal>
+
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        title="Delete Backup"
+        message="Are you sure you want to delete this backup? This action cannot be undone."
+        confirmText="Delete"
+        confirmVariant="error"
+        onConfirm={handleDeleteBackup}
+        onClose={() => setConfirmDeleteId(null)}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmRestoreId}
+        title="Restore System"
+        message="Are you sure you want to restore this backup? This will overwrite the current system configuration and may require a reload."
+        confirmText="Restore"
+        confirmVariant="primary"
+        onConfirm={handleRestoreBackup}
+        onClose={() => setConfirmRestoreId(null)}
+      />
+
+      <ConfirmModal
+        isOpen={confirmClearCache}
+        title="Clear Cache"
+        message="Are you sure you want to clear the system cache? This may temporarily impact performance as caches are rebuilt."
+        confirmText="Clear Cache"
+        confirmVariant="warning"
+        onConfirm={handleClearCache}
+        onClose={() => setConfirmClearCache(false)}
+      />
     </div>
   );
 };
