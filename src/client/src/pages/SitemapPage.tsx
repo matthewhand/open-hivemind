@@ -4,8 +4,10 @@ import {
   Download,
   RefreshCw,
   Map as MapIcon,
+  Copy,
 } from 'lucide-react';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -34,6 +36,9 @@ const SitemapPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
   const [searchValue, setSearchValue] = useState('');
+
+  const showSuccess = useSuccessToast();
+  const showError = useErrorToast();
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -86,6 +91,15 @@ const SitemapPage: React.FC = () => {
 
   const handleOpenUrl = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyUrl = async (fullUrl: string) => {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      showSuccess('URL copied to clipboard');
+    } catch (err) {
+      showError('Failed to copy URL');
+    }
   };
 
   const filteredUrls = sitemapData?.urls.filter(url => {
@@ -245,12 +259,22 @@ const SitemapPage: React.FC = () => {
                       <h3 className="font-mono text-sm break-all font-bold">
                         {url.url}
                       </h3>
-                      <button
-                        className="btn btn-ghost btn-xs btn-circle"
-                        onClick={() => handleOpenUrl(url.fullUrl)}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle tooltip"
+                          data-tip="Copy URL"
+                          onClick={() => handleCopyUrl(url.fullUrl)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle tooltip"
+                          data-tip="Open in New Tab"
+                          onClick={() => handleOpenUrl(url.fullUrl)}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <p className="text-xs text-base-content/70 mb-3">

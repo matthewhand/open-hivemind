@@ -175,6 +175,9 @@ View the complete navigation structure of the application.
 *   **Page Hierarchy**: See all available pages and their relationships.
 *   **Search & Filter**: Find specific pages by URL or description, and filter by access level.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
+*   **Copy URL**: Quickly copy any page's full URL to your clipboard.
+
+![Sitemap Copy Notification](docs/images/sitemap-copy-toast.png)
 
 ![Sitemap Page](docs/screenshots/sitemap-page.png)
 
