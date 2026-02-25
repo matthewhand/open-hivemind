@@ -109,18 +109,12 @@ describe('UnifiedDashboard', () => {
 
     // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
     // should be hidden because the active tab is 'status'.
-    // However, in UnifiedDashboard.tsx, tabs are implemented using CSS display property (hidden class),
-    // not by conditional rendering of React components.
-    // The screen.queryByText might still find it if it's just hidden with CSS.
-    // But typically expect(...).not.toBeInTheDocument() checks if it's in the DOM.
-    // If it's in the DOM but hidden, queryByText will find it.
-    // Let's check how 'hidden' class behaves.
-    // UnifiedDashboard.tsx: className={activeTab === 'getting-started' ? 'space-y-6' : 'hidden'}
-    // If 'hidden' class is present, it is still in the DOM.
-    // To fix this test, we should check for visibility or simply check that the status panel is visible.
+    // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
+    expect(screen.queryByText('Welcome to Open Hivemind')).not.toBeVisible();
 
-    const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });
-    expect(gettingStartedPanel).toHaveClass('hidden');
+    // Alternatively check for hidden class on parent if visible check is flaky in some JSDOM setups
+    // const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });
+    // expect(gettingStartedPanel).toHaveClass('hidden');
 
     const statusPanel = screen.getByRole('tabpanel', { name: /status/i });
     expect(statusPanel).not.toHaveClass('hidden');
