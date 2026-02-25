@@ -833,6 +833,21 @@ class ApiService {
   async getEnvOverrides(): Promise<any> {
     return this.request('/api/admin/env-overrides');
   }
+
+  // MCP Methods
+  async getMCPServers(): Promise<{ servers: any[] }> {
+    return this.request('/api/mcp/servers');
+  }
+
+  async executeMCPTool(serverName: string, toolName: string, args: Record<string, any>): Promise<{ result: any }> {
+    return this.request(`/api/mcp/servers/${serverName}/call-tool`, {
+      method: 'POST',
+      body: JSON.stringify({
+        toolName,
+        arguments: args,
+      }),
+    });
+  }
 }
 
 export const apiService = new ApiService();
