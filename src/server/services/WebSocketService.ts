@@ -277,10 +277,8 @@ export class WebSocketService {
     };
   }
 
-  public getAllBotStats(): Record<
-    string,
-    { messageCount: number; errors: string[]; errorCount: number }
-  > {
+  // prettier-ignore
+  public getAllBotStats(): Record<string, { messageCount: number; errors: string[]; errorCount: number }> {
     const metricsService = BotMetricsService.getInstance();
     const allMetrics = metricsService.getAllMetrics();
     const out: Record<string, { messageCount: number; errors: string[]; errorCount: number }> = {};
