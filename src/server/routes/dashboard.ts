@@ -1,7 +1,7 @@
 import { Router } from 'express';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticateToken } from '../middleware/auth';
 import { ActivityLogger } from '../services/ActivityLogger';
 
