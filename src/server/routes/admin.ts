@@ -8,6 +8,7 @@ import { MCPService } from '../../mcp/MCPService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
+import { providerRegistry } from '../../registries/ProviderRegistry';
 import activityRouter from './activity';
 import agentsRouter from './agents';
 import guardProfilesRouter from './guardProfiles';
@@ -902,60 +903,21 @@ router.get('/env-overrides', (req: Request, res: Response) => {
 // GET /providers - Get available providers
 router.get('/providers', async (req: Request, res: Response) => {
   try {
-    const messageProviders = [
-      {
-        id: 'discord',
-        name: 'Discord',
-        description: 'Discord bot integration',
-        configRequired: ['token'],
-        envVarPrefix: 'DISCORD_',
-      },
-      {
-        id: 'slack',
-        name: 'Slack',
-        description: 'Slack bot integration',
-        configRequired: ['botToken', 'appToken'],
-        envVarPrefix: 'SLACK_',
-      },
-      {
-        id: 'telegram',
-        name: 'Telegram',
-        description: 'Telegram bot integration',
-        configRequired: ['token'],
-        envVarPrefix: 'TELEGRAM_',
-      },
-      {
-        id: 'mattermost',
-        name: 'Mattermost',
-        description: 'Mattermost bot integration',
-        configRequired: ['token', 'serverUrl'],
-        envVarPrefix: 'MATTERMOST_',
-      },
-    ];
+    const messageProviders = providerRegistry.getMessageProviders().map((p) => ({
+      id: p.id,
+      name: p.label,
+      description: p.description || `${p.label} integration`,
+      configRequired: p.getSensitiveKeys(),
+      envVarPrefix: p.id.toUpperCase() + '_',
+    }));
 
-    const llmProviders = [
-      {
-        id: 'openai',
-        name: 'OpenAI',
-        description: 'OpenAI GPT models',
-        configRequired: ['apiKey'],
-        envVarPrefix: 'OPENAI_',
-      },
-      {
-        id: 'flowise',
-        name: 'Flowise',
-        description: 'Flowise workflow engine',
-        configRequired: ['baseUrl'],
-        envVarPrefix: 'FLOWISE_',
-      },
-      {
-        id: 'openwebui',
-        name: 'Open WebUI',
-        description: 'Open WebUI local models',
-        configRequired: ['baseUrl'],
-        envVarPrefix: 'OPENWEBUI_',
-      },
-    ];
+    const llmProviders = providerRegistry.getLLMProviders().map((p) => ({
+      id: p.id,
+      name: p.label,
+      description: p.description || `${p.label} integration`,
+      configRequired: p.getSensitiveKeys(),
+      envVarPrefix: p.id.toUpperCase() + '_',
+    }));
 
     return res.json({
       messageProviders,

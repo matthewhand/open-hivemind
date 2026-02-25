@@ -16,7 +16,7 @@ import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
 import ciRouter from '@src/server/routes/ci';
-import webuiConfigRouter from '@src/server/routes/config';
+import webuiConfigRouter, { initializeConfig } from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
@@ -40,6 +40,7 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
+import { initProviders } from './initProviders';
 
 require('dotenv/config');
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
@@ -424,6 +425,10 @@ async function startBot(messengerService: any) {
 async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
+
+  // Initialize Providers
+  initProviders();
+  initializeConfig();
 
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();

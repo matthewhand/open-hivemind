@@ -7,17 +7,13 @@ import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import discordConfig from '../../config/discordConfig';
-import flowiseConfig from '../../config/flowiseConfig';
 import {
   getGuardrailProfiles,
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
-import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
-import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
@@ -31,9 +27,6 @@ import {
   saveMessageProfiles,
   type MessageProfile,
 } from '../../config/messageProfiles';
-import ollamaConfig from '../../config/ollamaConfig';
-import openaiConfig from '../../config/openaiConfig';
-import openWebUIConfig from '../../config/openWebUIConfig';
 import {
   createResponseProfile,
   deleteResponseProfile,
@@ -41,9 +34,7 @@ import {
   updateResponseProfile,
   type ResponseProfile,
 } from '../../config/responseProfileManager';
-import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -59,21 +50,22 @@ const debug = Debug('app:server:routes:config');
 const router = Router();
 
 // Map of base config types to their convict objects (used as schema sources)
-const schemaSources: Record<string, any> = {
-  message: messageConfig,
-  llm: llmConfig,
-  discord: discordConfig,
-  slack: slackConfig,
-  openai: openaiConfig,
-  flowise: flowiseConfig,
-  ollama: ollamaConfig,
-  mattermost: mattermostConfig,
-  openwebui: openWebUIConfig,
-  webhook: webhookConfig,
-};
+let schemaSources: Record<string, any> = {};
 
 // Map of all active config instances
-const globalConfigs: Record<string, any> = { ...schemaSources };
+let globalConfigs: Record<string, any> = {};
+
+export const initializeConfig = () => {
+  const providers = providerRegistry.getAll();
+  for (const p of providers) {
+    if (p.getConfigInstance) {
+      const instance = p.getConfigInstance();
+      schemaSources[p.id] = instance;
+      globalConfigs[p.id] = instance;
+    }
+  }
+  loadDynamicConfigs();
+};
 
 // Helper to load dynamic configs from files
 const loadDynamicConfigs = () => {
@@ -115,8 +107,7 @@ const loadDynamicConfigs = () => {
   }
 };
 
-// Initial load
-loadDynamicConfigs();
+// Initial load deferred to initializeConfig()
 
 // Apply audit middleware to all config routes (except in test)
 if (process.env.NODE_ENV !== 'test') {
@@ -703,47 +694,8 @@ router.get('/', async (req, res) => {
         status: isDisabled ? 'disabled' : mergedBot.status || 'active',
         // If disabled, set connected to false
         connected: isDisabled ? false : mergedBot.connected !== false,
-        discord: mergedBot.discord
-          ? {
-              ...mergedBot.discord,
-              token: redactSensitiveInfo('DISCORD_BOT_TOKEN', mergedBot.discord.token || ''),
-            }
-          : undefined,
-        slack: mergedBot.slack
-          ? {
-              ...mergedBot.slack,
-              botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', mergedBot.slack.botToken || ''),
-              appToken: redactSensitiveInfo('SLACK_APP_TOKEN', mergedBot.slack.appToken || ''),
-              signingSecret: redactSensitiveInfo(
-                'SLACK_SIGNING_SECRET',
-                mergedBot.slack.signingSecret || ''
-              ),
-            }
-          : undefined,
-        openai: mergedBot.openai
-          ? {
-              ...mergedBot.openai,
-              apiKey: redactSensitiveInfo('OPENAI_API_KEY', mergedBot.openai.apiKey || ''),
-            }
-          : undefined,
-        flowise: mergedBot.flowise
-          ? {
-              ...mergedBot.flowise,
-              apiKey: redactSensitiveInfo('FLOWISE_API_KEY', mergedBot.flowise.apiKey || ''),
-            }
-          : undefined,
-        openwebui: mergedBot.openwebui
-          ? {
-              ...mergedBot.openwebui,
-              apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', mergedBot.openwebui.apiKey || ''),
-            }
-          : undefined,
-        openswarm: mergedBot.openswarm
-          ? {
-              ...mergedBot.openswarm,
-              apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', mergedBot.openswarm.apiKey || ''),
-            }
-          : undefined,
+        // Dynamic redaction
+        ...redactObjectSimple(mergedBot),
         metadata: buildFieldMetadata(mergedBot, userConfigStore),
       };
     });
