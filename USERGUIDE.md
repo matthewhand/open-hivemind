@@ -50,9 +50,14 @@ Define the personality and behavior of your bots.
 
 ### [Guards](/admin/guards)
 Set up safety and security boundaries.
+*   **Guard Profiles**: Create and manage reusable security profiles.
 *   **Content Filters**: Block specific words or phrases.
-*   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
-*   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
+*   **Rate Limiting**: Control request frequency to prevent abuse.
+*   **Access Control**: Restrict bot usage to specific users or owners.
+
+![Guard Profiles List](docs/screenshots/guard-profiles-list.png)
+
+![Create Guard Profile](docs/screenshots/guard-profile-modal.png)
 
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
