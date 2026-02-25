@@ -104,6 +104,7 @@ export class ActivityLogger {
             events.shift();
           }
         } catch (e) {
+          debug('Failed to parse activity log line: %O', e);
           continue;
         }
       }

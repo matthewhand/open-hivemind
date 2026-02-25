@@ -1,5 +1,6 @@
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
+import readline from 'readline';
 import Debug from 'debug';
 
 const debug = Debug('app:auditLogger');
@@ -224,55 +225,78 @@ export class AuditLogger {
     });
   }
 
-  public getAuditEvents(limit = 100, offset = 0): AuditEvent[] {
+  public async getAuditEvents(
+    limit = 100,
+    offset = 0,
+    filter?: (event: AuditEvent) => boolean
+  ): Promise<AuditEvent[]> {
     try {
       if (!fs.existsSync(this.logFilePath)) {
         return [];
       }
 
-      const content = fs.readFileSync(this.logFilePath, 'utf8');
-      const lines = content
-        .trim()
-        .split('\n')
-        .filter((line) => line.trim());
+      const fileStream = fs.createReadStream(this.logFilePath, { encoding: 'utf8' });
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      });
 
-      const events: AuditEvent[] = lines
-        .map((line) => {
-          try {
-            return JSON.parse(line) as AuditEvent;
-          } catch {
-            return null;
+      // Rolling buffer to store (limit + offset) events.
+      // Since file is oldest -> newest, buffer will contain the newest (limit + offset) matching events.
+      const bufferSize = limit + offset;
+      const buffer: AuditEvent[] = [];
+
+      for await (const line of rl) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        try {
+          const event = JSON.parse(trimmed) as AuditEvent;
+
+          if (filter && !filter(event)) {
+            continue;
           }
-        })
-        .filter((event): event is AuditEvent => event !== null)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-      return events.slice(offset, offset + limit);
+          buffer.push(event);
+          if (buffer.length > bufferSize) {
+            buffer.shift(); // Remove oldest in buffer
+          }
+        } catch (e) {
+          debug('Failed to parse audit log line: %O', e);
+          continue;
+        }
+      }
+
+      // Buffer contains [Oldest ... Newest] of the tail.
+      // We want Newest -> Oldest.
+      // So reverse.
+      buffer.reverse();
+
+      // Now buffer is [Newest ... Oldest].
+      // Apply offset (skip first 'offset' items).
+      // Take 'limit' items.
+      return buffer.slice(offset, offset + limit);
     } catch (error) {
       debug('Failed to read audit events:', error);
       return [];
     }
   }
 
-  public getAuditEventsByUser(user: string, limit = 100): AuditEvent[] {
-    const allEvents = this.getAuditEvents(1000); // Get more to filter
-    return allEvents.filter((event) => event.user === user).slice(0, limit);
+  public async getAuditEventsByUser(user: string, limit = 100): Promise<AuditEvent[]> {
+    return this.getAuditEvents(limit, 0, (event) => event.user === user);
   }
 
-  public getAuditEventsByAction(action: string, limit = 100): AuditEvent[] {
-    const allEvents = this.getAuditEvents(1000); // Get more to filter
-    return allEvents.filter((event) => event.action === action).slice(0, limit);
+  public async getAuditEventsByAction(action: string, limit = 100): Promise<AuditEvent[]> {
+    return this.getAuditEvents(limit, 0, (event) => event.action === action);
   }
 
-  public getBotActivity(botId: string, limit = 50): AuditEvent[] {
-    const allEvents = this.getAuditEvents(2000);
+  public async getBotActivity(botId: string, limit = 50): Promise<AuditEvent[]> {
     const resourceKey = `bots/${botId}`;
-    return allEvents
-      .filter(
-        (event) =>
-          event.resource === resourceKey || (event.metadata && event.metadata.botId === botId)
+    return this.getAuditEvents(limit, 0, (event) =>
+      Boolean(
+        event.resource === resourceKey || (event.metadata && event.metadata.botId === botId)
       )
-      .slice(0, limit);
+    );
   }
 
   private generateId(): string {
