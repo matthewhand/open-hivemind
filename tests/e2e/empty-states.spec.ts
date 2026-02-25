@@ -18,15 +18,15 @@ test.describe('Empty States', () => {
     });
     // Mock personas
     await page.route('**/api/personas', async (route) => {
-        await route.fulfill({ json: [] });
+      await route.fulfill({ json: [] });
     });
     // Mock bots (default empty)
     await page.route('**/api/bots', async (route) => {
-        await route.fulfill({ json: [] });
+      await route.fulfill({ json: [] });
     });
     // Mock guards (default empty)
     await page.route('**/api/admin/guard-profiles', async (route) => {
-        await route.fulfill({ json: { data: [] } });
+      await route.fulfill({ json: { data: [] } });
     });
     // Mock health/status endpoints to prevent network errors
     await page.route('**/api/health', async (route) => route.fulfill({ json: { status: 'ok' } }));
@@ -73,12 +73,12 @@ test.describe('Empty States', () => {
     await expect(page.locator('.loading')).toHaveCount(0);
     await expect(page.getByText('No Guard Profiles')).toBeVisible();
     await expect(page.getByText('Create a guard profile to enforce security policies.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Create Profile' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'New Profile' })).toBeVisible();
   });
 
   test('Personas Page shows empty state when no personas exist', async ({ page }) => {
-     await page.route('**/api/personas', async (route) => {
-        await route.fulfill({ json: [] });
+    await page.route('**/api/personas', async (route) => {
+      await route.fulfill({ json: [] });
     });
     await page.goto('/admin/personas');
     await expect(page.locator('.loading')).toHaveCount(0);
@@ -89,11 +89,14 @@ test.describe('Empty States', () => {
   });
 
   test('Personas Page shows empty state when search returns no results', async ({ page }) => {
-     await page.route('**/api/personas', async (route) => {
-        await route.fulfill({ json: [
-            { id: 'p1', name: 'Test Persona', description: 'Test', isBuiltIn: false, category: 'general', systemPrompt: 'You are a test.' }
-        ] });
+    await page.route('**/api/personas', async (route) => {
+      await route.fulfill({
+        json: [
+          { id: 'p1', name: 'Test Persona', description: 'Test', isBuiltIn: false, category: 'general', systemPrompt: 'You are a test.' }
+        ]
+      });
     });
+
     await page.goto('/admin/personas');
     await expect(page.getByText('Test Persona')).toBeVisible();
 

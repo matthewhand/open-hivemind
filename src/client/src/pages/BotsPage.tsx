@@ -4,7 +4,7 @@ import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCi
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import Input from '../components/DaisyUI/Input';
+import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 
 interface BotData {
@@ -227,6 +227,7 @@ const BotsPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!deleteModal.bot) { return; }
+    if (deleteConfirmation !== deleteModal.bot.name) { return; }
 
     try {
       setActionLoading(deleteModal.bot.id);
@@ -341,15 +342,11 @@ const BotsPage: React.FC = () => {
 
       {/* Search Input */}
       {bots.length > 0 && (
-        <div className="w-full">
-          <Input
-            placeholder="Search bots..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="w-4 h-4" />}
-            className="pl-10"
-          />
-        </div>
+        <SearchFilterBar
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search bots..."
+        />
       )}
 
       {/* DataTable */}
@@ -365,7 +362,7 @@ const BotsPage: React.FC = () => {
               icon={Bot}
               title="No bots configured"
               description="Create a bot configuration to get started"
-              actionLabel="Create Bot"
+              actionLabel={<><Plus className="w-4 h-4 mr-2" /> Create Bot</>}
               onAction={() => setShowCreateModal(true)}
               variant="primary"
             />
@@ -455,11 +452,7 @@ const BotsPage: React.FC = () => {
           llmProfiles={llmProfiles}
           integrationOptions={{ message: getIntegrationOptions('message') }}
           onUpdateConfig={async (bot: any, key: string, value: any) => {
-            // Wrap update to refresh selected bot state if needed
             await handleUpdateConfig(bot, key as any, value);
-            // We might need to fetch the updated bot from the list to keep modal in sync?
-            // Since handleUpdateConfig updates state, the 'bot' prop from the list *should* update if we keyed it correctly.
-            // But 'selectedBotForConfig' is a separate state piece. We need to update it too.
             setSelectedBotForConfig(prev => prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null);
           }}
           onUpdatePersona={async (bot: any, pid: string) => {

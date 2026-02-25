@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
-import { EmptyState } from '../components/DaisyUI';
+import EmptyState from '../components/DaisyUI/EmptyState';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -198,8 +198,9 @@ const GuardsPage: React.FC = () => {
           icon={Shield}
           title="No Guard Profiles"
           description="Create a guard profile to enforce security policies."
-          actionLabel="Create Profile"
+          actionLabel={<><Plus className="w-4 h-4 mr-2" /> New Profile</>}
           onAction={handleCreate}
+          variant="primary"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

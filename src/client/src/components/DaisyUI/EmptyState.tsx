@@ -3,13 +3,13 @@ import type { LucideIcon } from 'lucide-react';
 import { Button } from './index';
 
 interface EmptyStateProps {
-    icon: LucideIcon;
-    title: string;
-    description: string;
-    actionLabel?: string;
-    onAction?: () => void;
-    variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success';
-    className?: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  actionLabel?: string | React.ReactNode;
+  onAction?: () => void;
+  variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success';
+  className?: string;
 }
 
 const variantStyles = {
@@ -81,6 +81,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
+      data-testid="empty-state"
       className={`
         group relative overflow-hidden rounded-2xl py-16 px-8
         bg-gradient-to-br ${styles.gradient}
