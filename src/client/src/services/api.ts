@@ -820,6 +820,18 @@ class ApiService {
     });
   }
 
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const response = await fetch(buildUrl(`/api/import-export/backups/${backupId}/download`), {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
   async deleteSystemBackup(backupId: string): Promise<{ success: boolean; message: string }> {
     return this.request(`/api/import-export/backups/${backupId}`, {
       method: 'DELETE',

@@ -1,0 +1,23 @@
+[1A[2K[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 13dcc94c16b81a91d7d41b4f16bec7e4
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[frontend] No frontend dist path matched; using fallback { fallback: [32m'/app/src/client/dist'[39m }
+[2m[WebServer] [22m[frontend] Frontend dist directory not found { path: [32m'/app/src/client/dist'[39m }
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+[1A[2K[2m[WebServer] [22m[app:index] ⚠️  Frontend build not found - run `npm run build` to create WebUI assets
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/screenshot-export.spec.ts:5:7 › Export Page Screenshots › Capture Export Page and Create Backup Modal
+Global teardown completed
+[1A[2K  1 passed (23.2s)
