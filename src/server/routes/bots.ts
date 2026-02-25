@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 const manager = BotManager.getInstance();
+const wsService = WebSocketService.getInstance();
 
 // GET /api/bots - List all bots with status
 router.get('/', async (req, res) => {
@@ -11,19 +13,23 @@ router.get('/', async (req, res) => {
     const statuses = await manager.getBotsStatus();
     const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
 
-    const result = bots.map((bot) => ({
-      id: bot.id,
-      name: bot.name,
-      provider: bot.messageProvider,
-      messageProvider: bot.messageProvider,
-      llmProvider: bot.llmProvider,
-      persona: bot.persona,
-      status: bot.isActive ? 'active' : 'disabled',
-      connected: statusMap.get(bot.id) || false,
-      messageCount: 0, // TODO: Implement metrics
-      errorCount: 0, // TODO: Implement metrics
-      // Note: config and envOverrides intentionally excluded to avoid exposing sensitive data
-    }));
+    const result = bots.map((bot) => {
+      // WebSocketService tracks metrics by bot name, not ID
+      const stats = wsService.getBotStats(bot.name) || { messageCount: 0, errors: [] };
+      return {
+        id: bot.id,
+        name: bot.name,
+        provider: bot.messageProvider,
+        messageProvider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        persona: bot.persona,
+        status: bot.isActive ? 'active' : 'disabled',
+        connected: statusMap.get(bot.id) || false,
+        messageCount: stats.messageCount,
+        errorCount: stats.errors.length,
+        // Note: config and envOverrides intentionally excluded to avoid exposing sensitive data
+      };
+    });
 
     return res.json(result);
   } catch (error: any) {

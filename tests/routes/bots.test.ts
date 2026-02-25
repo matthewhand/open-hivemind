@@ -1,9 +1,13 @@
 import express from 'express';
 import request from 'supertest';
 import { BotManager } from '../../src/managers/BotManager';
+import { WebSocketService } from '../../src/server/services/WebSocketService';
 
 // Mock BotManager
 jest.mock('../../src/managers/BotManager');
+
+// Mock WebSocketService
+jest.mock('../../src/server/services/WebSocketService');
 
 // Mock authenticateToken middleware
 jest.mock('../../src/server/middleware/auth', () => ({
@@ -13,6 +17,7 @@ jest.mock('../../src/server/middleware/auth', () => ({
 describe('Bots Router', () => {
   let app: express.Application;
   let mockManager: any;
+  let mockWsService: any;
   let botsRouter: any;
 
   beforeEach(() => {
@@ -30,8 +35,15 @@ describe('Bots Router', () => {
       getBotHistory: jest.fn(),
     };
 
-    // Correctly mock the static getInstance method
+    mockWsService = {
+      getBotStats: jest.fn(),
+    };
+
+    // Correctly mock the static getInstance method for BotManager
     (BotManager.getInstance as jest.Mock).mockReturnValue(mockManager);
+
+    // Correctly mock the static getInstance method for WebSocketService
+    (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWsService);
 
     // Re-require router to ensure it picks up the mock return value
     jest.isolateModules(() => {
@@ -43,7 +55,7 @@ describe('Bots Router', () => {
     app.use('/api/bots', botsRouter);
   });
 
-  it('GET /api/bots should return list of bots with status', async () => {
+  it('GET /api/bots should return list of bots with status and metrics', async () => {
     const mockBots = [
       { id: 'bot1', name: 'Bot 1', messageProvider: 'discord', isActive: true },
       { id: 'bot2', name: 'Bot 2', messageProvider: 'slack', isActive: false },
@@ -56,20 +68,41 @@ describe('Bots Router', () => {
     mockManager.getAllBots.mockResolvedValue(mockBots);
     mockManager.getBotsStatus.mockResolvedValue(mockStatus);
 
+    // Mock WebSocketService responses
+    mockWsService.getBotStats.mockImplementation((name: string) => {
+      if (name === 'Bot 1') {
+        return { messageCount: 10, errors: ['error1', 'error2'] };
+      } else {
+        return { messageCount: 0, errors: [] };
+      }
+    });
+
     const res = await request(app).get('/api/bots');
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
+
+    // Verify Bot 1
     expect(res.body[0]).toMatchObject({
       id: 'bot1',
       status: 'active',
       connected: true,
+      messageCount: 10,
+      errorCount: 2,
     });
+
+    // Verify Bot 2
     expect(res.body[1]).toMatchObject({
       id: 'bot2',
       status: 'disabled',
       connected: false,
+      messageCount: 0,
+      errorCount: 0,
     });
+
+    // Ensure getBotStats was called for each bot
+    expect(mockWsService.getBotStats).toHaveBeenCalledWith('Bot 1');
+    expect(mockWsService.getBotStats).toHaveBeenCalledWith('Bot 2');
   });
 
   it('POST /api/bots/:id/start should start a bot', async () => {
