@@ -9,6 +9,32 @@ jest.mock('../../src/managers/BotManager');
 // Mock WebSocketService
 jest.mock('../../src/server/services/WebSocketService');
 
+// Mock ShutdownCoordinator to prevent process exit during tests
+jest.mock('../../src/server/ShutdownCoordinator', () => ({
+  ShutdownCoordinator: {
+    getInstance: jest.fn().mockReturnValue({
+      registerHttpServer: jest.fn(),
+      registerViteServer: jest.fn(),
+      registerMessengerService: jest.fn(),
+      registerService: jest.fn(),
+      isShuttingDownNow: jest.fn().mockReturnValue(false),
+      setupSignalHandlers: jest.fn(),
+      initiateShutdown: jest.fn(),
+    }),
+  },
+  default: {
+    getInstance: jest.fn().mockReturnValue({
+      registerHttpServer: jest.fn(),
+      registerViteServer: jest.fn(),
+      registerMessengerService: jest.fn(),
+      registerService: jest.fn(),
+      isShuttingDownNow: jest.fn().mockReturnValue(false),
+      setupSignalHandlers: jest.fn(),
+      initiateShutdown: jest.fn(),
+    }),
+  },
+}));
+
 // Mock authenticateToken middleware
 jest.mock('../../src/server/middleware/auth', () => ({
   authenticateToken: (req: any, res: any, next: any) => next(),
