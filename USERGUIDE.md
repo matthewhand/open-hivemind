@@ -27,7 +27,11 @@ Connect your bots to messaging services.
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.
+![Bots Page](./docs/images/bots-page.png)
+
 *   **Create Bot**: Define a new bot with a unique name.
+![Create Bot Modal](./docs/images/create-bot-modal.png)
+
 *   **Link Persona**: Assign a specific personality to the bot.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
 *   **Active Status**: Toggle bots on or off individually.
