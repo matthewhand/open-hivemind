@@ -826,10 +826,6 @@ class ApiService {
     });
   }
 
-  getBackupDownloadUrl(backupId: string): string {
-    return buildUrl(`/api/import-export/backups/${backupId}/download`);
-  }
-
   async getSystemInfo(): Promise<any> {
     return this.request('/api/admin/system-info');
   }

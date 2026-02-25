@@ -159,18 +159,10 @@ A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
 
-### [Export & System Data](/admin/export)
-Manage system backups and export configurations.
-
-![Export Page](docs/images/export-page.png)
-
-*   **System Backups**: Create, restore, and delete full system backups.
-    *   **Create Backup**: Save a snapshot of all bot configurations and settings.
-    ![Create Backup Modal](docs/images/create-backup-modal.png)
-    *   **Restore**: Revert the system to a previous state from a backup.
-    *   **Download**: Save backup files locally for safekeeping.
-*   **Export Configuration**: Download a JSON file containing all current bot and system settings.
+### [Export](/admin/export)
+Download API specifications and system documentation.
 *   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
+*   **Documentation**: Access generated documentation resources.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
@@ -188,5 +180,12 @@ Browse and manage persisted specifications and design documents.
 
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system.
-*   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
-*   **Direct Access**: Open static pages in new tabs for testing or display.
+
+![Static Pages Gallery](docs/images/static-pages-gallery.png)
+
+*   **Page Gallery**: Browse special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
+*   **Preview Mode**: View pages directly within the WebUI without leaving the dashboard.
+    ![Static Page Preview](docs/images/static-pages-preview.png)
+*   **Quick Actions**:
+    *   **Open**: Launch the page in a new browser tab.
+    *   **Copy Link**: Instantly copy the full URL to the clipboard.
