@@ -55,7 +55,18 @@ test.describe('MCP Servers Screenshots', () => {
                 name: 'Filesystem Server',
                 serverUrl: 'http://localhost:3000',
                 connected: true,
-                tools: [{ name: 'read_file' }, { name: 'write_file' }],
+                tools: [
+                    {
+                        name: 'read_file',
+                        description: 'Reads a file from the filesystem.',
+                        inputSchema: { type: 'object', properties: { path: { type: 'string' } } }
+                    },
+                    {
+                        name: 'write_file',
+                        description: 'Writes content to a file.',
+                        inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } } }
+                    }
+                ],
                 lastConnected: new Date().toISOString(),
                 description: 'Allows access to the local filesystem for reading and writing files.',
               },
@@ -63,7 +74,7 @@ test.describe('MCP Servers Screenshots', () => {
                 name: 'Search Server',
                 serverUrl: 'http://search-mcp:8080',
                 connected: true,
-                tools: [{ name: 'google_search' }],
+                tools: [{ name: 'google_search', description: 'Search Google.' }],
                 lastConnected: new Date().toISOString(),
                 description: 'Provides search capabilities via Google Custom Search API.',
               },
@@ -95,14 +106,30 @@ test.describe('MCP Servers Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
+    // Click "View Tools" on the first server (Filesystem Server)
+    // Assuming the first card is the Filesystem Server which has tools
+    await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
+
+    // Wait for modal to be visible and check for tool name
+    const toolsModal = page.locator('.modal-box').filter({ hasText: 'Tools provided by Filesystem Server' });
+    await expect(toolsModal).toBeVisible();
+    await expect(toolsModal.getByText('read_file')).toBeVisible();
+
+    // Take screenshot of the tools modal
+    await page.screenshot({ path: 'docs/screenshots/mcp-tools-modal.png' });
+
+    // Close the modal to proceed with other screenshots if needed
+    await toolsModal.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(toolsModal).toBeHidden();
+
     // Click "Add Server" button
-    // Note: use .first() to avoid conflict with the button inside the hidden modal
     await page.getByRole('button', { name: 'Add Server' }).first().click();
 
     // Wait for modal to be visible
-    await expect(page.locator('.modal-box')).toBeVisible();
+    const addModal = page.locator('.modal-box').filter({ hasText: 'Add MCP Server' });
+    await expect(addModal).toBeVisible();
 
-    // Take screenshot of the modal
+    // Take screenshot of the add modal
     await page.screenshot({ path: 'docs/screenshots/mcp-add-server-modal.png' });
   });
 });

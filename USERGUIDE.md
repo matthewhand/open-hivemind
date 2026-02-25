@@ -53,8 +53,12 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 *   **Server List**: View and manage connected MCP servers.
 *   **Add Server**: Connect to a new MCP server by URL.
 *   **Tool Discovery**: Automatically discover tools provided by connected servers.
+*   **View Tools**: Inspect available tools from connected servers.
+*   **Connection Status**: Monitor server health and retry failed connections.
 
 ![MCP Servers List](docs/screenshots/mcp-servers-list.png)
+
+![MCP Tools Modal](docs/screenshots/mcp-tools-modal.png)
 
 ![Add MCP Server](docs/screenshots/mcp-add-server-modal.png)
 
