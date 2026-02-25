@@ -33,8 +33,29 @@ const ActivityPage: React.FC = () => {
   // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
 
+  // Enhanced error handling with retry logic
+  const [retryCount, setRetryCount] = useState(0);
+  const [maxRetries, setMaxRetries] = useState(3);
+  const [retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
+
+  /**
+   * Fetch activity data with exponential backoff retry logic
+   * - Retries up to 3 times for network/timeout errors
+   * - Uses exponential backoff (1s, 2s, 4s delays)
+   * - Resets retry state on success
+   */
+
   const fetchActivity = useCallback(async () => {
     try {
+      // Exponential backoff retry logic
+      const shouldRetry = retryCount < maxRetries;
+      const currentDelay = shouldRetry ? retryDelay * Math.pow(2, retryCount) : 0;
+
+      if (currentDelay > 0) {
+        console.log(`Retrying fetchActivity in ${currentDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, currentDelay));
+      }
+
       // Don't set loading on auto-refresh to avoid flickering
       if (!autoRefresh) setLoading(true);
       setError(null);
@@ -51,14 +72,25 @@ const ActivityPage: React.FC = () => {
       if (result.filters) {
         setAvailableFilters(prev => prev || result.filters);
       }
-    } catch (err) {
+
+      // Reset retry state on success
+      setRetryCount(0);
+      setRetryDelay(1000);
+    } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
       console.error('Error fetching activity:', err);
+
+      // Implement retry logic for transient errors
+      if (shouldRetry && (err.message && (err.message.includes('network') || err.message.includes('timeout')))) {
+        setRetryCount(prev => prev + 1);
+        setRetryDelay(prev => prev * 2); // Exponential backoff
+        fetchActivity(); // Retry immediately
+      }
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, retryCount, maxRetries, retryDelay]);
 
   useEffect(() => {
     fetchActivity();
@@ -241,6 +273,39 @@ const ActivityPage: React.FC = () => {
           onClose={() => setError(null)}
         />
       )}
+
+      {/* Retry Button if there are errors */}
+      {error && retryCount > 0 && (
+        <div className="mt-2 text-center">
+          {retryCount < maxRetries ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={fetchActivity}
+              disabled={loading}
+            >
+              Retry ({retryCount}/{maxRetries})
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setRetryCount(0);
+                setRetryDelay(1000);
+                setError(null);
+                fetchActivity();
+              }}
+            >
+              Reset & Retry
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Header */}
+
+      {/* Header */}
 
       {/* Header */}
       <PageHeader

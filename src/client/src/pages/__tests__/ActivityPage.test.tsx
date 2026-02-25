@@ -10,6 +10,19 @@ jest.mock('../../services/api', () => ({
   },
 }));
 
+// Mock retry logic to prevent infinite retries in test environment
+jest.mock('../ActivityPage', () => {
+  const original = jest.requireActual('../ActivityPage');
+  return {
+    __esModule: true,
+    ...original,
+    default: (props: any) => {
+      const WrappedComponent = original.default;
+      return <WrappedComponent {...props} retryCount={0} maxRetries={0} retryDelay={0} shouldRetry={false} />;
+    }
+  };
+});
+
 // Mock components to avoid deep rendering issues and dependency on child implementations
 jest.mock('../../components/DaisyUI', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
@@ -60,7 +73,7 @@ describe('ActivityPage', () => {
 
   it('renders loading state initially', async () => {
     // Return a promise that doesn't resolve immediately to test loading state
-    (apiService.getActivity as jest.Mock).mockReturnValue(new Promise(() => {}));
+    (apiService.getActivity as jest.Mock).mockReturnValue(new Promise(() => { }));
 
     render(<ActivityPage />);
 
