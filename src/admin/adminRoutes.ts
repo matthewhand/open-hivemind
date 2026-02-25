@@ -7,6 +7,7 @@ import { IMessageProvider } from '../types/IProvider';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
+import { serializeSchema } from '../utils/schemaSerializer';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -136,6 +137,27 @@ adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
   }));
   res.json({ ok: true, providers });
 });
+
+adminRouter.get(
+  '/providers/:providerId/schema',
+  requireAdmin,
+  async (req: AuditedRequest, res: Response) => {
+    const { providerId } = req.params;
+    const provider = providerRegistry.get(providerId);
+
+    if (!provider) {
+      return res.status(404).json({ ok: false, error: `Provider '${providerId}' not found` });
+    }
+
+    try {
+      const schema = provider.getSchema();
+      const serialized = serializeSchema(schema);
+      res.json({ ok: true, schema: serialized });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  }
+);
 
 // Generic bot creation endpoint
 adminRouter.post(

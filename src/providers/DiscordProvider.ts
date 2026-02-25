@@ -1,5 +1,5 @@
 import { IMessageProvider } from '../types/IProvider';
-import { Discord } from '@hivemind/adapter-discord';
+import { Discord, DiscordService } from '@hivemind/adapter-discord';
 import discordConfig, { DiscordConfig } from '../config/discordConfig';
 import fs from 'fs';
 import path from 'path';
@@ -11,6 +11,17 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://discord.com/developers/applications';
   helpText = 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.';
+
+  private discordService: DiscordService;
+
+  constructor(discordService?: DiscordService) {
+    if (discordService) {
+      this.discordService = discordService;
+    } else {
+      // Access singleton via exported object to match legacy behavior
+      this.discordService = (Discord as any).DiscordService.getInstance();
+    }
+  }
 
   getSchema() {
     return discordConfig.getSchema();
@@ -28,7 +39,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     let discordBots: string[] = [];
     let discordInfo: any[] = [];
     try {
-      const ds = (Discord as any).DiscordService.getInstance();
+      const ds = this.discordService;
       const bots = (ds.getAllBots?.() || []) as IBotInfo[];
       discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
       discordInfo = bots.map((b) => ({
@@ -84,7 +95,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     }
 
     // Try runtime add
-    const ds = (Discord as any).DiscordService.getInstance();
+    const ds = this.discordService;
     const instanceCfg = { name: name || '', token, llm };
     if (ds.addBot) {
         await ds.addBot(instanceCfg);
@@ -103,7 +114,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     }
 
     let added = 0;
-    const ds = (Discord as any).DiscordService.getInstance();
+    const ds = this.discordService;
     const bots = (ds.getAllBots?.() || []) as IBotInfo[];
     const have = new Set(
         bots.map((b) => b?.config?.discord?.token || b?.config?.token)
