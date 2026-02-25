@@ -6,11 +6,12 @@ import {
   TrashIcon,
   PlayIcon,
   StopIcon,
-  ArrowPathIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Server, Search } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import SearchFilterBar from '../components/SearchFilterBar';
 
 interface MCPServer {
   id: string;
@@ -44,6 +45,10 @@ const MCPServersPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Search and Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/admin/mcp' },
@@ -99,6 +104,19 @@ const MCPServersPage: React.FC = () => {
   useEffect(() => {
     fetchServers();
   }, [fetchServers]);
+
+  // Filter servers based on search and status
+  const filteredServers = servers.filter((server) => {
+    const matchesSearch =
+      server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      server.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      server.url.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'All' || server.status.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -287,40 +305,39 @@ const MCPServersPage: React.FC = () => {
     );
   }
 
-  return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
+  const renderContent = () => {
+    if (servers.length === 0) {
+      return (
+        <EmptyState
+          icon={Server}
+          title="No servers configured"
+          description="Connect an MCP server to get started extending your bot's capabilities."
+          actionLabel="Add Server"
+          onAction={handleAddServer}
+          variant="noData"
+        />
+      );
+    }
 
-      <div className="flex justify-between items-center mt-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            MCP Servers
-          </h1>
-          <p className="text-base-content/70">
-            Manage Model Context Protocol servers and their tools
-          </p>
-        </div>
-        <button
-          className="btn btn-primary"
-          onClick={handleAddServer}
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Add Server
-        </button>
-      </div>
+    if (filteredServers.length === 0) {
+      return (
+        <EmptyState
+          icon={Search}
+          title="No results found"
+          description={`No servers match your search for "${searchTerm}".`}
+          actionLabel="Clear Search"
+          onAction={() => {
+            setSearchTerm('');
+            setStatusFilter('All');
+          }}
+          variant="noResults"
+        />
+      );
+    }
 
-      {alert && !dialogOpen && (
-        <div className="mb-6">
-          <Alert
-            status={alert.type === 'success' ? 'success' : 'error'}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
-      )}
-
+    return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {servers.map((server) => (
+        {filteredServers.map((server) => (
           <div key={server.id} className="card bg-base-100 shadow-xl h-full">
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">
@@ -387,6 +404,65 @@ const MCPServersPage: React.FC = () => {
           </div>
         ))}
       </div>
+    );
+  };
+
+  return (
+    <div className="p-6">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="flex justify-between items-center mt-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">
+            MCP Servers
+          </h1>
+          <p className="text-base-content/70">
+            Manage Model Context Protocol servers and their tools
+          </p>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={handleAddServer}
+        >
+          <PlusIcon className="w-5 h-5 mr-2" />
+          Add Server
+        </button>
+      </div>
+
+      {servers.length > 0 && (
+        <div className="mb-6">
+          <SearchFilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search servers..."
+            filters={[
+              {
+                key: 'status',
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: [
+                  { value: 'All', label: 'All Status' },
+                  { value: 'running', label: 'Running' },
+                  { value: 'stopped', label: 'Stopped' },
+                  { value: 'error', label: 'Error' },
+                ],
+              },
+            ]}
+          />
+        </div>
+      )}
+
+      {alert && !dialogOpen && (
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
+
+      {renderContent()}
 
       {/* Add/Edit Server Modal */}
       <Modal
