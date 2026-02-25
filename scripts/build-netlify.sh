@@ -15,10 +15,15 @@ npm run build:frontend
 # 3. Prepare Publish Directory
 echo "🔹 Preparing publish directory..."
 mkdir -p dist/client
-if [ -d "src/client/dist" ]; then
+# Check for new build location (dist/client/dist) or legacy (src/client/dist)
+if [ -d "dist/client/dist" ]; then
+  echo "✅ Found build in dist/client/dist, copying to publish root..."
+  cp -r dist/client/dist/* dist/client/
+elif [ -d "src/client/dist" ]; then
+  echo "⚠️  Found build in legacy location src/client/dist..."
   cp -r src/client/dist/* dist/client/
 else
-  echo "❌ Frontend build directory src/client/dist not found!"
+  echo "❌ Frontend build directory not found!"
   exit 1
 fi
 

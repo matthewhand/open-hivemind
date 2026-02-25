@@ -35,6 +35,8 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: '../../dist/client/dist',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks: {
