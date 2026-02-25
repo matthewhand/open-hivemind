@@ -113,8 +113,4 @@ jobs:
 
       - name: Run frontend unit tests
         run: |
-          cd src/client && NODE_ENV=test ../../node_modules/.bin/jest \
-            src/ \
-            --verbose \
-            --ci \
-            --maxWorkers=2
+          cd src/client && npm test

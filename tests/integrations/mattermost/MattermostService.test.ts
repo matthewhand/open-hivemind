@@ -1,4 +1,29 @@
+import 'reflect-metadata';
 import { MattermostService } from '@src/integrations/mattermost/MattermostService';
+import { container } from 'tsyringe';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
+
+// Mock StartupGreetingService
+class MockStartupGreetingService {
+  emit() {}
+}
+container.register(StartupGreetingService, { useClass: MockStartupGreetingService });
+
+jest.mock('@src/integrations/mattermost/mattermostClient', () => {
+  return class MockMattermostClient {
+    constructor() {}
+    connect = jest.fn().mockResolvedValue(undefined);
+    postMessage = jest.fn().mockResolvedValue({ id: 'post123' });
+    getChannelPosts = jest.fn().mockResolvedValue([]);
+    getUser = jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' });
+    isConnected = jest.fn().mockReturnValue(true);
+    disconnect = jest.fn();
+    getCurrentUserId = jest.fn().mockReturnValue('user123');
+    getCurrentUsername = jest.fn().mockReturnValue('testuser');
+    getChannelInfo = jest.fn().mockResolvedValue(null);
+    sendTyping = jest.fn().mockResolvedValue(undefined);
+  };
+});
 
 jest.mock('@hivemind/adapter-mattermost', () => {
   const mockClient = {
@@ -105,7 +130,7 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     public async joinChannel(): Promise<void> {}
 
     public getClientId(): string {
-      return 'test-bot';
+      return 'user123';
     }
 
     public getDefaultChannel(): string {
@@ -206,7 +231,7 @@ describe('MattermostService', () => {
 
   it('handles service configuration and management', async () => {
     const clientId = service.getClientId();
-    expect(clientId).toBe('test-bot');
+    expect(clientId).toBe('user123');
 
     const channel = service.getDefaultChannel();
     expect(channel).toBe('general');

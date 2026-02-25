@@ -1,7 +1,6 @@
 export * from './InputSanitizer';
 export * from './PerformanceProfiler';
 export * from './TimerRegistry';
-export * from './alias';
 export * from './common';
 export * from './envUtils';
 export * from './errorLogger';
