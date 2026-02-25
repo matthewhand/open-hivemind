@@ -1,44 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
-import { 
-  Alert, 
-  Badge, 
-  Button, 
-  Card, 
-  DataTable, 
-  StatsCards, 
-  Timeline, 
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  StatsCards,
+  Timeline,
   Toggle,
   PageHeader,
   LoadingSpinner,
   EmptyState,
 } from '../components/DaisyUI';
-
-interface ActivityEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider: string;
-  status: 'success' | 'error' | 'timeout' | 'pending';
-  duration?: number;
-  inputLength?: number;
-  outputLength?: number;
-}
-
-interface ActivityResponse {
-  events: ActivityEvent[];
-  filters: {
-    agents: string[];
-    messageProviders: string[];
-    llmProviders: string[];
-  };
-  timeline: any[];
-  agentMetrics: any[];
-}
-
-const API_BASE = '/api';
+import SearchFilterBar from '../components/SearchFilterBar';
+import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -47,38 +24,105 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  const fetchActivity = useCallback(async () => {
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBot, setSelectedBot] = useState<string>('all');
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
+
+  // Cache initial filters for dropdowns
+  const [availableFilters, setAvailableFilters] = useState<{
+    agents: string[];
+    messageProviders: string[];
+    llmProviders: string[];
+  } | null>(null);
+
+  const fetchActivity = useCallback(async (isAutoRefresh = false) => {
     try {
       setError(null);
-      const response = await fetch(`${API_BASE}/dashboard/api/activity`);
+      // Only set loading on initial fetch or manual refresh, not auto-refresh to avoid flickering
+      if (!isAutoRefresh) setLoading(true);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch activity: ${response.statusText}`);
-      }
+      const response = await apiService.getActivity({
+        bot: selectedBot !== 'all' ? selectedBot : undefined,
+        messageProvider: selectedProvider !== 'all' ? selectedProvider : undefined,
+        llmProvider: selectedLlmProvider !== 'all' ? selectedLlmProvider : undefined
+      });
 
-      const result = await response.json();
-      setData(result);
+      setData(response);
+
+      // Initialize available filters once
+      setAvailableFilters(prev => {
+        if (!prev && response.filters) return response.filters;
+        return prev;
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
       console.error('Error fetching activity:', err);
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) setLoading(false);
     }
-  }, []);
+  }, [selectedBot, selectedProvider, selectedLlmProvider]);
 
   useEffect(() => {
     fetchActivity();
+  }, [fetchActivity]);
 
+  useEffect(() => {
     if (autoRefresh) {
-      const interval = setInterval(fetchActivity, 5000);
+      const interval = setInterval(() => fetchActivity(true), 5000);
       return () => clearInterval(interval);
     }
-  }, [fetchActivity, autoRefresh]);
+  }, [autoRefresh, fetchActivity]);
+
+  const handleExport = () => {
+    if (!data?.events || data.events.length === 0) return;
+
+    const headers = ['Timestamp', 'Bot', 'Provider', 'LLM', 'Status', 'Duration (ms)', 'Message Type'];
+    const rows = data.events.map(e => [
+      e.timestamp,
+      e.botName,
+      e.provider,
+      e.llmProvider,
+      e.status,
+      e.processingTime || '',
+      e.messageType
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `activity_export_${new Date().toISOString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const events = data?.events || [];
 
-  const timelineEvents = events.map(event => ({
+  // Client-side search filtering
+  const filteredEvents = useMemo(() => {
+    if (!searchQuery) return events;
+    const lowerQuery = searchQuery.toLowerCase();
+    return events.filter(e =>
+      e.botName.toLowerCase().includes(lowerQuery) ||
+      e.provider.toLowerCase().includes(lowerQuery) ||
+      e.llmProvider.toLowerCase().includes(lowerQuery) ||
+      (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
+    );
+  }, [events, searchQuery]);
+
+  const timelineEvents = filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -95,7 +139,7 @@ const ActivityPage: React.FC = () => {
       timeout: 'warning',
       pending: 'primary',
     };
-    return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
+    return <Badge variant={variants[status] || 'primary' as any} size="sm">{status}</Badge>;
   };
 
   const columns = [
@@ -136,7 +180,7 @@ const ActivityPage: React.FC = () => {
       render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
-      key: 'duration' as keyof ActivityEvent,
+      key: 'processingTime' as keyof ActivityEvent,
       title: 'Duration',
       sortable: true,
       width: '100px',
@@ -148,21 +192,21 @@ const ActivityPage: React.FC = () => {
     {
       id: 'total',
       title: 'Total Events',
-      value: events.length,
+      value: filteredEvents.length,
       icon: '📊',
       color: 'primary' as const,
     },
     {
       id: 'success',
       title: 'Successful',
-      value: events.filter(e => e.status === 'success').length,
+      value: filteredEvents.filter(e => e.status === 'success').length,
       icon: '✅',
       color: 'success' as const,
     },
     {
       id: 'errors',
       title: 'Errors',
-      value: events.filter(e => e.status === 'error' || e.status === 'timeout').length,
+      value: filteredEvents.filter(e => e.status === 'error' || e.status === 'timeout').length,
       icon: '❌',
       color: 'error' as const,
     },
@@ -175,12 +219,18 @@ const ActivityPage: React.FC = () => {
     },
   ];
 
+  // Helper to create options for Select
+  const createOptions = (items: string[] = [], defaultLabel: string) => [
+    { value: 'all', label: defaultLabel },
+    ...items.map(item => ({ value: item, label: item }))
+  ];
+
   return (
     <div className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <Alert 
-          status="error" 
+        <Alert
+          status="error"
           message={error}
           onClose={() => setError(null)}
         />
@@ -195,16 +245,16 @@ const ActivityPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {/* View Toggle */}
             <div className="join">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'table' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('table')}
               >
                 <LayoutList className="w-4 h-4" /> Table
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('timeline')}
@@ -212,25 +262,25 @@ const ActivityPage: React.FC = () => {
                 <GitBranch className="w-4 h-4" /> Timeline
               </Button>
             </div>
-            
+
             {/* Auto Refresh Toggle */}
-            <Toggle 
+            <Toggle
               label="Auto"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
               size="sm"
             />
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={fetchActivity}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => fetchActivity()}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            
-            <Button variant="ghost" size="sm">
+
+            <Button variant="ghost" size="sm" onClick={handleExport} disabled={!data?.events.length}>
               <Download className="w-4 h-4" /> Export
             </Button>
           </div>
@@ -238,29 +288,71 @@ const ActivityPage: React.FC = () => {
       />
 
       {/* Stats Cards */}
-      <StatsCards stats={stats} isLoading={loading} />
+      <StatsCards stats={stats} isLoading={loading && !data} />
+
+      {/* Filters */}
+      <SearchFilterBar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search events..."
+        filters={[
+          {
+            key: 'bot',
+            value: selectedBot,
+            onChange: setSelectedBot,
+            options: createOptions(availableFilters?.agents, 'All Bots'),
+            className: "w-full sm:w-40"
+          },
+          {
+            key: 'provider',
+            value: selectedProvider,
+            onChange: setSelectedProvider,
+            options: createOptions(availableFilters?.messageProviders, 'All Providers'),
+            className: "w-full sm:w-40"
+          },
+          {
+            key: 'llm',
+            value: selectedLlmProvider,
+            onChange: setSelectedLlmProvider,
+            options: createOptions(availableFilters?.llmProviders, 'All LLMs'),
+            className: "w-full sm:w-40"
+          }
+        ]}
+        onClear={() => {
+            setSelectedBot('all');
+            setSelectedProvider('all');
+            setSelectedLlmProvider('all');
+        }}
+      />
 
       {/* Content */}
-      {loading && events.length === 0 ? (
+      {loading && !data ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="No activity yet"
-          description="Events will appear here as your bots process messages"
+          title="No activity found"
+          description={data?.events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your filters"}
+          actionLabel={data?.events.length !== 0 ? "Clear Filters" : undefined}
+          onAction={data?.events.length !== 0 ? () => {
+             setSearchQuery('');
+             setSelectedBot('all');
+             setSelectedProvider('all');
+             setSelectedLlmProvider('all');
+          } : undefined}
         />
       ) : (
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={events}
+              data={filteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={true}
-              exportable={true}
+              searchable={false} // We handle search externally
+              exportable={false} // We handle export externally
             />
           ) : (
             <div className="p-4">

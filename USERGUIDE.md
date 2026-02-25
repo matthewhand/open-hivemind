@@ -71,6 +71,14 @@ Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.
 
+### [Activity Feed](/admin/activity)
+Real-time audit log of all bot interactions.
+*   **Event Log**: Detailed list of incoming/outgoing messages, errors, and system events.
+*   **Filtering**: Drill down by Bot, Provider, or LLM to isolate issues.
+*   **Export**: Export the current view to CSV for reporting.
+
+![Activity Feed](docs/screenshots/activity-page.png)
+
 ### [Monitoring](/admin/monitoring)
 Deep dive into system performance.
 *   **Metrics**: detailed graphs of API usage, response times, and error rates.
