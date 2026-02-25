@@ -162,6 +162,15 @@ A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
 
+### [System Management](/admin/system-management)
+Manage system configuration, alerts, and backups.
+![System Management Page](docs/screenshots/system-management.png)
+
+*   **Alert Management**: View, acknowledge, and resolve system alerts.
+*   **System Configuration**: Configure global settings like log levels, connection limits, and backup intervals.
+*   **Backup Management**: Create manual backups, restore from previous backups, and manage storage.
+*   **Performance Tuning**: Monitor API endpoint health and clear system caches.
+
 ### [Export](/admin/export)
 Download API specifications and system documentation.
 *   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.

@@ -3,8 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
-import StatusCard from '../components/Monitoring/StatusCard';
 import Modal from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import {
+  Settings,
+  AlertTriangle,
+  Database,
+  Activity,
+  Save,
+  RefreshCw,
+  Trash2,
+  Shield,
+  Cpu,
+  HardDrive,
+  Server,
+  AlertCircle,
+  Info,
+  CheckCircle,
+  Zap,
+  MemoryStick,
+  Clock,
+  LayoutList
+} from 'lucide-react';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -266,105 +287,94 @@ const SystemManagement: React.FC = () => {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
 
-  const systemMetricsCards = [
+  const stats = [
     {
-      title: 'Alert Management',
-      subtitle: 'Active system alerts',
-      status: alerts.some(a => a.level === 'error') ? 'error' :
-        alerts.some(a => a.level === 'warning') ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
-        { label: 'Warnings', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' },
-        { label: 'Info', value: alerts.filter(a => a.level === 'info').length, icon: 'ℹ️' },
-        { label: 'Total', value: alerts.length, icon: '✅' },
-      ],
+      id: 'active-alerts',
+      title: 'Active Alerts',
+      value: alerts.length,
+      icon: <AlertCircle className="w-8 h-8" />,
+      description: `${alerts.filter(a => a.level === 'critical').length} Critical`,
+      color: alerts.some(a => a.level === 'critical') ? 'error' as const :
+             alerts.some(a => a.level === 'warning') ? 'warning' as const : 'success' as const
     },
     {
-      title: 'Backup Status',
-      subtitle: 'System recovery',
-      status: backups.length > 0 ? 'healthy' : 'warning',
-      metrics: [
-        { label: 'Total Backups', value: backups.length, icon: '💾' },
-        { label: 'Latest', value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None', icon: '📅' },
-        { label: 'Auto-Backup', value: systemConfig.enableAutoBackup ? 'On' : 'Off', icon: systemConfig.enableAutoBackup ? '✅' : '➖' },
-      ],
+      id: 'latest-backup',
+      title: 'Latest Backup',
+      value: backups.length > 0 ? new Date(backups[0].createdAt).toLocaleDateString() : 'None',
+      icon: <Database className="w-8 h-8" />,
+      description: backups.length > 0 ? backups[0].size : 'No backups',
+      color: 'primary' as const
     },
     {
-      title: 'System Resources',
-      subtitle: 'Current utilization',
-      status: currentMetric.cpuUsage > 80 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'CPU Usage', value: currentMetric.cpuUsage, unit: '%' },
-        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
-        { label: 'Connections', value: currentMetric.activeConnections, icon: '🔗' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-      ],
+      id: 'cpu-usage',
+      title: 'CPU Load',
+      value: `${currentMetric.cpuUsage}%`,
+      icon: <Cpu className="w-8 h-8" />,
+      description: 'System Load',
+      color: currentMetric.cpuUsage > 80 ? 'warning' as const : 'info' as const
     },
+    {
+      id: 'memory-usage',
+      title: 'Memory Usage',
+      value: `${currentMetric.memoryUsage}%`,
+      icon: <Activity className="w-8 h-8" />, // Using Activity as memory icon or Zap
+      description: 'System Memory',
+      color: currentMetric.memoryUsage > 85 ? 'warning' as const : 'secondary' as const
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
+    <div className="flex-1 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">System Management</h1>
-            <p className="text-lg text-neutral-content/70">
-              Manage system configuration, alerts, and backups
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <button
-              className="btn btn-success"
-              onClick={openBackupModal}
-              disabled={isCreatingBackup}
-            >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="System Management"
+        description="Manage system configuration, alerts, and backups"
+        icon={Settings}
+        actions={
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={openBackupModal}
+            disabled={isCreatingBackup}
+          >
+            {isCreatingBackup ? <span className="loading loading-spinner loading-xs"></span> : <Save className="w-4 h-4 mr-2" />}
+            Create Backup
+          </button>
+        }
+      />
 
       {/* System Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {systemMetricsCards.map((card, index) => (
-          <StatusCard
-            key={index}
-            title={card.title}
-            subtitle={card.subtitle}
-            status={card.status as any}
-            metrics={card.metrics}
-            compact={true}
-          />
-        ))}
-      </div>
+      <StatsCards stats={stats} />
 
       {/* Management Tabs */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="tabs tabs-boxed mb-6">
             <button
-              className={`tab ${activeTab === 'alerts' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${activeTab === 'alerts' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('alerts')}
             >
+              <AlertTriangle className="w-4 h-4" />
               Alert Management
             </button>
             <button
-              className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${activeTab === 'config' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('config')}
             >
+              <Settings className="w-4 h-4" />
               System Configuration
             </button>
             <button
-              className={`tab ${activeTab === 'backups' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${activeTab === 'backups' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('backups')}
             >
+              <Database className="w-4 h-4" />
               Backup Management
             </button>
             <button
-              className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${activeTab === 'performance' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('performance')}
             >
+              <Activity className="w-4 h-4" />
               Performance Tuning
             </button>
           </div>
