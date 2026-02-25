@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { CommandHandler } from './CommandHandler';
 
 export class ServerCommandHandler implements CommandHandler {

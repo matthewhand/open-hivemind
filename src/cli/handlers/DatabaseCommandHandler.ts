@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import inquirer from 'inquirer';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { CommandHandler } from './CommandHandler';
 

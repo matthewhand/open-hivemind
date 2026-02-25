@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
+import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import chalk from 'chalk';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { CommandHandler } from './CommandHandler';
 

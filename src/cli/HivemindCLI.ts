@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { BotCommandHandler } from './handlers/BotCommandHandler';
+import { ConfigCommandHandler } from './handlers/ConfigCommandHandler';
 import { DatabaseCommandHandler } from './handlers/DatabaseCommandHandler';
 import { ServerCommandHandler } from './handlers/ServerCommandHandler';
-import { ConfigCommandHandler } from './handlers/ConfigCommandHandler';
 
 export class HivemindCLI {
   private program: Command;
