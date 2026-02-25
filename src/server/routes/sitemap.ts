@@ -476,14 +476,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
     
     ${generateSectionHTML(
       'Admin Dashboard',
-      routes.filter(
-        (r) =>
-          r.url.startsWith('/admin') &&
-          !r.url.startsWith('/admin/ai') &&
-          !r.url.startsWith('/admin/integrations') &&
-          !r.url.startsWith('/admin/mcp') &&
-          !r.url.startsWith('/admin/monitoring')
-      ),
+      routes.filter((r) => r.url.startsWith('/admin') && !r.url.startsWith('/admin/ai') && !r.url.startsWith('/admin/integrations') && !r.url.startsWith('/admin/mcp') && !r.url.startsWith('/admin/monitoring')),
       baseUrl
     )}
     ${generateSectionHTML(
@@ -493,20 +486,12 @@ router.get('/sitemap', (req: Request, res: Response) => {
     )}
     ${generateSectionHTML(
       'Integrations & MCP',
-      routes.filter(
-        (r) => r.url.startsWith('/admin/integrations') || r.url.startsWith('/admin/mcp')
-      ),
+      routes.filter((r) => r.url.startsWith('/admin/integrations') || r.url.startsWith('/admin/mcp')),
       baseUrl
     )}
     ${generateSectionHTML(
       'Monitoring & System',
-      routes.filter(
-        (r) =>
-          r.url.startsWith('/admin/monitoring') ||
-          r.url === '/admin/activity' ||
-          r.url === '/admin/analytics' ||
-          r.url === '/admin/system-management'
-      ),
+      routes.filter((r) => r.url.startsWith('/admin/monitoring') || r.url === '/admin/activity' || r.url === '/admin/analytics' || r.url === '/admin/system-management'),
       baseUrl
     )}
     ${generateSectionHTML(
@@ -541,8 +526,8 @@ function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: strin
         <h2>${title}</h2>
         <div class="route-grid">
             ${routes
-              .map(
-                (route) => `
+      .map(
+        (route) => `
                 <div class="route-card">
                     <div class="route-url">
                         <a href="${baseUrl}${route.url}" target="_blank">${route.url}</a>
@@ -554,8 +539,8 @@ function generateSectionHTML(title: string, routes: SitemapUrl[], baseUrl: strin
                     </div>
                 </div>
             `
-              )
-              .join('')}
+      )
+      .join('')}
         </div>
     </div>`;
 }

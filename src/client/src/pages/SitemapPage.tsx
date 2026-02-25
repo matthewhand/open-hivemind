@@ -3,9 +3,6 @@ import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -31,8 +28,6 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -87,12 +82,7 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const filteredUrls = sitemapData?.urls.filter(url =>
-    url.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    url.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
-  const groupedUrls = filteredUrls.reduce((acc, url) => {
+  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -164,207 +154,109 @@ const SitemapPage: React.FC = () => {
       </div>
 
       {/* Statistics and Controls */}
-      <div className="flex flex-col gap-4 mb-8">
-        {/* Top Row: Stats and Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="stats shadow">
-            <div className="stat">
-              <div className="stat-title">Total Pages</div>
-              <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
-            </div>
-          </div>
-
-          <div className="stats shadow">
-            <div className="stat">
-              <div className="stat-title">Generated</div>
-              <div className="stat-value text-sm">
-                {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-              </div>
-              <div className="stat-desc">
-                {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-              </div>
-            </div>
-          </div>
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text">Access Level</span>
-            </label>
-            <select
-              className="select select-bordered w-full"
-              value={accessFilter}
-              onChange={(e) => setAccessFilter(e.target.value)}
-            >
-              <option value="all">All Pages</option>
-              <option value="public">Public Only</option>
-              <option value="authenticated">Authenticated</option>
-              <option value="owner">Owner Only</option>
-            </select>
-          </div>
-
-          <div className="flex gap-2 items-end">
-            <button
-              className="btn btn-outline flex-1"
-              onClick={handleDownloadXml}
-            >
-              <DownloadIcon className="w-5 h-5 mr-2" />
-              XML
-            </button>
-            <button
-              className="btn btn-outline"
-              onClick={fetchSitemap}
-              title="Refresh"
-            >
-              <RefreshIcon className="w-5 h-5" />
-            </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Total Pages</div>
+            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
           </div>
         </div>
 
-        {/* Bottom Row: Search and View Toggle */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-base-200 p-4 rounded-box">
-           <div className="relative w-full sm:max-w-md">
-            <input
-              type="text"
-              placeholder="Search pages..."
-              className="input input-bordered w-full pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
-           </div>
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Generated</div>
+            <div className="stat-value text-sm">
+              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
+            </div>
+            <div className="stat-desc">
+              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
+            </div>
+          </div>
+        </div>
 
-           <div className="join">
-             <button
-               className={`join-item btn ${viewMode === 'grid' ? 'btn-active' : ''}`}
-               onClick={() => setViewMode('grid')}
-               title="Grid View"
-             >
-               <Squares2X2Icon className="w-5 h-5" />
-             </button>
-             <button
-               className={`join-item btn ${viewMode === 'list' ? 'btn-active' : ''}`}
-               onClick={() => setViewMode('list')}
-               title="List View"
-             >
-               <ListBulletIcon className="w-5 h-5" />
-             </button>
-           </div>
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">Access Level</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={accessFilter}
+            onChange={(e) => setAccessFilter(e.target.value)}
+          >
+            <option value="all">All Pages</option>
+            <option value="public">Public Only</option>
+            <option value="authenticated">Authenticated</option>
+            <option value="owner">Owner Only</option>
+          </select>
+        </div>
+
+        <div className="flex gap-2 items-end">
+          <button
+            className="btn btn-outline flex-1"
+            onClick={handleDownloadXml}
+          >
+            <DownloadIcon className="w-5 h-5 mr-2" />
+            XML
+          </button>
+          <button
+            className="btn btn-outline"
+            onClick={fetchSitemap}
+            title="Refresh"
+          >
+            <RefreshIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>URL</th>
-                <th>Description</th>
-                <th>Access</th>
-                <th>Priority</th>
-                <th>Last Modified</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUrls.map((url) => (
-                <tr key={url.url} className="hover">
-                  <td>
-                    <div className="font-mono font-bold text-sm">{url.url}</div>
-                  </td>
-                  <td>
-                    <div className="text-sm opacity-70">{url.description}</div>
-                  </td>
-                  <td>
-                    <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                      {url.access}
-                    </div>
-                  </td>
-                  <td>
-                    <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                      {url.priority}
-                    </div>
-                  </td>
-                  <td className="text-sm">
-                    {new Date(url.lastmod).toLocaleDateString()}
-                  </td>
-                  <td>
+      {/* Grouped URLs */}
+      {Object.entries(groupedUrls).map(([category, urls]) => (
+        <div key={category} className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            {category}
+            <div className="badge badge-neutral">{urls.length}</div>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {urls.map((url) => (
+              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-mono text-sm break-all font-bold">
+                      {url.url}
+                    </h3>
                     <button
-                      className="btn btn-ghost btn-xs"
+                      className="btn btn-ghost btn-xs btn-circle"
                       onClick={() => handleOpenUrl(url.fullUrl)}
-                      title="Open Link"
                     >
                       <LaunchIcon className="w-4 h-4" />
                     </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredUrls.length === 0 && (
-                 <tr>
-                   <td colSpan={6} className="text-center py-8 text-base-content/50">
-                     No pages found matching "{searchTerm}"
-                   </td>
-                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        /* Grouped URLs (Grid View) */
-        Object.entries(groupedUrls).length > 0 ? (
-          Object.entries(groupedUrls).map(([category, urls]) => (
-            <div key={category} className="mb-8">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                {category}
-                <div className="badge badge-neutral">{urls.length}</div>
-              </h2>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {urls.map((url) => (
-                  <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
-                    <div className="card-body p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-mono text-sm break-all font-bold">
-                          {url.url}
-                        </h3>
-                        <button
-                          className="btn btn-ghost btn-xs btn-circle"
-                          onClick={() => handleOpenUrl(url.fullUrl)}
-                        >
-                          <LaunchIcon className="w-4 h-4" />
-                        </button>
-                      </div>
+                  <p className="text-xs text-base-content/70 mb-3">
+                    {url.description}
+                  </p>
 
-                      <p className="text-xs text-base-content/70 mb-3">
-                        {url.description}
-                      </p>
-
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                          {url.access}
-                        </div>
-                        <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                          Priority: {url.priority}
-                        </div>
-                        <div className="badge badge-sm badge-outline">
-                          {url.changefreq}
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-base-content/50 mt-auto">
-                        Last modified: {new Date(url.lastmod).toLocaleDateString()}
-                      </div>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                      {url.access}
+                    </div>
+                    <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                      Priority: {url.priority}
+                    </div>
+                    <div className="badge badge-sm badge-outline">
+                      {url.changefreq}
                     </div>
                   </div>
-                ))}
+
+                  <div className="text-xs text-base-content/50 mt-auto">
+                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-           <div className="text-center py-12 text-base-content/50">
-             No pages found matching "{searchTerm}"
-           </div>
-        )
-      )}
+            ))}
+          </div>
+        </div>
+      ))}
 
       {/* Sitemap Links */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
