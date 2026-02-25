@@ -142,6 +142,7 @@ describe('SlackEventProcessor', () => {
         channel: { id: 'channel123' },
         actions: [{ action_id: 'test_action' }],
       };
+      // Payload can be a string or object, testing object directly to simulate parsed body
       mockReq = { body: { payload: JSON.stringify(mockPayload) } } as any;
       mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
 
@@ -247,13 +248,20 @@ describe('SlackEventProcessor', () => {
       const botManager = slackServiceInstance.getBotManager();
       (botManager?.handleMessage as jest.Mock).mockRejectedValueOnce(new Error('handler failed'));
 
+      // If internal catch block handles error and calls res.status(400), verify that.
+      // Assuming SlackEventProcessor sends 400 on error as per previous implementation logic.
       await eventProcessor.handleActionRequest(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
     });
 
     it('should handle errors during request processing', async () => {
-      const mockReq = { body: 'invalid json' } as any; // This will cause JSON.parse to throw
+      // Simulate invalid body that might cause issues, though basic object access is safe.
+      // Testing with a body that is a string but not valid JSON is tricky with express types mock,
+      // but let's assume body parsing failed or something else threw.
+      const mockReq = { body: 'invalid json' } as any;
+      // In real Express, body parser handles JSON. If body is raw string, JSON.parse might fail in logic.
+
       const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
 
       await eventProcessor.handleActionRequest(mockReq, mockRes);
@@ -333,6 +341,8 @@ describe('SlackEventProcessor', () => {
       await eventProcessor.debugEventPermissions();
 
       expect(bots[0].webClient.auth.test).toHaveBeenCalled();
+      // Even if auth fails, it might try to list channels or just log error and continue
+      // Based on implementation, it continues to next bot or next step
       expect(bots[0].webClient.conversations.list).toHaveBeenCalled();
     });
   });

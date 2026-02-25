@@ -25,6 +25,7 @@ const unitIntegrationProject = {
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
     '^@integrations/mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',

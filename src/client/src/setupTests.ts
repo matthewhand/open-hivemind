@@ -11,11 +11,36 @@ configure({ testIdAttribute: 'data-testid' });
 global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
 
-// Mock HTMLDialogElement methods
+// Polyfill HTMLDialogElement for JSDOM environments that don't support it
+if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
+  class HTMLDialogElement extends HTMLElement {
+    open = false;
+    returnValue = '';
+
+    show() {
+      this.open = true;
+      this.setAttribute('open', '');
+    }
+
+    showModal() {
+      this.open = true;
+      this.setAttribute('open', '');
+    }
+
+    close() {
+      this.open = false;
+      this.removeAttribute('open');
+      this.dispatchEvent(new Event('close'));
+    }
+  }
+  (window as any).HTMLDialogElement = HTMLDialogElement;
+}
+
+// Mock HTMLDialogElement methods if prototype exists
 if (typeof HTMLDialogElement !== 'undefined') {
-  HTMLDialogElement.prototype.show = jest.fn();
-  HTMLDialogElement.prototype.showModal = jest.fn();
-  HTMLDialogElement.prototype.close = jest.fn();
+  if (!HTMLDialogElement.prototype.show) HTMLDialogElement.prototype.show = jest.fn();
+  if (!HTMLDialogElement.prototype.showModal) HTMLDialogElement.prototype.showModal = jest.fn();
+  if (!HTMLDialogElement.prototype.close) HTMLDialogElement.prototype.close = jest.fn();
 }
 
 // Mock IntersectionObserver
