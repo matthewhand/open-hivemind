@@ -137,15 +137,6 @@ Download API specifications and system documentation.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
-
-![Sitemap Grid View](./docs/images/sitemap-grid-view.png)
-
-*   **View Modes**: Switch between Grid View (grouped by category) and Table View (detailed list).
-![Sitemap Table View](./docs/images/sitemap-table-view.png)
-
-*   **Search**: Quickly find specific pages by URL or description.
-![Sitemap Search](./docs/images/sitemap-search-result.png)
-
 *   **Page Hierarchy**: See all available pages and their relationships.
 *   **Access Control**: Filter pages by public, authenticated, or owner access levels.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.

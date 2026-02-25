@@ -3,9 +3,6 @@ import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -31,8 +28,6 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -87,16 +82,7 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const filteredUrls = sitemapData?.urls.filter(url => {
-    if (!searchTerm) return true;
-    const lowerTerm = searchTerm.toLowerCase();
-    return (
-      url.url.toLowerCase().includes(lowerTerm) ||
-      url.description.toLowerCase().includes(lowerTerm)
-    );
-  }) || [];
-
-  const groupedUrls = filteredUrls.reduce((acc, url) => {
+  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -129,113 +115,6 @@ const SitemapPage: React.FC = () => {
     acc[category].push(url);
     return acc;
   }, {} as Record<string, SitemapUrl[]>) || {};
-
-  const renderGridView = () => (
-    <>
-      {Object.entries(groupedUrls).map(([category, urls]) => (
-        <div key={category} className="mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            {category}
-            <div className="badge badge-neutral">{urls.length}</div>
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {urls.map((url) => (
-              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-mono text-sm break-all font-bold">
-                      {url.url}
-                    </h3>
-                    <button
-                      className="btn btn-ghost btn-xs btn-circle"
-                      onClick={() => handleOpenUrl(url.fullUrl)}
-                    >
-                      <LaunchIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <p className="text-xs text-base-content/70 mb-3">
-                    {url.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                      {url.access}
-                    </div>
-                    <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                      Priority: {url.priority}
-                    </div>
-                    <div className="badge badge-sm badge-outline">
-                      {url.changefreq}
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-base-content/50 mt-auto">
-                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-
-  const renderTableView = () => (
-    <div className="overflow-x-auto bg-base-100 rounded-lg shadow border border-base-200">
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th>URL</th>
-            <th>Description</th>
-            <th>Access</th>
-            <th>Priority</th>
-            <th>Last Mod</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUrls.map((url) => (
-            <tr key={url.url} className="hover">
-              <td className="font-mono text-sm font-bold">{url.url}</td>
-              <td className="text-sm text-base-content/70 max-w-xs truncate" title={url.description}>
-                {url.description}
-              </td>
-              <td>
-                <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                  {url.access}
-                </div>
-              </td>
-              <td>
-                <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                  {url.priority}
-                </div>
-              </td>
-              <td className="text-sm">
-                {new Date(url.lastmod).toLocaleDateString()}
-              </td>
-              <td>
-                <button
-                  className="btn btn-ghost btn-xs btn-circle"
-                  onClick={() => handleOpenUrl(url.fullUrl)}
-                  title="Open URL"
-                >
-                  <LaunchIcon className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {filteredUrls.length === 0 && (
-        <div className="p-8 text-center text-base-content/50">
-          No URLs found matching your search.
-        </div>
-      )}
-    </div>
-  );
 
   if (loading) {
     return (
@@ -329,41 +208,55 @@ const SitemapPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search and View Toggle */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <div className="relative w-full sm:max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon className="h-5 w-5 text-base-content/50" />
+      {/* Grouped URLs */}
+      {Object.entries(groupedUrls).map(([category, urls]) => (
+        <div key={category} className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            {category}
+            <div className="badge badge-neutral">{urls.length}</div>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {urls.map((url) => (
+              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-mono text-sm break-all font-bold">
+                      {url.url}
+                    </h3>
+                    <button
+                      className="btn btn-ghost btn-xs btn-circle"
+                      onClick={() => handleOpenUrl(url.fullUrl)}
+                    >
+                      <LaunchIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-base-content/70 mb-3">
+                    {url.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                      {url.access}
+                    </div>
+                    <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                      Priority: {url.priority}
+                    </div>
+                    <div className="badge badge-sm badge-outline">
+                      {url.changefreq}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-base-content/50 mt-auto">
+                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <input
-            type="text"
-            placeholder="Search URLs or descriptions..."
-            className="input input-bordered w-full pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
-
-        <div className="join">
-          <button
-            className={`btn join-item ${viewMode === 'grid' ? 'btn-active' : ''}`}
-            onClick={() => setViewMode('grid')}
-            title="Grid View"
-          >
-            <Squares2X2Icon className="w-5 h-5" />
-          </button>
-          <button
-            className={`btn join-item ${viewMode === 'list' ? 'btn-active' : ''}`}
-            onClick={() => setViewMode('list')}
-            title="List View"
-          >
-            <ListBulletIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Content View */}
-      {viewMode === 'grid' ? renderGridView() : renderTableView()}
+      ))}
 
       {/* Sitemap Links */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
