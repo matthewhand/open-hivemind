@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
-import { 
-  Alert, 
-  Badge, 
-  Button, 
-  Card, 
-  DataTable, 
-  StatsCards, 
-  Timeline, 
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  StatsCards,
+  Timeline,
   Toggle,
   PageHeader,
   LoadingSpinner,
@@ -24,16 +24,21 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  // Filters
-  const [selectedBot, setSelectedBot] = useState('all');
-  const [selectedProvider, setSelectedProvider] = useState('all');
-  const [selectedLlmProvider, setSelectedLlmProvider] = useState('all');
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBot, setSelectedBot] = useState<string>('all');
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
+
+  // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
 
   const fetchActivity = useCallback(async () => {
     try {
+      // Don't set loading on auto-refresh to avoid flickering
+      if (!autoRefresh) setLoading(true);
       setError(null);
-      // Construct params
+
       const params: any = {};
       if (selectedBot !== 'all') params.bot = selectedBot;
       if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
@@ -42,7 +47,7 @@ const ActivityPage: React.FC = () => {
       const result = await apiService.getActivity(params);
       setData(result);
 
-      // Store initial filters if not set
+      // Store initial filters
       if (!availableFilters && result.filters) {
         setAvailableFilters(result.filters);
       }
@@ -53,16 +58,18 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [availableFilters, selectedBot, selectedProvider, selectedLlmProvider]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, availableFilters]);
 
   useEffect(() => {
     fetchActivity();
+  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
 
+  useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchActivity, 5000);
       return () => clearInterval(interval);
     }
-  }, [fetchActivity, autoRefresh]);
+  }, [autoRefresh, fetchActivity]);
 
   const handleExport = () => {
     if (!data?.events || data.events.length === 0) return;
@@ -98,7 +105,20 @@ const ActivityPage: React.FC = () => {
 
   const events = data?.events || [];
 
-  const timelineEvents = events.map(event => ({
+  // Filter events client-side based on search query
+  const filteredEvents = useMemo(() => {
+    if (!searchQuery) return events;
+    const lowerQuery = searchQuery.toLowerCase();
+    return events.filter(e =>
+      e.botName.toLowerCase().includes(lowerQuery) ||
+      e.provider.toLowerCase().includes(lowerQuery) ||
+      e.llmProvider.toLowerCase().includes(lowerQuery) ||
+      e.status.toLowerCase().includes(lowerQuery) ||
+      (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
+    );
+  }, [events, searchQuery]);
+
+  const timelineEvents = filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -115,7 +135,7 @@ const ActivityPage: React.FC = () => {
       timeout: 'warning',
       pending: 'primary',
     };
-    return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
+    return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
   };
 
   const columns = [
@@ -146,14 +166,14 @@ const ActivityPage: React.FC = () => {
       title: 'Provider',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>,
+      render: (value: string) => <Badge variant="neutral" size="small">{value}</Badge>,
     },
     {
       key: 'llmProvider' as keyof ActivityEvent,
       title: 'LLM',
       sortable: true,
       filterable: true,
-      render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
+      render: (value: string) => <Badge variant="primary" size="small" style="outline">{value}</Badge>,
     },
     {
       key: 'processingTime' as keyof ActivityEvent,
@@ -195,28 +215,28 @@ const ActivityPage: React.FC = () => {
     },
   ];
 
-  // Prepare filter options
+  // Construct filter options
   const botOptions = [
     { value: 'all', label: 'All Bots' },
-    ...(availableFilters?.agents?.map(a => ({ value: a, label: a })) || [])
+    ...(availableFilters?.agents || []).map(agent => ({ value: agent, label: agent }))
   ];
 
   const providerOptions = [
-    { value: 'all', label: 'All Platforms' },
-    ...(availableFilters?.messageProviders?.map(p => ({ value: p, label: p })) || [])
+    { value: 'all', label: 'All Providers' },
+    ...(availableFilters?.messageProviders || []).map(p => ({ value: p, label: p }))
   ];
 
   const llmOptions = [
     { value: 'all', label: 'All LLMs' },
-    ...(availableFilters?.llmProviders?.map(p => ({ value: p, label: p })) || [])
+    ...(availableFilters?.llmProviders || []).map(p => ({ value: p, label: p }))
   ];
 
   return (
     <div className="space-y-6">
       {/* Error Alert */}
       {error && (
-        <Alert 
-          status="error" 
+        <Alert
+          status="error"
           message={error}
           onClose={() => setError(null)}
         />
@@ -231,16 +251,16 @@ const ActivityPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {/* View Toggle */}
             <div className="join">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'table' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('table')}
               >
                 <LayoutList className="w-4 h-4" /> Table
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
                 className="join-item"
                 onClick={() => setViewMode('timeline')}
@@ -248,25 +268,30 @@ const ActivityPage: React.FC = () => {
                 <GitBranch className="w-4 h-4" /> Timeline
               </Button>
             </div>
-            
+
             {/* Auto Refresh Toggle */}
-            <Toggle 
+            <Toggle
               label="Auto"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
               size="sm"
             />
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={fetchActivity}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            
-            <Button variant="ghost" size="sm" onClick={handleExport} disabled={loading || events.length === 0}>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={events.length === 0}
+            >
               <Download className="w-4 h-4" /> Export
             </Button>
           </div>
@@ -274,67 +299,62 @@ const ActivityPage: React.FC = () => {
       />
 
       {/* Stats Cards */}
-      <StatsCards stats={stats} isLoading={loading} />
+      <StatsCards stats={stats} isLoading={loading && !data} />
 
       {/* Filters */}
       <SearchFilterBar
-        searchValue="" // Not using text search right now, or could map to generic search
-        onSearchChange={() => {}} // No-op for now
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
         searchPlaceholder="Filter activity..."
-        className="hidden sm:flex" // Hide generic search input via CSS if not needed, or just keep it minimal
+        className={loading ? 'opacity-50 pointer-events-none' : ''}
         filters={[
           {
             key: 'bot',
             value: selectedBot,
             onChange: setSelectedBot,
             options: botOptions,
-            className: "w-full sm:w-auto min-w-[150px]"
+            className: "w-full sm:w-1/4"
           },
           {
             key: 'provider',
             value: selectedProvider,
             onChange: setSelectedProvider,
             options: providerOptions,
-            className: "w-full sm:w-auto min-w-[150px]"
+            className: "w-full sm:w-1/4"
           },
           {
             key: 'llm',
             value: selectedLlmProvider,
             onChange: setSelectedLlmProvider,
             options: llmOptions,
-            className: "w-full sm:w-auto min-w-[150px]"
+            className: "w-full sm:w-1/4"
           }
         ]}
       />
 
       {/* Content */}
-      {loading && events.length === 0 ? (
+      {loading && !data ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="No activity found"
-          description="Try adjusting your filters or checking back later"
-          variant="noResults"
-          actionLabel="Clear Filters"
-          onAction={() => {
-            setSelectedBot('all');
-            setSelectedProvider('all');
-            setSelectedLlmProvider('all');
-          }}
+          title={events.length === 0 ? "No activity yet" : "No matching events"}
+          description={events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your search or filters"}
+          actionLabel="Refresh"
+          onAction={fetchActivity}
         />
       ) : (
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={events}
+              data={filteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={true} // Client-side search within the page
-              exportable={false} // We have a custom export button
+              searchable={false} // We use SearchFilterBar
+              exportable={false} // We have our own export button
             />
           ) : (
             <div className="p-4">

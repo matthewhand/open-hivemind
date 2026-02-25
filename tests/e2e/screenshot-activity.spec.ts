@@ -42,62 +42,61 @@ test.describe('Activity Page Screenshots', () => {
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
-    // Mock Activity Data
+    // Mock Activity API
     await page.route('/api/dashboard/api/activity*', async (route) => {
       const now = new Date();
       const events = [
         {
-          id: 'evt-1',
-          timestamp: new Date(now.getTime() - 1000 * 60 * 1).toISOString(),
+          id: '1',
+          timestamp: new Date(now.getTime() - 1000 * 60 * 2).toISOString(),
           botName: 'SupportBot',
           provider: 'discord',
           llmProvider: 'openai',
           channelId: '123',
-          userId: 'user-1',
+          userId: 'user1',
           messageType: 'incoming',
           contentLength: 50,
-          processingTime: 1200,
-          status: 'success',
+          processingTime: 120,
+          status: 'success'
         },
         {
-          id: 'evt-2',
+          id: '2',
           timestamp: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
-          botName: 'CoderBot',
+          botName: 'SalesBot',
           provider: 'slack',
           llmProvider: 'anthropic',
           channelId: '456',
-          userId: 'user-2',
+          userId: 'user2',
           messageType: 'incoming',
-          contentLength: 150,
+          contentLength: 120,
           processingTime: 2500,
-          status: 'success',
+          status: 'timeout'
         },
         {
-          id: 'evt-3',
+          id: '3',
           timestamp: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
           botName: 'SupportBot',
           provider: 'discord',
           llmProvider: 'openai',
           channelId: '123',
-          userId: 'user-3',
-          messageType: 'incoming',
-          contentLength: 20,
-          processingTime: 5000,
-          status: 'timeout',
-          errorMessage: 'Gateway Timeout',
+          userId: 'user3',
+          messageType: 'outgoing',
+          contentLength: 200,
+          processingTime: 450,
+          status: 'success'
         },
         {
-          id: 'evt-4',
+          id: '4',
           timestamp: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
-          botName: 'SalesBot',
+          botName: 'CodingAssistant',
           provider: 'mattermost',
-          llmProvider: 'local',
+          llmProvider: 'ollama',
           channelId: '789',
-          userId: 'user-4',
+          userId: 'dev1',
           messageType: 'incoming',
-          contentLength: 80,
-          processingTime: 800,
-          status: 'success',
+          contentLength: 800,
+          processingTime: 8000,
+          status: 'success'
         },
       ];
 
@@ -105,29 +104,32 @@ test.describe('Activity Page Screenshots', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          events: events,
+          events,
           filters: {
-            agents: ['SupportBot', 'CoderBot', 'SalesBot'],
+            agents: ['SupportBot', 'SalesBot', 'CodingAssistant'],
             messageProviders: ['discord', 'slack', 'mattermost'],
-            llmProviders: ['openai', 'anthropic', 'local'],
+            llmProviders: ['openai', 'anthropic', 'ollama']
           },
           timeline: [],
-          agentMetrics: [],
+          agentMetrics: []
         }),
       });
     });
   });
 
-  test('capture Activity Page screenshot', async ({ page }) => {
+  test('capture Activity page screenshots', async ({ page }) => {
     // Set viewport
-    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.setViewportSize({ width: 1280, height: 800 });
 
-    // Navigate to Activity Page
+    // Navigate to Activity page
     await page.goto('/admin/activity');
 
-    // Wait for the page to load and data to be displayed
-    await expect(page.locator('.card').first()).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'SupportBot' }).first()).toBeVisible();
+    // Wait for the page to load and table to be visible
+    await expect(page.getByText('Total Events')).toBeVisible();
+    await expect(page.getByRole('table')).toBeVisible();
+
+    // Wait a bit for filters to populate
+    await page.waitForTimeout(500);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/activity-page.png', fullPage: true });
