@@ -40,13 +40,13 @@ Connect your bots to messaging services.
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.
-![Bots Page](./docs/images/bots-page.png)
+![Bots Page](./docs/screenshots/bots-page.png)
 
 *   **Create Bot**: Define a new bot with a unique name.
-![Create Bot Modal](./docs/images/create-bot-modal.png)
+![Create Bot Modal](./docs/screenshots/create-bot-modal.png)
 
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](./docs/images/clone-bot-modal.png)
+![Duplicate Bot Modal](./docs/screenshots/clone-bot-modal.png)
 
 *   **Link Persona**: Assign a specific personality to the bot.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
@@ -166,11 +166,11 @@ A reference for developers extending the WebUI.
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
-![System Backups & Export](docs/images/export-page.png)
+![System Backups & Export](docs/screenshots/export-page.png)
 
 *   **System Backups**: Create, restore, and delete full system configuration backups.
     *   **Create Backup**: Save a snapshot of your current bot and system configuration.
-    ![Create Backup Modal](docs/images/create-backup-modal.png)
+    ![Create Backup Modal](docs/screenshots/create-backup-modal.png)
     *   **Restore**: Revert the system to a previous state from a backup.
     *   **Download**: Save backup files locally for safekeeping.
 *   **Configuration Export**: Export the current running configuration as a JSON file.

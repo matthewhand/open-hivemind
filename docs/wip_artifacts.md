@@ -1,6 +1,6 @@
 # WIP Artifacts
 
-This page lists screenshots and images that are currently not referenced in the main documentation.
+This page lists screenshots that are currently available in the documentation folder but may not be fully integrated into the main documentation structure.
 
 ## Screenshots
 
@@ -15,11 +15,8 @@ This page lists screenshots and images that are currently not referenced in the 
 - ![MCP Add Server Modal](screenshots/mcp-add-server-modal.png)
 - ![Monitoring Dashboard](screenshots/monitoring-dashboard.png)
 - ![MCP Tools Modal](screenshots/mcp-tools-modal.png)
-
-## Images
-
-- ![Clone Bot Modal](images/clone-bot-modal.png)
-- ![Export Page](images/export-page.png)
-- ![Create Bot Modal](images/create-bot-modal.png)
-- ![Create Backup Modal](images/create-backup-modal.png)
-- ![Bots Page](images/bots-page.png)
+- ![Clone Bot Modal](screenshots/clone-bot-modal.png)
+- ![Export Page](screenshots/export-page.png)
+- ![Create Bot Modal](screenshots/create-bot-modal.png)
+- ![Create Backup Modal](screenshots/create-backup-modal.png)
+- ![Bots Page](screenshots/bots-page.png)
