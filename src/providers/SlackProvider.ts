@@ -1,10 +1,10 @@
 import { IMessageProvider } from '../types/IProvider';
 import { SlackService } from '@hivemind/adapter-slack';
-import slackConfig from '../config/slackConfig';
+import slackConfig, { SlackConfig } from '../config/slackConfig';
 import fs from 'fs';
 import path from 'path';
 
-export class SlackProvider implements IMessageProvider {
+export class SlackProvider implements IMessageProvider<SlackConfig> {
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;

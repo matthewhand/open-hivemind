@@ -1,6 +1,21 @@
 import convict from 'convict';
 import path from 'path';
 
+export interface SlackConfig {
+  SLACK_BOT_TOKEN: string;
+  SLACK_APP_TOKEN: string;
+  SLACK_SIGNING_SECRET: string;
+  SLACK_JOIN_CHANNELS: string;
+  SLACK_DEFAULT_CHANNEL_ID: string;
+  SLACK_MODE: 'socket' | 'rtm';
+  SLACK_BOT_JOIN_CHANNEL_MESSAGE: string;
+  SLACK_USER_JOIN_CHANNEL_MESSAGE: string;
+  SLACK_BOT_LEARN_MORE_MESSAGE: string;
+  SLACK_BUTTON_MAPPINGS: string;
+  WELCOME_RESOURCE_URL: string;
+  REPORT_ISSUE_URL: string;
+}
+
 /**
  * Slack Configuration Module
  *
@@ -22,7 +37,7 @@ import path from 'path';
  * const botToken = slackConfig.get('SLACK_BOT_TOKEN');
  * const mode = slackConfig.get('SLACK_MODE');
  */
-const slackConfig = convict({
+const slackConfig = convict<SlackConfig>({
   SLACK_BOT_TOKEN: {
     doc: 'Comma-separated Slack bot tokens for API access',
     format: String,
