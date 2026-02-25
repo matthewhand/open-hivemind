@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
 import SearchFilterBar from '../SearchFilterBar';
 
 describe('SearchFilterBar', () => {
@@ -8,7 +7,7 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue=""
-        onSearchChange={vi.fn()}
+        onSearchChange={jest.fn()}
         searchPlaceholder="Test Search"
       />
     );
@@ -16,7 +15,7 @@ describe('SearchFilterBar', () => {
   });
 
   it('renders clear button when searchValue is present', () => {
-    const handleSearchChange = vi.fn();
+    const handleSearchChange = jest.fn();
     render(
       <SearchFilterBar
         searchValue="test"
@@ -31,15 +30,15 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue=""
-        onSearchChange={vi.fn()}
+        onSearchChange={jest.fn()}
       />
     );
     expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
   });
 
   it('calls onSearchChange with empty string when clear button is clicked', () => {
-    const handleSearchChange = vi.fn();
-    const handleClear = vi.fn();
+    const handleSearchChange = jest.fn();
+    const handleClear = jest.fn();
     render(
       <SearchFilterBar
         searchValue="test"
@@ -57,7 +56,7 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue="test"
-        onSearchChange={vi.fn()}
+        onSearchChange={jest.fn()}
       />
     );
     const clearButton = screen.getByLabelText('Clear search');
@@ -70,7 +69,7 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue=""
-        onSearchChange={vi.fn()}
+        onSearchChange={jest.fn()}
       />
     );
     const input = screen.getByRole('textbox');

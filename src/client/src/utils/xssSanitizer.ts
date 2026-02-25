@@ -14,7 +14,7 @@ const sanitizer = typeof DOMPurify === 'function'
 /**
  * Configuration for DOMPurify sanitization
  */
-const SANITIZE_CONFIG: DOMPurify.Config = {
+const SANITIZE_CONFIG: any = {
   ALLOWED_TAGS: [
     'b', 'i', 'em', 'strong', 'u', 's', 'span', 'p', 'br',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -48,7 +48,7 @@ sanitizer.addHook('uponSanitizeElement', (node, data) => {
  * @param config - Optional custom sanitization config
  * @returns Sanitized HTML string
  */
-export function sanitizeHTML(dirty: string, config?: DOMPurify.Config): string {
+export function sanitizeHTML(dirty: string, config?: any): string {
   if (!dirty || typeof dirty !== 'string') {
     return '';
   }

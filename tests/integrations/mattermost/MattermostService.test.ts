@@ -1,4 +1,4 @@
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
+import { MattermostService } from '../../../packages/adapter-mattermost/src/MattermostService';
 
 jest.mock('@hivemind/adapter-mattermost', () => {
   const mockClient = {
