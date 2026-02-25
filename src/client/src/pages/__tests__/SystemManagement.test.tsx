@@ -24,6 +24,36 @@ vi.mock('../../contexts/WebSocketContext', () => ({
   useWebSocket: vi.fn(),
 }));
 
+// Mock Modal since JSDOM doesn't support dialog fully
+vi.mock('../../components/DaisyUI/Modal', () => {
+  return {
+    __esModule: true,
+    default: ({ isOpen, children, title }: any) => {
+      if (!isOpen) return null;
+      return (
+        <div role="dialog" aria-label={title}>
+          {title && <h2>{title}</h2>}
+          {children}
+        </div>
+      );
+    },
+    // Export named exports as well if they are used
+    ConfirmModal: ({ isOpen, onConfirm }: any) => isOpen ? <button onClick={onConfirm}>Confirm</button> : null,
+    FormModal: ({ isOpen, onSubmit, children, title }: any) => {
+        if (!isOpen) return null;
+        return (
+            <div role="dialog" aria-label={title}>
+                <h2>{title}</h2>
+                <form onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
+                    {children}
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        )
+    }
+  };
+});
+
 describe('SystemManagement', () => {
   const mockWebSocket = {
     alerts: [],
@@ -71,7 +101,9 @@ describe('SystemManagement', () => {
     expect(modalTitle).toBeInTheDocument();
 
     // Check encryption
-    const encryptCheckbox = screen.getByLabelText('Encrypt Backup');
+    // In DaisyUI toggle/checkbox often doesn't have a label element directly associated via 'for' attribute in the way getByLabelText expects if custom structure is used.
+    // We'll try to find by role 'checkbox'
+    const encryptCheckbox = screen.getByRole('checkbox', { name: /encrypt backup/i });
     fireEvent.click(encryptCheckbox);
 
     // Enter password
@@ -79,7 +111,7 @@ describe('SystemManagement', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit
-    const submitButton = screen.getByRole('button', { name: 'Create Backup' });
+    const submitButton = screen.getByText('Submit'); // From our mocked FormModal
     fireEvent.click(submitButton);
 
     await waitFor(() => {
