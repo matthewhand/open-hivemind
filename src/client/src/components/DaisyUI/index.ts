@@ -68,4 +68,4 @@ export { default as Pagination } from './Pagination';
 export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
 // Advanced Components
-export { default as ModelAutocomplete } from './ModelAutocomplete';
+export { default as ModelAutocomplete } from './ModelAutocomplete';export { default as TagInput } from './TagInput';

@@ -72,7 +72,9 @@ Set up safety and security boundaries.
 
 ![Guard Profiles List](docs/screenshots/guards-page.png)
 
-![Create Guard Profile](docs/screenshots/guards-modal.png)
+![Create Guard Profile](docs/screenshots/guards-modal-enhanced.png)
+
+*   **Tag Inputs**: Easily add multiple allowed users, tools, or blocked terms using the enhanced tag input fields. Type and press Enter to add.
 
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
@@ -158,19 +160,6 @@ An internal chat interface for admins.
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
-
-### [System Backups & Export](/admin/export)
-Manage full system backups and download API specifications.
-
-![System Backups Page](docs/screenshots/export-page.png)
-
-*   **System Backups**: Create, restore, and delete full snapshots of your configuration.
-    *   **Create Backup**: Save the current state of all bots and settings.
-    ![Create Backup Modal](docs/screenshots/export-create-modal.png)
-    *   **Restore**: Revert the system to a previous state.
-    *   **Download**: Save backup files locally for safekeeping.
-*   **Configuration Export**: Download the current active configuration as a JSON file.
-*   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.

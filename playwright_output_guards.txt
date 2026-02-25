@@ -1,0 +1,74 @@
+[1A[2K[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 6ac1bbb25d965384563e4466bd315eae
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[frontend] No frontend dist path matched; using fallback { fallback: [32m'/app/src/client/dist'[39m }
+
+[1A[2K[2m[WebServer] [22m[frontend] Frontend dist directory not found { path: [32m'/app/src/client/dist'[39m }
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+[1A[2K[2m[WebServer] [22m[app:index] ⚠️  Frontend build not found - run `npm run build` to create WebUI assets
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/screenshot-guards.spec.ts:5:7 › Guards Page Screenshots › Capture Enhanced Guards Modal
+[1A[2K  1) [chromium] › tests/e2e/screenshot-guards.spec.ts:5:7 › Guards Page Screenshots › Capture Enhanced Guards Modal
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.collapse-title').filter({ hasText: 'Access Control' })[22m
+    [2m    - locator resolved to <div class="collapse-title text-xl font-medium flex items-center gap-2">…</div>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <input checked type="checkbox"/> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <input checked type="checkbox"/> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    107 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is visible, enabled and stable[22m
+    [2m        - scrolling into view if needed[22m
+    [2m        - done scrolling[22m
+    [2m        - <input checked type="checkbox"/> intercepts pointer events[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+      46 |     // Wait for the collapse to be visible
+      47 |     const accessControl = page.locator('.collapse-title', { hasText: 'Access Control' });
+    > 48 |     await accessControl.click();
+         |                         ^
+      49 |
+      50 |     // Enable the toggle inside the title
+      51 |     const accessToggle = accessControl.locator('input[type="checkbox"].toggle');
+        at /app/tests/e2e/screenshot-guards.spec.ts:48:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/screenshot-guards-Guards-P-c7bd1-pture-Enhanced-Guards-Modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/screenshot-guards-Guards-P-c7bd1-pture-Enhanced-Guards-Modal-chromium/error-context.md
+
+
+Global teardown completed
+[1A[2K  1 failed
+    [chromium] › tests/e2e/screenshot-guards.spec.ts:5:7 › Guards Page Screenshots › Capture Enhanced Guards Modal

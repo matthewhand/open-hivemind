@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { TagInput } from '../components/DaisyUI';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -334,27 +335,22 @@ const GuardsPage: React.FC = () => {
                   </div>
                   {editingProfile.guards.mcpGuard.type === 'custom' && (
                     <div className="form-control mt-4">
-                      <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                      <input
-                        id="allowed-users"
-                        type="text"
-                        className="input input-bordered"
-                        value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                        onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
+                      <TagInput
+                        value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                        onChange={tags => updateGuard('mcpGuard', { allowedUsers: tags })}
+                        placeholder="Add user ID..."
                         disabled={!editingProfile.guards.mcpGuard.enabled}
                       />
                     </div>
                   )}
 
                   <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                    <input
-                      id="allowed-tools"
-                      type="text"
-                      className="input input-bordered"
-                      placeholder="e.g. calculator, weather"
-                      value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                      onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                    <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
+                    <TagInput
+                      value={editingProfile.guards.mcpGuard.allowedTools || []}
+                      onChange={tags => updateGuard('mcpGuard', { allowedTools: tags })}
+                      placeholder="Add tool name..."
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                     <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -435,13 +431,11 @@ const GuardsPage: React.FC = () => {
                   </div>
 
                   <div className="form-control mt-4">
-                    <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                    <textarea
-                      id="blocked-terms"
-                      className="textarea textarea-bordered h-20"
-                      placeholder="e.g. secret, password, confidential"
-                      value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                      onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                    <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
+                    <TagInput
+                      value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                      onChange={tags => updateGuard('contentFilter', { blockedTerms: tags })}
+                      placeholder="Add term..."
                       disabled={!editingProfile.guards.contentFilter?.enabled}
                     />
                   </div>
