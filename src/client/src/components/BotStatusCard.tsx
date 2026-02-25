@@ -2,18 +2,20 @@
 import React, { useState } from 'react';
 import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
 import {
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-import type { Bot } from '../services/api';
+  RefreshCw,
+  Info,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Bot,
+  MessageSquare,
+  Smartphone,
+  Wrench,
+} from 'lucide-react';
+import type { Bot as BotType } from '../services/api';
 
 interface BotStatusCardProps {
-  bot: Bot;
+  bot: BotType;
   statusData?: {
     status: string;
     healthDetails?: Record<string, unknown>;
@@ -40,15 +42,15 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'error':
     case 'disconnected':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <XCircle className={`${className} text-error`} />;
     case 'warning':
     case 'connecting':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -69,15 +71,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   };
 
   const getProviderIcon = (provider: string) => {
+    const className = 'w-6 h-6';
     switch (provider?.toLowerCase()) {
     case 'discord':
-      return '🤖';
+      return <Bot className={className} />;
     case 'slack':
-      return '💬';
+      return <MessageSquare className={className} />;
     case 'mattermost':
-      return '📱';
+      return <Smartphone className={className} />;
     default:
-      return '🔧';
+      return <Wrench className={className} />;
     }
   };
 
@@ -211,7 +214,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
             >
-              <Cog6ToothIcon className="w-4 h-4" />
+              <Info className="w-4 h-4" />
               Details
             </Button>
             <Button
@@ -227,7 +230,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               }}
               disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : <RefreshCw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>
