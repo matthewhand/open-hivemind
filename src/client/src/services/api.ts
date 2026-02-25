@@ -615,7 +615,7 @@ class ApiService {
     }>;
     timestamp: string;
   }> {
-    return this.request('/health/api-endpoints');
+    return this.request('/api/health/api-endpoints');
   }
 
   async getApiEndpointStatus(id: string): Promise<{
@@ -636,7 +636,7 @@ class ApiService {
     };
     timestamp: string;
   }> {
-    return this.request(`/health/api-endpoints/${id}`);
+    return this.request(`/api/health/api-endpoints/${id}`);
   }
 
   async addApiEndpoint(config: {
@@ -671,7 +671,7 @@ class ApiService {
     };
     timestamp: string;
   }> {
-    return this.request('/health/api-endpoints', {
+    return this.request('/api/health/api-endpoints', {
       method: 'POST',
       body: JSON.stringify(config),
     });
@@ -708,7 +708,7 @@ class ApiService {
     };
     timestamp: string;
   }> {
-    return this.request(`/health/api-endpoints/${id}`, {
+    return this.request(`/api/health/api-endpoints/${id}`, {
       method: 'PUT',
       body: JSON.stringify(config),
     });
@@ -733,21 +733,21 @@ class ApiService {
     };
     timestamp: string;
   }> {
-    return this.request(`/health/api-endpoints/${id}`, { method: 'DELETE' });
+    return this.request(`/api/health/api-endpoints/${id}`, { method: 'DELETE' });
   }
 
   async startApiMonitoring(): Promise<{
     message: string;
     timestamp: string;
   }> {
-    return this.request('/health/api-endpoints/start', { method: 'POST' });
+    return this.request('/api/health/api-endpoints/start', { method: 'POST' });
   }
 
   async stopApiMonitoring(): Promise<{
     message: string;
     timestamp: string;
   }> {
-    return this.request('/health/api-endpoints/stop', { method: 'POST' });
+    return this.request('/api/health/api-endpoints/stop', { method: 'POST' });
   }
 
   async getSystemHealth(): Promise<{
@@ -771,7 +771,7 @@ class ApiService {
       loadAverage: number[];
     };
   }> {
-    return this.request('/health/detailed');
+    return this.request('/api/health/detailed');
   }
   async getGlobalConfig(): Promise<Record<string, any>> {
     return this.request('/api/config/global');

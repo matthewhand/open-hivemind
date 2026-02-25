@@ -1,97 +1,83 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Table } from './DaisyUI';
+import { Card, Badge, Button, Table, Alert, Loading } from './DaisyUI';
 import {
-  BoltIcon,
-  ServerIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline';
-
-export interface ActivityEvent {
-  id: string;
-  timestamp: Date;
-  type: 'bot' | 'user' | 'system' | 'error';
-  message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  duration?: number;
-}
-
-const mockEvents: ActivityEvent[] = [
-  {
-    id: '1',
-    timestamp: new Date(),
-    type: 'bot',
-    message: 'Bot configuration updated successfully',
-    severity: 'low',
-    duration: 120,
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 60000),
-    type: 'user',
-    message: 'User login from new device',
-    severity: 'medium',
-    duration: 300,
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 180000),
-    type: 'system',
-    message: 'Database backup completed',
-    severity: 'low',
-    duration: 5000,
-  },
-];
+  Zap,
+  Server,
+  Users,
+  BarChart2,
+  Activity,
+  AlertCircle,
+  Bot,
+  MessageCircle,
+  Clock
+} from 'lucide-react';
+import { apiService, ActivityEvent } from '../services/api';
 
 const ActivityMonitor: React.FC = () => {
-  const [events, setEvents] = useState<ActivityEvent[]>(mockEvents);
-  const [filter, setFilter] = useState<string>('all');
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [filter, setFilter] = useState<string>('all');
+
+  const fetchActivity = async () => {
+    try {
+      // In a real scenario, we might want to fetch only new events since last timestamp
+      // But API might not support it fully yet, so we fetch latest.
+      const data = await apiService.getActivity();
+      setEvents(data.events || []);
+    } catch (err) {
+      console.error('Failed to fetch activity:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!isMonitoring) { return; }
+    fetchActivity();
 
-    const interval = setInterval(() => {
-      const newEvent: ActivityEvent = {
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        type: (['bot', 'user', 'system', 'error'] as const)[Math.floor(Math.random() * 4)],
-        message: `System activity detected at ${new Date().toLocaleTimeString()}`,
-        severity: (['low', 'medium', 'high', 'critical'] as const)[Math.floor(Math.random() * 4)],
-        duration: Math.floor(Math.random() * 1000) + 50,
-      };
-      setEvents(prev => [newEvent, ...prev].slice(0, 50));
-    }, 5000);
-
-    return () => clearInterval(interval);
+    if (isMonitoring) {
+      const interval = setInterval(fetchActivity, 5000);
+      return () => clearInterval(interval);
+    }
   }, [isMonitoring]);
 
-  const filteredEvents = events.filter(event =>
-    filter === 'all' || event.type === filter,
-  );
+  // Determine event type based on available fields or custom logic
+  // ActivityEvent has: botName, provider, llmProvider, messageType, status
+  const getEventType = (event: ActivityEvent) => {
+    if (event.status === 'error' || event.status === 'timeout') return 'error';
+    if (event.messageType === 'incoming') return 'user';
+    if (event.messageType === 'outgoing') return 'bot';
+    return 'system';
+  };
 
-  const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
-    switch (severity) {
-      case 'critical': return 'error';
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
+  const filteredEvents = events.filter(event => {
+    if (filter === 'all') return true;
+    const type = getEventType(event);
+    return type === filter;
+  });
+
+  const getSeverityColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
+    switch (status) {
+      case 'error': return 'error';
+      case 'timeout': return 'warning';
+      case 'success': return 'success';
       default: return 'info';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'bot': return '🤖';
-      case 'user': return '👤';
-      case 'system': return '⚙️';
-      case 'error': return '❌';
-      default: return '📝';
+      case 'bot': return <Bot className="w-4 h-4" />;
+      case 'user': return <Users className="w-4 h-4" />;
+      case 'system': return <Server className="w-4 h-4" />;
+      case 'error': return <AlertCircle className="w-4 h-4" />;
+      default: return <Activity className="w-4 h-4" />;
     }
   };
 
   const recentEvents = events.filter(e =>
-    e.timestamp > new Date(Date.now() - 300000),
+    new Date(e.timestamp).getTime() > Date.now() - 300000
   );
 
   return (
@@ -100,7 +86,7 @@ const ActivityMonitor: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <BoltIcon className="w-8 h-8 text-info" />
+              <Zap className="w-8 h-8 text-info" />
               <div>
                 <h2 className="card-title text-2xl">Activity Monitor</h2>
                 <p className="text-sm opacity-70">Real-time system activity tracking</p>
@@ -112,7 +98,7 @@ const ActivityMonitor: React.FC = () => {
               </Badge>
               <Button
                 onClick={() => setIsMonitoring(!isMonitoring)}
-                className={`btn-${isMonitoring ? 'error' : 'success'}`}
+                className={`btn-${isMonitoring ? 'error' : 'success'} btn-sm`}
               >
                 {isMonitoring ? 'Pause' : 'Resume'}
               </Button>
@@ -124,29 +110,33 @@ const ActivityMonitor: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow">
-          <div className="card-body text-center">
-            <BoltIcon className="w-8 h-8 mx-auto text-primary mb-2" />
+          <div className="card-body text-center p-4">
+            <Activity className="w-8 h-8 mx-auto text-primary mb-2" />
             <div className="text-2xl font-bold">{events.length}</div>
             <p className="text-sm opacity-70">Total Events</p>
           </div>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
-            <ServerIcon className="w-8 h-8 mx-auto text-info mb-2" />
-            <div className="text-2xl font-bold">{events.filter(e => e.type === 'bot').length}</div>
-            <p className="text-sm opacity-70">Bot Activities</p>
+          <div className="card-body text-center p-4">
+            <Bot className="w-8 h-8 mx-auto text-info mb-2" />
+            <div className="text-2xl font-bold">
+              {events.filter(e => e.messageType === 'outgoing').length}
+            </div>
+            <p className="text-sm opacity-70">Bot Responses</p>
           </div>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
-            <UserGroupIcon className="w-8 h-8 mx-auto text-warning mb-2" />
-            <div className="text-2xl font-bold">{events.filter(e => e.type === 'user').length}</div>
-            <p className="text-sm opacity-70">User Activities</p>
+          <div className="card-body text-center p-4">
+            <Users className="w-8 h-8 mx-auto text-warning mb-2" />
+            <div className="text-2xl font-bold">
+              {events.filter(e => e.messageType === 'incoming').length}
+            </div>
+            <p className="text-sm opacity-70">User Messages</p>
           </div>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
-            <ChartBarIcon className="w-8 h-8 mx-auto text-success mb-2" />
+          <div className="card-body text-center p-4">
+            <BarChart2 className="w-8 h-8 mx-auto text-success mb-2" />
             <div className="text-2xl font-bold">{recentEvents.length}</div>
             <p className="text-sm opacity-70">Last 5 min</p>
           </div>
@@ -155,40 +145,34 @@ const ActivityMonitor: React.FC = () => {
 
       {/* Filters */}
       <Card className="shadow">
-        <div className="card-body">
+        <div className="card-body p-4">
           <div className="flex items-center gap-4">
             <span className="font-semibold">Filter:</span>
-            <div className="btn-group">
-              <Button
-                className={`btn-${filter === 'all' ? 'active' : 'ghost'}`}
+            <div className="join">
+              <button
+                className={`btn btn-sm join-item ${filter === 'all' ? 'btn-active' : 'btn-ghost'}`}
                 onClick={() => setFilter('all')}
               >
                 All
-              </Button>
-              <Button
-                className={`btn-${filter === 'bot' ? 'active' : 'ghost'}`}
+              </button>
+              <button
+                className={`btn btn-sm join-item ${filter === 'bot' ? 'btn-active' : 'btn-ghost'}`}
                 onClick={() => setFilter('bot')}
               >
                 Bot
-              </Button>
-              <Button
-                className={`btn-${filter === 'user' ? 'active' : 'ghost'}`}
+              </button>
+              <button
+                className={`btn btn-sm join-item ${filter === 'user' ? 'btn-active' : 'btn-ghost'}`}
                 onClick={() => setFilter('user')}
               >
                 User
-              </Button>
-              <Button
-                className={`btn-${filter === 'system' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('system')}
-              >
-                System
-              </Button>
-              <Button
-                className={`btn-${filter === 'error' ? 'active' : 'ghost'}`}
+              </button>
+              <button
+                className={`btn btn-sm join-item ${filter === 'error' ? 'btn-active' : 'btn-ghost'}`}
                 onClick={() => setFilter('error')}
               >
                 Error
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -197,41 +181,56 @@ const ActivityMonitor: React.FC = () => {
       {/* Activity Table */}
       <Card className="shadow-lg">
         <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Recent Activity</h3>
+          <div className="flex justify-between items-center mb-4">
+             <h3 className="card-title text-lg">Recent Activity</h3>
+             {loading && <span className="loading loading-spinner loading-sm"></span>}
+          </div>
+
           <div className="overflow-x-auto">
-            <Table className="table table-zebra table-compact">
+            <Table className="table table-zebra table-compact w-full">
               <thead>
                 <tr>
                   <th>Time</th>
                   <th>Type</th>
                   <th>Message</th>
-                  <th>Severity</th>
+                  <th>Status</th>
                   <th>Duration</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredEvents.slice(0, 20).map((event) => (
-                  <tr key={event.id}>
-                    <td className="text-sm opacity-70">
-                      {event.timestamp.toLocaleTimeString()}
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span>{getTypeIcon(event.type)}</span>
-                        <span className="capitalize">{event.type}</span>
-                      </div>
-                    </td>
-                    <td className="max-w-xs truncate">{event.message}</td>
-                    <td>
-                      <Badge variant={getSeverityColor(event.severity)} size="sm">
-                        {event.severity}
-                      </Badge>
-                    </td>
-                    <td className="text-sm">
-                      {event.duration ? `${event.duration}ms` : '-'}
-                    </td>
-                  </tr>
-                ))}
+                {filteredEvents.length === 0 ? (
+                    <tr>
+                        <td colSpan={5} className="text-center py-4 text-base-content/50">
+                            No activity events found.
+                        </td>
+                    </tr>
+                ) : (
+                    filteredEvents.slice(0, 20).map((event) => (
+                      <tr key={event.id}>
+                        <td className="text-sm opacity-70 whitespace-nowrap">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <span>{getTypeIcon(getEventType(event))}</span>
+                            <span className="capitalize">{getEventType(event)}</span>
+                          </div>
+                        </td>
+                        <td className="max-w-xs truncate" title={event.errorMessage || 'Message processed'}>
+                            {event.botName}: {event.messageType === 'incoming' ? 'Received message' : 'Sent response'}
+                            {event.errorMessage && <span className="text-error ml-1">- {event.errorMessage}</span>}
+                        </td>
+                        <td>
+                          <Badge variant={getSeverityColor(event.status)} size="sm">
+                            {event.status}
+                          </Badge>
+                        </td>
+                        <td className="text-sm">
+                          {event.processingTime ? `${event.processingTime}ms` : '-'}
+                        </td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </Table>
           </div>
@@ -239,8 +238,7 @@ const ActivityMonitor: React.FC = () => {
       </Card>
 
       {isMonitoring && (
-        <Alert variant="info" className="flex items-center gap-3">
-          <BoltIcon className="w-5 h-5 animate-pulse" />
+        <Alert variant="info" icon={<Zap className="w-5 h-5 animate-pulse" />}>
           <div>
             <p className="font-medium">Live monitoring active</p>
             <p className="text-sm opacity-70">Real-time events being captured</p>
