@@ -1,5 +1,8 @@
 import fs from 'fs';
-import { getMessengerProvider } from '@src/message/management/getMessengerProvider';
+import {
+  getMessengerProvider,
+  resetMessengerProviderCache,
+} from '@src/message/management/getMessengerProvider';
 
 // Mock Discord Service
 const mockDiscordService = {
@@ -27,7 +30,8 @@ jest.mock('@hivemind/adapter-discord', () => ({
   },
 }));
 
-jest.mock('@src/integrations/slack/SlackService', () => ({
+// Mocking the adapter directly as it is required in the source
+jest.mock('@hivemind/adapter-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => mockSlackService),
   },
@@ -41,6 +45,7 @@ describe('getMessengerProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetMessengerProviderCache();
     process.env = { ...originalEnv };
 
     // Default mock for fs.readFileSync

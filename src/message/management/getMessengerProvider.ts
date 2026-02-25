@@ -29,16 +29,28 @@ function __require(modulePath: string): any {
   return require(modulePath);
 }
 
+let cachedMessengersConfig: any = null;
+
+export function resetMessengerProviderCache(): void {
+  cachedMessengersConfig = null;
+}
+
 export function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
 
   let messengersConfig: any = {};
-  try {
-    const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
-    messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
-  } catch (error) {
-    // If file doesn't exist or JSON is invalid, use empty config
-    messengersConfig = {};
+
+  if (cachedMessengersConfig) {
+    messengersConfig = cachedMessengersConfig;
+  } else {
+    try {
+      const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
+      messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
+    } catch (_error) {
+      // If file doesn't exist or JSON is invalid, use empty config
+      messengersConfig = {};
+    }
+    cachedMessengersConfig = messengersConfig;
   }
 
   const messengerServices: any[] = [];
@@ -203,4 +215,4 @@ export function getMessengerProvider() {
   return messengerServices;
 }
 
-module.exports = { getMessengerProvider };
+module.exports = { getMessengerProvider, resetMessengerProviderCache };
