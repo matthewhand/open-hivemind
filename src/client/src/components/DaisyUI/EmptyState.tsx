@@ -8,7 +8,7 @@ interface EmptyStateProps {
     description: string;
     actionLabel?: string;
     onAction?: () => void;
-    variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success';
+    variant?: 'primary' | 'secondary' | 'accent';
     className?: string;
 }
 
@@ -27,26 +27,6 @@ const variantStyles = {
     gradient: 'from-accent/5 via-accent/10 to-accent/5',
     iconBg: 'bg-accent/15 text-accent group-hover:bg-accent/25',
     border: 'border-accent/20 hover:border-accent/40',
-  },
-  error: {
-    gradient: 'from-error/5 via-error/10 to-error/5',
-    iconBg: 'bg-error/15 text-error group-hover:bg-error/25',
-    border: 'border-error/20 hover:border-error/40',
-  },
-  warning: {
-    gradient: 'from-warning/5 via-warning/10 to-warning/5',
-    iconBg: 'bg-warning/15 text-warning group-hover:bg-warning/25',
-    border: 'border-warning/20 hover:border-warning/40',
-  },
-  info: {
-    gradient: 'from-info/5 via-info/10 to-info/5',
-    iconBg: 'bg-info/15 text-info group-hover:bg-info/25',
-    border: 'border-info/20 hover:border-info/40',
-  },
-  success: {
-    gradient: 'from-success/5 via-success/10 to-success/5',
-    iconBg: 'bg-success/15 text-success group-hover:bg-success/25',
-    border: 'border-success/20 hover:border-success/40',
   },
 };
 
