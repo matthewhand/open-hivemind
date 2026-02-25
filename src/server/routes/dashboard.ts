@@ -276,7 +276,7 @@ router.get('/api/status', authenticateToken, (req, res) => {
   }
 });
 
-router.get('/api/activity', authenticateToken, (req, res) => {
+router.get('/api/activity', authenticateToken, async (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const ws = WebSocketService.getInstance();
@@ -291,7 +291,7 @@ router.get('/api/activity', authenticateToken, (req, res) => {
     const to = parseDate(req.query.to);
 
     // Fetch events from persistent storage
-    const storedEvents = ActivityLogger.getInstance().getEvents({
+    const storedEvents = await ActivityLogger.getInstance().getEvents({
       startTime: from || undefined,
       endTime: to || undefined,
       limit: 5000,
