@@ -139,14 +139,14 @@ describe('AdvancedMonitor', () => {
     });
 
     it('should update health status based on metrics', () => {
-       // Mock high CPU usage
-       jest.spyOn(process, 'cpuUsage').mockReturnValue({ user: 96000000, system: 0 }); // 96 seconds
+      // Mock high CPU usage
+      jest.spyOn(process, 'cpuUsage').mockReturnValue({ user: 96000000, system: 0 }); // 96 seconds
 
-       monitor.startMonitoring();
-       jest.advanceTimersByTime(30000);
+      monitor.startMonitoring();
+      jest.advanceTimersByTime(30000);
 
-       const health = monitor.getHealthStatus();
-       expect(health.overall).toBe('unhealthy');
+      const health = monitor.getHealthStatus();
+      expect(health.overall).toBe('unhealthy');
     });
   });
 
@@ -236,14 +236,30 @@ describe('AdvancedMonitor', () => {
     });
 
     it('should report degraded status', () => {
-        // Mock CPU usage between 85 and 95
-        jest.spyOn(process, 'cpuUsage').mockReturnValue({ user: 90000000, system: 0 }); // 90 seconds
+      // Mock CPU usage between 85 and 95
+      jest.spyOn(process, 'cpuUsage').mockReturnValue({ user: 90000000, system: 0 }); // 90 seconds
 
-        monitor.startMonitoring();
-        jest.advanceTimersByTime(30000);
+      monitor.startMonitoring();
+      jest.advanceTimersByTime(30000);
 
-        const health = monitor.getHealthStatus();
-        expect(health.overall).toBe('degraded');
+      const health = monitor.getHealthStatus();
+      expect(health.overall).toBe('degraded');
+    });
+  });
+
+  describe('Public API', () => {
+    it('getMetricsSummary should return correct populated structure', () => {
+      monitor.startMonitoring();
+      jest.advanceTimersByTime(10000); // Collect some metrics
+
+      const summary = monitor.getMetricsSummary();
+
+      expect(summary).toHaveProperty('system');
+      expect(summary.system).toHaveProperty('cpu');
+      expect(summary.system).toHaveProperty('memory');
+      expect(summary).toHaveProperty('application');
+      expect(summary).toHaveProperty('health');
+      expect(summary.health.overall).toBe('healthy');
     });
   });
 });
