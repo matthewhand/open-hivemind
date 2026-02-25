@@ -55,10 +55,13 @@ jest.mock('../../src/auth/middleware', () => ({
 
 describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
+  const originalEnv = process.env;
 
   beforeAll(() => {
     // Set a dummy sensitive env var for testing redaction
+    process.env = { ...originalEnv };
     process.env.OPENAI_API_KEY = 'sk-test-1234567890';
+    process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
 
     app = express();
     app.use(express.json());
@@ -77,6 +80,10 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     // Clear WebUIStorage mocks
     (webUIStorage.deleteMcp as jest.Mock).mockClear();
     (webUIStorage.saveMcp as jest.Mock).mockClear();
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
   describe('GET /api/admin/llm-providers', () => {

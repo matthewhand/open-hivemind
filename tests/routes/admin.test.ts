@@ -65,6 +65,17 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 
 describe('Admin Routes', () => {
+  const originalEnv = process.env;
+
+  beforeAll(() => {
+    process.env = { ...originalEnv };
+    process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     const { webUIStorage } = require('../../src/storage/webUIStorage');
