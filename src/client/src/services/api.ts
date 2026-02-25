@@ -826,6 +826,22 @@ class ApiService {
     });
   }
 
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const response = await fetch(buildUrl(`/api/import-export/backups/${backupId}/download`), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/gzip',
+        ...(this.csrfToken ? { 'X-CSRF-Token': this.csrfToken } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
   async getSystemInfo(): Promise<any> {
     return this.request('/api/admin/system-info');
   }
