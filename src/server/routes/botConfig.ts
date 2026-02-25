@@ -491,11 +491,11 @@ router.get('/templates', async (req: Request, res: Response) => {
       llmProvider: 'openai',
       config: {
         discord: {
-          token: 'YOUR_DISCORD_BOT_TOKEN',
-          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID',
+          token: '',
+          voiceChannelId: '',
         },
         openai: {
-          apiKey: 'YOUR_OPENAI_API_KEY',
+          apiKey: '',
           model: 'gpt-3.5-turbo',
         },
       },
@@ -507,13 +507,13 @@ router.get('/templates', async (req: Request, res: Response) => {
       llmProvider: 'flowise',
       config: {
         slack: {
-          botToken: 'YOUR_SLACK_BOT_TOKEN',
-          signingSecret: 'YOUR_SLACK_SIGNING_SECRET',
-          appToken: 'OPTIONAL_SLACK_APP_TOKEN',
+          botToken: '',
+          signingSecret: '',
+          appToken: '',
         },
         flowise: {
-          apiKey: 'YOUR_FLOWISE_API_KEY',
-          endpoint: 'YOUR_FLOWISE_ENDPOINT',
+          apiKey: '',
+          endpoint: '',
         },
       },
     },
@@ -524,12 +524,12 @@ router.get('/templates', async (req: Request, res: Response) => {
       llmProvider: 'openwebui',
       config: {
         mattermost: {
-          serverUrl: 'YOUR_MATTERMOST_SERVER_URL',
-          token: 'YOUR_MATTERMOST_TOKEN',
+          serverUrl: '',
+          token: '',
         },
         openwebui: {
-          apiKey: 'YOUR_OPENWEBUI_API_KEY',
-          endpoint: 'YOUR_OPENWEBUI_ENDPOINT',
+          apiKey: '',
+          endpoint: '',
         },
       },
     },
