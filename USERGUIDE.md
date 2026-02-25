@@ -106,11 +106,20 @@ Monitor real-time interactions and events across your bot ecosystem.
 *   **Export**: Download the activity log as a CSV file for offline analysis.
 *   **Timeline View**: Visualize the sequence of events over time.
 
+### [System Management](/admin/system-management)
+Comprehensive tools for maintaining the health and configuration of the platform.
+![System Management - Performance](./docs/screenshots/system-management-performance.png)
+
+*   **Alert Management**: View and acknowledge system alerts (Errors, Warnings, Info).
+*   **Configuration**: Adjust system-wide settings like refresh intervals, log levels, and backup schedules.
+    ![System Management - Configuration](./docs/screenshots/system-management-config.png)
+*   **Backups**: Create manual backups, restore from previous states, and manage backup history.
+*   **Performance**: Monitor real-time API endpoint health, system resources (CPU/Memory), and database connection status.
+
 ### [Settings](/admin/settings)
-General system configuration.
+General system preferences.
 *   **Rate Limits**: Adjust global message rate limits to prevent spam.
 *   **Logging**: Configure log levels and retention policies.
-*   **Updates**: Check for system updates.
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.

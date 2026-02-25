@@ -1,5 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import {
+  Bell,
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  XCircle,
+  Check,
+  CheckCheck,
+  X,
+  Search,
+  Clock
+} from 'lucide-react';
+import { Badge, Button, Input } from '../DaisyUI';
 
 export interface Alert {
   id: string;
@@ -83,29 +96,13 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
       case 'error':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <XCircle className="w-6 h-6 text-error" />;
       case 'warning':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        );
+        return <AlertTriangle className="w-6 h-6 text-warning" />;
       case 'success':
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <CheckCircle className="w-6 h-6 text-success" />;
       default:
-        return (
-          <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <Info className="w-6 h-6 text-info" />;
     }
   };
 
@@ -121,120 +118,136 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   };
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${className}`}>
+    <div className={`card bg-base-100 shadow-xl border border-base-200 ${className}`}>
       <div className="card-body">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="card-title">Alerts & Notifications</h2>
+          <div className="flex items-center gap-3">
+             <Bell className="w-6 h-6" />
+             <h2 className="card-title">Alerts & Notifications</h2>
+          </div>
           <div className="flex gap-2">
-            <div className="badge badge-error gap-2">
+            <Badge variant="error" size="sm" className="gap-1">
               {getAlertCountByType('error')} Errors
-            </div>
-            <div className="badge badge-warning gap-2">
+            </Badge>
+            <Badge variant="warning" size="sm" className="gap-1">
               {getAlertCountByType('warning')} Warnings
-            </div>
-            <div className="badge badge-info gap-2">
+            </Badge>
+            <Badge variant="info" size="sm" className="gap-1">
               {getAlertCountByType('info')} Info
-            </div>
+            </Badge>
           </div>
         </div>
 
         {showFilters && (
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex gap-2">
-              <button
-                className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant={filter === 'all' ? 'primary' : 'ghost'}
                 onClick={() => setFilter('all')}
               >
                 All ({alerts.filter(a => !a.resolved).length})
-              </button>
-              <button
-                className={`btn btn-sm ${filter === 'error' ? 'btn-error' : 'btn-ghost'}`}
+              </Button>
+              <Button
+                size="sm"
+                variant={filter === 'error' ? 'error' : 'ghost'}
                 onClick={() => setFilter('error')}
+                className={filter !== 'error' ? 'text-error' : ''}
               >
                 Errors ({getAlertCountByType('error')})
-              </button>
-              <button
-                className={`btn btn-sm ${filter === 'warning' ? 'btn-warning' : 'btn-ghost'}`}
+              </Button>
+              <Button
+                size="sm"
+                variant={filter === 'warning' ? 'warning' : 'ghost'}
                 onClick={() => setFilter('warning')}
+                className={filter !== 'warning' ? 'text-warning' : ''}
               >
                 Warnings ({getAlertCountByType('warning')})
-              </button>
-              <button
-                className={`btn btn-sm ${filter === 'info' ? 'btn-info' : 'btn-ghost'}`}
+              </Button>
+              <Button
+                size="sm"
+                variant={filter === 'info' ? 'info' : 'ghost'}
                 onClick={() => setFilter('info')}
+                className={filter !== 'info' ? 'text-info' : ''}
               >
                 Info ({getAlertCountByType('info')})
-              </button>
+              </Button>
             </div>
 
-            <div className="form-control">
-              <input
+            <div className="form-control flex-1">
+              <Input
                 type="text"
                 placeholder="Search alerts..."
-                className="input input-bordered input-sm w-full"
+                className="input-sm w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                prefix={<Search className="w-4 h-4 opacity-50"/>}
               />
             </div>
           </div>
         )}
 
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
           {filteredAlerts.length === 0 ? (
-            <div className="text-center py-8 text-neutral-content/50">
-              <div className="text-4xl mb-2">🔔</div>
+            <div className="text-center py-12 text-neutral-content/50 border-2 border-dashed border-base-200 rounded-xl">
+              <Bell className="w-12 h-12 mx-auto mb-2 opacity-20" />
               <p>No alerts found</p>
             </div>
           ) : (
             filteredAlerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`alert ${alert.resolved ? 'alert-success' : `alert-${alert.type}`} ${alert.acknowledged && !alert.resolved ? 'opacity-75' : ''
-                  }`}
+                className={`alert ${alert.resolved ? 'bg-base-200/50' : `alert-${alert.type}`} ${alert.acknowledged && !alert.resolved ? 'opacity-75' : ''
+                  } transition-all duration-200 hover:shadow-md border border-transparent hover:border-base-300`}
               >
                 {getAlertIcon(alert.type)}
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">{alert.title}</h4>
-                      <p className="text-sm opacity-90">{alert.message}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs opacity-70">{alert.source}</span>
-                        <span className="text-xs opacity-70">•</span>
-                        <span className="text-xs opacity-70">{formatTimestamp(alert.timestamp)}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm sm:text-base truncate pr-2">{alert.title}</h4>
+                      <p className="text-sm opacity-90 break-words">{alert.message}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="badge badge-ghost badge-xs opacity-70">{alert.source}</span>
+                        <span className="text-xs opacity-50">•</span>
+                        <span className="text-xs opacity-70 flex items-center gap-1">
+                            <Clock className="w-3 h-3"/> {formatTimestamp(alert.timestamp)}
+                        </span>
                         {alert.acknowledged && (
-                          <span className="badge badge-success badge-xs">Acknowledged</span>
+                          <Badge variant="success" size="xs">Acknowledged</Badge>
                         )}
                         {alert.resolved && (
-                          <span className="badge badge-success badge-xs">Resolved</span>
+                          <Badge variant="success" size="xs">Resolved</Badge>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       {!alert.acknowledged && !alert.resolved && (
                         <button
-                          className="btn btn-xs btn-ghost"
+                          className="btn btn-xs btn-circle btn-ghost tooltip tooltip-left"
+                          data-tip="Acknowledge"
                           onClick={() => handleAcknowledge(alert.id)}
-                          title="Acknowledge"
+                          aria-label="Acknowledge"
                         >
-                          ✓
+                          <Check className="w-4 h-4" />
                         </button>
                       )}
                       {!alert.resolved && (
                         <button
-                          className="btn btn-xs btn-ghost"
+                          className="btn btn-xs btn-circle btn-ghost tooltip tooltip-left"
+                          data-tip="Resolve"
                           onClick={() => handleResolve(alert.id)}
-                          title="Resolve"
+                          aria-label="Resolve"
                         >
-                          ✓✓
+                          <CheckCheck className="w-4 h-4" />
                         </button>
                       )}
                       <button
-                        className="btn btn-xs btn-ghost"
+                        className="btn btn-xs btn-circle btn-ghost tooltip tooltip-left"
+                        data-tip="Dismiss"
                         onClick={() => handleDismiss(alert.id)}
-                        title="Dismiss"
+                        aria-label="Dismiss"
                       >
-                        ×
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -245,12 +258,13 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
         </div>
 
         {alerts.length > 0 && (
-          <div className="mt-4 flex justify-between items-center">
-            <span className="text-sm text-neutral-content/70">
+          <div className="mt-4 pt-4 border-t border-base-200 flex justify-between items-center">
+            <span className="text-xs text-neutral-content/70">
               Showing {filteredAlerts.length} of {alerts.length} alerts
             </span>
-            <button
-              className="btn btn-sm btn-ghost"
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => {
                 alerts.forEach(alert => {
                   if (!alert.acknowledged && !alert.resolved) {
@@ -258,9 +272,10 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                   }
                 });
               }}
+              disabled={alerts.every(a => a.acknowledged || a.resolved)}
             >
               Acknowledge All
-            </button>
+            </Button>
           </div>
         )}
       </div>
