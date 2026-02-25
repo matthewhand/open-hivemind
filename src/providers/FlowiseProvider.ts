@@ -1,7 +1,7 @@
 import { ILLMProvider } from '../types/IProvider';
 import flowiseConfig from '../config/flowiseConfig';
 
-export class FlowiseProvider implements ILLMProvider {
+export class FlowiseProvider implements ILLMProvider<any> {
   id = 'flowise';
   label = 'Flowise';
   type = 'llm' as const;

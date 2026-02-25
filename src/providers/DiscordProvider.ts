@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import type { IBotInfo } from '../types/botInfo';
 
-export class DiscordProvider implements IMessageProvider {
+export class DiscordProvider implements IMessageProvider<any> {
   id = 'discord';
   label = 'Discord';
   type = 'messenger' as const;

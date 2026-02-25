@@ -4,7 +4,7 @@ import slackConfig from '../config/slackConfig';
 import fs from 'fs';
 import path from 'path';
 
-export class SlackProvider implements IMessageProvider {
+export class SlackProvider implements IMessageProvider<any> {
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;

@@ -2,7 +2,7 @@ import { IMessageProvider } from '../types/IProvider';
 import { MattermostService } from '@hivemind/adapter-mattermost';
 import mattermostConfig from '../config/mattermostConfig';
 
-export class MattermostProvider implements IMessageProvider {
+export class MattermostProvider implements IMessageProvider<any> {
   id = 'mattermost';
   label = 'Mattermost';
   type = 'messenger' as const;

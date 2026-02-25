@@ -1,6 +1,6 @@
 const unitIntegrationProject = {
   displayName: 'unit-integration',
-  roots: ['<rootDir>/tests', '<rootDir>/packages'],
+  roots: ['<rootDir>/tests', '<rootDir>/packages', '<rootDir>/src'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   // testTimeout handled in setup files to avoid CLI conflicts
@@ -54,6 +54,7 @@ const unitIntegrationProject = {
     '/dist/',
     '/tests/e2e/',
     'tests/integrations/.*\.real\.test\.[tj]s$',
+    '/src/client/',
   ],
   transformIgnorePatterns: [
     '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid)',

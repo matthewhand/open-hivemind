@@ -1,7 +1,7 @@
 import { ILLMProvider } from '../types/IProvider';
 import openWebUIConfig from '../config/openWebUIConfig';
 
-export class OpenWebUIProvider implements ILLMProvider {
+export class OpenWebUIProvider implements ILLMProvider<any> {
   id = 'openwebui';
   label = 'OpenWebUI';
   type = 'llm' as const;

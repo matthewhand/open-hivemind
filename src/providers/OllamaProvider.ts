@@ -1,7 +1,7 @@
 import { ILLMProvider } from '../types/IProvider';
 import ollamaConfig from '../config/ollamaConfig';
 
-export class OllamaProvider implements ILLMProvider {
+export class OllamaProvider implements ILLMProvider<any> {
   id = 'ollama';
   label = 'Ollama';
   type = 'llm' as const;
