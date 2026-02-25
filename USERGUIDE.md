@@ -90,6 +90,9 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 
 ### [MCP Tools](/admin/mcp/tools)
 Browse and manage tools available from your connected MCP servers.
+
+![MCP Tools](docs/screenshots/mcp-tools.png)
+
 *   **Tool Registry**: View all available tools, their descriptions, and server origins.
 *   **Schema Inspection**: View input and output schemas for each tool.
 *   **Tool Execution**: Test tools directly by providing JSON arguments and viewing the output.

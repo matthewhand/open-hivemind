@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
-  WrenchScrewdriverIcon as ToolIcon,
-  PlayIcon as RunIcon,
-  MagnifyingGlassIcon as SearchIcon,
-} from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+  Wrench,
+  Play,
+  Search,
+} from 'lucide-react';
+import { Alert, Modal, PageHeader, EmptyState } from '../components/DaisyUI';
+import SearchFilterBar from '../components/SearchFilterBar';
 
 interface MCPTool {
   id: string;
@@ -29,11 +30,6 @@ const MCPToolsPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [serverFilter, setServerFilter] = useState('all');
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-
-  const breadcrumbItems = [
-    { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Tools', href: '/uber/mcp/tools', isActive: true },
-  ];
 
   useEffect(() => {
     const fetchTools = async () => {
@@ -201,149 +197,135 @@ const MCPToolsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
-        <p className="mt-2">Loading MCP tools...</p>
+      <div className="flex flex-col items-center justify-center p-12 gap-4">
+        <span className="loading loading-infinity loading-lg text-primary" />
+        <span className="text-base-content/50">Loading MCP tools...</span>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-4 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          MCP Tools
-        </h1>
-        <p className="text-base-content/70">
-          Browse and manage tools available from your MCP servers
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="MCP Tools"
+        description="Browse and manage tools available from your MCP servers"
+        icon={Wrench}
+      />
 
       {alert && (
-        <div className="mb-6">
-          <Alert
-            status={alert.type === 'success' ? 'success' : 'error'}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
-          <div className="input-group">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search tools..."
-                className="input input-bordered w-full pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
-            </div>
-          </div>
-        </div>
+      <SearchFilterBar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search tools..."
+        filters={[
+          {
+            key: 'category',
+            value: categoryFilter,
+            onChange: setCategoryFilter,
+            options: [
+              { value: 'all', label: 'All Categories' },
+              ...categories.map(category => ({
+                value: category,
+                label: category.charAt(0).toUpperCase() + category.slice(1)
+              }))
+            ]
+          },
+          {
+            key: 'server',
+            value: serverFilter,
+            onChange: setServerFilter,
+            options: [
+              { value: 'all', label: 'All Servers' },
+              ...servers.map(server => ({
+                value: server.id,
+                label: server.name
+              }))
+            ]
+          }
+        ]}
+      />
 
-        <select
-          className="select select-bordered w-full md:w-auto"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-        >
-          <option value="all">All Categories</option>
-          {categories.map(category => (
-            <option key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="select select-bordered w-full md:w-auto"
-          value={serverFilter}
-          onChange={(e) => setServerFilter(e.target.value)}
-        >
-          <option value="all">All Servers</option>
-          {servers.map(server => (
-            <option key={server.id} value={server.id}>
-              {server.name}
-            </option>
-          ))}
-        </select>
+      <div className="flex justify-between items-center text-sm text-base-content/70">
+        <p>Showing {filteredTools.length} of {tools.length} tools</p>
       </div>
 
-      <p className="text-sm text-base-content/70 mb-4">
-        Showing {filteredTools.length} of {tools.length} tools
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTools.map((tool) => (
-          <div key={tool.id} className="card bg-base-100 shadow-xl h-full">
-            <div className="card-body">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <ToolIcon className="w-5 h-5 text-base-content/70" />
-                  <h2 className="card-title text-lg">
-                    {tool.name}
-                  </h2>
+      {filteredTools.length === 0 ? (
+        <EmptyState
+            icon={Search}
+            title={tools.length === 0 ? "No tools found" : "No matches found"}
+            description={tools.length === 0 ? "Connect an MCP server to see available tools." : "Try adjusting your search or filters."}
+            actionLabel="Clear Search"
+            onAction={() => {
+                setSearchTerm('');
+                setCategoryFilter('all');
+                setServerFilter('all');
+            }}
+            variant={tools.length === 0 ? "noData" : "noResults"}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTools.map((tool) => (
+            <div key={tool.id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow h-full">
+                <div className="card-body">
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                    <Wrench className="w-5 h-5 text-primary" />
+                    <h2 className="card-title text-lg">
+                        {tool.name}
+                    </h2>
+                    </div>
+                    <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                    {tool.enabled ? 'Enabled' : 'Disabled'}
+                    </div>
                 </div>
-                <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
-                  {tool.enabled ? 'Enabled' : 'Disabled'}
+
+                <p className="text-sm text-base-content/70 mb-4 line-clamp-2 min-h-[40px]">
+                    {tool.description}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <div className={`badge ${getCategoryColor(tool.category)}`}>
+                    {tool.category}
+                    </div>
+                    <div className="badge badge-outline">{tool.serverName}</div>
                 </div>
-              </div>
 
-              <p className="text-sm text-base-content/70 mb-4">
-                {tool.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                <div className={`badge ${getCategoryColor(tool.category)}`}>
-                  {tool.category}
+                <div className="text-xs space-y-1 mb-4 bg-base-200/50 p-2 rounded">
+                    <p><strong>Usage:</strong> {tool.usageCount} times</p>
+                    {tool.lastUsed && (
+                    <p className="text-base-content/50">
+                        Last used: {new Date(tool.lastUsed).toLocaleString()}
+                    </p>
+                    )}
                 </div>
-                <div className="badge badge-outline">{tool.serverName}</div>
-              </div>
 
-              <div className="text-xs space-y-1 mb-4">
-                <p><strong>Usage:</strong> {tool.usageCount} times</p>
-                {tool.lastUsed && (
-                  <p className="text-base-content/50">
-                    Last used: {new Date(tool.lastUsed).toLocaleString()}
-                  </p>
-                )}
-              </div>
-
-              <div className="card-actions justify-between mt-auto">
-                <button
-                  className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
-                  onClick={() => handleToggleTool(tool.id)}
-                >
-                  {tool.enabled ? 'Disable' : 'Enable'}
-                </button>
-                <button
-                  className="btn btn-sm btn-primary"
-                  onClick={() => handleOpenRunModal(tool)}
-                  disabled={!tool.enabled}
-                >
-                  <RunIcon className="w-4 h-4 mr-1" />
-                  Run Tool
-                </button>
-              </div>
+                <div className="card-actions justify-between mt-auto">
+                    <button
+                    className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
+                    onClick={() => handleToggleTool(tool.id)}
+                    >
+                    {tool.enabled ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => handleOpenRunModal(tool)}
+                    disabled={!tool.enabled}
+                    >
+                    <Play className="w-4 h-4 mr-1" />
+                    Run Tool
+                    </button>
+                </div>
+                </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredTools.length === 0 && !loading && (
-        <div className="text-center mt-12">
-          <h3 className="text-lg font-medium text-base-content/70">
-            No tools found
-          </h3>
-          <p className="text-sm text-base-content/50 mt-1">
-            Try adjusting your search criteria or add more MCP servers
-          </p>
+            ))}
         </div>
       )}
 
@@ -352,6 +334,7 @@ const MCPToolsPage: React.FC = () => {
           isOpen={!!selectedTool}
           onClose={handleCloseRunModal}
           title={`Run Tool: ${selectedTool.name}`}
+          size="lg"
           actions={[
             {
               label: 'Cancel',
