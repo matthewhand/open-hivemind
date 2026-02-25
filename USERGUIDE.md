@@ -138,8 +138,10 @@ Download API specifications and system documentation.
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
 *   **Page Hierarchy**: See all available pages and their relationships.
-*   **Access Control**: Filter pages by public, authenticated, or owner access levels.
+*   **Search & Filter**: Find specific pages by URL or description, and filter by access level.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
+
+![Sitemap Page](docs/screenshots/sitemap-page.png)
 
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
