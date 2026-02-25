@@ -98,6 +98,9 @@ router.post('/', (req: Request, res: Response) => {
                 ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers)
                   ? { allowedUsers: guards.mcpGuard.allowedUsers }
                   : {}),
+                ...(guards.mcpGuard.allowedTools && Array.isArray(guards.mcpGuard.allowedTools)
+                  ? { allowedTools: guards.mcpGuard.allowedTools }
+                  : {}),
               }
             : { enabled: false, type: 'owner' },
         rateLimit:
@@ -115,6 +118,10 @@ router.post('/', (req: Request, res: Response) => {
                 strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
                   ? guards.contentFilter.strictness
                   : 'low',
+                ...(guards.contentFilter.blockedTerms &&
+                Array.isArray(guards.contentFilter.blockedTerms)
+                  ? { blockedTerms: guards.contentFilter.blockedTerms }
+                  : {}),
               }
             : { enabled: false, strictness: 'low' },
       },

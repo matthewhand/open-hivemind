@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
+import { logger } from '../utils/logger';
 
 interface MessageFlowEvent {
   id: string;
@@ -36,22 +37,22 @@ export const useWebSocket = () => {
     const newSocket = io('/webui');
     
     newSocket.on('connect', () => {
-      console.log('WebSocket connected');
+      logger.info('WebSocket connected');
       setConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+      logger.info('WebSocket disconnected');
       setConnected(false);
     });
 
     newSocket.on('messageFlowUpdate', (data: MessageFlowEvent[]) => {
-      console.log('Received message flow update:', data);
+      logger.debug('Received message flow update:', data);
       setMessages(data);
     });
 
     newSocket.on('performanceMetricsUpdate', (data: PerformanceMetric[]) => {
-      console.log('Received performance metrics update:', data);
+      logger.debug('Received performance metrics update:', data);
       setMetrics(data);
     });
 

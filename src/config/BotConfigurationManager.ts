@@ -799,12 +799,37 @@ export class BotConfigurationManager {
       ? mcpGuard.allowedUsers.filter(Boolean)
       : undefined;
 
+    const allowedTools = Array.isArray(mcpGuard.allowedTools)
+      ? mcpGuard.allowedTools.filter(Boolean)
+      : undefined;
+
     config.mcpGuard = {
       enabled: Boolean(mcpGuard.enabled),
       type: mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
       allowedUserIds: allowed,
+      allowedTools: allowedTools,
     } as McpGuardConfig;
+
+    // Access rateLimit from profile.guards.rateLimit
+    const rateLimit = profile.guards?.rateLimit;
+    if (rateLimit) {
+      config.rateLimit = {
+        enabled: Boolean(rateLimit.enabled),
+        maxRequests: rateLimit.maxRequests,
+        windowMs: rateLimit.windowMs,
+      };
+    }
+
+    // Access contentFilter from profile.guards.contentFilter
+    const contentFilter = profile.guards?.contentFilter;
+    if (contentFilter) {
+      config.contentFilter = {
+        enabled: Boolean(contentFilter.enabled),
+        strictness: contentFilter.strictness,
+        blockedTerms: contentFilter.blockedTerms,
+      };
+    }
   }
 
   private applyMcpServerProfile(config: BotConfig): void {
