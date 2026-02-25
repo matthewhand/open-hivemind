@@ -172,10 +172,20 @@ router.put(
         });
       }
 
+      // Get user with password hash for verification
+      const userWithHash = authManager.getUserWithHash(req.user.id);
+
+      if (!userWithHash || !userWithHash.passwordHash) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'User record incomplete or missing',
+        });
+      }
+
       // Verify current password
       const isValidCurrentPassword = await authManager.verifyPassword(
         currentPassword,
-        req.user.passwordHash || ''
+        userWithHash.passwordHash
       );
 
       if (!isValidCurrentPassword) {
