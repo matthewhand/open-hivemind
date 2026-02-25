@@ -45,6 +45,7 @@ describe('AdvancedMonitor', () => {
     monitor.stopMonitoring();
     (AdvancedMonitor as any).instance = null;
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   describe('Singleton Pattern', () => {
