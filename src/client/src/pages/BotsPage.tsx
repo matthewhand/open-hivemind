@@ -362,7 +362,8 @@ const BotsPage: React.FC = () => {
               icon={Bot}
               title="No bots configured"
               description="Create a bot configuration to get started"
-              actionLabel={<><Plus className="w-4 h-4 mr-2" /> Create Bot</>}
+              actionLabel="Create Bot"
+              actionIcon={Plus}
               onAction={() => setShowCreateModal(true)}
               variant="primary"
             />

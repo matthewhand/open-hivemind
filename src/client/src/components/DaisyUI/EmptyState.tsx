@@ -7,6 +7,7 @@ interface EmptyStateProps {
   title: string;
   description: string;
   actionLabel?: string | React.ReactNode;
+  actionIcon?: LucideIcon;
   onAction?: () => void;
   variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success';
   className?: string;
@@ -73,6 +74,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   actionLabel,
+  actionIcon: ActionIcon,
   onAction,
   variant = 'primary',
   className = '',
@@ -122,6 +124,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             variant={variant === 'primary' || variant === 'secondary' || variant === 'accent' ? variant : 'primary'}
             onClick={onAction}
             className={`gap-2 shadow-lg ${styles.buttonShadow} transition-shadow`}
+            startIcon={ActionIcon ? <ActionIcon className="w-4 h-4" /> : undefined}
           >
             {actionLabel}
           </Button>
