@@ -1,19 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
+import { Card, Badge, Button, Modal, Accordion, Progress } from './DaisyUI';
 import {
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-import type { Bot } from '../services/api';
+  RotateCw,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Bot,
+  MessageCircle,
+  Smartphone,
+  Wrench,
+  Activity,
+  Zap,
+  Clock,
+  Server
+} from 'lucide-react';
+import type { Bot as ApiBot } from '../services/api';
 
 interface BotStatusCardProps {
-  bot: Bot;
+  bot: ApiBot;
   statusData?: {
     status: string;
     healthDetails?: Record<string, unknown>;
@@ -40,15 +47,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'healthy':
+      return <CheckCircle className={`${className} text-success`} />;
     case 'error':
     case 'disconnected':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     case 'warning':
     case 'connecting':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -56,6 +64,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
+    case 'healthy':
       return 'success';
     case 'error':
     case 'disconnected':
@@ -69,15 +78,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   };
 
   const getProviderIcon = (provider: string) => {
+    const className = "w-6 h-6";
     switch (provider?.toLowerCase()) {
     case 'discord':
-      return '🤖';
+      return <Bot className={className} />;
     case 'slack':
-      return '💬';
+      return <MessageCircle className={className} />;
     case 'mattermost':
-      return '📱';
+      return <Smartphone className={className} />;
     default:
-      return '🔧';
+      return <Wrench className={className} />;
     }
   };
 
@@ -98,7 +108,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     if (!statusData) {return 0;}
 
     let score = 100;
-    if (statusData.status !== 'active') {score -= 30;}
+    if (statusData.status !== 'active' && statusData.status !== 'healthy') {score -= 30;}
     if (statusData.errorCount && statusData.errorCount > 0) {score -= 20;}
     if (statusData.responseTime && statusData.responseTime > 2000) {score -= 15;}
     if (!statusData.connected) {score -= 25;}
@@ -117,135 +127,140 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   return (
     <>
       <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-        <Card.Body>
-          {/* Header */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{getProviderIcon(bot.messageProvider)}</span>
-              <h3 className="text-lg font-bold">{bot.name}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              {getStatusIcon(statusData?.status || 'unknown')}
-              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
-                {statusData?.status || 'unknown'}
-              </Badge>
-            </div>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-primary">{getProviderIcon(bot.messageProvider)}</span>
+            <h3 className="text-lg font-bold">{bot.name}</h3>
           </div>
-
-          {/* Provider and LLM Info */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Badge variant="primary" size="sm">
-              Provider: {bot.messageProvider}
+          <div className="flex items-center gap-2">
+            {getStatusIcon(statusData?.status || 'unknown')}
+            <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
+              {statusData?.status || 'unknown'}
             </Badge>
-            <Badge variant="secondary" size="sm">
-              LLM: {bot.llmProvider}
+          </div>
+        </div>
+
+        {/* Provider and LLM Info */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <Badge variant="primary" size="sm">
+            Provider: {bot.messageProvider}
+          </Badge>
+          <Badge variant="secondary" size="sm">
+            LLM: {bot.llmProvider}
+          </Badge>
+          {bot.persona && (
+            <Badge variant="accent" size="sm">
+              Persona: {bot.persona}
             </Badge>
-            {bot.persona && (
-              <Badge variant="accent" size="sm">
-                Persona: {bot.persona}
-              </Badge>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Health Score */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-base-content/70">
-                Health Score
-              </span>
-              <span className="text-sm font-medium">
-                {healthScore}%
-              </span>
-            </div>
-            <Progress value={healthScore} variant={getHealthVariant(healthScore)} size="md" />
+        {/* Health Score */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-base-content/70">
+              Health Score
+            </span>
+            <span className="text-sm font-medium">
+              {healthScore}%
+            </span>
           </div>
+          <Progress value={healthScore} variant={getHealthVariant(healthScore)} size="md" />
+        </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-4 text-center">
-            <div>
-              <div className="text-xl font-bold text-primary">
-                {statusData?.messageCount || 0}
-              </div>
-              <div className="text-xs text-base-content/70">
-                Messages
-              </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-4 text-center">
+          <div>
+            <div className="text-xl font-bold text-primary flex justify-center">
+              {statusData?.messageCount || 0}
             </div>
-            <div>
-              <div className="text-xl font-bold text-error">
-                {statusData?.errorCount || 0}
-              </div>
-              <div className="text-xs text-base-content/70">
-                Errors
-              </div>
-            </div>
-            <div>
-              <div className="text-xl font-bold text-success">
-                {statusData?.connected ? '✓' : '✗'}
-              </div>
-              <div className="text-xs text-base-content/70">
-                Connected
-              </div>
+            <div className="text-xs text-base-content/70">
+              Messages
             </div>
           </div>
+          <div>
+            <div className="text-xl font-bold text-error flex justify-center">
+              {statusData?.errorCount || 0}
+            </div>
+            <div className="text-xs text-base-content/70">
+              Errors
+            </div>
+          </div>
+          <div>
+            <div className="text-xl font-bold text-success flex justify-center">
+              {statusData?.connected ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6 text-error" />}
+            </div>
+            <div className="text-xs text-base-content/70">
+              Connected
+            </div>
+          </div>
+        </div>
 
-          {/* Additional Info */}
-          <div className="mb-4 space-y-1">
-            <p className="text-sm text-base-content/70">
-              Response Time: {formatResponseTime(statusData?.responseTime || 0)}
+        {/* Additional Info */}
+        <div className="mb-4 space-y-1">
+          <p className="text-sm text-base-content/70 flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Response Time: {formatResponseTime(statusData?.responseTime || 0)}
+          </p>
+          <p className="text-sm text-base-content/70 flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Uptime: {formatUptime(statusData?.uptime || 0)}
+          </p>
+          {statusData?.lastActivity && (
+            <p className="text-sm text-base-content/70 flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
             </p>
-            <p className="text-sm text-base-content/70">
-              Uptime: {formatUptime(statusData?.uptime || 0)}
-            </p>
-            {statusData?.lastActivity && (
-              <p className="text-sm text-base-content/70">
-                Last Activity: {new Date(statusData.lastActivity).toLocaleString()}
-              </p>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="btn-outline flex items-center gap-2"
-              onClick={() => setDetailsOpen(true)}
-            >
-              <Cog6ToothIcon className="w-4 h-4" />
-              Details
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="btn-outline flex items-center gap-2"
-              onClick={() => {
-                setLoading(true);
-                setTimeout(() => {
-                  setLoading(false);
-                  if (onRefresh) {onRefresh();}
-                }, 1000);
-              }}
-              disabled={loading}
-            >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
-              Refresh
-            </Button>
-          </div>
-        </Card.Body>
+        {/* Action Buttons */}
+        <div className="flex gap-2 mt-auto">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="btn-outline flex items-center gap-2 flex-1"
+            onClick={() => setDetailsOpen(true)}
+          >
+            <Settings className="w-4 h-4" />
+            Details
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="btn-outline flex items-center gap-2 flex-1"
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => {
+                setLoading(false);
+                if (onRefresh) {onRefresh();}
+              }, 1000);
+            }}
+            disabled={loading}
+          >
+            {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCw className="w-4 h-4" />}
+            Refresh
+          </Button>
+        </div>
       </Card>
 
       {/* Detailed Information Modal */}
-      <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)}>
-        <Modal.Header>
-          Bot Details - {bot.name}
-        </Modal.Header>
-        <Modal.Body>
+      <Modal
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        title={`Bot Details - ${bot.name}`}
+        actions={[
+            { label: 'Close', onClick: () => setDetailsOpen(false), variant: 'primary' }
+        ]}
+      >
           <div className="space-y-2">
             {/* Basic Information */}
-            <Accordion defaultOpen>
+            <Accordion>
               <Accordion.Item value="basic">
                 <Accordion.Trigger>
                   <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4" />
                     <span>Basic Information</span>
                   </div>
                 </Accordion.Trigger>
@@ -275,9 +290,14 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             </Accordion>
 
             {/* Status Information */}
-            <Accordion defaultOpen>
+            <Accordion>
               <Accordion.Item value="status">
-                <Accordion.Trigger>Status Information</Accordion.Trigger>
+                <Accordion.Trigger>
+                    <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4" />
+                        <span>Status Information</span>
+                    </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     <div className="flex gap-4">
@@ -305,7 +325,12 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             {/* Performance Metrics */}
             <Accordion>
               <Accordion.Item value="performance">
-                <Accordion.Trigger>Performance Metrics</Accordion.Trigger>
+                <Accordion.Trigger>
+                    <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        <span>Performance Metrics</span>
+                    </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     <div className="flex gap-4">
@@ -359,7 +384,12 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             {/* Configuration */}
             <Accordion>
               <Accordion.Item value="config">
-                <Accordion.Trigger>Configuration</Accordion.Trigger>
+                <Accordion.Trigger>
+                    <div className="flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        <span>Configuration</span>
+                    </div>
+                </Accordion.Trigger>
                 <Accordion.Content>
                   <div className="space-y-3">
                     {bot.systemInstruction && (
@@ -383,12 +413,6 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               </Accordion.Item>
             </Accordion>
           </div>
-        </Modal.Body>
-        <Modal.Actions>
-          <Button onClick={() => setDetailsOpen(false)}>
-            Close
-          </Button>
-        </Modal.Actions>
       </Modal>
     </>
   );

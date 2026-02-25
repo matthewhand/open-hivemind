@@ -9,16 +9,17 @@ import {
   Divider,
 } from './DaisyUI';
 import {
-  ChevronDownIcon,
-  CpuChipIcon,
-  BoltIcon,
-  ServerIcon,
-  SignalIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+  CheckCircle,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  Cpu,
+  Zap,
+  HardDrive,
+  Wifi,
+  Activity,
+} from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface SystemHealthProps {
   refreshInterval?: number;
@@ -65,75 +66,69 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // Mock data for demonstration - in real implementation, this would come from API
   useEffect(() => {
-    const fetchSystemData = () => {
-      const mockMetrics: SystemMetrics = {
-        cpu: {
-          usage: Math.random() * 100,
-          cores: 8,
-          temperature: 45 + Math.random() * 20,
-        },
-        memory: {
-          used: Math.random() * 16 * 1024, // GB
-          total: 16 * 1024, // 16GB
-          usage: Math.random() * 100,
-        },
-        disk: {
-          used: Math.random() * 500, // GB
-          total: 500, // 500GB
-          usage: Math.random() * 100,
-        },
-        network: {
-          latency: 20 + Math.random() * 50, // ms
-          status: Math.random() > 0.9 ? 'slow' : Math.random() > 0.95 ? 'offline' : 'online',
-        },
-        uptime: Math.random() * 86400 * 7, // Up to 7 days
-        loadAverage: [Math.random() * 2, Math.random() * 2, Math.random() * 2],
-      };
+    const fetchSystemData = async () => {
+      try {
+        const [healthData, endpointsData] = await Promise.all([
+          apiService.getSystemHealth().catch(() => null),
+          apiService.getApiEndpointsStatus().catch(() => null)
+        ]);
 
-      const mockHealthChecks: HealthCheck[] = [
-        {
-          id: '1',
-          name: 'Database Connection',
-          status: 'healthy',
-          message: 'All database connections are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Discord API',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'High API response time detected' : 'Discord API is responding normally',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '3',
-          name: 'LLM Services',
-          status: Math.random() > 0.95 ? 'error' : Math.random() > 0.85 ? 'warning' : 'healthy',
-          message: Math.random() > 0.95 ? 'OpenAI API is currently unavailable' : Math.random() > 0.85 ? 'Some LLM providers experiencing issues' : 'All LLM services are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '4',
-          name: 'Message Queue',
-          status: 'healthy',
-          message: 'Message processing is running smoothly',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '5',
-          name: 'Cache System',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'Cache hit rate is below optimal' : 'Cache system is performing well',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-      ];
+        if (healthData) {
+          const newMetrics: SystemMetrics = {
+            cpu: {
+              usage: (healthData.cpu.user + healthData.cpu.system) || 0,
+              cores: 0, // Not available in API
+              temperature: 0, // Not available in API
+            },
+            memory: {
+              used: healthData.memory.used,
+              total: healthData.memory.total,
+              usage: healthData.memory.usage,
+            },
+            disk: {
+              used: 0, // Not available in API
+              total: 0, // Not available in API
+              usage: 0, // Not available in API
+            },
+            network: {
+              latency: 0, // Not available in API
+              status: endpointsData?.overall.status === 'healthy' ? 'online' : 'slow', // Infer from endpoints
+            },
+            uptime: healthData.uptime,
+            loadAverage: healthData.system.loadAverage || [],
+          };
+          setMetrics(newMetrics);
+        }
 
-      setMetrics(mockMetrics);
-      setHealthChecks(mockHealthChecks);
-      setLastRefresh(new Date());
-      setLoading(false);
+        if (endpointsData) {
+          const newChecks: HealthCheck[] = endpointsData.endpoints.map(e => ({
+            id: e.id,
+            name: e.name,
+            status: e.status === 'online' ? 'healthy' : e.status === 'error' ? 'error' : 'warning',
+            message: e.errorMessage || e.status,
+            lastChecked: e.lastChecked,
+          }));
+          setHealthChecks(newChecks);
+        } else {
+            // Fallback mock checks if API fails or is not configured
+            setHealthChecks([
+                {
+                  id: '1',
+                  name: 'System API',
+                  status: healthData ? 'healthy' : 'error',
+                  message: healthData ? 'System API responding' : 'System API unavailable',
+                  lastChecked: new Date().toISOString(),
+                }
+            ]);
+        }
+
+        setLastRefresh(new Date());
+      } catch (err) {
+        console.error('Failed to fetch system data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSystemData();
@@ -149,15 +144,15 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     switch (status) {
     case 'healthy':
     case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'warning':
     case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     case 'error':
     case 'offline':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      return <Info className={`${className} text-info`} />;
     }
   };
 
@@ -173,7 +168,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     case 'offline':
       return 'error';
     default:
-      return 'ghost';
+      return 'ghost'; // Using ghost as default, though 'info' might be safer for some components
     }
   };
 
@@ -188,6 +183,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   };
 
   const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     let value = bytes;
     let unitIndex = 0;
@@ -201,6 +197,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   };
 
   const formatLatency = (ms: number) => {
+    if (ms === 0) return '-';
     if (ms < 50) {return `${ms.toFixed(0)}ms`;}
     if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
@@ -220,14 +217,14 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   if (loading) {
     return (
       <Card>
-        <Card.Body>
+        <div className="card-body">
           <div className="flex justify-center items-center py-8">
             <span className="loading loading-spinner loading-lg"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>
           </div>
-        </Card.Body>
+        </div>
       </Card>
     );
   }
@@ -236,14 +233,14 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     {
       id: 'system-info',
       title: 'System Information',
-      icon: 'ℹ️',
+      icon: <Info className="w-5 h-5" />,
       content: (
         <div className="flex flex-wrap gap-4">
           <div className="min-w-[300px] flex-1">
             <h4 className="font-medium mb-2">Performance Metrics</h4>
-            <p className="text-sm">• CPU Load: {(metrics?.loadAverage[0] || 0).toFixed(2)} (1m), {(metrics?.loadAverage[1] || 0).toFixed(2)} (5m), {(metrics?.loadAverage[2] || 0).toFixed(2)} (15m)</p>
+            <p className="text-sm">• CPU Load: {(metrics?.loadAverage?.[0] || 0).toFixed(2)} (1m), {(metrics?.loadAverage?.[1] || 0).toFixed(2)} (5m), {(metrics?.loadAverage?.[2] || 0).toFixed(2)} (15m)</p>
             <p className="text-sm">• Memory Available: {formatBytes((metrics?.memory.total || 0) - (metrics?.memory.used || 0))}</p>
-            <p className="text-sm">• Disk Available: {formatBytes((metrics?.disk.total || 0) - (metrics?.disk.used || 0))}</p>
+            <p className="text-sm">• Disk Available: {metrics?.disk.total ? formatBytes((metrics?.disk.total || 0) - (metrics?.disk.used || 0)) : 'N/A'}</p>
           </div>
           <div className="min-w-[300px] flex-1">
             <h4 className="font-medium mb-2">Network Status</h4>
@@ -258,11 +255,11 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
 
   return (
     <Card>
-      <Card.Body>
+      <div className="card-body">
         <div className="flex justify-between items-center mb-6">
-          <Card.Title>
+          <h2 className="card-title">
             System Health Monitor
-          </Card.Title>
+          </h2>
           {lastRefresh && (
             <span className="text-sm text-base-content/70">
               Last updated: {lastRefresh.toLocaleTimeString()}
@@ -273,11 +270,10 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         {/* Overall Health Status */}
         <div className="mb-6">
           <Alert
-            variant={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
+            status={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
+            message={overallHealth.message}
             icon={getStatusIcon(overallHealth.status)}
-          >
-            {overallHealth.message}
-          </Alert>
+          />
         </div>
 
         {/* System Metrics */}
@@ -291,7 +287,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <BoltIcon className="w-5 h-5 mr-2" />
+                  <Zap className="w-5 h-5 mr-2" />
                   <span className="font-medium">CPU Usage</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -307,7 +303,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                   </span>
                 </div>
                 <span className="text-xs text-base-content/70 mt-1">
-                  {metrics?.cpu.cores} cores • {metrics?.cpu.temperature?.toFixed(0)}°C
+                  Load Average: {(metrics?.loadAverage?.[0] || 0).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -318,7 +314,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <CpuChipIcon className="w-5 h-5 mr-2" />
+                  <Cpu className="w-5 h-5 mr-2" />
                   <span className="font-medium">Memory Usage</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -340,39 +336,41 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             </div>
           </div>
 
-          {/* Disk Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <ServerIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Disk Usage</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.disk.usage || 0}
-                      max="100"
-                    ></progress>
+          {/* Disk Usage (Conditional) */}
+          {metrics?.disk.total ? (
+            <div className="min-w-[300px] flex-1">
+              <div className="card card-bordered border-base-300">
+                <div className="card-body p-4">
+                  <div className="flex items-center mb-2">
+                    <HardDrive className="w-5 h-5 mr-2" />
+                    <span className="font-medium">Disk Usage</span>
                   </div>
-                  <span className="text-sm">
-                    {(metrics?.disk.usage || 0).toFixed(1)}%
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <progress
+                        className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
+                        value={metrics?.disk.usage || 0}
+                        max="100"
+                      ></progress>
+                    </div>
+                    <span className="text-sm">
+                      {(metrics?.disk.usage || 0).toFixed(1)}%
+                    </span>
+                  </div>
+                  <span className="text-xs text-base-content/70 mt-1">
+                    {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
                   </span>
                 </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
-                </span>
               </div>
             </div>
-          </div>
+          ) : null}
 
           {/* Network Status */}
           <div className="min-w-[300px] flex-1">
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <SignalIcon className="w-5 h-5 mr-2" />
+                  <Wifi className="w-5 h-5 mr-2" />
                   <span className="font-medium">Network Status</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -399,13 +397,13 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
           Load Average
         </h3>
         <div className="flex gap-2 mb-6">
-          {metrics?.loadAverage.map((load, index) => (
+          {metrics?.loadAverage?.map((load, index) => (
             <Badge
               key={index}
               variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'success'}
               size="lg"
             >
-              {`${index + 1}m: ${load.toFixed(2)}`}
+              {`${index === 0 ? '1m' : index === 1 ? '5m' : '15m'}: ${load.toFixed(2)}`}
             </Badge>
           ))}
         </div>
@@ -445,11 +443,16 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               {index < healthChecks.length - 1 && <Divider className="my-0" />}
             </React.Fragment>
           ))}
+          {healthChecks.length === 0 && (
+            <li className="text-center py-4 text-base-content/50">
+              No health checks available
+            </li>
+          )}
         </ul>
 
         {/* Detailed Information */}
         <Accordion items={accordionItems} className="mt-4" />
-      </Card.Body>
+      </div>
     </Card>
   );
 };
