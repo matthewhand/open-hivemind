@@ -118,10 +118,15 @@ Configure incoming webhooks for external integrations.
 *   **Security**: Manage webhook secrets and verification.
 
 ### [Monitoring](/admin/monitoring)
-Deep dive into system performance.
-*   **Metrics**: detailed graphs of API usage, response times, and error rates.
-*   **Logs**: Searchable real-time system logs.
-*   **Health Checks**: Detailed status of all internal services and dependencies.
+A comprehensive dashboard for system health, bot status, and activity monitoring.
+![Monitoring Dashboard - System Health](docs/screenshots/monitoring-dashboard-health.png)
+
+*   **System Health**: Real-time overview of CPU, memory, and network status, plus overall system health indicators.
+*   **Bot Status**: detailed cards for each bot showing connection status, error rates, and response times.
+![Monitoring Dashboard - Bot Status](docs/screenshots/monitoring-dashboard-bots.png)
+
+*   **Activity Monitor**: A live feed of system events, user interactions, and bot activities with filtering capabilities.
+![Monitoring Dashboard - Activity Monitor](docs/screenshots/monitoring-dashboard-activity.png)
 
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.

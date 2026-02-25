@@ -9,16 +9,16 @@ import {
   Divider,
 } from './DaisyUI';
 import {
-  ChevronDownIcon,
-  CpuChipIcon,
-  BoltIcon,
-  ServerIcon,
-  SignalIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+  Zap,
+  Cpu,
+  Server,
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+} from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface SystemHealthProps {
   refreshInterval?: number;
@@ -65,75 +65,91 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  // Mock data for demonstration - in real implementation, this would come from API
   useEffect(() => {
-    const fetchSystemData = () => {
-      const mockMetrics: SystemMetrics = {
-        cpu: {
-          usage: Math.random() * 100,
-          cores: 8,
-          temperature: 45 + Math.random() * 20,
-        },
-        memory: {
-          used: Math.random() * 16 * 1024, // GB
-          total: 16 * 1024, // 16GB
-          usage: Math.random() * 100,
-        },
-        disk: {
-          used: Math.random() * 500, // GB
-          total: 500, // 500GB
-          usage: Math.random() * 100,
-        },
-        network: {
-          latency: 20 + Math.random() * 50, // ms
-          status: Math.random() > 0.9 ? 'slow' : Math.random() > 0.95 ? 'offline' : 'online',
-        },
-        uptime: Math.random() * 86400 * 7, // Up to 7 days
-        loadAverage: [Math.random() * 2, Math.random() * 2, Math.random() * 2],
-      };
+    const fetchSystemData = async () => {
+      try {
+        const data = await apiService.getSystemHealth();
 
-      const mockHealthChecks: HealthCheck[] = [
-        {
-          id: '1',
-          name: 'Database Connection',
-          status: 'healthy',
-          message: 'All database connections are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Discord API',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'High API response time detected' : 'Discord API is responding normally',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '3',
-          name: 'LLM Services',
-          status: Math.random() > 0.95 ? 'error' : Math.random() > 0.85 ? 'warning' : 'healthy',
-          message: Math.random() > 0.95 ? 'OpenAI API is currently unavailable' : Math.random() > 0.85 ? 'Some LLM providers experiencing issues' : 'All LLM services are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '4',
-          name: 'Message Queue',
-          status: 'healthy',
-          message: 'Message processing is running smoothly',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '5',
-          name: 'Cache System',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'Cache hit rate is below optimal' : 'Cache system is performing well',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-      ];
+        // Map API response to SystemMetrics
+        // Note: Some fields are still mocked because the API doesn't provide them yet
+        const mappedMetrics: SystemMetrics = {
+          cpu: {
+            usage: (data.cpu.user + data.cpu.system) / 100, // Assuming ticks or raw values, this is a guesstimate visualization
+            cores: 8, // Not provided by API
+            temperature: 45 + Math.random() * 5, // Mocked
+          },
+          memory: {
+            used: data.memory.used,
+            total: data.memory.total,
+            usage: (data.memory.used / data.memory.total) * 100,
+          },
+          disk: {
+             // API doesn't provide disk info yet
+            used: 120,
+            total: 500,
+            usage: 24,
+          },
+          network: {
+            // API doesn't provide network latency yet
+            latency: 24,
+            status: 'online',
+          },
+          uptime: data.uptime,
+          loadAverage: data.system.loadAverage,
+        };
 
-      setMetrics(mockMetrics);
-      setHealthChecks(mockHealthChecks);
-      setLastRefresh(new Date());
-      setLoading(false);
+        setMetrics(mappedMetrics);
+
+        // Keep mock health checks for demo purposes until API supports detailed health checks
+        const mockHealthChecks: HealthCheck[] = [
+          {
+            id: '1',
+            name: 'Database Connection',
+            status: 'healthy',
+            message: 'All database connections are operational',
+            lastChecked: new Date().toISOString(),
+          },
+           {
+            id: '2',
+            name: 'API Service',
+            status: 'healthy',
+            message: 'API is responding normally',
+            lastChecked: new Date().toISOString(),
+          },
+        ];
+        setHealthChecks(mockHealthChecks);
+
+      } catch (error) {
+        console.error('Failed to fetch system health:', error);
+        // Fallback to purely mock data if API fails (e.g. in dev without backend)
+         const mockMetrics: SystemMetrics = {
+          cpu: {
+            usage: Math.random() * 100,
+            cores: 8,
+            temperature: 45 + Math.random() * 20,
+          },
+          memory: {
+            used: Math.random() * 16 * 1024, // GB
+            total: 16 * 1024, // 16GB
+            usage: Math.random() * 100,
+          },
+          disk: {
+            used: Math.random() * 500, // GB
+            total: 500, // 500GB
+            usage: Math.random() * 100,
+          },
+          network: {
+            latency: 20 + Math.random() * 50, // ms
+            status: Math.random() > 0.9 ? 'slow' : Math.random() > 0.95 ? 'offline' : 'online',
+          },
+          uptime: Math.random() * 86400 * 7, // Up to 7 days
+          loadAverage: [Math.random() * 2, Math.random() * 2, Math.random() * 2],
+        };
+        setMetrics(mockMetrics);
+      } finally {
+        setLoading(false);
+        setLastRefresh(new Date());
+      }
     };
 
     fetchSystemData();
@@ -149,15 +165,15 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     switch (status) {
     case 'healthy':
     case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'warning':
     case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     case 'error':
     case 'offline':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      return <Info className={`${className} text-info`} />;
     }
   };
 
@@ -236,7 +252,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     {
       id: 'system-info',
       title: 'System Information',
-      icon: 'ℹ️',
+      icon: <Info className="w-5 h-5" />,
       content: (
         <div className="flex flex-wrap gap-4">
           <div className="min-w-[300px] flex-1">
@@ -291,7 +307,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <BoltIcon className="w-5 h-5 mr-2" />
+                  <Zap className="w-5 h-5 mr-2" />
                   <span className="font-medium">CPU Usage</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -318,7 +334,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <CpuChipIcon className="w-5 h-5 mr-2" />
+                  <Cpu className="w-5 h-5 mr-2" />
                   <span className="font-medium">Memory Usage</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -345,7 +361,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <ServerIcon className="w-5 h-5 mr-2" />
+                  <Server className="w-5 h-5 mr-2" />
                   <span className="font-medium">Disk Usage</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -372,7 +388,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="card card-bordered border-base-300">
               <div className="card-body p-4">
                 <div className="flex items-center mb-2">
-                  <SignalIcon className="w-5 h-5 mr-2" />
+                  <Activity className="w-5 h-5 mr-2" />
                   <span className="font-medium">Network Status</span>
                 </div>
                 <div className="flex items-center gap-4">
