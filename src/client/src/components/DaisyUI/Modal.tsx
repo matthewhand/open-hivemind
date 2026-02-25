@@ -59,10 +59,19 @@ const Modal: React.FC<ModalProps> = ({
     const modal = modalRef.current;
     if (!modal) {return;}
 
+    // Check if JSDOM-mocked methods exist before calling
     if (isOpen) {
-      modal.showModal();
+      if (typeof modal.showModal === 'function') {
+        modal.showModal();
+      } else {
+        modal.setAttribute('open', 'true');
+      }
     } else {
-      modal.close();
+      if (typeof modal.close === 'function') {
+        modal.close();
+      } else {
+        modal.removeAttribute('open');
+      }
     }
   }, [isOpen]);
 

@@ -12,35 +12,44 @@ global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
 
 // Polyfill HTMLDialogElement for JSDOM environments that don't support it
-if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
-  class HTMLDialogElement extends HTMLElement {
-    open = false;
-    returnValue = '';
+if (typeof window !== 'undefined') {
+  // Ensure HTMLDialogElement exists on window
+  if (!window.HTMLDialogElement) {
+    class HTMLDialogElement extends HTMLElement {
+      open = false;
+      returnValue = '';
 
-    show() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
+      show() {
+        this.open = true;
+        this.setAttribute('open', '');
+      }
 
-    showModal() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
+      showModal() {
+        this.open = true;
+        this.setAttribute('open', '');
+      }
 
-    close() {
-      this.open = false;
-      this.removeAttribute('open');
-      this.dispatchEvent(new Event('close'));
+      close() {
+        this.open = false;
+        this.removeAttribute('open');
+        this.dispatchEvent(new Event('close'));
+      }
     }
+    (window as any).HTMLDialogElement = HTMLDialogElement;
   }
-  (window as any).HTMLDialogElement = HTMLDialogElement;
 }
 
-// Mock HTMLDialogElement methods if prototype exists
-if (typeof HTMLDialogElement !== 'undefined') {
-  if (!HTMLDialogElement.prototype.show) HTMLDialogElement.prototype.show = jest.fn();
-  if (!HTMLDialogElement.prototype.showModal) HTMLDialogElement.prototype.showModal = jest.fn();
-  if (!HTMLDialogElement.prototype.close) HTMLDialogElement.prototype.close = jest.fn();
+// Ensure the prototype methods are mocked if they exist or are added
+if (typeof window !== 'undefined' && (window as any).HTMLDialogElement) {
+    if (!(window as any).HTMLDialogElement.prototype.show) {
+        (window as any).HTMLDialogElement.prototype.show = function() { this.open = true; this.setAttribute('open', ''); };
+    }
+    if (!(window as any).HTMLDialogElement.prototype.showModal) {
+        (window as any).HTMLDialogElement.prototype.showModal = function() { this.open = true; this.setAttribute('open', ''); };
+    }
+    if (!(window as any).HTMLDialogElement.prototype.close) {
+        (window as any).HTMLDialogElement.prototype.close = function() { this.open = false; this.removeAttribute('open'); };
+    }
 }
 
 // Mock IntersectionObserver

@@ -262,9 +262,10 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
-    cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
-  };
+  // Safe access to metrics
+  const currentMetric = (performanceMetrics && performanceMetrics.length > 0)
+    ? performanceMetrics[performanceMetrics.length - 1]
+    : { cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0 };
 
   const systemMetricsCards = [
     {
