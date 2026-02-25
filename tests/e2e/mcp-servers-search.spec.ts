@@ -1,9 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  assertNoErrors,
-  navigateAndWaitReady,
-  setupTestWithErrorDetection,
-} from './test-utils';
+import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('MCP Servers Search and Filter', () => {
   test.setTimeout(60000);
@@ -34,29 +30,53 @@ test.describe('MCP Servers Search and Filter', () => {
   test.beforeEach(async ({ page }) => {
     // Mock common API endpoints to prevent 404s/errors from Layout components
     await page.route('**/api/config/global', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
     });
 
     await page.route('**/api/personas', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
     });
 
     await page.route('**/api/config/llm-profiles', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: { llm: [] } }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ profiles: { llm: [] } }),
+      });
     });
 
     await page.route('**/api/config/llm-status', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+        }),
+      });
     });
 
     await page.route('**/api/notifications', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
     });
 
     // Catch-all for other API requests to avoid network errors
     await page.route('**/api/**', async (route) => {
-       const url = route.request().url();
-       await route.continue();
+      const url = route.request().url();
+      await route.continue();
     });
   });
 
@@ -112,7 +132,7 @@ test.describe('MCP Servers Search and Filter', () => {
   });
 
   test('should show empty state when no servers exist', async ({ page }) => {
-     const errors = await setupTestWithErrorDetection(page);
+    const errors = await setupTestWithErrorDetection(page);
 
     // Mock API with empty list
     await page.route('**/api/admin/mcp-servers', async (route) => {
@@ -129,7 +149,9 @@ test.describe('MCP Servers Search and Filter', () => {
 
     // Scope the button check to the empty state container to avoid ambiguity
     // with the page header "Add Server" button
-    await expect(page.getByTestId('empty-state').getByRole('button', { name: 'Add Server' })).toBeVisible();
+    await expect(
+      page.getByTestId('empty-state').getByRole('button', { name: 'Add Server' })
+    ).toBeVisible();
 
     await assertNoErrors(errors, 'MCP Servers Empty State');
   });

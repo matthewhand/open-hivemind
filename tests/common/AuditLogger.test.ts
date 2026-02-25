@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { AuditLogger, AuditEvent } from '../../src/common/auditLogger';
+import { AuditEvent, AuditLogger } from '../../src/common/auditLogger';
 
 describe('AuditLogger', () => {
   const tmpDir = path.join(__dirname, 'tmp_audit_test');
@@ -30,10 +30,10 @@ describe('AuditLogger', () => {
     }
     // Clean up rotated files
     for (let i = 1; i <= 5; i++) {
-        const rotatedFile = `${logFile}.${i}`;
-        if (fs.existsSync(rotatedFile)) {
-            fs.unlinkSync(rotatedFile);
-        }
+      const rotatedFile = `${logFile}.${i}`;
+      if (fs.existsSync(rotatedFile)) {
+        fs.unlinkSync(rotatedFile);
+      }
     }
 
     logger = AuditLogger.getInstance();

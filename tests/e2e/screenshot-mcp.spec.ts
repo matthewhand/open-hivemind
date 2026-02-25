@@ -56,16 +56,19 @@ test.describe('MCP Servers Screenshots', () => {
                 serverUrl: 'http://localhost:3000',
                 connected: true,
                 tools: [
-                    {
-                        name: 'read_file',
-                        description: 'Reads a file from the filesystem.',
-                        inputSchema: { type: 'object', properties: { path: { type: 'string' } } }
+                  {
+                    name: 'read_file',
+                    description: 'Reads a file from the filesystem.',
+                    inputSchema: { type: 'object', properties: { path: { type: 'string' } } },
+                  },
+                  {
+                    name: 'write_file',
+                    description: 'Writes content to a file.',
+                    inputSchema: {
+                      type: 'object',
+                      properties: { path: { type: 'string' }, content: { type: 'string' } },
                     },
-                    {
-                        name: 'write_file',
-                        description: 'Writes content to a file.',
-                        inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } } }
-                    }
+                  },
                 ],
                 lastConnected: new Date().toISOString(),
                 description: 'Allows access to the local filesystem for reading and writing files.',
@@ -111,7 +114,9 @@ test.describe('MCP Servers Screenshots', () => {
     await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
 
     // Wait for modal to be visible and check for tool name
-    const toolsModal = page.locator('.modal-box').filter({ hasText: 'Tools provided by Filesystem Server' });
+    const toolsModal = page
+      .locator('.modal-box')
+      .filter({ hasText: 'Tools provided by Filesystem Server' });
     await expect(toolsModal).toBeVisible();
     await expect(toolsModal.getByText('read_file')).toBeVisible();
 

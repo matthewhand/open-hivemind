@@ -4,8 +4,8 @@ import {
   csrfProtection,
   csrfTokenHandler,
   generateCsrfToken,
-  stopTokenCleanup,
   getSessionId,
+  stopTokenCleanup,
 } from '../../../src/server/middleware/csrf';
 
 describe('CSRF Middleware', () => {
@@ -215,7 +215,11 @@ describe('CSRF Middleware', () => {
       const res1 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
       const sid1 = getSessionId(req1, res1);
 
-      const req2 = { ...mockReq, cookies: { '_csrf_sid': sid1 }, headers: { ...mockReq.headers } } as unknown as Request;
+      const req2 = {
+        ...mockReq,
+        cookies: { _csrf_sid: sid1 },
+        headers: { ...mockReq.headers },
+      } as unknown as Request;
       const res2 = { ...mockRes, cookie: jest.fn() } as unknown as Response;
       const sid2 = getSessionId(req2, res2);
 

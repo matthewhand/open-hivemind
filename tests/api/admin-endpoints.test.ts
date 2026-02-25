@@ -13,6 +13,8 @@ import request from 'supertest';
 import { authenticate, requireAdmin } from '../../src/auth/middleware';
 import { AuthMiddlewareRequest } from '../../src/auth/types';
 import { MCPService } from '../../src/mcp/MCPService';
+import adminRouter from '../../src/server/routes/admin';
+import { webUIStorage } from '../../src/storage/webUIStorage';
 
 // Mock WebUIStorage
 jest.mock('../../src/storage/webUIStorage', () => ({
@@ -29,11 +31,8 @@ jest.mock('../../src/storage/webUIStorage', () => ({
     deleteLlmProvider: jest.fn(),
     saveMessengerProvider: jest.fn(),
     deleteMessengerProvider: jest.fn(),
-  }
+  },
 }));
-
-import { webUIStorage } from '../../src/storage/webUIStorage';
-import adminRouter from '../../src/server/routes/admin';
 
 // Mock the authentication middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -333,8 +332,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should disconnect AND delete an MCP server', async () => {
       const serverName = 'delete-test';
 
-      const response = await request(app)
-        .delete(`/api/admin/mcp-servers/${serverName}`);
+      const response = await request(app).delete(`/api/admin/mcp-servers/${serverName}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);

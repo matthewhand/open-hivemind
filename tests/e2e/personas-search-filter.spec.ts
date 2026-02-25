@@ -34,7 +34,7 @@ test.describe('Personas Search and Filter', () => {
       isBuiltIn: false,
       assignedBotNames: [],
       assignedBotIds: [],
-    }
+    },
   ];
 
   test.beforeEach(async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('Personas Search and Filter', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ bots: [] })
+        body: JSON.stringify({ bots: [] }),
       });
     });
 
@@ -51,7 +51,7 @@ test.describe('Personas Search and Filter', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(mockPersonas)
+        body: JSON.stringify(mockPersonas),
       });
     });
   });
