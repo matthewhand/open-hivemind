@@ -1,119 +1,123 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Table } from './DaisyUI';
+import { Card, Badge, Button, Alert, Table, StatsCards } from './DaisyUI';
 import {
-  BoltIcon,
-  ServerIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline';
-
-export interface ActivityEvent {
-  id: string;
-  timestamp: Date;
-  type: 'bot' | 'user' | 'system' | 'error';
-  message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  duration?: number;
-}
-
-const mockEvents: ActivityEvent[] = [
-  {
-    id: '1',
-    timestamp: new Date(),
-    type: 'bot',
-    message: 'Bot configuration updated successfully',
-    severity: 'low',
-    duration: 120,
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 60000),
-    type: 'user',
-    message: 'User login from new device',
-    severity: 'medium',
-    duration: 300,
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 180000),
-    type: 'system',
-    message: 'Database backup completed',
-    severity: 'low',
-    duration: 5000,
-  },
-];
+  Activity,
+  Bot,
+  User,
+  Server,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  Pause,
+  Play,
+  BarChart2
+} from 'lucide-react';
+import { apiService, ActivityEvent as ApiActivityEvent } from '../services/api';
 
 const ActivityMonitor: React.FC = () => {
-  const [events, setEvents] = useState<ActivityEvent[]>(mockEvents);
-  const [filter, setFilter] = useState<string>('all');
+  const [events, setEvents] = useState<ApiActivityEvent[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchActivity = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getActivity();
+      setEvents(data.events || []);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch activity:', err);
+      // specific error message handled in UI
+      // Keep existing events if fail
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!isMonitoring) { return; }
+    fetchActivity();
 
-    const interval = setInterval(() => {
-      const newEvent: ActivityEvent = {
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        type: (['bot', 'user', 'system', 'error'] as const)[Math.floor(Math.random() * 4)],
-        message: `System activity detected at ${new Date().toLocaleTimeString()}`,
-        severity: (['low', 'medium', 'high', 'critical'] as const)[Math.floor(Math.random() * 4)],
-        duration: Math.floor(Math.random() * 1000) + 50,
-      };
-      setEvents(prev => [newEvent, ...prev].slice(0, 50));
-    }, 5000);
-
-    return () => clearInterval(interval);
+    if (isMonitoring) {
+        const interval = setInterval(fetchActivity, 5000);
+        return () => clearInterval(interval);
+    }
   }, [isMonitoring]);
 
-  const filteredEvents = events.filter(event =>
-    filter === 'all' || event.type === filter,
-  );
-
-  const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
-    switch (severity) {
-      case 'critical': return 'error';
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
+  const getSeverityColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
+    switch (status) {
+      case 'error': return 'error';
+      case 'timeout': return 'warning';
+      case 'success': return 'success';
       default: return 'info';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'bot': return '🤖';
-      case 'user': return '👤';
-      case 'system': return '⚙️';
-      case 'error': return '❌';
-      default: return '📝';
+      case 'outgoing': return <Bot className="w-4 h-4" />;
+      case 'incoming': return <User className="w-4 h-4" />;
+      default: return <Server className="w-4 h-4" />;
     }
   };
 
-  const recentEvents = events.filter(e =>
-    e.timestamp > new Date(Date.now() - 300000),
-  );
+  const stats = [
+      {
+          id: 'total',
+          title: 'Total Events',
+          value: events.length,
+          icon: <Activity className="w-8 h-8"/>,
+          color: 'primary' as const
+      },
+      {
+          id: 'bot',
+          title: 'Bot Responses',
+          value: events.filter(e => e.messageType === 'outgoing').length,
+          icon: <Bot className="w-8 h-8"/>,
+          color: 'secondary' as const
+      },
+      {
+          id: 'user',
+          title: 'User Messages',
+          value: events.filter(e => e.messageType === 'incoming').length,
+          icon: <User className="w-8 h-8"/>,
+          color: 'accent' as const
+      },
+      {
+          id: 'errors',
+          title: 'Errors',
+          value: events.filter(e => e.status === 'error' || e.status === 'timeout').length,
+          icon: <AlertCircle className="w-8 h-8"/>,
+          color: 'error' as const
+      }
+  ];
 
   return (
     <div className="w-full space-y-6">
-      <Card className="shadow-lg border-l-4 border-info">
-        <div className="card-body">
+      <Card className="shadow-sm border border-base-200">
+        <div className="card-body p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <BoltIcon className="w-8 h-8 text-info" />
+              <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                  <Activity className="w-6 h-6" />
+              </div>
               <div>
-                <h2 className="card-title text-2xl">Activity Monitor</h2>
+                <h2 className="card-title text-lg">Live Activity Feed</h2>
                 <p className="text-sm opacity-70">Real-time system activity tracking</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={isMonitoring ? 'success' : 'neutral'} size="lg">
+              <Badge variant={isMonitoring ? 'success' : 'neutral'} size="lg" className="gap-1">
+                {isMonitoring ? <Activity className="w-3 h-3 animate-pulse"/> : <Pause className="w-3 h-3"/>}
                 {isMonitoring ? 'Live' : 'Paused'}
               </Badge>
               <Button
+                size="sm"
                 onClick={() => setIsMonitoring(!isMonitoring)}
-                className={`btn-${isMonitoring ? 'error' : 'success'}`}
+                className={`btn-${isMonitoring ? 'error' : 'success'} btn-outline`}
               >
+                {isMonitoring ? <Pause className="w-4 h-4"/> : <Play className="w-4 h-4"/>}
                 {isMonitoring ? 'Pause' : 'Resume'}
               </Button>
             </div>
@@ -122,131 +126,63 @@ const ActivityMonitor: React.FC = () => {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <BoltIcon className="w-8 h-8 mx-auto text-primary mb-2" />
-            <div className="text-2xl font-bold">{events.length}</div>
-            <p className="text-sm opacity-70">Total Events</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ServerIcon className="w-8 h-8 mx-auto text-info mb-2" />
-            <div className="text-2xl font-bold">{events.filter(e => e.type === 'bot').length}</div>
-            <p className="text-sm opacity-70">Bot Activities</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <UserGroupIcon className="w-8 h-8 mx-auto text-warning mb-2" />
-            <div className="text-2xl font-bold">{events.filter(e => e.type === 'user').length}</div>
-            <p className="text-sm opacity-70">User Activities</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ChartBarIcon className="w-8 h-8 mx-auto text-success mb-2" />
-            <div className="text-2xl font-bold">{recentEvents.length}</div>
-            <p className="text-sm opacity-70">Last 5 min</p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="shadow">
-        <div className="card-body">
-          <div className="flex items-center gap-4">
-            <span className="font-semibold">Filter:</span>
-            <div className="btn-group">
-              <Button
-                className={`btn-${filter === 'all' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('all')}
-              >
-                All
-              </Button>
-              <Button
-                className={`btn-${filter === 'bot' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('bot')}
-              >
-                Bot
-              </Button>
-              <Button
-                className={`btn-${filter === 'user' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('user')}
-              >
-                User
-              </Button>
-              <Button
-                className={`btn-${filter === 'system' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('system')}
-              >
-                System
-              </Button>
-              <Button
-                className={`btn-${filter === 'error' ? 'active' : 'ghost'}`}
-                onClick={() => setFilter('error')}
-              >
-                Error
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
+      <StatsCards stats={stats} isLoading={loading && events.length === 0} />
 
       {/* Activity Table */}
-      <Card className="shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Recent Activity</h3>
+      <Card className="shadow-sm border border-base-200">
+        <div className="card-body p-0">
           <div className="overflow-x-auto">
-            <Table className="table table-zebra table-compact">
+            <Table className="table table-zebra w-full">
               <thead>
                 <tr>
                   <th>Time</th>
                   <th>Type</th>
-                  <th>Message</th>
-                  <th>Severity</th>
+                  <th>Bot / Provider</th>
+                  <th>Status</th>
                   <th>Duration</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredEvents.slice(0, 20).map((event) => (
-                  <tr key={event.id}>
-                    <td className="text-sm opacity-70">
-                      {event.timestamp.toLocaleTimeString()}
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span>{getTypeIcon(event.type)}</span>
-                        <span className="capitalize">{event.type}</span>
-                      </div>
-                    </td>
-                    <td className="max-w-xs truncate">{event.message}</td>
-                    <td>
-                      <Badge variant={getSeverityColor(event.severity)} size="sm">
-                        {event.severity}
-                      </Badge>
-                    </td>
-                    <td className="text-sm">
-                      {event.duration ? `${event.duration}ms` : '-'}
-                    </td>
-                  </tr>
-                ))}
+                {events.length === 0 ? (
+                    <tr>
+                        <td colSpan={5} className="text-center py-8 text-base-content/50">
+                            No recent activity found
+                        </td>
+                    </tr>
+                ) : (
+                    events.slice(0, 20).map((event) => (
+                    <tr key={event.id}>
+                        <td className="text-sm opacity-70 font-mono">
+                        {new Date(event.timestamp).toLocaleTimeString()}
+                        </td>
+                        <td>
+                        <div className="flex items-center gap-2">
+                            <span className="p-1 bg-base-200 rounded">{getTypeIcon(event.messageType)}</span>
+                            <span className="capitalize text-sm font-medium">{event.messageType}</span>
+                        </div>
+                        </td>
+                        <td>
+                            <div className="flex flex-col">
+                                <span className="font-medium text-sm">{event.botName}</span>
+                                <span className="text-xs opacity-70">{event.provider} / {event.llmProvider}</span>
+                            </div>
+                        </td>
+                        <td>
+                        <Badge variant={getSeverityColor(event.status)} size="sm">
+                            {event.status}
+                        </Badge>
+                        </td>
+                        <td className="text-sm font-mono">
+                        {event.processingTime ? `${event.processingTime}ms` : '-'}
+                        </td>
+                    </tr>
+                    ))
+                )}
               </tbody>
             </Table>
           </div>
         </div>
       </Card>
-
-      {isMonitoring && (
-        <Alert variant="info" className="flex items-center gap-3">
-          <BoltIcon className="w-5 h-5 animate-pulse" />
-          <div>
-            <p className="font-medium">Live monitoring active</p>
-            <p className="text-sm opacity-70">Real-time events being captured</p>
-          </div>
-        </Alert>
-      )}
     </div>
   );
 };

@@ -2,11 +2,11 @@ import React from 'react';
 
 export interface BadgeProps {
   /** The content to display inside the badge */
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /** Color variant of the badge */
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'neutral';
+  variant?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'ghost';
   /** Size of the badge */
-  size?: 'small' | 'normal' | 'large';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Style variant - solid or outline */
   style?: 'solid' | 'outline';
   /** Optional icon to display before the content */
@@ -24,7 +24,7 @@ export interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({
   children,
   variant = 'neutral',
-  size = 'normal',
+  size = 'md',
   style = 'solid',
   icon,
   avatar,
@@ -42,8 +42,9 @@ export const Badge: React.FC<BadgeProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-    case 'small': return 'badge-xs';
-    case 'large': return 'badge-lg';
+    case 'xs': return 'badge-xs';
+    case 'sm': return 'badge-sm';
+    case 'lg': return 'badge-lg';
     default: return 'badge-md';
     }
   };
