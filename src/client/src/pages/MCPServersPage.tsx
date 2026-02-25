@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search } from 'lucide-react';
+import { Server, Search, Wrench } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -20,6 +20,7 @@ interface MCPServer {
   status: 'running' | 'stopped' | 'error';
   description: string;
   toolCount: number;
+  tools?: any[];
   lastConnected?: string;
   apiKey?: string;
 }
@@ -41,6 +42,7 @@ const MCPServersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
+  const [viewToolsServer, setViewToolsServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -74,6 +76,7 @@ const MCPServersPage: React.FC = () => {
         status: server.connected ? 'running' : 'stopped',
         description: server.description || '',
         toolCount: server.tools?.length || 0,
+        tools: server.tools || [],
         lastConnected: server.lastConnected,
       }));
 
@@ -386,6 +389,13 @@ const MCPServersPage: React.FC = () => {
                 <div className="flex gap-1">
                   <button
                     className="btn btn-ghost btn-sm btn-circle"
+                    onClick={() => setViewToolsServer(server)}
+                    title="View Tools"
+                  >
+                    <Wrench className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm btn-circle"
                     onClick={() => handleEditServer(server)}
                     title="Edit Server"
                   >
@@ -545,6 +555,40 @@ const MCPServersPage: React.FC = () => {
           <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
           </button>
+        </div>
+      </Modal>
+
+      {/* View Tools Modal */}
+      <Modal
+        isOpen={!!viewToolsServer}
+        onClose={() => setViewToolsServer(null)}
+        title={`Tools: ${viewToolsServer?.name}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {!viewToolsServer?.tools || viewToolsServer.tools.length === 0 ? (
+            <div className="text-center py-12 opacity-50">
+              <Wrench className="w-12 h-12 mx-auto mb-2 opacity-20" />
+              <p>No tools available for this server.</p>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              {viewToolsServer.tools.map((tool: any, idx: number) => (
+                <div key={idx} className="bg-base-200 p-3 rounded-lg border border-base-300">
+                  <div className="font-bold text-primary flex items-center gap-2">
+                    <Wrench className="w-4 h-4 opacity-70" />
+                    {tool.name}
+                  </div>
+                  {tool.description && (
+                    <p className="text-sm text-base-content/70 mt-1">{tool.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="modal-action">
+          <button className="btn" onClick={() => setViewToolsServer(null)}>Close</button>
         </div>
       </Modal>
     </div>

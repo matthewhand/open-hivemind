@@ -55,7 +55,10 @@ test.describe('MCP Servers Screenshots', () => {
                 name: 'Filesystem Server',
                 serverUrl: 'http://localhost:3000',
                 connected: true,
-                tools: [{ name: 'read_file' }, { name: 'write_file' }],
+                tools: [
+                  { name: 'read_file', description: 'Reads a file from the filesystem' },
+                  { name: 'write_file', description: 'Writes content to a file on the filesystem' }
+                ],
                 lastConnected: new Date().toISOString(),
                 description: 'Allows access to the local filesystem for reading and writing files.',
               },
@@ -100,9 +103,23 @@ test.describe('MCP Servers Screenshots', () => {
     await page.getByRole('button', { name: 'Add Server' }).first().click();
 
     // Wait for modal to be visible
-    await expect(page.locator('.modal-box')).toBeVisible();
+    const addModal = page.locator('.modal-box').filter({ hasText: 'Add MCP Server' });
+    await expect(addModal).toBeVisible();
 
     // Take screenshot of the modal
     await page.screenshot({ path: 'docs/screenshots/mcp-add-server-modal.png' });
+
+    // Close the modal
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Click "View Tools" button for the first server
+    // The "View Tools" button has title="View Tools"
+    await page.locator('button[title="View Tools"]').first().click();
+
+    // Wait for modal
+    await expect(page.getByText('Tools: Filesystem Server')).toBeVisible();
+
+    // Take screenshot of the tools modal
+    await page.screenshot({ path: 'docs/screenshots/mcp-server-tools-modal.png' });
   });
 });
