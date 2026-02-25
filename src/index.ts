@@ -45,11 +45,6 @@ import { reloadGlobalConfigs } from './server/routes/config';
 
 require('dotenv/config');
 
-// Initialize providers (must be done before config routes are fully utilized)
-initProviders();
-// Reload global configs to include provider schemas
-reloadGlobalConfigs();
-
 // In production we rely on compiled output and module-alias mappings (pointing to dist/*)
 // In development (ts-node) we instead leverage tsconfig "paths" via tsconfig-paths/register
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
@@ -430,6 +425,11 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+  // Initialize providers (must be done before config routes are fully utilized)
+  await initProviders();
+  // Reload global configs to include provider schemas
+  reloadGlobalConfigs();
+
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 

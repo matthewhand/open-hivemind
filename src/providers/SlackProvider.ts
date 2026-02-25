@@ -3,8 +3,24 @@ import { SlackService } from '@hivemind/adapter-slack';
 import slackConfig from '../config/slackConfig';
 import fs from 'fs';
 import path from 'path';
+import { Config } from 'convict';
 
-export class SlackProvider implements IMessageProvider {
+export interface SlackConfig {
+  SLACK_BOT_TOKEN: string;
+  SLACK_APP_TOKEN: string;
+  SLACK_SIGNING_SECRET: string;
+  SLACK_JOIN_CHANNELS: string;
+  SLACK_DEFAULT_CHANNEL_ID: string;
+  SLACK_MODE: 'socket' | 'rtm';
+  SLACK_BOT_JOIN_CHANNEL_MESSAGE: string;
+  SLACK_USER_JOIN_CHANNEL_MESSAGE: string;
+  SLACK_BOT_LEARN_MORE_MESSAGE: string;
+  SLACK_BUTTON_MAPPINGS: string;
+  WELCOME_RESOURCE_URL: string;
+  REPORT_ISSUE_URL: string;
+}
+
+export class SlackProvider implements IMessageProvider<SlackConfig> {
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;
@@ -15,8 +31,8 @@ export class SlackProvider implements IMessageProvider {
     return slackConfig.getSchema();
   }
 
-  getConfig() {
-    return slackConfig;
+  getConfig(): Config<SlackConfig> {
+    return slackConfig as unknown as Config<SlackConfig>;
   }
 
   getSensitiveKeys() {

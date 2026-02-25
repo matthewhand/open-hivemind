@@ -1,4 +1,6 @@
-export interface IProvider {
+import { Config } from 'convict';
+
+export interface IProvider<TConfig = any> {
   /**
    * Unique identifier for the provider (e.g., 'slack', 'discord', 'openai').
    */
@@ -22,7 +24,7 @@ export interface IProvider {
   /**
    * Returns the Convict configuration instance.
    */
-  getConfig(): any;
+  getConfig(): Config<TConfig>;
 
   /**
    * Returns a list of sensitive configuration keys (e.g., tokens, secrets) that should be redacted.
@@ -40,7 +42,7 @@ export interface IProvider {
   helpText?: string;
 }
 
-export interface IMessageProvider extends IProvider {
+export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
   type: 'messenger';
 
   /**
@@ -69,6 +71,6 @@ export interface IMessageProvider extends IProvider {
   reload?(): Promise<any>;
 }
 
-export interface ILLMProvider extends IProvider {
+export interface ILLMProvider<TConfig = any> extends IProvider<TConfig> {
   type: 'llm';
 }
