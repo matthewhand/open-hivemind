@@ -198,7 +198,7 @@ const GuardsPage: React.FC = () => {
           icon={Shield}
           title="No Guard Profiles"
           description="Create a guard profile to enforce security policies."
-          actionLabel="Create Profile"
+          actionLabel="New Profile"
           actionIcon={Plus}
           onAction={handleCreate}
           variant="primary"
