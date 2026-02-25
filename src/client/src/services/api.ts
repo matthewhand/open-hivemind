@@ -345,6 +345,23 @@ class ApiService {
     });
   }
 
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('auth_tokens');
+    const headers: Record<string, string> = {};
+
+    if (token) {
+      try {
+        const tokens = JSON.parse(token);
+        if (tokens.accessToken) {
+          headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+        }
+      } catch (e) {
+        console.error('Failed to parse auth token', e);
+      }
+    }
+    return headers;
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const url = buildUrl(endpoint);
     const method = options?.method?.toUpperCase() || 'GET';
@@ -353,19 +370,7 @@ class ApiService {
     const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
-      const token = localStorage.getItem('auth_tokens');
-      const authHeaders: Record<string, string> = {};
-
-      if (token) {
-        try {
-          const tokens = JSON.parse(token);
-          if (tokens.accessToken) {
-            authHeaders['Authorization'] = `Bearer ${tokens.accessToken}`;
-          }
-        } catch (e) {
-          console.error('Failed to parse auth token', e);
-        }
-      }
+      const authHeaders = this.getAuthHeaders();
 
       // Add CSRF token for mutating requests (POST, PUT, DELETE, PATCH)
       const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
@@ -571,11 +576,12 @@ class ApiService {
   }
 
   async exportConfig(): Promise<Blob> {
+    const headers = this.getAuthHeaders();
+    headers['Accept'] = 'application/json';
+
     const response = await fetch(buildUrl('/api/config/export'), {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -824,6 +830,22 @@ class ApiService {
     return this.request(`/api/import-export/backups/${backupId}`, {
       method: 'DELETE',
     });
+  }
+
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const url = buildUrl(`/api/import-export/backups/${backupId}/download`);
+    const headers = this.getAuthHeaders();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`);
+    }
+
+    return response.blob();
   }
 
   async getSystemInfo(): Promise<any> {
