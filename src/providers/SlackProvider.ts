@@ -10,6 +10,11 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://api.slack.com/apps';
   helpText = 'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
+  private slackService: SlackService;
+
+  constructor(slackService?: SlackService) {
+    this.slackService = slackService || SlackService.getInstance();
+  }
 
   getSchema() {
     return slackConfig.getSchema();
@@ -24,7 +29,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   }
 
   async getStatus() {
-    const slack = SlackService.getInstance();
+    const slack = this.slackService;
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
       const cfg: any = slack.getBotConfig(name) || {};
@@ -44,7 +49,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   }
 
   getBotNames() {
-    return SlackService.getInstance().getBotNames();
+    return this.slackService.getBotNames();
   }
 
   async getBots() {
@@ -92,7 +97,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     }
 
     // Runtime add
-    const slack = SlackService.getInstance();
+    const slack = this.slackService;
     const instanceCfg = {
       name,
       slack: {
@@ -123,7 +128,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     }
 
     let added = 0;
-    const slack = SlackService.getInstance();
+    const slack = this.slackService;
     const existing = new Set(slack.getBotNames());
     const instances = cfg.slack?.instances || [];
     for (const inst of instances) {
