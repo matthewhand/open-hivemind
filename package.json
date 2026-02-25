@@ -53,7 +53,8 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test:backend",
-    "test:only:frontend": "npm run test:frontend"
+    "test:only:frontend": "npm run test:frontend",
+    "generate-docs": "mkdir -p docs/screenshots && npx playwright test tests/e2e/screenshot-mcp.spec.ts"
   },
   "_moduleAliases": {
     "@src": "dist/src",
