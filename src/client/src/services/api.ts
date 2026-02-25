@@ -313,6 +313,23 @@ class ApiService {
     return this.fetchCsrfToken();
   }
 
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('auth_tokens');
+    const authHeaders: Record<string, string> = {};
+
+    if (token) {
+      try {
+        const tokens = JSON.parse(token);
+        if (tokens.accessToken) {
+          authHeaders['Authorization'] = `Bearer ${tokens.accessToken}`;
+        }
+      } catch (e) {
+        console.error('Failed to parse auth token', e);
+      }
+    }
+    return authHeaders;
+  }
+
   public async get<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
@@ -353,19 +370,7 @@ class ApiService {
     const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
-      const token = localStorage.getItem('auth_tokens');
-      const authHeaders: Record<string, string> = {};
-
-      if (token) {
-        try {
-          const tokens = JSON.parse(token);
-          if (tokens.accessToken) {
-            authHeaders['Authorization'] = `Bearer ${tokens.accessToken}`;
-          }
-        } catch (e) {
-          console.error('Failed to parse auth token', e);
-        }
-      }
+      const authHeaders = this.getAuthHeaders();
 
       // Add CSRF token for mutating requests (POST, PUT, DELETE, PATCH)
       const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
@@ -824,6 +829,21 @@ class ApiService {
     return this.request(`/api/import-export/backups/${backupId}`, {
       method: 'DELETE',
     });
+  }
+
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const headers = this.getAuthHeaders();
+
+    const response = await fetch(buildUrl(`/api/import-export/backups/${backupId}/download`), {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`);
+    }
+
+    return response.blob();
   }
 
   async getSystemInfo(): Promise<any> {
