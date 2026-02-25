@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert } from '../components/DaisyUI';
+import { Card, Button, Badge, Alert, PageHeader } from '../components/DaisyUI';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -182,21 +182,17 @@ const LLMProvidersPage: React.FC = () => {
     <div className="p-6 max-w-6xl mx-auto">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-4 mb-8 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-            <BrainIcon className="w-8 h-8 text-primary" />
-            LLM Providers
-          </h1>
-          <p className="text-base-content/70">
-            Configure reusable AI personalities and connection templates.
-          </p>
-        </div>
-        <Button variant="primary" onClick={handleAddProfile}>
-          <AddIcon className="w-4 h-4 mr-2" />
-          Create Profile
-        </Button>
-      </div>
+      <PageHeader
+        title="LLM Providers"
+        description="Configure reusable AI personalities and connection templates."
+        icon={BrainIcon}
+        actions={
+          <Button variant="primary" onClick={handleAddProfile}>
+            <AddIcon className="w-4 h-4 mr-2" />
+            Create Profile
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="skeleton h-64 w-full"></div>

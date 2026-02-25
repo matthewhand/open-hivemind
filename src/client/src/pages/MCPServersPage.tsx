@@ -10,8 +10,8 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import { Search, Server } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState, PageHeader } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface MCPServer {
@@ -304,23 +304,20 @@ const MCPServersPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="flex justify-between items-center mt-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            MCP Servers
-          </h1>
-          <p className="text-base-content/70">
-            Manage Model Context Protocol servers and their tools
-          </p>
-        </div>
-        <button
-          className="btn btn-primary"
-          onClick={handleAddServer}
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Add Server
-        </button>
-      </div>
+      <PageHeader
+        title="MCP Servers"
+        description="Manage Model Context Protocol servers and their tools"
+        icon={Server}
+        actions={
+          <button
+            className="btn btn-primary"
+            onClick={handleAddServer}
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Add Server
+          </button>
+        }
+      />
 
       {alert && !dialogOpen && (
         <div className="mb-6">
