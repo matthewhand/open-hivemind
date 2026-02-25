@@ -95,6 +95,10 @@ Browse and manage tools available from your connected MCP servers.
 *   **Tool Execution**: Test tools directly by providing JSON arguments and viewing the output.
 *   **Enable/Disable**: Toggle individual tools on or off.
 
+![MCP Tools List](docs/screenshots/mcp-tools-list.png)
+
+![MCP Tool Run Modal](docs/screenshots/mcp-tool-run.png)
+
 ## System
 
 ### [Activity Feed](/admin/activity)
