@@ -40,6 +40,14 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 
     // Dashboard pages
     {
+      url: '/dashboard',
+      changefreq: 'daily',
+      priority: 1.0,
+      lastmod: now,
+      description: 'User Dashboard',
+      access: 'authenticated',
+    },
+    {
       url: '/admin/overview',
       changefreq: 'daily',
       priority: 0.9,
@@ -518,7 +526,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
     )}
     ${generateSectionHTML(
       'Root Pages',
-      routes.filter((r) => r.url === '/' || r.url === '/webui'),
+      routes.filter((r) => r.url === '/' || r.url === '/webui' || r.url === '/dashboard'),
       baseUrl
     )}
 </body>

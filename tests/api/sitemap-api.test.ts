@@ -33,6 +33,6 @@ describe('Sitemap API Endpoints', () => {
     expect(response.text).toContain('<!DOCTYPE html>');
     expect(response.text).toContain('Open-Hivemind Sitemap');
     expect(response.text).toContain('User Dashboard');
-    expect(response.text).toContain('AI Intelligence Features');
+    expect(response.text).toContain('AI & Intelligence');
   });
 });
