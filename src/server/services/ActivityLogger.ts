@@ -60,7 +60,11 @@ export class ActivityLogger {
         crlfDelay: Infinity,
       });
 
-      const events: MessageFlowEvent[] = [];
+      const bufferSize = options.limit ? options.limit : Infinity;
+      const isBufferLimited = bufferSize !== Infinity;
+      const events: MessageFlowEvent[] = isBufferLimited ? new Array<MessageFlowEvent>(bufferSize) : [];
+      let count = 0;
+
       const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
       const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
 
@@ -74,14 +78,6 @@ export class ActivityLogger {
           const eventTime = new Date(event.timestamp).getTime();
 
           if (eventTime > endTimeMs) {
-            // Since we scan from oldest to newest (append-only file),
-            // if we hit a time after endTime, we can theoretically stop if strictly ordered.
-            // However, slight clock skews or out-of-order writes (unlikely with appendFile)
-            // suggest we should be careful. But for massive logs optimization,
-            // we assume chronological order.
-            // If the file is extremely large, breaking early is crucial.
-            // But usually we filter by Recent Time (startTime), so we scan until end.
-            // If we filter by Old Time (endTime), we stop early.
             break;
           }
 
@@ -97,20 +93,31 @@ export class ActivityLogger {
             continue;
           }
 
-          events.push(event);
-
-          if (options.limit && events.length > options.limit) {
-            // Keep only the most recent 'limit' events
-            events.shift();
+          if (isBufferLimited) {
+            events[count % bufferSize] = event;
+          } else {
+            // We know it is a dynamic array here
+            (events as MessageFlowEvent[]).push(event);
           }
+          count++;
+
         } catch (e) {
           debug('Failed to parse activity log line: %O', e);
           continue;
         }
       }
 
-      // Events are collected Oldest -> Newest.
-      // Original implementation returned Oldest -> Newest (by reversing Newest -> Oldest).
+      // Convert circular buffer [Oldest ... Newest]
+      if (isBufferLimited) {
+        const results: MessageFlowEvent[] = [];
+        const totalElements = Math.min(count, bufferSize);
+        for (let i = 0; i < totalElements; i++) {
+          const index = count > bufferSize ? (count + i) % bufferSize : i;
+          results.push(events[index]);
+        }
+        return results;
+      }
+
       return events;
     } catch (error) {
       debug('Failed to read activity log: %O', error);

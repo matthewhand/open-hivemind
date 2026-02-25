@@ -241,10 +241,11 @@ export class AuditLogger {
         crlfDelay: Infinity,
       });
 
-      // Rolling buffer to store (limit + offset) events.
+      // Circular buffer to store (limit + offset) events.
       // Since file is oldest -> newest, buffer will contain the newest (limit + offset) matching events.
       const bufferSize = limit + offset;
-      const buffer: AuditEvent[] = [];
+      const buffer = new Array<AuditEvent>(bufferSize);
+      let count = 0;
 
       for await (const line of rl) {
         const trimmed = line.trim();
@@ -257,25 +258,27 @@ export class AuditLogger {
             continue;
           }
 
-          buffer.push(event);
-          if (buffer.length > bufferSize) {
-            buffer.shift(); // Remove oldest in buffer
-          }
+          buffer[count % bufferSize] = event;
+          count++;
         } catch (e) {
           debug('Failed to parse audit log line: %O', e);
           continue;
         }
       }
 
-      // Buffer contains [Oldest ... Newest] of the tail.
-      // We want Newest -> Oldest.
-      // So reverse.
-      buffer.reverse();
+      // Convert the circular buffer to an array: [Newest ... Oldest]
+      const results: AuditEvent[] = [];
+      const totalElements = Math.min(count, bufferSize);
+      for (let i = 0; i < totalElements; i++) {
+        // The newest element is at index (count - 1), moving backwards.
+        const logicalIndex = count - 1 - i;
+        const physicalIndex = logicalIndex % bufferSize;
+        const normalizedIndex = physicalIndex < 0 ? physicalIndex + bufferSize : physicalIndex;
+        results.push(buffer[normalizedIndex]);
+      }
 
-      // Now buffer is [Newest ... Oldest].
-      // Apply offset (skip first 'offset' items).
-      // Take 'limit' items.
-      return buffer.slice(offset, offset + limit);
+      // Apply offset (skip first 'offset' items) and limit
+      return results.slice(offset, offset + limit);
     } catch (error) {
       debug('Failed to read audit events:', error);
       return [];
