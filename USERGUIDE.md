@@ -12,13 +12,13 @@ The central hub for monitoring your bot ecosystem.
 
 ## Configuration
 
-### [LLM Providers](/admin/integrations/llm)
+### [LLM Providers](/admin/providers/llm)
 Manage connections to Large Language Model providers.
 *   **Add Provider**: Configure API keys and endpoints for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
 *   **Model Selection**: Choose default models for different tasks (chat, summarization, etc.).
 *   **Test Connection**: Verify your API credentials are working.
 
-### [Message Platforms](/admin/integrations/message)
+### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
@@ -31,6 +31,12 @@ Create and manage individual bot instances.
 *   **Link Persona**: Assign a specific personality to the bot.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
 *   **Active Status**: Toggle bots on or off individually.
+
+### [Bot Templates](/admin/bots/templates)
+Start quickly with pre-configured bot setups.
+*   **Browse Templates**: View a gallery of bots with predefined personas and provider configurations.
+*   **Filter**: Search templates by platform, persona, or LLM provider.
+*   **Use Template**: Instantly pre-populate the bot creation form with template settings.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
@@ -48,11 +54,18 @@ Set up safety and security boundaries.
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
 *   **Server List**: View and manage connected MCP servers.
 *   **Add Server**: Connect to a new MCP server by URL.
-*   **Tool Discovery**: Automatically discover tools provided by connected servers.
+*   **Connection Status**: Monitor the health and connectivity of each server.
 
 ![MCP Servers List](docs/screenshots/mcp-servers-list.png)
 
 ![Add MCP Server](docs/screenshots/mcp-add-server-modal.png)
+
+### [MCP Tools](/admin/mcp/tools)
+Explore and test the capabilities provided by your MCP servers.
+*   **Tool Registry**: Browse all available tools across connected servers.
+*   **Interactive Testing**: Execute tools directly from the UI with custom JSON arguments.
+*   **Schema Inspection**: View input and output schemas to understand tool requirements.
+*   **Access Control**: Enable or disable specific tools individually.
 
 ## System
 
@@ -108,3 +121,25 @@ An internal chat interface for admins.
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
+
+### [Sitemap](/admin/sitemap)
+Visualize the application's structure and page hierarchy.
+*   **Dynamic Tree**: View all registered routes and pages in real-time.
+*   **Access Filtering**: Filter pages by access level (Public, Authenticated, Owner).
+*   **Export**: Download the sitemap as XML (for SEO) or JSON.
+
+### [Export & APIs](/admin/export)
+Access system documentation and API specifications.
+*   **OpenAPI Spec**: Download the complete API definition in JSON or YAML format.
+*   **Integration**: Use these specs to generate clients or integrate external services.
+
+### [Specifications](/admin/specs)
+Manage and view technical specifications and documentation.
+*   **Spec Registry**: Browse a searchable list of system specifications.
+*   **Detail View**: Read full specifications rendered in Markdown.
+*   **Export**: Download specs as Markdown, JSON, or YAML.
+
+### [Static Pages](/admin/static)
+Access a catalog of standalone HTML pages served by the system.
+*   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
+*   **Direct Access**: Open static pages directly for testing or use in other contexts.
