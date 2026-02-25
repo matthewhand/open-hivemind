@@ -97,6 +97,27 @@ export function getMessengerProvider() {
         if (typeof (svc as any).provider === 'undefined') {
           (svc as any).provider = 'discord';
         }
+
+        // Load instances from discord.json
+        try {
+            const discordPath = path.join(__dirname, '../../../config/providers/discord.json');
+            if (fs.existsSync(discordPath)) {
+                const content = fs.readFileSync(discordPath, 'utf-8');
+                const cfg = JSON.parse(content);
+                if (Array.isArray(cfg.instances)) {
+                    cfg.instances.forEach((inst: any) => {
+                        try {
+                            (svc as any).addBot({ name: inst.name, token: inst.token, llm: inst.llm });
+                        } catch (err) {
+                            gmpDebug(`Failed to add Discord bot ${inst.name}:`, err);
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            gmpDebug('Failed to load extra Discord instances', e);
+        }
+
         messengerServices.push(svc);
         gmpDebug('Initialized Discord provider');
         gmpDebug(
@@ -133,6 +154,38 @@ export function getMessengerProvider() {
         if (typeof (svc as any).provider === 'undefined') {
           (svc as any).provider = 'slack';
         }
+
+        // Load instances from slack.json and discord.json
+        try {
+            const slackPath = path.join(__dirname, '../../../config/providers/slack.json');
+            if (fs.existsSync(slackPath)) {
+                const content = fs.readFileSync(slackPath, 'utf-8');
+                const cfg = JSON.parse(content);
+                if (Array.isArray(cfg.instances)) {
+                    cfg.instances.forEach((inst: any) => {
+                        try {
+                            (svc as any).addBot({
+                                name: inst.name,
+                                slack: {
+                                    botToken: inst.token,
+                                    signingSecret: inst.signingSecret,
+                                    appToken: inst.appToken || '',
+                                    defaultChannelId: inst.defaultChannelId || '',
+                                    joinChannels: inst.joinChannels || '',
+                                    mode: inst.mode || 'socket'
+                                },
+                                llm: inst.llm
+                            });
+                        } catch (err) {
+                            gmpDebug(`Failed to add Slack bot ${inst.name}:`, err);
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            gmpDebug('Failed to load extra Slack instances', e);
+        }
+
         messengerServices.push(svc);
         gmpDebug('Initialized Slack provider');
         gmpDebug(

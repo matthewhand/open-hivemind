@@ -2,9 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { Discord } from '@hivemind/adapter-discord';
-import { SlackService } from '@hivemind/adapter-slack';
-import type { IBotInfo } from '@src/types/botInfo';
+import { ProviderRegistry } from '../registries/ProviderRegistry';
+import { IMessageProvider, ILLMProvider } from '../types/IProvider';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
@@ -74,35 +73,51 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
   }
 }
 
-adminRouter.get('/status', (_req: Request, res: Response) => {
+adminRouter.get('/status', async (_req: Request, res: Response) => {
   try {
-    const slack = SlackService.getInstance();
-    const slackBots = slack.getBotNames();
-    const slackInfo = slackBots.map((name: string) => {
-      const cfg: any = slack.getBotConfig(name) || {};
-      return {
-        provider: 'slack',
-        name,
-        defaultChannel: cfg?.slack?.defaultChannelId || '',
-        mode: cfg?.slack?.mode || 'socket',
-      };
-    });
+    const registry = ProviderRegistry.getInstance();
+    const providers = registry.getMessageProviders();
+
+    // Arrays for legacy support
+    const bots: string[] = [];
+    const botInfo: any[] = [];
+
+    // Legacy mapping vars
+    let slackBots: string[] = [];
+    let slackInfo: any[] = [];
     let discordBots: string[] = [];
     let discordInfo: any[] = [];
-    try {
-      const ds = (Discord as any).DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
-      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b) => ({
-        provider: 'discord',
-        name: b?.botUserName || b?.config?.name || 'discord',
-      }));
-    } catch {}
+    let discordCount = 0;
+
+    for (const provider of providers) {
+        try {
+            const status = await provider.getStatus();
+            if (status.bots) {
+                const names = status.bots.map((b: any) => b.name);
+                bots.push(...names);
+                botInfo.push(...status.bots);
+
+                if (provider.id === 'slack') {
+                    slackBots = names;
+                    slackInfo = status.bots;
+                } else if (provider.id === 'discord') {
+                    discordBots = names;
+                    discordInfo = status.bots;
+                    discordCount = status.bots.length;
+                }
+            }
+        } catch (e) {
+            debug(`Failed to get status for provider ${provider.id}`, e);
+        }
+    }
+
     res.json({
       ok: true,
+      bots,
+      // Legacy fields for backward compatibility
       slackBots,
       discordBots,
-      discordCount: discordBots.length,
+      discordCount,
       slackInfo,
       discordInfo,
     });
@@ -115,286 +130,158 @@ adminRouter.get('/personas', async (_req: Request, res: Response) => {
   res.json({ ok: true, personas: await loadPersonas() });
 });
 
-const LLM_PROVIDERS = [
-  {
-    key: 'openai',
-    label: 'OpenAI',
-    docsUrl: 'https://platform.openai.com/account/api-keys',
-    helpText: 'Create an OpenAI API key from the developer dashboard and paste it here.',
-  },
-  {
-    key: 'flowise',
-    label: 'Flowise',
-    docsUrl: 'https://docs.flowiseai.com/installation/overview',
-    helpText: 'Use the Flowise REST endpoint and API key configured in your Flowise instance.',
-  },
-  {
-    key: 'openwebui',
-    label: 'OpenWebUI',
-    docsUrl: 'https://docs.openwebui.com/',
-    helpText: 'Enable API access in OpenWebUI and copy the token from the administration panel.',
-  },
-];
-
-const MESSENGER_PROVIDERS = [
-  {
-    key: 'discord',
-    label: 'Discord',
-    docsUrl: 'https://discord.com/developers/applications',
-    helpText: 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.',
-  },
-  {
-    key: 'slack',
-    label: 'Slack',
-    docsUrl: 'https://api.slack.com/apps',
-    helpText:
-      'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.',
-  },
-  {
-    key: 'mattermost',
-    label: 'Mattermost',
-    docsUrl: 'https://developers.mattermost.com/integrate/admin-guide/admin-bot-accounts/',
-    helpText: 'Create a Mattermost bot account and generate a personal access token for it.',
-  },
-];
-
 adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: LLM_PROVIDERS });
+    const registry = ProviderRegistry.getInstance();
+    const providers = registry.getLLMProviders().map(p => ({
+        key: p.id,
+        label: p.label,
+        docsUrl: p.docsUrl,
+        helpText: p.helpText
+    }));
+  res.json({ ok: true, providers });
 });
 
 adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
-  res.json({ ok: true, providers: MESSENGER_PROVIDERS });
+    const registry = ProviderRegistry.getInstance();
+    const providers = registry.getMessageProviders().map(p => ({
+        key: p.id,
+        label: p.label,
+        docsUrl: p.docsUrl,
+        helpText: p.helpText
+    }));
+  res.json({ ok: true, providers });
 });
 
-// Minimal Slack bot creation: supports a single instance add at runtime
+// Generic bot creation
+adminRouter.post('/providers/:type/bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
+    try {
+        const { type } = req.params;
+        const registry = ProviderRegistry.getInstance();
+        const provider = registry.getProvider(type) as IMessageProvider;
+
+        if (!provider || provider.type !== 'message') {
+            return res.status(404).json({ ok: false, error: `Message provider '${type}' not found` });
+        }
+
+        const result = await provider.createBot(req.body);
+
+        if (!result.success) {
+            logAdminAction(
+                req,
+                `CREATE_${type.toUpperCase()}_BOT`,
+                `${type}-bots/${req.body?.name || 'unknown'}`,
+                'failure',
+                result.error || 'Unknown error'
+            );
+            return res.status(400).json({ ok: false, error: result.error });
+        }
+
+        logAdminAction(
+            req,
+            `CREATE_${type.toUpperCase()}_BOT`,
+            `${type}-bots/${req.body?.name || 'unknown'}`,
+            'success',
+            `Created ${type} bot ${req.body?.name}`
+        );
+        return res.json({ ok: true });
+    } catch (e: any) {
+        return res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// Deprecated routes - mapped to generic one
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  try {
-    const { name, botToken, signingSecret, appToken, defaultChannelId, joinChannels, mode, llm } =
-      req.body || {};
-    if (!name || !botToken || !signingSecret) {
-      logAdminAction(
-        req,
-        'CREATE_SLACK_BOT',
-        `slack-bots/${name}`,
-        'failure',
-        'Missing required fields: name, botToken, signingSecret'
-      );
-      return res
-        .status(400)
-        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
-    }
-
-    // Persist to config/providers/messengers.json for demo persistence
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-    const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any = { slack: { instances: [] } };
     try {
-      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(fileContent);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
-        // File doesn't exist yet, start with empty config
-      } else {
-        debug('Failed reading messengers.json', e);
-        throw e;
-      }
-    }
-    cfg.slack = cfg.slack || {};
-    cfg.slack.mode = cfg.slack.mode || mode || 'socket';
-    cfg.slack.instances = cfg.slack.instances || [];
-    cfg.slack.instances.push({ name, token: botToken, signingSecret, llm });
+        const registry = ProviderRegistry.getInstance();
+        const provider = registry.getProvider('slack') as IMessageProvider;
+        if (!provider) return res.status(500).json({ ok: false, error: 'Slack provider not available' });
 
-    try {
-      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
-      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
-    } catch (e) {
-      debug('Failed writing messengers.json', e);
-      // Non-fatal; still attempt runtime add
+        const result = await provider.createBot(req.body);
+         if (!result.success) {
+            logAdminAction(
+                req,
+                'CREATE_SLACK_BOT',
+                `slack-bots/${req.body?.name || 'unknown'}`,
+                'failure',
+                result.error || 'Unknown error'
+            );
+             return res.status(400).json({ ok: false, error: result.error });
+         }
+         logAdminAction(
+            req,
+            'CREATE_SLACK_BOT',
+            `slack-bots/${req.body?.name || 'unknown'}`,
+            'success',
+            `Created Slack bot ${req.body?.name}`
+        );
+         return res.json({ ok: true });
+    } catch(e: any) {
+        return res.status(500).json({ ok: false, error: e.message });
     }
-
-    // Runtime add via SlackService
-    try {
-      const slack = SlackService.getInstance();
-      const instanceCfg = {
-        name,
-        slack: {
-          botToken,
-          signingSecret,
-          appToken: appToken || '',
-          defaultChannelId: defaultChannelId || '',
-          joinChannels: joinChannels || '',
-          mode: mode || 'socket',
-        },
-        llm,
-      };
-      await (slack as any).addBot?.(instanceCfg);
-    } catch (e) {
-      debug('Runtime addBot failed (continue, config was persisted):', e);
-    }
-
-    logAdminAction(
-      req,
-      'CREATE_SLACK_BOT',
-      `slack-bots/${name}`,
-      'success',
-      `Created Slack bot ${name} with token and configuration`
-    );
-    return res.json({ ok: true });
-  } catch (e: any) {
-    logAdminAction(
-      req,
-      'CREATE_SLACK_BOT',
-      `slack-bots/${req.body?.name || 'unknown'}`,
-      'failure',
-      `Failed to create Slack bot: ${e?.message || String(e)}`
-    );
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
-  }
 });
 
-export default adminRouter;
-
-// Discord admin routes
 adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  try {
-    const { name, token, llm } = req.body || {};
-    if (!token) {
-      logAdminAction(
-        req,
-        'CREATE_DISCORD_BOT',
-        `discord-bots/${name || 'unnamed'}`,
-        'failure',
-        'Missing required field: token'
-      );
-      return res.status(400).json({ ok: false, error: 'token is required' });
-    }
-
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-    const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any = { discord: { instances: [] } };
     try {
-      const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(fileContent);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
-        // File doesn't exist yet, start with empty config
-      } else {
-        debug('Failed reading messengers.json', e);
-        throw e;
-      }
-    }
-    cfg.discord = cfg.discord || {};
-    cfg.discord.instances = cfg.discord.instances || [];
-    cfg.discord.instances.push({ name: name || '', token, llm });
+        const registry = ProviderRegistry.getInstance();
+        const provider = registry.getProvider('discord') as IMessageProvider;
+        if (!provider) return res.status(500).json({ ok: false, error: 'Discord provider not available' });
 
-    try {
-      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
-      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
-    } catch (e) {
-      debug('Failed writing messengers.json', e);
+        const result = await provider.createBot(req.body);
+         if (!result.success) {
+            logAdminAction(
+                req,
+                'CREATE_DISCORD_BOT',
+                `discord-bots/${req.body?.name || 'unknown'}`,
+                'failure',
+                result.error || 'Unknown error'
+            );
+             return res.status(400).json({ ok: false, error: result.error });
+         }
+         logAdminAction(
+            req,
+            'CREATE_DISCORD_BOT',
+            `discord-bots/${req.body?.name || 'unknown'}`,
+            'success',
+            `Created Discord bot ${req.body?.name}`
+        );
+         // Mimic old response
+         return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    } catch(e: any) {
+        return res.status(500).json({ ok: false, error: e.message });
     }
-
-    // Try runtime add
-    try {
-      const ds = (Discord as any).DiscordService.getInstance();
-      const instanceCfg = { name: name || '', token, llm };
-      await ds.addBot?.(instanceCfg);
-      logAdminAction(
-        req,
-        'CREATE_DISCORD_BOT',
-        `discord-bots/${name || 'unnamed'}`,
-        'success',
-        `Created Discord bot ${name || 'unnamed'} with runtime initialization`
-      );
-      return res.json({ ok: true, note: 'Added and saved.' });
-    } catch (e) {
-      debug('Discord runtime add failed; config persisted:', e);
-    }
-    logAdminAction(
-      req,
-      'CREATE_DISCORD_BOT',
-      `discord-bots/${name || 'unnamed'}`,
-      'success',
-      `Created Discord bot ${name || 'unnamed'} (requires restart for initialization)`
-    );
-    return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
-  } catch (e: any) {
-    logAdminAction(
-      req,
-      'CREATE_DISCORD_BOT',
-      `discord-bots/${req.body?.name || 'unnamed'}`,
-      'failure',
-      `Failed to create Discord bot: ${e?.message || String(e)}`
-    );
-    return res.status(500).json({ ok: false, error: e?.message || String(e) });
-  }
 });
 
 // Reload bots from messengers.json (adds missing instances for Slack and Discord)
 adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Response) => {
   try {
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-    const messengersPath = path.join(configDir, 'messengers.json');
-    let cfg: any;
-    try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(content);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
-        return res.status(400).json({ ok: false, error: 'messengers.json not found' });
-      }
-      throw e;
-    }
+    const registry = ProviderRegistry.getInstance();
+    const providers = registry.getMessageProviders();
+    const stats: any = {};
     let addedSlack = 0;
     let addedDiscord = 0;
-    try {
-      const slack = SlackService.getInstance();
-      const existing = new Set(slack.getBotNames());
-      const instances = cfg.slack?.instances || [];
-      for (const inst of instances) {
-        const nm = inst.name || '';
-        if (!nm || !existing.has(nm)) {
-          await (slack as any).addBot?.({
-            name: nm || `Bot${Date.now()}`,
-            slack: {
-              botToken: inst.token,
-              signingSecret: inst.signingSecret || '',
-              mode: cfg.slack?.mode || 'socket',
-            },
-          });
-          addedSlack++;
+
+    for (const provider of providers) {
+        try {
+            const result = await provider.reload();
+            if (provider.id === 'slack') addedSlack = result.added || 0;
+            if (provider.id === 'discord') addedDiscord = result.added || 0;
+            stats[`added${provider.label}`] = result.added || 0;
+        } catch (e) {
+            debug(`Reload error for ${provider.id}`, e);
         }
-      }
-    } catch (e) {
-      debug('Slack reload error', e);
     }
 
-    try {
-      const ds = (Discord as any).DiscordService.getInstance();
-      const have = new Set(
-        ((ds.getAllBots?.() || []) as any[]).map(
-          (b) => b?.config?.discord?.token || b?.config?.token
-        )
-      );
-      const instances = cfg.discord?.instances || [];
-      for (const inst of instances) {
-        if (inst.token && !have.has(inst.token)) {
-          await ds.addBot?.({ name: inst.name || '', token: inst.token });
-          addedDiscord++;
-        }
-      }
-    } catch (e) {
-      debug('Discord reload error', e);
-    }
+    // Support legacy response keys for slack/discord
+    const response: any = { ok: true, ...stats, addedSlack, addedDiscord };
 
     logAdminAction(
       req,
       'RELOAD_BOTS',
       'bots/reload',
       'success',
-      `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
+      `Reloaded bots: ${JSON.stringify(stats)}`
     );
-    return res.json({ ok: true, addedSlack, addedDiscord });
+    return res.json(response);
   } catch (e: any) {
     logAdminAction(
       req,
@@ -406,3 +293,5 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
+
+export default adminRouter;

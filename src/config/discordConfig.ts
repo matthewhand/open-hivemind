@@ -183,6 +183,11 @@ const discordConfig = convict({
     default: 0,
     env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS',
   },
+  instances: {
+    doc: 'List of Discord bot instances',
+    format: Array,
+    default: [],
+  },
 });
 
 import Debug from 'debug';

@@ -7,8 +7,7 @@ import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import discordConfig from '../../config/discordConfig';
-import flowiseConfig from '../../config/flowiseConfig';
+import { ProviderRegistry } from '../../registries/ProviderRegistry';
 import {
   getGuardrailProfiles,
   saveGuardrailProfiles,
@@ -17,7 +16,6 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
-import mattermostConfig from '../../config/mattermostConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
@@ -31,9 +29,6 @@ import {
   saveMessageProfiles,
   type MessageProfile,
 } from '../../config/messageProfiles';
-import ollamaConfig from '../../config/ollamaConfig';
-import openaiConfig from '../../config/openaiConfig';
-import openWebUIConfig from '../../config/openWebUIConfig';
 import {
   createResponseProfile,
   deleteResponseProfile,
@@ -41,9 +36,7 @@ import {
   updateResponseProfile,
   type ResponseProfile,
 } from '../../config/responseProfileManager';
-import slackConfig from '../../config/slackConfig';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
@@ -59,18 +52,15 @@ const debug = Debug('app:server:routes:config');
 const router = Router();
 
 // Map of base config types to their convict objects (used as schema sources)
+const registry = ProviderRegistry.getInstance();
 const schemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  discord: discordConfig,
-  slack: slackConfig,
-  openai: openaiConfig,
-  flowise: flowiseConfig,
-  ollama: ollamaConfig,
-  mattermost: mattermostConfig,
-  openwebui: openWebUIConfig,
-  webhook: webhookConfig,
 };
+
+registry.getAllProviders().forEach((provider) => {
+  schemaSources[provider.id] = provider.getSchema();
+});
 
 // Map of all active config instances
 const globalConfigs: Record<string, any> = { ...schemaSources };
@@ -128,11 +118,17 @@ router.get('/ping', (req, res) => {
   return res.json({ message: 'pong', timestamp: new Date().toISOString() });
 });
 
-// Sensitive key patterns for redaction
-const SENSITIVE_PATTERNS = [/token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i];
-
 function isSensitiveKey(key: string): boolean {
-  return SENSITIVE_PATTERNS.some((pattern) => pattern.test(key));
+  const allSensitive = registry.getAllProviders().flatMap((p) => p.getSensitiveKeys());
+  // Also include generic patterns as fallback for non-provider keys (e.g. core config secrets if any)
+  const genericPatterns = [/token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i];
+
+  if (allSensitive.some((k) => k === key || k.toLowerCase() === key.toLowerCase())) {
+    return true;
+  }
+
+  // Use generic patterns for keys not explicitly listed but obviously sensitive
+  return genericPatterns.some((pattern) => pattern.test(key));
 }
 
 function redactValue(value: unknown): string {
