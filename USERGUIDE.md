@@ -44,18 +44,6 @@ Set up safety and security boundaries.
 *   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
 *   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
 
-### [MCP Servers](/admin/mcp/servers)
-Integrate external tools and data sources via the Model Context Protocol (MCP).
-*   **Manage Servers**: Connect to local or remote MCP servers.
-*   **Tool Discovery**: Automatically discover available tools from connected servers.
-*   **Status Monitoring**: Check the health and connection status of your MCP servers.
-
-![MCP Servers List](docs/screenshots/mcp-servers-list.png)
-*Figure: The MCP Servers management interface showing connected servers and their status.*
-
-![Add MCP Server](docs/screenshots/mcp-add-server-modal.png)
-*Figure: Adding a new MCP server configuration.*
-
 ## System
 
 ### [Settings](/admin/settings)
