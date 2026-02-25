@@ -12,13 +12,17 @@ The central hub for monitoring your bot ecosystem.
 
 ## Configuration
 
-### [LLM Providers](/admin/integrations/llm)
+### [LLM Providers](/admin/providers/llm)
 Manage connections to Large Language Model providers.
-*   **Add Provider**: Configure API keys and endpoints for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
-*   **Model Selection**: Choose default models for different tasks (chat, summarization, etc.).
-*   **Test Connection**: Verify your API credentials are working.
+*   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
+*   **System Default**: Define the fallback provider for bots without a specific profile.
+*   **WebUI Intelligence**: Select a provider to power internal AI features.
 
-### [Message Platforms](/admin/integrations/message)
+![LLM Providers List](docs/screenshots/llm-providers-list.png)
+
+![Add LLM Profile](docs/screenshots/llm-add-profile-modal.png)
+
+### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
@@ -39,6 +43,12 @@ Create and manage individual bot instances.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
 *   **Active Status**: Toggle bots on or off individually.
 
+### [Bot Templates](/admin/bots/templates)
+Quick-start templates to help you create bots faster.
+*   **Template Gallery**: Browse pre-configured templates with specific personas and provider settings.
+*   **Quick Create**: Use a template to pre-populate the bot creation form.
+*   **Filtering**: Find templates by platform, persona, or LLM provider.
+
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
 *   **System Prompt**: Write the core instructions that define who the bot is (e.g., "You are a helpful coding assistant").
@@ -56,12 +66,32 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 *   **Server List**: View and manage connected MCP servers.
 *   **Add Server**: Connect to a new MCP server by URL.
 *   **Tool Discovery**: Automatically discover tools provided by connected servers.
+*   **View Tools**: Inspect available tools from connected servers.
+*   **Connection Status**: Monitor server health and retry failed connections.
 
 ![MCP Servers List](docs/screenshots/mcp-servers-list.png)
 
+![MCP Tools Modal](docs/screenshots/mcp-tools-modal.png)
+
 ![Add MCP Server](docs/screenshots/mcp-add-server-modal.png)
 
+### [MCP Tools](/admin/mcp/tools)
+Browse and manage tools available from your connected MCP servers.
+*   **Tool Registry**: View all available tools, their descriptions, and server origins.
+*   **Schema Inspection**: View input and output schemas for each tool.
+*   **Tool Execution**: Test tools directly by providing JSON arguments and viewing the output.
+*   **Enable/Disable**: Toggle individual tools on or off.
+
 ## System
+
+### [Activity Feed](/admin/activity)
+Monitor real-time interactions and events across your bot ecosystem.
+![Activity Feed](docs/screenshots/activity-page.png)
+
+*   **Real-time Feed**: Watch events as they happen with auto-refresh.
+*   **Filtering**: Filter events by Bot, Provider, or LLM to isolate specific interactions.
+*   **Export**: Download the activity log as a CSV file for offline analysis.
+*   **Timeline View**: Visualize the sequence of events over time.
 
 ### [Settings](/admin/settings)
 General system configuration.
@@ -115,3 +145,27 @@ An internal chat interface for admins.
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
+
+### [Export](/admin/export)
+Download API specifications and system documentation.
+*   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
+*   **Documentation**: Access generated documentation resources.
+
+### [Sitemap](/admin/sitemap)
+View the complete navigation structure of the application.
+*   **Page Hierarchy**: See all available pages and their relationships.
+*   **Search & Filter**: Find specific pages by URL or description, and filter by access level.
+*   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
+
+![Sitemap Page](docs/screenshots/sitemap-page.png)
+
+### [Specifications](/admin/specs)
+Browse and manage persisted specifications and design documents.
+*   **Spec Registry**: Search and filter specifications by topic or tag.
+*   **Detailed View**: Read full specifications rendered in Markdown.
+*   **Export**: Download specifications as Markdown, JSON, or YAML.
+
+### [Static Pages](/admin/static)
+Access a catalog of static HTML pages served by the system.
+*   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
+*   **Direct Access**: Open static pages in new tabs for testing or display.

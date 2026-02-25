@@ -43,7 +43,7 @@
     "test:e2e:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test TEST_SERVER_RUNNING=true node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --reporter spec",
     "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --watch",
     "test:playwright": "node ./node_modules/.bin/playwright test",
-    "generate-docs": "mkdir -p docs/screenshots && node ./node_modules/.bin/playwright test tests/e2e/screenshot-mcp.spec.ts",
+    "generate-docs": "mkdir -p docs/screenshots && node ./node_modules/.bin/playwright test tests/e2e/screenshot-*.spec.ts --project=chromium",
     "docs:screenshots": "npx playwright test tests/e2e/docs-screenshots.spec.ts",
     "playwright:serve": "RUNTIME_BUILD_ON_START=true NODE_ENV=production bash ./scripts/start-runtime.sh",
     "ncu": "ncu",
