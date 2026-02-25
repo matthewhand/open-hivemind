@@ -1,5 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import * as LoggerModule from '../../src/common/logger';
+// Import after mocks
+import { GreetingStateManager } from '../../src/services/GreetingStateManager';
 
 // Mock fs/promises
 jest.mock('fs/promises');
@@ -38,10 +41,6 @@ jest.mock('../../src/common/logger', () => {
     mockDebug,
   };
 });
-
-// Import after mocks
-import { GreetingStateManager } from '../../src/services/GreetingStateManager';
-import * as LoggerModule from '../../src/common/logger';
 
 const { mockInfo, mockError } = LoggerModule as any;
 
@@ -109,7 +108,9 @@ describe('GreetingStateManager', () => {
       await stateManager.initialize();
 
       expect((stateManager as any).state).toEqual({});
-      expect(mockInfo).toHaveBeenCalledWith('No existing greeting state file found, starting fresh');
+      expect(mockInfo).toHaveBeenCalledWith(
+        'No existing greeting state file found, starting fresh'
+      );
     });
 
     it('should handle other file read errors gracefully', async () => {
@@ -126,8 +127,8 @@ describe('GreetingStateManager', () => {
 
     it('should clean up expired entries during initialization', async () => {
       const now = Date.now();
-      const expiredTimestamp = now - (25 * 60 * 60 * 1000); // 25 hours ago
-      const validTimestamp = now - (1 * 60 * 60 * 1000); // 1 hour ago
+      const expiredTimestamp = now - 25 * 60 * 60 * 1000; // 25 hours ago
+      const validTimestamp = now - 1 * 60 * 60 * 1000; // 1 hour ago
 
       const stateWithExpired = {
         'expired-service': { timestamp: expiredTimestamp, channelId: 'channel-1' },
@@ -149,7 +150,7 @@ describe('GreetingStateManager', () => {
 
     it('should log error if saving state fails during cleanup', async () => {
       const now = Date.now();
-      const expiredTimestamp = now - (25 * 60 * 60 * 1000);
+      const expiredTimestamp = now - 25 * 60 * 60 * 1000;
       const stateWithExpired = {
         'expired-service': { timestamp: expiredTimestamp, channelId: 'channel-1' },
       };
@@ -196,7 +197,7 @@ describe('GreetingStateManager', () => {
 
     it('should return false and remove entry if expired', async () => {
       const serviceId = 'expired-service';
-      const expiredTimestamp = Date.now() - (25 * 60 * 60 * 1000);
+      const expiredTimestamp = Date.now() - 25 * 60 * 60 * 1000;
       (stateManager as any).state[serviceId] = {
         timestamp: expiredTimestamp,
         channelId: 'channel-1',
@@ -213,7 +214,7 @@ describe('GreetingStateManager', () => {
 
     it('should log error if saving state fails after expiration removal', async () => {
       const serviceId = 'expired-service';
-      const expiredTimestamp = Date.now() - (25 * 60 * 60 * 1000);
+      const expiredTimestamp = Date.now() - 25 * 60 * 60 * 1000;
       (stateManager as any).state[serviceId] = {
         timestamp: expiredTimestamp,
         channelId: 'channel-1',
@@ -245,11 +246,7 @@ describe('GreetingStateManager', () => {
       const state = (stateManager as any).state;
       expect(state[serviceId]).toBeDefined();
       expect(state[serviceId].channelId).toBe(channelId);
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        mockStatePath,
-        expect.any(String),
-        'utf-8'
-      );
+      expect(fs.writeFile).toHaveBeenCalledWith(mockStatePath, expect.any(String), 'utf-8');
       expect(mockInfo).toHaveBeenCalledWith('Marked greeting as sent', { serviceId, channelId });
     });
 
@@ -258,12 +255,11 @@ describe('GreetingStateManager', () => {
       const serviceId = 'new-service';
       const channelId = 'channel-1';
 
-      await expect(stateManager.markGreetingAsSent(serviceId, channelId)).rejects.toThrow('Write failed');
-
-      expect(mockError).toHaveBeenCalledWith(
-        'Failed to save greeting state',
-        expect.any(Object)
+      await expect(stateManager.markGreetingAsSent(serviceId, channelId)).rejects.toThrow(
+        'Write failed'
       );
+
+      expect(mockError).toHaveBeenCalledWith('Failed to save greeting state', expect.any(Object));
     });
   });
 
@@ -295,17 +291,13 @@ describe('GreetingStateManager', () => {
       await stateManager.clearAllState();
 
       expect((stateManager as any).state).toEqual({});
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        mockStatePath,
-        '{}',
-        'utf-8'
-      );
+      expect(fs.writeFile).toHaveBeenCalledWith(mockStatePath, '{}', 'utf-8');
       expect(mockInfo).toHaveBeenCalledWith('Cleared all greeting state');
     });
   });
 
   describe('getAllState', () => {
-     beforeEach(async () => {
+    beforeEach(async () => {
       await stateManager.initialize();
     });
 

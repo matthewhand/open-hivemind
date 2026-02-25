@@ -1,7 +1,6 @@
-
-import { AuthMiddleware } from '../../src/auth/middleware';
+import { NextFunction, Request, Response } from 'express';
 import { AuthManager } from '../../src/auth/AuthManager';
-import { Request, Response, NextFunction } from 'express';
+import { AuthMiddleware } from '../../src/auth/middleware';
 import { AuthenticationError } from '../../src/types/errorClasses';
 
 describe('AuthMiddleware Security Vulnerability', () => {
@@ -79,38 +78,38 @@ describe('AuthMiddleware Security Vulnerability', () => {
   });
 
   it('should ALLOW valid localhost Host header', async () => {
-      // Mock Host to be valid localhost
-      (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
-        if (header === 'host') return 'localhost:3000';
-        return undefined;
-      });
-
-      await authMiddleware.authenticate(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
-
-      // Should be authenticated as admin
-      expect((mockRequest as any).user).toBeDefined();
-      expect((mockRequest as any).user.role).toBe('admin');
-      expect(nextFunction).toHaveBeenCalledWith();
+    // Mock Host to be valid localhost
+    (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
+      if (header === 'host') return 'localhost:3000';
+      return undefined;
     });
 
-    it('should ALLOW valid localhost IP Host header', async () => {
-        // Mock Host to be valid IP
-        (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
-          if (header === 'host') return '127.0.0.1:8080';
-          return undefined;
-        });
+    await authMiddleware.authenticate(
+      mockRequest as Request,
+      mockResponse as Response,
+      nextFunction
+    );
 
-        await authMiddleware.authenticate(
-          mockRequest as Request,
-          mockResponse as Response,
-          nextFunction
-        );
+    // Should be authenticated as admin
+    expect((mockRequest as any).user).toBeDefined();
+    expect((mockRequest as any).user.role).toBe('admin');
+    expect(nextFunction).toHaveBeenCalledWith();
+  });
 
-        expect((mockRequest as any).user).toBeDefined();
-        expect((mockRequest as any).user.role).toBe('admin');
-      });
+  it('should ALLOW valid localhost IP Host header', async () => {
+    // Mock Host to be valid IP
+    (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
+      if (header === 'host') return '127.0.0.1:8080';
+      return undefined;
+    });
+
+    await authMiddleware.authenticate(
+      mockRequest as Request,
+      mockResponse as Response,
+      nextFunction
+    );
+
+    expect((mockRequest as any).user).toBeDefined();
+    expect((mockRequest as any).user.role).toBe('admin');
+  });
 });

@@ -12,9 +12,9 @@ describe('Password Change Vulnerability Fix Verification', () => {
 
     // Register a user
     user = await authManager.register({
-        username: 'victim',
-        email: 'victim@example.com',
-        password: 'oldPassword123'
+      username: 'victim',
+      email: 'victim@example.com',
+      password: 'oldPassword123',
     });
   });
 
@@ -33,17 +33,20 @@ describe('Password Change Vulnerability Fix Verification', () => {
     expect(userWithHash?.passwordHash).toBeDefined();
 
     // Verify password against the retrieved hash
-    const isValid = await authManager.verifyPassword(currentPasswordInput, userWithHash!.passwordHash!);
+    const isValid = await authManager.verifyPassword(
+      currentPasswordInput,
+      userWithHash!.passwordHash!
+    );
 
     // Assert that validation succeeds
     expect(isValid).toBe(true);
   });
 
   it('verifies that the old logic would fail (regression check)', async () => {
-      // Simulate OLD logic failure
-      const userFromMiddleware = authManager.getUser(user.id);
-      const hashToVerify = userFromMiddleware?.passwordHash || '';
-      const isValid = await authManager.verifyPassword('oldPassword123', hashToVerify);
-      expect(isValid).toBe(false);
+    // Simulate OLD logic failure
+    const userFromMiddleware = authManager.getUser(user.id);
+    const hashToVerify = userFromMiddleware?.passwordHash || '';
+    const isValid = await authManager.verifyPassword('oldPassword123', hashToVerify);
+    expect(isValid).toBe(false);
   });
 });

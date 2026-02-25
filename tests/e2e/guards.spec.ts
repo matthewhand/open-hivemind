@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import {
   assertNoErrors,
   navigateAndWaitReady,
-  setupTestWithErrorDetection,
   SELECTORS,
+  setupTestWithErrorDetection,
 } from './test-utils';
 
 test.describe('Guards Page', () => {
@@ -34,7 +34,7 @@ test.describe('Guards Page', () => {
     // Mock all other API calls to prevent timeouts from unhandled requests
     // Registered first to have lowest priority (Playwright uses LIFO for route matching)
     await page.route('/api/**', async (route) => {
-       await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
     });
 
     // Mock the API response for profiles
@@ -88,7 +88,9 @@ test.describe('Guards Page', () => {
     const modal = page.locator('dialog.modal[open]');
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('Delete Guard Profile');
-    await expect(modal).toContainText('Are you sure you want to delete the profile "Development Profile"?');
+    await expect(modal).toContainText(
+      'Are you sure you want to delete the profile "Development Profile"?'
+    );
 
     // Click Cancel
     await modal.getByRole('button', { name: 'Cancel' }).click();
@@ -133,15 +135,15 @@ test.describe('Guards Page', () => {
     // Note: We need to override the previous mock.
     // Adding a route inside the test overrides previous routes (LIFO).
     await page.route('/api/admin/guard-profiles', async (route) => {
-       if (route.request().method() === 'GET') {
-           await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ data: [mockProfiles[0]] }),
-          });
-       } else {
-           await route.fallback();
-       }
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: [mockProfiles[0]] }),
+        });
+      } else {
+        await route.fallback();
+      }
     });
 
     // Click Delete

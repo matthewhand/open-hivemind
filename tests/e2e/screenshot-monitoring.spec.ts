@@ -13,8 +13,9 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );
-    await page.route('/api/config/global', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } }) // config/global returns object with sections
+    await page.route(
+      '/api/config/global',
+      async (route) => route.fulfill({ status: 200, json: { bots: [] } }) // config/global returns object with sections
     );
     await page.route('/api/config/llm-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
@@ -83,7 +84,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
               messageCount: 89,
               errorCount: 0,
             },
-             {
+            {
               name: 'DevBot',
               provider: 'mattermost',
               llmProvider: 'local',
@@ -153,7 +154,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
               status: 'success',
               processingTime: 450,
             },
-             {
+            {
               id: '3',
               timestamp: new Date(Date.now() - 15000).toISOString(),
               botName: 'InternalHelper',
@@ -163,7 +164,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
               status: 'success',
               processingTime: 150,
             },
-             {
+            {
               id: '4',
               timestamp: new Date(Date.now() - 25000).toISOString(),
               botName: 'DevBot',
@@ -180,49 +181,49 @@ test.describe('Monitoring Dashboard Screenshots', () => {
 
     // 5. API Endpoints Status (used by SystemHealth)
     await page.route('/health/api-endpoints', async (route) =>
-        route.fulfill({
-            status: 200,
-            json: {
-                overall: {
-                    status: 'healthy',
-                    message: 'All systems operational',
-                    stats: {
-                        total: 3,
-                        online: 3,
-                        slow: 0,
-                        offline: 0,
-                        error: 0
-                    }
-                },
-                endpoints: [
-                    {
-                        id: '1',
-                        name: 'Database',
-                        url: 'postgres://localhost:5432',
-                        status: 'online',
-                        responseTime: 5,
-                        lastChecked: new Date().toISOString()
-                    },
-                    {
-                        id: '2',
-                        name: 'Redis',
-                        url: 'redis://localhost:6379',
-                        status: 'online',
-                        responseTime: 2,
-                        lastChecked: new Date().toISOString()
-                    },
-                     {
-                        id: '3',
-                        name: 'LLM API',
-                        url: 'https://api.openai.com',
-                        status: 'online',
-                        responseTime: 150,
-                        lastChecked: new Date().toISOString()
-                    }
-                ],
-                timestamp: new Date().toISOString()
-            }
-        })
+      route.fulfill({
+        status: 200,
+        json: {
+          overall: {
+            status: 'healthy',
+            message: 'All systems operational',
+            stats: {
+              total: 3,
+              online: 3,
+              slow: 0,
+              offline: 0,
+              error: 0,
+            },
+          },
+          endpoints: [
+            {
+              id: '1',
+              name: 'Database',
+              url: 'postgres://localhost:5432',
+              status: 'online',
+              responseTime: 5,
+              lastChecked: new Date().toISOString(),
+            },
+            {
+              id: '2',
+              name: 'Redis',
+              url: 'redis://localhost:6379',
+              status: 'online',
+              responseTime: 2,
+              lastChecked: new Date().toISOString(),
+            },
+            {
+              id: '3',
+              name: 'LLM API',
+              url: 'https://api.openai.com',
+              status: 'online',
+              responseTime: 150,
+              lastChecked: new Date().toISOString(),
+            },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+      })
     );
   });
 

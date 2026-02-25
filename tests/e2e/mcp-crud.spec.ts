@@ -22,14 +22,14 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
                 connected: true,
                 tools: [],
                 lastConnected: new Date().toISOString(),
-              }
+              },
             ],
             configurations: [
               {
                 name: 'Stopped Server',
                 serverUrl: 'http://stopped.com',
-                apiKey: '123'
-              }
+                apiKey: '123',
+              },
             ],
           },
         }),
@@ -85,7 +85,7 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
     });
 
     // Mock window.confirm to return true
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       expect(dialog.message()).toContain('Are you sure you want to delete');
       await dialog.accept();
     });

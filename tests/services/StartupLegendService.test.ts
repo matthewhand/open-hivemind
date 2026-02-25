@@ -1,5 +1,5 @@
-import StartupLegendService from '../../src/services/StartupLegendService';
 import Logger from '@common/logger';
+import StartupLegendService from '../../src/services/StartupLegendService';
 
 // Mock the Logger module
 jest.mock('@common/logger', () => {

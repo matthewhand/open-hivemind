@@ -1,16 +1,15 @@
-/**
- * Consolidated utilities index
- * Re-exports all utility functions and types for easy importing
- */
-
-// Common utilities
+export * from './InputSanitizer';
+export * from './PerformanceProfiler';
+export * from './TimerRegistry';
+export * from './alias';
 export * from './common';
-
-// Parser utilities
+export * from './envUtils';
+export * from './errorLogger';
+export * from './errorRecovery';
+export * from './errorResponse';
 export * from './parsers';
-
-// Type definitions
+export * from './startupDiagnostics';
 export * from './types';
-
-// Re-export existing utilities that weren't consolidated
-export { parseCommand as originalCommandParser } from '../message/helpers/commands/parseCommand';
+export * from './utils';
+export * from './xssSanitizer';
+export * from './ssrfGuard';
