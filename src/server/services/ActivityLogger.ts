@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import readline from 'readline';
 import { type MessageFlowEvent } from './WebSocketService';
 
 const debug = Debug('app:ActivityLogger');
@@ -47,32 +48,44 @@ export class ActivityLogger {
     });
   }
 
-  public getEvents(options: ActivityFilter = {}): MessageFlowEvent[] {
+  public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     try {
       if (!fs.existsSync(this.logFile)) {
         return [];
       }
 
-      // Read file content
-      // TODO: For production with large files, use readline or streams
-      const content = fs.readFileSync(this.logFile, 'utf8');
-      const lines = content.split('\n').filter((line) => line.trim());
+      const fileStream = fs.createReadStream(this.logFile, { encoding: 'utf8' });
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      });
 
       const events: MessageFlowEvent[] = [];
+      const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
+      const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
 
-      // Process in reverse to get newest first, allowing early exit
-      for (let i = lines.length - 1; i >= 0; i--) {
+      for await (const line of rl) {
+        if (!line.trim()) {
+          continue;
+        }
+
         try {
-          const event = JSON.parse(lines[i]) as MessageFlowEvent;
+          const event = JSON.parse(line) as MessageFlowEvent;
           const eventTime = new Date(event.timestamp).getTime();
 
-          if (options.startTime && eventTime < options.startTime.getTime()) {
-            // Since we scan from newest to oldest, if we hit a time before startTime,
-            // all remaining events are also before startTime.
+          if (eventTime > endTimeMs) {
+            // Since we scan from oldest to newest (append-only file),
+            // if we hit a time after endTime, we can theoretically stop if strictly ordered.
+            // However, slight clock skews or out-of-order writes (unlikely with appendFile)
+            // suggest we should be careful. But for massive logs optimization,
+            // we assume chronological order.
+            // If the file is extremely large, breaking early is crucial.
+            // But usually we filter by Recent Time (startTime), so we scan until end.
+            // If we filter by Old Time (endTime), we stop early.
             break;
           }
 
-          if (options.endTime && eventTime > options.endTime.getTime()) {
+          if (eventTime < startTimeMs) {
             continue;
           }
 
@@ -84,26 +97,20 @@ export class ActivityLogger {
             continue;
           }
 
-          // Note: MessageFlowEvent doesn't strictly have llmProvider in definition in WebSocketService
-          // but dashboard.ts annotates it. We rely on what's logged.
-          // If the logged event has it, we can filter.
-          // But looking at WebSocketService, MessageFlowEvent doesn't have llmProvider.
-          // It's added in dashboard.ts via annotateEvent.
-          // So filtering by llmProvider here might not work if it's not in the log.
-          // We will handle llmProvider filtering in the dashboard router after annotation.
-
           events.push(event);
 
-          if (options.limit && events.length >= options.limit) {
-            break;
+          if (options.limit && events.length > options.limit) {
+            // Keep only the most recent 'limit' events
+            events.shift();
           }
         } catch (e) {
           continue;
         }
       }
 
-      // Return in chronological order (oldest to newest)
-      return events.reverse();
+      // Events are collected Oldest -> Newest.
+      // Original implementation returned Oldest -> Newest (by reversing Newest -> Oldest).
+      return events;
     } catch (error) {
       debug('Failed to read activity log: %O', error);
       return [];
