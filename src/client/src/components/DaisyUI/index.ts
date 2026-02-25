@@ -24,6 +24,7 @@ export { default as ToastNotification } from './ToastNotification';
 export { default as VisualFeedback } from './VisualFeedback';
 export { default as PageHeader } from './PageHeader';
 export { default as EmptyState } from './EmptyState';
+export { default as SearchFilterBar } from '../SearchFilterBar';
 
 
 // Navigation Components

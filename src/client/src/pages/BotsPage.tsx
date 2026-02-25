@@ -5,6 +5,7 @@ import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCi
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { EmptyState } from '../components/DaisyUI';
 
 interface BotData {
   id: string;
@@ -366,11 +367,13 @@ const BotsPage: React.FC = () => {
               </button>
             </div>
           ) : filteredBots.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-              <h3 className="text-lg font-medium text-base-content/60">No bots found matching "{searchQuery}"</h3>
-              <button className="btn btn-ghost btn-sm mt-2" onClick={() => setSearchQuery('')}>Clear Search</button>
-            </div>
+            <EmptyState
+              icon={Search}
+              title={`No bots found matching "${searchQuery}"`}
+              description="Try adjusting your search query"
+              actionLabel="Clear Search"
+              onAction={() => setSearchQuery('')}
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {filteredBots.map((bot) => (
