@@ -19,6 +19,19 @@ describe('Bots Router', () => {
   let mockManager: any;
   let mockWsService: any;
   let botsRouter: any;
+  let processExitSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    // Mock process.exit to prevent Jest from crashing if ShutdownCoordinator triggers it
+    processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+      console.log(`process.exit called with ${code}`);
+      return undefined as never;
+    });
+  });
+
+  afterAll(() => {
+    processExitSpy.mockRestore();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
