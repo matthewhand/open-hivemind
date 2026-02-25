@@ -1,0 +1,33 @@
+
+> open-hivemind@1.0.0 generate-docs
+> mkdir -p docs/screenshots && node ./node_modules/.bin/playwright test tests/e2e/screenshot-*.spec.ts --project=chromium
+
+[1A[2K[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 231bb21f5fec9fdd9328859a0927b206
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[frontend] No frontend dist path matched; using fallback { fallback: [32m'/app/src/client/dist'[39m }
+[2m[WebServer] [22m[frontend] Frontend dist directory not found { path: [32m'/app/src/client/dist'[39m }
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+[1A[2K[2m[WebServer] [22m[app:index] ⚠️  Frontend build not found - run `npm run build` to create WebUI assets
+
+
+Running 6 tests using 2 workers
+
+[1A[2K[1/6] [chromium] › tests/e2e/screenshot-export.spec.ts:5:7 › Export Page Screenshots › Capture Export Page and Create Backup Modal
+[1A[2K[2/6] [chromium] › tests/e2e/screenshot-activity.spec.ts:120:7 › Activity Page Screenshots › capture Activity page screenshots
+[1A[2K[3/6] [chromium] › tests/e2e/screenshot-guards.spec.ts:89:7 › Guards Page Screenshots › capture guards page screenshots
+[1A[2K[4/6] [chromium] › tests/e2e/screenshot-llm.spec.ts:86:7 › LLM Providers Screenshots › capture LLM providers page screenshots
+[1A[2K[5/6] [chromium] › tests/e2e/screenshot-mcp.spec.ts:96:7 › MCP Servers Screenshots › capture MCP servers page screenshots
+[1A[2K[6/6] [chromium] › tests/e2e/screenshot-sitemap.spec.ts:94:7 › Sitemap Screenshots › Capture Sitemap page screenshot
+Global teardown completed
+[1A[2K  6 passed (36.7s)

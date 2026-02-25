@@ -1,0 +1,3 @@
+
+> open-hivemind@1.0.0 check-types
+> tsc --noEmit || true
