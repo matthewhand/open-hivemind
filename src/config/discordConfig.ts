@@ -193,7 +193,7 @@ const configPath = path.join(configDir, 'providers/discord.json');
 
 try {
   discordConfig.loadFile(configPath);
-  discordConfig.validate({ allowed: 'strict' });
+  discordConfig.validate({ allowed: 'warn' });
   debug(`Successfully loaded Discord config from ${configPath}`);
 } catch {
   // Fallback to defaults if config file is missing or invalid

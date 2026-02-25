@@ -105,7 +105,7 @@ const debug = Debug('app:slackConfig');
 
 try {
   slackConfig.loadFile(configPath);
-  slackConfig.validate({ allowed: 'strict' });
+  slackConfig.validate({ allowed: 'warn' });
   debug(`Successfully loaded Slack config from ${configPath}`);
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
