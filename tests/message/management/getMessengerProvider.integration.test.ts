@@ -1,4 +1,7 @@
-import { getMessengerProvider } from '@src/message/management/getMessengerProvider';
+import {
+  getMessengerProvider,
+  resetMessengerProviderCache,
+} from '@src/message/management/getMessengerProvider';
 
 jest.mock('@hivemind/adapter-discord', () => ({
   DiscordService: {
@@ -10,7 +13,7 @@ jest.mock('@hivemind/adapter-discord', () => ({
   },
 }));
 
-jest.mock('@src/integrations/slack/SlackService', () => ({
+jest.mock('@hivemind/adapter-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => ({
       sendMessageToChannel: jest.fn(),
@@ -33,6 +36,7 @@ describe('getMessengerProvider Unit Test', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetMessengerProviderCache();
     process.env = { ...originalEnv };
   });
 
