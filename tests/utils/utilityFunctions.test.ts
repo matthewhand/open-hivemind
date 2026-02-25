@@ -428,7 +428,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       auditLogger.getAuditEvents().forEach(() => {});
     });
 
-    test('should create audit log with basic event data', () => {
+    test('should create audit log with basic event data', async () => {
       auditLogger.log({
         user: 'test-user',
         action: 'TEST_ACTION',
@@ -436,6 +436,8 @@ describe('Utility Functions Comprehensive Tests', () => {
         result: 'success',
         details: 'Test audit event',
       });
+
+      await auditLogger.waitForQueueDrain();
 
       const events = auditLogger.getAuditEvents();
       // Find our test event by looking for the specific action
@@ -449,7 +451,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       expect(testEvent.id).toBeDefined();
     });
 
-    test('should filter events by user', () => {
+    test('should filter events by user', async () => {
       // Clear existing events first
       const initialCount = auditLogger.getAuditEvents().length;
 
@@ -468,6 +470,8 @@ describe('Utility Functions Comprehensive Tests', () => {
         result: 'success',
         details: 'Event 2',
       });
+
+      await auditLogger.waitForQueueDrain();
 
       const user1Events = auditLogger.getAuditEventsByUser('user1');
       expect(user1Events.length).toBeGreaterThanOrEqual(1);
@@ -602,7 +606,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       process.env = OLD_ENV;
     });
 
-    test('should handle configuration validation with complex data structures', () => {
+    test('should handle configuration validation with complex data structures', async () => {
       const { AuditLogger } = require('../../src/common/auditLogger');
       const auditLogger = AuditLogger.getInstance();
 
@@ -628,6 +632,8 @@ describe('Utility Functions Comprehensive Tests', () => {
       };
 
       auditLogger.log(complexEvent);
+
+      await auditLogger.waitForQueueDrain();
 
       const events = auditLogger.getAuditEvents();
       const foundEvent = events.find((event: any) => event.action === 'CONFIG_UPDATE');

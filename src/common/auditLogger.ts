@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import Debug from 'debug';
 
@@ -24,6 +25,8 @@ export class AuditLogger {
   private logFilePath: string;
   private maxLogSize: number = 10 * 1024 * 1024; // 10MB
   private maxLogFiles = 5;
+  private logQueue: string[] = [];
+  private isProcessing: boolean = false;
 
   private constructor() {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -45,36 +48,90 @@ export class AuditLogger {
     }
   }
 
-  private rotateLogIfNeeded(): void {
+  private async rotateLogIfNeeded(): Promise<void> {
     try {
-      if (fs.existsSync(this.logFilePath)) {
-        const stats = fs.statSync(this.logFilePath);
-        if (stats.size > this.maxLogSize) {
-          // Rotate log files
-          for (let i = this.maxLogFiles - 1; i >= 1; i--) {
-            const oldFile = `${this.logFilePath}.${i}`;
-            const newFile = `${this.logFilePath}.${i + 1}`;
-            if (fs.existsSync(oldFile)) {
-              if (i === this.maxLogFiles - 1) {
-                fs.unlinkSync(oldFile); // Remove oldest
-              } else {
-                fs.renameSync(oldFile, newFile);
-              }
+      // Check if file exists
+      try {
+        await fsPromises.access(this.logFilePath);
+      } catch {
+        return; // File does not exist
+      }
+
+      const stats = await fsPromises.stat(this.logFilePath);
+      if (stats.size > this.maxLogSize) {
+        // Rotate log files
+        for (let i = this.maxLogFiles - 1; i >= 1; i--) {
+          const oldFile = `${this.logFilePath}.${i}`;
+          const newFile = `${this.logFilePath}.${i + 1}`;
+
+          try {
+            await fsPromises.access(oldFile);
+            // File exists
+            if (i === this.maxLogFiles - 1) {
+                await fsPromises.unlink(oldFile); // Remove oldest
+            } else {
+                await fsPromises.rename(oldFile, newFile);
             }
+          } catch {
+            // File does not exist, skip
           }
-          // Move current log to .1
-          fs.renameSync(this.logFilePath, `${this.logFilePath}.1`);
         }
+        // Move current log to .1
+        await fsPromises.rename(this.logFilePath, `${this.logFilePath}.1`);
       }
     } catch (error) {
       debug('Failed to rotate audit log:', error);
     }
   }
 
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    try {
+      while (this.logQueue.length > 0) {
+        await this.rotateLogIfNeeded();
+
+        // Process all currently queued items
+        const batch = this.logQueue.splice(0, this.logQueue.length);
+        if (batch.length === 0) break;
+
+        const data = batch.join('');
+
+        try {
+            await fsPromises.appendFile(this.logFilePath, data);
+        } catch (error) {
+            debug('Failed to write to audit log:', error);
+            console.error('AUDIT LOG WRITE ERROR:', error);
+            // In case of write error, we lose these logs.
+            // In a robust system we might retry or write to a fallback,
+            // but for now we just log the error to stderr.
+        }
+      }
+    } catch (error) {
+        debug('Error in processQueue:', error);
+    } finally {
+        this.isProcessing = false;
+        // Check if new items arrived while we were finishing
+        if (this.logQueue.length > 0) {
+            this.processQueue();
+        }
+    }
+  }
+
+  public async waitForQueueDrain(timeoutMs = 5000): Promise<void> {
+    const start = Date.now();
+    while (this.isProcessing || this.logQueue.length > 0) {
+      if (Date.now() - start > timeoutMs) {
+        debug('Timeout waiting for queue drain');
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+
   public log(event: Omit<AuditEvent, 'id' | 'timestamp'>): void {
     try {
-      this.rotateLogIfNeeded();
-
       const auditEvent: AuditEvent = {
         id: this.generateId(),
         timestamp: new Date().toISOString(),
@@ -82,18 +139,19 @@ export class AuditLogger {
       };
 
       const logEntry = JSON.stringify(auditEvent) + '\n';
+      this.logQueue.push(logEntry);
 
-      fs.appendFileSync(this.logFilePath, logEntry);
-
-      debug('Audit event logged:', {
+      debug('Audit event queued:', {
         id: auditEvent.id,
         action: auditEvent.action,
         user: auditEvent.user,
         result: auditEvent.result,
       });
+
+      this.processQueue();
+
     } catch (error) {
-      debug('Failed to log audit event:', error);
-      // Fallback to console logging
+      debug('Failed to queue audit event:', error);
       console.error('AUDIT LOG ERROR:', event, error);
     }
   }
