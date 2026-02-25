@@ -26,6 +26,9 @@ const mockDiscordInstance = {
 };
 
 jest.mock('@hivemind/adapter-discord', () => ({
+  DiscordService: {
+    getInstance: jest.fn(() => mockDiscordInstance),
+  },
   Discord: {
     DiscordService: {
         getInstance: jest.fn(() => mockDiscordInstance),

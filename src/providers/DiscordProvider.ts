@@ -1,5 +1,5 @@
 import { IMessageProvider } from '../types/IProvider';
-import { Discord } from '@hivemind/adapter-discord';
+import { DiscordService } from '@hivemind/adapter-discord';
 import discordConfig, { DiscordConfig } from '../config/discordConfig';
 import fs from 'fs';
 import path from 'path';
@@ -11,6 +11,12 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://discord.com/developers/applications';
   helpText = 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.';
+
+  private discordService?: DiscordService;
+
+  constructor(discordService?: DiscordService) {
+    this.discordService = discordService;
+  }
 
   getSchema() {
     return discordConfig.getSchema();
@@ -24,18 +30,29 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     return ['DISCORD_BOT_TOKEN', 'DISCORD_CLIENT_ID'];
   }
 
+  private getService(): DiscordService | undefined {
+    if (this.discordService) return this.discordService;
+    try {
+      return DiscordService.getInstance();
+    } catch {
+      return undefined;
+    }
+  }
+
   async getStatus() {
     let discordBots: string[] = [];
     let discordInfo: any[] = [];
     try {
-      const ds = (Discord as any).DiscordService.getInstance();
-      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
-      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b) => ({
-        provider: 'discord',
-        name: b?.botUserName || b?.config?.name || 'discord',
-        connected: true
-      }));
+      const ds = this.getService();
+      if (ds) {
+          const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+          discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
+          discordInfo = bots.map((b) => ({
+            provider: 'discord',
+            name: b?.botUserName || b?.config?.name || 'discord',
+            connected: true
+          }));
+      }
     } catch (e) {
        // Ignore if not initialized
     }
@@ -47,7 +64,6 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   getBotNames() {
-     // Not strictly used by adminRoutes logic for Discord, but we can implement it
      return [];
   }
 
@@ -84,9 +100,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     }
 
     // Try runtime add
-    const ds = (Discord as any).DiscordService.getInstance();
+    const ds = this.getService();
     const instanceCfg = { name: name || '', token, llm };
-    if (ds.addBot) {
+    if (ds && ds.addBot) {
         await ds.addBot(instanceCfg);
     }
   }
@@ -103,7 +119,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     }
 
     let added = 0;
-    const ds = (Discord as any).DiscordService.getInstance();
+    const ds = this.getService();
+    if (!ds) return { added: 0 };
+
     const bots = (ds.getAllBots?.() || []) as IBotInfo[];
     const have = new Set(
         bots.map((b) => b?.config?.discord?.token || b?.config?.token)
