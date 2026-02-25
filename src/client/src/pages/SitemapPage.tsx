@@ -3,6 +3,9 @@ import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -28,6 +31,8 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -82,7 +87,16 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
+  const filteredUrls = sitemapData?.urls.filter((url) => {
+    if (!searchTerm) return true;
+    const lowerTerm = searchTerm.toLowerCase();
+    return (
+      url.url.toLowerCase().includes(lowerTerm) ||
+      url.description.toLowerCase().includes(lowerTerm)
+    );
+  }) || [];
+
+  const groupedUrls = filteredUrls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -208,55 +222,152 @@ const SitemapPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Grouped URLs */}
-      {Object.entries(groupedUrls).map(([category, urls]) => (
-        <div key={category} className="mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            {category}
-            <div className="badge badge-neutral">{urls.length}</div>
-          </h2>
+       {/* Toolbar: Search and View Toggle */}
+       <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center bg-base-100 p-4 rounded-box shadow-sm border border-base-200">
+        <div className="relative w-full md:w-96">
+          <input
+            type="text"
+            placeholder="Search pages..."
+            className="input input-bordered w-full pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50" />
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {urls.map((url) => (
-              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-mono text-sm break-all font-bold">
-                      {url.url}
-                    </h3>
-                    <button
-                      className="btn btn-ghost btn-xs btn-circle"
-                      onClick={() => handleOpenUrl(url.fullUrl)}
-                    >
-                      <LaunchIcon className="w-4 h-4" />
-                    </button>
+        <div className="join">
+          <button
+            className={`join-item btn ${viewMode === 'grid' ? 'btn-active' : ''}`}
+            onClick={() => setViewMode('grid')}
+            title="Grid View"
+          >
+            <Squares2X2Icon className="w-5 h-5" />
+          </button>
+          <button
+            className={`join-item btn ${viewMode === 'list' ? 'btn-active' : ''}`}
+            onClick={() => setViewMode('list')}
+            title="List View"
+          >
+            <ListBulletIcon className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      {filteredUrls.length === 0 ? (
+        <div className="text-center p-12 bg-base-100 rounded-box border border-base-200">
+          <p className="text-base-content/70">No pages found matching your filters.</p>
+          <button
+            className="btn btn-link"
+            onClick={() => { setSearchTerm(''); setAccessFilter('all'); }}
+          >
+            Clear Filters
+          </button>
+        </div>
+      ) : viewMode === 'grid' ? (
+         /* Grid View (Grouped) */
+        Object.entries(groupedUrls).map(([category, urls]) => (
+          <div key={category} className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              {category}
+              <div className="badge badge-neutral">{urls.length}</div>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {urls.map((url) => (
+                <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+                  <div className="card-body p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-mono text-sm break-all font-bold">
+                        {url.url}
+                      </h3>
+                      <button
+                        className="btn btn-ghost btn-xs btn-circle"
+                        onClick={() => handleOpenUrl(url.fullUrl)}
+                      >
+                        <LaunchIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-base-content/70 mb-3">
+                      {url.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                        {url.access}
+                      </div>
+                      <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                        Priority: {url.priority}
+                      </div>
+                      <div className="badge badge-sm badge-outline">
+                        {url.changefreq}
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-base-content/50 mt-auto">
+                      Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                    </div>
                   </div>
-
-                  <p className="text-xs text-base-content/70 mb-3">
-                    {url.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1 mb-2">
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : (
+        /* List View (Table) */
+        <div className="overflow-x-auto bg-base-100 rounded-box shadow-xl border border-base-200">
+          <table className="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Access</th>
+                <th>Priority</th>
+                <th>Change Freq</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUrls.map((url) => (
+                <tr key={url.url}>
+                  <td className="max-w-xs md:max-w-md">
+                    <div className="font-bold break-all font-mono text-sm">{url.url}</div>
+                    <div className="text-xs opacity-70 truncate" title={url.description}>
+                      {url.description}
+                    </div>
+                  </td>
+                  <td>
                     <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
                       {url.access}
                     </div>
+                  </td>
+                  <td>
                     <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                      Priority: {url.priority}
+                      {url.priority}
                     </div>
-                    <div className="badge badge-sm badge-outline">
-                      {url.changefreq}
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-base-content/50 mt-auto">
-                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </td>
+                  <td>
+                    <span className="text-xs uppercase">{url.changefreq}</span>
+                  </td>
+                  <td className="text-xs">
+                    {new Date(url.lastmod).toLocaleDateString()}
+                  </td>
+                  <td>
+                     <button
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => handleOpenUrl(url.fullUrl)}
+                        title="Open Page"
+                      >
+                        <LaunchIcon className="w-4 h-4" />
+                      </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      )}
 
       {/* Sitemap Links */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
