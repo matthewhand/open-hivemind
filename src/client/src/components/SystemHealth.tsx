@@ -7,139 +7,106 @@ import {
   Alert,
   Accordion,
   Divider,
+  Progress,
 } from './DaisyUI';
 import {
-  ChevronDownIcon,
-  CpuChipIcon,
-  BoltIcon,
-  ServerIcon,
-  SignalIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+  CheckCircle,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  Bolt,
+  Cpu,
+  Server,
+  Signal,
+  ChevronDown,
+  Activity,
+} from 'lucide-react';
+import { apiService } from '../services/api';
 
 interface SystemHealthProps {
   refreshInterval?: number;
 }
 
-interface SystemMetrics {
-  cpu: {
-    usage: number;
-    cores: number;
-    temperature?: number;
-  };
+interface SystemHealthData {
+  status: string;
+  timestamp: string;
+  uptime: number;
   memory: {
     used: number;
     total: number;
     usage: number;
   };
-  disk: {
-    used: number;
-    total: number;
-    usage: number;
+  cpu: {
+    user: number;
+    system: number;
   };
-  network: {
-    latency: number;
-    status: 'online' | 'offline' | 'slow';
+  system: {
+    platform: string;
+    arch: string;
+    release: string;
+    hostname: string;
+    loadAverage: number[];
   };
-  uptime: number;
-  loadAverage: number[];
 }
 
-interface HealthCheck {
-  id: string;
-  name: string;
-  status: 'healthy' | 'warning' | 'error';
-  message: string;
-  lastChecked: string;
-  details?: string;
+interface ApiHealthData {
+  overall: {
+    status: 'healthy' | 'warning' | 'error';
+    message: string;
+    stats: {
+      total: number;
+      online: number;
+      slow: number;
+      offline: number;
+      error: number;
+    };
+  };
+  endpoints: Array<{
+    id: string;
+    name: string;
+    url: string;
+    status: 'online' | 'offline' | 'slow' | 'error';
+    responseTime: number;
+    lastChecked: string;
+    errorMessage?: string;
+  }>;
 }
 
 const SystemHealth: React.FC<SystemHealthProps> = ({
   refreshInterval = 30000,
 }) => {
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
+  const [metrics, setMetrics] = useState<SystemHealthData | null>(null);
+  const [apiHealth, setApiHealth] = useState<ApiHealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for demonstration - in real implementation, this would come from API
   useEffect(() => {
-    const fetchSystemData = () => {
-      const mockMetrics: SystemMetrics = {
-        cpu: {
-          usage: Math.random() * 100,
-          cores: 8,
-          temperature: 45 + Math.random() * 20,
-        },
-        memory: {
-          used: Math.random() * 16 * 1024, // GB
-          total: 16 * 1024, // 16GB
-          usage: Math.random() * 100,
-        },
-        disk: {
-          used: Math.random() * 500, // GB
-          total: 500, // 500GB
-          usage: Math.random() * 100,
-        },
-        network: {
-          latency: 20 + Math.random() * 50, // ms
-          status: Math.random() > 0.9 ? 'slow' : Math.random() > 0.95 ? 'offline' : 'online',
-        },
-        uptime: Math.random() * 86400 * 7, // Up to 7 days
-        loadAverage: [Math.random() * 2, Math.random() * 2, Math.random() * 2],
-      };
+    const fetchData = async () => {
+      try {
+        const [sysData, apiData] = await Promise.all([
+          apiService.getSystemHealth(),
+          apiService.getApiEndpointsStatus().catch(() => null), // Optional if API monitoring is not enabled
+        ]);
 
-      const mockHealthChecks: HealthCheck[] = [
-        {
-          id: '1',
-          name: 'Database Connection',
-          status: 'healthy',
-          message: 'All database connections are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Discord API',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'High API response time detected' : 'Discord API is responding normally',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '3',
-          name: 'LLM Services',
-          status: Math.random() > 0.95 ? 'error' : Math.random() > 0.85 ? 'warning' : 'healthy',
-          message: Math.random() > 0.95 ? 'OpenAI API is currently unavailable' : Math.random() > 0.85 ? 'Some LLM providers experiencing issues' : 'All LLM services are operational',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '4',
-          name: 'Message Queue',
-          status: 'healthy',
-          message: 'Message processing is running smoothly',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-        {
-          id: '5',
-          name: 'Cache System',
-          status: Math.random() > 0.9 ? 'warning' : 'healthy',
-          message: Math.random() > 0.9 ? 'Cache hit rate is below optimal' : 'Cache system is performing well',
-          lastChecked: new Date(Date.now() - Math.random() * 300000).toISOString(),
-        },
-      ];
-
-      setMetrics(mockMetrics);
-      setHealthChecks(mockHealthChecks);
-      setLastRefresh(new Date());
-      setLoading(false);
+        setMetrics(sysData);
+        if (apiData) {
+          setApiHealth(apiData);
+        }
+        setLastRefresh(new Date());
+        setError(null);
+      } catch (err: any) {
+        console.error('Failed to fetch system health:', err);
+        setError('Failed to fetch system health data');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchSystemData();
+    fetchData();
 
     if (refreshInterval > 0) {
-      const interval = setInterval(fetchSystemData, refreshInterval);
+      const interval = setInterval(fetchData, refreshInterval);
       return () => clearInterval(interval);
     }
   }, [refreshInterval]);
@@ -149,15 +116,15 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     switch (status) {
     case 'healthy':
     case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+      return <CheckCircle className={`${className} text-success`} />;
     case 'warning':
     case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     case 'error':
     case 'offline':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      return <Info className={`${className} text-info`} />;
     }
   };
 
@@ -206,18 +173,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
-  const getOverallHealth = () => {
-    const errorCount = healthChecks.filter(h => h.status === 'error').length;
-    const warningCount = healthChecks.filter(h => h.status === 'warning').length;
-
-    if (errorCount > 0) {return { status: 'error', message: `${errorCount} critical issues detected` };}
-    if (warningCount > 0) {return { status: 'warning', message: `${warningCount} warnings detected` };}
-    return { status: 'healthy', message: 'All systems operational' };
-  };
-
-  const overallHealth = getOverallHealth();
-
-  if (loading) {
+  if (loading && !metrics) {
     return (
       <Card>
         <Card.Body>
@@ -232,24 +188,52 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     );
   }
 
+  if (error && !metrics) {
+    return (
+      <Alert status="error" message={error} />
+    );
+  }
+
   const accordionItems = [
     {
       id: 'system-info',
-      title: 'System Information',
-      icon: 'ℹ️',
+      title: 'Detailed System Information',
+      icon: <Info className="w-5 h-5" />,
       content: (
-        <div className="flex flex-wrap gap-4">
-          <div className="min-w-[300px] flex-1">
-            <h4 className="font-medium mb-2">Performance Metrics</h4>
-            <p className="text-sm">• CPU Load: {(metrics?.loadAverage[0] || 0).toFixed(2)} (1m), {(metrics?.loadAverage[1] || 0).toFixed(2)} (5m), {(metrics?.loadAverage[2] || 0).toFixed(2)} (15m)</p>
-            <p className="text-sm">• Memory Available: {formatBytes((metrics?.memory.total || 0) - (metrics?.memory.used || 0))}</p>
-            <p className="text-sm">• Disk Available: {formatBytes((metrics?.disk.total || 0) - (metrics?.disk.used || 0))}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium mb-2 text-sm uppercase tracking-wider opacity-70">OS Details</h4>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Platform:</span>
+                <span className="font-mono">{metrics?.system.platform}</span>
+              </div>
+              <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Architecture:</span>
+                <span className="font-mono">{metrics?.system.arch}</span>
+              </div>
+              <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Release:</span>
+                <span className="font-mono">{metrics?.system.release}</span>
+              </div>
+              <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Hostname:</span>
+                <span className="font-mono">{metrics?.system.hostname}</span>
+              </div>
+            </div>
           </div>
-          <div className="min-w-[300px] flex-1">
-            <h4 className="font-medium mb-2">Network Status</h4>
-            <p className="text-sm">• Connection Status: {metrics?.network.status}</p>
-            <p className="text-sm">• Response Time: {formatLatency(metrics?.network.latency || 0)}</p>
-            <p className="text-sm">• System Uptime: {formatUptime(metrics?.uptime || 0)}</p>
+          <div>
+            <h4 className="font-medium mb-2 text-sm uppercase tracking-wider opacity-70">Process</h4>
+            <div className="space-y-1 text-sm">
+               <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Uptime:</span>
+                <span className="font-mono">{formatUptime(metrics?.uptime || 0)}</span>
+              </div>
+              <div className="flex justify-between border-b border-base-200 py-1">
+                <span>Status:</span>
+                <Badge size="sm" variant={getStatusColor(metrics?.status || 'unknown') as any}>{metrics?.status}</Badge>
+              </div>
+            </div>
           </div>
         </div>
       ),
@@ -257,12 +241,13 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   ];
 
   return (
-    <Card>
+    <Card className="shadow-sm border border-base-200">
       <Card.Body>
         <div className="flex justify-between items-center mb-6">
-          <Card.Title>
-            System Health Monitor
-          </Card.Title>
+          <div className="flex items-center gap-2">
+            <Activity className="w-6 h-6 text-primary" />
+            <h2 className="card-title text-xl">System Health Monitor</h2>
+          </div>
           {lastRefresh && (
             <span className="text-sm text-base-content/70">
               Last updated: {lastRefresh.toLocaleTimeString()}
@@ -270,182 +255,141 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
           )}
         </div>
 
-        {/* Overall Health Status */}
-        <div className="mb-6">
-          <Alert
-            variant={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
-            icon={getStatusIcon(overallHealth.status)}
-          >
-            {overallHealth.message}
-          </Alert>
-        </div>
+        {/* Overall Health Status from API Health if available, else System Status */}
+        {apiHealth && (
+          <div className="mb-6">
+            <Alert
+              status={apiHealth.overall.status}
+              message={apiHealth.overall.message || `System Status: ${metrics?.status}`}
+            />
+          </div>
+        )}
 
         {/* System Metrics */}
-        <h3 className="text-lg font-bold mb-4 mt-2">
-          System Metrics
+        <h3 className="text-lg font-bold mb-4 mt-2 flex items-center gap-2">
+           <Cpu className="w-5 h-5" /> Resources
         </h3>
 
-        <div className="flex flex-wrap gap-4 mb-6">
-          {/* CPU Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <BoltIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">CPU Usage</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.cpu.usage || 0) > 80 ? 'progress-error' : (metrics?.cpu.usage || 0) > 60 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.cpu.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.cpu.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {metrics?.cpu.cores} cores • {metrics?.cpu.temperature?.toFixed(0)}°C
-                </span>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Memory Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <CpuChipIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Memory Usage</span>
+          <div className="card bg-base-100 border border-base-200">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Bolt className="w-5 h-5 mr-2 text-warning" />
+                <span className="font-medium">Memory Usage</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Progress
+                    value={metrics?.memory.usage || 0}
+                    max={100}
+                    variant={(metrics?.memory.usage || 0) > 90 ? 'error' : (metrics?.memory.usage || 0) > 70 ? 'warning' : 'success'}
+                  />
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.memory.usage || 0) > 90 ? 'progress-error' : (metrics?.memory.usage || 0) > 70 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.memory.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.memory.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+                <span className="text-sm font-mono w-12 text-right">
+                  {(metrics?.memory.usage || 0).toFixed(0)}%
                 </span>
+              </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* Load Average */}
+          <div className="card bg-base-100 border border-base-200">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Cpu className="w-5 h-5 mr-2 text-primary" />
+                <span className="font-medium">Load Average</span>
+              </div>
+              <div className="flex gap-2 justify-between items-center h-full">
+                {metrics?.system.loadAverage.map((load, index) => (
+                  <div key={index} className="flex flex-col items-center">
+                    <span className="text-xs opacity-70">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
+                    <Badge
+                      variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'neutral'}
+                      size="lg"
+                    >
+                      {load.toFixed(2)}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Disk Usage */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <ServerIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Disk Usage</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <progress
-                      className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
-                      value={metrics?.disk.usage || 0}
-                      max="100"
-                    ></progress>
-                  </div>
-                  <span className="text-sm">
-                    {(metrics?.disk.usage || 0).toFixed(1)}%
-                  </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
-                </span>
+          {/* Network Status (if available) */}
+          <div className="card bg-base-100 border border-base-200">
+            <div className="card-body p-4">
+              <div className="flex items-center mb-2">
+                <Signal className="w-5 h-5 mr-2 text-info" />
+                <span className="font-medium">API Network Status</span>
               </div>
-            </div>
-          </div>
-
-          {/* Network Status */}
-          <div className="min-w-[300px] flex-1">
-            <div className="card card-bordered border-base-300">
-              <div className="card-body p-4">
-                <div className="flex items-center mb-2">
-                  <SignalIcon className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Network Status</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Badge
-                    variant={getStatusColor(metrics?.network.status || 'unknown') as any}
-                    size="sm"
-                  >
-                    {metrics?.network.status || 'unknown'}
-                  </Badge>
+              <div className="flex items-center gap-4 mt-2">
+                <Badge
+                  variant={getStatusColor(apiHealth?.overall.status || 'unknown') as any}
+                  size="lg"
+                >
+                  {apiHealth?.overall.status || 'Unknown'}
+                </Badge>
+                {apiHealth && (
                   <span className="text-sm">
-                    {formatLatency(metrics?.network.latency || 0)}
+                    {apiHealth.overall.stats.online} / {apiHealth.overall.stats.total} Online
                   </span>
-                </div>
-                <span className="text-xs text-base-content/70 mt-1">
-                  System uptime: {formatUptime(metrics?.uptime || 0)}
-                </span>
+                )}
               </div>
+              <span className="text-xs text-base-content/70 mt-1">
+                 Latency check on endpoints
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Load Average */}
-        <h3 className="text-lg font-bold mb-4">
-          Load Average
-        </h3>
-        <div className="flex gap-2 mb-6">
-          {metrics?.loadAverage.map((load, index) => (
-            <Badge
-              key={index}
-              variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'success'}
-              size="lg"
-            >
-              {`${index + 1}m: ${load.toFixed(2)}`}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Health Checks */}
-        <h3 className="text-lg font-bold mb-4">
-          Health Checks
-        </h3>
-
-        <ul className="menu bg-base-200 w-full rounded-box mb-6">
-          {healthChecks.map((check, index) => (
-            <React.Fragment key={check.id}>
-              <li>
-                <div className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(check.status)}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{check.name}</span>
-                        <Badge
-                          variant={getStatusColor(check.status) as any}
-                          size="sm"
-                        >
-                          {check.status}
-                        </Badge>
+        {/* Health Checks List */}
+        {apiHealth?.endpoints && apiHealth.endpoints.length > 0 && (
+          <>
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" /> Endpoint Checks
+            </h3>
+            <ul className="menu bg-base-100 border border-base-200 w-full rounded-box mb-6 p-0">
+              {apiHealth.endpoints.map((check, index) => (
+                <React.Fragment key={check.id}>
+                  <li>
+                    <div className="flex items-center justify-between py-3 hover:bg-base-200 cursor-default">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(check.status)}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{check.name}</span>
+                            <Badge
+                              variant={getStatusColor(check.status) as any}
+                              size="sm"
+                            >
+                              {check.status}
+                            </Badge>
+                          </div>
+                          {check.errorMessage && (
+                            <div className="text-sm text-error mt-1">
+                              {check.errorMessage}
+                            </div>
+                          )}
+                          <div className="text-xs text-base-content/50 mt-1">
+                            Response: {formatLatency(check.responseTime)} • Checked: {new Date(check.lastChecked).toLocaleTimeString()}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-base-content/70 mt-1">
-                        {check.message}
-                      </div>
-                      <div className="text-xs text-base-content/50 mt-1">
-                        Last checked: {new Date(check.lastChecked).toLocaleString()}
+                      <div className="text-sm font-mono opacity-50">
+                        {check.url}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </li>
-              {index < healthChecks.length - 1 && <Divider className="my-0" />}
-            </React.Fragment>
-          ))}
-        </ul>
+                  </li>
+                  {index < apiHealth.endpoints.length - 1 && <Divider className="my-0" />}
+                </React.Fragment>
+              ))}
+            </ul>
+          </>
+        )}
 
         {/* Detailed Information */}
         <Accordion items={accordionItems} className="mt-4" />
