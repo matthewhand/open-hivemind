@@ -82,7 +82,7 @@
     "@discordjs/rest": "^2.0.0",
     "@discordjs/voice": "^0.17.0",
     "@heroicons/react": "^2.2.0",
-    "@modelcontextprotocol/sdk": "^1.18.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@reduxjs/toolkit": "^2.9.0",
     "@slack/rtm-api": "^7.0.2",
     "@slack/socket-mode": "^2.0.3",
@@ -118,11 +118,13 @@
     "express-session": "^1.18.2",
     "express-sitemap-xml": "^3.1.0",
     "express-validator": "^7.3.1",
+    "fast-xml-parser": "^5.3.6",
     "ffmpeg-static": "^5.2.0",
     "flowise-sdk": "^1.0.8",
     "form-data": "^4.0.4",
     "framer-motion": "^12.23.19",
     "gpt-tokenizer": "^2.1.2",
+    "hono": "^4.12.2",
     "html-entities": "^2.5.2",
     "inquirer": "^12.9.4",
     "ioredis": "^5.8.2",
@@ -256,6 +258,8 @@
   },
   "overrides": {
     "undici": "^6.23.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "fast-xml-parser": "^5.3.6",
+    "tar": "^7.5.9"
   }
 }

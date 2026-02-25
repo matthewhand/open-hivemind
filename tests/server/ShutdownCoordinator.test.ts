@@ -4,12 +4,13 @@
  */
 
 import { Server as HttpServer } from 'http';
-import { IShutdownable, ShutdownCoordinator, ShutdownPhase } from '@src/server/ShutdownCoordinator';
+import { IShutdownable, ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 
 // Mock HttpServer
 const createMockHttpServer = (): jest.Mocked<HttpServer> => {
   return {
     close: jest.fn((callback?: () => void) => {
+      // Simulate close callback if needed, but for hanging tests we override this
       if (callback) callback();
       return this;
     }),
@@ -20,6 +21,7 @@ const createMockHttpServer = (): jest.Mocked<HttpServer> => {
 
 // Mock Vite server
 const createMockViteServer = () => ({
+  shutdown: jest.fn(() => Promise.resolve()),
   close: jest.fn(() => Promise.resolve()),
 });
 
@@ -37,17 +39,28 @@ const createMockService = (name: string): IShutdownable & { name: string } => ({
 
 describe('ShutdownCoordinator', () => {
   let coordinator: ShutdownCoordinator;
+  let exitSpy: jest.SpyInstance;
+  const originalEnv = process.env;
 
   beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv };
+
     // Reset singleton instance between tests
     (ShutdownCoordinator as any).instance = undefined;
     coordinator = ShutdownCoordinator.getInstance();
     jest.useFakeTimers();
+
+    // Mock process.exit to prevent test runner from exiting
+    // @ts-ignore
+    exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    process.env = originalEnv;
     jest.useRealTimers();
     jest.clearAllMocks();
+    exitSpy.mockRestore();
   });
 
   describe('Singleton Pattern', () => {
@@ -82,41 +95,9 @@ describe('ShutdownCoordinator', () => {
 
     it('should register generic service', () => {
       const service = createMockService('test-service');
-      coordinator.registerService('test-service', service);
+      coordinator.registerService(service);
       // Service should be registered without error
-      expect(() => coordinator.registerService('test-service', service)).not.toThrow();
-    });
-  });
-
-  describe('Phase Management', () => {
-    it('should start in IDLE phase', () => {
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.IDLE);
-    });
-
-    it('should transition through phases during shutdown', async () => {
-      const httpServer = createMockHttpServer();
-      coordinator.registerHttpServer(httpServer);
-
-      const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
-
-      // Check phase transitions
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.STOP_ACCEPTING);
-
-      // Advance through phases
-      await jest.advanceTimersByTimeAsync(5000);
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.DRAIN_REQUESTS);
-
-      await jest.advanceTimersByTimeAsync(10000);
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.STOP_BACKGROUND);
-
-      await jest.advanceTimersByTimeAsync(5000);
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.DISCONNECT_EXTERNAL);
-
-      await jest.advanceTimersByTimeAsync(15000);
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.FINAL_CLEANUP);
-
-      await shutdownPromise;
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.COMPLETE);
+      expect(() => coordinator.registerService(service)).not.toThrow();
     });
   });
 
@@ -130,6 +111,7 @@ describe('ShutdownCoordinator', () => {
       await shutdownPromise;
 
       expect(httpServer.close).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(0);
     });
 
     it('should close Vite server during shutdown', async () => {
@@ -140,7 +122,7 @@ describe('ShutdownCoordinator', () => {
       await jest.runAllTimersAsync();
       await shutdownPromise;
 
-      expect(viteServer.close).toHaveBeenCalled();
+      expect(viteServer.shutdown).toHaveBeenCalled();
     });
 
     it('should call shutdown on messenger services', async () => {
@@ -156,7 +138,7 @@ describe('ShutdownCoordinator', () => {
 
     it('should call shutdown on generic services', async () => {
       const service = createMockService('test-service');
-      coordinator.registerService('test-service', service);
+      coordinator.registerService(service);
 
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
       await jest.runAllTimersAsync();
@@ -167,7 +149,7 @@ describe('ShutdownCoordinator', () => {
 
     it('should handle services without shutdown method gracefully', async () => {
       const serviceWithoutShutdown = { name: 'no-shutdown' } as any;
-      coordinator.registerService('no-shutdown', serviceWithoutShutdown);
+      coordinator.registerService(serviceWithoutShutdown);
 
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
       await jest.runAllTimersAsync();
@@ -180,7 +162,7 @@ describe('ShutdownCoordinator', () => {
       const failingService: IShutdownable = {
         shutdown: jest.fn(() => Promise.reject(new Error('Shutdown failed'))),
       };
-      coordinator.registerService('failing-service', failingService);
+      coordinator.registerService(failingService);
 
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
       await jest.runAllTimersAsync();
@@ -222,43 +204,32 @@ describe('ShutdownCoordinator', () => {
 
   describe('Timeout Handling', () => {
     it('should force exit after timeout', async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      // Set short total timeout and long phase timeout for stopBackground
+      process.env.SHUTDOWN_TIMEOUT_TOTAL = '1000';
+      process.env.SHUTDOWN_TIMEOUT_STOPBACKGROUND = '5000';
 
-      const httpServer = createMockHttpServer();
-      httpServer.close.mockImplementation(() => {
-        // Never call callback - simulate hanging
-        return this;
-      });
-      coordinator.registerHttpServer(httpServer);
+      // Re-instantiate to pick up env vars
+      (ShutdownCoordinator as any).instance = undefined;
+      coordinator = ShutdownCoordinator.getInstance();
+
+      exitSpy.mockClear();
+
+      // Register a service that hangs on shutdown
+      const hangingService = {
+        name: 'hanging',
+        shutdown: jest.fn(() => new Promise<void>(() => {})) // Never resolves
+      };
+      coordinator.registerService(hangingService);
 
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
 
-      // Advance past all timeouts (40s total)
-      await jest.advanceTimersByTimeAsync(45000);
+      // Advance past total timeout (1000ms) AND phase timeout (5000ms)
+      // We need phase to timeout so shutdownPromise resolves (since process.exit is mocked)
+      await jest.advanceTimersByTimeAsync(10000);
 
       await shutdownPromise;
 
-      expect(exitSpy).toHaveBeenCalled();
-
-      exitSpy.mockRestore();
-    });
-  });
-
-  describe('Shutdown Reason Tracking', () => {
-    it('should track shutdown reason', async () => {
-      const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
-      await jest.runAllTimersAsync();
-      await shutdownPromise;
-
-      expect(coordinator.getShutdownReason()).toBe('SIGTERM');
-    });
-
-    it('should track different shutdown reasons', async () => {
-      const shutdownPromise = coordinator.initiateShutdown('unhandledRejection');
-      await jest.runAllTimersAsync();
-      await shutdownPromise;
-
-      expect(coordinator.getShutdownReason()).toBe('unhandledRejection');
+      expect(exitSpy).toHaveBeenCalledWith(1);
     });
   });
 });
