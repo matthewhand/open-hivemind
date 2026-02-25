@@ -347,6 +347,28 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     // Command validation
     if (config.command) {
       const command = (config.command as string).trim();
+
+      // Security validation: Block dangerous shell commands
+      const blockedCommands = [
+        'sh', 'bash', 'zsh', 'dash', 'csh', 'ksh', 'tcsh',
+        'cmd', 'cmd.exe', 'powershell', 'powershell.exe', 'pwsh',
+      ];
+
+      const isBlocked = blockedCommands.some(blocked => {
+        const lowerCommand = command.toLowerCase();
+        // Check exact match
+        if (lowerCommand === blocked) return true;
+        // Check if it ends with the blocked command (e.g. /bin/sh)
+        // using forward slash or backslash as separator
+        // blocked commands are lowercase in the list
+        const pattern = new RegExp(`[\\/\\\\]${blocked}$`);
+        return pattern.test(lowerCommand);
+      });
+
+      if (isBlocked) {
+        errors.push('Command is not allowed for security reasons');
+      }
+
       const validCommandPatterns = [
         /^[a-zA-Z0-9\-_]+$/,
         /^\.\/[a-zA-Z0-9\-_\/.]+$/,
@@ -398,8 +420,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     }
 
     // Suggestions
-    if (config.type === 'desktop' && (!config.args || (config.args as string | string[] as string).trim().length === 0)) {
-      suggestions.push('Consider adding arguments like "--port 3000" for local MCP servers');
+    if (config.type === 'desktop') {
+      const hasArgs = Array.isArray(config.args)
+        ? config.args.length > 0
+        : !!config.args && (config.args as string).trim().length > 0;
+
+      if (!hasArgs) {
+        suggestions.push('Consider adding arguments like "--port 3000" for local MCP servers');
+      }
     }
 
     if (!config.healthCheck?.enabled) {
