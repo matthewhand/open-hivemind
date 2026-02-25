@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowTopRightOnSquareIcon as LaunchIcon,
   ArrowDownTrayIcon as DownloadIcon,
   ArrowPathIcon as RefreshIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
@@ -28,6 +31,8 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -82,39 +87,52 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
-    let category = 'Other';
+  const filteredUrls = useMemo(() => {
+    if (!sitemapData?.urls) return [];
+    return sitemapData.urls.filter((url) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        url.url.toLowerCase().includes(searchLower) ||
+        url.description.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [sitemapData, searchTerm]);
 
-    if (url.url === '/') {
-      category = 'Root';
-    } else if (url.url.startsWith('/admin')) {
-      if (url.url.includes('/bots') || url.url.includes('/personas')) {
-        category = 'Bot Management';
-      } else if (url.url.includes('/mcp')) {
-        category = 'MCP Servers';
-      } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) {
-        category = 'Monitoring & Analytics';
-      } else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration') || url.url.includes('/system-management')) {
-        category = 'System Management';
-      } else if (url.url.includes('/ai/')) {
-        category = 'AI Features';
-      } else if (url.url.includes('/integrations')) {
-        category = 'Integrations';
-      } else {
-        category = 'Main Dashboard';
+  const groupedUrls = useMemo(() => {
+    return filteredUrls.reduce((acc, url) => {
+      let category = 'Other';
+
+      if (url.url === '/') {
+        category = 'Root';
+      } else if (url.url.startsWith('/admin')) {
+        if (url.url.includes('/bots') || url.url.includes('/personas')) {
+          category = 'Bot Management';
+        } else if (url.url.includes('/mcp')) {
+          category = 'MCP Servers';
+        } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) {
+          category = 'Monitoring & Analytics';
+        } else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration') || url.url.includes('/system-management')) {
+          category = 'System Management';
+        } else if (url.url.includes('/ai/')) {
+          category = 'AI Features';
+        } else if (url.url.includes('/integrations')) {
+          category = 'Integrations';
+        } else {
+          category = 'Main Dashboard';
+        }
+      } else if (url.url.startsWith('/webui')) {
+        category = 'Legacy Interfaces';
+      } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
+        category = 'System APIs';
+      } else if (url.url === '/login') {
+        category = 'Authentication';
       }
-    } else if (url.url.startsWith('/webui')) {
-      category = 'Legacy Interfaces';
-    } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
-      category = 'System APIs';
-    } else if (url.url === '/login') {
-      category = 'Authentication';
-    }
 
-    if (!acc[category]) { acc[category] = []; }
-    acc[category].push(url);
-    return acc;
-  }, {} as Record<string, SitemapUrl[]>) || {};
+      if (!acc[category]) { acc[category] = []; }
+      acc[category].push(url);
+      return acc;
+    }, {} as Record<string, SitemapUrl[]>) || {};
+  }, [filteredUrls]);
 
   if (loading) {
     return (
@@ -153,110 +171,197 @@ const SitemapPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Statistics and Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Total Pages</div>
-            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
+      {/* Controls */}
+      <div className="flex flex-col gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="stats shadow">
+            <div className="stat">
+              <div className="stat-title">Total Pages</div>
+              <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
+            </div>
+          </div>
+
+          <div className="stats shadow">
+            <div className="stat">
+              <div className="stat-title">Generated</div>
+              <div className="stat-value text-sm">
+                {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
+              </div>
+              <div className="stat-desc">
+                {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
+              </div>
+            </div>
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Access Level</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={accessFilter}
+              onChange={(e) => setAccessFilter(e.target.value)}
+            >
+              <option value="all">All Pages</option>
+              <option value="public">Public Only</option>
+              <option value="authenticated">Authenticated</option>
+              <option value="owner">Owner Only</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 items-end">
+            <button
+              className="btn btn-outline flex-1"
+              onClick={handleDownloadXml}
+            >
+              <DownloadIcon className="w-5 h-5 mr-2" />
+              XML
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={fetchSitemap}
+              title="Refresh"
+            >
+              <RefreshIcon className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Generated</div>
-            <div className="stat-value text-sm">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-            </div>
-            <div className="stat-desc">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-            </div>
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-base-100 p-4 rounded-lg shadow">
+          <div className="relative w-full sm:max-w-md">
+            <input
+              type="text"
+              placeholder="Search URLs or descriptions..."
+              className="input input-bordered w-full pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" />
           </div>
-        </div>
 
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text">Access Level</span>
-          </label>
-          <select
-            className="select select-bordered w-full"
-            value={accessFilter}
-            onChange={(e) => setAccessFilter(e.target.value)}
-          >
-            <option value="all">All Pages</option>
-            <option value="public">Public Only</option>
-            <option value="authenticated">Authenticated</option>
-            <option value="owner">Owner Only</option>
-          </select>
-        </div>
-
-        <div className="flex gap-2 items-end">
-          <button
-            className="btn btn-outline flex-1"
-            onClick={handleDownloadXml}
-          >
-            <DownloadIcon className="w-5 h-5 mr-2" />
-            XML
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={fetchSitemap}
-            title="Refresh"
-          >
-            <RefreshIcon className="w-5 h-5" />
-          </button>
+          <div className="join">
+            <button
+              className={`join-item btn ${viewMode === 'grid' ? 'btn-active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid View"
+            >
+              <Squares2X2Icon className="w-5 h-5" />
+            </button>
+            <button
+              className={`join-item btn ${viewMode === 'list' ? 'btn-active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List View"
+            >
+              <ListBulletIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Grouped URLs */}
-      {Object.entries(groupedUrls).map(([category, urls]) => (
-        <div key={category} className="mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            {category}
-            <div className="badge badge-neutral">{urls.length}</div>
-          </h2>
+      {/* Content */}
+      {viewMode === 'grid' ? (
+        Object.entries(groupedUrls).map(([category, urls]) => (
+          <div key={category} className="mb-8">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              {category}
+              <div className="badge badge-neutral">{urls.length}</div>
+            </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {urls.map((url) => (
-              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-mono text-sm break-all font-bold">
-                      {url.url}
-                    </h3>
-                    <button
-                      className="btn btn-ghost btn-xs btn-circle"
-                      onClick={() => handleOpenUrl(url.fullUrl)}
-                    >
-                      <LaunchIcon className="w-4 h-4" />
-                    </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {urls.map((url) => (
+                <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+                  <div className="card-body p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-mono text-sm break-all font-bold">
+                        {url.url}
+                      </h3>
+                      <button
+                        className="btn btn-ghost btn-xs btn-circle"
+                        onClick={() => handleOpenUrl(url.fullUrl)}
+                      >
+                        <LaunchIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-base-content/70 mb-3">
+                      {url.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                        {url.access}
+                      </div>
+                      <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                        Priority: {url.priority}
+                      </div>
+                      <div className="badge badge-sm badge-outline">
+                        {url.changefreq}
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-base-content/50 mt-auto">
+                      Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                    </div>
                   </div>
-
-                  <p className="text-xs text-base-content/70 mb-3">
-                    {url.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1 mb-2">
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="overflow-x-auto bg-base-100 rounded-lg shadow mb-8">
+          <table className="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Access</th>
+                <th>Priority</th>
+                <th>Change Freq</th>
+                <th>Last Mod</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUrls.map((url) => (
+                <tr key={url.url}>
+                  <td className="max-w-xs md:max-w-md">
+                    <div className="font-bold font-mono text-sm break-all">{url.url}</div>
+                    <div className="text-xs opacity-70 truncate">{url.description}</div>
+                  </td>
+                  <td>
                     <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
                       {url.access}
                     </div>
+                  </td>
+                  <td>
                     <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                      Priority: {url.priority}
+                      {url.priority}
                     </div>
-                    <div className="badge badge-sm badge-outline">
-                      {url.changefreq}
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-base-content/50 mt-auto">
-                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </td>
+                  <td className="text-sm">{url.changefreq}</td>
+                  <td className="text-sm">{new Date(url.lastmod).toLocaleDateString()}</td>
+                  <td>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => handleOpenUrl(url.fullUrl)}
+                      title="Open URL"
+                    >
+                      <LaunchIcon className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredUrls.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-base-content/50">
+                    No pages found matching your search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      ))}
+      )}
 
       {/* Sitemap Links */}
       <div className="bg-base-200 rounded-box p-6 mt-8">
