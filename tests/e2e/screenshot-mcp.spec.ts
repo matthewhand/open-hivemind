@@ -106,12 +106,13 @@ test.describe('MCP Servers Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
-    // Click "View Tools" on the first server (Filesystem Server)
-    // Assuming the first card is the Filesystem Server which has tools
-    await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
+    // Click "View Tools" on the Filesystem Server card
+    const fsCard = page.locator('.card').filter({ hasText: 'Filesystem Server' });
+    await expect(fsCard).toBeVisible();
+    await fsCard.getByRole('button', { name: 'View Tools' }).first().click();
 
     // Wait for modal to be visible and check for tool name
-    const toolsModal = page.locator('.modal-box').filter({ hasText: 'Tools provided by Filesystem Server' });
+    const toolsModal = page.locator('.modal-box').filter({ hasText: 'Tools: Filesystem Server' });
     await expect(toolsModal).toBeVisible();
     await expect(toolsModal.getByText('read_file')).toBeVisible();
 

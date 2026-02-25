@@ -833,6 +833,57 @@ class ApiService {
   async getEnvOverrides(): Promise<any> {
     return this.request('/api/admin/env-overrides');
   }
+
+  // MCP Servers
+  async getMcpServers(): Promise<{
+    success: boolean;
+    data: {
+      servers: Array<{
+        name: string;
+        serverUrl?: string;
+        url?: string;
+        connected: boolean;
+        tools?: any[];
+        lastConnected?: string;
+        description?: string;
+        apiKey?: string;
+      }>;
+      configurations: Array<{
+        name: string;
+        serverUrl?: string;
+        apiKey?: string;
+      }>;
+    };
+  }> {
+    return this.request('/api/admin/mcp-servers');
+  }
+
+  async connectMcpServer(data: { name: string; serverUrl: string; apiKey?: string }): Promise<any> {
+    return this.request('/api/admin/mcp-servers/connect', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async disconnectMcpServer(name: string): Promise<any> {
+    return this.request('/api/admin/mcp-servers/disconnect', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async deleteMcpServer(name: string): Promise<any> {
+    return this.request(`/api/admin/mcp-servers/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async testMcpServer(data: { name: string; serverUrl: string; apiKey?: string }): Promise<any> {
+    return this.request('/api/admin/mcp-servers/test', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();
