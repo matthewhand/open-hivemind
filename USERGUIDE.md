@@ -60,6 +60,15 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 
 ## System
 
+### [Activity Feed](/admin/activity)
+Monitor real-time interactions and events across your bot ecosystem.
+![Activity Feed](docs/screenshots/activity-page.png)
+
+*   **Real-time Feed**: Watch events as they happen with auto-refresh.
+*   **Filtering**: Filter events by Bot, Provider, or LLM to isolate specific interactions.
+*   **Export**: Download the activity log as a CSV file for offline analysis.
+*   **Timeline View**: Visualize the sequence of events over time.
+
 ### [Settings](/admin/settings)
 General system configuration.
 *   **Rate Limits**: Adjust global message rate limits to prevent spam.

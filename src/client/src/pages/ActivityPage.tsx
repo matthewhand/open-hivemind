@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
 import { 
   Alert, 
@@ -14,31 +14,8 @@ import {
   LoadingSpinner,
   EmptyState,
 } from '../components/DaisyUI';
-
-interface ActivityEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider: string;
-  status: 'success' | 'error' | 'timeout' | 'pending';
-  duration?: number;
-  inputLength?: number;
-  outputLength?: number;
-}
-
-interface ActivityResponse {
-  events: ActivityEvent[];
-  filters: {
-    agents: string[];
-    messageProviders: string[];
-    llmProviders: string[];
-  };
-  timeline: any[];
-  agentMetrics: any[];
-}
-
-const API_BASE = '/api';
+import SearchFilterBar from '../components/SearchFilterBar';
+import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -47,17 +24,33 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBot, setSelectedBot] = useState<string>('all');
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
+
+  // Cache initial filters to populate dropdowns even when filtered
+  const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
+
   const fetchActivity = useCallback(async () => {
     try {
+      // Don't set loading on auto-refresh to avoid flickering
+      if (!autoRefresh) setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE}/dashboard/api/activity`);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch activity: ${response.statusText}`);
-      }
+      const params: any = {};
+      if (selectedBot !== 'all') params.bot = selectedBot;
+      if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
+      if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
 
-      const result = await response.json();
+      const result = await apiService.getActivity(params);
       setData(result);
+
+      // Store initial filters
+      if (!availableFilters && result.filters) {
+        setAvailableFilters(result.filters);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
@@ -65,20 +58,67 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, availableFilters]);
 
   useEffect(() => {
     fetchActivity();
+  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
 
+  useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchActivity, 5000);
       return () => clearInterval(interval);
     }
-  }, [fetchActivity, autoRefresh]);
+  }, [autoRefresh, fetchActivity]);
+
+  const handleExport = () => {
+    if (!data?.events || data.events.length === 0) return;
+
+    const headers = ['Timestamp', 'Bot', 'Provider', 'LLM', 'Status', 'Duration (ms)', 'Message Type'];
+    const rows = data.events.map(e => [
+      e.timestamp,
+      e.botName,
+      e.provider,
+      e.llmProvider,
+      e.status,
+      e.processingTime || '',
+      e.messageType
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `activity_export_${new Date().toISOString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const events = data?.events || [];
 
-  const timelineEvents = events.map(event => ({
+  // Filter events client-side based on search query
+  const filteredEvents = useMemo(() => {
+    if (!searchQuery) return events;
+    const lowerQuery = searchQuery.toLowerCase();
+    return events.filter(e =>
+      e.botName.toLowerCase().includes(lowerQuery) ||
+      e.provider.toLowerCase().includes(lowerQuery) ||
+      e.llmProvider.toLowerCase().includes(lowerQuery) ||
+      e.status.toLowerCase().includes(lowerQuery) ||
+      (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
+    );
+  }, [events, searchQuery]);
+
+  const timelineEvents = filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -136,7 +176,7 @@ const ActivityPage: React.FC = () => {
       render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
-      key: 'duration' as keyof ActivityEvent,
+      key: 'processingTime' as keyof ActivityEvent,
       title: 'Duration',
       sortable: true,
       width: '100px',
@@ -173,6 +213,22 @@ const ActivityPage: React.FC = () => {
       icon: '🤖',
       color: 'secondary' as const,
     },
+  ];
+
+  // Construct filter options
+  const botOptions = [
+    { value: 'all', label: 'All Bots' },
+    ...(availableFilters?.agents || []).map(agent => ({ value: agent, label: agent }))
+  ];
+
+  const providerOptions = [
+    { value: 'all', label: 'All Providers' },
+    ...(availableFilters?.messageProviders || []).map(p => ({ value: p, label: p }))
+  ];
+
+  const llmOptions = [
+    { value: 'all', label: 'All LLMs' },
+    ...(availableFilters?.llmProviders || []).map(p => ({ value: p, label: p }))
   ];
 
   return (
@@ -230,7 +286,12 @@ const ActivityPage: React.FC = () => {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             
-            <Button variant="ghost" size="sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={events.length === 0}
+            >
               <Download className="w-4 h-4" /> Export
             </Button>
           </div>
@@ -238,29 +299,62 @@ const ActivityPage: React.FC = () => {
       />
 
       {/* Stats Cards */}
-      <StatsCards stats={stats} isLoading={loading} />
+      <StatsCards stats={stats} isLoading={loading && !data} />
+
+      {/* Filters */}
+      <SearchFilterBar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Filter activity..."
+        className={loading ? 'opacity-50 pointer-events-none' : ''}
+        filters={[
+          {
+            key: 'bot',
+            value: selectedBot,
+            onChange: setSelectedBot,
+            options: botOptions,
+            className: "w-full sm:w-1/4"
+          },
+          {
+            key: 'provider',
+            value: selectedProvider,
+            onChange: setSelectedProvider,
+            options: providerOptions,
+            className: "w-full sm:w-1/4"
+          },
+          {
+            key: 'llm',
+            value: selectedLlmProvider,
+            onChange: setSelectedLlmProvider,
+            options: llmOptions,
+            className: "w-full sm:w-1/4"
+          }
+        ]}
+      />
 
       {/* Content */}
-      {loading && events.length === 0 ? (
+      {loading && !data ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="No activity yet"
-          description="Events will appear here as your bots process messages"
+          title={events.length === 0 ? "No activity yet" : "No matching events"}
+          description={events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your search or filters"}
+          actionLabel="Refresh"
+          onAction={fetchActivity}
         />
       ) : (
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={events}
+              data={filteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={true}
-              exportable={true}
+              searchable={false} // We use SearchFilterBar
+              exportable={false} // We have our own export button
             />
           ) : (
             <div className="p-4">
