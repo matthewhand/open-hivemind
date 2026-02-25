@@ -34,7 +34,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           placeholder={searchPlaceholder}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          prefix={<Search className="w-4 h-4 text-base-content/50" />}
+          prefix={<Search className="w-4 h-4 text-base-content/50" /> as any}
           className="pl-10 w-full"
           size="sm"
           suffix={
