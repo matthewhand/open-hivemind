@@ -1,19 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Loading, Modal, Accordion, Progress } from './DaisyUI';
+import { Card, Badge, Button, Modal, Accordion, Progress, Loading } from './DaisyUI';
 import {
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-import type { Bot } from '../services/api';
+  RotateCcw,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  ChevronDown,
+  Bot,
+  MessageCircle,
+  Smartphone,
+  Wrench,
+  Activity,
+  Zap,
+} from 'lucide-react';
+import type { Bot as BotType } from '../services/api';
 
 interface BotStatusCardProps {
-  bot: Bot;
+  bot: BotType;
   statusData?: {
     status: string;
     healthDetails?: Record<string, unknown>;
@@ -40,15 +46,16 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
-      return <CheckCircleIcon className={`${className} text-success`} />;
+    case 'healthy':
+      return <CheckCircle className={`${className} text-success`} />;
     case 'error':
     case 'disconnected':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
+      return <AlertCircle className={`${className} text-error`} />;
     case 'warning':
     case 'connecting':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      return <AlertTriangle className={`${className} text-warning`} />;
     default:
-      return <InformationCircleIcon className={`${className} text-base-content/50`} />;
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -56,6 +63,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
+    case 'healthy':
       return 'success';
     case 'error':
     case 'disconnected':
@@ -71,13 +79,13 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   const getProviderIcon = (provider: string) => {
     switch (provider?.toLowerCase()) {
     case 'discord':
-      return '🤖';
+      return <Bot className="w-5 h-5" />;
     case 'slack':
-      return '💬';
+      return <MessageCircle className="w-5 h-5" />;
     case 'mattermost':
-      return '📱';
+      return <Smartphone className="w-5 h-5" />;
     default:
-      return '🔧';
+      return <Wrench className="w-5 h-5" />;
     }
   };
 
@@ -98,7 +106,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     if (!statusData) {return 0;}
 
     let score = 100;
-    if (statusData.status !== 'active') {score -= 30;}
+    if (statusData.status !== 'active' && statusData.status !== 'healthy') {score -= 30;}
     if (statusData.errorCount && statusData.errorCount > 0) {score -= 20;}
     if (statusData.responseTime && statusData.responseTime > 2000) {score -= 15;}
     if (!statusData.connected) {score -= 25;}
@@ -113,6 +121,144 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   };
 
   const healthScore = getHealthScore();
+
+  const handleRefreshClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      if (onRefresh) {onRefresh();}
+    }, 1000);
+  };
+
+  const accordionItems = [
+    {
+      id: 'basic',
+      title: 'Basic Information',
+      icon: <Info className="w-5 h-5" />,
+      content: (
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Name:</span>
+            <span className="text-sm">{bot.name}</span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Message Provider:</span>
+            <span className="text-sm">{bot.messageProvider}</span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">LLM Provider:</span>
+            <span className="text-sm">{bot.llmProvider}</span>
+          </div>
+          {bot.persona && (
+            <div className="flex gap-4">
+              <span className="text-sm font-semibold min-w-[120px]">Persona:</span>
+              <span className="text-sm">{bot.persona}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'status',
+      title: 'Status Information',
+      icon: <Activity className="w-5 h-5" />,
+      content: (
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Status:</span>
+            <div className="flex items-center gap-2">
+              {getStatusIcon(statusData?.status || 'unknown')}
+              <span className="text-sm">{statusData?.status || 'Unknown'}</span>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Connected:</span>
+            <span className="text-sm">
+              {statusData?.connected ? 'Yes' : 'No'}
+            </span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Health Score:</span>
+            <span className="text-sm">{healthScore}%</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'performance',
+      title: 'Performance Metrics',
+      icon: <Zap className="w-5 h-5" />,
+      content: (
+        <div className="space-y-3">
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Messages:</span>
+            <span className="text-sm">{statusData?.messageCount || 0}</span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Errors:</span>
+            <span className="text-sm text-error">
+              {statusData?.errorCount || 0}
+            </span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Response Time:</span>
+            <span className="text-sm">
+              {formatResponseTime(statusData?.responseTime || 0)}
+            </span>
+          </div>
+          <div className="flex gap-4">
+            <span className="text-sm font-semibold min-w-[120px]">Uptime:</span>
+            <span className="text-sm">
+              {formatUptime(statusData?.uptime || 0)}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    ...(statusData?.healthDetails ? [{
+      id: 'health',
+      title: 'Health Details',
+      icon: <Activity className="w-5 h-5" />,
+      content: (
+        <div className="space-y-3">
+          {Object.entries(statusData.healthDetails).map(([key, value]) => (
+            <div key={key} className="flex gap-4">
+              <span className="text-sm font-semibold min-w-[120px]">{key}:</span>
+              <span className="text-sm">
+                {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ),
+    }] : []),
+    {
+      id: 'config',
+      title: 'Configuration',
+      icon: <Settings className="w-5 h-5" />,
+      content: (
+        <div className="space-y-3">
+          {bot.systemInstruction && (
+            <div>
+              <p className="text-sm font-semibold mb-2">System Instruction:</p>
+              <p className="text-sm italic bg-base-200 p-3 rounded-lg">
+                {bot.systemInstruction}
+              </p>
+            </div>
+          )}
+          {bot.mcpServers && (
+            <div>
+              <p className="text-sm font-semibold mb-2">MCP Servers:</p>
+              <p className="text-sm">
+                {Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1} server(s) configured
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -211,23 +357,17 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               className="btn-outline flex items-center gap-2"
               onClick={() => setDetailsOpen(true)}
             >
-              <Cog6ToothIcon className="w-4 h-4" />
+              <Settings className="w-4 h-4" />
               Details
             </Button>
             <Button
               size="sm"
               variant="secondary"
               className="btn-outline flex items-center gap-2"
-              onClick={() => {
-                setLoading(true);
-                setTimeout(() => {
-                  setLoading(false);
-                  if (onRefresh) {onRefresh();}
-                }, 1000);
-              }}
+              onClick={handleRefreshClick}
               disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>
@@ -235,160 +375,22 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
       </Card>
 
       {/* Detailed Information Modal */}
-      <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)}>
-        <Modal.Header>
-          Bot Details - {bot.name}
-        </Modal.Header>
-        <Modal.Body>
-          <div className="space-y-2">
-            {/* Basic Information */}
-            <Accordion defaultOpen>
-              <Accordion.Item value="basic">
-                <Accordion.Trigger>
-                  <div className="flex items-center gap-2">
-                    <span>Basic Information</span>
-                  </div>
-                </Accordion.Trigger>
-                <Accordion.Content>
-                  <div className="space-y-3">
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Name:</span>
-                      <span className="text-sm">{bot.name}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Message Provider:</span>
-                      <span className="text-sm">{bot.messageProvider}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">LLM Provider:</span>
-                      <span className="text-sm">{bot.llmProvider}</span>
-                    </div>
-                    {bot.persona && (
-                      <div className="flex gap-4">
-                        <span className="text-sm font-semibold min-w-[120px]">Persona:</span>
-                        <span className="text-sm">{bot.persona}</span>
-                      </div>
-                    )}
-                  </div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion>
-
-            {/* Status Information */}
-            <Accordion defaultOpen>
-              <Accordion.Item value="status">
-                <Accordion.Trigger>Status Information</Accordion.Trigger>
-                <Accordion.Content>
-                  <div className="space-y-3">
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Status:</span>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(statusData?.status || 'unknown')}
-                        <span className="text-sm">{statusData?.status || 'Unknown'}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Connected:</span>
-                      <span className="text-sm">
-                        {statusData?.connected ? 'Yes' : 'No'}
-                      </span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Health Score:</span>
-                      <span className="text-sm">{healthScore}%</span>
-                    </div>
-                  </div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion>
-
-            {/* Performance Metrics */}
-            <Accordion>
-              <Accordion.Item value="performance">
-                <Accordion.Trigger>Performance Metrics</Accordion.Trigger>
-                <Accordion.Content>
-                  <div className="space-y-3">
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Messages:</span>
-                      <span className="text-sm">{statusData?.messageCount || 0}</span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Errors:</span>
-                      <span className="text-sm text-error">
-                        {statusData?.errorCount || 0}
-                      </span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Response Time:</span>
-                      <span className="text-sm">
-                        {formatResponseTime(statusData?.responseTime || 0)}
-                      </span>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-sm font-semibold min-w-[120px]">Uptime:</span>
-                      <span className="text-sm">
-                        {formatUptime(statusData?.uptime || 0)}
-                      </span>
-                    </div>
-                  </div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion>
-
-            {/* Health Details */}
-            {statusData?.healthDetails && (
-              <Accordion>
-                <Accordion.Item value="health">
-                  <Accordion.Trigger>Health Details</Accordion.Trigger>
-                  <Accordion.Content>
-                    <div className="space-y-3">
-                      {Object.entries(statusData.healthDetails).map(([key, value]) => (
-                        <div key={key} className="flex gap-4">
-                          <span className="text-sm font-semibold min-w-[120px]">{key}:</span>
-                          <span className="text-sm">
-                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </Accordion.Content>
-                </Accordion.Item>
-              </Accordion>
-            )}
-
-            {/* Configuration */}
-            <Accordion>
-              <Accordion.Item value="config">
-                <Accordion.Trigger>Configuration</Accordion.Trigger>
-                <Accordion.Content>
-                  <div className="space-y-3">
-                    {bot.systemInstruction && (
-                      <div>
-                        <p className="text-sm font-semibold mb-2">System Instruction:</p>
-                        <p className="text-sm italic bg-base-200 p-3 rounded-lg">
-                          {bot.systemInstruction}
-                        </p>
-                      </div>
-                    )}
-                    {bot.mcpServers && (
-                      <div>
-                        <p className="text-sm font-semibold mb-2">MCP Servers:</p>
-                        <p className="text-sm">
-                          {Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1} server(s) configured
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion>
-          </div>
-        </Modal.Body>
-        <Modal.Actions>
-          <Button onClick={() => setDetailsOpen(false)}>
-            Close
-          </Button>
-        </Modal.Actions>
+      <Modal
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        title={`Bot Details - ${bot.name}`}
+        size="lg"
+        actions={[
+          {
+            label: 'Close',
+            onClick: () => setDetailsOpen(false),
+            variant: 'ghost',
+          }
+        ]}
+      >
+        <div className="py-2">
+          <Accordion items={accordionItems} />
+        </div>
       </Modal>
     </>
   );
