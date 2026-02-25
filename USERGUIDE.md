@@ -42,6 +42,8 @@ Quick-start templates to help you create bots faster.
 *   **Quick Create**: Use a template to pre-populate the bot creation form.
 *   **Filtering**: Find templates by platform, persona, or LLM provider.
 
+![Bot Templates List](docs/screenshots/bot-templates-list.png)
+
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
 *   **System Prompt**: Write the core instructions that define who the bot is (e.g., "You are a helpful coding assistant").
@@ -49,15 +51,10 @@ Define the personality and behavior of your bots.
 *   **Context**: Provide background information the bot should know.
 
 ### [Guards](/admin/guards)
-Manage security and access control profiles for bots.
-*   **Guard Profiles**: Create and manage reusable security profiles.
-*   **Access Control**: Restrict bot usage to the owner or specific users.
-*   **Rate Limits**: Configure maximum requests per window to prevent abuse.
-*   **Content Filters**: Set strictness levels for content moderation.
-
-![Guard Profiles List](docs/screenshots/guards-list.png)
-
-![Create Guard Profile](docs/screenshots/guards-create-modal.png)
+Set up safety and security boundaries.
+*   **Content Filters**: Block specific words or phrases.
+*   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
+*   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
 
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
