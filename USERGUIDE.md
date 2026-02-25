@@ -32,11 +32,15 @@ Manage connections to Large Language Model providers.
 ![Add LLM Profile](docs/screenshots/llm-add-profile-modal.png)
 
 ### [Message Platforms](/admin/providers/message)
-Connect your bots to messaging services.
+Connect your bots to messaging services like Discord, Slack, Telegram, and more.
+![Message Platforms Page](docs/screenshots/message-providers-page.png)
+
+*   **Configured Platforms**: View and manage your active message provider integrations.
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
 *   **Status**: Check connection health for each platform.
+*   **Configuration Guide**: Access built-in guides for setting up each platform.
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.

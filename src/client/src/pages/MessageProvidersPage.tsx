@@ -1,30 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useModal } from '../hooks/useModal';
-import { useBotProviders } from '../hooks/useBotProviders';
-import { Card, Button, Badge } from '../components/DaisyUI';
+import { Card, Button, Badge, PageHeader, StatsCards } from '../components/DaisyUI';
 import {
-  MessageCircle as MessageIcon,
-  Plus as AddIcon,
-  Settings as ConfigIcon,
-  CheckCircle as CheckIcon,
-  XCircle as XIcon,
-  AlertCircle as WarningIcon,
+  MessageCircle,
+  Plus,
+  Settings,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Radio,
+  RefreshCw,
 } from 'lucide-react';
-import { Breadcrumbs } from '../components/DaisyUI';
 import type { MessageProviderType} from '../types/bot';
 import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
+import SearchFilterBar from '../components/SearchFilterBar';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, closeModal } = useModal();
   const [configuredProviders, setConfiguredProviders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchProviders();
   }, []);
 
   const fetchProviders = async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/config/message-profiles');
       if (response.ok) {
@@ -33,44 +37,23 @@ const MessageProvidersPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch message profiles:', error);
-    }
-  };
-
-  const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
-    { label: 'Providers', href: '/admin/providers' },
-    { label: 'Message Platforms', href: '/admin/providers/message', isActive: true },
-  ];
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-    case 'connected':
-      return <CheckIcon className="w-4 h-4 text-success" />;
-    case 'error':
-      return <XIcon className="w-4 h-4 text-error" />;
-    case 'testing':
-      return <WarningIcon className="w-4 h-4 text-warning" />;
-    default:
-      return <XIcon className="w-4 h-4 text-base-content/40" />;
+    } finally {
+        setLoading(false);
     }
   };
 
   const handleAddProvider = (providerType: MessageProviderType) => {
-    // We pass the provider type to the modal state if needed, but openAddModal
-    // currently takes (context, type). We might need to adjust modal state handling
-    // or just open it. The modal allows selecting type anyway.
     openAddModal('global', 'message');
   };
 
   const handleProviderSubmit = async (providerData: any) => {
     try {
-      // Generate a key from name if not present (simple slug)
       const key = providerData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
       const payload = {
         key,
         name: providerData.name,
-        provider: providerData.type, // Map 'type' to 'provider' for backend
+        provider: providerData.type,
         config: providerData.config,
       };
 
@@ -83,12 +66,11 @@ const MessageProvidersPage: React.FC = () => {
       });
 
       if (response.ok) {
-        await fetchProviders(); // Refresh list
+        await fetchProviders();
         closeModal();
       } else {
         const error = await response.json();
         console.error('Failed to create provider:', error);
-        // Ideally show error to user
       }
     } catch (error) {
       console.error('Error submitting provider:', error);
@@ -96,39 +78,84 @@ const MessageProvidersPage: React.FC = () => {
   };
 
   const providerTypes = Object.keys(MESSAGE_PROVIDER_CONFIGS) as MessageProviderType[];
+  const filteredProviderTypes = providerTypes.filter(type =>
+      MESSAGE_PROVIDER_CONFIGS[type].displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const stats = [
+    {
+      id: 'total',
+      title: 'Configured',
+      value: configuredProviders.length,
+      icon: <CheckCircle className="w-8 h-8" />,
+      color: 'success' as const,
+    },
+    {
+      id: 'available',
+      title: 'Available Types',
+      value: providerTypes.length,
+      icon: <Radio className="w-8 h-8" />,
+      color: 'primary' as const,
+    },
+     {
+      id: 'active',
+      title: 'Active Platforms',
+      value: new Set(configuredProviders.map(p => p.provider)).size,
+      description: 'Unique platforms used',
+      icon: <MessageCircle className="w-8 h-8" />,
+      color: 'secondary' as const,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
+    <div className="space-y-6">
+      <PageHeader
+        title="Message Platforms"
+        description="Configure messaging platforms for your bots to connect and communicate"
+        icon={MessageCircle}
+        actions={
+            <Button
+                variant="ghost"
+                onClick={fetchProviders}
+                disabled={loading}
+            >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            </Button>
+        }
+      />
 
-      <div className="mt-4 mb-8">
-        <h1 className="text-4xl font-bold mb-2">Message Platforms</h1>
-        <p className="text-base-content/70">
-          Configure messaging platforms for your bots to connect and communicate
-        </p>
-      </div>
+      <StatsCards stats={stats} isLoading={loading} />
 
       {/* Configured Providers */}
       {configuredProviders.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Configured Platforms</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-success" />
+              Configured Platforms
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {configuredProviders.map((provider) => {
               const config = MESSAGE_PROVIDER_CONFIGS[provider.provider as MessageProviderType] || MESSAGE_PROVIDER_CONFIGS.webhook;
               return (
-                <Card key={provider.key} className="bg-base-100 shadow-lg border border-base-300">
+                <Card key={provider.key} className="bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all">
                   <div className="card-body">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="text-xl">{config.icon}</div>
-                        <h3 className="card-title text-lg">{provider.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-base-200 text-xl">{config.icon}</div>
+                        <div>
+                            <h3 className="card-title text-base">{provider.name}</h3>
+                            <div className="text-xs opacity-60 capitalize">{provider.provider}</div>
+                        </div>
                       </div>
-                      <Badge variant="success" size="sm">Configured</Badge>
+                      <Badge variant="success" size="sm" style="outline">Active</Badge>
                     </div>
-                    <p className="text-sm text-base-content/60 mb-4">{provider.description || config.description}</p>
-                    <div className="card-actions justify-end">
-                      {/* Edit functionality to be implemented */}
-                      <Button size="sm" variant="ghost" disabled>Edit</Button>
+                    <p className="text-sm text-base-content/60 mb-4 line-clamp-2">{provider.description || config.description}</p>
+                    <div className="card-actions justify-end mt-auto">
+                      <Button size="sm" variant="ghost" disabled>
+                          <Settings className="w-4 h-4 mr-2" />
+                          Manage
+                      </Button>
                     </div>
                   </div>
                 </Card>
@@ -139,71 +166,71 @@ const MessageProvidersPage: React.FC = () => {
       )}
 
       {/* Provider Types Grid */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Available Provider Types</h2>
+      <div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+                <Radio className="w-5 h-5 text-primary" />
+                Available Platforms
+            </h2>
+            <div className="w-full md:w-1/3">
+                 <SearchFilterBar
+                    searchValue={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Filter platforms..."
+                />
+            </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {providerTypes.map((type) => {
+          {filteredProviderTypes.map((type) => {
             const config = MESSAGE_PROVIDER_CONFIGS[type];
             const requiredFields = (config.fields || []).filter((f: any) => f.required);
             const optionalFields = (config.fields || []).filter((f: any) => !f.required);
 
             return (
-              <Card key={type} className="bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow duration-200">
+              <Card key={type} className="bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all h-full flex flex-col">
                 <div className="card-body">
                   {/* Header */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{config.icon}</div>
+                      <div className="p-3 bg-primary/10 text-primary rounded-xl text-2xl">{config.icon}</div>
                       <div>
                         <h3 className="card-title text-lg">{config.displayName}</h3>
-                        <p className="text-sm text-base-content/60">{type}</p>
+                        <Badge variant="neutral" size="sm" className="mt-1">
+                            {type}
+                        </Badge>
                       </div>
                     </div>
-                    <Badge variant="neutral" size="sm">
-                      {requiredFields.length} required
-                    </Badge>
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-base-content/70 mb-4">
+                  <p className="text-sm text-base-content/70 mb-4 flex-grow">
                     {config.description}
                   </p>
 
-                  {/* Required Fields */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {requiredFields.map((field: any) => (
-                        <Badge key={field.name} color="neutral" variant="secondary" className="btn-outline text-xs">
-                          {field.label}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="space-y-3 mb-6">
+                      {/* Required Fields */}
+                      <div>
+                        <h4 className="text-xs font-bold uppercase opacity-50 mb-1">Required Config</h4>
+                        <div className="flex flex-wrap gap-1">
+                        {requiredFields.length > 0 ? requiredFields.map((field: any) => (
+                            <Badge key={field.name} size="small" variant="neutral" style="outline">
+                            {field.label}
+                            </Badge>
+                        )) : <span className="text-xs italic opacity-50">None</span>}
+                        </div>
+                      </div>
                   </div>
 
-                  {/* Optional Fields */}
-                  {optionalFields.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {optionalFields.map((field: any) => (
-                          <Badge key={field.name} color="ghost" variant="secondary" className="btn-outline text-xs">
-                            {field.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Actions */}
-                  <div className="card-actions justify-end">
+                  <div className="card-actions justify-end mt-auto pt-4 border-t border-base-200">
                     <Button
                       variant="primary"
                       size="sm"
                       onClick={() => handleAddProvider(type)}
                       className="w-full"
                     >
-                      <AddIcon className="w-4 h-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Configure {config.displayName}
                     </Button>
                   </div>
@@ -215,51 +242,51 @@ const MessageProvidersPage: React.FC = () => {
       </div>
 
       {/* Configuration Guide */}
-      <Card className="bg-primary/5 border border-primary/20">
+      <Card className="bg-base-200/50 border border-base-300">
         <div className="card-body">
-          <h2 className="card-title text-xl mb-4">
-            <ConfigIcon className="w-6 h-6 mr-2" />
+          <h2 className="card-title text-lg mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5" />
             Configuration Guide
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3 text-primary">📱 Discord Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Create a Discord Bot Application</li>
-                <li>• Enable Message Content Intent</li>
-                <li>• Generate Bot Token</li>
-                <li>• Invite Bot to your Server</li>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-4 bg-base-100 rounded-lg">
+              <h3 className="font-bold mb-2 flex items-center gap-2">📱 Discord Setup</h3>
+              <ul className="space-y-1 text-xs text-base-content/70 list-disc list-inside">
+                <li>Create Discord Bot App</li>
+                <li>Enable Message Intent</li>
+                <li>Generate Bot Token</li>
+                <li>Invite Bot to Server</li>
               </ul>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-3 text-primary">✈️ Telegram Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Create a Bot with @BotFather</li>
-                <li>• Get your Bot Token</li>
-                <li>• Configure Webhook (optional)</li>
-                <li>• Set up commands and permissions</li>
+            <div className="p-4 bg-base-100 rounded-lg">
+              <h3 className="font-bold mb-2 flex items-center gap-2">✈️ Telegram Setup</h3>
+              <ul className="space-y-1 text-xs text-base-content/70 list-disc list-inside">
+                <li>Message @BotFather</li>
+                <li>Create New Bot</li>
+                <li>Get Bot Token</li>
+                <li>Set Privacy Mode</li>
               </ul>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-3 text-primary">📱 Slack Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Create a Slack App</li>
-                <li>• Enable Bot Token Scopes</li>
-                <li>• Install App to Workspace</li>
-                <li>• Add Bot to Channels</li>
+            <div className="p-4 bg-base-100 rounded-lg">
+              <h3 className="font-bold mb-2 flex items-center gap-2">💬 Slack Setup</h3>
+              <ul className="space-y-1 text-xs text-base-content/70 list-disc list-inside">
+                <li>Create Slack App</li>
+                <li>Add Bot Scopes</li>
+                <li>Install to Workspace</li>
+                <li>Invite to Channels</li>
               </ul>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-3 text-primary">🔗 Webhook Setup</h3>
-              <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Configure endpoint URL</li>
-                <li>• Set up authentication</li>
-                <li>• Define message format</li>
-                <li>• Test webhook delivery</li>
+            <div className="p-4 bg-base-100 rounded-lg">
+              <h3 className="font-bold mb-2 flex items-center gap-2">🔗 Webhook Setup</h3>
+              <ul className="space-y-1 text-xs text-base-content/70 list-disc list-inside">
+                <li>Set Endpoint URL</li>
+                <li>Configure Auth Header</li>
+                <li>Define Payload Format</li>
+                <li>Verify Signature</li>
               </ul>
             </div>
           </div>
