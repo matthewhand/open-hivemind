@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import type { McpGuardConfig } from '@src/types/config';
+import type { McpGuardConfig, ContentFilterConfig } from '@src/types/config';
 
 const debug = Debug('app:guardrailProfiles');
 
@@ -16,10 +16,7 @@ export interface GuardrailProfile {
       maxRequests: number;
       windowMs: number;
     };
-    contentFilter?: {
-      enabled: boolean;
-      strictness?: 'low' | 'medium' | 'high';
-    };
+    contentFilter?: ContentFilterConfig;
   };
 }
 
