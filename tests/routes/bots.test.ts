@@ -14,6 +14,15 @@ jest.mock('../../src/server/middleware/auth', () => ({
   authenticateToken: (req: any, res: any, next: any) => next(),
 }));
 
+// Mock ShutdownCoordinator to prevent process.exit
+jest.mock('../../src/server/ShutdownCoordinator', () => ({
+  ShutdownCoordinator: {
+    getInstance: jest.fn().mockReturnValue({
+      initiateShutdown: jest.fn(),
+    }),
+  },
+}));
+
 describe('Bots Router', () => {
   let app: express.Application;
   let mockManager: any;
