@@ -54,9 +54,13 @@ Create and manage individual bot instances.
 
 ### [Bot Templates](/admin/bots/templates)
 Quick-start templates to help you create bots faster.
+![Bot Templates Page](docs/images/bot-templates-page.png)
+
 *   **Template Gallery**: Browse pre-configured templates with specific personas and provider settings.
-*   **Quick Create**: Use a template to pre-populate the bot creation form.
-*   **Filtering**: Find templates by platform, persona, or LLM provider.
+*   **Smart Search**: Filter templates by name, platform, description, or tags.
+![Bot Templates Search](docs/images/bot-templates-search.png)
+*   **Quick Create**: Use a template to pre-populate the bot creation form instantly.
+*   **Featured Templates**: Highlighted templates for common use cases.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
