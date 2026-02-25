@@ -3,6 +3,7 @@ import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
+import SettingsMaintenance from '../components/Settings/SettingsMaintenance';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { Cog } from 'lucide-react';
 
@@ -17,6 +18,7 @@ const SystemSettings: React.FC = () => {
     { label: 'General', component: <SettingsGeneral /> },
     { label: 'Messaging', component: <SettingsMessaging /> },
     { label: 'Security', component: <SettingsSecurity /> },
+    { label: 'Maintenance', component: <SettingsMaintenance /> },
   ];
 
   return (

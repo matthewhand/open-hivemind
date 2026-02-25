@@ -220,6 +220,26 @@ export interface HotReloadResponse {
   rollbackId?: string;
 }
 
+export interface SystemInfo {
+  uptime: number;
+  memory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  };
+  nodeVersion: string;
+  platform: string;
+  arch: string;
+  pid: number;
+  database: {
+    connected: boolean;
+    stats: any;
+  };
+  environment: string;
+}
+
 export interface ActivityEvent {
   id: string;
   timestamp: string;
@@ -842,7 +862,7 @@ class ApiService {
     return response.blob();
   }
 
-  async getSystemInfo(): Promise<any> {
+  async getSystemInfo(): Promise<{ systemInfo: SystemInfo }> {
     return this.request('/api/admin/system-info');
   }
 

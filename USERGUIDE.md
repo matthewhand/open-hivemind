@@ -111,6 +111,11 @@ General system configuration.
 *   **Rate Limits**: Adjust global message rate limits to prevent spam.
 *   **Logging**: Configure log levels and retention policies.
 *   **Updates**: Check for system updates.
+*   **Maintenance**: Monitor system health and perform administrative tasks.
+    *   **System Info**: View uptime, memory usage, and environment details.
+    *   **Service Controls**: Reload configuration or clear system caches without restarting.
+
+![Maintenance Settings](docs/images/settings-maintenance.png)
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
