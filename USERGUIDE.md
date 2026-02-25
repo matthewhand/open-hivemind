@@ -112,6 +112,18 @@ General system configuration.
 *   **Logging**: Configure log levels and retention policies.
 *   **Updates**: Check for system updates.
 
+### [System Backups & Export](/admin/export)
+Manage full system backups and configuration exports.
+![Export Page](docs/images/export-page.png)
+
+*   **System Backups**: Create, download, restore, and delete full system backups.
+    *   **Create Backup**: generate a new backup with a custom name and description.
+    ![Create Backup Modal](docs/images/create-backup-modal.png)
+    *   **Restore**: Rollback the system to a previous state (requires reload).
+    *   **Download**: Save backup files locally for safekeeping.
+*   **Configuration Export**: Export the current system configuration as a JSON file.
+*   **API Specifications**: Download OpenAPI specs in JSON or YAML format.
+
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
@@ -158,11 +170,6 @@ An internal chat interface for admins.
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
-
-### [Export](/admin/export)
-Download API specifications and system documentation.
-*   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
-*   **Documentation**: Access generated documentation resources.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.

@@ -826,6 +826,32 @@ class ApiService {
     });
   }
 
+  async downloadSystemBackup(backupId: string): Promise<Blob> {
+    const response = await fetch(buildUrl(`/api/import-export/backups/${backupId}/download`), {
+      method: 'GET',
+      headers: {
+        'Authorization': (() => {
+          const token = localStorage.getItem('auth_tokens');
+          if (token) {
+            try {
+              const tokens = JSON.parse(token);
+              return tokens.accessToken ? `Bearer ${tokens.accessToken}` : '';
+            } catch {
+              return '';
+            }
+          }
+          return '';
+        })()
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
   async getSystemInfo(): Promise<any> {
     return this.request('/api/admin/system-info');
   }
