@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Map as MapIcon,
-  Download as DownloadIcon,
-  RefreshCw as RefreshIcon,
-  ExternalLink as LaunchIcon,
-  Search as SearchIcon,
-} from 'lucide-react';
+  ArrowTopRightOnSquareIcon as LaunchIcon,
+  ArrowDownTrayIcon as DownloadIcon,
+  ArrowPathIcon as RefreshIcon,
+} from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import SearchFilterBar from '../components/SearchFilterBar';
-import EmptyState from '../components/DaisyUI/EmptyState';
 
 interface SitemapUrl {
   url: string;
@@ -33,7 +28,6 @@ const SitemapPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accessFilter, setAccessFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
@@ -88,16 +82,7 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  // Filter URLs based on search query
-  const filteredUrls = sitemapData?.urls.filter(url => {
-    const query = searchQuery.toLowerCase();
-    return (
-      url.url.toLowerCase().includes(query) ||
-      (url.description || '').toLowerCase().includes(query)
-    );
-  }) || [];
-
-  const groupedUrls = filteredUrls.reduce((acc, url) => {
+  const groupedUrls = sitemapData?.urls.reduce((acc, url) => {
     let category = 'Other';
 
     if (url.url === '/') {
@@ -131,9 +116,7 @@ const SitemapPage: React.FC = () => {
     return acc;
   }, {} as Record<string, SitemapUrl[]>) || {};
 
-  const sortedCategories = Object.keys(groupedUrls).sort();
-
-  if (loading && !sitemapData) {
+  if (loading) {
     return (
       <div className="p-6 text-center">
         <span className="loading loading-spinner loading-lg"></span>
@@ -142,7 +125,7 @@ const SitemapPage: React.FC = () => {
     );
   }
 
-  if (error && !sitemapData) {
+  if (error) {
     return (
       <div className="p-6">
         <Breadcrumbs items={breadcrumbItems} />
@@ -161,45 +144,28 @@ const SitemapPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <PageHeader
-        title="Dynamic Sitemap"
-        description="Complete navigation structure and page hierarchy"
-        icon={MapIcon}
-        actions={
-          <>
-            <button
-              className="btn btn-ghost gap-2"
-              onClick={fetchSitemap}
-              disabled={loading}
-            >
-              <RefreshIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-            <button
-              className="btn btn-primary gap-2"
-              onClick={handleDownloadXml}
-            >
-              <DownloadIcon className="w-4 h-4" />
-              Download XML
-            </button>
-          </>
-        }
-      />
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          🗺️ Dynamic Sitemap
+        </h1>
+        <p className="text-base-content/70">
+          Complete navigation structure and page hierarchy
+        </p>
+      </div>
 
       {/* Statistics and Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="stats shadow bg-base-100 border border-base-200">
+        <div className="stats shadow">
           <div className="stat">
             <div className="stat-title">Total Pages</div>
             <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
-            <div className="stat-desc">Indexed URLs</div>
           </div>
         </div>
 
-        <div className="stats shadow bg-base-100 border border-base-200">
+        <div className="stats shadow">
           <div className="stat">
             <div className="stat-title">Generated</div>
-            <div className="stat-value text-lg">
+            <div className="stat-value text-sm">
               {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
             </div>
             <div className="stat-desc">
@@ -208,116 +174,113 @@ const SitemapPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-2">
-          <SearchFilterBar
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search URLs..."
-            filters={[
-              {
-                key: 'access',
-                value: accessFilter,
-                onChange: setAccessFilter,
-                options: [
-                  { label: 'All Pages', value: 'all' },
-                  { label: 'Public Only', value: 'public' },
-                  { label: 'Authenticated', value: 'authenticated' },
-                  { label: 'Owner Only', value: 'owner' },
-                ],
-                className: 'w-full sm:w-48'
-              }
-            ]}
-          />
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">Access Level</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={accessFilter}
+            onChange={(e) => setAccessFilter(e.target.value)}
+          >
+            <option value="all">All Pages</option>
+            <option value="public">Public Only</option>
+            <option value="authenticated">Authenticated</option>
+            <option value="owner">Owner Only</option>
+          </select>
+        </div>
+
+        <div className="flex gap-2 items-end">
+          <button
+            className="btn btn-outline flex-1"
+            onClick={handleDownloadXml}
+          >
+            <DownloadIcon className="w-5 h-5 mr-2" />
+            XML
+          </button>
+          <button
+            className="btn btn-outline"
+            onClick={fetchSitemap}
+            title="Refresh"
+          >
+            <RefreshIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      {filteredUrls.length === 0 ? (
-         <EmptyState
-            icon={SearchIcon}
-            title={sitemapData?.urls.length === 0 ? "No URLs found" : "No matching URLs"}
-            description={sitemapData?.urls.length === 0 ? "The sitemap is empty." : `No results found for "${searchQuery}"`}
-            actionLabel={sitemapData?.urls.length === 0 ? undefined : "Clear Search"}
-            onAction={sitemapData?.urls.length === 0 ? undefined : () => setSearchQuery('')}
-            variant={sitemapData?.urls.length === 0 ? "noData" : "noResults"}
-          />
-      ) : (
-        /* Grouped URLs */
-        sortedCategories.map((category) => (
-          <div key={category} className="mb-8">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              {category}
-              <div className="badge badge-neutral">{groupedUrls[category].length}</div>
-            </h2>
+      {/* Grouped URLs */}
+      {Object.entries(groupedUrls).map(([category, urls]) => (
+        <div key={category} className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            {category}
+            <div className="badge badge-neutral">{urls.length}</div>
+          </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {groupedUrls[category].map((url) => (
-                <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200 hover:shadow-2xl transition-shadow">
-                  <div className="card-body p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-mono text-sm break-all font-bold text-primary" title={url.url}>
-                        {url.url}
-                      </h3>
-                      <button
-                        className="btn btn-ghost btn-xs btn-circle opacity-50 hover:opacity-100"
-                        onClick={() => handleOpenUrl(url.fullUrl)}
-                        title="Open URL"
-                      >
-                        <LaunchIcon className="w-4 h-4" />
-                      </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {urls.map((url) => (
+              <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-mono text-sm break-all font-bold">
+                      {url.url}
+                    </h3>
+                    <button
+                      className="btn btn-ghost btn-xs btn-circle"
+                      onClick={() => handleOpenUrl(url.fullUrl)}
+                    >
+                      <LaunchIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-base-content/70 mb-3">
+                    {url.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                      {url.access}
                     </div>
-
-                    <p className="text-xs text-base-content/70 mb-3 line-clamp-2" title={url.description}>
-                      {url.description || 'No description available'}
-                    </p>
-
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
-                        {url.access}
-                      </div>
-                      <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
-                        {url.priority}
-                      </div>
-                      <div className="badge badge-sm badge-outline opacity-70">
-                        {url.changefreq}
-                      </div>
+                    <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                      Priority: {url.priority}
                     </div>
-
-                    <div className="text-[10px] text-base-content/40 mt-auto pt-2 border-t border-base-content/5">
-                      Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                    <div className="badge badge-sm badge-outline">
+                      {url.changefreq}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
 
-      {/* Sitemap Links Footer */}
-      <div className="bg-base-200/50 rounded-box p-6 mt-8 border border-base-200">
-        <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-          <DownloadIcon className="w-5 h-5" />
-          Export Options
+                  <div className="text-xs text-base-content/50 mt-auto">
+                    Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Sitemap Links */}
+      <div className="bg-base-200 rounded-box p-6 mt-8">
+        <h3 className="text-lg font-bold mb-2">
+          Sitemap Formats
         </h3>
         <p className="text-sm text-base-content/70 mb-4">
-          Access the sitemap in different machine-readable formats:
+          Access the sitemap in different formats:
         </p>
         <div className="flex flex-wrap gap-2">
           <button
-            className="btn btn-outline btn-sm gap-2"
+            className="btn btn-outline btn-sm"
             onClick={() => window.open('/sitemap.xml', '_blank')}
           >
             XML Sitemap (SEO)
           </button>
           <button
-            className="btn btn-outline btn-sm gap-2"
+            className="btn btn-outline btn-sm"
             onClick={() => window.open('/sitemap.json', '_blank')}
           >
             JSON API
           </button>
           <button
-            className="btn btn-outline btn-sm gap-2"
+            className="btn btn-outline btn-sm"
             onClick={() => window.open('/sitemap', '_blank')}
           >
             Human-Readable HTML
