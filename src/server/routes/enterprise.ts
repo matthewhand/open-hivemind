@@ -227,7 +227,7 @@ router.post('/api/integrations', (req, res) => {
 });
 
 // Get audit events
-router.get('/api/audit', (req, res) => {
+router.get('/api/audit', async (req, res) => {
   try {
     const { limit = 50, offset = 0, user, action } = req.query;
 
@@ -235,11 +235,11 @@ router.get('/api/audit', (req, res) => {
 
     let auditEvents;
     if (user) {
-      auditEvents = auditLogger.getAuditEventsByUser(user as string, Number(limit));
+      auditEvents = await auditLogger.getAuditEventsByUser(user as string, Number(limit));
     } else if (action) {
-      auditEvents = auditLogger.getAuditEventsByAction(action as string, Number(limit));
+      auditEvents = await auditLogger.getAuditEventsByAction(action as string, Number(limit));
     } else {
-      auditEvents = auditLogger.getAuditEvents(Number(limit), Number(offset));
+      auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset));
     }
 
     return res.json({
