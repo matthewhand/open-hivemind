@@ -14,9 +14,13 @@ The central hub for monitoring your bot ecosystem.
 
 ### [LLM Providers](/admin/providers/llm)
 Manage connections to Large Language Model providers.
-*   **Add Provider**: Configure API keys and endpoints for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
-*   **Model Selection**: Choose default models for different tasks (chat, summarization, etc.).
-*   **Test Connection**: Verify your API credentials are working.
+*   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
+*   **System Default**: Define the fallback provider for bots without a specific profile.
+*   **WebUI Intelligence**: Select a provider to power internal AI features.
+
+![LLM Providers List](docs/screenshots/llm-providers-list.png)
+
+![Add LLM Profile](docs/screenshots/llm-add-profile-modal.png)
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
