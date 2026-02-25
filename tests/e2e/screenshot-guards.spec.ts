@@ -39,7 +39,7 @@ test.describe('Guards Page Screenshots', () => {
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
     await page.route('/api/admin/mcp-servers', async (route) =>
-        route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
     );
 
     // Mock Guard Profiles
@@ -94,9 +94,6 @@ test.describe('Guards Page Screenshots', () => {
     await page.goto('/admin/guards');
 
     // Wait for content to load
-    // Using a more generic selector initially, will be updated to PageHeader specific one after refactor
-    // But for now, let's target something we expect to be there or fail if not.
-    // The refactor will add 'Guard Profiles' to PageHeader.
     await expect(page.getByText('Guard Profiles')).toBeVisible();
 
     // Wait for cards
@@ -106,13 +103,9 @@ test.describe('Guards Page Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/guards-page.png', fullPage: true });
 
     // Open "New Profile" modal
-    // Depending on current implementation vs new implementation, button text might vary slightly
-    // but 'New Profile' is consistent in both.
     await page.getByRole('button', { name: 'New Profile' }).click();
 
     // Wait for modal
-    // The current implementation uses manual modal structure, new one uses <Modal>.
-    // Both should result in a visible modal.
     const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });
     await expect(modal).toBeVisible();
 

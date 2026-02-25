@@ -12,6 +12,7 @@ interface McpGuardConfig {
   enabled: boolean;
   type: 'owner' | 'custom';
   allowedUsers?: string[];
+  allowedTools?: string[];
 }
 
 interface GuardrailProfile {
@@ -28,6 +29,7 @@ interface GuardrailProfile {
     contentFilter?: {
       enabled: boolean;
       strictness: 'low' | 'medium' | 'high';
+      blockedTerms?: string[];
     };
   };
 }
@@ -53,9 +55,9 @@ const GuardsPage: React.FC = () => {
     name: '',
     description: '',
     guards: {
-      mcpGuard: { enabled: false, type: 'owner', allowedUsers: [] },
+      mcpGuard: { enabled: false, type: 'owner', allowedUsers: [], allowedTools: [] },
       rateLimit: { enabled: false, maxRequests: 100, windowMs: 60000 },
-      contentFilter: { enabled: false, strictness: 'low' },
+      contentFilter: { enabled: false, strictness: 'low', blockedTerms: [] },
     },
   });
 
@@ -343,6 +345,20 @@ const GuardsPage: React.FC = () => {
                       />
                     </div>
                   )}
+
+                  <div className="form-control mt-4">
+                    <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                    <input
+                      id="allowed-tools"
+                      type="text"
+                      className="input input-bordered"
+                      placeholder="e.g. calculator, weather"
+                      value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
+                      onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      disabled={!editingProfile.guards.mcpGuard.enabled}
+                    />
+                    <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
+                  </div>
                 </div>
               </div>
 
@@ -416,6 +432,18 @@ const GuardsPage: React.FC = () => {
                         </label>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="form-control mt-4">
+                    <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
+                    <textarea
+                      id="blocked-terms"
+                      className="textarea textarea-bordered h-20"
+                      placeholder="e.g. secret, password, confidential"
+                      value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
+                      onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      disabled={!editingProfile.guards.contentFilter?.enabled}
+                    />
                   </div>
                 </div>
               </div>
