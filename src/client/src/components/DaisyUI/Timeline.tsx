@@ -22,19 +22,19 @@ export interface TimelineProps {
   onEventClick?: (event: TimelineEvent) => void;
 }
 
-const getEventIcon = (type: EventType): string => {
+const getEventIcon = (type: EventType): React.ReactNode => {
   switch (type) {
   case 'success':
-    return '✓';
+    return <span role="img" aria-label="success">✓</span>;
   case 'error':
-    return '✗';
+    return <span role="img" aria-label="error">✗</span>;
   case 'warning':
-    return '⚠';
+    return <span role="img" aria-label="warning">⚠</span>;
   case 'info':
-    return 'ℹ';
+    return <span role="img" aria-label="info">ℹ</span>;
   case 'neutral':
   default:
-    return '○';
+    return <span role="img" aria-label="neutral">○</span>;
   }
 };
 
@@ -118,6 +118,14 @@ const Timeline: React.FC<TimelineProps> = ({
       {sortedEvents.map((event, index) => {
         const isExpanded = expandedEvents.has(event.id);
         const isLast = index === sortedEvents.length - 1;
+        const isInteractive = viewMode === 'compact' || !!onEventClick;
+
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (isInteractive && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            handleEventClick(event);
+          }
+        };
 
         return (
           <div key={event.id} className={`timeline-item ${getEventColorClass(event.type)}`}>
@@ -132,9 +140,14 @@ const Timeline: React.FC<TimelineProps> = ({
             {/* Event content */}
             <div className="timeline-end">
               <div
-                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'
+                className={`card bg-base-100 shadow-sm transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'} ${
+                  isInteractive ? 'cursor-pointer hover:shadow-md' : ''
                 }`}
-                onClick={() => handleEventClick(event)}
+                onClick={isInteractive ? () => handleEventClick(event) : undefined}
+                role={isInteractive ? 'button' : undefined}
+                tabIndex={isInteractive ? 0 : undefined}
+                onKeyDown={isInteractive ? handleKeyDown : undefined}
+                aria-expanded={viewMode === 'compact' ? isExpanded : undefined}
               >
                 <div className="card-body p-0">
                   {/* Event header */}

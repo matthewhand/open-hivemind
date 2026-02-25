@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { setupTestWithErrorDetection, navigateAndWaitReady } from './test-utils';
+import { expect, test } from '@playwright/test';
+import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Export Page Screenshots', () => {
   test('Capture Export Page and Create Backup Modal', async ({ page }) => {
@@ -27,21 +27,21 @@ test.describe('Export Page Screenshots', () => {
     ];
 
     // Mock API responses
-    await page.route('**/api/import-export/backups', async route => {
+    await page.route('**/api/import-export/backups', async (route) => {
       await route.fulfill({ json: { success: true, data: mockBackups } });
     });
 
-    await page.route('**/api/import-export/backup', async route => {
-        // Mock success for creation
-        await route.fulfill({ json: { success: true, message: 'Backup created successfully' } });
+    await page.route('**/api/import-export/backup', async (route) => {
+      // Mock success for creation
+      await route.fulfill({ json: { success: true, message: 'Backup created successfully' } });
     });
 
-    await page.route('**/api/config/export', async route => {
-       await route.fulfill({
-           status: 200,
-           contentType: 'application/json',
-           body: JSON.stringify({ export: 'mock-data' })
-       });
+    await page.route('**/api/config/export', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ export: 'mock-data' }),
+      });
     });
 
     // Navigate to Export page

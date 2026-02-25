@@ -1,5 +1,4 @@
-import fs from 'fs';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import Debug from 'debug';
 
@@ -68,9 +67,9 @@ export class AuditLogger {
             await fsPromises.access(oldFile);
             // File exists
             if (i === this.maxLogFiles - 1) {
-                await fsPromises.unlink(oldFile); // Remove oldest
+              await fsPromises.unlink(oldFile); // Remove oldest
             } else {
-                await fsPromises.rename(oldFile, newFile);
+              await fsPromises.rename(oldFile, newFile);
             }
           } catch {
             // File does not exist, skip
@@ -99,23 +98,23 @@ export class AuditLogger {
         const data = batch.join('');
 
         try {
-            await fsPromises.appendFile(this.logFilePath, data);
+          await fsPromises.appendFile(this.logFilePath, data);
         } catch (error) {
-            debug('Failed to write to audit log:', error);
-            console.error('AUDIT LOG WRITE ERROR:', error);
-            // In case of write error, we lose these logs.
-            // In a robust system we might retry or write to a fallback,
-            // but for now we just log the error to stderr.
+          debug('Failed to write to audit log:', error);
+          console.error('AUDIT LOG WRITE ERROR:', error);
+          // In case of write error, we lose these logs.
+          // In a robust system we might retry or write to a fallback,
+          // but for now we just log the error to stderr.
         }
       }
     } catch (error) {
-        debug('Error in processQueue:', error);
+      debug('Error in processQueue:', error);
     } finally {
-        this.isProcessing = false;
-        // Check if new items arrived while we were finishing
-        if (this.logQueue.length > 0) {
-            this.processQueue();
-        }
+      this.isProcessing = false;
+      // Check if new items arrived while we were finishing
+      if (this.logQueue.length > 0) {
+        this.processQueue();
+      }
     }
   }
 
@@ -149,7 +148,6 @@ export class AuditLogger {
       });
 
       this.processQueue();
-
     } catch (error) {
       debug('Failed to queue audit event:', error);
       console.error('AUDIT LOG ERROR:', event, error);
