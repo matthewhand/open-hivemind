@@ -14,9 +14,13 @@ The central hub for monitoring your bot ecosystem.
 
 ### [LLM Providers](/admin/providers/llm)
 Manage connections to Large Language Model providers.
-*   **Add Provider**: Configure API keys and endpoints for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
-*   **Model Selection**: Choose default models for different tasks (chat, summarization, etc.).
-*   **Test Connection**: Verify your API credentials are working.
+*   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
+*   **System Default**: Define the fallback provider for bots without a specific profile.
+*   **WebUI Intelligence**: Select a provider to power internal AI features.
+
+![LLM Providers List](docs/screenshots/llm-providers-list.png)
+
+![Add LLM Profile](docs/screenshots/llm-add-profile-modal.png)
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
@@ -76,6 +80,15 @@ Browse and manage tools available from your connected MCP servers.
 *   **Enable/Disable**: Toggle individual tools on or off.
 
 ## System
+
+### [Activity Feed](/admin/activity)
+Monitor real-time interactions and events across your bot ecosystem.
+![Activity Feed](docs/screenshots/activity-page.png)
+
+*   **Real-time Feed**: Watch events as they happen with auto-refresh.
+*   **Filtering**: Filter events by Bot, Provider, or LLM to isolate specific interactions.
+*   **Export**: Download the activity log as a CSV file for offline analysis.
+*   **Timeline View**: Visualize the sequence of events over time.
 
 ### [Settings](/admin/settings)
 General system configuration.
