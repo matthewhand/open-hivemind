@@ -128,7 +128,7 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Content */}
         <div className="py-4">
-          {children}
+          {isOpen && children}
         </div>
 
         {/* Actions */}
