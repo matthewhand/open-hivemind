@@ -40,7 +40,7 @@ jest.mock('../../src/server/services/WebSocketService', () => ({
   WebSocketService: {
     getInstance: jest.fn(() => ({
       getMessageFlow: jest.fn(() => []),
-      getBotStats: jest.fn(() => ({ messageCount: 0, errors: [] })),
+      getBotStats: jest.fn(() => ({ messageCount: 10, errors: [], errorCount: 5 })),
     })),
   },
 }));
@@ -92,8 +92,8 @@ describe('Bots Routes', () => {
         id: 'bot1',
         name: 'Bot 1',
         connected: false,
-        messageCount: 0,
-        errorCount: 0
+        messageCount: 10,
+        errorCount: 5
       }));
     });
   });
