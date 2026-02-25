@@ -197,11 +197,11 @@ const GuardsPage: React.FC = () => {
         <EmptyState
           icon={Shield}
           title="No Guard Profiles"
-          description="Create a guard profile to enforce security policies."
+          description="Create a guard profile to enforce security policies and access controls for your bots."
           actionLabel="New Profile"
           actionIcon={Plus}
           onAction={handleCreate}
-          variant="primary"
+          variant="noData"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

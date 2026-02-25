@@ -9,11 +9,11 @@ interface EmptyStateProps {
   actionLabel?: string | React.ReactNode;
   actionIcon?: LucideIcon;
   onAction?: () => void;
-  variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success';
+  variant?: 'primary' | 'secondary' | 'accent' | 'error' | 'warning' | 'info' | 'success' | 'noData' | 'noResults';
   className?: string;
 }
 
-const variantStyles = {
+const variantStyles: Record<string, { gradient: string; iconBg: string; border: string; buttonShadow: string; blob: string }> = {
   primary: {
     gradient: 'from-primary/5 via-primary/10 to-primary/5',
     iconBg: 'bg-primary/15 text-primary group-hover:bg-primary/25',
@@ -65,6 +65,10 @@ const variantStyles = {
   },
 };
 
+// Aliases for semantic usage
+variantStyles.noData = variantStyles.primary;
+variantStyles.noResults = variantStyles.secondary;
+
 /**
  * Modern empty state component with gradient backgrounds and SVG icons.
  * Replaces basic emoji empty states with a polished, professional look.
@@ -79,7 +83,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   variant = 'primary',
   className = '',
 }) => {
-  const styles = variantStyles[variant];
+  const styles = variantStyles[variant] || variantStyles.primary;
 
   return (
     <div
@@ -121,7 +125,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
         {actionLabel && onAction && (
           <Button
-            variant={variant === 'primary' || variant === 'secondary' || variant === 'accent' ? variant : 'primary'}
+            variant={variant === 'primary' || variant === 'secondary' || variant === 'accent' || variant === 'noData' || variant === 'noResults' ? (variant === 'noData' ? 'primary' : variant === 'noResults' ? 'secondary' : variant) : 'primary'}
             onClick={onAction}
             className={`gap-2 shadow-lg ${styles.buttonShadow} transition-shadow`}
             startIcon={ActionIcon ? <ActionIcon className="w-4 h-4" /> : undefined}

@@ -100,7 +100,7 @@ test.describe('Empty States', () => {
 
     // Verify empty state
     await expect(page.getByText('No Guard Profiles')).toBeVisible();
-    await expect(page.getByText('Create a guard profile to enforce security policies.')).toBeVisible();
+    await expect(page.getByText('Create a guard profile to enforce security policies')).toBeVisible();
     await expect(page.getByRole('button', { name: 'New Profile' })).toBeVisible();
   });
 
@@ -116,7 +116,7 @@ test.describe('Empty States', () => {
     await page.goto('/admin/personas');
 
     // Verify empty state
-    await expect(page.getByText('No personas found')).toBeVisible();
+    await expect(page.getByText('No personas configured')).toBeVisible();
     await expect(page.getByText('Create your first persona to get started')).toBeVisible();
     // Use last() because there is also a "Create Persona" button in the page header
     await expect(page.getByRole('button', { name: 'Create Persona' }).last()).toBeVisible();

@@ -365,7 +365,7 @@ const BotsPage: React.FC = () => {
               actionLabel="Create Bot"
               actionIcon={Plus}
               onAction={() => setShowCreateModal(true)}
-              variant="primary"
+              variant="noData"
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
@@ -374,7 +374,7 @@ const BotsPage: React.FC = () => {
               description="Try adjusting your search query"
               actionLabel="Clear Search"
               onAction={() => setSearchQuery('')}
-              variant="secondary"
+              variant="noResults"
             />
           ) : (
             <div className="flex flex-col gap-2">

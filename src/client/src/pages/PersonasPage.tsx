@@ -348,12 +348,12 @@ const PersonasPage: React.FC = () => {
       ) : personas.length === 0 ? (
         <EmptyState
           icon={Sparkles}
-          title="No personas found"
+          title="No personas configured"
           description="Create your first persona to get started"
           actionLabel="Create Persona"
           actionIcon={Plus}
           onAction={openCreateModal}
-          variant="primary"
+          variant="noData"
         />
       ) : filteredPersonas.length === 0 ? (
         <EmptyState
@@ -362,7 +362,7 @@ const PersonasPage: React.FC = () => {
           description="Try adjusting your search or filters"
           actionLabel="Clear Filters"
           onAction={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-          variant="secondary"
+          variant="noResults"
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
