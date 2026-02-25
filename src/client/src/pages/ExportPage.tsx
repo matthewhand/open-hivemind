@@ -1,99 +1,204 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import {
-  ArrowDownTrayIcon as DownloadIcon,
-  DocumentTextIcon as DocIcon,
-  CodeBracketIcon as ApiIcon,
-} from '@heroicons/react/24/outline';
-import { Alert, ToastNotification } from '../components/DaisyUI';
+  Download,
+  FileJson,
+  FileCode,
+  FileText,
+  Share2,
+  Database,
+  Archive,
+  BookOpen
+} from 'lucide-react';
+import { Card, Button, PageHeader, ToastNotification, Alert } from '../components/DaisyUI';
+
+interface ExportOption {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  format: string;
+  color?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
+  action: () => void;
+}
 
 const ExportPage: React.FC = () => {
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
+  const handleDownload = async (endpoint: string, filename: string, id: string) => {
+    setIsLoading(id);
     try {
-      const response = await fetch(`/webui/api/openapi.${format}`);
+      const response = await fetch(endpoint);
       if (!response.ok) {
-        throw new Error('Failed to download OpenAPI spec');
+        throw new Error(`Failed to download ${filename}`);
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `openapi-spec.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setToast({ message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
+      setToast({ message: `${filename} downloaded successfully`, type: 'success' });
     } catch (error) {
       setToast({
-        message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
+        message: error instanceof Error ? error.message : `Failed to download ${filename}`,
         type: 'error',
       });
+    } finally {
+      setIsLoading(null);
     }
   };
 
-  const exportOptions = [
+  const exportOptions: ExportOption[] = [
     {
-      title: 'OpenAPI JSON',
-      description: 'Download the complete API specification in JSON format',
-      icon: <ApiIcon className="w-6 h-6" />,
-      action: () => handleDownloadOpenAPI('json'),
+      id: 'openapi-json',
+      title: 'OpenAPI Specification (JSON)',
+      description: 'Complete API documentation in standard JSON format for programmatic use.',
+      icon: <FileJson className="w-8 h-8" />,
+      format: 'JSON',
+      color: 'primary',
+      action: () => handleDownload('/webui/api/openapi.json', 'openapi-spec.json', 'openapi-json'),
     },
     {
-      title: 'OpenAPI YAML',
-      description: 'Download the complete API specification in YAML format',
-      icon: <DocIcon className="w-6 h-6" />,
-      action: () => handleDownloadOpenAPI('yaml'),
+      id: 'openapi-yaml',
+      title: 'OpenAPI Specification (YAML)',
+      description: 'Human-readable API documentation in YAML format for easy reading.',
+      icon: <FileCode className="w-8 h-8" />,
+      format: 'YAML',
+      color: 'secondary',
+      action: () => handleDownload('/webui/api/openapi.yaml', 'openapi-spec.yaml', 'openapi-yaml'),
     },
+    {
+      id: 'postman',
+      title: 'Postman Collection',
+      description: 'Importable collection for testing API endpoints directly in Postman.',
+      icon: <Share2 className="w-8 h-8" />,
+      format: 'JSON',
+      color: 'accent',
+      action: () => handleDownload('/webui/api/postman-collection.json', 'hivemind-postman.json', 'postman'),
+    },
+    {
+        id: 'db-schema',
+        title: 'Database Schema',
+        description: 'Structure of the database tables and relationships.',
+        icon: <Database className="w-8 h-8" />,
+        format: 'SQL',
+        color: 'info',
+        action: () => handleDownload('/webui/api/schema.sql', 'schema.sql', 'db-schema'),
+    }
+  ];
+
+  const documentationOptions: ExportOption[] = [
+      {
+          id: 'user-guide',
+          title: 'User Guide',
+          description: 'Comprehensive guide for using the Open-Hivemind WebUI.',
+          icon: <BookOpen className="w-8 h-8" />,
+          format: 'PDF',
+          color: 'success',
+          action: () => handleDownload('/webui/docs/user-guide.pdf', 'user-guide.pdf', 'user-guide'),
+      },
+      {
+          id: 'dev-docs',
+          title: 'Developer Documentation',
+          description: 'Technical details for extending and customizing the platform.',
+          icon: <FileText className="w-8 h-8" />,
+          format: 'Markdown',
+          color: 'warning',
+          action: () => handleDownload('/webui/docs/developer-guide.md', 'developer-guide.md', 'dev-docs'),
+      }
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          Export & Documentation
-        </h1>
-        <p className="text-base-content/70">
-          Download API specifications and system documentation for integration and development.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Export & Documentation"
+        description="Download API specifications, system schemas, and documentation resources."
+        icon={Archive}
+      />
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title mb-2">
-            API Specifications
-          </h2>
-          <p className="text-sm text-base-content/70 mb-6">
-            Export the OpenAPI specification for the Open-Hivemind WebUI API endpoints.
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* API Exports Section */}
+        <section className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2 px-1">
+                <FileCode className="w-5 h-5 text-primary" />
+                API Specifications
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+                {exportOptions.map((option) => (
+                    <Card key={option.id} className="hover:shadow-md transition-shadow duration-200 border border-base-200">
+                        <div className="card-body p-5 flex flex-row items-center gap-4">
+                            <div className={`p-3 rounded-xl bg-${option.color}/10 text-${option.color}`}>
+                                {option.icon}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg">{option.title}</h3>
+                                <p className="text-sm text-base-content/70">{option.description}</p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="btn-square"
+                                onClick={option.action}
+                                loading={isLoading === option.id}
+                                disabled={!!isLoading}
+                                title={`Download ${option.format}`}
+                            >
+                                <Download className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+        </section>
 
-          <div className="divide-y divide-base-200">
-            {exportOptions.map((option) => (
-              <div key={option.title} className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-base-200 rounded-lg text-primary">
-                    {option.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-bold">{option.title}</h3>
-                    <p className="text-sm text-base-content/70">{option.description}</p>
-                  </div>
-                </div>
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={option.action}
-                >
-                  <DownloadIcon className="w-4 h-4 mr-2" />
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Documentation Section */}
+        <section className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2 px-1">
+                <BookOpen className="w-5 h-5 text-secondary" />
+                System Documentation
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+                {documentationOptions.map((option) => (
+                    <Card key={option.id} className="hover:shadow-md transition-shadow duration-200 border border-base-200">
+                        <div className="card-body p-5 flex flex-row items-center gap-4">
+                            <div className={`p-3 rounded-xl bg-${option.color}/10 text-${option.color}`}>
+                                {option.icon}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg">{option.title}</h3>
+                                <p className="text-sm text-base-content/70">{option.description}</p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="btn-square"
+                                onClick={option.action}
+                                loading={isLoading === option.id}
+                                disabled={!!isLoading}
+                                title={`Download ${option.format}`}
+                            >
+                                <Download className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+
+                {/* Info Card */}
+                <Alert variant="info" className="mt-4">
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold">Need more help?</span>
+                        <span className="text-sm opacity-90">Check out the official GitHub repository for the latest updates and community support.</span>
+                    </div>
+                </Alert>
+            </div>
+        </section>
       </div>
 
       {toast && (

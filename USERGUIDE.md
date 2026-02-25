@@ -160,9 +160,13 @@ A reference for developers extending the WebUI.
 *   **Theme Preview**: Test how components look with different themes.
 
 ### [Export](/admin/export)
-Download API specifications and system documentation.
+Download API specifications and system documentation for integration and development.
+![Export Page](docs/screenshots/export-page.png)
+
 *   **OpenAPI Spec**: Get the full API definition in JSON or YAML format.
-*   **Documentation**: Access generated documentation resources.
+*   **Postman Collection**: Importable collection for testing API endpoints directly in Postman.
+*   **Database Schema**: Structure of the database tables and relationships.
+*   **Documentation**: Access generated documentation resources including the User Guide and Developer Docs.
 
 ### [Sitemap](/admin/sitemap)
 View the complete navigation structure of the application.
