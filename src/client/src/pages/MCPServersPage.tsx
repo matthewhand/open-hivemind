@@ -8,10 +8,18 @@ import {
   StopIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ArrowPathIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
+
+interface Tool {
+  name: string;
+  description?: string;
+  inputSchema?: any;
+}
 
 interface MCPServer {
   id: string;
@@ -22,6 +30,8 @@ interface MCPServer {
   toolCount: number;
   lastConnected?: string;
   apiKey?: string;
+  error?: string;
+  tools?: Tool[];
 }
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -42,6 +52,9 @@ const MCPServersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [toolsModalOpen, setToolsModalOpen] = useState(false);
+  const [viewingTools, setViewingTools] = useState<Tool[]>([]);
+  const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -75,6 +88,7 @@ const MCPServersPage: React.FC = () => {
         description: server.description || '',
         toolCount: server.tools?.length || 0,
         lastConnected: server.lastConnected,
+        tools: server.tools || [],
       }));
 
       // Also include stored configurations that might not be connected
@@ -162,9 +176,53 @@ const MCPServersPage: React.FC = () => {
       }
 
       setAlert({ type: 'success', message: `Server ${action} action completed` });
+
+      // Clear error state if action succeeded
+      setServers(prev => prev.map(s => s.id === serverId ? { ...s, status: action === 'start' ? 'running' : 'stopped', error: undefined } : s));
+
       await fetchServers();
     } catch (error) {
-      setAlert({ type: 'error', message: error instanceof Error ? error.message : `Failed to ${action} server` });
+      const errorMsg = error instanceof Error ? error.message : `Failed to ${action} server`;
+      setAlert({ type: 'error', message: errorMsg });
+
+      // Set error state on the server card
+      setServers(prev => prev.map(s => s.id === serverId ? { ...s, status: 'error', error: errorMsg } : s));
+    }
+  };
+
+  const handleViewTools = async (server: MCPServer) => {
+    // If we already have tools loaded (e.g. from initial fetch), use them
+    if (server.tools && server.tools.length > 0) {
+      setViewingTools(server.tools);
+      setViewingServerName(server.name);
+      setToolsModalOpen(true);
+      return;
+    }
+
+    // Otherwise try to fetch them via test endpoint
+    try {
+      const response = await fetch('/api/admin/mcp-servers/test', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: server.name,
+          serverUrl: server.url,
+          apiKey: server.apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tools');
+      }
+
+      const data = await response.json();
+      const tools = data.data?.tools || [];
+
+      setViewingTools(tools);
+      setViewingServerName(server.name);
+      setToolsModalOpen(true);
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Failed to retrieve tools for this server.' });
     }
   };
 
@@ -338,10 +396,10 @@ const MCPServersPage: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServers.map((server) => (
-          <div key={server.id} className="card bg-base-100 shadow-xl h-full">
+          <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="card-title">
+                <h2 className="card-title text-lg font-bold">
                   {server.name}
                 </h2>
                 <div className={`badge ${getStatusColor(server.status)}`}>
@@ -349,16 +407,33 @@ const MCPServersPage: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-sm text-base-content/70 mb-4">
-                {server.description}
+              <p className="text-sm text-base-content/70 mb-2 min-h-[40px]">
+                {server.description || 'No description provided.'}
               </p>
 
-              <div className="text-sm space-y-2 mb-4">
-                <p><strong>URL:</strong> {server.url}</p>
-                <p><strong>Tools:</strong> {server.toolCount}</p>
+              {server.status === 'error' && server.error && (
+                <div className="alert alert-error text-xs py-2 px-3 mb-3">
+                  <ExclamationCircleIcon className="w-4 h-4" />
+                  <span>{server.error}</span>
+                </div>
+              )}
+
+              <div className="text-sm space-y-1 mb-4 bg-base-200/50 p-3 rounded-lg">
+                <p className="truncate" title={server.url}><strong>URL:</strong> {server.url}</p>
+                <div className="flex items-center gap-2">
+                    <p><strong>Tools:</strong> {server.toolCount}</p>
+                    {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
+                        <button
+                            className="btn btn-xs btn-ghost text-primary"
+                            onClick={() => handleViewTools(server)}
+                        >
+                            View Tools
+                        </button>
+                    )}
+                </div>
                 {server.lastConnected && (
-                  <p className="text-base-content/50">
-                    Last connected: {new Date(server.lastConnected).toLocaleString()}
+                  <p className="text-base-content/50 text-xs">
+                    Last connected: {new Date(server.lastConnected).toLocaleDateString()}
                   </p>
                 )}
               </div>
@@ -367,34 +442,43 @@ const MCPServersPage: React.FC = () => {
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
                     <button
-                      className="btn btn-ghost btn-sm btn-circle text-error"
+                      className="btn btn-ghost btn-sm btn-circle text-error tooltip"
+                      data-tip="Disconnect"
                       onClick={() => handleServerAction(server.id, 'stop')}
-                      title="Stop Server"
                     >
                       <StopIcon className="w-5 h-5" />
                     </button>
                   ) : (
                     <button
-                      className="btn btn-ghost btn-sm btn-circle text-success"
+                      className="btn btn-ghost btn-sm btn-circle text-success tooltip"
+                      data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
                       onClick={() => handleServerAction(server.id, 'start')}
-                      title="Start Server"
                     >
-                      <PlayIcon className="w-5 h-5" />
+                        {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
                     </button>
+                  )}
+                  {server.toolCount > 0 && (
+                     <button
+                        className="btn btn-ghost btn-sm btn-circle tooltip"
+                        data-tip="View Tools"
+                        onClick={() => handleViewTools(server)}
+                     >
+                        <WrenchScrewdriverIcon className="w-5 h-5" />
+                     </button>
                   )}
                 </div>
                 <div className="flex gap-1">
                   <button
-                    className="btn btn-ghost btn-sm btn-circle"
+                    className="btn btn-ghost btn-sm btn-circle tooltip"
+                    data-tip="Edit Configuration"
                     onClick={() => handleEditServer(server)}
-                    title="Edit Server"
                   >
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
-                    className="btn btn-ghost btn-sm btn-circle text-error"
+                    className="btn btn-ghost btn-sm btn-circle text-error tooltip"
+                    data-tip="Delete"
                     onClick={() => handleDeleteServer(server.id)}
-                    title="Delete Server"
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>
@@ -463,6 +547,47 @@ const MCPServersPage: React.FC = () => {
       )}
 
       {renderContent()}
+
+      {/* Tools Modal */}
+      <Modal
+        isOpen={toolsModalOpen}
+        onClose={() => setToolsModalOpen(false)}
+        title={`Tools provided by ${viewingServerName}`}
+      >
+        <div className="overflow-y-auto max-h-[60vh]">
+            {viewingTools.length === 0 ? (
+                <div className="text-center py-8 opacity-50">No tools found for this server.</div>
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {viewingTools.map((tool, idx) => (
+                        <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
+                                <h3 className="font-bold text-lg">{tool.name}</h3>
+                            </div>
+                            <p className="text-sm text-base-content/80 mb-2">{tool.description || 'No description provided.'}</p>
+                            {tool.inputSchema && (
+                                <div className="collapse collapse-arrow bg-base-200">
+                                    <input type="checkbox" />
+                                    <div className="collapse-title text-xs font-medium uppercase opacity-50">
+                                        Input Schema
+                                    </div>
+                                    <div className="collapse-content">
+                                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                                            {JSON.stringify(tool.inputSchema, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+        <div className="modal-action">
+            <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
+        </div>
+      </Modal>
 
       {/* Add/Edit Server Modal */}
       <Modal
