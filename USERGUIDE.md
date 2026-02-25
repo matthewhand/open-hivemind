@@ -38,15 +38,6 @@ Define the personality and behavior of your bots.
 *   **Tone & Style**: Adjust the bot's communication style (formal, casual, witty).
 *   **Context**: Provide background information the bot should know.
 
-### [MCP Servers](/admin/mcp/servers)
-Manage Model Context Protocol servers and their tools.
-*   **Add Server**: Connect to a new MCP server.
-*   **Manage Servers**: Start, stop, edit, or delete server configurations.
-*   **Tool Discovery**: Automatically discover and register tools from connected servers.
-
-![MCP Servers List](docs/screenshots/mcp-servers-list.png)
-![Add MCP Server Modal](docs/screenshots/mcp-add-server-modal.png)
-
 ### [Guards](/admin/guards)
 Set up safety and security boundaries.
 *   **Content Filters**: Block specific words or phrases.
