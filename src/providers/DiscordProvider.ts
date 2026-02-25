@@ -1,11 +1,11 @@
 import { IMessageProvider } from '../types/IProvider';
 import { Discord } from '@hivemind/adapter-discord';
-import discordConfig from '../config/discordConfig';
+import discordConfig, { DiscordConfig } from '../config/discordConfig';
 import fs from 'fs';
 import path from 'path';
 import type { IBotInfo } from '../types/botInfo';
 
-export class DiscordProvider implements IMessageProvider {
+export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   id = 'discord';
   label = 'Discord';
   type = 'messenger' as const;

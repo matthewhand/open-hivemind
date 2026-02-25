@@ -1,7 +1,13 @@
 import convict from 'convict';
 import path from 'path';
 
-const mattermostConfig = convict({
+export interface MattermostConfig {
+  MATTERMOST_SERVER_URL: string;
+  MATTERMOST_TOKEN: string;
+  MATTERMOST_CHANNEL: string;
+}
+
+const mattermostConfig = convict<MattermostConfig>({
   MATTERMOST_SERVER_URL: {
     doc: 'Mattermost server endpoint',
     format: String,
