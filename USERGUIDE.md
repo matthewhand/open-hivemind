@@ -10,6 +10,12 @@ The central hub for monitoring your bot ecosystem.
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
 
+### [Activity Feed](/admin/activity)
+A dedicated view for real-time message flow and system events.
+*   **Timeline View**: Visual representation of event sequences.
+*   **Table View**: Detailed list of all activities with filtering options.
+*   **Auto-Refresh**: Toggle live updates for monitoring active systems.
+
 ## Configuration
 
 ### [LLM Providers](/admin/integrations/llm)
@@ -31,6 +37,11 @@ Create and manage individual bot instances.
 *   **Link Persona**: Assign a specific personality to the bot.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
 *   **Active Status**: Toggle bots on or off individually.
+
+### [Bot Templates](/admin/bots/templates)
+Jumpstart bot creation using pre-configured templates.
+*   **Template Gallery**: Browse available bot templates by category or platform.
+*   **Quick Start**: Create a new bot with pre-filled settings from a chosen template.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
@@ -54,6 +65,12 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 
 ![Add MCP Server](docs/screenshots/mcp-add-server-modal.png)
 
+### [MCP Tools](/admin/mcp/tools)
+Browse and test individual tools provided by your connected MCP servers.
+*   **Tool Catalog**: Searchable list of all available tools.
+*   **Direct Execution**: Run tools directly from the UI with custom JSON arguments for testing.
+*   **Enable/Disable**: Toggle specific tools on or off without disconnecting the entire server.
+
 ## System
 
 ### [Settings](/admin/settings)
@@ -61,6 +78,13 @@ General system configuration.
 *   **Rate Limits**: Adjust global message rate limits to prevent spam.
 *   **Logging**: Configure log levels and retention policies.
 *   **Updates**: Check for system updates.
+
+### [System Management](/admin/system-management)
+Advanced system administration and maintenance.
+*   **Alert Management**: Acknowledge and resolve system alerts.
+*   **System Configuration**: Fine-tune refresh intervals, log levels, and performance thresholds.
+*   **Backup Management**: Create manual backups, configure auto-backups, and restore from previous states.
+*   **Performance Tuning**: Monitor API status and clear system cache.
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
@@ -108,3 +132,19 @@ An internal chat interface for admins.
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 *   **Theme Preview**: Test how components look with different themes.
+
+### [Export & Documentation](/admin/export)
+Access system documentation and export configurations.
+*   **OpenAPI Specs**: Download the full API specification in JSON or YAML format.
+
+### [Specifications](/admin/specs)
+Manage and view persisted API specifications.
+*   **Spec Library**: Search and view detailed API specs stored in the system.
+
+### [Static Pages](/admin/static)
+Access auxiliary system pages.
+*   **Utility Pages**: Links to standalone pages like the enhanced homepage, loading screens, and screensavers.
+
+### [Sitemap](/admin/sitemap)
+Visual overview of the application structure.
+*   **Navigation Tree**: View the hierarchical layout of all application routes.
