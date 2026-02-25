@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Clock, Download, LayoutList, GitBranch, RefreshCw, Filter } from 'lucide-react';
 import { 
   Alert, 
   Badge, 
@@ -22,6 +22,11 @@ interface ActivityEvent {
   provider: string;
   llmProvider: string;
   status: 'success' | 'error' | 'timeout' | 'pending';
+  processingTime?: number;
+  contentLength?: number;
+  messageType?: 'incoming' | 'outgoing';
+  errorMessage?: string;
+  // Keep legacy fields just in case
   duration?: number;
   inputLength?: number;
   outputLength?: number;
@@ -40,12 +45,92 @@ interface ActivityResponse {
 
 const API_BASE = '/api';
 
+const EventDetailsModal: React.FC<{ event: ActivityEvent | null, onClose: () => void }> = ({ event, onClose }) => {
+  if (!event) return null;
+
+  return (
+    <dialog className="modal modal-open">
+      <div className="modal-box w-11/12 max-w-3xl">
+        <h3 className="font-bold text-lg mb-4">Event Details</h3>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm opacity-70">Event ID</div>
+              <div className="font-mono text-sm break-all">{event.id}</div>
+            </div>
+            <div>
+              <div className="text-sm opacity-70">Timestamp</div>
+              <div>{new Date(event.timestamp).toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-sm opacity-70">Bot Name</div>
+              <div className="font-bold">{event.botName}</div>
+            </div>
+             <div>
+              <div className="text-sm opacity-70">Status</div>
+              <div>
+                <Badge variant={event.status === 'success' ? 'success' : event.status === 'error' ? 'error' : 'warning'}>
+                  {event.status}
+                </Badge>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm opacity-70">Message Provider</div>
+              <div>{event.provider}</div>
+            </div>
+            <div>
+              <div className="text-sm opacity-70">LLM Provider</div>
+              <div>{event.llmProvider}</div>
+            </div>
+            {event.processingTime !== undefined && (
+              <div>
+                <div className="text-sm opacity-70">Processing Time</div>
+                <div>{event.processingTime}ms</div>
+              </div>
+            )}
+            {event.contentLength !== undefined && (
+               <div>
+                <div className="text-sm opacity-70">Content Length</div>
+                <div>{event.contentLength} chars</div>
+              </div>
+            )}
+             {event.errorMessage && (
+               <div className="col-span-2">
+                <div className="text-sm opacity-70 text-error">Error Message</div>
+                <div className="text-error font-medium">{event.errorMessage}</div>
+              </div>
+            )}
+          </div>
+
+          <div className="divider">Raw Data</div>
+          <div className="bg-base-200 p-4 rounded-lg overflow-x-auto">
+            <pre className="text-xs font-mono">
+                {JSON.stringify(event, null, 2)}
+            </pre>
+          </div>
+        </div>
+
+        <div className="modal-action">
+          <button className="btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -77,6 +162,11 @@ const ActivityPage: React.FC = () => {
   }, [fetchActivity, autoRefresh]);
 
   const events = data?.events || [];
+
+  const filteredEvents = useMemo(() => {
+    if (statusFilter === 'all') return events;
+    return events.filter(e => e.status === statusFilter);
+  }, [events, statusFilter]);
 
   const timelineEvents = events.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
@@ -136,12 +226,19 @@ const ActivityPage: React.FC = () => {
       render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
-      key: 'duration' as keyof ActivityEvent,
+      key: 'processingTime' as keyof ActivityEvent,
       title: 'Duration',
       sortable: true,
       width: '100px',
-      render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
+      render: (value: number | undefined) => value ? <span className="font-mono">{value}ms</span> : '-',
     },
+    {
+        key: 'contentLength' as keyof ActivityEvent,
+        title: 'Size',
+        sortable: true,
+        width: '80px',
+        render: (value: number | undefined) => value ? <span className="font-mono text-xs">{value}B</span> : '-',
+    }
   ];
 
   const stats = [
@@ -177,6 +274,8 @@ const ActivityPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <EventDetailsModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+
       {/* Error Alert */}
       {error && (
         <Alert 
@@ -193,6 +292,20 @@ const ActivityPage: React.FC = () => {
         icon={Clock}
         actions={
           <div className="flex items-center gap-2">
+             {/* Status Filter */}
+            <div className="dropdown dropdown-end">
+              <div tabIndex={0} role="button" className="btn btn-sm btn-ghost gap-2">
+                 <Filter className="w-4 h-4" />
+                 {statusFilter === 'all' ? 'All Status' : statusFilter}
+              </div>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a className={statusFilter === 'all' ? 'active' : ''} onClick={() => setStatusFilter('all')}>All Status</a></li>
+                <li><a className={statusFilter === 'success' ? 'active' : ''} onClick={() => setStatusFilter('success')}>Success</a></li>
+                <li><a className={statusFilter === 'error' ? 'active' : ''} onClick={() => setStatusFilter('error')}>Error</a></li>
+                <li><a className={statusFilter === 'timeout' ? 'active' : ''} onClick={() => setStatusFilter('timeout')}>Timeout</a></li>
+              </ul>
+            </div>
+
             {/* View Toggle */}
             <div className="join">
               <Button 
@@ -255,12 +368,13 @@ const ActivityPage: React.FC = () => {
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={events}
+              data={filteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
               searchable={true}
               exportable={true}
+              onRowClick={(record) => setSelectedEvent(record)}
             />
           ) : (
             <div className="p-4">
