@@ -14,31 +14,8 @@ import {
   LoadingSpinner,
   EmptyState,
 } from '../components/DaisyUI';
-
-interface ActivityEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider: string;
-  status: 'success' | 'error' | 'timeout' | 'pending';
-  duration?: number;
-  inputLength?: number;
-  outputLength?: number;
-}
-
-interface ActivityResponse {
-  events: ActivityEvent[];
-  filters: {
-    agents: string[];
-    messageProviders: string[];
-    llmProviders: string[];
-  };
-  timeline: any[];
-  agentMetrics: any[];
-}
-
-const API_BASE = '/api';
+import SearchFilterBar from '../components/SearchFilterBar';
+import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -47,17 +24,28 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
+  // Filters
+  const [selectedBot, setSelectedBot] = useState('all');
+  const [selectedProvider, setSelectedProvider] = useState('all');
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState('all');
+  const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
+
   const fetchActivity = useCallback(async () => {
     try {
       setError(null);
-      const response = await fetch(`${API_BASE}/dashboard/api/activity`);
+      // Construct params
+      const params: any = {};
+      if (selectedBot !== 'all') params.bot = selectedBot;
+      if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
+      if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch activity: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await apiService.getActivity(params);
       setData(result);
+
+      // Store initial filters if not set
+      if (!availableFilters && result.filters) {
+        setAvailableFilters(result.filters);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
@@ -65,7 +53,7 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [availableFilters, selectedBot, selectedProvider, selectedLlmProvider]);
 
   useEffect(() => {
     fetchActivity();
@@ -75,6 +63,38 @@ const ActivityPage: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [fetchActivity, autoRefresh]);
+
+  const handleExport = () => {
+    if (!data?.events || data.events.length === 0) return;
+
+    const headers = ['Timestamp', 'Bot', 'Provider', 'LLM', 'Status', 'Duration (ms)', 'Message Type'];
+    const rows = data.events.map(e => [
+      e.timestamp,
+      e.botName,
+      e.provider,
+      e.llmProvider,
+      e.status,
+      e.processingTime || '',
+      e.messageType
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `activity_export_${new Date().toISOString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const events = data?.events || [];
 
@@ -136,7 +156,7 @@ const ActivityPage: React.FC = () => {
       render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
-      key: 'duration' as keyof ActivityEvent,
+      key: 'processingTime' as keyof ActivityEvent,
       title: 'Duration',
       sortable: true,
       width: '100px',
@@ -169,10 +189,26 @@ const ActivityPage: React.FC = () => {
     {
       id: 'bots',
       title: 'Active Bots',
-      value: data?.filters?.agents?.length || 0,
+      value: availableFilters?.agents?.length || 0,
       icon: '🤖',
       color: 'secondary' as const,
     },
+  ];
+
+  // Prepare filter options
+  const botOptions = [
+    { value: 'all', label: 'All Bots' },
+    ...(availableFilters?.agents?.map(a => ({ value: a, label: a })) || [])
+  ];
+
+  const providerOptions = [
+    { value: 'all', label: 'All Platforms' },
+    ...(availableFilters?.messageProviders?.map(p => ({ value: p, label: p })) || [])
+  ];
+
+  const llmOptions = [
+    { value: 'all', label: 'All LLMs' },
+    ...(availableFilters?.llmProviders?.map(p => ({ value: p, label: p })) || [])
   ];
 
   return (
@@ -230,7 +266,7 @@ const ActivityPage: React.FC = () => {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleExport} disabled={loading || events.length === 0}>
               <Download className="w-4 h-4" /> Export
             </Button>
           </div>
@@ -240,6 +276,37 @@ const ActivityPage: React.FC = () => {
       {/* Stats Cards */}
       <StatsCards stats={stats} isLoading={loading} />
 
+      {/* Filters */}
+      <SearchFilterBar
+        searchValue="" // Not using text search right now, or could map to generic search
+        onSearchChange={() => {}} // No-op for now
+        searchPlaceholder="Filter activity..."
+        className="hidden sm:flex" // Hide generic search input via CSS if not needed, or just keep it minimal
+        filters={[
+          {
+            key: 'bot',
+            value: selectedBot,
+            onChange: setSelectedBot,
+            options: botOptions,
+            className: "w-full sm:w-auto min-w-[150px]"
+          },
+          {
+            key: 'provider',
+            value: selectedProvider,
+            onChange: setSelectedProvider,
+            options: providerOptions,
+            className: "w-full sm:w-auto min-w-[150px]"
+          },
+          {
+            key: 'llm',
+            value: selectedLlmProvider,
+            onChange: setSelectedLlmProvider,
+            options: llmOptions,
+            className: "w-full sm:w-auto min-w-[150px]"
+          }
+        ]}
+      />
+
       {/* Content */}
       {loading && events.length === 0 ? (
         <div className="flex items-center justify-center py-12">
@@ -248,8 +315,15 @@ const ActivityPage: React.FC = () => {
       ) : events.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="No activity yet"
-          description="Events will appear here as your bots process messages"
+          title="No activity found"
+          description="Try adjusting your filters or checking back later"
+          variant="noResults"
+          actionLabel="Clear Filters"
+          onAction={() => {
+            setSelectedBot('all');
+            setSelectedProvider('all');
+            setSelectedLlmProvider('all');
+          }}
         />
       ) : (
         <Card>
@@ -259,8 +333,8 @@ const ActivityPage: React.FC = () => {
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={true}
-              exportable={true}
+              searchable={true} // Client-side search within the page
+              exportable={false} // We have a custom export button
             />
           ) : (
             <div className="p-4">
