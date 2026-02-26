@@ -98,6 +98,19 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Take screenshot of the full list
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
+    // Test Search Functionality
+    const searchInput = page.getByPlaceholder('Search templates...');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('Code Reviewer');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
+
+    // Clear search
+    await searchInput.fill('');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+
     // Test Interaction: Filter by Platform 'Discord'
     const platformSelect = page.locator('select').nth(0); // First select is Platform
     await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
