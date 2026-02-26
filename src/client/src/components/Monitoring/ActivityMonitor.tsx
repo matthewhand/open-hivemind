@@ -1,22 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Select } from '../DaisyUI';
-import dayjs, { Dayjs } from 'dayjs';
+import { Card, Badge, Button, DataTable, LoadingSpinner, EmptyState, StatsCards } from '../DaisyUI';
+import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
-
-interface MessageFlowEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
-}
+import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
+import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
 
 interface FilterOptions {
   agent?: string;
@@ -28,263 +16,325 @@ interface FilterOptions {
 }
 
 const ActivityMonitor: React.FC = () => {
-  const { messages, metrics } = useWebSocket();
-  const [filteredMessages, setFilteredMessages] = useState<MessageFlowEvent[]>([]);
-  const [filters, setFilters] = useState<FilterOptions>({});
-  const [uniqueAgents, setUniqueAgents] = useState<string[]>([]);
-  const [uniqueProviders, setUniqueProviders] = useState<string[]>([]);
+  const { messages: wsMessages } = useWebSocket();
+  const [initialMessages, setInitialMessages] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Extract unique agents and providers from messages
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAgent, setSelectedAgent] = useState<string>('all');
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Cache filter options
+  const [availableFilters, setAvailableFilters] = useState<{
+    agents: string[];
+    providers: string[];
+  }>({ agents: [], providers: [] });
+
+  const fetchActivity = async () => {
+    setLoading(true);
+    try {
+      // Fetch initial data via API
+      const result = await apiService.getActivity({
+        // We fetch a decent amount to populate the initial view
+        // Ideally we'd implement server-side filtering, but for now we'll fetch recent and filter client-side
+        // to match the existing WS behavior, or better yet, fetch filtered.
+        // Let's just fetch recent 100
+      });
+
+      if (result && result.events) {
+        setInitialMessages(result.events);
+
+        // Extract unique agents and providers for filters if not already set
+        const agents = result.filters?.agents || Array.from(new Set(result.events.map(e => e.botName)));
+        const providers = result.filters?.messageProviders || Array.from(new Set(result.events.map(e => e.provider)));
+
+        setAvailableFilters({
+          agents,
+          providers
+        });
+      }
+      setError(null);
+    } catch (err: any) {
+      console.error('Failed to fetch activity:', err);
+      setError('Failed to load activity history');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (messages && messages.length > 0) {
-      const agents = Array.from(new Set(messages.map(msg => msg.botName)));
-      const providers = Array.from(new Set(messages.map(msg => msg.provider)));
-      setUniqueAgents(agents);
-      setUniqueProviders(providers);
+    fetchActivity();
+  }, []);
 
-      // Apply filters
-      applyFilters(messages);
-    } else {
-      setFilteredMessages([]);
-    }
-  }, [messages, filters]);
+  // Merge initial API messages with live WS messages
+  // We prioritize WS messages for updates, but keep history
+  // Since WS messages arrive as they happen, we prepend them?
+  // Or replace if ID matches?
+  // Simplified: Combine and dedup by ID.
+  const allMessages = React.useMemo(() => {
+    const messageMap = new Map<string, any>();
 
-  const applyFilters = (msgs: MessageFlowEvent[]) => {
-    let filtered = [...msgs];
+    // Add initial messages
+    initialMessages.forEach(msg => messageMap.set(msg.id, msg));
 
-    // Filter by agent
-    if (filters.agent) {
-      filtered = filtered.filter(msg => msg.botName === filters.agent);
-    }
+    // Add/Update with WS messages
+    // Note: useWebSocket messages might have slightly different interface, check types
+    wsMessages.forEach((msg: any) => messageMap.set(msg.id, msg));
 
-    // Filter by provider
-    if (filters.provider) {
-      filtered = filtered.filter(msg => msg.provider === filters.provider);
-    }
+    return Array.from(messageMap.values()).sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [initialMessages, wsMessages]);
 
-    // Filter by message type
-    if (filters.messageType) {
-      filtered = filtered.filter(msg => msg.messageType === filters.messageType);
-    }
+  // Filter messages
+  const filteredMessages = React.useMemo(() => {
+    return allMessages.filter(msg => {
+      // Search Query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matches =
+          msg.botName.toLowerCase().includes(query) ||
+          msg.provider.toLowerCase().includes(query) ||
+          (msg.errorMessage && msg.errorMessage.toLowerCase().includes(query));
+        if (!matches) return false;
+      }
 
-    // Filter by status
-    if (filters.status) {
-      filtered = filtered.filter(msg => msg.status === filters.status);
-    }
+      // Dropdowns
+      if (selectedAgent !== 'all' && msg.botName !== selectedAgent) return false;
+      if (selectedProvider !== 'all' && msg.provider !== selectedProvider) return false;
+      if (selectedStatus !== 'all' && msg.status !== selectedStatus) return false;
+      if (selectedType !== 'all' && msg.messageType !== selectedType) return false;
 
-    // Filter by date range
-    if (filters.startDate) {
-      filtered = filtered.filter(msg => dayjs(msg.timestamp).isAfter(dayjs(filters.startDate)));
-    }
+      // Dates
+      if (startDate && new Date(msg.timestamp) < new Date(startDate)) return false;
+      if (endDate && new Date(msg.timestamp) > new Date(endDate)) return false;
 
-    if (filters.endDate) {
-      filtered = filtered.filter(msg => dayjs(msg.timestamp).isBefore(dayjs(filters.endDate)));
-    }
+      return true;
+    });
+  }, [allMessages, searchQuery, selectedAgent, selectedProvider, selectedStatus, selectedType, startDate, endDate]);
 
-    setFilteredMessages(filtered);
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedAgent('all');
+    setSelectedProvider('all');
+    setSelectedStatus('all');
+    setSelectedType('all');
+    setStartDate('');
+    setEndDate('');
   };
 
-  const handleFilterChange = (field: keyof FilterOptions, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  };
+  // Stats
+  const stats = [
+    {
+      id: 'total',
+      title: 'Total Messages',
+      value: filteredMessages.length,
+      icon: <MessageSquare className="w-6 h-6" />,
+      color: 'primary' as const,
+    },
+    {
+      id: 'errors',
+      title: 'Errors',
+      value: filteredMessages.filter(m => m.status === 'error').length,
+      icon: <AlertTriangle className="w-6 h-6" />,
+      color: 'error' as const, // 'error' is valid for Badge/Button but maybe not StatsCards? Checking StatsCards props... usually accepts 'primary', 'secondary', 'accent', 'neutral', 'info', 'success', 'warning', 'error'
+    },
+    {
+      id: 'activity',
+      title: 'Active Agents',
+      value: new Set(filteredMessages.map(m => m.botName)).size,
+      icon: <Activity className="w-6 h-6" />,
+      color: 'secondary' as const,
+    }
+  ];
 
-  const clearFilters = () => {
-    setFilters({});
-  };
+  const columns = [
+    {
+      key: 'timestamp',
+      title: 'Time',
+      sortable: true,
+      width: '180px',
+      render: (value: string) => <span className="font-mono text-xs">{new Date(value).toLocaleString()}</span>,
+    },
+    {
+      key: 'botName',
+      title: 'Agent',
+      sortable: true,
+      filterable: true,
+      render: (value: string) => <span className="font-medium">{value}</span>,
+    },
+    {
+      key: 'provider',
+      title: 'Provider',
+      sortable: true,
+      filterable: true,
+      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>,
+    },
+    {
+      key: 'messageType',
+      title: 'Type',
+      sortable: true,
+      width: '100px',
+      render: (value: string) => (
+        <Badge variant={value === 'incoming' ? 'primary' : 'secondary'} size="sm">
+          {value}
+        </Badge>
+      ),
+    },
+    {
+      key: 'contentLength',
+      title: 'Length',
+      width: '80px',
+      render: (value: number) => <span className="text-xs">{value} chars</span>,
+    },
+    {
+      key: 'processingTime',
+      title: 'Duration',
+      width: '100px',
+      render: (value: number) => value ? <span className="font-mono text-xs">{value}ms</span> : '-',
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      width: '100px',
+      render: (value: string) => (
+        <Badge
+          variant={value === 'success' ? 'success' : value === 'error' ? 'error' : 'warning'}
+          size="sm"
+        >
+          {value}
+        </Badge>
+      ),
+    },
+  ];
 
-  // Calculate statistics
-  const totalMessages = filteredMessages.length;
-  const incomingMessages = filteredMessages.filter(msg => msg.messageType === 'incoming').length;
-  const outgoingMessages = filteredMessages.filter(msg => msg.messageType === 'outgoing').length;
-  const errorMessages = filteredMessages.filter(msg => msg.status === 'error').length;
+  const agentOptions = [
+    { value: 'all', label: 'All Agents' },
+    ...availableFilters.agents.map(a => ({ value: a, label: a }))
+  ];
+
+  const providerOptions = [
+    { value: 'all', label: 'All Providers' },
+    ...availableFilters.providers.map(p => ({ value: p, label: p }))
+  ];
+
+  const statusOptions = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'success', label: 'Success' },
+    { value: 'error', label: 'Error' },
+    { value: 'timeout', label: 'Timeout' },
+  ];
+
+  const typeOptions = [
+    { value: 'all', label: 'All Types' },
+    { value: 'incoming', label: 'Incoming' },
+    { value: 'outgoing', label: 'Outgoing' },
+  ];
 
   return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Activity Monitoring</h2>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Total Messages
-            </p>
-            <h3 className="text-2xl font-bold">
-              {totalMessages}
-            </h3>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Incoming
-            </p>
-            <h3 className="text-2xl font-bold text-primary">
-              {incomingMessages}
-            </h3>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Outgoing
-            </p>
-            <h3 className="text-2xl font-bold text-secondary">
-              {outgoingMessages}
-            </h3>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Errors
-            </p>
-            <h3 className={`text-2xl font-bold ${errorMessages > 0 ? 'text-error' : 'text-success'}`}>
-              {errorMessages}
-            </h3>
-          </Card.Body>
-        </Card>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Activity className="w-6 h-6" /> Activity Monitor
+        </h2>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={fetchActivity}
+          disabled={loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <Card.Body>
-          <Card.Title>Filters</Card.Title>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-            <Select
-              label="Agent"
-              value={filters.agent || ''}
-              onChange={(value) => handleFilterChange('agent', value || undefined)}
-              options={[
-                { value: '', label: 'All Agents' },
-                ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
-              ]}
-            />
+      <StatsCards stats={stats} />
 
-            <Select
-              label="Provider"
-              value={filters.provider || ''}
-              onChange={(value) => handleFilterChange('provider', value || undefined)}
-              options={[
-                { value: '', label: 'All Providers' },
-                ...uniqueProviders.map(provider => ({ value: provider, label: provider })),
-              ]}
-            />
+      <SearchFilterBar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search activity..."
+        onClear={handleClearFilters}
+        filters={[
+          {
+            key: 'agent',
+            value: selectedAgent,
+            onChange: setSelectedAgent,
+            options: agentOptions,
+            className: "w-full sm:w-1/5"
+          },
+          {
+            key: 'provider',
+            value: selectedProvider,
+            onChange: setSelectedProvider,
+            options: providerOptions,
+            className: "w-full sm:w-1/5"
+          },
+          {
+            key: 'status',
+            value: selectedStatus,
+            onChange: setSelectedStatus,
+            options: statusOptions,
+            className: "w-full sm:w-1/5"
+          },
+          {
+            key: 'type',
+            value: selectedType,
+            onChange: setSelectedType,
+            options: typeOptions,
+            className: "w-full sm:w-1/5"
+          }
+        ]}
+      >
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            className="input input-sm input-bordered"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            placeholder="Start Date"
+          />
+          <span className="text-base-content/50">-</span>
+          <input
+            type="date"
+            className="input input-sm input-bordered"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            placeholder="End Date"
+          />
+        </div>
+      </SearchFilterBar>
 
-            <Select
-              label="Message Type"
-              value={filters.messageType || ''}
-              onChange={(value) => handleFilterChange('messageType', value || undefined)}
-              options={[
-                { value: '', label: 'All Types' },
-                { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' },
-              ]}
-            />
-
-            <Select
-              label="Status"
-              value={filters.status || ''}
-              onChange={(value) => handleFilterChange('status', value || undefined)}
-              options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'success', label: 'Success' },
-                { value: 'error', label: 'Error' },
-                { value: 'timeout', label: 'Timeout' },
-              ]}
-            />
-
-            <Button
-              variant="secondary" className="btn-outline"
-              onClick={clearFilters}
-              className="self-end"
-            >
-              Clear Filters
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="label">
-                <span className="label-text">Start Date</span>
-              </label>
-              <input
-                type="datetime-local"
-                className="input input-bordered w-full"
-                value={filters.startDate || ''}
-                onChange={(e) => handleFilterChange('startDate', e.target.value || undefined)}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">End Date</span>
-              </label>
-              <input
-                type="datetime-local"
-                className="input input-bordered w-full"
-                value={filters.endDate || ''}
-                onChange={(e) => handleFilterChange('endDate', e.target.value || undefined)}
-              />
-            </div>
-          </div>
-        </Card.Body>
-      </Card>
-
-      {/* Message Flow Table */}
-      <Card>
-        <Card.Body>
-          <div className="overflow-x-auto">
-            <table className="table table-sm table-zebra">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Agent</th>
-                  <th>Provider</th>
-                  <th>Type</th>
-                  <th>Channel</th>
-                  <th>Length</th>
-                  <th>Processing Time</th>
-                  <th>
-
-                    Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMessages.map((msg) => (
-                  <tr
-                    key={msg.id}
-                    className={msg.status === 'error' ? 'bg-error/10' : ''}
-                  >
-                    <td>{dayjs(msg.timestamp).format('YYYY-MM-DD HH:mm:ss')}</td>
-                    <td>{msg.botName}</td>
-                    <td>{msg.provider}</td>
-                    <td>
-                      <Badge
-                        variant={msg.messageType === 'incoming' ? 'primary' : 'secondary'}
-                        size="sm"
-                      >
-                        {msg.messageType}
-                      </Badge>
-                    </td>
-                    <td>{msg.channelId}</td>
-                    <td>{msg.contentLength}</td>
-                    <td>{msg.processingTime ? `${msg.processingTime}ms` : '-'}</td>
-                    <td>
-                      <Badge
-                        variant={msg.status === 'success' ? 'success' : msg.status === 'error' ? 'error' : 'warning'}
-                        size="sm"
-                      >
-                        {msg.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card.Body>
-      </Card>
+      {loading && !allMessages.length ? (
+         <div className="flex justify-center py-12">
+           <LoadingSpinner size="lg" />
+         </div>
+      ) : filteredMessages.length === 0 ? (
+        <EmptyState
+          icon={Activity}
+          title="No activity found"
+          description="Try adjusting your filters or check back later."
+          actionLabel="Refresh"
+          onAction={fetchActivity}
+        />
+      ) : (
+        <Card className="shadow-sm">
+          <DataTable
+            data={filteredMessages}
+            columns={columns}
+            pagination={{ pageSize: 15 }}
+            searchable={false} // Handled by SearchFilterBar
+            loading={loading}
+          />
+        </Card>
+      )}
     </div>
   );
 };

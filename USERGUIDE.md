@@ -142,6 +142,8 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 *   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
 
+![Activity Monitor](docs/screenshots/activity-monitor.png)
+
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
-import ActivityMonitor from '../ActivityMonitor';
+import ActivityMonitor from './ActivityMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
 
