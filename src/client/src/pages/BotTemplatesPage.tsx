@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs } from '../components/DaisyUI';
 import { Copy, Check } from 'lucide-react';
+import SearchFilterBar, { FilterConfig } from '../components/SearchFilterBar';
+import { SelectOption } from '../components/DaisyUI/Select';
 
 interface BotTemplate {
   id: string;
@@ -21,10 +23,10 @@ const BotTemplatesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
   const [selectedPersona, setSelectedPersona] = useState<string>('All');
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
-  const [selectedTemplate, setSelectedTemplate] = useState<BotTemplate | null>(null);
   const [copied, setCopied] = useState(false);
 
   const breadcrumbItems = [
@@ -113,15 +115,59 @@ const BotTemplatesPage: React.FC = () => {
   const personas = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.persona)))], [templates]);
   const llmProviders = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.llmProvider)))], [templates]);
 
+  const platformOptions: SelectOption[] = platforms.map(p => ({
+    label: p === 'All' ? 'All Platforms' : p.charAt(0).toUpperCase() + p.slice(1),
+    value: p
+  }));
+
+  const personaOptions: SelectOption[] = personas.map(p => ({
+    label: p === 'All' ? 'All Personas' : p,
+    value: p
+  }));
+
+  const llmOptions: SelectOption[] = llmProviders.map(p => ({
+    label: p === 'All' ? 'All Providers' : p,
+    value: p
+  }));
+
+  const filters: FilterConfig[] = [
+    {
+      key: 'platform',
+      value: selectedPlatform,
+      onChange: setSelectedPlatform,
+      options: platformOptions,
+      placeholder: 'Platform'
+    },
+    {
+      key: 'persona',
+      value: selectedPersona,
+      onChange: setSelectedPersona,
+      options: personaOptions,
+      placeholder: 'Persona'
+    },
+    {
+      key: 'llm',
+      value: selectedLlmProvider,
+      onChange: setSelectedLlmProvider,
+      options: llmOptions,
+      placeholder: 'LLM Provider'
+    }
+  ];
+
   // Filter templates
   const filteredTemplates = useMemo(() => {
     return templates.filter(t => {
       const matchPlatform = selectedPlatform === 'All' || t.platform === selectedPlatform;
       const matchPersona = selectedPersona === 'All' || t.persona === selectedPersona;
       const matchLlm = selectedLlmProvider === 'All' || t.llmProvider === selectedLlmProvider;
-      return matchPlatform && matchPersona && matchLlm;
+
+      const matchSearch = searchTerm === '' ||
+        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchPlatform && matchPersona && matchLlm && matchSearch;
     });
-  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider]);
+  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider, searchTerm]);
 
   if (loading) {
     return (
@@ -145,45 +191,19 @@ const BotTemplatesPage: React.FC = () => {
         </p>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mt-6 p-4 bg-base-200 rounded-lg">
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">Platform</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedPlatform}
-              onChange={(e) => setSelectedPlatform(e.target.value)}
-            >
-              {platforms.map(p => <option key={p} value={p}>{p === 'All' ? 'All Platforms' : p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-            </select>
-          </div>
-
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">Persona</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedPersona}
-              onChange={(e) => setSelectedPersona(e.target.value)}
-            >
-              {personas.map(p => <option key={p} value={p}>{p === 'All' ? 'All Personas' : p}</option>)}
-            </select>
-          </div>
-
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">LLM Provider</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedLlmProvider}
-              onChange={(e) => setSelectedLlmProvider(e.target.value)}
-            >
-              {llmProviders.map(p => <option key={p} value={p}>{p === 'All' ? 'All Providers' : p}</option>)}
-            </select>
-          </div>
+        <div className="mt-6">
+          <SearchFilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search templates..."
+            filters={filters}
+            onClear={() => {
+                setSearchTerm('');
+                setSelectedPlatform('All');
+                setSelectedPersona('All');
+                setSelectedLlmProvider('All');
+            }}
+          />
         </div>
       </div>
 
@@ -247,6 +267,7 @@ const BotTemplatesPage: React.FC = () => {
           <div className="col-span-full text-center py-10">
             <p className="text-lg text-base-content/60">No templates match your filters.</p>
             <button className="btn btn-ghost btn-sm mt-2" onClick={() => {
+              setSearchTerm('');
               setSelectedPlatform('All');
               setSelectedPersona('All');
               setSelectedLlmProvider('All');
