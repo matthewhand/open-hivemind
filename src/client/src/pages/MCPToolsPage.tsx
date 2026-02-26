@@ -21,6 +21,74 @@ interface MCPTool {
   enabled: boolean;
 }
 
+const SchemaForm: React.FC<{
+  schema: any;
+  value: any;
+  onChange: (value: any) => void;
+  disabled?: boolean;
+}> = ({ schema, value, onChange, disabled }) => {
+  if (!schema || !schema.properties) {
+    return <div className="text-sm text-base-content/50">No arguments required.</div>;
+  }
+
+  const handleChange = (key: string, val: any) => {
+    onChange({ ...value, [key]: val });
+  };
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+        const isRequired = schema.required?.includes(key);
+        const description = prop.description;
+        const type = prop.type;
+
+        return (
+          <div key={key} className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium">
+                {key} {isRequired && <span className="text-error">*</span>}
+              </span>
+            </label>
+            {description && (
+              <label className="label pt-0 pb-1">
+                <span className="label-text-alt text-base-content/70">{description}</span>
+              </label>
+            )}
+
+            {type === 'boolean' ? (
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={value[key] || false}
+                onChange={(e) => handleChange(key, e.target.checked)}
+                disabled={disabled}
+              />
+            ) : type === 'integer' || type === 'number' ? (
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={value[key] || ''}
+                onChange={(e) => handleChange(key, parseFloat(e.target.value))}
+                placeholder={`Enter ${type}...`}
+                disabled={disabled}
+              />
+            ) : (
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={value[key] || ''}
+                onChange={(e) => handleChange(key, e.target.value)}
+                placeholder="Enter text..."
+                disabled={disabled}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const MCPToolsPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [filteredTools, setFilteredTools] = useState<MCPTool[]>([]);
@@ -121,11 +189,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [mode, setMode] = useState<'form' | 'json'>('form');
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setMode('form');
   };
 
   const handleCloseRunModal = () => {
@@ -197,6 +267,10 @@ const MCPToolsPage: React.FC = () => {
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to update tool status' });
     }
+  };
+
+  const handleFormChange = (newValues: any) => {
+      setRunArgs(JSON.stringify(newValues, null, 2));
   };
 
   if (loading) {
@@ -373,37 +447,56 @@ const MCPToolsPage: React.FC = () => {
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
-              </div>
+            <div className="flex gap-2 bg-base-200 p-1 rounded-lg w-fit">
+                <button
+                    className={`btn btn-sm ${mode === 'form' ? 'btn-white shadow' : 'btn-ghost'}`}
+                    onClick={() => setMode('form')}
+                >
+                    Form View
+                </button>
+                <button
+                    className={`btn btn-sm ${mode === 'json' ? 'btn-white shadow' : 'btn-ghost'}`}
+                    onClick={() => setMode('json')}
+                >
+                    JSON View
+                </button>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
+            {mode === 'form' ? (
+                <SchemaForm
+                    schema={selectedTool.inputSchema}
+                    value={(function() {
+                        try {
+                            return runArgs ? JSON.parse(runArgs) : {};
+                        } catch (e) {
+                            return {};
+                        }
+                    })()}
+                    onChange={handleFormChange}
+                    disabled={isRunning}
+                />
+            ) : (
+                <div className="form-control">
                 <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
+                    <span className="label-text font-medium">Arguments (JSON)</span>
                 </label>
-              )}
-            </div>
+                <textarea
+                    className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                    value={runArgs}
+                    onChange={(e) => {
+                    setRunArgs(e.target.value);
+                    if (jsonError) setJsonError(null);
+                    }}
+                    placeholder="{}"
+                    disabled={isRunning}
+                />
+                {jsonError && (
+                    <label className="label">
+                    <span className="label-text-alt text-error">{jsonError}</span>
+                    </label>
+                )}
+                </div>
+            )}
           </div>
         </Modal>
       )}
