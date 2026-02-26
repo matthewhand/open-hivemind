@@ -140,14 +140,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (data.success) {
+        const { accessToken, refreshToken, expiresIn } = data.data;
         const authTokens: AuthTokens = {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresIn: data.expiresIn,
+          accessToken,
+          refreshToken,
+          expiresIn,
         };
 
         // Get user info from token (or mock if serverless token)
-        const userInfo = await verifyToken(data.accessToken);
+        const userInfo = await verifyToken(accessToken);
 
         setTokens(authTokens);
         setUser(userInfo);
@@ -206,9 +207,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data.success) {
         const newTokens: AuthTokens = {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresIn: data.expiresIn,
+          accessToken: data.data.accessToken,
+          refreshToken: data.data.refreshToken,
+          expiresIn: data.data.expiresIn,
         };
 
         setTokens(newTokens);
