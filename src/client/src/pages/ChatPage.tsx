@@ -66,6 +66,7 @@ const ChatPage: React.FC = () => {
           type: msg.author?.role === 'system' ? 'system' : (msg.author?.bot ? 'bot' : 'user'),
           avatar: msg.author?.avatar, // If available
         },
+        type: msg.type || 'text',
         metadata: {
           platform: 'discord', // Or infer from bot provider?
         }

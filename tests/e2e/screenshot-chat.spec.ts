@@ -100,6 +100,13 @@ test.describe('Chat Monitor Screenshots', () => {
                         content: 'The dashboard analytics one.',
                         createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                    },
+                    {
+                        id: 'msg-5',
+                        content: 'Here is the code snippet for the configuration:\n```json\n{\n  "analytics": true\n}\n```',
+                        type: 'code',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
+                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
                     }
                 ]
             }

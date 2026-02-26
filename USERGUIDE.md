@@ -142,6 +142,16 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 *   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
 
+### [Live Chat Monitor](/admin/chat)
+Monitor real-time conversations across your bot fleet.
+
+![Live Chat Monitor](docs/screenshots/chat-monitor.png)
+
+*   **Active Bots Sidebar**: View all connected bots and their status.
+*   **Real-time Chat**: Watch conversations unfold as they happen.
+*   **Rich Content**: Support for code blocks, images, and file attachments.
+*   **History**: Access past conversation logs for any selected bot.
+
 ### Demo Mode
 When running the application without configured API keys, the system enters **Demo Mode**.
 *   **Visual Indicator**: A purple banner appears at the top of the screen.
