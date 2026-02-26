@@ -67,4 +67,15 @@ describe('DiscordConnectionTest', () => {
       headers: { Authorization: 'Bot valid-token' },
     });
   });
+
+  it('should throw error if JSON parsing fails after a successful response', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockRejectedValue(new Error('Invalid JSON format')),
+      headers: new Headers(),
+    } as unknown as Response);
+
+    await expect(testDiscordConnection('valid-token')).rejects.toThrow('Invalid JSON format');
+  });
 });
