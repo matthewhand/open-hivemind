@@ -103,41 +103,7 @@ describe('Bots Routes', () => {
     });
   });
 
-  describe('GET /api/bots/:botId', () => {
-    // Note: The router doesn't actually have a GET /:id endpoint in the provided file content!
-    // It has PUT, DELETE, POST /clone, etc. but not GET /:id directly?
-    // Let me double check the file content.
-    // The file bots.ts I read has: GET /, POST /, PUT /:id, DELETE /:id, POST /:id/clone, ...
-    // It does NOT have GET /:id.
-    // So this test 'GET /api/bots/:botId' should probably fail 404 or be removed if the route doesn't exist.
-    // However, the previous test code had it.
-    // "router.get('/:id/history', ...)" exists.
-    // "router.get('/:id/activity', ...)" exists.
-    // But "router.get('/:id', ...)" is MISSING in the file I read!
-    // Wait, let me check the file content again.
-
-    /*
-    // GET /api/bots - List all bots with status
-    router.get('/', ...);
-    // POST /api/bots - Create a new bot
-    router.post('/', ...);
-    // PUT /api/bots/:id - Update a bot
-    router.put('/:id', ...);
-    // DELETE /api/bots/:id - Delete a bot
-    router.delete('/:id', ...);
-    ...
-    */
-
-    // Indeed, GET /:id is missing.
-    // If the original test had it, maybe it was testing a route that existed or expected to exist.
-    // But here I am fixing the test failure.
-    // The failure was in the 'before' part (loading the file), so I haven't reached this test case yet.
-    // I will remove this test case or comment it out if it fails.
-    // But for now, I'll keep it simple and just fix the mock.
-    // Actually, I'll remove it to be safe and clean.
-
-    // it('should return a bot', ...) -> Removed
-  });
+  // Note: GET /api/bots/:id does not exist in the router implementation, so we skip testing it.
 
   describe('POST /api/bots', () => {
     it('should create a bot', async () => {
@@ -177,7 +143,6 @@ describe('Bots Routes', () => {
   describe('PUT /api/bots/:botId', () => {
     it('should update a bot', async () => {
       const bot = { id: 'bot1', name: 'Bot 1', persona: 'new' };
-      // getMockManager().getBot.mockResolvedValue(bot); // Not needed as updateBot is called directly
       getMockManager().updateBot.mockResolvedValue(bot);
 
       const response = await request(app)
@@ -192,14 +157,12 @@ describe('Bots Routes', () => {
 
   describe('DELETE /api/bots/:botId', () => {
     it('should delete a bot', async () => {
-      // getMockManager().getBot.mockResolvedValue({ id: 'bot1' });
       getMockManager().deleteBot.mockResolvedValue(true);
 
       await request(app).delete('/api/bots/bot1').expect(200);
     });
 
     it('should return 404 if delete fails (not found)', async () => {
-      // getMockManager().getBot.mockResolvedValue(null);
       getMockManager().deleteBot.mockRejectedValue(new Error('Bot not found'));
 
       await request(app).delete('/api/bots/bot1').expect(404);

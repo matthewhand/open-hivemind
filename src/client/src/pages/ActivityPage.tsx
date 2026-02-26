@@ -48,8 +48,8 @@ const ActivityPage: React.FC = () => {
       setData(result);
 
       // Store initial filters
-      if (result.filters) {
-        setAvailableFilters(prev => prev || result.filters);
+      if (!availableFilters && result.filters) {
+        setAvailableFilters(result.filters);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
@@ -58,7 +58,7 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, availableFilters]);
 
   useEffect(() => {
     fetchActivity();

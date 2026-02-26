@@ -4,12 +4,11 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
-import MainLayout from '../layouts/MainLayout';
-import DashboardPage from '../pages/Dashboard';
-import AdminPage from '../pages/Admin';
-import BotManagementPage from '../pages/Admin/BotManagementPage';
-import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
+
+const MainLayout = lazy(() => import('../layouts/MainLayout'));
+const DashboardPage = lazy(() => import('../pages/Dashboard'));
+const UberLayout = lazy(() => import('../layouts/UberLayout'));
 
 const Login = lazy(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
