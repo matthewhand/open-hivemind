@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
+import { ConfirmModal } from './Modal';
+import { useSuccessToast, useErrorToast } from './ToastNotification';
 
 interface ThemeOption {
   value: string;
@@ -32,6 +34,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onSettingsChange,
   initialSettings = {},
 }) => {
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   const [settings, setSettings] = useState<UserPreferences>({
     theme: 'dark',
     autoTheme: false,
@@ -263,8 +269,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           const imported = JSON.parse(e.target?.result as string);
           setSettings({ ...settings, ...imported });
           onSettingsChange?.({ ...settings, ...imported });
+          successToast('Settings Imported', 'Your settings have been successfully imported.');
         } catch (error) {
-          alert('Invalid settings file');
+          errorToast('Import Failed', 'Invalid settings file. Please check the file format.');
         }
       };
       reader.readAsText(file);
@@ -545,11 +552,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     
                     <button
                       className="btn btn-warning btn-sm"
-                      onClick={() => {
-                        if (confirm('Reset all settings to default values?')) {
-                          resetToDefaults();
-                        }
-                      }}
+                      onClick={() => setShowResetConfirm(true)}
+                      data-testid="reset-button"
                     >
                       🔄 Reset to Defaults
                     </button>
@@ -613,12 +617,30 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <button className="btn" onClick={() => window.history.back()}>
               ← Back to Dashboard
             </button>
-            <button className="btn btn-primary" onClick={() => alert('Settings saved!')}>
+            <button
+              className="btn btn-primary"
+              onClick={() => successToast('Settings saved!', 'Your preferences have been updated.')}
+              data-testid="save-button"
+            >
               💾 Save All Changes
             </button>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={() => {
+          resetToDefaults();
+          setShowResetConfirm(false);
+          successToast('Settings Reset', 'All settings have been restored to default values.');
+        }}
+        title="Reset Settings"
+        message="Are you sure you want to reset all settings to default values? This action cannot be undone."
+        confirmText="Reset"
+        confirmVariant="warning"
+      />
     </div>
   );
 };
