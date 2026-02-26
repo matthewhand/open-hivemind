@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Download, LayoutList, GitBranch, RefreshCw } from 'lucide-react';
+import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -13,6 +13,7 @@ import {
   PageHeader,
   LoadingSpinner,
   EmptyState,
+  Input,
 } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
@@ -29,6 +30,8 @@ const ActivityPage: React.FC = () => {
   const [selectedBot, setSelectedBot] = useState<string>('all');
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
@@ -46,9 +49,9 @@ const ActivityPage: React.FC = () => {
    */
 
   const fetchActivity = useCallback(async () => {
+    const shouldRetry = retryCount < maxRetries;
     try {
       // Exponential backoff retry logic
-      const shouldRetry = retryCount < maxRetries;
       const currentDelay = shouldRetry ? retryDelay * Math.pow(2, retryCount) : 0;
 
       if (currentDelay > 0) {
@@ -64,6 +67,8 @@ const ActivityPage: React.FC = () => {
       if (selectedBot !== 'all') params.bot = selectedBot;
       if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
       if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
+      if (startDate) params.from = new Date(startDate).toISOString();
+      if (endDate) params.to = new Date(endDate).toISOString();
 
       const result = await apiService.getActivity(params);
       setData(result);
@@ -90,11 +95,20 @@ const ActivityPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, autoRefresh, retryCount, maxRetries, retryDelay]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, retryCount, maxRetries, retryDelay]);
 
   useEffect(() => {
     fetchActivity();
   }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedBot('all');
+    setSelectedProvider('all');
+    setSelectedLlmProvider('all');
+    setStartDate('');
+    setEndDate('');
+  };
 
   useEffect(() => {
     if (autoRefresh) {
@@ -372,6 +386,7 @@ const ActivityPage: React.FC = () => {
         onSearchChange={setSearchQuery}
         searchPlaceholder="Filter activity..."
         className={loading ? 'opacity-50 pointer-events-none' : ''}
+        onClear={handleClearFilters}
         filters={[
           {
             key: 'bot',
@@ -395,7 +410,36 @@ const ActivityPage: React.FC = () => {
             className: "w-full sm:w-1/4"
           }
         ]}
-      />
+      >
+        <div className="flex items-center gap-2">
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="input-sm w-auto"
+            placeholder="Start Date"
+          />
+          <span className="text-base-content/50">-</span>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="input-sm w-auto"
+            placeholder="End Date"
+          />
+          {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
+             <Button
+               size="sm"
+               variant="ghost"
+               className="btn-square"
+               onClick={handleClearFilters}
+               title="Clear All Filters"
+             >
+               <X className="w-4 h-4" />
+             </Button>
+          )}
+        </div>
+      </SearchFilterBar>
 
       {/* Content */}
       {loading && !data ? (
