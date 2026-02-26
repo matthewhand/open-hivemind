@@ -22,6 +22,10 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 ## 📚 Reference & Planning
 - [Package Specifications & Features](reference/package.md)
 - [Project TODOs](reference/todo.md)
+- [Bot Management Design](reference/BOT_MANAGEMENT_DESIGN.md)
+- [Build Fix Attempts](reference/BUILD_FIX_ATTEMPTS.md)
+- [Improvement Roadmap](reference/IMPROVEMENT_ROADMAP.md)
+- [Type Safety Roadmap](reference/TYPE_SAFETY_ROADMAP.md)
 
 ## 🛠️ Development Tools
 ### Generating Screenshots
