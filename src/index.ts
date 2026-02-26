@@ -245,6 +245,7 @@ if (process.env.NODE_ENV !== 'development') {
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
+  app.get('/screensaver', serveDevHtml);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -288,6 +289,9 @@ app.use(sitemapRouter); // Sitemap routes at root level
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
 app.get('/admin*', (req: Request, res: Response) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+app.get('/screensaver', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 

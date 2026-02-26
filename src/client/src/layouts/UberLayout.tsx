@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
+import Screensaver from '../components/Screensaver';
 import { hivemindNavItems, NavItem } from '../config/navigation';
 import { useHealthBadges } from '../hooks/useHealthBadges';
 
@@ -28,6 +29,7 @@ const UberLayout: React.FC = () => {
       <div key={location.pathname}>
         <Outlet />
       </div>
+      <Screensaver />
     </ResponsiveNavigation>
   );
 };

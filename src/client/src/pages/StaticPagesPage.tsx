@@ -25,7 +25,7 @@ const StaticPagesPage: React.FC = () => {
       title: 'Screensaver',
       description: 'Interactive screensaver display for idle states',
       icon: <ComputerDesktopIcon className="w-10 h-10" />,
-      url: '/screensaver.html',
+      url: '/screensaver',
       color: 'info',
     },
   ];

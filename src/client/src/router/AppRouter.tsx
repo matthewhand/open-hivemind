@@ -40,6 +40,7 @@ const SystemSettings = lazy(() => import('../pages/SystemSettings'));
 const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
 const ConfigPage = lazy(() => import('../pages/ConfigPage'));
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
+const CyberScreensaver = lazy(() => import('../components/DaisyUI/CyberScreensaver'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
 const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
@@ -95,6 +96,7 @@ const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/" element={<LoadingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/screensaver" element={<CyberScreensaver />} />
 
         {/* User Dashboard Routes - Wrapped in MainLayout */}
         <Route element={

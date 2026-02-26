@@ -215,6 +215,8 @@ Access a catalog of static HTML pages served by the system.
 *   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
 *   **Direct Access**: Open static pages in new tabs for testing or display.
 
+![Screensaver Preview](docs/screenshots/screensaver.png)
+
 ## Documentation Maintenance
 
 ### Generating Screenshots
