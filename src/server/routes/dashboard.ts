@@ -158,20 +158,20 @@ const mockUserSegments: UserSegment[] = [
 
 // ----------------------------------------------------------------------------
 // AI Dashboard Endpoints
-// Note: These are mounted at /api/dashboard by server.ts, so paths are relative to that.
-// BUT, existing routes use /api/... internally too.
+// Note: These are mounted at /api/dashboard by index.ts, so paths here are relative to that.
+// Full paths: /api/dashboard/ai/config, /api/dashboard/status, etc.
 // ----------------------------------------------------------------------------
 
-router.get('/api/ai/config', authenticateToken, (req, res) => {
+router.get('/ai/config', authenticateToken, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post('/api/ai/config', authenticateToken, (req, res) => {
+router.post('/ai/config', authenticateToken, (req, res) => {
   dashboardConfig = { ...dashboardConfig, ...req.body };
   res.json(dashboardConfig);
 });
 
-router.get('/api/ai/stats', authenticateToken, (req, res) => {
+router.get('/ai/stats', authenticateToken, (req, res) => {
   res.json({
     learningProgress: 75,
     behaviorPatternsCount: mockBehaviorPatterns.length,
@@ -179,15 +179,15 @@ router.get('/api/ai/stats', authenticateToken, (req, res) => {
   });
 });
 
-router.get('/api/ai/segments', authenticateToken, (req, res) => {
+router.get('/ai/segments', authenticateToken, (req, res) => {
   res.json(mockUserSegments);
 });
 
-router.get('/api/ai/patterns', authenticateToken, (req, res) => {
+router.get('/ai/patterns', authenticateToken, (req, res) => {
   res.json(mockBehaviorPatterns);
 });
 
-router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
+router.get('/ai/recommendations', authenticateToken, (req, res) => {
   const recommendations: DashboardRecommendation[] = [
     {
       id: `rec-1`,
@@ -212,7 +212,7 @@ router.get('/api/ai/recommendations', authenticateToken, (req, res) => {
   res.json(recommendations);
 });
 
-router.post('/api/ai/feedback', authenticateToken, async (req, res) => {
+router.post('/ai/feedback', authenticateToken, async (req, res) => {
   const { recommendationId, feedback, metadata } = req.body;
   try {
     const db = DatabaseManager.getInstance();
@@ -249,7 +249,7 @@ function isProviderConnected(bot: any): boolean {
   }
 }
 
-router.get('/api/status', authenticateToken, (req, res) => {
+router.get('/status', authenticateToken, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     let bots = [];
@@ -283,7 +283,7 @@ router.get('/api/status', authenticateToken, (req, res) => {
   }
 });
 
-router.get('/api/activity', authenticateToken, async (req, res) => {
+router.get('/activity', authenticateToken, async (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const ws = WebSocketService.getInstance();
@@ -344,7 +344,7 @@ router.get('/api/activity', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/api/alerts/:id/acknowledge', authenticateToken, (req, res) => {
+router.post('/alerts/:id/acknowledge', authenticateToken, (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();
@@ -360,7 +360,7 @@ router.post('/api/alerts/:id/acknowledge', authenticateToken, (req, res) => {
   }
 });
 
-router.post('/api/alerts/:id/resolve', authenticateToken, (req, res) => {
+router.post('/alerts/:id/resolve', authenticateToken, (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();

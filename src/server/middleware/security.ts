@@ -162,12 +162,14 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
   if (clientData.requests.length >= maxRequests) {
     debug('Rate limit exceeded for IP:', clientIP);
     const retryAfter = Math.ceil((clientData.resetTime - now) / 1000);
-    throw new RateLimitError(
-      'Rate limit exceeded. Please try again later.',
-      retryAfter,
-      maxRequests,
-      0,
-      new Date(clientData.resetTime)
+    return next(
+      new RateLimitError(
+        'Rate limit exceeded. Please try again later.',
+        retryAfter,
+        maxRequests,
+        0,
+        new Date(clientData.resetTime)
+      )
     );
   }
 
@@ -211,26 +213,20 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction): 
 
 /**
  * Recursively sanitize object properties
+ * Strips script injection patterns without HTML-encoding data values,
+ * which would corrupt legitimate API payloads (URLs with &, JSON strings, etc.).
  */
 function sanitizeObject(obj: any): void {
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
-      // Remove potentially dangerous characters and scripts
+      // Strip dangerous script/iframe tags and event handler attributes.
+      // Do NOT HTML-encode characters like <, >, &, ', " — these are valid
+      // in API request values and encoding them corrupts the data.
       obj[key] = value
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
         .replace(/javascript:/gi, '')
-        .replace(/on\w+\s*=/gi, '')
-        .replace(/[<>'"&]/g, (match) => {
-          const entityMap: Record<string, string> = {
-            '<': '<',
-            '>': '>',
-            '"': '"',
-            "'": '&#x27;',
-            '&': '&',
-          };
-          return entityMap[match] || match;
-        });
+        .replace(/on\w+\s*=/gi, '');
     } else if (typeof value === 'object' && value !== null) {
       sanitizeObject(value);
     }
@@ -239,13 +235,28 @@ function sanitizeObject(obj: any): void {
 
 /**
  * Sanitize request headers
+ * Only strips script-injection patterns from non-security-sensitive headers.
+ * Headers such as Authorization and Cookie carry opaque token values and must
+ * not be modified — stripping characters from them breaks authentication.
  */
+const SKIP_HEADER_SANITIZATION = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'proxy-authorization',
+]);
+
 function sanitizeHeaders(req: Request): void {
   if (req.headers) {
     for (const [key, value] of Object.entries(req.headers)) {
+      if (SKIP_HEADER_SANITIZATION.has(key.toLowerCase())) {
+        continue;
+      }
       if (typeof value === 'string') {
-        // Remove potentially dangerous characters from headers
-        req.headers[key] = value.replace(/[<>'"&]/g, '');
+        // Strip script tags and javascript: URIs from header values.
+        req.headers[key] = value
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/javascript:/gi, '');
       }
     }
   }
