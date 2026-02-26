@@ -4,6 +4,11 @@ import { RateLimitError } from '../../types/errorClasses';
 
 const debug = Debug('app:securityMiddleware');
 
+// Module-scoped rate-limit store (replaces global.rateLimitStore).
+// Scoped to the module lifecycle so it is garbage-collected when the module is
+// unloaded and never bleeds between jest test runs after jest.resetModules().
+const rateLimitStore = new Map<string, { requests: number[]; resetTime: number }>();
+
 /**
  * Security middleware that adds comprehensive security headers
  * to protect against common web vulnerabilities
@@ -140,18 +145,13 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
 
   // This is a simple in-memory rate limiter
   // In production, you'd want to use Redis or another persistent store
-  if (!(global as any).rateLimitStore) {
-    (global as any).rateLimitStore = new Map();
-  }
-
-  const store = (global as any).rateLimitStore;
   const key = `ratelimit:${clientIP}`;
 
-  if (!store.has(key)) {
-    store.set(key, { requests: [], resetTime: now + windowMs });
+  if (!rateLimitStore.has(key)) {
+    rateLimitStore.set(key, { requests: [], resetTime: now + windowMs });
   }
 
-  const clientData = store.get(key);
+  const clientData = rateLimitStore.get(key)!
 
   // Clean up old requests
   clientData.requests = clientData.requests.filter(
