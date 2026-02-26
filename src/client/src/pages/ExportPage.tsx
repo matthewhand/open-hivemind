@@ -9,7 +9,7 @@ import {
   TrashIcon,
   ArrowPathIcon as RestoreIcon,
 } from '@heroicons/react/24/outline';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState } from '../components/DaisyUI';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import { apiService } from '../services/api';
 
 interface Backup {
@@ -166,6 +166,38 @@ const ExportPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const stats = React.useMemo(() => {
+    const totalBackups = backups.length;
+    const totalSize = backups.reduce((acc, b) => acc + b.size, 0);
+    const lastBackup = backups.length > 0
+      ? new Date(Math.max(...backups.map(b => new Date(b.createdAt).getTime()))).toLocaleDateString()
+      : 'N/A';
+
+    return [
+      {
+        id: 'total-backups',
+        title: 'Total Backups',
+        value: totalBackups,
+        icon: 'database',
+        color: 'primary' as const,
+      },
+      {
+        id: 'total-size',
+        title: 'Total Size',
+        value: formatBytes(totalSize),
+        icon: 'storage',
+        color: 'secondary' as const,
+      },
+      {
+        id: 'last-backup',
+        title: 'Latest Backup',
+        value: lastBackup,
+        icon: 'clock',
+        color: 'accent' as const,
+      },
+    ];
+  }, [backups]);
+
   return (
     <div className="p-6 space-y-8">
       <PageHeader
@@ -174,6 +206,8 @@ const ExportPage: React.FC = () => {
         icon={BackupIcon}
         gradient="secondary"
       />
+
+      <StatsCards stats={stats} isLoading={loading && backups.length === 0} />
 
       {/* System Backups Section */}
       <div className="card bg-base-100 shadow-xl">

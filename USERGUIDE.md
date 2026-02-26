@@ -168,6 +168,7 @@ Manage system configuration backups and download API documentation.
 
 ![System Backups & Export](docs/images/export-page.png)
 
+*   **Backup Overview**: View key metrics including total backups, total storage usage, and the date of the latest backup.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
     *   **Create Backup**: Save a snapshot of your current bot and system configuration.
     ![Create Backup Modal](docs/images/create-backup-modal.png)
