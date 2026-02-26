@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    'process.env': {},
+  },
   plugins: [
     react({
       jsxRuntime: 'automatic',
