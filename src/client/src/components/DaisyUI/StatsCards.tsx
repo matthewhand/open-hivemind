@@ -58,10 +58,16 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   // Animate numbers when they change
   useEffect(() => {
+    const timers: ReturnType<typeof setInterval>[] = [];
+
     stats.forEach(stat => {
       if (typeof stat.value === 'number') {
         const startValue = animatedValues[stat.id] || 0;
         const endValue = stat.value;
+
+        // Optimization: Don't animate if value hasn't changed
+        if (startValue === endValue) return;
+
         const duration = 1000;
         const steps = 60;
         const increment = (endValue - startValue) / steps;
@@ -81,9 +87,13 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
           }
         }, duration / steps);
 
-        return () => clearInterval(timer);
+        timers.push(timer);
       }
     });
+
+    return () => {
+      timers.forEach(timer => clearInterval(timer));
+    };
   }, [stats]);
 
   const getGradientBg = (color?: string) => {

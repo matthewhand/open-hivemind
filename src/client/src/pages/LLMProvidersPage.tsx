@@ -271,7 +271,7 @@ const LLMProvidersPage: React.FC = () => {
                     Fallback configuration loaded from environment variables (`.env`). Used when no specific profile is assigned.
                 </p>
 
-                {defaultStatus?.defaultProviders?.map((p: any) => (
+                {defaultStatus?.providers?.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between p-3 bg-base-200/50 rounded-lg mb-2">
                         <div className="flex items-center gap-3">
                             {getProviderIcon(p.type)}
@@ -284,7 +284,7 @@ const LLMProvidersPage: React.FC = () => {
                     </div>
                 ))}
 
-                {(!defaultStatus?.defaultProviders || defaultStatus.defaultProviders.length === 0) && (
+                {(!defaultStatus?.providers || defaultStatus.providers.length === 0) && (
                     <div className="alert alert-warning text-xs p-2">
                         <WarningIcon className="w-4 h-4" />
                         <span>No default provider in .env. Bots without a profile will fail.</span>
