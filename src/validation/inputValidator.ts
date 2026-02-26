@@ -9,7 +9,6 @@ import DOMPurify from 'dompurify';
 import type { NextFunction, Request, Response } from 'express';
 import { body, param, query, validationResult, type ValidationChain } from 'express-validator';
 import { JSDOM } from 'jsdom';
-import { ValidationError } from '../types/errorClasses';
 
 const debug = Debug('app:inputValidator');
 const window = new JSDOM('').window;
