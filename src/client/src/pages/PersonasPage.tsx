@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, Eye } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -56,6 +56,7 @@ const PersonasPage: React.FC = () => {
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -129,6 +130,11 @@ const PersonasPage: React.FC = () => {
   };
 
   const handleSavePersona = async () => {
+    if (isReadOnly) {
+      setShowEditModal(false);
+      return;
+    }
+
     if (!personaName.trim()) { return; }
 
     setLoading(true);
@@ -208,6 +214,7 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds([]);
     setEditingPersona(null);
     setCloningPersonaId(null);
+    setIsReadOnly(false);
     setShowCreateModal(true);
   };
 
@@ -219,6 +226,7 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds([]); // Don't copy assignments by default
     setEditingPersona(null);
     setCloningPersonaId(persona.id);
+    setIsReadOnly(false);
     setShowCreateModal(true); // Reuse create modal
   };
 
@@ -234,6 +242,19 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds(persona.assignedBotIds);
     setEditingPersona(persona);
     setCloningPersonaId(null);
+    setIsReadOnly(false);
+    setShowEditModal(true);
+  };
+
+  const openViewModal = (persona: Persona) => {
+    setPersonaName(persona.name);
+    setPersonaDescription(persona.description);
+    setPersonaCategory(persona.category);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds);
+    setEditingPersona(persona);
+    setCloningPersonaId(null);
+    setIsReadOnly(true);
     setShowEditModal(true);
   };
 
@@ -366,96 +387,111 @@ const PersonasPage: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map(persona => (
-            <Card key={persona.id} data-testid="persona-card" className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
-                    <User className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{persona.name}</h3>
-                      {persona.isBuiltIn && <Badge size="small" variant="neutral" style="outline">Built-in</Badge>}
+          {filteredPersonas.map(persona => {
+             const MAX_BOTS_SHOWN = 3;
+             const assignedCount = persona.assignedBotNames.length;
+             const shownBots = persona.assignedBotNames.slice(0, MAX_BOTS_SHOWN);
+             const remainingBots = assignedCount - MAX_BOTS_SHOWN;
+
+             return (
+              <Card key={persona.id} data-testid="persona-card" className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
+                      <User className="w-5 h-5" />
                     </div>
-                    <p className="text-xs text-base-content/60">{persona.category}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">{persona.name}</h3>
+                        {persona.isBuiltIn && <Badge size="small" variant="neutral" style="outline">Built-in</Badge>}
+                      </div>
+                      <p className="text-xs text-base-content/60">{persona.category}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-4 flex-1">
-                <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
-                <div className="bg-base-200/50 p-3 rounded-lg mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
-                        onClick={() => handleCopyPrompt(persona.systemPrompt)}
-                        title="Copy System Prompt"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                      <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
-                        <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                <div className="mb-4 flex-1">
+                  <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
+                  <div className="bg-base-200/50 p-3 rounded-lg mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                          onClick={() => handleCopyPrompt(persona.systemPrompt)}
+                          title="Copy System Prompt"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                        <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
+                          <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                        </div>
                       </div>
                     </div>
+                    <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
+                      "{persona.systemPrompt}"
+                    </p>
                   </div>
-                  <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
-                    "{persona.systemPrompt}"
-                  </p>
+
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-medium text-base-content/50 uppercase">Assigned Bots</h4>
+                    <div className="tooltip tooltip-left" data-tip="Bots currently using this persona">
+                      <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                    </div>
+                  </div>
+
+                  {assignedCount > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {shownBots.map(botName => (
+                        <Badge key={botName} variant="secondary" size="small" style="outline">
+                          {botName}
+                        </Badge>
+                      ))}
+                      {remainingBots > 0 && (
+                        <Badge variant="ghost" size="small" className="opacity-60 text-xs">
+                          +{remainingBots} more
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-base-content/40 italic">No bots assigned</span>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-medium text-base-content/50 uppercase">Assigned Bots</h4>
-                  <div className="tooltip tooltip-left" data-tip="Bots currently using this persona">
-                    <Info className="w-3 h-3 text-base-content/30 cursor-help" />
-                  </div>
+                <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => openViewModal(persona)} title="View Details">
+                    <Eye className="w-4 h-4 mr-1" /> View
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
+                    <Copy className="w-4 h-4 mr-1" /> Clone
+                  </Button>
+                  {!persona.isBuiltIn && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
+                        <Edit2 className="w-4 h-4" /> Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeletePersona(persona.id)}
+                        className="text-error hover:bg-error/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
-
-                {persona.assignedBotNames.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {persona.assignedBotNames.map(botName => (
-                      <Badge key={botName} variant="secondary" size="small" style="outline">
-                        {botName}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-sm text-base-content/40 italic">No bots assigned</span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
-                <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
-                  <Copy className="w-4 h-4 mr-1" /> Clone
-                </Button>
-                {!persona.isBuiltIn && (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
-                      <Edit2 className="w-4 h-4" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeletePersona(persona.id)}
-                      className="text-error hover:bg-error/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </>
-                )}
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit/View Modal */}
       <Modal
         isOpen={showCreateModal || showEditModal}
         onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
-        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona')}
+        title={isReadOnly ? `View Persona: ${editingPersona?.name}` : (editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona'))}
         size="lg"
       >
         <div className="space-y-4">
@@ -472,7 +508,7 @@ const PersonasPage: React.FC = () => {
               placeholder="e.g. Friendly Helper"
               value={personaName}
               onChange={(e) => setPersonaName(e.target.value)}
-              disabled={!!editingPersona && editingPersona.isBuiltIn}
+              disabled={isReadOnly || (!!editingPersona && editingPersona.isBuiltIn)}
             />
           </div>
 
@@ -484,6 +520,7 @@ const PersonasPage: React.FC = () => {
               placeholder="Short description of this persona"
               value={personaDescription}
               onChange={(e) => setPersonaDescription(e.target.value)}
+              disabled={isReadOnly}
             />
           </div>
 
@@ -493,6 +530,7 @@ const PersonasPage: React.FC = () => {
               className="select select-bordered"
               value={personaCategory}
               onChange={(e) => setPersonaCategory(e.target.value as any)}
+              disabled={isReadOnly}
             >
               <option value="general">General</option>
               <option value="customer_service">Customer Service</option>
@@ -518,6 +556,7 @@ const PersonasPage: React.FC = () => {
               value={personaPrompt}
               onChange={(e) => setPersonaPrompt(e.target.value)}
               placeholder="You are a helpful assistant..."
+              disabled={isReadOnly}
             />
           </div>
 
@@ -540,7 +579,7 @@ const PersonasPage: React.FC = () => {
                   return (
                     <label
                       key={bot.id}
-                      className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
+                      className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked ? 'opacity-50 cursor-not-allowed' : (isReadOnly ? '' : 'hover:bg-base-300')}`}
                       title={isEnvLocked ? "Persona is locked by environment variable" : ""}
                     >
                       <input
@@ -551,7 +590,7 @@ const PersonasPage: React.FC = () => {
                           if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
                           else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
                         }}
-                        disabled={!!isEnvLocked}
+                        disabled={!!isEnvLocked || isReadOnly}
                       />
                       <div className="flex flex-col">
                         <span className="label-text font-medium flex items-center gap-2">
@@ -571,10 +610,14 @@ const PersonasPage: React.FC = () => {
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
-            <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
-              {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>
+              {isReadOnly ? 'Close' : 'Cancel'}
             </Button>
+            {!isReadOnly && (
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
+                {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+              </Button>
+            )}
           </div>
         </div>
       </Modal>
