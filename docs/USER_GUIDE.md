@@ -22,26 +22,21 @@ The Live Chat Monitor allows administrators to observe conversations across all 
 3.  The main view will load the recent message history for that bot.
 4.  Click the **Refresh** icon in the header to update the view with new messages.
 
-## System Configuration
+## Persona Roulette
 
-The System Configuration page allows you to manage global settings for your Open Hivemind instance.
+Creating detailed system prompts can be time-consuming. Open Hivemind includes a "Persona Roulette" feature that helps you get started quickly with creative templates.
 
-![General Settings](screenshots/settings-general.png)
+![Persona Roulette](screenshots/persona-roulette.png)
 
 ### Features
 
--   **Instance Information**: Customize the name and description of your Open Hivemind instance.
--   **Localization**: Set the default timezone for logs and display.
--   **Logging & Notifications**: Toggle system logging levels (Debug, Info, Warn, Error) and enable/disable notifications.
--   **System Limits**:
-    -   **Max Concurrent Bots**: Limit the number of bots running simultaneously to manage server load.
-    -   **Response Timeout**: Set the maximum time (in seconds) to wait for an LLM response before timing out.
-    -   **Health Checks**: Enable/disable periodic health checks and set the interval.
--   **Advanced Mode**: Unlock additional experimental features and granular controls.
+-   **Creative Templates**: Includes presets like "The Noir Detective", "Haiku Master", "Sarcastic Butler", and more.
+-   **Instant Fill**: Populates the Name, Description, Category, and System Prompt fields with a single click.
 
 ### How to Use
 
-1.  Navigate to the **Settings** section in the admin sidebar.
-2.  The **General** tab is selected by default.
-3.  Adjust the settings using the inputs and sliders.
-4.  Click **Save Settings** to apply your changes immediately.
+1.  Navigate to the **Personas** section.
+2.  Click **Create Persona**.
+3.  Click the **Surprise Me!** button (dice icon) in the modal header.
+4.  The form will fill with a random persona.
+5.  Edit as needed, then click **Create Persona**.

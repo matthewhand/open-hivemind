@@ -17,9 +17,9 @@ To update all screenshots:
 npm run generate-docs
 ```
 
-To update a specific screenshot (e.g., Settings):
+To update the Persona Roulette screenshot:
 ```bash
-npx playwright test tests/e2e/screenshot-settings.spec.ts
+npx playwright test tests/e2e/screenshot-personas-roulette.spec.ts
 ```
 
 This ensures that the user guide always reflects the latest UI changes.

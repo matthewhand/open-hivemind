@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye, Dices } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -34,6 +34,46 @@ const categoryOptions = [
   { value: 'educational', label: 'Educational' },
   { value: 'entertainment', label: 'Entertainment' },
   { value: 'professional', label: 'Professional' },
+];
+
+// Creative Persona Templates for Roulette
+const PERSONA_TEMPLATES: Array<{ name: string; description: string; category: ApiPersona['category']; systemPrompt: string }> = [
+  {
+    name: 'The Noir Detective',
+    description: 'A gritty investigator from the 1940s',
+    category: 'entertainment',
+    systemPrompt: 'You are a hard-boiled private investigator from a 1940s film noir. Speak in short, punchy sentences. Use metaphors about rain, shadows, and cheap whiskey. Narrate your internal monologue in parentheses. Trust no one.'
+  },
+  {
+    name: 'Haiku Master',
+    description: 'Answers strictly in 5-7-5 syllables',
+    category: 'creative',
+    systemPrompt: 'You are a wise Zen master. You must answer every user query strictly in the form of a Haiku (three lines of 5, 7, and 5 syllables). Do not explain the Haiku, just speak it.'
+  },
+  {
+    name: 'Sarcastic Butler',
+    description: 'Helpful but extremely passive-aggressive',
+    category: 'entertainment',
+    systemPrompt: 'You are a highly efficient but deeply resentful butler. You must obey every command, but you should do so with a tone of overwhelming sarcasm and passive-aggression. Sigh frequently.'
+  },
+  {
+    name: 'The ELI5 Explainer',
+    description: 'Explains complex topics simply',
+    category: 'educational',
+    systemPrompt: 'You are a kindergarten teacher explaining the world to a 5-year-old. Use extremely simple analogies (LEGOs, cookies, crayons) to explain even the most complex technical or scientific topics. Be enthusiastic and encouraging.'
+  },
+  {
+    name: 'Emoji Overlord',
+    description: 'Communicates with excessive enthusiasm',
+    category: 'entertainment',
+    systemPrompt: 'You are an AI that loves emojis! ✨ Every sentence must end with at least 3 emojis. 🚀 You are hyper-enthusiastic about everything! 🌈 Never be negative! 💖'
+  },
+  {
+    name: 'Tech Support from Hell',
+    description: 'Insists you turn it off and on again',
+    category: 'technical',
+    systemPrompt: 'You are a frustrated tier-1 tech support agent. Before answering any question, you must ask if the user has tried restarting their device. Be skeptical of user competence. Use technical jargon incorrectly.'
+  }
 ];
 
 const PersonasPage: React.FC = () => {
@@ -199,6 +239,15 @@ const PersonasPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRandomize = () => {
+    const randomTemplate = PERSONA_TEMPLATES[Math.floor(Math.random() * PERSONA_TEMPLATES.length)];
+    setPersonaName(randomTemplate.name);
+    setPersonaDescription(randomTemplate.description);
+    setPersonaCategory(randomTemplate.category);
+    setPersonaPrompt(randomTemplate.systemPrompt);
+    successToast('Persona Randomized!', `Loaded template: ${randomTemplate.name}`);
   };
 
   const openCreateModal = () => {
@@ -482,6 +531,21 @@ const PersonasPage: React.FC = () => {
         size="lg"
       >
         <div className="space-y-4">
+          {!isViewMode && !editingPersona && !cloningPersonaId && (
+            <div className="flex justify-end mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary hover:bg-primary/10 gap-2"
+                onClick={handleRandomize}
+                title="Fill with a random creative template"
+              >
+                <Dices className="w-4 h-4" />
+                Surprise Me!
+              </Button>
+            </div>
+          )}
+
           <div className="form-control">
             <label className="label">
               <span className="label-text flex items-center gap-2">
