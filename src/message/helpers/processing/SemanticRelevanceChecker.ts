@@ -69,9 +69,16 @@ export async function isOnTopic(conversationContext: string, newMessage: string)
   }
 
   try {
-    const { provider, metadata } = await getTaskLlm('semantic', {
+    const sel = await getTaskLlm('semantic', {
       baseMetadata: { maxTokensOverride: 5 },
     });
+
+    if (!sel?.provider) {
+      debug('Semantic relevance check: no LLM provider available, failing open');
+      return true;
+    }
+
+    const { provider, metadata } = sel;
 
     // Build the prompt - focussing on pivoting vs continuation
     const prompt = `You are a conversation flow analyzer. Determine if the new message continues the current topic or pivots to a new, unrelated topic.\n\nContext:\n${conversationContext}\n\nNew Message:\n"${newMessage}"\n\nHas the topic pivoted? Answer with one word: "Pivoted" or "Continuing".`;
@@ -146,9 +153,16 @@ export async function isNonsense(message: string): Promise<boolean> {
   }
 
   try {
-    const { provider, metadata } = await getTaskLlm('semantic', {
+    const sel = await getTaskLlm('semantic', {
       baseMetadata: { maxTokensOverride: 5 },
     });
+
+    if (!sel?.provider) {
+      debug('Nonsense check: no LLM provider available, assuming coherent');
+      return false;
+    }
+
+    const { provider, metadata } = sel;
 
     const prompt = `Analyze this message. Is it nonsense, corrupted text, a repetition loop, or does it cut off unexpectedly mid-sentence? Answer "Nonsense" or "Coherent".\n\nMessage: "${message}"`;
     const response = await provider.generateChatCompletion(prompt, [], metadata);
