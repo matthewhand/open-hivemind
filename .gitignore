@@ -193,3 +193,9 @@ test-results/
 # User bot state config
 config/user-config.json
 config/message-profiles.json
+
+.qwen
+.serena
+.jules
+.codex/
+k8s/
