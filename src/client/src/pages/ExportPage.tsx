@@ -9,9 +9,11 @@ import {
   Trash2,
   RotateCcw,
   Search,
-  HardDrive
+  HardDrive,
+  Clock,
+  DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -184,22 +186,74 @@ const ExportPage: React.FC = () => {
     return backups.reduce((acc, b) => acc + b.size, 0);
   }, [backups]);
 
-  const stats = [
-    {
-      id: 'total-backups',
-      title: 'Total Backups',
-      value: backups.length,
-      icon: <Archive className="w-8 h-8" />,
-      color: 'primary' as const
-    },
-    {
-      id: 'total-size',
-      title: 'Total Size',
-      value: formatBytes(totalSize),
-      icon: <HardDrive className="w-8 h-8" />,
-      color: 'secondary' as const
-    }
-  ];
+  const stats = useMemo(() => {
+    const totalBackups = backups.length;
+    const lastBackup = backups.length > 0
+      ? new Date(Math.max(...backups.map(b => new Date(b.createdAt).getTime()))).toLocaleDateString()
+      : 'N/A';
+
+    return [
+      {
+        id: 'total-backups',
+        title: 'Total Backups',
+        value: totalBackups,
+        icon: <Archive className="w-8 h-8" />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'total-size',
+        title: 'Total Size',
+        value: formatBytes(totalSize),
+        icon: <HardDrive className="w-8 h-8" />,
+        color: 'secondary' as const,
+      },
+      {
+        id: 'last-backup',
+        title: 'Latest Backup',
+        value: lastBackup,
+        icon: <Clock className="w-8 h-8" />,
+        color: 'accent' as const,
+      },
+    ];
+  }, [backups, totalSize]);
+
+  const statsRef = React.useRef<HTMLDivElement>(null);
+
+  const handleDownloadStatsImage = () => {
+    if (!statsRef.current) return;
+
+    // Create a canvas from the stats element
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    canvas.width = 800;
+    canvas.height = 200;
+
+    // Fill background
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw stats text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText('Backup Statistics', 20, 40);
+
+    ctx.font = '16px sans-serif';
+    stats.forEach((stat, index) => {
+      ctx.fillStyle = '#a0a0a0';
+      ctx.fillText(`${stat.title}:`, 20, 80 + (index * 35));
+      ctx.fillStyle = '#00d9ff';
+      ctx.fillText(String(stat.value), 200, 80 + (index * 35));
+    });
+
+    // Download as image
+    const link = document.createElement('a');
+    link.download = `backup-stats-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
 
   return (
     <div className="space-y-6">
@@ -210,7 +264,16 @@ const ExportPage: React.FC = () => {
         gradient="secondary"
       />
 
-      <StatsCards stats={stats} isLoading={loading} />
+      <div ref={statsRef} className="relative">
+        <button
+          className="btn btn-sm btn-ghost absolute top-0 right-0 z-10"
+          onClick={handleDownloadStatsImage}
+          title="Download stats as image"
+        >
+          <DownloadIcon className="w-4 h-4" /> Save as Image
+        </button>
+        <StatsCards stats={stats} isLoading={loading && backups.length === 0} />
+      </div>
 
       {/* System Backups Section */}
       <div className="card bg-base-100 shadow-xl">
@@ -437,9 +500,9 @@ const ExportPage: React.FC = () => {
       </Modal>
 
       {toast && (
-        <div className={`toast toast-top toast-end`}>
+        <div className="toast toast-top toast-end">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
-            <span>{toast.title}: {toast.message}</span>
+            <span>{toast.title ? `${toast.title}: ` : ''}{toast.message}</span>
             <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost">✕</button>
           </div>
         </div>

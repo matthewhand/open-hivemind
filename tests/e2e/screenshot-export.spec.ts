@@ -24,6 +24,14 @@ test.describe('Export Page Screenshots', () => {
         createdAt: new Date('2023-10-24T15:30:00Z').toISOString(),
         createdBy: 'admin',
       },
+      {
+        id: 'backup-789',
+        name: 'Post-Migration',
+        description: 'Safe checkpoint after DB migration',
+        size: 1024 * 1024 * 1.2, // 1.2MB
+        createdAt: new Date('2023-10-26T09:15:00Z').toISOString(),
+        createdBy: 'admin',
+      },
     ];
 
     // Mock API responses
@@ -46,6 +54,7 @@ test.describe('Export Page Screenshots', () => {
 
     // Navigate to Export page
     await page.goto('/admin/export');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for content to load properly
     await expect(page.locator('h1:has-text("Export & System Data")')).toBeVisible();
