@@ -147,6 +147,12 @@ Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
 *   **Default Persona**: The base personality applied to new bots.
 
+### Demo Mode
+When running the application without configuration (e.g., first launch), a **Demo Mode** banner appears at the top of the screen.
+*   **Simulation**: The system simulates bot activity, conversations, and metrics to demonstrate platform capabilities.
+*   **Visual Indicator**: A purple banner indicates that data is simulated and not persisted.
+*   **Configuration**: The banner provides a quick link to Settings to configure real providers and exit Demo Mode.
+
 ## AI & Analytics
 
 ### [AI Dashboard](/admin/ai/dashboard)
@@ -228,3 +234,4 @@ To regenerate screenshots:
    ```
 
 This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
+This automated workflow ensures that the documentation always reflects the current design and layout of the application, including any recent UI improvements or fixes.
