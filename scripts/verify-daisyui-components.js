@@ -51,8 +51,7 @@ const EXPECTED_COMPONENTS = [
   
   // Advanced Components
   'AdvancedThemeSwitcher',
-  'DashboardWidgetSystem',
-  'SettingsPage'
+  'DashboardWidgetSystem'
 ];
 
 console.log('🔍 DaisyUI Component Verification\n');

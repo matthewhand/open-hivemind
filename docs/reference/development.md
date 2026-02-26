@@ -1,6 +1,6 @@
 # Development Guide
 
-Navigation: [Docs Index](../README.md) | [User Guide](user-guide.md) | [Todo](todo.md)
+Navigation: [Docs Index](../README.md) | [User Guide](../USER_GUIDE.md) | [Todo](todo.md)
 
 
 ## Project Overview and Architecture
