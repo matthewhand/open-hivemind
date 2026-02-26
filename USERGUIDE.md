@@ -12,9 +12,9 @@ The central hub for monitoring your bot ecosystem.
 
 ### [Activity Feed](/admin/activity)
 A comprehensive view of all message processing events and system actions.
-![Activity Page](docs/screenshots/activity-page.png)
+![Activity Page](docs/screenshots/activity-page-filters.png)
 
-*   **Real-time Filters**: Filter events by specific Bot, Message Platform, or LLM Provider.
+*   **Real-time Filters**: Filter events by specific Bot, Message Platform, LLM Provider, or Date Range.
 *   **Timeline View**: Switch between a detailed table and a visual timeline of events.
 *   **Export Data**: Download the current activity log as a CSV file for external analysis.
 *   **Performance Metrics**: View processing duration for each message interaction.
@@ -99,10 +99,10 @@ Browse and manage tools available from your connected MCP servers.
 
 ### [Activity Feed](/admin/activity)
 Monitor real-time interactions and events across your bot ecosystem.
-![Activity Feed](docs/screenshots/activity-page.png)
+![Activity Feed](docs/screenshots/activity-page-filters.png)
 
 *   **Real-time Feed**: Watch events as they happen with auto-refresh.
-*   **Filtering**: Filter events by Bot, Provider, or LLM to isolate specific interactions.
+*   **Filtering**: Filter events by Bot, Provider, LLM, or Date Range to isolate specific interactions.
 *   **Export**: Download the activity log as a CSV file for offline analysis.
 *   **Timeline View**: Visualize the sequence of events over time.
 

@@ -19,6 +19,7 @@ export interface SearchFilterBarProps {
   filters?: FilterConfig[];
   className?: string;
   onClear?: () => void;
+  children?: React.ReactNode;
 }
 
 export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
@@ -27,7 +28,8 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   searchPlaceholder = 'Search...',
   filters = [],
   className = '',
-  onClear
+  onClear,
+  children
 }) => {
   const handleClearSearch = () => {
     onSearchChange('');
@@ -57,6 +59,12 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           }
         />
       </div>
+
+      {children && (
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
+          {children}
+        </div>
+      )}
 
       {filters.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
