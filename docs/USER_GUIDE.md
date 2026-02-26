@@ -21,20 +21,3 @@ The Live Chat Monitor allows administrators to observe conversations across all 
 2.  Click on a bot from the list on the left.
 3.  The main view will load the recent message history for that bot.
 4.  Click the **Refresh** icon in the header to update the view with new messages.
-
-## System Configuration
-
-The System Configuration page allows administrators to manage global settings for the Open Hivemind instance, including instance details, localization, logging, and system limits.
-
-![General Settings](screenshots/settings-general.png)
-
-### General Settings
-
--   **Instance Information**: Configure the display name and description of your Open Hivemind instance.
--   **Localization & Appearance**: Set the timezone and theme (Light, Dark, or System Auto).
--   **Logging & Notifications**: Toggle system logging, set log levels (Debug, Info, Warn, Error), and enable/disable notifications.
--   **System Limits**:
-    -   **Max Concurrent Bots**: Limit the number of bots running simultaneously.
-    -   **Response Timeout**: Set the maximum time to wait for a bot response.
-    -   **Health Checks**: Enable/disable automated health checks and set the interval.
--   **Advanced Settings**: Enable experimental features and granular configuration options.
