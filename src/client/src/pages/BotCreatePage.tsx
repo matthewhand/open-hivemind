@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Save, ArrowLeft } from 'lucide-react';
+import { Bot, Save, Gamepad2, Hash, MessageSquare, Send, Info } from 'lucide-react';
 import {
   Breadcrumbs,
   Alert,
@@ -87,6 +87,13 @@ const BotCreatePage: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const platforms = [
+    { id: 'discord', name: 'Discord', icon: Gamepad2 },
+    { id: 'slack', name: 'Slack', icon: Hash },
+    { id: 'mattermost', name: 'Mattermost', icon: MessageSquare },
+    { id: 'telegram', name: 'Telegram', icon: Send },
+  ];
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
@@ -96,12 +103,6 @@ const BotCreatePage: React.FC = () => {
         description="Configure a new bot instance with persona and provider settings."
         icon={Bot}
         gradient="primary"
-        actions={
-          <Button variant="ghost" onClick={() => navigate('/admin/bots')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Bots
-          </Button>
-        }
       />
 
       {alert && (
@@ -168,15 +169,29 @@ const BotCreatePage: React.FC = () => {
                   <label className="label">
                     <span className="label-text font-semibold">Message Platform <span className="text-error">*</span></span>
                   </label>
-                  <Select
-                    value={formData.platform}
-                    onChange={(e) => handleInputChange('platform', e.target.value)}
-                  >
-                    <option value="discord">Discord</option>
-                    <option value="slack">Slack</option>
-                    <option value="mattermost">Mattermost</option>
-                    <option value="telegram">Telegram</option>
-                  </Select>
+                  <div className="grid grid-cols-2 gap-3">
+                    {platforms.map((platform) => {
+                      const Icon = platform.icon;
+                      const isSelected = formData.platform === platform.id;
+                      return (
+                        <div
+                          key={platform.id}
+                          className={`
+                            cursor-pointer rounded-lg border p-3 flex flex-col items-center gap-2 transition-all
+                            ${isSelected
+                              ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-offset-2 ring-offset-base-100'
+                              : 'border-base-300 hover:border-base-content/30 hover:bg-base-200/50'}
+                          `}
+                          onClick={() => handleInputChange('platform', platform.id)}
+                        >
+                          <Icon className={`w-6 h-6 ${isSelected ? 'text-primary' : 'text-base-content/50'}`} />
+                          <span className={`font-semibold text-xs ${isSelected ? 'text-primary' : ''}`}>
+                            {platform.name}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Persona */}
@@ -193,6 +208,21 @@ const BotCreatePage: React.FC = () => {
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </Select>
+
+                  {/* Preview */}
+                  {formData.persona !== 'default' && (
+                    <div className="mt-2 p-3 bg-base-200 rounded-lg text-xs opacity-80 border border-base-300">
+                      <span className="font-bold block mb-1">
+                        {personas.find((p) => p.id === formData.persona)?.name}
+                      </span>
+                      {personas.find((p) => p.id === formData.persona)?.description}
+                    </div>
+                  )}
+                  {formData.persona === 'default' && (
+                    <div className="mt-2 p-3 bg-base-200/50 rounded-lg text-xs opacity-60 italic">
+                      Standard assistant behavior without specific persona traits.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -202,17 +232,40 @@ const BotCreatePage: React.FC = () => {
                   <span className="label-text font-semibold">
                     LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
                   </span>
-                  <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
+                  <a
+                    href="/admin/integrations/llm"
+                    target="_blank"
+                    className="link link-primary text-xs"
+                    rel="noreferrer"
+                  >
+                    Manage Providers
+                  </a>
                 </label>
                 <Select
                   value={formData.llmProvider}
                   onChange={(e) => handleInputChange('llmProvider', e.target.value)}
                 >
-                  <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}</option>
+                  <option value="">
+                    {defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}
+                  </option>
                   {llmProfiles.map((p) => (
-                    <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                    <option key={p.key} value={p.key}>
+                      {p.name} ({p.provider})
+                    </option>
                   ))}
                 </Select>
+
+                {/* Default Info */}
+                {!formData.llmProvider && defaultLlmConfigured && llmStatus?.defaultProviders && (
+                  <div className="label-text-alt mt-2 text-info flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    Using system default:{' '}
+                    <span className="font-semibold">
+                      {llmStatus.defaultProviders.map((p: any) => p.name).join(', ')}
+                    </span>
+                  </div>
+                )}
+
                 {!defaultLlmConfigured && !formData.llmProvider && (
                   <div className="text-error text-xs mt-1">
                     System default is not configured. Please select a provider.

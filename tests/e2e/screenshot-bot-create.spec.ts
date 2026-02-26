@@ -94,7 +94,7 @@ test.describe('Bot Create Page Screenshots', () => {
 
     // Wait for the page to load and specific elements to be visible
     await expect(page.getByText('Create New Bot')).toBeVisible();
-    await expect(page.getByText('Message Platform')).toBeVisible();
+    await expect(page.locator('label').filter({ hasText: 'Message Platform' })).toBeVisible();
 
     // Wait for dynamic content (options in select)
     // We can check if the select has populated options
