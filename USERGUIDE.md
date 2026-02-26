@@ -142,6 +142,8 @@ Visual insights into your AI usage.
 
 ### [Analytics](/admin/analytics)
 Historical data and trends.
+![Analytics Dashboard](docs/screenshots/analytics-dashboard.png)
+
 *   **Conversation Volume**: Track message volume over time.
 *   **User Engagement**: See active users and interaction frequency.
 *   **Topic Analysis**: (If enabled) High-level analysis of conversation topics.
