@@ -314,6 +314,20 @@ router.get('/sources', async (req, res) => {
   }
 });
 
+// GET /api/config/llm-status - Get LLM configuration status
+router.get('/llm-status', (req, res) => {
+  try {
+    const status = getLlmDefaultStatus();
+    return res.json(status);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_STATUS_GET_ERROR',
+    });
+  }
+});
+
 // GET /api/config/llm-profiles - List all LLM profiles
 router.get('/llm-profiles', (req, res) => {
   try {
