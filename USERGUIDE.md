@@ -60,9 +60,13 @@ Quick-start templates to help you create bots faster.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
+
+![Personas Page](docs/screenshots/personas-page.png)
+
 *   **System Prompt**: Write the core instructions that define who the bot is (e.g., "You are a helpful coding assistant").
 *   **Tone & Style**: Adjust the bot's communication style (formal, casual, witty).
 *   **Context**: Provide background information the bot should know.
+*   **View & Clone**: Quickly view persona details or clone existing personas to create new variations.
 
 ### [Guards](/admin/guards)
 Set up safety and security boundaries.
