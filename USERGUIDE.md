@@ -228,3 +228,13 @@ To regenerate screenshots:
    ```
 
 This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
+
+### Automated Updates (GitHub Actions)
+
+You can trigger a documentation update directly from GitHub using the **Update Screenshots** workflow:
+
+1. Go to the **Actions** tab in the repository.
+2. Select **Update Screenshots** from the workflow list.
+3. Click **Run workflow**.
+
+This will automatically generate new screenshots and commit them to the repository.
