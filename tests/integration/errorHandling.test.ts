@@ -1,3 +1,14 @@
+import { jest } from '@jest/globals';
+
+// Mock auth middleware to allow all requests
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  optionalAuth: (req: any, res: any, next: any) => next(),
+}));
+
 import express from 'express';
 import request from 'supertest';
 import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
