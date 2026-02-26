@@ -147,6 +147,15 @@ Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
 *   **Default Persona**: The base personality applied to new bots.
 
+### [Screensaver](/admin/screensaver)
+A Matrix-inspired digital rain effect that activates during periods of inactivity.
+
+![Matrix Rain Screensaver](docs/screenshots/screensaver.png)
+
+*   **Automatic Activation**: The screensaver engages automatically after a period of user inactivity to prevent screen burn-in and add a visual aesthetic.
+*   **Visuals**: Features a classic green digital rain effect with varying speeds and character sets.
+*   **Restoration**: Activity (mouse movement, clicks, or key presses) instantly restores the previous view.
+
 ### Demo Mode
 When the system is initialized without configuration, it operates in Demo Mode to showcase capabilities.
 *   **Visual Indicator**: A distinct banner appears at the top of all pages.

@@ -4,6 +4,7 @@ import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
+import Screensaver from '../Screensaver';
 
 interface NavItem {
   id: string;
@@ -32,6 +33,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
   return (
     <div className={`min-h-screen flex bg-base-200 ${className}`}>
+      <Screensaver />
 
       {/* SIDEBAR - Fixed on left */}
       {!isMobile && (
