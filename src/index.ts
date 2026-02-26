@@ -198,8 +198,7 @@ if (process.env.NODE_ENV !== 'development') {
   });
 }
 
-// Serve static files from public directory
-app.use(express.static(path.join(process.cwd(), 'public')));
+
 
 // Serve static files from webui dist directory
 // Serve static files from webui dist directory (Production Only)
