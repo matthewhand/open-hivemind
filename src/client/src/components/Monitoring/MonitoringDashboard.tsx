@@ -130,12 +130,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
       systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
 
-    const botHealthIssues = bots.filter(bot =>
-      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
-    ).length;
+    const botErrors = bots.filter(bot => bot.statusData?.status === 'error').length;
+    const botWarnings = bots.filter(bot => bot.statusData?.status === 'warning').length;
 
-    if (systemHealth === 'error' || botHealthIssues > 0) {return 'error';}
-    if (systemHealth === 'warning' || botHealthIssues > 0) {return 'warning';}
+    if (systemHealth === 'error' || botErrors > 0) {return 'error';}
+    if (systemHealth === 'warning' || botWarnings > 0) {return 'warning';}
     return 'healthy';
   };
 
