@@ -92,15 +92,32 @@ test.describe('Bot Templates Page Screenshots', () => {
     await expect(page.getByText('Bot Templates')).toBeVisible();
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
+    // Check if Search Bar is visible
+    await expect(page.getByPlaceholder('Search templates...')).toBeVisible();
+
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
 
-    // Take screenshot of the full list
+    // Take screenshot of the full list (showing the new Search Bar)
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
+    // Test Interaction: Text Search
+    const searchInput = page.getByPlaceholder('Search templates...');
+    await searchInput.fill('Fun');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Fun Chatbot')).toBeVisible();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
+
+    // Clear Search
+    await page.getByRole('button', { name: 'Clear search' }).click();
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+
     // Test Interaction: Filter by Platform 'Discord'
-    const platformSelect = page.locator('select').nth(0); // First select is Platform
-    await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
+    // Since we are using SearchFilterBar, the selects are still there.
+    // The order in filters prop is: Platform, Persona, LLM Provider.
+    const platformSelect = page.locator('select').nth(0);
+    await platformSelect.selectOption('discord');
 
     // Wait for filter to apply
     await page.waitForTimeout(300);
