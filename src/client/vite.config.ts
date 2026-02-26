@@ -52,6 +52,10 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts'],
   },
+  define: {
+    'process.env': {},
+    'global': 'window',
+  },
   // @ts-expect-error - Vitest config
   test: {
     globals: true,

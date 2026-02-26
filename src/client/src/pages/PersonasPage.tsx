@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -56,6 +56,7 @@ const PersonasPage: React.FC = () => {
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
+  const [viewOnly, setViewOnly] = useState(false);
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -208,6 +209,7 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds([]);
     setEditingPersona(null);
     setCloningPersonaId(null);
+    setViewOnly(false);
     setShowCreateModal(true);
   };
 
@@ -219,6 +221,7 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds([]); // Don't copy assignments by default
     setEditingPersona(null);
     setCloningPersonaId(persona.id);
+    setViewOnly(false);
     setShowCreateModal(true); // Reuse create modal
   };
 
@@ -234,6 +237,19 @@ const PersonasPage: React.FC = () => {
     setSelectedBotIds(persona.assignedBotIds);
     setEditingPersona(persona);
     setCloningPersonaId(null);
+    setViewOnly(false);
+    setShowEditModal(true);
+  };
+
+  const openViewModal = (persona: Persona) => {
+    setPersonaName(persona.name);
+    setPersonaDescription(persona.description);
+    setPersonaCategory(persona.category);
+    setPersonaPrompt(persona.systemPrompt);
+    setSelectedBotIds(persona.assignedBotIds);
+    setEditingPersona(persona);
+    setCloningPersonaId(null);
+    setViewOnly(true);
     setShowEditModal(true);
   };
 
@@ -415,11 +431,16 @@ const PersonasPage: React.FC = () => {
 
                 {persona.assignedBotNames.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {persona.assignedBotNames.map(botName => (
+                    {persona.assignedBotNames.slice(0, 3).map(botName => (
                       <Badge key={botName} variant="secondary" size="small" style="outline">
                         {botName}
                       </Badge>
                     ))}
+                    {persona.assignedBotNames.length > 3 && (
+                      <Badge variant="ghost" size="small" className="text-xs opacity-60">
+                        +{persona.assignedBotNames.length - 3} more
+                      </Badge>
+                    )}
                   </div>
                 ) : (
                   <span className="text-sm text-base-content/40 italic">No bots assigned</span>
@@ -427,6 +448,9 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                <Button variant="ghost" size="sm" onClick={() => openViewModal(persona)} title="View Details">
+                  <Eye className="w-4 h-4" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
                   <Copy className="w-4 h-4 mr-1" /> Clone
                 </Button>
@@ -451,11 +475,11 @@ const PersonasPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit/View Modal */}
       <Modal
         isOpen={showCreateModal || showEditModal}
         onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
-        title={editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona')}
+        title={viewOnly ? `View Persona: ${personaName}` : (editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona'))}
         size="lg"
       >
         <div className="space-y-4">
@@ -472,7 +496,7 @@ const PersonasPage: React.FC = () => {
               placeholder="e.g. Friendly Helper"
               value={personaName}
               onChange={(e) => setPersonaName(e.target.value)}
-              disabled={!!editingPersona && editingPersona.isBuiltIn}
+              disabled={viewOnly || (!!editingPersona && editingPersona.isBuiltIn)}
             />
           </div>
 
@@ -484,6 +508,7 @@ const PersonasPage: React.FC = () => {
               placeholder="Short description of this persona"
               value={personaDescription}
               onChange={(e) => setPersonaDescription(e.target.value)}
+              disabled={viewOnly}
             />
           </div>
 
@@ -493,6 +518,7 @@ const PersonasPage: React.FC = () => {
               className="select select-bordered"
               value={personaCategory}
               onChange={(e) => setPersonaCategory(e.target.value as any)}
+              disabled={viewOnly}
             >
               <option value="general">General</option>
               <option value="customer_service">Customer Service</option>
@@ -518,6 +544,7 @@ const PersonasPage: React.FC = () => {
               value={personaPrompt}
               onChange={(e) => setPersonaPrompt(e.target.value)}
               placeholder="You are a helpful assistant..."
+              disabled={viewOnly}
             />
           </div>
 
@@ -540,7 +567,7 @@ const PersonasPage: React.FC = () => {
                   return (
                     <label
                       key={bot.id}
-                      className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
+                      className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked || viewOnly ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
                       title={isEnvLocked ? "Persona is locked by environment variable" : ""}
                     >
                       <input
@@ -551,7 +578,7 @@ const PersonasPage: React.FC = () => {
                           if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
                           else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
                         }}
-                        disabled={!!isEnvLocked}
+                        disabled={!!isEnvLocked || viewOnly}
                       />
                       <div className="flex flex-col">
                         <span className="label-text font-medium flex items-center gap-2">
@@ -571,10 +598,14 @@ const PersonasPage: React.FC = () => {
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>Cancel</Button>
-            <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
-              {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>
+              {viewOnly ? 'Close' : 'Cancel'}
             </Button>
+            {!viewOnly && (
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
+                {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+              </Button>
+            )}
           </div>
         </div>
       </Modal>
