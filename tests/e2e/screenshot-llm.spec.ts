@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { setupAuth, setupScreenshotEnv } from './test-utils';
 
 test.describe('LLM Providers Screenshots', () => {
   test.beforeEach(async ({ page }) => {
@@ -88,7 +88,7 @@ test.describe('LLM Providers Screenshots', () => {
 
   test('capture LLM providers page screenshots', async ({ page }) => {
     // Set viewport for consistent screenshots
-    await page.setViewportSize({ width: 1280, height: 800 });
+    await setupScreenshotEnv(page);
 
     // Navigate to LLM Providers page
     await page.goto('/admin/providers/llm');
@@ -97,6 +97,11 @@ test.describe('LLM Providers Screenshots', () => {
     // We look for the "Total Profiles" stat card or the first profile card
     await expect(page.locator('.card').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'GPT-4 Turbo' }).first()).toBeVisible();
+
+    // Verify stats are loaded and correct (no animation or finished animation)
+    // 3 profiles + 3 provider types + System Default configured
+    await expect(page.getByText('Total Profiles').locator('..').getByText('3', { exact: true })).toBeVisible();
+    await expect(page.getByText('Provider Types').locator('..').getByText('3', { exact: true })).toBeVisible();
 
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/llm-providers-list.png', fullPage: true });

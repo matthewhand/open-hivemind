@@ -165,6 +165,15 @@ export async function withErrorDetection<T>(
 }
 
 /**
+ * Setup standard environment for screenshots
+ * Sets viewport and emulates reduced motion to avoid animation artifacts
+ */
+export async function setupScreenshotEnv(page: Page) {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+}
+
+/**
  * Common selectors used across tests
  */
 export const SELECTORS = {

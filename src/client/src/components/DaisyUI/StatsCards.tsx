@@ -58,8 +58,22 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   // Animate numbers when they change
   useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const shouldAnimate = !mediaQuery.matches;
+    const timers: NodeJS.Timeout[] = [];
+
     stats.forEach(stat => {
       if (typeof stat.value === 'number') {
+        // Skip animation if reduced motion is preferred
+        if (!shouldAnimate) {
+          setAnimatedValues(prev => ({
+            ...prev,
+            [stat.id]: stat.value as number,
+          }));
+          return;
+        }
+
         const startValue = animatedValues[stat.id] || 0;
         const endValue = stat.value;
         const duration = 1000;
@@ -81,9 +95,13 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
           }
         }, duration / steps);
 
-        return () => clearInterval(timer);
+        timers.push(timer);
       }
     });
+
+    return () => {
+      timers.forEach(timer => clearInterval(timer));
+    };
   }, [stats]);
 
   const getGradientBg = (color?: string) => {
