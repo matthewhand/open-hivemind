@@ -55,7 +55,11 @@ test.describe('MCP Servers Screenshots', () => {
                 name: 'Filesystem Server',
                 serverUrl: 'http://localhost:3000',
                 connected: true,
-                tools: [{ name: 'read_file' }, { name: 'write_file' }],
+                tools: [
+                  { name: 'read_file', description: 'Reads a file from the filesystem' },
+                  { name: 'write_file', description: 'Writes content to a file on the filesystem' },
+                  { name: 'list_directory', description: 'Lists contents of a directory' }
+                ],
                 lastConnected: new Date().toISOString(),
                 description: 'Allows access to the local filesystem for reading and writing files.',
               },
@@ -63,7 +67,7 @@ test.describe('MCP Servers Screenshots', () => {
                 name: 'Search Server',
                 serverUrl: 'http://search-mcp:8080',
                 connected: true,
-                tools: [{ name: 'google_search' }],
+                tools: [{ name: 'google_search', description: 'Performs a Google search' }],
                 lastConnected: new Date().toISOString(),
                 description: 'Provides search capabilities via Google Custom Search API.',
               },
@@ -95,12 +99,26 @@ test.describe('MCP Servers Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
+    // Open Tools Modal for the first server
+    // Look for the "View Tools" button which we added (it has a title "View Tools")
+    await page.getByTitle('View Tools').first().click();
+
+    // Wait for the modal to be visible
+    // We can target the modal title "Tools: Filesystem Server"
+    await expect(page.getByText('Tools: Filesystem Server')).toBeVisible();
+
+    // Take screenshot of the tools modal
+    await page.screenshot({ path: 'docs/screenshots/mcp-server-tools-modal.png' });
+
+    // Close the modal
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
+
     // Click "Add Server" button
-    // Note: use .first() to avoid conflict with the button inside the hidden modal
+    // Note: use .first() to avoid conflict with the button inside the hidden modal if any
     await page.getByRole('button', { name: 'Add Server' }).first().click();
 
     // Wait for modal to be visible
-    await expect(page.locator('.modal-box')).toBeVisible();
+    await expect(page.locator('.modal-box').filter({ hasText: 'Add MCP Server' })).toBeVisible();
 
     // Take screenshot of the modal
     await page.screenshot({ path: 'docs/screenshots/mcp-add-server-modal.png' });

@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search } from 'lucide-react';
+import { Server, Search, Wrench } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -22,6 +22,7 @@ interface MCPServer {
   toolCount: number;
   lastConnected?: string;
   apiKey?: string;
+  tools?: any[];
 }
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -41,6 +42,7 @@ const MCPServersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
+  const [viewToolsServer, setViewToolsServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -75,6 +77,7 @@ const MCPServersPage: React.FC = () => {
         description: server.description || '',
         toolCount: server.tools?.length || 0,
         lastConnected: server.lastConnected,
+        tools: server.tools || [],
       }));
 
       // Also include stored configurations that might not be connected
@@ -89,6 +92,7 @@ const MCPServersPage: React.FC = () => {
           status: 'stopped' as const,
           description: '',
           toolCount: 0,
+          tools: [],
         };
       }).filter(Boolean);
 
@@ -144,7 +148,7 @@ const MCPServersPage: React.FC = () => {
         });
       } else {
         const server = servers.find(s => s.id === serverId);
-        if (!server) {throw new Error('Server not found');}
+        if (!server) { throw new Error('Server not found'); }
 
         response = await fetch('/api/admin/mcp-servers/connect', {
           method: 'POST',
@@ -384,6 +388,15 @@ const MCPServersPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex gap-1">
+                  <div className="tooltip" data-tip="View Tools">
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle"
+                      onClick={() => setViewToolsServer(server)}
+                      title="View Tools"
+                    >
+                      <Wrench className="w-5 h-5" />
+                    </button>
+                  </div>
                   <button
                     className="btn btn-ghost btn-sm btn-circle"
                     onClick={() => handleEditServer(server)}
@@ -463,6 +476,51 @@ const MCPServersPage: React.FC = () => {
       )}
 
       {renderContent()}
+
+      {/* View Tools Modal */}
+      <Modal
+        isOpen={!!viewToolsServer}
+        onClose={() => setViewToolsServer(null)}
+        title={viewToolsServer ? `Tools: ${viewToolsServer.name}` : 'Server Tools'}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-base-content/70">
+            Below are the tools exposed by this MCP server. These tools can be used by bots if permission is granted.
+          </p>
+
+          <div className="overflow-x-auto bg-base-200/50 rounded-lg p-1 max-h-[60vh]">
+            <table className="table table-sm w-full">
+              <thead>
+                <tr>
+                  <th>Tool Name</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {viewToolsServer?.tools && viewToolsServer.tools.length > 0 ? (
+                  viewToolsServer.tools.map((tool: any, index: number) => (
+                    <tr key={index} className="hover:bg-base-200">
+                      <td className="font-mono font-bold text-xs">{tool.name}</td>
+                      <td className="text-sm opacity-80">{tool.description || <span className="italic opacity-50">No description provided</span>}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="text-center py-8 opacity-50">
+                      No tools found on this server.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="modal-action">
+            <button className="btn btn-primary" onClick={() => setViewToolsServer(null)}>Close</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add/Edit Server Modal */}
       <Modal
