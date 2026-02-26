@@ -171,9 +171,9 @@ export class AuthManager {
    */
   public async register(data: RegisterData): Promise<User> {
     // Validate password strength
-    if (!data.password || data.password.length < 6) {
+    if (!data.password || data.password.length < 8) {
       throw new ValidationError(
-        'Password must be at least 6 characters long',
+        'Password must be at least 8 characters long',
         'PASSWORD_TOO_SHORT'
       );
     }

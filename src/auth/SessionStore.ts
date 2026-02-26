@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import TimerRegistry from '@src/utils/TimerRegistry';
 
@@ -159,7 +160,7 @@ export class SessionStore {
    * @returns Session ID
    */
   private generateSessionId(): string {
-    return `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `sess_${crypto.randomBytes(16).toString('hex')}`;
   }
 
   /**

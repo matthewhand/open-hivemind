@@ -21,6 +21,6 @@ export interface Metrics {
 }
 
 export const getMetrics = async (): Promise<Metrics> => {
-  const response = await axios.get('/api/webui/metrics');
+  const response = await axios.get('/health/metrics');
   return response.data;
 };
