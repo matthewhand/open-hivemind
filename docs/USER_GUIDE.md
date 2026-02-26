@@ -42,3 +42,23 @@ The System Configuration page allows administrators to manage global settings, i
 1.  Navigate to the **Settings** section in the admin sidebar.
 2.  Adjust the settings as needed.
 3.  Click **Save Settings** to apply changes.
+
+## Personas Management
+
+The Personas (Beta) feature allows you to define distinct AI personalities and system prompts that can be assigned to one or more bots. This centralizes the management of bot behaviors.
+
+![Personas Management](screenshots/personas-page.png)
+
+### Features
+
+-   **Persona Library**: Create, edit, and delete custom personas. Built-in personas (like "Technical Assistant") are read-only but can be cloned.
+-   **System Prompts**: Define the core instructions (System Prompt) for the AI.
+-   **Bulk Assignment**: Assign a persona to multiple bots simultaneously.
+-   **Real-time Updates**: Changes to a persona (e.g., updating the prompt) are immediately reflected across all assigned bots.
+
+### Workflow
+
+1.  **Create a Persona**: Click the **Create Persona** button.
+2.  **Define Behavior**: Enter a name, description, and the **System Prompt** (e.g., "You are a helpful assistant...").
+3.  **Assign Bots**: In the "Assign to Bots" section, select the bots that should use this persona.
+4.  **Save**: Click **Create Persona** (or **Save Changes**) to apply. The selected bots will now use the new system prompt.
