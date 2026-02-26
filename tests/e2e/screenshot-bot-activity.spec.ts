@@ -87,6 +87,13 @@ test.describe('Bot Activity Screenshots', () => {
       await route.fulfill({ json: { openai: { values: {} }, discord: { values: {} } } });
     });
 
+    // Handle Demo Status GET
+    await page.route('**/api/demo/status', async (route) => {
+      await route.fulfill({
+        json: { isDemoMode: true, botCount: 2, conversationCount: 0, messageCount: 0 },
+      });
+    });
+
     // Handle Config GET
     await page.route('**/api/config', async (route) => {
       if (route.request().method() === 'GET') {
