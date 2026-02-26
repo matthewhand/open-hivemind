@@ -82,7 +82,7 @@
     "@discordjs/rest": "^2.0.0",
     "@discordjs/voice": "^0.17.0",
     "@heroicons/react": "^2.2.0",
-    "@modelcontextprotocol/sdk": "^1.18.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@reduxjs/toolkit": "^2.9.0",
     "@slack/rtm-api": "^7.0.2",
     "@slack/socket-mode": "^2.0.3",
@@ -165,7 +165,8 @@
     "typeforce": "^1.18.0",
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "hono": "^4.6.14"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
