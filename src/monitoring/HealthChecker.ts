@@ -230,7 +230,7 @@ export class HealthChecker {
 
     // Check service statuses
     const downServices = Object.values(healthCheck.services).filter((s) => s.status === 'down');
-    if (downServices.length > 1) {
+    if (downServices.length >= 1) {
       return 'unhealthy';
     }
 

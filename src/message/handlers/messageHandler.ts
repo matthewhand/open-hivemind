@@ -804,7 +804,7 @@ export async function handleMessage(
           });
         } catch {}
 
-        while (retryCount <= MAX_DUPLICATE_RETRIES) {
+        while (retryCount < MAX_DUPLICATE_RETRIES) {
           const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
 
           const metadata = {
