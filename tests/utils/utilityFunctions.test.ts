@@ -419,13 +419,13 @@ describe('Utility Functions Comprehensive Tests', () => {
   describe('Audit Logging Consolidated', () => {
     let auditLogger: any;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Reset singleton instance before each test
       const { AuditLogger } = require('../../src/common/auditLogger');
       (AuditLogger as any).instance = null;
       auditLogger = AuditLogger.getInstance();
       // Clear any existing events
-      auditLogger.getAuditEvents().forEach(() => {});
+      (await auditLogger.getAuditEvents()).forEach(() => { });
     });
 
     test('should create audit log with basic event data', async () => {
@@ -439,7 +439,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
       await auditLogger.waitForQueueDrain();
 
-      const events = auditLogger.getAuditEvents();
+      const events = await auditLogger.getAuditEvents();
       // Find our test event by looking for the specific action
       const testEvent = events.find((event: any) => event.action === 'TEST_ACTION');
       expect(testEvent).toBeDefined();
@@ -453,7 +453,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
     test('should filter events by user', async () => {
       // Clear existing events first
-      const initialCount = auditLogger.getAuditEvents().length;
+      const initialCount = (await auditLogger.getAuditEvents()).length;
 
       auditLogger.log({
         user: 'user1',
@@ -473,7 +473,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
       await auditLogger.waitForQueueDrain();
 
-      const user1Events = auditLogger.getAuditEventsByUser('user1');
+      const user1Events = await auditLogger.getAuditEventsByUser('user1');
       expect(user1Events.length).toBeGreaterThanOrEqual(1);
       expect(user1Events[user1Events.length - 1].user).toBe('user1');
     });
@@ -635,7 +635,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
       await auditLogger.waitForQueueDrain();
 
-      const events = auditLogger.getAuditEvents();
+      const events = await auditLogger.getAuditEvents();
       const foundEvent = events.find((event: any) => event.action === 'CONFIG_UPDATE');
 
       expect(foundEvent).toBeDefined();

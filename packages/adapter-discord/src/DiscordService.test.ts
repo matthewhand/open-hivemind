@@ -129,6 +129,39 @@ describe('DiscordService', () => {
     });
   });
 
+  const createMockDeps = () => ({
+    logger: {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    },
+    errorTypes: {
+      HivemindError: Error,
+      ConfigError: jest.fn().mockImplementation((msg) => new Error(msg)),
+      NetworkError: jest.fn().mockImplementation((msg) => new Error(msg)),
+      ValidationError: jest.fn().mockImplementation((msg) => new Error(msg)),
+      AuthenticationError: jest.fn().mockImplementation((msg) => new Error(msg)),
+    },
+    discordConfig: discordConfig,
+    messageConfig: messageConfig,
+    webSocketService: WebSocketService.getInstance(),
+    startupGreetingService: { emit: jest.fn() },
+    getAllBotConfigs: () => {
+      const bots = (BotConfigurationManager.getInstance() as any).getDiscordBotConfigs() || [];
+      const providers = (ProviderConfigManager.getInstance() as any).getAllProviders() || [];
+      // Combine or pick based on test needs.
+      // For these tests, we often mock one or the other.
+      if (bots.length > 0) return bots;
+      return providers.map((p: any) => ({
+        name: p.name || 'Test Bot',
+        messageProvider: 'discord',
+        discord: p.config,
+      }));
+    },
+    isBotDisabled: (name: string) => (UserConfigStore.getInstance() as any).isBotDisabled(name),
+  });
+
   describe('initialization', () => {
     it('should initialize with a single bot from ProviderConfigManager', async () => {
       const providerConfig = {
@@ -143,7 +176,7 @@ describe('DiscordService', () => {
         providerConfig,
       ]);
 
-      service = DiscordService.getInstance();
+      service = new DiscordService(createMockDeps() as any);
       await service.initialize();
 
       expect(service.getAllBots()).toHaveLength(1);
@@ -154,7 +187,9 @@ describe('DiscordService', () => {
     it('should handle multiple bots from BotConfigurationManager', async () => {
       const botConfig = {
         name: 'Bot 1',
+        messageProvider: 'discord',
         messageProviderId: 'provider1',
+        discord: { token: 'token1' },
       };
       const providerConfig = {
         id: 'provider1',
@@ -170,7 +205,7 @@ describe('DiscordService', () => {
         providerConfig,
       ]);
 
-      service = DiscordService.getInstance();
+      service = new DiscordService(createMockDeps() as any);
       await service.initialize();
 
       expect(service.getAllBots()).toHaveLength(1);
@@ -191,7 +226,7 @@ describe('DiscordService', () => {
       (ProviderConfigManager.getInstance().getAllProviders as jest.Mock).mockReturnValue([
         providerConfig,
       ]);
-      service = DiscordService.getInstance();
+      service = new DiscordService(createMockDeps() as any);
       await service.initialize();
     });
 

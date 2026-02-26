@@ -233,6 +233,20 @@ export class BotConfigService {
   }
 
   /**
+   * Get bot configurations filtered by message provider
+   */
+  async getBotConfigsByProvider(provider: string): Promise<BotConfigResponse[]> {
+    try {
+      this.ensureDatabaseEnabled('list bot configurations by provider');
+      const allConfigs = await this.getAllBotConfigs();
+      return allConfigs.filter(config => config.messageProvider === provider);
+    } catch (error) {
+      debug('Error getting bot configurations by provider:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Update a bot configuration
    */
   async updateBotConfig(

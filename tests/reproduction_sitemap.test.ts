@@ -15,18 +15,16 @@ describe('Sitemap Routes Reproduction', () => {
     expect(res.status).toBe(200);
     expect(res.body.urls).toBeDefined();
 
-    // Check for existence of /uber paths (which are currently there but wrong)
-    const uberUrl = res.body.urls.find((u: any) => u.url === '/uber/bots');
-    expect(uberUrl).toBeDefined();
+    // Check for existence of /admin/bots (which should be there now)
 
-    // Check for absence of /admin/bots (which should be there)
+    // Check for existence of /admin/bots (which should be there now)
     const adminUrl = res.body.urls.find((u: any) => u.url === '/admin/bots');
-    expect(adminUrl).toBeUndefined();
+    expect(adminUrl).toBeDefined();
   });
 
-  it('should fail to find new routes like /admin/ai/dashboard', async () => {
+  it('should find new routes like /admin/ai/dashboard', async () => {
     const res = await request(app).get('/sitemap.json');
     const aiUrl = res.body.urls.find((u: any) => u.url.includes('/ai/dashboard'));
-    expect(aiUrl).toBeUndefined();
+    expect(aiUrl).toBeDefined();
   });
 });

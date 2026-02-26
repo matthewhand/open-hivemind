@@ -185,16 +185,46 @@ describe('BotConfigService', () => {
     });
   });
 
+  describe('getBotConfigsByProvider', () => {
+    it('should return bot configs filtered by message provider', async () => {
+      const mockConfigs = [
+        { id: 1, name: 'Bot1', messageProvider: 'discord', versions: [], auditLog: [] },
+        { id: 2, name: 'Bot2', messageProvider: 'slack', versions: [], auditLog: [] },
+        { id: 3, name: 'Bot3', messageProvider: 'discord', versions: [], auditLog: [] },
+      ];
+      mockDbManager.getAllBotConfigurationsWithDetails.mockResolvedValue(mockConfigs);
+
+      const result = await botConfigService.getBotConfigsByProvider('discord');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('Bot1');
+      expect(result[1].name).toBe('Bot3');
+      expect(mockDbManager.getAllBotConfigurationsWithDetails).toHaveBeenCalled();
+    });
+
+    it('should return empty array if no configs match the provider', async () => {
+      const mockConfigs = [
+        { id: 1, name: 'Bot1', messageProvider: 'discord', versions: [], auditLog: [] },
+      ];
+      mockDbManager.getAllBotConfigurationsWithDetails.mockResolvedValue(mockConfigs);
+
+      const result = await botConfigService.getBotConfigsByProvider('slack');
+
+      expect(result).toHaveLength(0);
+      expect(mockDbManager.getAllBotConfigurationsWithDetails).toHaveBeenCalled();
+    });
+  });
+
   describe('updateBotConfig', () => {
     const updateReq: UpdateBotConfigRequest = { name: 'UpdatedBot' };
     const existingConfig: BotConfiguration = {
-        id: 1, name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai', isActive: true, createdAt: new Date(), updatedAt: new Date(),
-        // Add other required fields with defaults/mocks
+      id: 1, name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai', isActive: true, createdAt: new Date(), updatedAt: new Date(),
+      // Add other required fields with defaults/mocks
     } as any;
 
     it('should update bot config successfully', async () => {
       mockDbManager.getBotConfiguration.mockResolvedValueOnce(existingConfig) // for checking existence
-                                      .mockResolvedValueOnce({ ...existingConfig, ...updateReq }); // for returning updated
+        .mockResolvedValueOnce({ ...existingConfig, ...updateReq }); // for returning updated
 
       const result = await botConfigService.updateBotConfig(1, updateReq, 'user');
 

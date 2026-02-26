@@ -1,18 +1,21 @@
 import express from 'express';
 import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
+import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
 
 // Mock the SwarmInstaller to return successful responses
 jest.mock('@src/integrations/openswarm/SwarmInstaller', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
-      checkPython: jest.fn().mockResolvedValue(true),
-      checkSwarmInstalled: jest.fn().mockResolvedValue(false),
-      getSwarmWebUIUrl: jest.fn().mockReturnValue('http://localhost:8000'),
-      installSwarm: jest
+      id: 'openswarm',
+      checkPrerequisites: jest.fn().mockResolvedValue(true),
+      checkInstalled: jest.fn().mockResolvedValue(false),
+      getWebUIUrl: jest.fn().mockReturnValue('http://localhost:8000'),
+      install: jest
         .fn()
         .mockResolvedValue({ success: true, message: 'Installed successfully' }),
-      startSwarm: jest.fn().mockResolvedValue({ success: true, message: 'Started successfully' }),
+      start: jest.fn().mockResolvedValue({ success: true, message: 'Started successfully' }),
     })),
   };
 });
@@ -22,6 +25,8 @@ describe('Swarm Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Register the mock installer – the mock SwarmInstaller implementation already matches the interface
+    providerRegistry.registerInstaller(new SwarmInstaller());
     app = express();
     app.use(express.json());
     app.use('/', swarmRouter);

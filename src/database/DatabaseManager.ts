@@ -974,6 +974,19 @@ export class DatabaseManager {
   async updateBotMetrics(metrics: BotMetrics): Promise<void> {
     this.ensureConnected();
 
+    if (metrics.messagesSent !== undefined && (metrics.messagesSent < 0 || isNaN(metrics.messagesSent))) {
+      throw new RangeError('messagesSent cannot be negative or NaN');
+    }
+    if (metrics.messagesReceived !== undefined && (metrics.messagesReceived < 0 || isNaN(metrics.messagesReceived))) {
+      throw new RangeError('messagesReceived cannot be negative or NaN');
+    }
+    if (metrics.conversationsHandled !== undefined && (metrics.conversationsHandled < 0 || isNaN(metrics.conversationsHandled))) {
+      throw new RangeError('conversationsHandled cannot be negative or NaN');
+    }
+    if (metrics.averageResponseTime !== undefined && (metrics.averageResponseTime < 0 || isNaN(metrics.averageResponseTime))) {
+      throw new RangeError('averageResponseTime cannot be negative or NaN');
+    }
+
     try {
       await this.db!.run(
         `
@@ -2040,6 +2053,20 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error storing AI feedback:', error);
       throw new Error(`Failed to store AI feedback: ${error}`);
+    }
+  }
+
+  async clearAIFeedback(): Promise<number> {
+    this.ensureConnected();
+
+    try {
+      const result = await this.db!.run('DELETE FROM ai_feedback');
+      const deletedCount = result.changes ?? 0;
+      debug(`Cleared ${deletedCount} AI feedback records`);
+      return deletedCount;
+    } catch (error) {
+      debug('Error clearing AI feedback:', error);
+      throw new Error(`Failed to clear AI feedback: ${error}`);
     }
   }
 }

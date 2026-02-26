@@ -4,6 +4,8 @@ import express from 'express';
 import request from 'supertest';
 // We need to import the router AFTER mocks
 import { adminRouter } from '../../src/admin/adminRoutes';
+import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import { IMessageProvider } from '../../src/types/IProvider';
 
 // Mocks
 jest.mock('../../src/auth/middleware', () => ({
@@ -46,6 +48,16 @@ app.use('/api/admin', adminRouter);
 describe('Admin Routes I/O Performance', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Register mock slack provider
+    providerRegistry.register({
+      id: 'slack',
+      type: 'messenger',
+      label: 'Slack',
+      addBot: jest.fn().mockResolvedValue(true),
+      getStatus: jest.fn().mockResolvedValue({ bots: [] }),
+      getConfig: jest.fn().mockReturnValue({}),
+      getSchema: jest.fn().mockReturnValue({}),
+    } as unknown as IMessageProvider);
   });
 
   describe('GET /personas', () => {

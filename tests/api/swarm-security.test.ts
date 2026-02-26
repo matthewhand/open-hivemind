@@ -5,6 +5,8 @@ import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
 import { AuthManager } from '../../src/auth/AuthManager';
 import { authenticateToken } from '../../src/server/middleware/auth';
+import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
 
 // Mock AuthManager
 jest.mock('../../src/auth/AuthManager');
@@ -13,11 +15,12 @@ jest.mock('../../src/auth/AuthManager');
 jest.mock('../../src/integrations/openswarm/SwarmInstaller', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
-      checkPython: jest.fn().mockResolvedValue(true),
-      checkSwarmInstalled: jest.fn().mockResolvedValue(true),
-      getSwarmWebUIUrl: jest.fn().mockReturnValue('http://localhost:8000'),
-      installSwarm: jest.fn().mockResolvedValue({ success: true, message: 'Installed' }),
-      startSwarm: jest.fn().mockResolvedValue({ success: true, message: 'Started' }),
+      id: 'openswarm',
+      checkPrerequisites: jest.fn().mockResolvedValue(true),
+      checkInstalled: jest.fn().mockResolvedValue(true),
+      getWebUIUrl: jest.fn().mockReturnValue('http://localhost:8000'),
+      install: jest.fn().mockResolvedValue({ success: true, message: 'Installed' }),
+      start: jest.fn().mockResolvedValue({ success: true, message: 'Started' }),
     })),
   };
 });
@@ -36,6 +39,9 @@ describe('Swarm API Security', () => {
         verifyAccessToken: jest.fn(),
       };
       (AuthManager.getInstance as jest.Mock).mockReturnValue(mockAuthManager);
+
+      // Register the mock installer
+      providerRegistry.registerInstaller(new SwarmInstaller());
 
       app = express();
       app.use(express.json());

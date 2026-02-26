@@ -110,18 +110,18 @@ const loadDynamicConfigs = () => {
 
 // Initialize configuration from registry
 export const reloadGlobalConfigs = () => {
-    const providers = providerRegistry.getAll();
-    providers.forEach(p => {
-        schemaSources[p.id] = p.getConfig();
-    });
+  const providers = providerRegistry.getAll();
+  providers.forEach(p => {
+    schemaSources[p.id] = p.getConfig();
+  });
 
-    // Reset globalConfigs with updated schemas
-    globalConfigs = { ...schemaSources };
+  // Reset globalConfigs with updated schemas
+  globalConfigs = { ...schemaSources };
 
-    // Load dynamic configs
-    loadDynamicConfigs();
+  // Load dynamic configs
+  loadDynamicConfigs();
 
-    debug('Global configs reloaded with providers:', providers.map(p => p.id));
+  debug('Global configs reloaded with providers:', providers.map(p => p.id));
 };
 
 // Apply audit middleware to all config routes (except in test)
@@ -160,8 +160,8 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
     // Check if key corresponds to a provider (e.g. "slack": {...})
     const provider = providerRegistry.get(key);
     if (provider && value && typeof value === 'object' && !Array.isArray(value)) {
-        result[key] = redactProviderConfig(value as Record<string, unknown>, provider);
-        continue;
+      result[key] = redactProviderConfig(value as Record<string, unknown>, provider);
+      continue;
     }
 
     if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -180,30 +180,30 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
 }
 
 function redactProviderConfig(config: Record<string, unknown>, provider: IProvider): Record<string, unknown> {
-   const sensitiveKeys = new Set(provider.getSensitiveKeys());
-   const result: Record<string, unknown> = {};
-   for (const [key, value] of Object.entries(config)) {
-       if (sensitiveKeys.has(key) && value) {
-           result[key] = {
-            isRedacted: true,
-            redactedValue: redactValue(value),
-            hasValue: true,
-           };
-       } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-           // Recurse? Provider config might be nested?
-           // Usually flat or simple nesting.
-           // Convict schemas are flat-ish but can be nested.
-           // Does getSensitiveKeys return dotted paths?
-           // Provider implementation returns e.g. ['SLACK_BOT_TOKEN'].
-           // These are usually environment variable names or config keys.
-           // In convict, properties can be nested.
-           // If key matches sensitive key, redact.
-           result[key] = value;
-       } else {
-           result[key] = value;
-       }
-   }
-   return result;
+  const sensitiveKeys = new Set(provider.getSensitiveKeys());
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(config)) {
+    if (sensitiveKeys.has(key) && value) {
+      result[key] = {
+        isRedacted: true,
+        redactedValue: redactValue(value),
+        hasValue: true,
+      };
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // Recurse? Provider config might be nested?
+      // Usually flat or simple nesting.
+      // Convict schemas are flat-ish but can be nested.
+      // Does getSensitiveKeys return dotted paths?
+      // Provider implementation returns e.g. ['SLACK_BOT_TOKEN'].
+      // These are usually environment variable names or config keys.
+      // In convict, properties can be nested.
+      // If key matches sensitive key, redact.
+      result[key] = value;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 // GET /api/config/bots - List all configured bots with redacted secrets
@@ -252,6 +252,122 @@ router.get('/bots', async (req, res) => {
   }
 });
 
+// GET /api/config/sources - List all configuration sources
+router.get('/sources', async (req, res) => {
+  try {
+    const envVars = Object.keys(process.env)
+      .filter((key) =>
+        key.startsWith('BOTS_') ||
+        key.includes('DISCORD_') ||
+        key.includes('SLACK_') ||
+        key.includes('OPENAI_') ||
+        key.includes('FLOWISE_') ||
+        key.includes('OPENWEBUI_') ||
+        key.includes('MATTERMOST_') ||
+        key.includes('MESSAGE_') ||
+        key.includes('WEBHOOK_')
+      )
+      .reduce((acc, key) => {
+        acc[key] = {
+          source: 'environment',
+          value: redactSensitiveInfo(key, process.env[key] || ''),
+          sensitive:
+            key.toLowerCase().includes('token') ||
+            key.toLowerCase().includes('key') ||
+            key.toLowerCase().includes('secret'),
+        };
+        return acc;
+      }, {} as Record<string, any>);
+
+    // Detect config files
+    const configDir = path.join(process.cwd(), 'config');
+    const configFiles: any[] = [];
+
+    if (fs.existsSync(configDir)) {
+      const files = await fs.promises.readdir(configDir);
+      for (const file of files) {
+        if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
+          const filePath = path.join(configDir, file);
+          const stats = await fs.promises.stat(filePath);
+          configFiles.push({
+            name: file,
+            path: filePath,
+            size: stats.size,
+            modified: stats.mtime,
+            type: path.extname(file).slice(1),
+          });
+        }
+      }
+    }
+
+    return res.json({
+      envVars,
+      configFiles,
+      count: configFiles.length,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_SOURCES_ERROR',
+    });
+  }
+});
+
+// GET /api/config/llm-profiles - List all LLM profiles
+router.get('/llm-profiles', (req, res) => {
+  try {
+    const profiles = getLlmProfiles();
+    return res.json(profiles);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILES_GET_ERROR',
+    });
+  }
+});
+
+// PUT /api/config/llm-profiles/:key - Update an LLM profile
+router.put('/llm-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const updates = req.body;
+
+    // Validation
+    if (!updates.name || updates.name.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile name is required' });
+    }
+    if (!updates.provider || updates.provider.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile provider is required' });
+    }
+
+    const profiles = getLlmProfiles();
+    const normalizedKey = key.toLowerCase();
+    const index = profiles.llm.findIndex((p) => p.key.toLowerCase() === normalizedKey);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
+    }
+
+    const updatedProfile = { ...profiles.llm[index], ...updates };
+    profiles.llm[index] = updatedProfile;
+
+    saveLlmProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: updatedProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_UPDATE_ERROR',
+    });
+  }
+});
+
 // ... (Rest of the file mostly same, except global config redaction)
 
 // GET /api/config/global - Get all global configurations (schema + values)
@@ -285,31 +401,31 @@ router.get('/global', (req, res) => {
       const provider = providerRegistry.get(key); // key is config name, e.g. 'slack'
 
       if (provider) {
-          const sensitive = new Set(provider.getSensitiveKeys());
-          // Simple redaction for provider props
-          // Convict properties might be nested, but sensitive keys from provider are likely top-level env vars mapped to keys?
-          // SlackProvider.getSensitiveKeys() returns ['SLACK_BOT_TOKEN'].
-          // In convict: SLACK_BOT_TOKEN: { ... }
-          // So keys match.
-          for (const k in redactedProps) {
-              if (sensitive.has(k)) {
-                  redactedProps[k] = '********';
-              }
+        const sensitive = new Set(provider.getSensitiveKeys());
+        // Simple redaction for provider props
+        // Convict properties might be nested, but sensitive keys from provider are likely top-level env vars mapped to keys?
+        // SlackProvider.getSensitiveKeys() returns ['SLACK_BOT_TOKEN'].
+        // In convict: SLACK_BOT_TOKEN: { ... }
+        // So keys match.
+        for (const k in redactedProps) {
+          if (sensitive.has(k)) {
+            redactedProps[k] = '********';
           }
+        }
       } else {
-          // Fallback generic redaction
-          const redactObjectFallback = (obj: any) => {
-            for (const k in obj) {
-              if (typeof obj[k] === 'object' && obj[k] !== null) {
-                redactObjectFallback(obj[k]);
-              } else if (typeof k === 'string') {
-                if (isSensitiveKey(k)) {
-                  obj[k] = '********';
-                }
+        // Fallback generic redaction
+        const redactObjectFallback = (obj: any) => {
+          for (const k in obj) {
+            if (typeof obj[k] === 'object' && obj[k] !== null) {
+              redactObjectFallback(obj[k]);
+            } else if (typeof k === 'string') {
+              if (isSensitiveKey(k)) {
+                obj[k] = '********';
               }
             }
-          };
-          redactObjectFallback(redactedProps);
+          }
+        };
+        redactObjectFallback(redactedProps);
       }
 
       response[key] = {
@@ -400,11 +516,11 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Check if configName matches a known schema source (provider id or core)
     if (schemaSources[configName] && !createdNew) {
-        // Use convention: providers/{configName}.json
-        targetFile = `providers/${configName}.json`;
+      // Use convention: providers/{configName}.json
+      targetFile = `providers/${configName}.json`;
     } else {
-        // Dynamic named config
-        targetFile = `providers/${configName}.json`;
+      // Dynamic named config
+      targetFile = `providers/${configName}.json`;
     }
 
     const targetPath = path.join(configDir, targetFile);

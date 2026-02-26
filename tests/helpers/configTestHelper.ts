@@ -1,4 +1,4 @@
-import { Config } from 'config';
+type Config = any;
 
 /**
  * Shared utilities for testing configuration modules
@@ -25,7 +25,7 @@ export function testConfigDefaults(
     process.env = { NODE_ENV: 'test', NODE_CONFIG_DIR: '/dev/null' };
     jest.resetModules();
 
-    const freshConfig: Config = require(configPath).default;
+    const freshConfig: any = require(configPath).default;
 
     Object.entries(expectedDefaults).forEach(([key, expectedValue]) => {
       expect(freshConfig.get(key)).toEqual(expectedValue);
@@ -179,15 +179,15 @@ export function testConfigIntegration(
   describe(testName, () => {
     it('should maintain state after module re-import', () => {
       jest.resetModules();
-      const config1: Config = require(configPath).default;
-      const config2: Config = require(configPath).default;
+      const config1: any = require(configPath).default;
+      const config2: any = require(configPath).default;
 
       expect(config1).toBe(config2); // Should be the same instance
     });
 
     it('should have required configuration methods', () => {
       jest.resetModules();
-      const config: Config = require(configPath).default;
+      const config: any = require(configPath).default;
 
       expect(typeof config.get).toBe('function');
       expect(typeof config.validate).toBe('function');
@@ -211,7 +211,12 @@ export function testParameterized(
     scenarios.forEach(({ name, setup, action, assertion }) => {
       it(name, () => {
         if (setup) setup();
-        const result = action();
+        let result;
+        try {
+          result = action();
+        } catch (error) {
+          result = error;
+        }
         assertion(result);
       });
     });

@@ -1,10 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const getEnv = (key: string): string | undefined => {
+  // Use a dynamic check to avoid Babel syntax errors with import.meta in CommonJS/Node
+  try {
+    // This string-based approach prevents static analysis/Babel from failing
+    const env = (new Function('return import.meta.env'))();
+    return env[key];
+  } catch (e) {
+    // Fallback to process.env for Node/Jest
+    return (process.env as any)[key];
+  }
+};
+
+const rawBaseUrl = getEnv('VITE_API_BASE_URL');
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
 const buildUrl = (endpoint: string): string => {
   // In development, if no API_BASE_URL is set, use relative URLs for local backend
-  if (!API_BASE_URL && import.meta.env.DEV) {
+  const isDev = getEnv('DEV') === 'true' || getEnv('NODE_ENV') === 'development';
+  if (!API_BASE_URL && isDev) {
     return endpoint;
   }
 

@@ -7,7 +7,6 @@ import botsRouter from '../../src/server/routes/bots';
 jest.mock('../../src/managers/BotManager', () => {
   const mockInstance = {
     getAllBots: jest.fn(),
-    getBotsStatus: jest.fn(() => Promise.resolve([])), // Added mock
     getBot: jest.fn(),
     createBot: jest.fn(),
     cloneBot: jest.fn(),
@@ -35,7 +34,6 @@ jest.mock('../../src/common/auditLogger', () => ({
 }));
 
 // Mock WebSocketService
-<<<<<<< HEAD
 jest.mock('../../src/server/services/WebSocketService', () => ({
   WebSocketService: {
     getInstance: jest.fn(() => ({
@@ -79,7 +77,6 @@ describe('Bots Routes', () => {
     it('should return all bots', async () => {
       const bots = [{ id: 'bot1', name: 'Bot 1', isActive: true, messageProvider: 'discord', llmProvider: 'openai' }];
       getMockManager().getAllBots.mockResolvedValue(bots);
-<<<<<<< HEAD
       // Ensure getBotsStatus returns an empty array to match bots count
       getMockManager().getBotsStatus.mockResolvedValue([{ id: 'bot1', isRunning: false }]);
 

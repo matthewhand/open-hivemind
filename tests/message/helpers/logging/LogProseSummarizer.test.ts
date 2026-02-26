@@ -108,4 +108,18 @@ describe('summarizeLogWithLlm', () => {
 
     expect(result).toBe(input);
   });
+
+  it('returns original prose when OpenAI returns empty choices array', async () => {
+    process.env.LOG_SUMMARY_LLM = 'gpt-3.5-turbo';
+    process.env.OPENAI_API_KEY = 'test-key';
+
+    mockCreate.mockResolvedValue({
+      choices: [],
+    });
+
+    const input = 'Bot received a message from user123';
+    const result = await summarizeLogWithLlm(input);
+
+    expect(result).toBe(input);
+  });
 });

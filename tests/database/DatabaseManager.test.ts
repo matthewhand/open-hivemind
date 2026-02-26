@@ -267,6 +267,28 @@ describe('DatabaseManager', () => {
       );
     });
 
+    it('should throw RangeError for negative or NaN metrics', async () => {
+      const invalidMetrics = {
+        botName: 'TestBot',
+        messagesSent: -10, // Invalid
+        messagesReceived: 20,
+        conversationsHandled: 5,
+        averageResponseTime: 150,
+        lastActivity: new Date(),
+        provider: 'discord',
+      };
+
+      await expect(dbManager.updateBotMetrics(invalidMetrics)).rejects.toThrow(RangeError);
+
+      const nanMetrics = {
+        ...invalidMetrics,
+        messagesSent: 10,
+        averageResponseTime: NaN, // Invalid
+      };
+
+      await expect(dbManager.updateBotMetrics(nanMetrics)).rejects.toThrow(RangeError);
+    });
+
     it('should get bot metrics', async () => {
       mockAll.mockResolvedValueOnce([
         {
@@ -317,6 +339,15 @@ describe('DatabaseManager', () => {
       await expect(dbManager.storeAIFeedback(feedback)).rejects.toThrow(
         'Failed to store AI feedback'
       );
+    });
+
+    it('should clear AI feedback', async () => {
+      mockRun.mockResolvedValueOnce({ changes: 5 });
+
+      const deletedCount = await dbManager.clearAIFeedback();
+
+      expect(deletedCount).toBe(5);
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM ai_feedback');
     });
   });
 });

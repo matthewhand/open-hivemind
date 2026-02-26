@@ -106,8 +106,8 @@ describe('BotManager', () => {
     // Mock fs
     (fs.existsSync as jest.Mock).mockReturnValue(false);
     (fs.readFileSync as jest.Mock).mockReturnValue('{}');
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+    (fs.writeFileSync as jest.Mock).mockImplementation(() => { });
+    (fs.mkdirSync as jest.Mock).mockImplementation(() => { });
 
     // Reset singleton instance
     (BotManager as any).instance = undefined;
@@ -213,6 +213,15 @@ describe('BotManager', () => {
 
     it('should throw error if name is missing', async () => {
       await expect(botManager.createBot({ ...createRequest, name: '' })).rejects.toThrow('Bot name is required');
+    });
+  });
+
+  describe('updateBot', () => {
+    it('should throw error if bot is not found', async () => {
+      mockBotConfigManager.getAllBots.mockReturnValue([]);
+      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
+
+      await expect(botManager.updateBot('non-existent', { name: 'UpdatedName' })).rejects.toThrow(/not found/i);
     });
   });
 
