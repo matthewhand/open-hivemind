@@ -92,10 +92,13 @@ test.describe('Bot Templates Page Screenshots', () => {
     await expect(page.getByText('Bot Templates')).toBeVisible();
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
+    // Wait for SearchFilterBar to appear
+    await expect(page.getByPlaceholder('Search templates...')).toBeVisible();
+
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
 
-    // Take screenshot of the full list
+    // Take screenshot of the full list (Clean State)
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
     // Test Interaction: Filter by Platform 'Discord'
@@ -108,5 +111,19 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+
+    // Reset Filters (select 'All')
+    await platformSelect.selectOption('All');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
+
+    // Test Interaction: Text Search
+    const searchInput = page.getByPlaceholder('Search templates...');
+    await searchInput.fill('Fun');
+    await page.waitForTimeout(300);
+
+    // Verify search filtering
+    await expect(page.getByText('Fun Chatbot')).toBeVisible();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
   });
 });
