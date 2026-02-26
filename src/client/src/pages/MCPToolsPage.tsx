@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
+  CodeBracketIcon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -121,11 +123,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isJsonMode, setIsJsonMode] = useState(false);
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setIsJsonMode(false);
   };
 
   const handleCloseRunModal = () => {
@@ -197,6 +201,89 @@ const MCPToolsPage: React.FC = () => {
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to update tool status' });
     }
+  };
+
+  // Helper to parse current args for form
+  const currentArgsObj = useMemo(() => {
+    try {
+      return JSON.parse(runArgs);
+    } catch (e) {
+      return {};
+    }
+  }, [runArgs]);
+
+  const renderSchemaForm = () => {
+    if (!selectedTool?.inputSchema?.properties) {
+      return (
+        <div className="alert alert-info text-sm">
+          No schema properties defined. You can provide raw JSON arguments if needed.
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-base-200 p-4 rounded-lg space-y-4 max-h-[60vh] overflow-y-auto">
+        {Object.entries(selectedTool.inputSchema.properties).map(([key, schema]: [string, any]) => {
+          const isRequired = selectedTool.inputSchema.required?.includes(key);
+          const value = currentArgsObj[key];
+
+          const handleChange = (newValue: any) => {
+            const newArgs = { ...currentArgsObj, [key]: newValue };
+
+            // If value is empty string and not required, remove key?
+            // For now, let's keep it simple and just update.
+
+            try {
+              setRunArgs(JSON.stringify(newArgs, null, 2));
+              setJsonError(null);
+            } catch (e) {
+              // Should not happen with simple objects
+            }
+          };
+
+          return (
+            <div key={key} className="form-control">
+              <label className="label py-1">
+                <span className="label-text font-medium flex items-center gap-2">
+                  {key}
+                  {isRequired && <span className="text-error" title="Required">*</span>}
+                  {schema.type && <span className="badge badge-sm badge-ghost text-xs font-normal">{schema.type}</span>}
+                </span>
+              </label>
+
+              {schema.description && (
+                <p className="text-xs text-base-content/60 mb-2">{schema.description}</p>
+              )}
+
+              {schema.type === 'boolean' ? (
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={!!value}
+                  onChange={(e) => handleChange(e.target.checked)}
+                />
+              ) : schema.type === 'integer' || schema.type === 'number' ? (
+                <input
+                  type="number"
+                  className="input input-sm input-bordered w-full"
+                  value={value !== undefined ? value : ''}
+                  onChange={(e) => handleChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                  placeholder={`Enter number for ${key}`}
+                />
+              ) : (
+                <input
+                  type="text"
+                  className="input input-sm input-bordered w-full"
+                  value={value !== undefined ? value : ''}
+                  onChange={(e) => handleChange(e.target.value)}
+                  placeholder={`Enter text for ${key}`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   if (loading) {
@@ -373,36 +460,67 @@ const MCPToolsPage: React.FC = () => {
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
+            {/* Mode Toggle */}
+            <div className="flex justify-end mb-2">
+              <div className="join">
+                <button
+                  className={`join-item btn btn-sm ${!isJsonMode ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setIsJsonMode(false)}
+                >
+                  <ListBulletIcon className="w-4 h-4 mr-1" />
+                  Form
+                </button>
+                <button
+                  className={`join-item btn btn-sm ${isJsonMode ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setIsJsonMode(true)}
+                >
+                  <CodeBracketIcon className="w-4 h-4 mr-1" />
+                  JSON
+                </button>
               </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
+            {isJsonMode ? (
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
+                  <span className="label-text font-medium">Arguments (JSON)</span>
                 </label>
-              )}
+                <textarea
+                  className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                  value={runArgs}
+                  onChange={(e) => {
+                    setRunArgs(e.target.value);
+                    if (jsonError) setJsonError(null);
+                  }}
+                  placeholder="{}"
+                  disabled={isRunning}
+                />
+                {jsonError && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{jsonError}</span>
+                  </label>
+                )}
+              </div>
+            ) : (
+              renderSchemaForm()
+            )}
+
+            {/* Show raw schema only in JSON mode or if toggled? Let's hide it to clean up UI,
+                or show it in a collapsed state. The original had it always visible.
+                Let's keep it but inside a collapse or just smaller.
+                Actually, let's put it in a 'Details' collapse. */}
+             <div className="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box mt-2">
+              <input type="checkbox" />
+              <div className="collapse-title text-sm font-medium">
+                View Input Schema
+              </div>
+              <div className="collapse-content">
+                <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                  <pre className="p-4 overflow-x-auto">
+                    <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                  </pre>
+                </div>
+              </div>
             </div>
           </div>
         </Modal>
