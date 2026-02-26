@@ -407,11 +407,11 @@ export class BotManager extends EventEmitter {
   /**
    * Delete a bot instance
    */
-  public async deleteBot(botId: string): Promise<boolean> {
+  public async deleteBot(botId: string): Promise<void> {
     try {
       const bot = await this.getBot(botId);
       if (!bot) {
-        return false;
+        throw new Error(`Bot not found: ${botId}`);
       }
 
       // Check if it's a custom bot
@@ -439,8 +439,6 @@ export class BotManager extends EventEmitter {
 
       // Emit event for real-time updates
       this.emit('botDeleted', bot);
-
-      return true;
     } catch (error: unknown) {
       debug('Error deleting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
