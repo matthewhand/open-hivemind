@@ -22,6 +22,26 @@ The Live Chat Monitor allows administrators to observe conversations across all 
 3.  The main view will load the recent message history for that bot.
 4.  Click the **Refresh** icon in the header to update the view with new messages.
 
+## Personas (Beta)
+
+The Personas page allows administrators to define and manage AI personalities and system prompts that can be assigned to bots. This centralizes the behavior definition, making it easy to reuse prompts across multiple bots.
+
+![Personas Management](screenshots/personas-page.png)
+
+### Features
+
+-   **Persona Management**: Create, edit, clone, and delete custom personas.
+-   **Built-in Personas**: View system-provided personas (read-only).
+-   **Assignment Tracking**: See which bots are currently using each persona.
+-   **Persona Playground**: Test a persona's behavior directly in the browser before assigning it to a bot.
+
+### How to Use
+
+1.  Navigate to **Configuration** > **Personas** in the admin sidebar.
+2.  **Create**: Click "Create Persona" to define a new personality.
+3.  **Assign**: During creation or editing, select bots to assign the persona to.
+4.  **Test**: Click the **Test** button on any persona card to open a chat window and interact with the persona using your default AI provider.
+
 ## System Configuration
 
 The System Configuration page allows administrators to manage global settings for the Open Hivemind instance, including instance details, localization, logging, and system limits.

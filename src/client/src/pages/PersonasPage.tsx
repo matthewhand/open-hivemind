@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye, Play, MessageSquare } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -15,6 +15,7 @@ import {
   EmptyState,
   ToastNotification,
 } from '../components/DaisyUI';
+import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
@@ -53,10 +54,17 @@ const PersonasPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
+
+  // Test Modal State
+  const [testPersona, setTestPersona] = useState<Persona | null>(null);
+  const [testMessages, setTestMessages] = useState<ChatMessage[]>([]);
+  const [testLoading, setTestLoading] = useState(false);
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -250,6 +258,57 @@ const PersonasPage: React.FC = () => {
     setEditingPersona(persona);
     setIsViewMode(true);
     setShowEditModal(true);
+  };
+
+  const openTestModal = (persona: Persona) => {
+    setTestPersona(persona);
+    setTestMessages([
+      {
+        id: 'system-welcome',
+        content: `Testing Persona: ${persona.name}. Type a message to start.`,
+        timestamp: new Date().toISOString(),
+        sender: { id: 'system', name: 'System', type: 'system' }
+      }
+    ]);
+    setShowTestModal(true);
+  };
+
+  const handleTestMessage = async (content: string) => {
+    if (!testPersona) return;
+
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      content,
+      timestamp: new Date().toISOString(),
+      sender: { id: 'user', name: 'You', type: 'user' }
+    };
+
+    setTestMessages(prev => [...prev, userMsg]);
+    setTestLoading(true);
+
+    try {
+      const response = await apiService.chatWithPersona(testPersona.id, content);
+
+      const botMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: response.reply,
+        timestamp: new Date().toISOString(),
+        sender: { id: 'bot', name: testPersona.name, type: 'bot' }
+      };
+
+      setTestMessages(prev => [...prev, botMsg]);
+    } catch (err: any) {
+      const errorMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: `Error: ${err.message || 'Failed to get response'}`,
+        timestamp: new Date().toISOString(),
+        sender: { id: 'system', name: 'System', type: 'system' },
+        metadata: { status: 'failed' }
+      };
+      setTestMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setTestLoading(false);
+    }
   };
 
   const handleDeletePersona = (personaId: string) => {
@@ -446,7 +505,10 @@ const PersonasPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+              <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2 flex-wrap">
+                 <Button variant="ghost" size="sm" onClick={() => openTestModal(persona)} title="Test Persona" className="text-primary hover:bg-primary/10">
+                  <Play className="w-4 h-4 mr-1" /> Test
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => openViewModal(persona)} title="View Details">
                   <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
@@ -473,6 +535,30 @@ const PersonasPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Test Persona Modal */}
+      <Modal
+        isOpen={showTestModal}
+        onClose={() => setShowTestModal(false)}
+        title={`Testing Persona: ${testPersona?.name || 'Unknown'}`}
+        size="lg"
+      >
+        <div className="h-[500px] flex flex-col border border-base-300 rounded-lg overflow-hidden">
+          <ChatInterface
+            messages={testMessages}
+            onSendMessage={handleTestMessage}
+            isLoading={testLoading}
+            showHeader={false}
+            placeholder="Type a message to test this persona..."
+            className="h-full"
+            maxHeight="100%"
+          />
+        </div>
+        <div className="text-xs text-base-content/50 mt-2 flex items-center gap-2">
+          <Info className="w-3 h-3" />
+          <span>Using system prompt from "{testPersona?.name}". Responses are generated using your default AI Assistance provider.</span>
+        </div>
+      </Modal>
 
       {/* Create/Edit Modal */}
       <Modal

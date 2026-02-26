@@ -32,6 +32,7 @@ interface ChatInterfaceProps {
   showTypingIndicator?: boolean;
   typingUsers?: string[];
   maxHeight?: string;
+  showHeader?: boolean;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -45,6 +46,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   showTypingIndicator = false,
   typingUsers = [],
   maxHeight = '600px',
+  showHeader = true,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -197,36 +199,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className={`flex flex-col bg-base-100 ${className}`} style={{ height: maxHeight }}>
       {/* Chat Header */}
-      <div className="flex items-center justify-between p-4 border-b border-base-200">
-        <div className="flex items-center gap-3">
-          <div className="avatar">
-            <div className="w-8 rounded-full bg-primary">
-              <span className="text-primary-content text-sm">🤖</span>
+      {showHeader && (
+        <div className="flex items-center justify-between p-4 border-b border-base-200">
+          <div className="flex items-center gap-3">
+            <div className="avatar">
+              <div className="w-8 rounded-full bg-primary">
+                <span className="text-primary-content text-sm">🤖</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold">Bot Chat</h3>
+              <p className="text-xs text-base-content/60">
+                {messages.length} messages
+              </p>
             </div>
           </div>
-          <div>
-            <h3 className="font-semibold">Bot Chat</h3>
-            <p className="text-xs text-base-content/60">
-              {messages.length} messages
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-              </svg>
+          <div className="flex items-center gap-2">
+            <div className="dropdown dropdown-end">
+              <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                </svg>
+              </div>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a>🗑️ Clear Chat</a></li>
+                <li><a>📋 Export Chat</a></li>
+                <li><a>⚙️ Settings</a></li>
+              </ul>
             </div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a>🗑️ Clear Chat</a></li>
-              <li><a>📋 Export Chat</a></li>
-              <li><a>⚙️ Settings</a></li>
-            </ul>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-1">

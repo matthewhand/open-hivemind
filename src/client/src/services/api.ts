@@ -527,6 +527,13 @@ class ApiService {
     });
   }
 
+  async chatWithPersona(id: string, message: string): Promise<{ reply: string }> {
+    return this.request<{ reply: string }>(`/api/personas/${id}/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
   async clonePersona(id: string, overrides?: Partial<Persona>): Promise<Persona> {
     return this.request<Persona>(`/api/personas/${id}/clone`, {
       method: 'POST',
