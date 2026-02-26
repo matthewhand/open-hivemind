@@ -81,7 +81,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     });
   });
 
-  test('capture Bot Templates page screenshots', async ({ page }) => {
+  test('capture Bot Templates page screenshots and verify filters', async ({ page }) => {
     // Set viewport
     await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -95,8 +95,20 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
 
-    // Take screenshot of the full list
+    // Take screenshot of the full list (now includes SearchFilterBar)
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
+
+    // Test Search Functionality
+    const searchInput = page.getByPlaceholder('Search templates...');
+    await searchInput.fill('Fun');
+
+    // Verify search results
+    await expect(page.getByText('Fun Chatbot')).toBeVisible();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
+
+    // Clear search
+    await page.getByLabel('Clear search').click();
+    await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
     // Test Interaction: Filter by Platform 'Discord'
     const platformSelect = page.locator('select').nth(0); // First select is Platform
