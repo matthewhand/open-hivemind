@@ -108,9 +108,12 @@ Monitor real-time interactions and events across your bot ecosystem.
 
 ### [Settings](/admin/settings)
 General system configuration.
-*   **Rate Limits**: Adjust global message rate limits to prevent spam.
-*   **Logging**: Configure log levels and retention policies.
-*   **Updates**: Check for system updates.
+![General Settings](docs/screenshots/settings-general.png)
+
+*   **Instance Information**: Configure instance name and description.
+*   **Localization & Appearance**: Set the system **Timezone** and Theme.
+*   **Logging & Notifications**: Configure log levels and enable system logging.
+*   **System Limits**: Adjust concurrent bots, timeouts, and health check intervals.
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
