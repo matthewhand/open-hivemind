@@ -108,5 +108,20 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+
+    // Reset filters (clear search/filters)
+    await platformSelect.selectOption('All');
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
+
+    // Test Interaction: Search Text
+    const searchInput = page.getByPlaceholder('Search templates...');
+    await searchInput.fill('Reviewer');
+
+    // Wait for filter to apply
+    await page.waitForTimeout(300);
+
+    // Verify filtering
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
   });
 });
