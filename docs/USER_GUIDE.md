@@ -22,26 +22,23 @@ The Live Chat Monitor allows administrators to observe conversations across all 
 3.  The main view will load the recent message history for that bot.
 4.  Click the **Refresh** icon in the header to update the view with new messages.
 
-## System Configuration
+## MCP Servers & Tool Testing
 
-The System Settings page provides centralized control over the Open Hivemind instance, allowing you to configure global preferences, localization, and system limits.
+Model Context Protocol (MCP) servers extend the capabilities of your bots by providing external tools and resources. The MCP Servers page allows you to manage these connections and interactively test tools.
 
-![General Settings](screenshots/settings-general.png)
+![MCP Tool Tester](screenshots/mcp-tool-tester.png)
 
 ### Features
 
--   **Instance Information**: Set the display name and description for your instance.
--   **Localization**: Configure the default timezone and interface theme (Light/Dark/Auto).
--   **Logging & Notifications**: Toggle system-wide logging, set log levels, and enable/disable notifications.
--   **System Limits**:
-    -   **Max Concurrent Bots**: Limit the number of active bots to manage resource usage.
-    -   **Response Timeout**: Set the global timeout for bot responses.
-    -   **Health Checks**: Enable or disable automated health monitoring and configure the check interval.
--   **Advanced Mode**: Unlock experimental features and granular configuration options.
+-   **Server Management**: Add, edit, and remove MCP server connections.
+-   **Connection Status**: Monitor the real-time status (Running/Stopped/Error) of each server.
+-   **Tool Explorer**: View the list of tools provided by each server, including their input schemas.
+-   **Interactive Tool Tester**: Manually execute tools directly from the admin interface to verify functionality and debug responses.
 
 ### How to Use
 
-1.  Navigate to **Settings** > **General** in the admin sidebar.
-2.  Adjust the settings as needed using the form controls.
-3.  Click **Save Settings** to apply changes.
-4.  Note: Some changes (like Logging Level) may take effect immediately, while others may require a server restart.
+1.  Navigate to **MCP** > **Servers** in the admin sidebar.
+2.  Click **Add Server** to connect a new MCP server, or use the action buttons on existing server cards.
+3.  Click the **View Tools** icon (screwdriver/wrench) on a running server card to see available tools.
+4.  In the tools modal, click **Test Tool** next to any tool.
+5.  Enter the required arguments in JSON format and click **Execute Tool** to see the result.

@@ -11,39 +11,34 @@ test.describe('MCP Servers Screenshots', () => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
     });
 
-    // Mock background polling endpoints to prevent errors/warnings
-    await page.route('/api/health/detailed', async (route) =>
+    // Mock background polling endpoints
+    await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('/api/config/llm-status', async (route) =>
+    await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
-    await page.route('/api/config/global', async (route) =>
+    await page.route('**/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: {} })
     );
-    await page.route('/api/config/llm-profiles', async (route) =>
+    await page.route('**/api/config/llm-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('/api/admin/guard-profiles', async (route) =>
+    await page.route('**/api/admin/guard-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('/api/demo/status', async (route) =>
+    await page.route('**/api/demo/status', async (route) =>
       route.fulfill({ status: 200, json: { enabled: false } })
     );
-    await page.route('/api/csrf-token', async (route) =>
+    await page.route('**/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
     // Mock MCP servers list
-    await page.route('/api/admin/mcp-servers', async (route) => {
+    await page.route('**/api/admin/mcp-servers', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -59,7 +54,7 @@ test.describe('MCP Servers Screenshots', () => {
                   {
                     name: 'read_file',
                     description: 'Reads a file from the filesystem.',
-                    inputSchema: { type: 'object', properties: { path: { type: 'string' } } },
+                    inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] },
                   },
                   {
                     name: 'write_file',
@@ -67,74 +62,77 @@ test.describe('MCP Servers Screenshots', () => {
                     inputSchema: {
                       type: 'object',
                       properties: { path: { type: 'string' }, content: { type: 'string' } },
+                      required: ['path', 'content'],
                     },
                   },
                 ],
                 lastConnected: new Date().toISOString(),
                 description: 'Allows access to the local filesystem for reading and writing files.',
               },
-              {
-                name: 'Search Server',
-                serverUrl: 'http://search-mcp:8080',
-                connected: true,
-                tools: [{ name: 'google_search', description: 'Search Google.' }],
-                lastConnected: new Date().toISOString(),
-                description: 'Provides search capabilities via Google Custom Search API.',
-              },
             ],
-            configurations: [
+            configurations: [],
+          },
+        }),
+      });
+    });
+
+    // Mock Tool Execution
+    await page.route('**/api/admin/mcp-servers/*/call-tool', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          result: {
+            content: [
               {
-                name: 'Database Server',
-                serverUrl: 'postgres://user:pass@localhost:5432/db',
-                apiKey: 'secret-key',
-                description: 'Connects to the production database for querying data.',
+                type: 'text',
+                text: 'This is the content of the file.\nIt was read successfully from the filesystem.',
               },
             ],
           },
-        }),
+        },
       });
     });
   });
 
   test('capture MCP servers page screenshots', async ({ page }) => {
     // Set viewport for consistent screenshots
-    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.setViewportSize({ width: 1280, height: 800 });
 
     // Navigate to MCP Servers page
     await page.goto('/admin/mcp/servers');
 
-    // Wait for the page to load and servers to be displayed
+    // Wait for page load
     await expect(page.locator('.card').first()).toBeVisible();
 
-    // Take screenshot of the list
+    // Screenshot 1: Servers List
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
-    // Click "View Tools" on the first server (Filesystem Server)
-    // Assuming the first card is the Filesystem Server which has tools
+    // Open Tools Modal
     await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
-
-    // Wait for modal to be visible and check for tool name
-    const toolsModal = page
-      .locator('.modal-box')
-      .filter({ hasText: 'Tools provided by Filesystem Server' });
+    const toolsModal = page.locator('.modal').filter({ hasText: 'Tools provided by Filesystem Server' });
     await expect(toolsModal).toBeVisible();
-    await expect(toolsModal.getByText('read_file')).toBeVisible();
 
-    // Take screenshot of the tools modal
+    // Screenshot 2: Tools Modal
+    // Capture just the modal if possible, or full page with modal open
+    // Using fullPage: false might capture viewport
+    // Let's capture the viewport with the modal open
     await page.screenshot({ path: 'docs/screenshots/mcp-tools-modal.png' });
 
-    // Close the modal to proceed with other screenshots if needed
-    await toolsModal.getByRole('button', { name: 'Close', exact: true }).click();
-    await expect(toolsModal).toBeHidden();
+    // Open Tool Tester
+    await toolsModal.getByRole('button', { name: 'Test Tool' }).first().click();
+    const testerModal = page.locator('.modal').filter({ hasText: 'Test Tool: read_file' });
+    await expect(testerModal).toBeVisible();
 
-    // Click "Add Server" button
-    await page.getByRole('button', { name: 'Add Server' }).first().click();
+    // Fill in arguments to make it look realistic
+    await testerModal.getByRole('textbox').fill('{\n  "path": "/etc/hosts"\n}');
 
-    // Wait for modal to be visible
-    const addModal = page.locator('.modal-box').filter({ hasText: 'Add MCP Server' });
-    await expect(addModal).toBeVisible();
+    // Execute Tool
+    await testerModal.getByRole('button', { name: 'Execute Tool' }).click();
 
-    // Take screenshot of the add modal
-    await page.screenshot({ path: 'docs/screenshots/mcp-add-server-modal.png' });
+    // Wait for result
+    await expect(testerModal.getByText('This is the content of the file')).toBeVisible();
+
+    // Screenshot 3: Tool Tester with Result
+    await page.screenshot({ path: 'docs/screenshots/mcp-tool-tester.png' });
   });
 });

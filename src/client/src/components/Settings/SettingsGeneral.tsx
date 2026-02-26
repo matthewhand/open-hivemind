@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Alert, Input, Select, Toggle, Button } from '../DaisyUI';
+import { Alert, Input, Select, Toggle, Button, Divider } from '../DaisyUI';
 import { Settings as SettingsIcon } from 'lucide-react';
 
 interface GeneralConfig {
@@ -114,16 +114,8 @@ const SettingsGeneral: React.FC = () => {
         body: JSON.stringify({
           'app.name': settings.instanceName,
           'app.description': settings.description,
-          'app.timezone': settings.timezone,
-          'app.language': settings.language,
-          'webui.theme': settings.theme,
-          'webui.notifications': settings.enableNotifications,
           'logging.level': settings.logLevel,
           'logging.enabled': settings.enableLogging,
-          'limits.maxBots': settings.maxConcurrentBots,
-          'limits.timeout': settings.defaultResponseTimeout,
-          'health.enabled': settings.enableHealthChecks,
-          'health.interval': settings.healthCheckInterval,
           'webui.advancedMode': settings.advancedMode,
         }),
       });
@@ -166,7 +158,7 @@ const SettingsGeneral: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Instance Information */}
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-4">
+        <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
@@ -199,7 +191,7 @@ const SettingsGeneral: React.FC = () => {
         </div>
 
         {/* Localization */}
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-4">
+        <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-secondary rounded-full"></span>
             Localization & Appearance
@@ -235,7 +227,7 @@ const SettingsGeneral: React.FC = () => {
         </div>
 
         {/* Logging */}
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-4">
+        <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-accent rounded-full"></span>
             Logging & Notifications
@@ -283,7 +275,7 @@ const SettingsGeneral: React.FC = () => {
         </div>
 
         {/* System Limits */}
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-4">
+        <div className="card bg-base-200/50 p-4 border border-base-300">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-warning rounded-full"></span>
             System Limits
@@ -301,9 +293,9 @@ const SettingsGeneral: React.FC = () => {
               max="100"
               value={settings.maxConcurrentBots}
               onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
-              className="range range-primary range-sm"
+              className="range range-primary range-md"
             />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>1</span>
               <span>50</span>
               <span>100</span>
@@ -314,7 +306,7 @@ const SettingsGeneral: React.FC = () => {
           <div className="form-control mb-6">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Response Timeout (seconds)</span>
-              <span className="badge badge-secondary font-mono">{settings.defaultResponseTimeout}s</span>
+              <span className="badge badge-ghost font-mono">{settings.defaultResponseTimeout}s</span>
             </label>
             <input
               type="range"
@@ -322,28 +314,16 @@ const SettingsGeneral: React.FC = () => {
               max="300"
               value={settings.defaultResponseTimeout}
               onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
-              className="range range-secondary range-sm"
+              className="range range-xs"
             />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>5s</span>
               <span>300s</span>
             </div>
           </div>
 
-          {/* Health Check Toggle */}
-          <div className="form-control mb-3">
-            <label className="label cursor-pointer py-1">
-              <span className="label-text text-sm">Enable Health Checks</span>
-              <Toggle
-                checked={settings.enableHealthChecks}
-                onChange={(e) => handleChange('enableHealthChecks', e.target.checked)}
-                size="sm"
-              />
-            </label>
-          </div>
-
           {/* Health Check Interval: Range with Steps & Color (Accent) */}
-          <div className={`form-control ${!settings.enableHealthChecks ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="form-control">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Health Check Interval</span>
               <span className="badge badge-accent font-mono">{settings.healthCheckInterval}s</span>
@@ -355,10 +335,9 @@ const SettingsGeneral: React.FC = () => {
               step="30"
               value={settings.healthCheckInterval}
               onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
-              className="range range-accent range-sm"
-              disabled={!settings.enableHealthChecks}
+              className="range range-accent"
             />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 font-mono">
               <span>0</span>
               <span>60</span>
               <span>120</span>
@@ -370,24 +349,26 @@ const SettingsGeneral: React.FC = () => {
         </div>
 
         {/* Advanced Settings */}
-        <div className="card bg-base-100 border border-base-300 shadow-sm p-4 lg:col-span-2">
+        <div className="card bg-base-200/50 p-4 border border-base-300">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <SettingsIcon className="w-4 h-4" />
             Advanced Settings
           </h6>
 
           <div className="form-control">
-            <label className="label cursor-pointer py-1 justify-start gap-4">
-              <span className="label-text text-sm font-medium w-48">Enable Advanced Mode</span>
+            <label className="label cursor-pointer py-1">
+              <span className="label-text text-sm">Enable Advanced Mode</span>
               <Toggle
                 checked={settings.advancedMode}
                 onChange={(e) => handleChange('advancedMode', e.target.checked)}
                 size="sm"
               />
-              <span className="label-text-alt text-base-content/50 flex-1">
+            </label>
+            <div className="label pt-0 pb-1">
+              <span className="label-text-alt text-base-content/50">
                 Unlocks experimental features and granular configuration options across the system.
               </span>
-            </label>
+            </div>
           </div>
         </div>
       </div>

@@ -10,8 +10,9 @@ import {
   ExclamationCircleIcon,
   ArrowPathIcon,
   WrenchScrewdriverIcon,
+  CodeBracketIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search } from 'lucide-react';
+import { Server, Search, Terminal } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -58,6 +59,13 @@ const MCPServersPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Tool Tester State
+  const [testerModalOpen, setTesterModalOpen] = useState(false);
+  const [testingTool, setTestingTool] = useState<Tool | null>(null);
+  const [toolArgs, setToolArgs] = useState('{}');
+  const [toolResult, setToolResult] = useState<any>(null);
+  const [isExecutingTool, setIsExecutingTool] = useState(false);
 
   // Search and Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -223,6 +231,57 @@ const MCPServersPage: React.FC = () => {
       setToolsModalOpen(true);
     } catch (err) {
       setAlert({ type: 'error', message: 'Failed to retrieve tools for this server.' });
+    }
+  };
+
+  const handleOpenToolTester = (tool: Tool) => {
+    setTestingTool(tool);
+    setToolArgs('{}'); // Default to empty object
+    setToolResult(null);
+    setTesterModalOpen(true);
+    // Keep parent modal open or close it? Let's keep parent open behind it or close parent?
+    // Usually cleaner to keep parent open if we want to go back, but stacked modals can be tricky.
+    // Let's close parent for simplicity and focus.
+    setToolsModalOpen(false);
+  };
+
+  const handleExecuteTool = async () => {
+    if (!testingTool || !viewingServerName) { return; }
+
+    try {
+      let args;
+      try {
+        args = JSON.parse(toolArgs);
+      } catch (e) {
+        setAlert({ type: 'error', message: 'Invalid JSON arguments' });
+        return;
+      }
+
+      setIsExecutingTool(true);
+      setToolResult(null);
+
+      const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(viewingServerName)}/call-tool`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          toolName: testingTool.name,
+          arguments: args,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to execute tool');
+      }
+
+      const data = await response.json();
+      setToolResult(data.result);
+      setAlert({ type: 'success', message: 'Tool executed successfully' });
+    } catch (err) {
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Execution failed' });
+      setToolResult({ error: err instanceof Error ? err.message : 'Unknown error' });
+    } finally {
+      setIsExecutingTool(false);
     }
   };
 
@@ -536,7 +595,7 @@ const MCPServersPage: React.FC = () => {
         </div>
       )}
 
-      {alert && !dialogOpen && (
+      {alert && !dialogOpen && !toolsModalOpen && !testerModalOpen && (
         <div className="mb-6">
           <Alert
             status={alert.type === 'success' ? 'success' : 'error'}
@@ -561,9 +620,18 @@ const MCPServersPage: React.FC = () => {
                 <div className="flex flex-col gap-4">
                     {viewingTools.map((tool, idx) => (
                         <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
-                                <h3 className="font-bold text-lg">{tool.name}</h3>
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
+                                    <h3 className="font-bold text-lg">{tool.name}</h3>
+                                </div>
+                                <button
+                                    className="btn btn-sm btn-outline btn-secondary"
+                                    onClick={() => handleOpenToolTester(tool)}
+                                >
+                                    <Terminal className="w-4 h-4 mr-1" />
+                                    Test Tool
+                                </button>
                             </div>
                             <p className="text-sm text-base-content/80 mb-2">{tool.description || 'No description provided.'}</p>
                             {tool.inputSchema && (
@@ -586,6 +654,79 @@ const MCPServersPage: React.FC = () => {
         </div>
         <div className="modal-action">
             <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
+        </div>
+      </Modal>
+
+      {/* Tool Tester Modal */}
+      <Modal
+        isOpen={testerModalOpen}
+        onClose={() => {
+            setTesterModalOpen(false);
+            setToolsModalOpen(true); // Re-open parent modal on close
+        }}
+        title={`Test Tool: ${testingTool?.name}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+            <div className="alert alert-info text-sm py-2">
+                <span className="font-bold">Info:</span> This executes the tool directly on the server. Use with caution.
+            </div>
+
+            <div className="form-control">
+                <label className="label">
+                    <span className="label-text font-bold flex items-center gap-2">
+                        <CodeBracketIcon className="w-4 h-4" /> Arguments (JSON)
+                    </span>
+                    <span className="label-text-alt text-xs opacity-60">
+                        Required by schema
+                    </span>
+                </label>
+                <textarea
+                    className="textarea textarea-bordered font-mono text-sm h-32"
+                    value={toolArgs}
+                    onChange={(e) => setToolArgs(e.target.value)}
+                    placeholder='{"arg1": "value"}'
+                ></textarea>
+                {testingTool?.inputSchema && (
+                     <div className="mt-2 text-xs opacity-70">
+                        <strong>Expected Schema:</strong> {JSON.stringify(testingTool.inputSchema.properties || {})}
+                     </div>
+                )}
+            </div>
+
+            <div className="divider">Result</div>
+
+            <div className="bg-base-300 rounded-lg p-4 min-h-[100px] max-h-[300px] overflow-auto font-mono text-sm relative">
+                {isExecutingTool ? (
+                    <div className="flex items-center justify-center h-full min-h-[60px]">
+                        <span className="loading loading-spinner loading-md"></span>
+                    </div>
+                ) : toolResult ? (
+                    <pre>{JSON.stringify(toolResult, null, 2)}</pre>
+                ) : (
+                    <span className="opacity-40 italic">Output will appear here...</span>
+                )}
+            </div>
+
+            <div className="modal-action">
+                 <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                        setTesterModalOpen(false);
+                        setToolsModalOpen(true);
+                    }}
+                >
+                    Back
+                </button>
+                <button
+                    className="btn btn-primary"
+                    onClick={handleExecuteTool}
+                    disabled={isExecutingTool}
+                >
+                    <PlayIcon className="w-4 h-4 mr-2" />
+                    Execute Tool
+                </button>
+            </div>
         </div>
       </Modal>
 

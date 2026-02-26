@@ -881,6 +881,36 @@ router.get('/mcp-servers/:name/tools', async (req: Request, res: Response) => {
   }
 });
 
+// Execute a tool on an MCP server
+router.post('/mcp-servers/:name/call-tool', configRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+    const { toolName, arguments: args } = req.body;
+
+    // Validation
+    if (!toolName) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Tool name is required',
+      });
+    }
+
+    const mcpService = MCPService.getInstance();
+    const result = await mcpService.executeTool(name, toolName, args || {});
+
+    return res.json({
+      success: true,
+      result,
+      message: 'Tool executed successfully',
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to execute tool',
+      message: error.message || 'An error occurred while executing the tool',
+    });
+  }
+});
+
 // Get environment variable overrides
 router.get('/env-overrides', (req: Request, res: Response) => {
   try {
