@@ -1,9 +1,0 @@
-
-> open-hivemind@1.0.0 dev:webui-only
-> SKIP_MESSENGERS=true npm run start:dev
-
-
-> open-hivemind@1.0.0 start:dev
-> NODE_ENV=development ts-node --project tsconfig.json -r tsconfig-paths/register src/index.ts
-
-sh: 1: ts-node: not found

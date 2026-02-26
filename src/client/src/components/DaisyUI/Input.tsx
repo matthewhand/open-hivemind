@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> & {
@@ -10,6 +10,9 @@ export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
   containerClassName?: string;
+  label?: React.ReactNode;
+  error?: React.ReactNode;
+  helperText?: React.ReactNode;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -25,10 +28,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       suffix,
       className,
       containerClassName,
+      label,
+      error,
+      helperText,
+      id: providedId,
       ...props
     },
     ref,
   ) => {
+    const uniqueId = useId();
+    const id = providedId || uniqueId;
+
     const variantClasses = {
       primary: 'input-primary',
       secondary: 'input-secondary',
@@ -46,18 +56,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       lg: 'input-lg',
     };
 
+    // If there's an error, force the error variant
+    const appliedVariant = error ? 'error' : variant;
+
     const inputClasses = twMerge(
       'input w-full',
       bordered && 'input-bordered',
       ghost && 'input-ghost',
-      variant && variantClasses[variant],
+      appliedVariant && variantClasses[appliedVariant],
       size && sizeClasses[size],
       className,
     );
 
     const containerClasses = twMerge('relative', containerClassName);
 
-    return (
+    const inputContent = (
       <div className={containerClasses}>
         {prefix && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -66,8 +79,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
+          id={id}
           disabled={disabled || loading}
           className={inputClasses}
+          aria-invalid={!!error}
+          aria-describedby={
+            error ? `${id}-error` : helperText ? `${id}-helper` : undefined
+          }
           {...props}
         />
         {suffix && (
@@ -82,6 +100,31 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
+
+    if (label || error || helperText) {
+      return (
+        <div className="form-control w-full">
+          {label && (
+            <label htmlFor={id} className="label">
+              <span className="label-text">{label}</span>
+            </label>
+          )}
+          {inputContent}
+          {error && (
+            <label className="label" id={`${id}-error`}>
+              <span className="label-text-alt text-error">{error}</span>
+            </label>
+          )}
+          {helperText && !error && (
+            <label className="label" id={`${id}-helper`}>
+              <span className="label-text-alt text-base-content/60">{helperText}</span>
+            </label>
+          )}
+        </div>
+      );
+    }
+
+    return inputContent;
   },
 );
 

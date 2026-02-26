@@ -115,7 +115,7 @@ test.describe('Bots Search and Filter', () => {
     await expect(page.locator('text=Creative Writer')).not.toBeVisible();
 
     await assertNoErrors(errors, 'Bot search by name');
-    await page.screenshot({ path: 'verification-bots-search.png' });
+    await page.screenshot({ path: 'docs/screenshots/verification-bots-search.png' });
   });
 
   test('can search bots by provider', async ({ page }) => {
