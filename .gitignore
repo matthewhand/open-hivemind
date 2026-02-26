@@ -203,3 +203,4 @@ k8s/
 archive/
 /api/
 .specify/
+.kilocode/
