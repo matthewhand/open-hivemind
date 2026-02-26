@@ -192,19 +192,27 @@ export class ShutdownCoordinator {
     // Ensure we exit within total timeout
     const forceExitTimer = setTimeout(() => {
       console.error('⚠️  Shutdown timed out, forcing exit');
-      process.exit(1);
+      this.exitProcess(1);
     }, this.totalTimeout);
 
     try {
       await this.executeShutdownSequence();
       console.log('✅ Graceful shutdown completed successfully');
       clearTimeout(forceExitTimer);
-      process.exit(exitCode);
+      this.exitProcess(exitCode);
     } catch (error) {
       console.error('❌ Error during shutdown:', error);
       clearTimeout(forceExitTimer);
-      process.exit(1);
+      this.exitProcess(1);
     }
+  }
+
+  /**
+   * Exit the process.
+   * Can be overridden for testing.
+   */
+  protected exitProcess(code: number): void {
+    process.exit(code);
   }
 
   /**
