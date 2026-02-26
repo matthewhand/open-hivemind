@@ -34,7 +34,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     });
 
 
-    // Mock Templates API (using the correct endpoint /api/bot-config/templates and object structure)
+    // Mock Templates API
     await page.route('/api/bot-config/templates', async (route) => {
       const templates = {
         discord_basic: {
@@ -83,13 +83,13 @@ test.describe('Bot Templates Page Screenshots', () => {
 
   test('capture Bot Templates page screenshots', async ({ page }) => {
     // Set viewport
-    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 1000 });
 
     // Navigate to Templates page
     await page.goto('/admin/bots/templates');
 
     // Wait for the page to load and content to be visible
-    await expect(page.getByText('Bot Templates')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Bot Templates' })).toBeVisible();
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
     // Wait a bit for images/badges to render
@@ -99,8 +99,10 @@ test.describe('Bot Templates Page Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
     // Test Interaction: Filter by Platform 'Discord'
-    const platformSelect = page.locator('select').nth(0); // First select is Platform
-    await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
+    // Look for the "Discord" pill button. It should be visible.
+    // Use getByRole for better accessibility testing
+    const discordFilter = page.getByRole('button', { name: 'Discord', exact: true });
+    await discordFilter.click();
 
     // Wait for filter to apply
     await page.waitForTimeout(300);
@@ -108,5 +110,24 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+
+    // Reset filters
+    await page.getByRole('button', { name: 'All Platforms' }).click();
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
+
+    // Test Interaction: Open Preview Modal
+    // Click 'Preview' button on 'Helpful Assistant' card
+    // Since there are multiple 'Preview' buttons, we target the one inside the Helpful Assistant card context,
+    // or just the first one since it's the first card.
+    await page.locator('.card', { hasText: 'Helpful Assistant' }).getByRole('button', { name: 'Preview' }).click();
+
+    // Wait for modal to appear
+    await expect(page.getByText('Template Preview: Helpful Assistant')).toBeVisible();
+
+    // Wait for animation
+    await page.waitForTimeout(500);
+
+    // Screenshot modal
+    await page.screenshot({ path: 'docs/screenshots/bot-template-preview.png' });
   });
 });
