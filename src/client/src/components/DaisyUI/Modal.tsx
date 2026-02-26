@@ -33,13 +33,6 @@ interface ConfirmModalProps extends Omit<BaseModalProps, 'children'> {
   loading?: boolean;
 }
 
-interface FormModalProps extends BaseModalProps {
-  onSubmit: (data: FormData) => void;
-  submitText?: string;
-  cancelText?: string;
-  loading?: boolean;
-}
-
 // Base Modal Component
 const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -205,59 +198,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       <div className="text-base-content">
         <p>{message}</p>
       </div>
-    </Modal>
-  );
-};
-
-// Form Modal
-export const FormModal: React.FC<FormModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  title,
-  children,
-  submitText = 'Submit',
-  cancelText = 'Cancel',
-  loading = false,
-  ...props
-}) => {
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formRef.current) {
-      const formData = new FormData(formRef.current);
-      onSubmit(formData);
-    }
-  };
-
-  const actions: ModalAction[] = [
-    {
-      label: cancelText,
-      onClick: onClose,
-      variant: 'ghost',
-      disabled: loading,
-    },
-    {
-      label: submitText,
-      onClick: () => formRef.current?.requestSubmit(),
-      variant: 'primary',
-      loading,
-    },
-  ];
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={title}
-      actions={actions}
-      closable={!loading}
-      {...props}
-    >
-      <form ref={formRef} onSubmit={handleSubmit}>
-        {children}
-      </form>
     </Modal>
   );
 };
