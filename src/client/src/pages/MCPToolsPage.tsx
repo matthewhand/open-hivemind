@@ -4,8 +4,81 @@ import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
+  CodeBracketIcon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+
+// Helper component for Schema Form
+interface SchemaFormProps {
+  schema: any;
+  value: Record<string, any>;
+  onChange: (value: Record<string, any>) => void;
+  disabled?: boolean;
+}
+
+const SchemaForm: React.FC<SchemaFormProps> = ({ schema, value, onChange, disabled }) => {
+  if (!schema || !schema.properties) {
+    return <div className="text-base-content/50 text-sm italic">No input properties defined.</div>;
+  }
+
+  const handleFieldChange = (key: string, val: any) => {
+    onChange({ ...value, [key]: val });
+  };
+
+  return (
+    <div className="space-y-4 p-1">
+      {Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+        const isRequired = schema.required?.includes(key);
+        return (
+          <div key={key} className="form-control w-full">
+            <label className="label py-1">
+              <span className="label-text font-medium">
+                {key} {isRequired && <span className="text-error">*</span>}
+              </span>
+            </label>
+
+            {prop.type === 'boolean' ? (
+              <div className="flex items-center gap-3">
+                 <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={!!value[key]}
+                  onChange={(e) => handleFieldChange(key, e.target.checked)}
+                  disabled={disabled}
+                />
+                <span className="text-sm opacity-70">{value[key] ? 'True' : 'False'}</span>
+              </div>
+            ) : prop.type === 'integer' || prop.type === 'number' ? (
+              <input
+                type="number"
+                className="input input-bordered input-sm w-full"
+                value={value[key] ?? ''}
+                onChange={(e) => handleFieldChange(key, e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                placeholder={prop.description || `Enter ${key}`}
+                disabled={disabled}
+              />
+            ) : (
+              <input
+                type="text"
+                className="input input-bordered input-sm w-full"
+                value={value[key] ?? ''}
+                onChange={(e) => handleFieldChange(key, e.target.value)}
+                placeholder={prop.description || `Enter ${key}`}
+                disabled={disabled}
+              />
+            )}
+            {prop.description && (
+                <label className="label pt-1 pb-0">
+                    <span className="label-text-alt text-base-content/60">{prop.description}</span>
+                </label>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 interface MCPTool {
   id: string;
@@ -121,11 +194,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isFormMode, setIsFormMode] = useState(true);
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setIsFormMode(true); // Default to form mode
   };
 
   const handleCloseRunModal = () => {
@@ -133,6 +208,11 @@ const MCPToolsPage: React.FC = () => {
     setSelectedTool(null);
     setRunArgs('{}');
     setJsonError(null);
+  };
+
+  // Sync Form changes to JSON string
+  const handleFormChange = (newValues: Record<string, any>) => {
+     setRunArgs(JSON.stringify(newValues, null, 2));
   };
 
   const handleExecuteTool = async () => {
@@ -369,41 +449,77 @@ const MCPToolsPage: React.FC = () => {
           ]}
         >
           <div className="space-y-4">
-            <p className="text-base-content/70 text-sm">
+            <p className="text-base-content/70 text-sm border-b border-base-200 pb-2">
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
-              </div>
+             <div className="flex justify-between items-center">
+                <h3 className="font-bold text-sm">Arguments</h3>
+                <div className="join">
+                    <button
+                        className={`join-item btn btn-xs ${isFormMode ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setIsFormMode(true)}
+                        title="Form Mode"
+                    >
+                        <ListBulletIcon className="w-3 h-3" /> Form
+                    </button>
+                    <button
+                        className={`join-item btn btn-xs ${!isFormMode ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => setIsFormMode(false)}
+                        title="JSON Mode"
+                    >
+                         <CodeBracketIcon className="w-3 h-3" /> JSON
+                    </button>
+                </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
-                </label>
-              )}
-            </div>
+            {isFormMode ? (
+                <div className="bg-base-200/50 p-4 rounded-lg border border-base-200">
+                    <SchemaForm
+                        schema={selectedTool.inputSchema}
+                        value={(() => {
+                            try { return JSON.parse(runArgs); }
+                            catch { return {}; }
+                        })()}
+                        onChange={handleFormChange}
+                        disabled={isRunning}
+                    />
+                </div>
+            ) : (
+                 <div className="form-control">
+                  <textarea
+                    className={`textarea textarea-bordered h-64 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                    value={runArgs}
+                    onChange={(e) => {
+                      setRunArgs(e.target.value);
+                      if (jsonError) setJsonError(null);
+                    }}
+                    placeholder="{}"
+                    disabled={isRunning}
+                  />
+                  {jsonError && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{jsonError}</span>
+                    </label>
+                  )}
+                </div>
+            )}
+
+            {!isFormMode && (
+                <div className="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box">
+                    <input type="checkbox" />
+                    <div className="collapse-title text-xs font-medium opacity-70">
+                        View Input Schema
+                    </div>
+                    <div className="collapse-content">
+                        <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                            <pre className="p-4 overflow-x-auto">
+                            <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            )}
           </div>
         </Modal>
       )}
