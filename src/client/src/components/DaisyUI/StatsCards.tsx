@@ -58,8 +58,20 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   // Animate numbers when they change
   useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const shouldReduceMotion = mediaQuery.matches;
+
     stats.forEach(stat => {
       if (typeof stat.value === 'number') {
+        if (shouldReduceMotion) {
+          setAnimatedValues(prev => ({
+            ...prev,
+            [stat.id]: stat.value as number,
+          }));
+          return;
+        }
+
         const startValue = animatedValues[stat.id] || 0;
         const endValue = stat.value;
         const duration = 1000;

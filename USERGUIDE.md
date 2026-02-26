@@ -23,6 +23,7 @@ A comprehensive view of all message processing events and system actions.
 
 ### [LLM Providers](/admin/providers/llm)
 Manage connections to Large Language Model providers.
+*   **Overview Stats**: View at a glance the total number of profiles and provider types configured.
 *   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
 *   **System Default**: Define the fallback provider for bots without a specific profile.
 *   **WebUI Intelligence**: Select a provider to power internal AI features.
