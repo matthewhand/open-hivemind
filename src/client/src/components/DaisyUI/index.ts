@@ -54,11 +54,11 @@ export { default as Kbd } from './Kbd';
 export { default as Tooltip } from './Tooltip';
 export { default as ProgressBar } from './ProgressBar';
 export { default as Countdown } from './Countdown';
-export { default as Mockup } from './Mockup';
 
 // Advanced Components
 export { default as AdvancedThemeSwitcher } from './AdvancedThemeSwitcher';
 export { default as DashboardWidgetSystem } from './DashboardWidgetSystem';
+export { default as SettingsPage } from './SettingsPage';
 
 // Navigation Components
 export { default as Pagination } from './Pagination';

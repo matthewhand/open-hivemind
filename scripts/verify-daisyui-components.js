@@ -47,11 +47,11 @@ const EXPECTED_COMPONENTS = [
   'Tooltip',
   'ProgressBar',
   'Countdown',
-  'Mockup',
   
   // Advanced Components
   'AdvancedThemeSwitcher',
-  'DashboardWidgetSystem'
+  'DashboardWidgetSystem',
+  'SettingsPage'
 ];
 
 console.log('🔍 DaisyUI Component Verification\n');
