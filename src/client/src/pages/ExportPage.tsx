@@ -11,7 +11,7 @@ import {
   Search,
   HardDrive
 } from 'lucide-react';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import { Alert, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -25,7 +25,7 @@ interface Backup {
 }
 
 const ExportPage: React.FC = () => {
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ title: string, message?: string, type: 'success' | 'error' } | null>(null);
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -41,7 +41,7 @@ const ExportPage: React.FC = () => {
       setBackups(data);
     } catch (err) {
       console.error('Failed to fetch backups:', err);
-      setToast({ message: 'Failed to load backups', type: 'error' });
+      setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -59,13 +59,13 @@ const ExportPage: React.FC = () => {
         name: newBackupName,
         description: newBackupDesc,
       });
-      setToast({ message: 'Backup created successfully', type: 'success' });
+      setToast({ title: 'Success', message: 'Backup created successfully', type: 'success' });
       setCreateModalOpen(false);
       setNewBackupName('');
       setNewBackupDesc('');
       fetchBackups();
     } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : 'Failed to create backup', type: 'error' });
+      setToast({ title: 'Error', message: err instanceof Error ? err.message : 'Failed to create backup', type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -76,10 +76,10 @@ const ExportPage: React.FC = () => {
     try {
       setActionLoading(id);
       await apiService.deleteSystemBackup(id);
-      setToast({ message: 'Backup deleted successfully', type: 'success' });
+      setToast({ title: 'Success', message: 'Backup deleted successfully', type: 'success' });
       fetchBackups();
     } catch (err) {
-      setToast({ message: 'Failed to delete backup', type: 'error' });
+      setToast({ title: 'Error', message: 'Failed to delete backup', type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -90,10 +90,10 @@ const ExportPage: React.FC = () => {
     try {
       setActionLoading(id);
       await apiService.restoreSystemBackup(id, { overwrite: true });
-      setToast({ message: 'System restored successfully. Reloading...', type: 'success' });
+      setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
       setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
-      setToast({ message: 'Failed to restore backup', type: 'error' });
+      setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -112,11 +112,13 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      setToast({ message: 'Failed to download backup', type: 'error' });
+      setToast({ title: 'Error', message: 'Failed to download backup', type: 'error' });
     } finally {
       setActionLoading(null);
     }
   };
+
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'yaml'>('json');
 
   const handleExportConfig = async () => {
     try {
@@ -124,18 +126,18 @@ const ExportPage: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `config-export-${new Date().toISOString()}.json`;
+      a.download = `config-export-${new Date().toISOString()}.${exportFormat}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      setToast({ message: 'Configuration exported successfully', type: 'success' });
+      setToast({ title: 'Success', message: `Configuration exported successfully as ${exportFormat.toUpperCase()}`, type: 'success' });
     } catch (err) {
-      setToast({ message: 'Failed to export configuration', type: 'error' });
+      setToast({ title: 'Error', message: 'Failed to export configuration', type: 'error' });
     }
   };
 
-    const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
+  const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
     try {
       const response = await fetch(`/webui/api/openapi.${format}`);
       if (!response.ok) {
@@ -152,9 +154,10 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setToast({ message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
+      setToast({ title: 'Success', message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
     } catch (error) {
       setToast({
+        title: 'Error',
         message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
         type: 'error',
       });
@@ -218,7 +221,7 @@ const ExportPage: React.FC = () => {
               <p className="text-sm text-base-content/70">Create and manage full system configuration backups.</p>
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto">
-               <Button
+              <Button
                 variant="primary"
                 onClick={() => setCreateModalOpen(true)}
               >
@@ -265,7 +268,7 @@ const ExportPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : filteredBackups.length === 0 ? (
-                    <tr>
+                  <tr>
                     <td colSpan={5}>
                       <EmptyState
                         title="No backups match your search"
@@ -282,8 +285,8 @@ const ExportPage: React.FC = () => {
                     <tr key={backup.id} className="hover">
                       <td className="font-bold">
                         <div className="flex items-center gap-2">
-                            <Archive className="w-4 h-4 text-base-content/40" />
-                            {backup.name}
+                          <Archive className="w-4 h-4 text-base-content/40" />
+                          {backup.name}
                         </div>
                       </td>
                       <td className="text-sm text-base-content/70 truncate max-w-xs" title={backup.description}>
@@ -293,37 +296,37 @@ const ExportPage: React.FC = () => {
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
                         <div className="tooltip tooltip-left" data-tip="Restore">
-                            <Button
+                          <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleRestoreBackup(backup.id)}
                             disabled={actionLoading === backup.id}
                             className="text-warning hover:bg-warning/10"
-                            >
+                          >
                             <RotateCcw className="w-4 h-4" />
-                            </Button>
+                          </Button>
                         </div>
                         <div className="tooltip tooltip-left" data-tip="Download">
-                            <Button
+                          <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleDownloadBackup(backup.id, backup.name)}
                             disabled={actionLoading === backup.id}
                             className="text-primary hover:bg-primary/10"
-                            >
+                          >
                             <Download className="w-4 h-4" />
-                            </Button>
+                          </Button>
                         </div>
                         <div className="tooltip tooltip-left" data-tip="Delete">
-                            <Button
+                          <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleDeleteBackup(backup.id)}
                             disabled={actionLoading === backup.id}
                             className="text-error hover:bg-error/10"
-                            >
+                          >
                             <Trash2 className="w-4 h-4" />
-                            </Button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -344,10 +347,22 @@ const ExportPage: React.FC = () => {
               Configuration Export
             </h2>
             <p className="text-sm text-base-content/70 mb-4">
-              Export the current running configuration as a JSON file. Useful for debugging or manual migration.
+              Export the current running configuration. Useful for debugging or manual migration.
             </p>
+            <div className="flex items-center gap-2 mb-4">
+              <label className="text-sm font-medium text-base-content/70">Format:</label>
+              <select
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv' | 'yaml')}
+                className="select select-bordered select-sm"
+              >
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
+                <option value="yaml">YAML</option>
+              </select>
+            </div>
             <div className="card-actions justify-end mt-auto">
-              <Button variant="outline" onClick={handleExportConfig}>
+              <Button buttonStyle="outline" onClick={handleExportConfig}>
                 <Download className="w-4 h-4 mr-2" /> Export Config
               </Button>
             </div>
@@ -365,10 +380,10 @@ const ExportPage: React.FC = () => {
               Download the OpenAPI specification for integration and development.
             </p>
             <div className="card-actions justify-end gap-2 mt-auto">
-              <Button size="sm" variant="outline" onClick={() => handleDownloadOpenAPI('json')}>
+              <Button size="sm" buttonStyle="outline" onClick={() => handleDownloadOpenAPI('json')}>
                 JSON
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleDownloadOpenAPI('yaml')}>
+              <Button size="sm" buttonStyle="outline" onClick={() => handleDownloadOpenAPI('yaml')}>
                 YAML
               </Button>
             </div>
@@ -422,11 +437,12 @@ const ExportPage: React.FC = () => {
       </Modal>
 
       {toast && (
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <div className={`toast toast-top toast-end`}>
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.title}: {toast.message}</span>
+            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost">✕</button>
+          </div>
+        </div>
       )}
     </div>
   );
