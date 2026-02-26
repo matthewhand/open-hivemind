@@ -81,6 +81,7 @@ Set up safety and security boundaries.
 *   **Content Filters**: Block specific words or phrases.
 *   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
 *   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
+*   **Tag Management**: Easily add and remove allowed users, tools, and blocked terms using intuitive tag inputs.
 
 ![Guard Profiles List](docs/screenshots/guards-page.png)
 
