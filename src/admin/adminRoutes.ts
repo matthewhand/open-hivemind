@@ -149,10 +149,10 @@ adminRouter.get('/providers/:providerId/schema', requireAdmin, async (req: Reque
   try {
     const schema = provider.getSchema();
     const serialized = serializeSchema(schema);
-    res.json({ ok: true, schema: serialized });
+    return res.json({ ok: true, schema: serialized });
   } catch (e: any) {
     debug(`Failed to get schema for provider ${providerId}`, e);
-    res.status(500).json({ ok: false, error: e.message || String(e) });
+    return res.status(500).json({ ok: false, error: e.message || String(e) });
   }
 });
 
