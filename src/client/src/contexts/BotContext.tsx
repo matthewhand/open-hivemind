@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { BotInstance} from '../types/bot';
 import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
+import { apiService } from '../services/api';
 
 interface BotContextType {
     bots: BotInstance[];
@@ -101,6 +102,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [bots]);
 
   const startBot = useCallback(async (botId: string) => {
+    const previousStatus = bots.find(b => b.id === botId)?.status;
     try {
       setLoading(true);
       setError(null);
@@ -112,13 +114,17 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw new Error('Cannot start bot: No providers configured');
       }
 
+      // Optimistic UI update: show STARTING state while API call is in progress
       updateBot(botId, { status: BotStatus.STARTING });
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate startup
-      updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() }); // Using ACTIVE mapping to 'running' in UI
+
+      await apiService.startBot(botId);
+
+      updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() });
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to start';
       setError(msg);
+      // Revert to previous status or mark as error
       updateBot(botId, { status: BotStatus.ERROR, error: msg });
       return false;
     } finally {
@@ -129,12 +135,20 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const stopBot = useCallback(async (botId: string) => {
     try {
       setLoading(true);
+      setError(null);
+
+      // Optimistic UI update: show STOPPING state while API call is in progress
       updateBot(botId, { status: BotStatus.STOPPING });
-      await new Promise(resolve => setTimeout(resolve, 500));
+
+      await apiService.stopBot(botId);
+
       updateBot(botId, { status: BotStatus.INACTIVE });
       return true;
     } catch (err) {
-      setError('Failed to stop bot');
+      const msg = err instanceof Error ? err.message : 'Failed to stop bot';
+      setError(msg);
+      // Revert to ACTIVE since the stop failed
+      updateBot(botId, { status: BotStatus.ACTIVE });
       return false;
     } finally {
       setLoading(false);
