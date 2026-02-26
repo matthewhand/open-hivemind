@@ -41,8 +41,8 @@ test.describe('Monitoring Dashboard Screenshots', () => {
           timestamp: new Date().toISOString(),
           uptime: 3600 * 24 * 5, // 5 days
           memory: {
-            used: 8 * 1024 * 1024 * 1024, // 8GB
-            total: 16 * 1024 * 1024 * 1024, // 16GB
+            used: 8 * 1024, // 8GB in MB
+            total: 16 * 1024, // 16GB in MB
             usage: 50,
           },
           cpu: {
@@ -233,7 +233,9 @@ test.describe('Monitoring Dashboard Screenshots', () => {
 
     // Wait for key elements to be visible
     await expect(page.getByText('System Monitoring', { exact: true })).toBeVisible();
-    await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Ecosystem Status', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Infrastructure Health' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Infrastructure Health' })).toBeVisible();
 
     // Wait for charts/stats to load (checking for stats cards values)
     await expect(page.getByText('3/3', { exact: false })).toBeVisible(); // Active Bots

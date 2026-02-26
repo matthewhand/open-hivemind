@@ -122,7 +122,8 @@ A comprehensive dashboard for tracking system health, bot status, and real-time 
 
 ![Monitoring Dashboard](docs/screenshots/monitoring-dashboard.png)
 
-*   **System Health**: Real-time metrics for CPU, Memory, and API endpoint status.
+*   **Ecosystem Status**: High-level health summary of your bot ecosystem.
+*   **Infrastructure Health**: Real-time metrics for CPU, Memory, and API endpoint status.
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 *   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
 *   **Performance Metrics**: Track response times and error rates across the ecosystem.
