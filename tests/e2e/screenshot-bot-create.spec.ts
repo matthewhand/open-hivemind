@@ -93,8 +93,9 @@ test.describe('Bot Create Page Screenshots', () => {
     await page.goto('/admin/bots/create');
 
     // Wait for the page to load and specific elements to be visible
-    await expect(page.getByText('Create New Bot')).toBeVisible();
-    await expect(page.getByText('Message Platform')).toBeVisible();
+    await expect(page.getByText('Create New Bot', { exact: true })).toBeVisible();
+    // Use a more specific locator for the form label to avoid sidebar conflict
+    await expect(page.locator('span.label-text', { hasText: 'Message Platform' }).first()).toBeVisible();
 
     // Wait for dynamic content (options in select)
     // We can check if the select has populated options

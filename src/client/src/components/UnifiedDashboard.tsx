@@ -732,6 +732,86 @@ const UnifiedDashboard: React.FC = () => {
 
             <StatsCards stats={statsCards} isLoading={loading} />
 
+            {/* Swarm Topology Visualization */}
+            {bots.length > 0 && (
+              <Card className="bg-base-100 shadow-lg border-2 border-base-200/50">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="card-title text-lg flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-primary" />
+                        Live Swarm Topology
+                      </h2>
+                      <p className="text-sm text-base-content/60">
+                        Real-time visualization of agent connectivity and state.
+                      </p>
+                    </div>
+                    <Badge variant="neutral">
+                      {activeConnections} / {bots.length} Active Nodes
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap gap-12 justify-center items-center min-h-[160px] py-8 bg-base-200/30 rounded-xl relative overflow-hidden">
+                    {/* Background decoration grid */}
+                    <div className="absolute inset-0 grid grid-cols-[repeat(20,minmax(0,1fr))] opacity-[0.05] pointer-events-none">
+                      {Array.from({ length: 40 }).map((_, i) => (
+                        <div key={i} className="border-r border-b border-base-content" />
+                      ))}
+                    </div>
+
+                    {statusBots.map((bot, index) => {
+                      const isActive = bot.status?.toLowerCase() === 'active';
+                      const isError = bot.status?.toLowerCase() === 'error';
+
+                      const statusColor = isError
+                        ? 'border-error shadow-error/20'
+                        : isActive
+                          ? 'border-success shadow-success/20'
+                          : 'border-base-300';
+
+                      const pulseAnimation = isActive ? 'animate-pulse' : '';
+
+                      return (
+                        <div key={`${bot.name}-${index}`} className="group relative">
+                          {/* Connection Line (visual connector) */}
+                          {index < statusBots.length - 1 && (
+                            <div className="absolute top-1/2 left-full w-12 h-[2px] bg-base-300 -z-10 hidden sm:block opacity-50 transform -translate-y-1/2" />
+                          )}
+
+                          <div
+                            className={`
+                              relative z-10 w-16 h-16 rounded-full bg-base-100
+                              border-4 ${statusColor} shadow-lg
+                              flex items-center justify-center text-3xl
+                              transition-all duration-300 hover:scale-110 cursor-help
+                              hover:shadow-xl
+                            `}
+                          >
+                            {getProviderEmoji(bots[index]?.messageProvider || '')}
+
+                            {/* Status Indicator Dot */}
+                            <div className={`
+                              absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-base-100
+                              ${isActive ? 'bg-success' : isError ? 'bg-error' : 'bg-neutral'}
+                              ${pulseAnimation}
+                            `} />
+                          </div>
+
+                          {/* Tooltip */}
+                          <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-20 pointer-events-none">
+                            <div className="bg-neutral text-neutral-content text-xs rounded-lg px-3 py-2 shadow-xl text-center">
+                              <div className="font-bold mb-0.5">{bots[index]?.name}</div>
+                              <div className="opacity-80">{bot.status} • {bot.messageCount} msgs</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Card>
+            )}
+
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="bg-base-100 shadow">
                 <div className="card-body">
