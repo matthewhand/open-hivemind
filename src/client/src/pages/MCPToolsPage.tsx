@@ -4,8 +4,72 @@ import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
+  CodeBracketIcon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+
+// Helper component for dynamic form
+const ToolForm: React.FC<{
+  schema: any;
+  value: any;
+  onChange: (value: any) => void;
+  disabled?: boolean;
+}> = ({ schema, value, onChange, disabled }) => {
+  if (!schema || !schema.properties) return null;
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+        const isRequired = schema.required?.includes(key);
+
+        return (
+          <div key={key} className="form-control w-full">
+            <label className="label">
+              <span className="label-text font-medium">
+                {key} {isRequired && <span className="text-error">*</span>}
+              </span>
+            </label>
+
+            {prop.type === 'boolean' ? (
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={value[key] || false}
+                onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
+                disabled={disabled}
+              />
+            ) : prop.type === 'integer' || prop.type === 'number' ? (
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={value[key] === undefined ? '' : value[key]}
+                onChange={(e) => onChange({ ...value, [key]: e.target.value === '' ? undefined : Number(e.target.value) })}
+                placeholder={`Enter ${key}...`}
+                disabled={disabled}
+              />
+            ) : (
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={value[key] || ''}
+                onChange={(e) => onChange({ ...value, [key]: e.target.value })}
+                placeholder={`Enter ${key}...`}
+                disabled={disabled}
+              />
+            )}
+
+            {prop.description && (
+              <label className="label">
+                <span className="label-text-alt text-base-content/70">{prop.description}</span>
+              </label>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 interface MCPTool {
   id: string;
@@ -121,11 +185,14 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [useFormMode, setUseFormMode] = useState(true);
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    // Default to form mode if schema has properties
+    setUseFormMode(!!(tool.inputSchema && tool.inputSchema.properties));
   };
 
   const handleCloseRunModal = () => {
@@ -374,34 +441,69 @@ const MCPToolsPage: React.FC = () => {
             </p>
 
             <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
+              <div className="flex justify-between items-center mb-2">
+                 <label className="label p-0">
+                    <span className="label-text font-medium">Arguments</span>
+                 </label>
+                 <div className="tabs tabs-boxed tabs-sm">
+                    <a
+                      className={`tab ${useFormMode ? 'tab-active' : ''}`}
+                      onClick={() => setUseFormMode(true)}
+                    >
+                        <ListBulletIcon className="w-4 h-4 mr-1"/> Form
+                    </a>
+                    <a
+                      className={`tab ${!useFormMode ? 'tab-active' : ''}`}
+                      onClick={() => setUseFormMode(false)}
+                    >
+                        <CodeBracketIcon className="w-4 h-4 mr-1"/> JSON
+                    </a>
+                 </div>
               </div>
-            </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
-                </label>
+              {useFormMode && selectedTool.inputSchema && selectedTool.inputSchema.properties ? (
+                <div className="bg-base-200 p-4 rounded-lg">
+                    <ToolForm
+                        schema={selectedTool.inputSchema}
+                        value={(() => {
+                            try { return JSON.parse(runArgs); } catch { return {}; }
+                        })()}
+                        onChange={(val) => setRunArgs(JSON.stringify(val, null, 2))}
+                        disabled={isRunning}
+                    />
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                    value={runArgs}
+                    onChange={(e) => {
+                      setRunArgs(e.target.value);
+                      if (jsonError) setJsonError(null);
+                    }}
+                    placeholder="{}"
+                    disabled={isRunning}
+                  />
+                  {jsonError && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{jsonError}</span>
+                    </label>
+                  )}
+
+                  <div className="mt-4 collapse collapse-arrow bg-base-200">
+                    <input type="checkbox" />
+                    <div className="collapse-title text-sm font-medium">
+                        View Input Schema
+                    </div>
+                    <div className="collapse-content">
+                        <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                            <pre className="p-4 overflow-x-auto">
+                            <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                            </pre>
+                        </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
