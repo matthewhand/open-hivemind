@@ -63,7 +63,7 @@ const ChatPage: React.FC = () => {
         sender: {
           id: msg.author?.id || 'unknown',
           name: msg.author?.username || 'Unknown',
-          type: msg.author?.bot ? 'bot' : 'user',
+          type: msg.author?.role === 'system' ? 'system' : (msg.author?.bot ? 'bot' : 'user'),
           avatar: msg.author?.avatar, // If available
         },
         metadata: {
