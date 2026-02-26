@@ -19,6 +19,12 @@ A comprehensive view of all message processing events and system actions.
 *   **Export Data**: Download the current activity log as a CSV file for external analysis.
 *   **Performance Metrics**: View processing duration for each message interaction.
 
+### Demo Mode
+When the system runs in a demonstration environment (e.g., without configured API keys), a distinctive banner appears at the top of the interface.
+*   **Demo Status**: Clearly indicates the system is in preview mode.
+*   **Quick Stats**: Displays the count of demo bots and simulated conversations.
+*   **Configuration Shortcut**: Provides a direct link to Settings to input API keys and enable production mode.
+
 ## Configuration
 
 ### [LLM Providers](/admin/providers/llm)
@@ -217,14 +223,14 @@ Access a catalog of static HTML pages served by the system.
 
 ### Generating Screenshots
 
-To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright. This workflow allows for on-demand updates to visual documentation.
+To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright. This workflow allows for on-demand updates to visual documentation, ensuring that the images always reflect the current state of the application features (like the Demo Mode banner or new layout changes).
 
-To regenerate screenshots:
+To regenerate screenshots on demand:
 1. Ensure you have installed dependencies: `npm install`
-2. Install Playwright browsers: `npx playwright install chromium`
-3. Run the generation script:
+2. Install Playwright browsers (if not already installed): `npx playwright install chromium`
+3. Run the automated generation script:
    ```bash
    npm run generate-docs
    ```
 
-This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
+This process executes the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures high-resolution screenshots of the UI, and saves them to the `docs/screenshots/` directory, overwriting any existing files.
