@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
-import { Line, Bar, Area, Pie } from 'recharts';
+import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 
 export interface MetricData {
   timestamp: string;
@@ -75,33 +75,53 @@ const MetricChart: React.FC<MetricChartProps> = ({
     switch (type) {
     case 'bar':
       return (
-        <Bar {...commonProps}>
-          <Bar dataKey="value" fill={color} />
-        </Bar>
+        <BarChart {...commonProps}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis dataKey="time" />
+          <YAxis />
+          {showTooltip && <Tooltip />}
+          {showLegend && <Legend />}
+          <Bar dataKey="value" fill={color} name={title} />
+        </BarChart>
       );
     case 'area':
       return (
-        <Area {...commonProps}>
-          <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.3} />
-        </Area>
+        <AreaChart {...commonProps}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis dataKey="time" />
+          <YAxis />
+          {showTooltip && <Tooltip />}
+          {showLegend && <Legend />}
+          <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.3} name={title} />
+        </AreaChart>
       );
     case 'pie':
       return (
-        <Pie {...commonProps}>
+        <PieChart width={commonProps.width} height={commonProps.height} margin={commonProps.margin}>
+          {showTooltip && <Tooltip />}
+          {showLegend && <Legend />}
           <Pie
+            data={chartData}
             dataKey="value"
             cx={commonProps.width / 2}
             cy={commonProps.height / 2}
             outerRadius={80}
             fill={color}
+            nameKey="label"
+            label
           />
-        </Pie>
+        </PieChart>
       );
     default:
       return (
-        <Line {...commonProps}>
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} />
-        </Line>
+        <LineChart {...commonProps}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis dataKey="time" />
+          <YAxis />
+          {showTooltip && <Tooltip />}
+          {showLegend && <Legend />}
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} name={title} />
+        </LineChart>
       );
     }
   };
