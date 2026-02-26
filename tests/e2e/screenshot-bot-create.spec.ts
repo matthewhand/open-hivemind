@@ -93,8 +93,11 @@ test.describe('Bot Create Page Screenshots', () => {
     await page.goto('/admin/bots/create');
 
     // Wait for the page to load and specific elements to be visible
-    await expect(page.getByText('Create New Bot')).toBeVisible();
-    await expect(page.getByText('Message Platform')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create New Bot' })).toBeVisible();
+
+    // Check for Platform Selection (new grid)
+    await expect(page.getByText('Discord', { exact: true })).toBeVisible();
+    await expect(page.getByText('Slack', { exact: true })).toBeVisible();
 
     // Wait for dynamic content (options in select)
     // We can check if the select has populated options

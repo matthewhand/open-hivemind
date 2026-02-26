@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Save, ArrowLeft } from 'lucide-react';
+import { Bot, Save, Gamepad2, Hash, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 import {
   Breadcrumbs,
   Alert,
@@ -87,6 +87,18 @@ const BotCreatePage: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const selectedPersona = React.useMemo(() =>
+    personas.find(p => p.id === formData.persona),
+    [personas, formData.persona]
+  );
+
+  const platforms = [
+    { id: 'discord', name: 'Discord', icon: Gamepad2 },
+    { id: 'slack', name: 'Slack', icon: Hash },
+    { id: 'mattermost', name: 'Mattermost', icon: MessageSquare },
+    { id: 'telegram', name: 'Telegram', icon: Send },
+  ];
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
@@ -96,12 +108,6 @@ const BotCreatePage: React.FC = () => {
         description="Configure a new bot instance with persona and provider settings."
         icon={Bot}
         gradient="primary"
-        actions={
-          <Button variant="ghost" onClick={() => navigate('/admin/bots')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Bots
-          </Button>
-        }
       />
 
       {alert && (
@@ -162,23 +168,36 @@ const BotCreatePage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Platform */}
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text font-semibold">Message Platform <span className="text-error">*</span></span>
-                  </label>
-                  <Select
-                    value={formData.platform}
-                    onChange={(e) => handleInputChange('platform', e.target.value)}
-                  >
-                    <option value="discord">Discord</option>
-                    <option value="slack">Slack</option>
-                    <option value="mattermost">Mattermost</option>
-                    <option value="telegram">Telegram</option>
-                  </Select>
+              {/* Platform Selection */}
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Message Platform <span className="text-error">*</span></span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {platforms.map((platform) => (
+                    <button
+                      key={platform.id}
+                      type="button"
+                      onClick={() => handleInputChange('platform', platform.id)}
+                      className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center gap-2 transition-all hover:bg-base-200 ${
+                        formData.platform === platform.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-base-300 bg-base-100'
+                      }`}
+                    >
+                      <platform.icon className={`w-8 h-8 ${formData.platform === platform.id ? 'text-primary' : 'text-base-content/50'}`} />
+                      <div className="font-medium text-sm flex items-center gap-1">
+                        {platform.name}
+                        {formData.platform === platform.id && (
+                          <CheckCircle2 className="w-3 h-3 text-primary" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Persona */}
                 <div className="form-control w-full">
                   <label className="label">
@@ -193,31 +212,41 @@ const BotCreatePage: React.FC = () => {
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </Select>
+                  {selectedPersona ? (
+                    <div className="mt-3 p-3 bg-base-200 rounded-lg text-sm border border-base-300">
+                      <div className="font-semibold text-primary">{selectedPersona.name}</div>
+                      <div className="text-base-content/70 mt-1 text-xs">{selectedPersona.description}</div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 p-3 bg-base-200/50 rounded-lg text-sm border border-base-300/50 italic text-base-content/60 text-xs">
+                      Standard helpful assistant without specific personality traits.
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              {/* LLM Provider */}
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">
-                    LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
-                  </span>
-                  <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
-                </label>
-                <Select
-                  value={formData.llmProvider}
-                  onChange={(e) => handleInputChange('llmProvider', e.target.value)}
-                >
-                  <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}</option>
-                  {llmProfiles.map((p) => (
-                    <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
-                  ))}
-                </Select>
-                {!defaultLlmConfigured && !formData.llmProvider && (
-                  <div className="text-error text-xs mt-1">
-                    System default is not configured. Please select a provider.
-                  </div>
-                )}
+                {/* LLM Provider */}
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-semibold">
+                      LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
+                    </span>
+                    <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
+                  </label>
+                  <Select
+                    value={formData.llmProvider}
+                    onChange={(e) => handleInputChange('llmProvider', e.target.value)}
+                  >
+                    <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}</option>
+                    {llmProfiles.map((p) => (
+                      <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                    ))}
+                  </Select>
+                  {!defaultLlmConfigured && !formData.llmProvider && (
+                    <div className="text-error text-xs mt-1">
+                      System default is not configured. Please select a provider.
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-end pt-4">
