@@ -6,8 +6,6 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
-import AdminPage from '../pages/Admin';
-import BotManagementPage from '../pages/Admin/BotManagementPage';
 import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
 
@@ -209,7 +207,6 @@ const AppRouter: React.FC = () => {
           <Route path="ai/analytics" element={<PredictiveAnalytics />} />
           <Route path="ai/anomalies" element={<AnomalyDetection />} />
           <Route path="ai/chat" element={<NaturalLanguageInterface />} />
-          <Route path="ai/natural-language" element={<NaturalLanguageInterface />} />
           <Route path="ai/training" element={<BotTrainingDashboard />} />
         </Route>
 
