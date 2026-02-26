@@ -147,6 +147,12 @@ Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
 *   **Default Persona**: The base personality applied to new bots.
 
+### Demo Mode
+When the system is initialized without configuration, it operates in Demo Mode to showcase capabilities.
+*   **Visual Indicator**: A distinct banner appears at the top of all pages.
+*   **Simulated Environment**: The system populates with sample bots, conversations, and activity data.
+*   **Transition to Production**: Configure API keys in [Settings](/admin/settings) to disable Demo Mode and activate real AI responses.
+
 ## AI & Analytics
 
 ### [AI Dashboard](/admin/ai/dashboard)
