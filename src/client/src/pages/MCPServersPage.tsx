@@ -427,7 +427,7 @@ const MCPServersPage: React.FC = () => {
                             className="btn btn-xs btn-ghost text-primary"
                             onClick={() => handleViewTools(server)}
                         >
-                            View Tools
+                            View
                         </button>
                     )}
                 </div>
@@ -443,7 +443,7 @@ const MCPServersPage: React.FC = () => {
                   {server.status === 'running' ? (
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-error tooltip"
-                      data-tip="Disconnect"
+                      data-tip="Stop"
                       onClick={() => handleServerAction(server.id, 'stop')}
                     >
                       <StopIcon className="w-5 h-5" />
@@ -451,7 +451,7 @@ const MCPServersPage: React.FC = () => {
                   ) : (
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-success tooltip"
-                      data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
+                      data-tip={server.status === 'stopped' ? "Start" : "Retry"}
                       onClick={() => handleServerAction(server.id, 'start')}
                     >
                         {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
@@ -460,7 +460,7 @@ const MCPServersPage: React.FC = () => {
                   {server.toolCount > 0 && (
                      <button
                         className="btn btn-ghost btn-sm btn-circle tooltip"
-                        data-tip="View Tools"
+                        data-tip="Tools"
                         onClick={() => handleViewTools(server)}
                      >
                         <WrenchScrewdriverIcon className="w-5 h-5" />
@@ -470,14 +470,14 @@ const MCPServersPage: React.FC = () => {
                 <div className="flex gap-1">
                   <button
                     className="btn btn-ghost btn-sm btn-circle tooltip"
-                    data-tip="Edit Configuration"
+                    data-tip="Edit"
                     onClick={() => handleEditServer(server)}
                   >
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
                     className="btn btn-ghost btn-sm btn-circle text-error tooltip"
-                    data-tip="Delete"
+                    data-tip="Remove"
                     onClick={() => handleDeleteServer(server.id)}
                   >
                     <TrashIcon className="w-5 h-5" />

@@ -109,9 +109,9 @@ test.describe('MCP Servers Screenshots', () => {
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
-    // Click "View Tools" on the first server (Filesystem Server)
+    // Click "View" on the first server (Filesystem Server)
     // Assuming the first card is the Filesystem Server which has tools
-    await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
+    await page.locator('.card').first().getByRole('button', { name: 'View' }).first().click();
 
     // Wait for modal to be visible and check for tool name
     const toolsModal = page
