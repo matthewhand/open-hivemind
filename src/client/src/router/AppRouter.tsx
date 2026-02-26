@@ -32,7 +32,6 @@ const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 
 // Monitoring Dashboard pages
-const MonitoringDashboard = lazy(() => import('../pages/MonitoringDashboard'));
 const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
 const SystemManagement = lazy(() => import('../pages/SystemManagement'));
 const ExportPage = lazy(() => import('../pages/ExportPage'));
@@ -175,7 +174,6 @@ const AppRouter: React.FC = () => {
           <Route path="activity" element={<ActivityPage />} />
 
           {/* New Monitoring Dashboard Routes */}
-          <Route path="monitoring-dashboard" element={<MonitoringDashboard />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="system-management" element={<SystemManagement />} />
 

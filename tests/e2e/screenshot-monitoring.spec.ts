@@ -33,7 +33,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     // Mock Monitoring specific endpoints
 
     // 1. System Health (used by SystemHealth component)
-    await page.route('/api/health/detailed', async (route) =>
+    await page.route('**/health/detailed', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -41,8 +41,8 @@ test.describe('Monitoring Dashboard Screenshots', () => {
           timestamp: new Date().toISOString(),
           uptime: 3600 * 24 * 5, // 5 days
           memory: {
-            used: 8 * 1024 * 1024 * 1024, // 8GB
-            total: 16 * 1024 * 1024 * 1024, // 16GB
+            used: 8 * 1024, // 8GB in MB (as returned by server)
+            total: 16 * 1024, // 16GB in MB
             usage: 50,
           },
           cpu: {
@@ -232,11 +232,11 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for key elements to be visible
-    await expect(page.getByText('System Monitoring', { exact: true })).toBeVisible();
+    await expect(page.getByText('Monitoring Dashboard', { exact: true })).toBeVisible();
     await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
 
-    // Wait for charts/stats to load (checking for stats cards values)
-    await expect(page.getByText('3/3', { exact: false })).toBeVisible(); // Active Bots
+    // Wait for detailed system info to load (from SystemHealth component)
+    await expect(page.getByText(/8\.0 GB.*\/.*16\.0 GB/)).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/monitoring-dashboard.png', fullPage: true });

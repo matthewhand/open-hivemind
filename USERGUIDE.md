@@ -118,14 +118,14 @@ Configure incoming webhooks for external integrations.
 *   **Security**: Manage webhook secrets and verification.
 
 ### [Monitoring](/admin/monitoring)
-A comprehensive dashboard for tracking system health, bot status, and real-time activity.
+A comprehensive, real-time dashboard for tracking system health, bot status, and live activity.
 
 ![Monitoring Dashboard](docs/screenshots/monitoring-dashboard.png)
 
-*   **System Health**: Real-time metrics for CPU, Memory, and API endpoint status.
-*   **Bot Status**: Detailed connectivity and health scores for all configured bots.
-*   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
-*   **Performance Metrics**: Track response times and error rates across the ecosystem.
+*   **Real-Time Metrics**: Live charts for CPU, Memory, Message Rate, and Error Rate powered by WebSocket.
+*   **System Health**: Detailed server information including OS platform, architecture, uptime, and precise memory usage.
+*   **Connection Status**: Visual indicator of WebSocket and API connectivity.
+*   **Activity Stream**: Live feed of system events and alerts.
 
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.

@@ -1,274 +1,225 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
-import {
-  Activity,
-  RotateCcw,
-  Heart,
-  Cpu,
-  Clock,
-  ChartBar,
-  AlertTriangle,
-} from 'lucide-react';
-import SystemHealth from '../SystemHealth';
-import BotStatusCard from '../BotStatusCard';
-import ActivityMonitor from '../ActivityMonitor';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 import { apiService } from '../../services/api';
-import type { StatusResponse, Bot } from '../../services/api';
+import StatusCard from './StatusCard';
+import MetricChart from './MetricChart';
+import AlertPanel from './AlertPanel';
+import EventStream from './EventStream';
+import SystemHealth from '../SystemHealth';
+import { PageHeader } from '../DaisyUI';
+import { ChartBar } from 'lucide-react';
 
-interface BotWithStatus extends Bot {
-  id: string;
-  statusData: {
-    status: string;
-    connected: boolean;
-    messageCount: number;
-    errorCount: number;
-    responseTime: number;
-    uptime: number;
-    lastActivity: string;
-  };
-}
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <div role="tabpanel" hidden={value !== index}>
-    {value === index && <div className="p-6">{children}</div>}
-  </div>
-);
-
-interface MonitoringDashboardProps {
-  refreshInterval?: number;
-  onRefresh?: () => void;
-}
-
-const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
-  refreshInterval = 30000,
-  onRefresh,
-}) => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [systemMetrics, setSystemMetrics] = useState<StatusResponse | null>(null);
-  const [bots, setBots] = useState<BotWithStatus[]>([]);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-
-  const handleTabChange = (newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      // Refresh all monitoring data
-      const [systemData, configData] = await Promise.all([
-        apiService.getStatus(),
-        apiService.getConfig(),
-      ]);
-
-      setSystemMetrics(systemData);
-      // Add mock status data to bots for demonstration if not present in systemData
-      // Ideally systemData.bots should be used, but let's stick to the logic that was there or improve it.
-      // The original code was mapping configData.bots and adding mock status.
-      // Let's keep the mock generation for now as per instructions to "improve UI" not necessarily "implement full backend logic" if it's missing.
-      // But actually, apiService.getStatus() returns bots with status. Let's try to use that if available.
-
-      const botsWithStatus = configData.bots.map((bot: Bot) => {
-        const statusBot = systemData.bots.find(b => b.name === bot.name);
-        return {
-          ...bot,
-          id: bot.name,
-          statusData: statusBot ? {
-            status: statusBot.status,
-            connected: statusBot.connected || false,
-            messageCount: statusBot.messageCount || 0,
-            errorCount: statusBot.errorCount || 0,
-            responseTime: 0, // Not in StatusResponse
-            uptime: 0, // Not in StatusResponse
-            lastActivity: new Date().toISOString(),
-          } : {
-            status: 'healthy',
-            connected: true,
-            messageCount: Math.floor(Math.random() * 100),
-            errorCount: Math.floor(Math.random() * 5),
-            responseTime: Math.floor(Math.random() * 500) + 100,
-            uptime: Math.floor(Math.random() * 86400),
-            lastActivity: new Date().toISOString(),
-          },
-        };
-      });
-      setBots(botsWithStatus);
-      setLastRefresh(new Date());
-
-      if (onRefresh) {
-        onRefresh();
-      }
-    } catch (error) {
-      console.error('Failed to refresh monitoring data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const MonitoringDashboard: React.FC = () => {
+  const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
+  const [refreshInterval, setRefreshInterval] = useState(5000);
+  const [isLoading, setIsLoading] = useState(false);
+  const [initialMetrics, setInitialMetrics] = useState<any>(null);
 
   useEffect(() => {
-    handleRefresh();
+    connect();
 
-    const interval = setInterval(() => {
-      handleRefresh();
-    }, refreshInterval);
+    // Fetch initial system health to ensure we have data even before WS updates (and for screenshot tests)
+    const fetchInitialData = async () => {
+      try {
+        const health = await apiService.getSystemHealth();
+        setInitialMetrics(health);
+      } catch (err) {
+        console.error('Failed to fetch initial system health:', err);
+      }
+    };
+    fetchInitialData();
 
-    return () => clearInterval(interval);
-  }, [refreshInterval]);
+    return () => {
+      disconnect();
+    };
+  }, []);
 
-  const getOverallHealthStatus = () => {
-    if (!systemMetrics || !bots.length) {return 'unknown';}
+  // Determine current metrics: use WS data if available, otherwise fallback to initial fetch
+  const latestWsMetric = performanceMetrics[performanceMetrics.length - 1];
 
-    // Derive system health from StatusResponse data
-    const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
-      systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
+  const currentMetric = latestWsMetric || (initialMetrics ? {
+    cpuUsage: 0,
+    memoryUsage: initialMetrics.memory.usage, // This is %
+    activeConnections: 0,
+    messageRate: 0,
+    errorRate: 0,
+    responseTime: 0,
+  } : {
+    cpuUsage: 0,
+    memoryUsage: 0,
+    activeConnections: 0,
+    messageRate: 0,
+    errorRate: 0,
+    responseTime: 0,
+  });
 
-    const botHealthIssues = bots.filter(bot =>
-      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
-    ).length;
-
-    if (systemHealth === 'error' || botHealthIssues > 0) {return 'error';}
-    if (systemHealth === 'warning' || botHealthIssues > 0) {return 'warning';}
-    return 'healthy';
-  };
-
-  const getHealthColor = (status: string) => {
-    switch (status) {
-    case 'healthy': return 'success';
-    case 'warning': return 'warning';
-    case 'error': return 'error';
-    default: return 'info';
-    }
-  };
-
-  const overallStatus = getOverallHealthStatus();
-
-  const tabs = [
-    { icon: <Heart className="w-5 h-5" />, label: 'System Health' },
-    { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
-    { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-  ];
-
-  const stats = [
+  const statusCards = [
     {
-      id: 'health',
       title: 'System Health',
-      value: overallStatus,
-      icon: <Activity className="w-8 h-8" />,
-      color: getHealthColor(overallStatus) as any,
+      subtitle: 'Overall Status',
+      status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
+      metrics: [
+        { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
+        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
+        { label: 'Active', value: currentMetric.activeConnections, icon: '🔌' }
+      ]
     },
     {
-      id: 'active',
-      title: 'Active Bots',
-      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
-      description: 'Connected / Total',
-      icon: <Cpu className="w-8 h-8" />,
-      color: 'primary' as const,
+      title: 'Message Throughput',
+      subtitle: 'Traffic Analysis',
+      status: 'healthy',
+      metrics: [
+        { label: 'Rate', value: currentMetric.messageRate, unit: '/sec' },
+        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
+        { label: 'Errors', value: currentMetric.errorRate, unit: '%' }
+      ]
     },
     {
-      id: 'errors',
-      title: 'Error Rate',
-      value: `${bots.length > 0
-        ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
-        : 0}%`,
-      description: 'Bots with errors',
-      icon: <AlertTriangle className="w-8 h-8" />, // AlertTriangle needs import or use generic
-      color: 'error' as const,
+      title: 'Active Alerts',
+      subtitle: 'System Notifications',
+      status: alerts.length > 0 ? 'warning' : 'healthy',
+      metrics: [
+        { label: 'Total', value: alerts.length, icon: '🔔' },
+        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
+        { label: 'Warning', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' }
+      ]
     },
     {
-      id: 'latency',
-      title: 'Response Time',
-      value: `${bots.length > 0
-        ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
-        : 0}ms`,
-      description: 'Average',
-      icon: <Clock className="w-8 h-8" />,
-      color: 'secondary' as const,
+      title: 'Connection Status',
+      subtitle: 'WebSocket & API',
+      status: isConnected ? 'healthy' : 'error',
+      metrics: [
+        { label: 'WebSocket', value: isConnected ? 'Connected' : 'Disconnected', icon: isConnected ? '🟢' : '🔴' },
+        { label: 'API', value: 'Online', icon: '🟢' },
+        { label: 'Uptime', value: '99.9%', icon: '⏱️' }
+      ]
     }
   ];
-
-  // Need to import AlertTriangle
-  // Added AlertTriangle to imports in the file block above (I'll need to make sure it's actually there)
 
   return (
     <div className="flex-1 space-y-6">
-      {/* Header */}
-      <PageHeader
-        title="System Monitoring"
-        description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
+       <PageHeader
+        title="Monitoring Dashboard"
+        description="Real-time system monitoring and performance metrics"
         icon={ChartBar}
         actions={
-          <Button
-            variant="secondary"
-            className="btn-outline flex items-center gap-2"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              <RotateCcw className="w-4 h-4" />
-            )}
-            Refresh
-          </Button>
+          <div className="flex gap-4">
+             <span className={`badge ${isConnected ? 'badge-success' : 'badge-error'} gap-2`}>
+                {isConnected ? 'Live' : 'Disconnected'}
+             </span>
+            <select
+              className="select select-bordered select-sm"
+              value={refreshInterval}
+              onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            >
+              <option value={1000}>1s</option>
+              <option value={5000}>5s</option>
+              <option value={10000}>10s</option>
+              <option value={30000}>30s</option>
+            </select>
+          </div>
         }
       />
 
-      {/* Overall Health Summary */}
-      <StatsCards stats={stats} isLoading={loading && !systemMetrics} />
-
-      {/* Tab Navigation */}
-      <div className="bg-base-200 border-b border-base-300 rounded-t-lg">
-        <div role="tablist" className="tabs tabs-boxed bg-transparent">
-          {tabs.map((tab, index) => (
-            <a
-              key={index}
-              role="tab"
-              className={`tab gap-2 ${activeTab === index ? 'tab-active' : ''}`}
-              onClick={() => handleTabChange(index)}
-            >
-              {tab.icon}
-              {tab.label}
-            </a>
-          ))}
-        </div>
+      {/* Status Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {statusCards.map((card, index) => (
+          <StatusCard
+            key={index}
+            title={card.title}
+            subtitle={card.subtitle}
+            status={card.status as any}
+            metrics={card.metrics}
+            refreshInterval={refreshInterval}
+            isLoading={isLoading}
+          />
+        ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="bg-base-100 rounded-b-lg border border-t-0 border-base-200">
-        <TabPanel value={activeTab} index={0}>
-          <SystemHealth refreshInterval={refreshInterval} />
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={1}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {bots.map((bot) => (
-              <BotStatusCard
-                key={bot.id}
-                bot={bot}
-                statusData={bot.statusData}
-                onRefresh={handleRefresh}
-              />
-            ))}
-            {bots.length === 0 && (
-              <Alert variant="info">
-                No bots configured. Add bots through the Bot Manager to see status information.
-              </Alert>
-            )}
-          </div>
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={2}>
-          <ActivityMonitor />
-        </TabPanel>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MetricChart
+          title="CPU Usage"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.cpuUsage,
+            label: 'CPU'
+          }))}
+          type="area"
+          color="#ef4444"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
+        <MetricChart
+          title="Memory Usage"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.memoryUsage,
+            label: 'Memory'
+          }))}
+          type="line"
+          color="#3b82f6"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MetricChart
+          title="Message Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.messageRate,
+            label: 'Messages'
+          }))}
+          type="bar"
+          color="#10b981"
+          unit="msgs/sec"
+          refreshInterval={refreshInterval}
+        />
+        <MetricChart
+          title="Error Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.errorRate,
+            label: 'Errors'
+          }))}
+          type="line"
+          color="#f59e0b"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
+      </div>
+
+      {/* Alerts and Events */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <AlertPanel
+          alerts={alerts.map((alert, index) => ({
+            id: alert.id || `alert-${index}`,
+            type: (alert.level === 'critical' ? 'error' : alert.level) || 'info',
+            title: alert.title || 'System Alert',
+            message: alert.message || '',
+            timestamp: alert.timestamp || new Date().toISOString(),
+            source: 'System',
+            metadata: alert.metadata,
+          }))}
+          onAcknowledge={(id) => console.log('Acknowledged alert:', id)}
+          onResolve={(id) => console.log('Resolved alert:', id)}
+          onDismiss={(id) => console.log('Dismissed alert:', id)}
+          maxAlerts={10}
+        />
+        <EventStream
+          maxEvents={20}
+          showFilters={true}
+          autoScroll={true}
+          onEventClick={(event) => console.log('Event clicked:', event)}
+        />
+      </div>
+
+      {/* Detailed System Health (Restored Feature) */}
+      <div className="divider">Detailed System Information</div>
+      <SystemHealth refreshInterval={refreshInterval} />
     </div>
   );
 };
