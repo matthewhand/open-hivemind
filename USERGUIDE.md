@@ -58,6 +58,8 @@ Quick-start templates to help you create bots faster.
 *   **Quick Create**: Use a template to pre-populate the bot creation form.
 *   **Filtering**: Find templates by platform, persona, or LLM provider.
 
+![Bot Templates Page](docs/screenshots/bot-templates-page.png)
+
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
 *   **System Prompt**: Write the core instructions that define who the bot is (e.g., "You are a helpful coding assistant").
