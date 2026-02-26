@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { authenticateToken } from '../middleware/auth';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 
@@ -98,7 +99,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
 });
 
 // Get error statistics (for monitoring)
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
   try {
     const stats = await errorLogger.getErrorStats();
     return res.json(stats);
@@ -109,7 +110,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 });
 
 // Get recent errors (for debugging)
-router.get('/recent', async (req: Request, res: Response) => {
+router.get('/recent', authenticateToken, async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const recentErrors = await errorLogger.getRecentErrors(limit);
