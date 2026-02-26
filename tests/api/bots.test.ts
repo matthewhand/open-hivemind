@@ -16,7 +16,6 @@ jest.mock('../../src/managers/BotManager', () => {
     startBot: jest.fn(),
     stopBot: jest.fn(),
     getBotHistory: jest.fn(),
-    getBotsStatus: jest.fn().mockResolvedValue([]),
   };
   return {
     BotManager: {
@@ -34,8 +33,26 @@ jest.mock('../../src/common/auditLogger', () => ({
   },
 }));
 
+// Mock ActivityLogger
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn(() => ({
+      getEvents: jest.fn(() => Promise.resolve([
+        {
+          id: '1',
+          timestamp: '2023-01-01T00:00:00Z',
+          messageType: 'incoming',
+          contentLength: 10,
+          status: 'success',
+          provider: 'discord',
+          channelId: '123'
+        }
+      ])),
+    })),
+  },
+}));
+
 // Mock WebSocketService
-<<<<<<< HEAD
 jest.mock('../../src/server/services/WebSocketService', () => ({
   WebSocketService: {
     getInstance: jest.fn(() => ({
@@ -79,7 +96,6 @@ describe('Bots Routes', () => {
     it('should return all bots', async () => {
       const bots = [{ id: 'bot1', name: 'Bot 1', isActive: true, messageProvider: 'discord', llmProvider: 'openai' }];
       getMockManager().getAllBots.mockResolvedValue(bots);
-<<<<<<< HEAD
       // Ensure getBotsStatus returns an empty array to match bots count
       getMockManager().getBotsStatus.mockResolvedValue([{ id: 'bot1', isRunning: false }]);
 
@@ -177,6 +193,23 @@ describe('Bots Routes', () => {
       getMockManager().stopBot.mockResolvedValue(true);
 
       await request(app).post('/api/bots/bot1/stop').expect(200);
+    });
+  });
+
+  describe('GET /api/bots/:botId/activity', () => {
+    it('should return bot activity', async () => {
+      getMockManager().getBot.mockResolvedValue({ id: 'bot1', name: 'Bot 1' });
+
+      const response = await request(app).get('/api/bots/bot1/activity').expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.activity).toHaveLength(1);
+      expect(response.body.data.activity[0].action).toBe('INCOMING');
+    });
+
+    it('should return 404 if bot not found', async () => {
+      getMockManager().getBot.mockResolvedValue(null);
+      await request(app).get('/api/bots/bot1/activity').expect(404);
     });
   });
 });

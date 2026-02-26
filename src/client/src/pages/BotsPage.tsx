@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
+import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Search } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -311,12 +311,6 @@ const BotsPage: React.FC = () => {
           <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>Dismiss</button>
         </div>
       )}
-
-      {/* WIP Alert */}
-      <div className="alert alert-warning shadow-sm">
-        <Info className="w-5 h-5" />
-        <span>This page is currently a Work In Progress. Some features (like activity logs) may contain mock data.</span>
-      </div>
 
       {/* Header */}
       <PageHeader
