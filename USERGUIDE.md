@@ -10,6 +10,8 @@ The central hub for monitoring your bot ecosystem.
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
 
+> **Note:** You may see a "Demo Mode Active" banner in some screenshots (e.g., in the Bots section). This indicates the system is running with simulated data for demonstration purposes. Configure your API keys in Settings to enable production mode.
+
 ### [Activity Feed](/admin/activity)
 A comprehensive view of all message processing events and system actions.
 ![Activity Page](docs/screenshots/activity-page-filters.png)
