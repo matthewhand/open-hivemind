@@ -4,6 +4,8 @@ import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
+  CodeBracketIcon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -121,11 +123,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [inputMode, setInputMode] = useState<'form' | 'json'>('form');
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setInputMode('form');
   };
 
   const handleCloseRunModal = () => {
@@ -197,6 +201,85 @@ const MCPToolsPage: React.FC = () => {
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to update tool status' });
     }
+  };
+
+  const updateField = (key: string, value: any) => {
+    try {
+      const current = JSON.parse(runArgs);
+      current[key] = value;
+      setRunArgs(JSON.stringify(current, null, 2));
+    } catch (e) {
+      // Should not happen in form mode if runArgs is valid JSON
+      console.error('Error updating field:', e);
+      // Fallback: reset to basic object with new key
+      const newObj: any = {};
+      newObj[key] = value;
+      setRunArgs(JSON.stringify(newObj, null, 2));
+    }
+  };
+
+  const renderFormInputs = () => {
+    if (!selectedTool?.inputSchema?.properties) {
+      return <div className="text-base-content/60 italic p-4 text-center">No arguments required for this tool.</div>;
+    }
+
+    let currentArgs: any = {};
+    try {
+      currentArgs = JSON.parse(runArgs);
+    } catch (e) {
+      currentArgs = {};
+    }
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(selectedTool.inputSchema.properties).map(([key, schema]: [string, any]) => {
+          const isRequired = selectedTool.inputSchema.required?.includes(key);
+          const value = currentArgs[key] !== undefined ? currentArgs[key] : '';
+
+          return (
+            <div key={key} className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-medium">
+                  {key}
+                  {isRequired && <span className="text-error ml-1">*</span>}
+                </span>
+              </label>
+
+              {schema.type === 'boolean' ? (
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!!value}
+                  onChange={(e) => updateField(key, e.target.checked)}
+                />
+              ) : schema.type === 'integer' || schema.type === 'number' ? (
+                <input
+                  type="number"
+                  className="input input-bordered w-full"
+                  placeholder={schema.description || `Enter ${key}`}
+                  value={value}
+                  onChange={(e) => updateField(key, Number(e.target.value))}
+                />
+              ) : (
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  placeholder={schema.description || `Enter ${key}`}
+                  value={value}
+                  onChange={(e) => updateField(key, e.target.value)}
+                />
+              )}
+
+              {schema.description && (
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">{schema.description}</span>
+                </label>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   if (loading) {
@@ -373,37 +456,65 @@ const MCPToolsPage: React.FC = () => {
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
+            <div className="flex justify-end gap-2 mb-2">
+              <div className="join">
+                <button
+                  className={`join-item btn btn-sm ${inputMode === 'form' ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setInputMode('form')}
+                  title="Form Mode"
+                >
+                  <ListBulletIcon className="w-4 h-4" />
+                </button>
+                <button
+                  className={`join-item btn btn-sm ${inputMode === 'json' ? 'btn-active btn-primary' : ''}`}
+                  onClick={() => setInputMode('json')}
+                  title="JSON Mode"
+                >
+                  <CodeBracketIcon className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
+            {inputMode === 'form' ? (
+              <div className="bg-base-200 p-4 rounded-lg">
+                 {renderFormInputs()}
+              </div>
+            ) : (
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
+                  <span className="label-text font-medium">Arguments (JSON)</span>
                 </label>
-              )}
-            </div>
+                <textarea
+                  className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                  value={runArgs}
+                  onChange={(e) => {
+                    setRunArgs(e.target.value);
+                    if (jsonError) setJsonError(null);
+                  }}
+                  placeholder="{}"
+                  disabled={isRunning}
+                />
+                {jsonError && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{jsonError}</span>
+                  </label>
+                )}
+              </div>
+            )}
+
+            {inputMode === 'form' && (
+              <div className="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="checkbox" />
+                <div className="collapse-title text-sm font-medium opacity-70">
+                  View Generated JSON
+                </div>
+                <div className="collapse-content">
+                  <pre className="text-xs font-mono bg-base-300 p-2 rounded overflow-x-auto">
+                    {runArgs}
+                  </pre>
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
