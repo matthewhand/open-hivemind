@@ -15,8 +15,77 @@ test.describe('Monitoring Dashboard Screenshots', () => {
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );
 
-    // Mock Config (Bots)
-    await page.route('**/api/config', async (route) =>
+    // Mock Monitoring specific endpoints
+
+    // 1. System Health (used by SystemHealth component)
+    await page.route('/api/health/detailed', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          status: 'healthy',
+          timestamp: new Date().toISOString(),
+          uptime: 3600 * 24 * 5, // 5 days
+          memory: {
+            used: 8 * 1024, // 8GB in MB
+            total: 16 * 1024, // 16GB in MB
+            usage: 50,
+          },
+          cpu: {
+            user: 15,
+            system: 5,
+          },
+          system: {
+            platform: 'linux',
+            arch: 'x64',
+            release: '5.15.0',
+            hostname: 'prod-server-01',
+            loadAverage: [0.5, 0.4, 0.3],
+          },
+        },
+      })
+    );
+
+    // 2. Dashboard Status (used by MonitoringDashboard to get bot statuses)
+    await page.route('/api/dashboard/api/status', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          bots: [
+            {
+              name: 'CustomerSupportBot',
+              provider: 'discord',
+              llmProvider: 'openai',
+              status: 'active',
+              connected: true,
+              messageCount: 1542,
+              errorCount: 2,
+            },
+            {
+              name: 'InternalHelper',
+              provider: 'slack',
+              llmProvider: 'anthropic',
+              status: 'active',
+              connected: true,
+              messageCount: 89,
+              errorCount: 0,
+            },
+            {
+              name: 'DevBot',
+              provider: 'mattermost',
+              llmProvider: 'local',
+              status: 'warning',
+              connected: true,
+              messageCount: 12,
+              errorCount: 5,
+            },
+          ],
+          uptime: 3600 * 24 * 5,
+        },
+      })
+    );
+
+    // 3. Config (used by MonitoringDashboard to get bot list)
+    await page.route('/api/config', async (route) =>
       route.fulfill({
         status: 200,
         json: {
