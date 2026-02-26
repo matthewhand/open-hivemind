@@ -147,6 +147,13 @@ Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
 *   **Default Persona**: The base personality applied to new bots.
 
+### Demo Mode
+When running in demonstration mode (as seen in screenshots), a purple banner appears at the top of the interface. This mode allows users to experience the platform with simulated bots and data without requiring external API keys.
+
+*   **Banner**: Displays active demo bot counts and provides a quick link to settings.
+*   **Dismissal**: The banner can be dismissed for the current session.
+*   **Configuration**: Configure API keys in Settings to switch to production mode.
+
 ## AI & Analytics
 
 ### [AI Dashboard](/admin/ai/dashboard)
@@ -228,3 +235,5 @@ To regenerate screenshots:
    ```
 
 This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
+
+**Note:** Always verify the generated screenshots for visual regressions or layout issues before committing changes to the documentation.
