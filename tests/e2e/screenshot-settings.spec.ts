@@ -27,6 +27,7 @@ test.describe('Settings Screenshots', () => {
 
     // Wait for content to load properly
     await page.waitForSelector('h5:has-text("General Settings")');
+    await page.getByText('System Limits', { exact: true }).waitFor();
 
     // Wait a bit for the select to populate and UI to settle
     await page.waitForTimeout(1000);
