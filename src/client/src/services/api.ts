@@ -880,6 +880,14 @@ class ApiService {
   async getEnvOverrides(): Promise<any> {
     return this.request('/api/admin/env-overrides');
   }
+
+  async startBot(botId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/bots/${botId}/start`, { method: 'POST' });
+  }
+
+  async stopBot(botId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/bots/${botId}/stop`, { method: 'POST' });
+  }
 }
 
 export const apiService = new ApiService();
