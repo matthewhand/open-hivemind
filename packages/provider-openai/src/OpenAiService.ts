@@ -143,118 +143,13 @@ export class OpenAiService {
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
     debug('[DEBUG] History messages count:', historyMessages.length);
 
-    const fullMetadata = {
-      workspaceInfo: {
-        workspaceId: 'T123456',
-        workspaceName: 'ENAB101',
-      },
-      channelInfo: {
-        channelId: 'C123456',
-        channelName: 'lecture-1',
-        description: 'Writing academically tips',
-        createdDate: '2025-01-01T09:00:00Z',
-      },
-      threadInfo: {
-        isThread: true,
-        threadTs: '1692302345.2345',
-        threadOwnerUserId: 'U999999',
-        threadParticipants: ['U999999', 'U123456'],
-        messageCount: 4,
-      },
-      slackUser: {
-        slackUserId: 'U123456',
-        userName: 'jane_student',
-        email: 'jane@example.edu',
-        preferredName: 'Jane',
-        isStaff: false,
-        dateOfBirth: '2000-05-10',
-        userCreatedDate: '2024-01-15T10:00:00Z',
-      },
-      studentCourseAttempt: {
-        courseCd: 'ENAB101',
-        courseVersionNumber: 1,
-        courseStatus: 'ENROLLED',
-        commencedDate: '2024-02-01T00:00:00Z',
-        course: {
-          courseCd: 'ENAB101',
-          versionNumber: 1,
-          courseType: 'Diploma',
-          title: 'Enabling Learning Strategies',
-          courseStatus: 'ACTIVE',
-          creditPoints: 12,
-        },
-      },
-      unitAttempts: {
-        unitAttempt: [
-          {
-            courseCd: 'ENAB101',
-            unitAttemptStatus: 'ENROLLED',
-            outcomeDate: null,
-            grade: null,
-            mark: null,
-            enrolledUnit: {
-              unitCd: 'ENAB101-01',
-              version: 1,
-              title: 'Academic Writing Basics',
-              creditPoints: 3,
-              unitStatus: 'active',
-            },
-          },
-        ],
-      },
-      learningCanvas: {
-        title: 'How to write academically',
-        description: 'Guidelines for academic style',
-        contentUrl: 'https://une-n70.slack.com/canvas/C07GNG6MAV9',
-      },
-      messageAttachments: [
-        {
-          id: 9999,
-          fileName: 'example.pdf',
-          fileType: 'pdf',
-          url: 'https://une-n70.slack.com/files/U07GNGXLMGB/F082J4FFNA1/usyd_ai_policy_change.pdf',
-          size: 2048,
-        },
-      ],
-      messageReactions: [
-        {
-          reaction: 'thumbsup',
-          reactedUserId: 'U999999',
-          messageId: 999999,
-          messageChannelId: 'C123456',
-        },
-      ],
-    };
-
-    const conversationId = 'conversation-id-string-less-than-40-char';
-    const toolCallId = 'matches-tool_call_id-in-tool-message';
-
     const chatParams: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemMessageContent },
-      { role: 'user', content: message },
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
         content: msg.getText() || '',
       })),
-      {
-        role: 'assistant',
-        content: '',
-        tool_calls: [
-          {
-            id: toolCallId,
-            type: 'function',
-            function: {
-              name: 'metadata_for_conversation',
-              arguments: conversationId,
-            },
-          },
-        ],
-      },
-      {
-        role: 'tool',
-        tool_call_id: toolCallId,
-        content: JSON.stringify(fullMetadata),
-      },
+      { role: 'user', content: message },
     ];
 
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
