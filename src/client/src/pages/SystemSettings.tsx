@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
@@ -7,17 +8,25 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import { Cog } from 'lucide-react';
 
 const SystemSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
-
-  const breadcrumbItems = [
-    { label: 'Settings', href: '/uber/settings', isActive: true },
-  ];
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTabId = searchParams.get('tab');
 
   const tabs = [
-    { label: 'General', component: <SettingsGeneral /> },
-    { label: 'Messaging', component: <SettingsMessaging /> },
-    { label: 'Security', component: <SettingsSecurity /> },
+    { id: 'general', label: 'General', component: <SettingsGeneral /> },
+    { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
+    { id: 'security', label: 'Security', component: <SettingsSecurity /> },
   ];
+
+  const activeTabId = tabs.find(t => t.id === rawTabId) ? rawTabId : 'general';
+  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
+  const breadcrumbItems = [
+    { label: 'Settings', href: '/admin/settings', isActive: true },
+  ];
+
+  const handleTabChange = (id: string) => {
+    setSearchParams({ tab: id });
+  };
 
   return (
     <div className="p-6">
@@ -33,11 +42,11 @@ const SystemSettings: React.FC = () => {
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="tabs tabs-boxed mb-6">
-            {tabs.map((tab, index) => (
+            {tabs.map((tab) => (
               <a
-                key={index}
-                className={`tab ${activeTab === index ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab(index)}
+                key={tab.id}
+                className={`tab ${activeTabId === tab.id ? 'tab-active' : ''}`}
+                onClick={() => handleTabChange(tab.id)}
               >
                 {tab.label}
               </a>
@@ -45,7 +54,7 @@ const SystemSettings: React.FC = () => {
           </div>
 
           <div className="mt-4">
-            {tabs[activeTab].component}
+            {activeTab.component}
           </div>
         </div>
       </div>

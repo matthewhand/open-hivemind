@@ -119,7 +119,7 @@ Monitor real-time interactions and events across your bot ecosystem.
 *   **Timeline View**: Visualize the sequence of events over time.
 
 ### [Settings](/admin/settings)
-General system configuration.
+General system configuration. Tabs are deep-linkable (e.g., `/admin/settings?tab=security`), allowing you to bookmark specific configuration sections.
 ![General Settings](docs/screenshots/settings-general.png)
 
 *   **Instance Information**: Configure instance name and description.
