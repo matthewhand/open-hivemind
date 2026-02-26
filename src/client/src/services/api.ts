@@ -438,6 +438,15 @@ class ApiService {
     return this.request('/api/config/reload', { method: 'POST' });
   }
 
+  async getBots(): Promise<any[]> {
+    return this.request<any[]>('/api/bots');
+  }
+
+  async getBotHistory(botId: string, limit: number = 20): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: { history: any[] } }>(`/api/bots/${botId}/history?limit=${limit}`);
+    return res.data?.history || [];
+  }
+
   async createBot(botData: {
     name: string;
     messageProvider: string;
