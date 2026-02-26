@@ -19,7 +19,7 @@ test.describe('LLM Providers Screenshots', () => {
       route.fulfill({
         status: 200,
         json: {
-          defaultConfigured: true,
+          configured: true,
           defaultProviders: [{ id: 'openai-default', name: 'OpenAI GPT-4', type: 'openai' }],
           botsMissingLlmProvider: [],
           hasMissing: false,
