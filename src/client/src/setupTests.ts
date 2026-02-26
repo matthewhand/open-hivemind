@@ -11,50 +11,34 @@ configure({ testIdAttribute: 'data-testid' });
 global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
 
-// Polyfill HTMLDialogElement for JSDOM environments that don't support it
-if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
-  class HTMLDialogElement extends HTMLElement {
-    open = false;
-    returnValue = '';
-
-    constructor() {
-      super();
+// Polyfill or Mock HTMLDialogElement
+if (typeof window !== 'undefined') {
+  // If HTMLDialogElement is missing entirely (older JSDOM)
+  if (!window.HTMLDialogElement) {
+    class HTMLDialogElementMock extends HTMLElement {
+      open = false;
+      returnValue = '';
+      constructor() { super(); }
+      show() { this.open = true; this.setAttribute('open', ''); }
+      showModal() { this.open = true; this.setAttribute('open', ''); }
+      close() {
+        this.open = false;
+        this.removeAttribute('open');
+        this.dispatchEvent(new Event('close'));
+      }
     }
-
-    show() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
-
-    showModal() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
-
-    close() {
-      this.open = false;
-      this.removeAttribute('open');
-      this.dispatchEvent(new Event('close'));
-    }
-  }
-  (window as any).HTMLDialogElement = HTMLDialogElement;
-}
-
-// Ensure methods are attached to the prototype if they don't exist
-// This handles cases where JSDOM has HTMLDialogElement but not the methods
-if (typeof HTMLDialogElement !== 'undefined') {
-  if (!HTMLDialogElement.prototype.show) {
-    HTMLDialogElement.prototype.show = function() {
+    (window as any).HTMLDialogElement = HTMLDialogElementMock;
+  } else {
+    // If HTMLDialogElement exists (newer JSDOM), ensure methods are mocked
+    // We forcefully overwrite because JSDOM implementation might throw "Not Implemented"
+    // or just be missing these specific methods while the class exists.
+    window.HTMLDialogElement.prototype.show = function() {
       this.setAttribute('open', '');
     };
-  }
-  if (!HTMLDialogElement.prototype.showModal) {
-    HTMLDialogElement.prototype.showModal = function() {
+    window.HTMLDialogElement.prototype.showModal = function() {
       this.setAttribute('open', '');
     };
-  }
-  if (!HTMLDialogElement.prototype.close) {
-    HTMLDialogElement.prototype.close = function() {
+    window.HTMLDialogElement.prototype.close = function() {
       this.removeAttribute('open');
       this.dispatchEvent(new Event('close'));
     };

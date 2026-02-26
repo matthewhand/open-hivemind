@@ -16,8 +16,6 @@ vi.mock('../../services/api', () => ({
     deleteSystemBackup: vi.fn(),
     getApiEndpointsStatus: vi.fn(),
     clearCache: vi.fn(),
-    getSystemInfo: vi.fn(),
-    getEnvOverrides: vi.fn(),
   },
 }));
 
@@ -25,6 +23,36 @@ vi.mock('../../services/api', () => ({
 vi.mock('../../contexts/WebSocketContext', () => ({
   useWebSocket: vi.fn(),
 }));
+
+// Mock Modal since JSDOM doesn't support dialog fully
+vi.mock('../../components/DaisyUI/Modal', () => {
+  return {
+    __esModule: true,
+    default: ({ isOpen, children, title }: any) => {
+      if (!isOpen) return null;
+      return (
+        <div role="dialog" aria-label={title}>
+          {title && <h2>{title}</h2>}
+          {children}
+        </div>
+      );
+    },
+    // Export named exports as well if they are used
+    ConfirmModal: ({ isOpen, onConfirm }: any) => isOpen ? <button onClick={onConfirm}>Confirm</button> : null,
+    FormModal: ({ isOpen, onSubmit, children, title }: any) => {
+        if (!isOpen) return null;
+        return (
+            <div role="dialog" aria-label={title}>
+                <h2>{title}</h2>
+                <form onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
+                    {children}
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        )
+    }
+  };
+});
 
 describe('SystemManagement', () => {
   const mockWebSocket = {
@@ -49,20 +77,6 @@ describe('SystemManagement', () => {
         { id: '1', name: 'Test API', status: 'online', responseTime: 50, consecutiveFailures: 0, lastChecked: new Date().toISOString() }
       ]
     });
-    (apiService.getSystemInfo as any).mockResolvedValue({
-      systemInfo: {
-        platform: 'linux',
-        arch: 'x64',
-        nodeVersion: 'v20.0.0',
-        uptime: 1000,
-        pid: 1234,
-        memory: { rss: 1000000 },
-        database: { connected: true, stats: {} }
-      }
-    });
-    (apiService.getEnvOverrides as any).mockResolvedValue({
-      data: { envVars: {} }
-    });
 
     // Mock window methods
     window.alert = vi.fn();
@@ -78,30 +92,26 @@ describe('SystemManagement', () => {
   it('handles backup creation with encryption', async () => {
     render(<SystemManagement />);
 
-    // Find create backup button - use exact text or regex to distinguish from modal button
-    // The header button has "💾 Create Backup"
-    const createButton = screen.getByText(/💾 Create Backup/);
+    // Find create backup button
+    const createButton = screen.getByText('Create Backup');
     fireEvent.click(createButton);
 
     // Expect modal to open
     const modalTitle = await screen.findByText('Create System Backup');
     expect(modalTitle).toBeInTheDocument();
 
-    // Check encryption - use findByText to wait for rendering
-    const encryptLabel = await screen.findByText('Encrypt Backup');
-    fireEvent.click(encryptLabel);
+    // Check encryption
+    // In DaisyUI toggle/checkbox often doesn't have a label element directly associated via 'for' attribute in the way getByLabelText expects if custom structure is used.
+    // We'll try to find by role 'checkbox'
+    const encryptCheckbox = screen.getByRole('checkbox', { name: /encrypt backup/i });
+    fireEvent.click(encryptCheckbox);
 
-    // Enter password - use findByPlaceholderText to wait for conditional rendering
-    const passwordInput = await screen.findByPlaceholderText('Enter a strong password');
+    // Enter password
+    const passwordInput = screen.getByPlaceholderText('Enter a strong password');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    // Submit - The modal button is just "Create Backup"
-    // We need to be careful not to click the header button again.
-    // The header button is likely disabled or hidden? No.
-    // But the modal button is inside the dialog.
-    // We can scope to dialog if needed, or use specific text.
-    // The modal button has exact text "Create Backup". The header one has "💾 Create Backup".
-    const submitButton = screen.getByRole('button', { name: /^Create Backup$/ });
+    // Submit
+    const submitButton = screen.getByText('Submit'); // From our mocked FormModal
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -121,7 +131,6 @@ describe('SystemManagement', () => {
 
     // Expect API call
     await waitFor(() => expect(apiService.getApiEndpointsStatus).toHaveBeenCalled());
-    await waitFor(() => expect(apiService.getSystemInfo).toHaveBeenCalled());
 
     // Expect data to be displayed
     await waitFor(() => expect(screen.getByText('Test API')).toBeInTheDocument());

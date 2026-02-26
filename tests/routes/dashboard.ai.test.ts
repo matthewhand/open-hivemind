@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
 // Mock auth middleware to bypass authentication
@@ -9,6 +10,18 @@ jest.mock('../../src/server/middleware/auth', () => ({
 
 describe('AI Dashboard Routes', () => {
   let app: express.Application;
+
+  beforeAll(async () => {
+    const db = DatabaseManager.getInstance({
+      type: 'sqlite',
+      path: ':memory:',
+    });
+    await db.connect();
+  });
+
+  afterAll(async () => {
+    await DatabaseManager.getInstance().disconnect();
+  });
 
   beforeEach(() => {
     app = express();

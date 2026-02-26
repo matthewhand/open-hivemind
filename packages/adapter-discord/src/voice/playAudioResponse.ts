@@ -9,7 +9,6 @@ import {
   type DiscordGatewayAdapterCreator,
 } from '@discordjs/voice';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
-// Fix: Added missing import for DiscordGatewayAdapterCreator
 import discordConfig from '@config/discordConfig';
 
 const debug = Debug('app:playAudioResponse');
@@ -37,14 +36,30 @@ export async function playAudioResponse(
       throw new Error('User is not in a voice channel.');
     }
 
-    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
-    const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
+    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string;
+    const audioFilePath = path.join(audioDirectory, fileName);
     debug(`Playing audio file: ${audioFilePath}`);
 
     const connection = joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator, // Fix: Correct type casting
+      /**
+       * TYPE CAST RATIONALE: discord-api-types version mismatch
+       *
+       * `discord.js` depends on a newer `discord-api-types` version that added
+       * `GuildMemberFlags.IsGuest` and `GatewayIntentBits.AutoModerationConfiguration`.
+       * `@discordjs/voice` still depends on an older `discord-api-types` version
+       * that does not include these additions.
+       *
+       * As a result, `VoiceAdapterCreator` (from @discordjs/voice) and
+       * `voiceAdapterCreator` (from discord.js) are structurally incompatible at
+       * the TypeScript type level, even though they are compatible at runtime.
+       *
+       * This cast can be removed once @discordjs/voice updates its
+       * discord-api-types peer dependency to match discord.js.
+       * Track: https://github.com/discordjs/discord.js/issues/9928
+       */
+      adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
     });
 
     connection.on('stateChange', (oldState, newState) => {
@@ -68,7 +83,7 @@ export async function playAudioResponse(
 
     player.on('error', (error) => {
       debug(`Error during audio playback: ${error.message}`);
-      debug(error.stack); // Improvement: log stack trace for better debugging
+      debug(error.stack);
       connection.destroy();
       throw error;
     });

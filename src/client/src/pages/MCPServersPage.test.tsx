@@ -7,9 +7,36 @@ import { act } from 'react';
 // Mock fetch
 global.fetch = jest.fn();
 
+// Mock Modal to avoid JSDOM issues with <dialog>
+jest.mock('../components/DaisyUI/Modal', () => ({
+  __esModule: true,
+  default: ({ children, isOpen, title }: { children: React.ReactNode; isOpen: boolean; title?: string }) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h2>{title}</h2>}
+        {children}
+      </div>
+    ) : null
+  ),
+}));
+
 describe('MCPServersPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock HTMLDialogElement methods manually to ensure Modal works
+    // Patch both HTMLElement (for JSDOM fallback) and HTMLDialogElement
+    const mockShowModal = jest.fn();
+    const mockClose = jest.fn();
+
+    (HTMLElement.prototype as any).showModal = mockShowModal;
+    (HTMLElement.prototype as any).close = mockClose;
+
+    if (typeof window !== 'undefined' && window.HTMLDialogElement) {
+      window.HTMLDialogElement.prototype.showModal = mockShowModal;
+      window.HTMLDialogElement.prototype.close = mockClose;
+    }
+
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -77,12 +104,14 @@ describe('MCPServersPage', () => {
       });
     });
 
+    let container: HTMLElement;
     await act(async () => {
-      render(
+      const result = render(
         <MemoryRouter>
           <MCPServersPage />
         </MemoryRouter>
       );
+      container = result.container;
     });
 
     // Wait for servers to load
@@ -91,9 +120,9 @@ describe('MCPServersPage', () => {
     });
 
     // Find the "Start" button (PlayIcon)
-    // Since we don't have aria-labels or predictable text on the icon button,
-    // we look for the button with title "Start Server"
-    const startButton = screen.getByTitle('Start Server');
+    // The button uses a tooltip data-tip="Connect"
+    const startButton = container!.querySelector('button[data-tip="Connect"]');
+    if (!startButton) throw new Error('Start button not found');
 
     await act(async () => {
       fireEvent.click(startButton);

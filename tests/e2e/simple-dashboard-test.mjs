@@ -1,8 +1,8 @@
 import { describe, it, before, after, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
 
 // Test configuration
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:5005';
@@ -29,7 +29,7 @@ describe('Dashboard E2E Tests', function() {
       console.log('Server not running, attempting to start...');
       try {
         // Import and start the server
-        const serverModule = require('../../dist/src/index');
+        const serverModule = await import('../../dist/src/index.js');
         app = serverModule.default || serverModule;
         
         // Start server on test port

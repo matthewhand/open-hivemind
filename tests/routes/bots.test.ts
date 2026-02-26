@@ -9,9 +9,44 @@ jest.mock('../../src/managers/BotManager');
 // Mock WebSocketService
 jest.mock('../../src/server/services/WebSocketService');
 
+// Mock ShutdownCoordinator to prevent process exit during tests
+jest.mock('../../src/server/ShutdownCoordinator', () => ({
+  ShutdownCoordinator: {
+    getInstance: jest.fn().mockReturnValue({
+      registerHttpServer: jest.fn(),
+      registerViteServer: jest.fn(),
+      registerMessengerService: jest.fn(),
+      registerService: jest.fn(),
+      isShuttingDownNow: jest.fn().mockReturnValue(false),
+      setupSignalHandlers: jest.fn(),
+      initiateShutdown: jest.fn(),
+    }),
+  },
+  default: {
+    getInstance: jest.fn().mockReturnValue({
+      registerHttpServer: jest.fn(),
+      registerViteServer: jest.fn(),
+      registerMessengerService: jest.fn(),
+      registerService: jest.fn(),
+      isShuttingDownNow: jest.fn().mockReturnValue(false),
+      setupSignalHandlers: jest.fn(),
+      initiateShutdown: jest.fn(),
+    }),
+  },
+}));
+
 // Mock authenticateToken middleware
 jest.mock('../../src/server/middleware/auth', () => ({
   authenticateToken: (req: any, res: any, next: any) => next(),
+}));
+
+// Mock ShutdownCoordinator to prevent process.exit
+jest.mock('../../src/server/ShutdownCoordinator', () => ({
+  ShutdownCoordinator: {
+    getInstance: jest.fn().mockReturnValue({
+      initiateShutdown: jest.fn(),
+    }),
+  },
 }));
 
 describe('Bots Router', () => {
@@ -19,6 +54,19 @@ describe('Bots Router', () => {
   let mockManager: any;
   let mockWsService: any;
   let botsRouter: any;
+  let processExitSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    // Mock process.exit to prevent Jest from crashing if ShutdownCoordinator triggers it
+    processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
+      console.log(`process.exit called with ${code}`);
+      return undefined as never;
+    });
+  });
+
+  afterAll(() => {
+    processExitSpy.mockRestore();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -71,9 +119,9 @@ describe('Bots Router', () => {
     // Mock WebSocketService responses
     mockWsService.getBotStats.mockImplementation((name: string) => {
       if (name === 'Bot 1') {
-        return { messageCount: 10, errors: ['error1', 'error2'] };
+        return { messageCount: 10, errors: ['error1', 'error2'], errorCount: 2 };
       } else {
-        return { messageCount: 0, errors: [] };
+        return { messageCount: 0, errors: [], errorCount: 0 };
       }
     });
 

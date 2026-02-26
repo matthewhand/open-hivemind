@@ -192,18 +192,24 @@ export class ShutdownCoordinator {
     // Ensure we exit within total timeout
     const forceExitTimer = setTimeout(() => {
       console.error('⚠️  Shutdown timed out, forcing exit');
-      process.exit(1);
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(1);
+      }
     }, this.totalTimeout);
 
     try {
       await this.executeShutdownSequence();
       console.log('✅ Graceful shutdown completed successfully');
       clearTimeout(forceExitTimer);
-      process.exit(exitCode);
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(exitCode);
+      }
     } catch (error) {
       console.error('❌ Error during shutdown:', error);
       clearTimeout(forceExitTimer);
-      process.exit(1);
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(1);
+      }
     }
   }
 

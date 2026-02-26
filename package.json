@@ -39,9 +39,9 @@
     "test:real:legacy": "./scripts/run-real-tests.sh",
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
-    "test:e2e": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000",
-    "test:e2e:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test TEST_SERVER_RUNNING=true node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --reporter spec",
-    "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --watch",
+    "test:e2e": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000",
+    "test:e2e:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test TEST_SERVER_RUNNING=true node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000 --reporter spec",
+    "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000 --watch",
     "test:playwright": "node ./node_modules/.bin/playwright test",
     "generate-docs": "mkdir -p docs/screenshots && node ./node_modules/.bin/playwright test tests/e2e/screenshot-*.spec.ts --project=chromium",
     "docs:screenshots": "npx playwright test tests/e2e/docs-screenshots.spec.ts",
@@ -118,13 +118,11 @@
     "express-session": "^1.18.2",
     "express-sitemap-xml": "^3.1.0",
     "express-validator": "^7.3.1",
-    "fast-xml-parser": "^5.3.6",
     "ffmpeg-static": "^5.2.0",
     "flowise-sdk": "^1.0.8",
     "form-data": "^4.0.4",
     "framer-motion": "^12.23.19",
     "gpt-tokenizer": "^2.1.2",
-    "hono": "^4.12.2",
     "html-entities": "^2.5.2",
     "inquirer": "^12.9.4",
     "ioredis": "^5.8.2",
@@ -167,7 +165,8 @@
     "typeforce": "^1.18.0",
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "hono": "^4.6.14"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -259,7 +258,7 @@
   "overrides": {
     "undici": "^6.23.0",
     "uuid": "^11.1.0",
-    "fast-xml-parser": "^5.3.6",
+    "fast-xml-parser": "^5.4.1",
     "tar": "^7.5.9"
   }
 }
