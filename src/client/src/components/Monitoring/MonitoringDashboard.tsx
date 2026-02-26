@@ -47,7 +47,7 @@ interface MonitoringDashboardProps {
 }
 
 const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
-  refreshInterval = 30000,
+  refreshInterval: initialRefreshInterval = 30000,
   onRefresh,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -55,6 +55,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const [systemMetrics, setSystemMetrics] = useState<StatusResponse | null>(null);
   const [bots, setBots] = useState<BotWithStatus[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [refreshInterval, setRefreshInterval] = useState(initialRefreshInterval);
 
   const handleTabChange = (newValue: number) => {
     setActiveTab(newValue);
@@ -124,7 +125,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [refreshInterval]);
 
   const getOverallHealthStatus = () => {
-    if (!bots.length) {return 'unknown';}
+    if (!bots.length) { return 'unknown'; }
 
     const botHealthIssues = bots.filter(bot =>
       bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
@@ -139,10 +140,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
   const getHealthColor = (status: string) => {
     switch (status) {
-    case 'healthy': return 'success';
-    case 'warning': return 'warning';
-    case 'error': return 'error';
-    default: return 'info';
+      case 'healthy': return 'success';
+      case 'warning': return 'warning';
+      case 'error': return 'error';
+      default: return 'info';
     }
   };
 
@@ -203,19 +204,30 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
         icon={ChartBar}
         actions={
-          <Button
-            variant="secondary"
-            className="btn-outline flex items-center gap-2"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              <RotateCcw className="w-4 h-4" />
-            )}
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <select
+              className="select select-bordered select-sm"
+              value={refreshInterval}
+              onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            >
+              <option value={30000}>30 seconds</option>
+              <option value={60000}>1 minute</option>
+              <option value={300000}>5 minutes</option>
+            </select>
+            <Button
+              variant="secondary"
+              className="btn-outline flex items-center gap-2"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <RotateCcw className="w-4 h-4" />
+              )}
+              Refresh
+            </Button>
+          </div>
         }
       />
 
