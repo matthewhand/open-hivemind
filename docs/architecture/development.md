@@ -4,6 +4,98 @@
 
 Open-Hivemind is an advanced, multi-agent bot ecosystem built with TypeScript. This system is designed with a modular architecture that scales from a single bot instance to a coordinated swarm across multiple messaging platforms such as Discord and Slack. This guide provides an exhaustive reference for developing new features, debugging complex issues, and maintaining a robust, fault-tolerant system.
 
+## Plugin Architecture: Adapters and Providers
+
+Open-Hivemind uses a **plugin-based architecture** where messaging adapters and LLM providers are **dynamically loaded** at runtime, not compiled into core code. This enables:
+
+- **Hot-swappable providers** – Switch LLM backends without code changes
+- **Platform extensibility** – Add new messaging platforms without modifying core logic
+- **Clean separation** – Core business logic is independent of specific implementations
+
+### Package Structure
+
+```
+packages/
+├── adapter-discord/      # Discord messaging adapter
+├── adapter-slack/        # Slack messaging adapter
+├── adapter-mattermost/   # Mattermost messaging adapter
+├── provider-openai/      # OpenAI LLM provider
+├── provider-flowise/     # Flowise LLM provider
+├── provider-openwebui/   # OpenWebUI LLM provider
+├── provider-openswarm/   # OpenSwarm LLM provider
+└── shared-types/         # Common interfaces (ILlmProvider, IAdapterFactory)
+```
+
+### Dynamic Loading Pattern
+
+Adapters and providers are loaded dynamically via `require()` based on configuration:
+
+**LLM Provider Loading** ([`src/llm/getLlmProvider.ts`](src/llm/getLlmProvider.ts:103)):
+```typescript
+switch (config.type.toLowerCase()) {
+  case 'openai':
+    const { OpenAiProvider } = require('@hivemind/provider-openai');
+    instance = new OpenAiProvider(config.config);
+    break;
+  case 'flowise':
+    instance = new FlowiseProvider(config.config);
+    break;
+  // ... additional providers
+}
+```
+
+**Adapter Loading** ([`src/message/management/getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts:91)):
+```typescript
+const DiscordMgr = require('@hivemind/adapter-discord');
+const svc = DiscordMgr?.DiscordService?.getInstance;
+```
+
+### Interface Contracts
+
+All plugins implement interfaces defined in [`packages/shared-types/`](packages/shared-types/src/):
+
+- **[`ILlmProvider`](packages/shared-types/src/ILlmProvider.ts)** – LLM providers must implement:
+  - `name: string` – Provider identifier
+  - `supportsChatCompletion()` – Capability check
+  - `generateChatCompletion()` – Main chat completion method
+  - `generateCompletion()` – Plain text completion
+
+- **[`IAdapterFactory`](packages/shared-types/src/IAdapterFactory.ts)** – Messaging adapters must implement:
+  - `createService(config, dependencies)` – Factory function returning `IMessengerService`
+  - `metadata` – Adapter metadata (name, version, platform)
+
+### Configuration-Driven Loading
+
+Providers and adapters are selected via environment variables or config files:
+
+```env
+# Select LLM provider(s)
+LLM_PROVIDER=openai,flowise
+
+# Select messaging platform(s)
+MESSAGE_PROVIDER=discord,slack
+
+# Per-bot overrides
+BOTS_SUPPORT_BOT_MESSAGE_PROVIDER=slack
+BOTS_SUPPORT_BOT_LLM_PROVIDER=openai
+```
+
+The [`ProviderConfigManager`](src/config/ProviderConfigManager.ts) maintains a registry of configured instances, and the core dynamically instantiates only the providers/adapters referenced in configuration.
+
+### Developing New Adapters/Providers
+
+To add a new messaging platform or LLM backend:
+
+1. **Create a new package** under `packages/adapter-<name>` or `packages/provider-<name>`
+2. **Implement the interface** – Extend `ILlmProvider` or `IAdapterFactory` from `@hivemind/shared-types`
+3. **Export your class** – Ensure it's accessible via `require()`
+4. **Add configuration schema** – Update [`BotConfigurationManager`](src/config/BotConfigurationManager.ts) if new config fields are needed
+5. **Register in loader** – Add a case to [`getLlmProvider.ts`](src/llm/getLlmProvider.ts) or [`getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts)
+
+See existing packages for implementation patterns:
+- **Discord adapter**: [`packages/adapter-discord/src/DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts)
+- **OpenAI provider**: [`packages/provider-openai/src/openAiProvider.ts`](packages/provider-openai/src/openAiProvider.ts)
+
 ## Core Architecture and Integration Details
 
 ### Multi-Agent System and Bot Initialization
