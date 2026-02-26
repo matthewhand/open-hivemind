@@ -24,6 +24,35 @@ vi.mock('../../contexts/WebSocketContext', () => ({
   useWebSocket: vi.fn(),
 }));
 
+// Mock Modal since JSDOM doesn't support dialog fully
+vi.mock('../../components/DaisyUI/Modal', () => {
+  return {
+    __esModule: true,
+    default: ({ isOpen, children, title }: any) => {
+      if (!isOpen) return null;
+      return (
+        <div role="dialog" aria-label={title}>
+          {title && <h2>{title}</h2>}
+          {children}
+        </div>
+      );
+    },
+    ConfirmModal: ({ isOpen, onConfirm }: any) => isOpen ? <button onClick={onConfirm}>Confirm</button> : null,
+    FormModal: ({ isOpen, onSubmit, children, title, submitText }: any) => {
+        if (!isOpen) return null;
+        return (
+            <div role="dialog" aria-label={title}>
+                <h2>{title}</h2>
+                <form data-testid="modal-form" onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
+                    {children}
+                    <button type="submit">{submitText || 'Submit'}</button>
+                </form>
+            </div>
+        )
+    }
+  };
+});
+
 describe('SystemManagement', () => {
   const mockWebSocket = {
     alerts: [],
@@ -62,8 +91,8 @@ describe('SystemManagement', () => {
   it('handles backup creation with encryption', async () => {
     render(<SystemManagement />);
 
-    // Find create backup button
-    const createButton = screen.getByText('Create Backup');
+    // Find create backup button - matches the button with emoji
+    const createButton = screen.getByRole('button', { name: /create backup/i });
     fireEvent.click(createButton);
 
     // Expect modal to open
@@ -71,16 +100,18 @@ describe('SystemManagement', () => {
     expect(modalTitle).toBeInTheDocument();
 
     // Check encryption
-    const encryptCheckbox = screen.getByLabelText('Encrypt Backup');
+    // In DaisyUI toggle/checkbox often doesn't have a label element directly associated via 'for' attribute in the way getByLabelText expects if custom structure is used.
+    // We'll try to find by role 'checkbox'
+    const encryptCheckbox = screen.getByRole('checkbox', { name: /encrypt backup/i });
     fireEvent.click(encryptCheckbox);
 
     // Enter password
     const passwordInput = screen.getByPlaceholderText('Enter a strong password');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    // Submit
-    const submitButton = screen.getByRole('button', { name: 'Create Backup' });
-    fireEvent.click(submitButton);
+    // Submit via form
+    const form = screen.getByTestId('modal-form');
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(apiService.createSystemBackup).toHaveBeenCalledWith(expect.objectContaining({
