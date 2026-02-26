@@ -7,6 +7,77 @@ import {
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
+const ToolArgumentForm: React.FC<{
+  schema: any;
+  args: any;
+  onChange: (newArgs: any) => void;
+  disabled?: boolean;
+}> = ({ schema, args, onChange, disabled }) => {
+  if (!schema || !schema.properties) {
+    return <div className="alert alert-info text-sm">No properties defined in schema. You can use JSON mode for complex inputs.</div>;
+  }
+
+  const handleChange = (key: string, value: any) => {
+    const newArgs = { ...args, [key]: value };
+    if (value === '' || value === undefined) {
+      delete newArgs[key];
+    }
+    onChange(newArgs);
+  };
+
+  return (
+    <div className="space-y-4 p-1">
+      {Object.entries(schema.properties).map(([key, prop]: [string, any]) => (
+        <div key={key} className="form-control">
+          <label className="label py-1">
+            <span className="label-text font-medium">
+              {key}
+              {schema.required?.includes(key) && <span className="text-error ml-1">*</span>}
+            </span>
+          </label>
+
+          {prop.type === 'boolean' ? (
+             <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={!!args[key]}
+                  onChange={(e) => handleChange(key, e.target.checked)}
+                  disabled={disabled}
+                />
+                <span className="ml-2 text-sm text-base-content/70">{!!args[key] ? 'True' : 'False'}</span>
+             </div>
+          ) : prop.type === 'integer' || prop.type === 'number' ? (
+            <input
+              type="number"
+              className="input input-bordered input-sm w-full"
+              value={args[key] ?? ''}
+              onChange={(e) => handleChange(key, Number(e.target.value))}
+              placeholder={prop.description || `Enter ${key}`}
+              disabled={disabled}
+            />
+          ) : (
+            <input
+              type="text"
+              className="input input-bordered input-sm w-full"
+              value={args[key] ?? ''}
+              onChange={(e) => handleChange(key, e.target.value)}
+              placeholder={prop.description || `Enter ${key}`}
+              disabled={disabled}
+            />
+          )}
+
+          {prop.description && (
+            <label className="label py-1">
+              <span className="label-text-alt text-base-content/60">{prop.description}</span>
+            </label>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 interface MCPTool {
   id: string;
   name: string;
@@ -121,11 +192,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [useFormMode, setUseFormMode] = useState(true);
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setUseFormMode(true);
   };
 
   const handleCloseRunModal = () => {
@@ -373,17 +446,43 @@ const MCPToolsPage: React.FC = () => {
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
+            <div className="collapse collapse-arrow bg-base-200 mb-4 rounded-box">
+              <input type="checkbox" />
+              <div className="collapse-title text-sm font-medium">
+                View Input Schema
+              </div>
+              <div className="collapse-content">
+                <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                  <pre className="p-4 overflow-x-auto">
+                    <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                  </pre>
+                </div>
               </div>
             </div>
 
+            <div className="flex justify-end mb-2">
+               <label className="label cursor-pointer gap-2">
+                 <span className="label-text text-xs text-base-content/60">JSON</span>
+                 <input
+                   type="checkbox"
+                   className="toggle toggle-sm"
+                   checked={useFormMode}
+                   onChange={(e) => setUseFormMode(e.target.checked)}
+                 />
+                 <span className="label-text text-xs font-bold">Form Builder</span>
+               </label>
+            </div>
+
+            {useFormMode ? (
+               <ToolArgumentForm
+                 schema={selectedTool.inputSchema}
+                 args={(() => {
+                   try { return JSON.parse(runArgs); } catch { return {}; }
+                 })()}
+                 onChange={(newArgs) => setRunArgs(JSON.stringify(newArgs, null, 2))}
+                 disabled={isRunning}
+               />
+            ) : (
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Arguments (JSON)</span>
@@ -404,6 +503,7 @@ const MCPToolsPage: React.FC = () => {
                 </label>
               )}
             </div>
+            )}
           </div>
         </Modal>
       )}
