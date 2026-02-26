@@ -122,6 +122,7 @@ Monitor real-time interactions and events across your bot ecosystem.
 General system configuration.
 ![General Settings](docs/screenshots/settings-general.png)
 
+*   **Demo Mode**: When enabled (as seen in screenshots), a banner allows users to explore the platform without API configuration. Configure API keys to enable production mode.
 *   **Instance Information**: Configure instance name and description.
 *   **Localization & Appearance**: Set the system **Timezone** and Theme.
 *   **Logging & Notifications**: Configure log levels and enable system logging.
