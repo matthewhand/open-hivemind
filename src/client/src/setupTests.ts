@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import '@testing-library/jest-dom'; // Generic import works for both
 import { configure } from '@testing-library/react';
-// vi is specific to Vitest, use jest global which works in both (Vitest aliases jest to vi)
+import { vi, beforeAll, beforeEach } from 'vitest';
 import { TextEncoder, TextDecoder } from 'util';
 
 // Configure testing library
@@ -11,37 +11,53 @@ configure({ testIdAttribute: 'data-testid' });
 global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
 
-// Polyfill HTMLDialogElement for JSDOM environments that don't support it
-if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
-  class HTMLDialogElement extends HTMLElement {
-    open = false;
-    returnValue = '';
-
-    show() {
-      this.open = true;
+// Setup global mocks
+const setupMocks = () => {
+  if (typeof window !== 'undefined') {
+    // Define mocks that toggle open attribute to simulate visibility
+    const mockShow = vi.fn(function(this: HTMLElement) {
       this.setAttribute('open', '');
-    }
-
-    showModal() {
-      this.open = true;
+    });
+    const mockShowModal = vi.fn(function(this: HTMLElement) {
       this.setAttribute('open', '');
-    }
-
-    close() {
-      this.open = false;
+    });
+    const mockClose = vi.fn(function(this: HTMLElement) {
       this.removeAttribute('open');
-      this.dispatchEvent(new Event('close'));
+    });
+
+    // Unconditionally patch HTMLElement prototype to ensure these methods exist on all elements.
+    // This is necessary because JSDOM might return HTMLUnknownElement for <dialog> tags,
+    // or the environment might reset prototypes.
+    Object.defineProperty(HTMLElement.prototype, 'show', { writable: true, configurable: true, value: mockShow });
+    Object.defineProperty(HTMLElement.prototype, 'showModal', { writable: true, configurable: true, value: mockShowModal });
+    Object.defineProperty(HTMLElement.prototype, 'close', { writable: true, configurable: true, value: mockClose });
+
+    // Also patch Element.prototype just in case
+    Object.defineProperty(Element.prototype, 'show', { writable: true, configurable: true, value: mockShow });
+    Object.defineProperty(Element.prototype, 'showModal', { writable: true, configurable: true, value: mockShowModal });
+    Object.defineProperty(Element.prototype, 'close', { writable: true, configurable: true, value: mockClose });
+
+    // If HTMLDialogElement exists, patch it specifically
+    if (window.HTMLDialogElement) {
+      Object.defineProperty(window.HTMLDialogElement.prototype, 'show', { writable: true, configurable: true, value: mockShow });
+      Object.defineProperty(window.HTMLDialogElement.prototype, 'showModal', { writable: true, configurable: true, value: mockShowModal });
+      Object.defineProperty(window.HTMLDialogElement.prototype, 'close', { writable: true, configurable: true, value: mockClose });
+    } else {
+      // Polyfill the class if missing (JSDOM < 24)
+      class MockHTMLDialogElement extends HTMLElement {
+        open = false;
+        returnValue = '';
+        show = mockShow;
+        showModal = mockShowModal;
+        close = mockClose;
+      }
+      (window as any).HTMLDialogElement = MockHTMLDialogElement;
     }
   }
-  (window as any).HTMLDialogElement = HTMLDialogElement;
-}
+};
 
-// Mock HTMLDialogElement methods if prototype exists
-if (typeof HTMLDialogElement !== 'undefined') {
-  if (!HTMLDialogElement.prototype.show) HTMLDialogElement.prototype.show = jest.fn();
-  if (!HTMLDialogElement.prototype.showModal) HTMLDialogElement.prototype.showModal = jest.fn();
-  if (!HTMLDialogElement.prototype.close) HTMLDialogElement.prototype.close = jest.fn();
-}
+beforeAll(setupMocks);
+beforeEach(setupMocks); // Re-apply before each test to ensure persistence
 
 // Mock IntersectionObserver
 (global as any).IntersectionObserver = jest.fn().mockImplementation(() => ({

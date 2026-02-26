@@ -107,8 +107,11 @@ describe('UnifiedDashboard', () => {
       expect(statusTab).toHaveClass('tab-active');
     });
 
-    // When bots are configured, the Getting Started tab content is not in the document
-    expect(screen.queryByText('Welcome to Open Hivemind')).not.toBeInTheDocument();
+    // When bots are configured, the Getting Started tab content is hidden (but still in DOM)
+    // We check that it is not visible
+    const gettingStartedHeader = screen.queryByText('Welcome to Open Hivemind');
+    expect(gettingStartedHeader).not.toBeVisible();
+
     // The Status tab is active (verified above) - this confirms correct default behavior
   });
 
