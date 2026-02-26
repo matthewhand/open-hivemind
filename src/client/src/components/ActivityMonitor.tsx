@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button, Alert, DataTable } from './DaisyUI';
 import {
   Activity,
   Server,
-  Users,
-  BarChart2,
   Play,
   Pause,
   RefreshCw,
@@ -15,10 +13,24 @@ import {
 } from 'lucide-react';
 import { apiService, ActivityEvent } from '../services/api';
 
-const ActivityMonitor: React.FC = () => {
+const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
+  switch (status) {
+    case 'success': return 'success';
+    case 'error': return 'error';
+    case 'timeout': return 'warning';
+    default: return 'info';
+  }
+};
+
+interface ActivityMonitorProps {
+  showPopoutButton?: boolean;
+  autoRefresh?: boolean;
+}
+
+const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = false, autoRefresh = true }) => {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMonitoring, setIsMonitoring] = useState(true);
+  const [isMonitoring, setIsMonitoring] = useState(autoRefresh);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const fetchActivity = useCallback(async () => {
@@ -42,16 +54,7 @@ const ActivityMonitor: React.FC = () => {
     }
   }, [isMonitoring, fetchActivity]);
 
-  const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
-    switch (status) {
-      case 'success': return 'success';
-      case 'error': return 'error';
-      case 'timeout': return 'warning';
-      default: return 'info';
-    }
-  };
-
-  const columns = [
+  const columns = useMemo(() => [
     {
       key: 'timestamp',
       title: 'Time',
@@ -87,14 +90,25 @@ const ActivityMonitor: React.FC = () => {
       title: 'Duration',
       render: (value: number) => value ? <span className="font-mono text-xs">{value}ms</span> : '-',
     },
-  ];
+  ], []);
 
   // Calculated Stats
-  const totalEvents = events.length;
-  const errorEvents = events.filter(e => e.status === 'error' || e.status === 'timeout').length;
-  const uniqueBots = new Set(events.map(e => e.botName)).size;
-  // Events in last 5 minutes (assuming events are recent)
-  const recentEventsCount = events.filter(e => new Date(e.timestamp).getTime() > Date.now() - 5 * 60 * 1000).length;
+  const { totalEvents, errorEvents, uniqueBots, recentEventsCount } = useMemo(() => {
+    const total = events.length;
+    const errors = events.filter(e => e.status === 'error' || e.status === 'timeout').length;
+    const unique = new Set(events.map(e => e.botName)).size;
+    // Events in last 5 minutes (assuming events are recent)
+    const recent = events.filter(e => new Date(e.timestamp).getTime() > Date.now() - 5 * 60 * 1000).length;
+
+    return {
+      totalEvents: total,
+      errorEvents: errors,
+      uniqueBots: unique,
+      recentEventsCount: recent
+    };
+  }, [events]);
+
+  const paginationConfig = useMemo(() => ({ pageSize: 10 }), []);
 
   return (
     <div className="w-full space-y-6">
@@ -188,7 +202,7 @@ const ActivityMonitor: React.FC = () => {
             data={events}
             columns={columns}
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            pagination={paginationConfig}
             searchable={true}
           />
         </div>

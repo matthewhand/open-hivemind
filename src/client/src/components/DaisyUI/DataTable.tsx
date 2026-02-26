@@ -408,4 +408,6 @@ const DataTable = <T extends Record<string, any>>({
   );
 };
 
-export default DataTable;
+const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
+
+export default MemoizedDataTable;
