@@ -121,11 +121,13 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [mode, setMode] = useState<'form' | 'json'>('form');
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    setMode('form');
   };
 
   const handleCloseRunModal = () => {
@@ -374,36 +376,171 @@ const MCPToolsPage: React.FC = () => {
             </p>
 
             <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text font-medium">Input Mode</span>
+                <div className="join">
+                  <button
+                    className={`join-item btn btn-sm ${mode === 'form' ? 'btn-active btn-primary' : ''}`}
+                    onClick={() => setMode('form')}
+                  >
+                    Form
+                  </button>
+                  <button
+                    className={`join-item btn btn-sm ${mode === 'json' ? 'btn-active btn-primary' : ''}`}
+                    onClick={() => setMode('json')}
+                  >
+                    JSON
+                  </button>
+                </div>
               </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
-              </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
-                </label>
-              )}
-            </div>
+            {mode === 'json' ? (
+              <>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Input Schema</span>
+                  </label>
+                  <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
+                    <pre className="p-4 overflow-x-auto">
+                      <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Arguments (JSON)</span>
+                  </label>
+                  <textarea
+                    className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                    value={runArgs}
+                    onChange={(e) => {
+                      setRunArgs(e.target.value);
+                      if (jsonError) setJsonError(null);
+                    }}
+                    placeholder="{}"
+                    disabled={isRunning}
+                  />
+                  {jsonError && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{jsonError}</span>
+                    </label>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                {selectedTool.inputSchema?.properties ? (
+                  Object.entries(selectedTool.inputSchema.properties).map(([key, schema]: [string, any]) => {
+                    const isRequired = selectedTool.inputSchema.required?.includes(key);
+                    let parsedArgs: any = {};
+                    try {
+                      parsedArgs = JSON.parse(runArgs);
+                    } catch (e) {
+                      /* ignore */
+                    }
+                    const value = parsedArgs[key] ?? '';
+
+                    const handleChange = (newValue: any) => {
+                      const newArgs = { ...parsedArgs, [key]: newValue };
+                      if (newValue === '' || newValue === null || newValue === undefined) {
+                        delete newArgs[key];
+                      }
+                      setRunArgs(JSON.stringify(newArgs, null, 2));
+                    };
+
+                    if (schema.type === 'boolean') {
+                      return (
+                        <div key={key} className="form-control">
+                          <label className="label cursor-pointer justify-start gap-4">
+                            <span className="label-text font-medium flex items-center gap-1">
+                              {key}
+                              {isRequired && <span className="text-error">*</span>}
+                            </span>
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-primary"
+                              checked={!!value}
+                              onChange={(e) => handleChange(e.target.checked)}
+                              disabled={isRunning}
+                            />
+                          </label>
+                          {schema.description && (
+                            <label className="label">
+                              <span className="label-text-alt text-base-content/70">
+                                {schema.description}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    if (schema.type === 'integer' || schema.type === 'number') {
+                      return (
+                        <div key={key} className="form-control">
+                          <label className="label">
+                            <span className="label-text font-medium flex items-center gap-1">
+                              {key}
+                              {isRequired && <span className="text-error">*</span>}
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            className="input input-bordered w-full"
+                            value={value}
+                            onChange={(e) =>
+                              handleChange(e.target.value === '' ? undefined : Number(e.target.value))
+                            }
+                            placeholder={`Enter ${key}...`}
+                            disabled={isRunning}
+                            step={schema.type === 'integer' ? '1' : 'any'}
+                          />
+                          {schema.description && (
+                            <label className="label">
+                              <span className="label-text-alt text-base-content/70">
+                                {schema.description}
+                              </span>
+                            </label>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={key} className="form-control">
+                        <label className="label">
+                          <span className="label-text font-medium flex items-center gap-1">
+                            {key}
+                            {isRequired && <span className="text-error">*</span>}
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered w-full"
+                          value={value}
+                          onChange={(e) => handleChange(e.target.value)}
+                          placeholder={`Enter ${key}...`}
+                          disabled={isRunning}
+                        />
+                        {schema.description && (
+                          <label className="label">
+                            <span className="label-text-alt text-base-content/70">
+                              {schema.description}
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="alert">
+                    <span>No properties defined in schema. Use JSON mode for complex inputs.</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Modal>
       )}
