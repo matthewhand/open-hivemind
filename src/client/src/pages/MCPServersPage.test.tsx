@@ -120,8 +120,8 @@ describe('MCPServersPage', () => {
     });
 
     // Find the "Start" button (PlayIcon)
-    // The button uses a tooltip data-tip="Connect"
-    const startButton = container!.querySelector('button[data-tip="Connect"]');
+    // The button uses a tooltip data-tip="Start"
+    const startButton = container!.querySelector('button[data-tip="Start"]');
     if (!startButton) throw new Error('Start button not found');
 
     await act(async () => {

@@ -90,6 +90,7 @@ Set up safety and security boundaries.
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
 *   **Server List**: View and manage connected MCP servers.
 *   **Add Server**: Connect to a new MCP server by URL.
+*   **Quick Actions**: Efficiently Start, Stop, Edit, or Remove servers with streamlined controls.
 *   **Tool Discovery**: Automatically discover tools provided by connected servers.
 *   **View Tools**: Inspect available tools from connected servers.
 *   **Connection Status**: Monitor server health and retry failed connections.
