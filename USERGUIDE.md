@@ -142,6 +142,13 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 *   **Activity Monitor**: Live feed of system events with filtering and search capabilities.
 
+### Demo Mode
+When the system detects it is running in a demonstration environment or without critical configuration, it activates Demo Mode.
+
+*   **Visual Indicator**: A distinct purple banner appears at the top of the interface.
+*   **Functionality**: The system populates with simulated data (bots, conversations, metrics) to allow UI exploration.
+*   **Configuration**: To exit Demo Mode, configure valid API keys in the **Settings** page.
+
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
