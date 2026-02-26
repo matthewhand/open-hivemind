@@ -70,53 +70,55 @@ export class AnomalyDetectionService extends EventEmitter {
     this.isDetecting = true;
     debug('Running anomaly detection');
 
-    const dbManager = DatabaseManager.getInstance();
+    try {
+      const dbManager = DatabaseManager.getInstance();
 
-    for (const [metric, window] of this.dataWindows.entries()) {
-      if (window.length < this.config.minDataPoints) {
-        continue;
+      for (const [metric, window] of this.dataWindows.entries()) {
+        if (window.length < this.config.minDataPoints) {
+          continue;
+        }
+
+        const { mean, stdDev } = this.calculateStats(window);
+        const recentValue = window[window.length - 1];
+        const zScore = Math.abs((recentValue - mean) / stdDev);
+
+        if (zScore > this.config.zThreshold) {
+          const anomaly = this.createAnomaly(metric, recentValue, mean, stdDev, zScore);
+          this.anomalies.push(anomaly);
+          this.emit('anomalyDetected', anomaly);
+
+          // Store in database
+          await dbManager.storeAnomaly(anomaly);
+
+          // Broadcast via WebSocket
+          const wsService = WebSocketService.getInstance();
+          const alert: Omit<
+            AlertEvent,
+            'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'
+          > = {
+            level:
+              anomaly.severity === 'critical'
+                ? 'critical'
+                : anomaly.severity === 'high'
+                  ? 'error'
+                  : 'warning',
+            title: `Anomaly Detected: ${anomaly.metric}`,
+            message: anomaly.explanation,
+            metadata: {
+              anomalyId: anomaly.id,
+              zScore: anomaly.zScore,
+              value: anomaly.value,
+              expected: anomaly.expectedMean,
+            },
+          };
+          wsService.recordAlert(alert);
+
+          debug(`Anomaly detected in ${metric}: z-score ${zScore.toFixed(2)}`);
+        }
       }
-
-      const { mean, stdDev } = this.calculateStats(window);
-      const recentValue = window[window.length - 1];
-      const zScore = Math.abs((recentValue - mean) / stdDev);
-
-      if (zScore > this.config.zThreshold) {
-        const anomaly = this.createAnomaly(metric, recentValue, mean, stdDev, zScore);
-        this.anomalies.push(anomaly);
-        this.emit('anomalyDetected', anomaly);
-
-        // Store in database
-        await dbManager.storeAnomaly(anomaly);
-
-        // Broadcast via WebSocket
-        const wsService = WebSocketService.getInstance();
-        const alert: Omit<
-          AlertEvent,
-          'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'
-        > = {
-          level:
-            anomaly.severity === 'critical'
-              ? 'critical'
-              : anomaly.severity === 'high'
-                ? 'error'
-                : 'warning',
-          title: `Anomaly Detected: ${anomaly.metric}`,
-          message: anomaly.explanation,
-          metadata: {
-            anomalyId: anomaly.id,
-            zScore: anomaly.zScore,
-            value: anomaly.value,
-            expected: anomaly.expectedMean,
-          },
-        };
-        wsService.recordAlert(alert);
-
-        debug(`Anomaly detected in ${metric}: z-score ${zScore.toFixed(2)}`);
-      }
+    } finally {
+      this.isDetecting = false;
     }
-
-    this.isDetecting = false;
   }
 
   private calculateStats(data: number[]): { mean: number; stdDev: number } {
