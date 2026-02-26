@@ -1,32 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  TextField, 
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  FormControlLabel,
-  Checkbox,
-  Grid,
-  Card,
-  CardContent
-} from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useMemo } from 'react';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import DataTable from '../DaisyUI/DataTable';
+import { Input, Select, Button, Badge } from '../DaisyUI';
+import { Filter, X, Search } from 'lucide-react';
+import dayjs from 'dayjs';
 
 interface MessageFlowEvent {
   id: string;
@@ -45,299 +23,162 @@ interface MessageFlowEvent {
 interface FilterOptions {
   agent?: string;
   provider?: string;
-  startDate?: Dayjs | null;
-  endDate?: Dayjs | null;
+  startDate?: string;
+  endDate?: string;
   messageType?: 'incoming' | 'outgoing';
   status?: 'success' | 'error' | 'timeout';
+  searchQuery?: string;
 }
 
 const ActivityMonitor: React.FC = () => {
-  const { messages, metrics } = useWebSocket();
-  const [filteredMessages, setFilteredMessages] = useState<MessageFlowEvent[]>([]);
-  const [filters, setFilters] = useState<FilterOptions>({
-    startDate: null,
-    endDate: null
-  });
+  const { messages } = useWebSocket();
+  const [filters, setFilters] = useState<FilterOptions>({ startDate: '', endDate: '', searchQuery: '' });
   const [uniqueAgents, setUniqueAgents] = useState<string[]>([]);
   const [uniqueProviders, setUniqueProviders] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Extract unique agents and providers from messages
   useEffect(() => {
     if (messages && messages.length > 0) {
-      const agents = Array.from(new Set(messages.map(msg => msg.botName)));
-      const providers = Array.from(new Set(messages.map(msg => msg.provider)));
-      setUniqueAgents(agents);
-      setUniqueProviders(providers);
-      
-      // Apply filters
-      applyFilters(messages);
-    } else {
-      setFilteredMessages([]);
+      setUniqueAgents(Array.from(new Set(messages.map((msg: MessageFlowEvent) => msg.botName))));
+      setUniqueProviders(Array.from(new Set(messages.map((msg: MessageFlowEvent) => msg.provider))));
     }
   }, [messages]);
 
-  const applyFilters = (msgs: MessageFlowEvent[]) => {
-    let filtered = [...msgs];
-    
-    // Filter by agent
-    if (filters.agent) {
-      filtered = filtered.filter(msg => msg.botName === filters.agent);
+  const filteredMessages = useMemo(() => {
+    if (!messages) return [];
+    let filtered = [...messages];
+    if (filters.searchQuery) {
+      const q = filters.searchQuery.toLowerCase();
+      filtered = filtered.filter((m: MessageFlowEvent) =>
+        m.botName.toLowerCase().includes(q) ||
+        m.provider.toLowerCase().includes(q) ||
+        m.channelId.toLowerCase().includes(q)
+      );
     }
-    
-    // Filter by provider
-    if (filters.provider) {
-      filtered = filtered.filter(msg => msg.provider === filters.provider);
-    }
-    
-    // Filter by message type
-    if (filters.messageType) {
-      filtered = filtered.filter(msg => msg.messageType === filters.messageType);
-    }
-    
-    // Filter by status
-    if (filters.status) {
-      filtered = filtered.filter(msg => msg.status === filters.status);
-    }
-    
-    // Filter by date range
-    if (filters.startDate) {
-      filtered = filtered.filter(msg => dayjs(msg.timestamp).isAfter(filters.startDate));
-    }
-    
-    if (filters.endDate) {
-      filtered = filtered.filter(msg => dayjs(msg.timestamp).isBefore(filters.endDate));
-    }
-    
-    setFilteredMessages(filtered);
-  };
+    if (filters.agent) filtered = filtered.filter((m: MessageFlowEvent) => m.botName === filters.agent);
+    if (filters.provider) filtered = filtered.filter((m: MessageFlowEvent) => m.provider === filters.provider);
+    if (filters.messageType) filtered = filtered.filter((m: MessageFlowEvent) => m.messageType === filters.messageType);
+    if (filters.status) filtered = filtered.filter((m: MessageFlowEvent) => m.status === filters.status);
+    if (filters.startDate) filtered = filtered.filter((m: MessageFlowEvent) => dayjs(m.timestamp).isAfter(filters.startDate));
+    if (filters.endDate) filtered = filtered.filter((m: MessageFlowEvent) => dayjs(m.timestamp).isBefore(filters.endDate));
+    return filtered;
+  }, [messages, filters]);
 
-  const handleFilterChange = (field: keyof FilterOptions, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  };
+  const handleFilterChange = (field: keyof FilterOptions, value: any) => setFilters(prev => ({ ...prev, [field]: value }));
+  const clearFilters = () => setFilters({ startDate: '', endDate: '', searchQuery: '' });
 
-  const clearFilters = () => {
-    setFilters({
-      startDate: null,
-      endDate: null
-    });
-  };
-
-  // Calculate statistics
   const totalMessages = filteredMessages.length;
-  const incomingMessages = filteredMessages.filter(msg => msg.messageType === 'incoming').length;
-  const outgoingMessages = filteredMessages.filter(msg => msg.messageType === 'outgoing').length;
-  const successfulMessages = filteredMessages.filter(msg => msg.status === 'success').length;
-  const errorMessages = filteredMessages.filter(msg => msg.status === 'error').length;
+  const incomingMessages = filteredMessages.filter((m: MessageFlowEvent) => m.messageType === 'incoming').length;
+  const outgoingMessages = filteredMessages.filter((m: MessageFlowEvent) => m.messageType === 'outgoing').length;
+  const errorMessages = filteredMessages.filter((m: MessageFlowEvent) => m.status === 'error').length;
+
+  const columns = [
+    { key: 'timestamp' as keyof MessageFlowEvent, title: 'Timestamp', sortable: true, render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm:ss') },
+    { key: 'botName' as keyof MessageFlowEvent, title: 'Agent', sortable: true, filterable: true },
+    { key: 'provider' as keyof MessageFlowEvent, title: 'Provider', sortable: true, filterable: true },
+    { key: 'messageType' as keyof MessageFlowEvent, title: 'Type', sortable: true, render: (v: string) => <Badge variant={v === 'incoming' ? 'primary' : 'secondary'} size="small">{v}</Badge> },
+    { key: 'channelId' as keyof MessageFlowEvent, title: 'Channel', sortable: true },
+    { key: 'contentLength' as keyof MessageFlowEvent, title: 'Length', sortable: true },
+    { key: 'processingTime' as keyof MessageFlowEvent, title: 'Processing', sortable: true, render: (v: number | undefined) => v ? `${v}ms` : '-' },
+    { key: 'status' as keyof MessageFlowEvent, title: 'Status', sortable: true, render: (v: string) => <Badge variant={v === 'success' ? 'success' : v === 'error' ? 'error' : 'warning'} size="small">{v}</Badge> },
+  ];
+
+  const agentOptions = [{ value: '', label: 'All Agents' }, ...uniqueAgents.map(a => ({ value: a, label: a }))];
+  const providerOptions = [{ value: '', label: 'All Providers' }, ...uniqueProviders.map(p => ({ value: p, label: p }))];
+  const typeOptions = [{ value: '', label: 'All Types' }, { value: 'incoming', label: 'Incoming' }, { value: 'outgoing', label: 'Outgoing' }];
+  const statusOptions = [{ value: '', label: 'All Statuses' }, { value: 'success', label: 'Success' }, { value: 'error', label: 'Error' }, { value: 'timeout', label: 'Timeout' }];
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box>
-        <Typography variant="h4" sx={{ mb: 3 }}>Activity Monitoring</Typography>
-        
-        {/* Summary Cards */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Total Messages
-                </Typography>
-                <Typography variant="h5">
-                  {totalMessages}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Incoming
-                </Typography>
-                <Typography variant="h5" color="primary">
-                  {incomingMessages}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Outgoing
-                </Typography>
-                <Typography variant="h5" color="secondary">
-                  {outgoingMessages}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Errors
-                </Typography>
-                <Typography variant="h5" color={errorMessages > 0 ? "error" : "success"}>
-                  {errorMessages}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-        
-        {/* Filters */}
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>Filters</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Agent</InputLabel>
-                <Select
-                  value={filters.agent || ''}
-                  label="Agent"
-                  onChange={(e) => handleFilterChange('agent', e.target.value)}
-                >
-                  <MenuItem value=""><em>All Agents</em></MenuItem>
-                  {uniqueAgents.map(agent => (
-                    <MenuItem key={agent} value={agent}>{agent}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Provider</InputLabel>
-                <Select
-                  value={filters.provider || ''}
-                  label="Provider"
-                  onChange={(e) => handleFilterChange('provider', e.target.value)}
-                >
-                  <MenuItem value=""><em>All Providers</em></MenuItem>
-                  {uniqueProviders.map(provider => (
-                    <MenuItem key={provider} value={provider}>{provider}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Message Type</InputLabel>
-                <Select
-                  value={filters.messageType || ''}
-                  label="Message Type"
-                  onChange={(e) => handleFilterChange('messageType', e.target.value)}
-                >
-                  <MenuItem value=""><em>All Types</em></MenuItem>
-                  <MenuItem value="incoming">Incoming</MenuItem>
-                  <MenuItem value="outgoing">Outgoing</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={2}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={filters.status || ''}
-                  label="Status"
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                >
-                  <MenuItem value=""><em>All Statuses</em></MenuItem>
-                  <MenuItem value="success">Success</MenuItem>
-                  <MenuItem value="error">Error</MenuItem>
-                  <MenuItem value="timeout">Timeout</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={2}>
-              <Button 
-                variant="outlined" 
-                onClick={clearFilters}
-                fullWidth
-              >
-                Clear Filters
-              </Button>
-            </Grid>
-          </Grid>
-          
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <DateTimePicker
-                label="Start Date"
-                value={filters.startDate}
-                onChange={(newValue) => handleFilterChange('startDate', newValue)}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <DateTimePicker
-                label="End Date"
-                value={filters.endDate}
-                onChange={(newValue) => handleFilterChange('endDate', newValue)}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </Grid>
-          </Grid>
-        </Paper>
-        
-        {/* Message Flow Table */}
-        <Paper>
-          <TableContainer>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Timestamp</TableCell>
-                  <TableCell>Agent</TableCell>
-                  <TableCell>Provider</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Channel</TableCell>
-                  <TableCell>Length</TableCell>
-                  <TableCell>Processing Time</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredMessages.map((msg) => (
-                  <TableRow 
-                    key={msg.id} 
-                    sx={{ 
-                      '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
-                      ...(msg.status === 'error' && { backgroundColor: 'error.light' })
-                    }}
-                  >
-                    <TableCell>{dayjs(msg.timestamp).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                    <TableCell>{msg.botName}</TableCell>
-                    <TableCell>{msg.provider}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={msg.messageType} 
-                        size="small" 
-                        color={msg.messageType === 'incoming' ? 'primary' : 'secondary'} 
-                      />
-                    </TableCell>
-                    <TableCell>{msg.channelId}</TableCell>
-                    <TableCell>{msg.contentLength}</TableCell>
-                    <TableCell>{msg.processingTime ? `${msg.processingTime}ms` : '-'}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={msg.status} 
-                        size="small" 
-                        color={msg.status === 'success' ? 'success' : msg.status === 'error' ? 'error' : 'warning'} 
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
-    </LocalizationProvider>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Activity Monitoring</h2>
+        <Button variant="ghost" size="sm" onClick={() => setShowFilters(!showFilters)}>
+          {showFilters ? <X className="w-4 h-4 mr-2" /> : <Filter className="w-4 h-4 mr-2" />}
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="card bg-base-200 p-4">
+          <div className="text-sm text-base-content/70">Total</div>
+          <div className="text-2xl font-bold">{totalMessages}</div>
+        </div>
+        <div className="card bg-base-200 p-4">
+          <div className="text-sm text-base-content/70">Incoming</div>
+          <div className="text-2xl font-bold text-primary">{incomingMessages}</div>
+        </div>
+        <div className="card bg-base-200 p-4">
+          <div className="text-sm text-base-content/70">Outgoing</div>
+          <div className="text-2xl font-bold text-secondary">{outgoingMessages}</div>
+        </div>
+        <div className="card bg-base-200 p-4">
+          <div className="text-sm text-base-content/70">Errors</div>
+          <div className={`text-2xl font-bold ${errorMessages > 0 ? 'text-error' : 'text-success'}`}>{errorMessages}</div>
+        </div>
+      </div>
+
+      {showFilters && (
+        <div className="card bg-base-200 p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Filters</h3>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4 mr-2" />Clear
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="form-control">
+              <label className="label"><span className="label-text">Agent</span></label>
+              <Select value={filters.agent || ''} onChange={(e) => handleFilterChange('agent', e.target.value)} options={agentOptions} size="sm" />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Provider</span></label>
+              <Select value={filters.provider || ''} onChange={(e) => handleFilterChange('provider', e.target.value)} options={providerOptions} size="sm" />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Type</span></label>
+              <Select value={filters.messageType || ''} onChange={(e) => handleFilterChange('messageType', e.target.value)} options={typeOptions} size="sm" />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Status</span></label>
+              <Select value={filters.status || ''} onChange={(e) => handleFilterChange('status', e.target.value)} options={statusOptions} size="sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="form-control">
+              <label className="label"><span className="label-text">Start Date</span></label>
+              <Input type="date" value={filters.startDate || ''} onChange={(e) => handleFilterChange('startDate', e.target.value)} size="sm" />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">End Date</span></label>
+              <Input type="date" value={filters.endDate || ''} onChange={(e) => handleFilterChange('endDate', e.target.value)} size="sm" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card bg-base-200 p-4">
+        <div className="form-control mb-4">
+          <div className="input-group">
+            <span className="input-group-text"><Search className="w-4 h-4" /></span>
+            <Input
+              type="text"
+              placeholder="Search messages..."
+              value={filters.searchQuery || ''}
+              onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
+              size="sm"
+              className="w-full"
+            />
+          </div>
+        </div>
+        <DataTable
+          data={filteredMessages}
+          columns={columns}
+          pagination={{ pageSize: 10 }}
+          searchable={false}
+          exportable={true}
+        />
+      </div>
+    </div>
   );
 };
 
