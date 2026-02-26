@@ -32,7 +32,9 @@ test.describe('Monitoring Dashboard Screenshots', () => {
 
     // Mock Monitoring specific endpoints
 
-    // 1. System Health (used by SystemHealth component)
+    // 1. System Health (used by SystemHealth component and initial dashboard metrics)
+    // NOTE: Server returns memory in MB, so we mock in MB.
+    // SystemHealth component converts MB to Bytes for display.
     await page.route('/api/health/detailed', async (route) =>
       route.fulfill({
         status: 200,
@@ -41,8 +43,8 @@ test.describe('Monitoring Dashboard Screenshots', () => {
           timestamp: new Date().toISOString(),
           uptime: 3600 * 24 * 5, // 5 days
           memory: {
-            used: 8 * 1024 * 1024 * 1024, // 8GB
-            total: 16 * 1024 * 1024 * 1024, // 16GB
+            used: 8192, // 8GB in MB
+            total: 16384, // 16GB in MB
             usage: 50,
           },
           cpu: {
@@ -232,11 +234,17 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for key elements to be visible
-    await expect(page.getByText('System Monitoring', { exact: true })).toBeVisible();
-    await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
+    // Expect the new header
+    await expect(page.getByText('Monitoring Dashboard', { exact: true })).toBeVisible();
 
-    // Wait for charts/stats to load (checking for stats cards values)
-    await expect(page.getByText('3/3', { exact: false })).toBeVisible(); // Active Bots
+    // Expect the new detailed section
+    await expect(page.getByText('Detailed Health & Resources', { exact: true })).toBeVisible();
+
+    // Expect System Health Monitor title (inside SystemHealth component)
+    await expect(page.getByText('System Health Monitor', { exact: true })).toBeVisible();
+
+    // Expect Charts to be visible (titles)
+    await expect(page.getByText('Memory Usage', { exact: true }).first()).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/monitoring-dashboard.png', fullPage: true });

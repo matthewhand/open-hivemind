@@ -1,32 +1,55 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService } from '../services/api';
-import StatusCard from '../components/Monitoring/StatusCard';
-import MetricChart from '../components/Monitoring/MetricChart';
-import AlertPanel from '../components/Monitoring/AlertPanel';
-import EventStream from '../components/Monitoring/EventStream';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import { apiService } from '../../services/api';
+import StatusCard from './StatusCard';
+import MetricChart from './MetricChart';
+import AlertPanel from './AlertPanel';
+import EventStream from './EventStream';
+import SystemHealth from '../SystemHealth';
 
-const MonitoringDashboard: React.FC = () => {
+const MonitoringDashboardNew: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [isLoading, setIsLoading] = useState(false);
+  const [initialMetrics, setInitialMetrics] = useState<any>(null);
 
   useEffect(() => {
     connect();
+
+    // Fetch initial metrics to populate cards immediately (hybrid approach)
+    const fetchInitialData = async () => {
+        try {
+            const sysHealth = await apiService.getSystemHealth();
+            setInitialMetrics({
+                cpuUsage: 0, // Not typically in sysHealth but we can try
+                memoryUsage: sysHealth.memory.usage,
+                activeConnections: 0,
+                messageRate: 0,
+                errorRate: 0,
+                responseTime: 0
+            });
+        } catch (e) {
+            console.error("Failed to fetch initial system health", e);
+        }
+    };
+    fetchInitialData();
+
     return () => {
       disconnect();
     };
   }, []);
 
-  const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
-    cpuUsage: 0,
-    memoryUsage: 0,
-    activeConnections: 0,
-    messageRate: 0,
-    errorRate: 0,
-    responseTime: 0,
-  };
+  const currentMetric = performanceMetrics.length > 0
+    ? performanceMetrics[performanceMetrics.length - 1]
+    : (initialMetrics || {
+        cpuUsage: 0,
+        memoryUsage: 0,
+        activeConnections: 0,
+        messageRate: 0,
+        errorRate: 0,
+        responseTime: 0,
+      });
 
   const statusCards = [
     {
@@ -173,7 +196,7 @@ const MonitoringDashboard: React.FC = () => {
       </div>
 
       {/* Alerts and Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <AlertPanel
           alerts={alerts.map((alert, index) => ({
             id: alert.id || `alert-${index}`,
@@ -196,8 +219,14 @@ const MonitoringDashboard: React.FC = () => {
           onEventClick={(event) => console.log('Event clicked:', event)}
         />
       </div>
+
+      {/* Detailed System Health (Restored Feature) */}
+      <div className="mb-8">
+         <h2 className="text-2xl font-bold mb-4">Detailed Health & Resources</h2>
+         <SystemHealth refreshInterval={refreshInterval} />
+      </div>
     </div>
   );
 };
 
-export default MonitoringDashboard;
+export default MonitoringDashboardNew;
