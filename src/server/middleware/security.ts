@@ -284,9 +284,39 @@ function sanitizeCookies(req: Request): void {
 function getTrustedProxies(): string[] {
   const envProxies = process.env.TRUSTED_PROXIES;
   if (envProxies) {
-    return envProxies.split(',').map(ip => ip.trim()).filter(Boolean);
+    const proxies: string[] = [];
+    const entries = envProxies.split(',').map(ip => ip.trim()).filter(Boolean);
+
+    for (const entry of entries) {
+      // Allow wildcard
+      if (entry === '*') {
+        proxies.push(entry);
+        continue;
+      }
+
+      // Validate CIDR notation
+      if (entry.includes('/')) {
+        const [network, prefix] = entry.split('/');
+        const prefixNum = parseInt(prefix, 10);
+        if (!isNaN(prefixNum) && prefixNum >= 0 && prefixNum <= 32 && network.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+          proxies.push(entry);
+        } else {
+          debug('Warning: Invalid CIDR in TRUSTED_PROXIES:', entry);
+        }
+        continue;
+      }
+
+      // Validate IP address (basic check)
+      if (entry.match(/^(\d{1,3}\.){3}\d{1,3}$/) || entry.match(/^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/) || entry === '::1') {
+        proxies.push(entry);
+      } else {
+        debug('Warning: Invalid IP in TRUSTED_PROXIES:', entry);
+      }
+    }
+
+    return proxies;
   }
-  
+
   // Default trusted proxies - localhost and private network ranges
   return [
     '127.0.0.1',
@@ -304,18 +334,18 @@ function getTrustedProxies(): string[] {
  */
 function isTrustedProxy(ip: string): boolean {
   const trustedProxies = getTrustedProxies();
-  
+
   for (const trusted of trustedProxies) {
     // Check for exact match
     if (ip === trusted || ip === `::ffff:${trusted}`) {
       return true;
     }
-    
-    // Check for wildcard (allow all)
-    if (trusted === '*' || trusted === '0.0.0.0') {
+
+    // Check for wildcard (allow all) - only '*' is supported, not '0.0.0.0'
+    if (trusted === '*') {
       return true;
     }
-    
+
     // Check CIDR notation
     if (trusted.includes('/')) {
       if (isIPInCIDR(ip, trusted)) {
@@ -323,7 +353,7 @@ function isTrustedProxy(ip: string): boolean {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -471,7 +501,7 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
 
   // Check if IP is in whitelist
   const isAllowed = whitelist.some((allowedIP) => {
-    if (allowedIP === '*' || allowedIP === '0.0.0.0') {
+    if (allowedIP === '*') {
       return true; // Allow all
     }
     if (allowedIP.includes('/')) {
@@ -492,7 +522,6 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
     res.status(403).json({
       error: 'Access Denied',
       message: 'Your IP address is not authorized to access this resource.',
-      ip: clientIP,
     });
     return;
   }
@@ -503,18 +532,35 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
 
 /**
  * Convert IPv4 address to numeric representation for comparison
+ * Returns NaN for invalid IP addresses
  */
 function ipToLong(ip: string): number {
+  // Validate IP format first
+  if (!ip || typeof ip !== 'string') {
+    return NaN;
+  }
+
   const parts = ip.split('.');
-  return (parseInt(parts[0]) << 24) + 
-         (parseInt(parts[1]) << 16) + 
-         (parseInt(parts[2]) << 8) + 
-         parseInt(parts[3]);
+  if (parts.length !== 4) {
+    return NaN;
+  }
+
+  const nums = parts.map(p => parseInt(p, 10));
+
+  // Validate each octet is a number between 0-255
+  for (const num of nums) {
+    if (isNaN(num) || num < 0 || num > 255) {
+      return NaN;
+    }
+  }
+
+  return (nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3];
 }
 
 /**
  * Check if an IP address is in a CIDR range
  * Supports both IPv4 and IPv4-mapped IPv6 addresses
+ * Note: IPv6 CIDR ranges are not currently supported
  */
 function isIPInCIDR(ip: string, cidr: string): boolean {
   try {
@@ -524,23 +570,41 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
     if (ipv4Match) {
       cleanIP = ipv4Match[1];
     }
-    
-    // Only support IPv4 CIDR for now
+
+    // Only support IPv4 CIDR for now - warn if IPv6 CIDR is provided
     if (!cleanIP.includes('.') || cleanIP.includes(':')) {
       return false;
     }
-    
+
+    // Validate CIDR network part is IPv4
     const [network, prefixStr] = cidr.split('/');
-    const prefix = parseInt(prefixStr);
-    
+    if (!network.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
+      debug('Warning: IPv6 CIDR not supported:', cidr);
+      return false;
+    }
+
+    const prefix = parseInt(prefixStr, 10);
+
     if (isNaN(prefix) || prefix < 0 || prefix > 32) {
       return false;
     }
-    
+
     const ipLong = ipToLong(cleanIP);
     const networkLong = ipToLong(network);
+
+    // Validate IP conversions succeeded
+    if (isNaN(ipLong) || isNaN(networkLong)) {
+      return false;
+    }
+
+    // Handle /0 prefix specially - it should match all IPs
+    // Note: JavaScript shift is modulo 32, so -1 << 32 === -1, not 0
+    if (prefix === 0) {
+      return true;
+    }
+
     const mask = -1 << (32 - prefix);
-    
+
     return (ipLong & mask) === (networkLong & mask);
   } catch (e) {
     debug('CIDR parsing error:', e);
