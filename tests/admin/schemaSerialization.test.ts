@@ -63,7 +63,7 @@ describe('Schema Serialization', () => {
   });
 
   it('should handle custom function format', () => {
-    function CustomFormat() {}
+    function CustomFormat() { }
     const schema = {
       prop: {
         format: CustomFormat
@@ -77,26 +77,40 @@ describe('Schema Serialization', () => {
   });
 
   it('should handle leaf node with function format correctly', () => {
-      // Sometimes the schema itself is passed as a leaf node
-      const schema = {
-          doc: 'Test',
-          format: String,
-          default: 'foo'
-      };
-      const result = serializeSchema(schema);
-      expect(result).toEqual({
-          doc: 'Test',
-          format: 'String',
-          default: 'foo'
-      });
+    // Sometimes the schema itself is passed as a leaf node
+    const schema = {
+      doc: 'Test',
+      format: String,
+      default: 'foo'
+    };
+    const result = serializeSchema(schema);
+    expect(result).toEqual({
+      doc: 'Test',
+      format: 'String',
+      default: 'foo'
+    });
+  });
+
+  it('should handle anonymous function format by falling back to custom', () => {
+    const anonFuncs = [() => { }];
+    const schema = {
+      prop: {
+        format: anonFuncs[0]
+      }
+    };
+    expect(serializeSchema(schema)).toEqual({
+      prop: {
+        format: 'custom'
+      }
+    });
   });
 
   it('should handle string formats', () => {
-      const schema = {
-          prop: {
-              format: 'int'
-          }
-      };
-      expect(serializeSchema(schema)).toEqual(schema);
+    const schema = {
+      prop: {
+        format: 'int'
+      }
+    };
+    expect(serializeSchema(schema)).toEqual(schema);
   });
 });
