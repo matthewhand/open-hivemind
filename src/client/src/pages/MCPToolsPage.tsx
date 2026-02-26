@@ -4,6 +4,8 @@ import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
   MagnifyingGlassIcon as SearchIcon,
+  CodeBracketIcon as CodeIcon,
+  TableCellsIcon as FormIcon,
 } from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
@@ -121,11 +123,15 @@ const MCPToolsPage: React.FC = () => {
   const [runArgs, setRunArgs] = useState('{}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isJsonMode, setIsJsonMode] = useState(false);
 
   const handleOpenRunModal = (tool: MCPTool) => {
     setSelectedTool(tool);
     setRunArgs('{}');
     setJsonError(null);
+    // Auto-detect if schema is simple enough for form mode
+    const hasProperties = tool.inputSchema && tool.inputSchema.properties;
+    setIsJsonMode(!hasProperties);
   };
 
   const handleCloseRunModal = () => {
@@ -197,6 +203,90 @@ const MCPToolsPage: React.FC = () => {
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to update tool status' });
     }
+  };
+
+  const renderSchemaForm = () => {
+      if (!selectedTool?.inputSchema?.properties) {
+          return <div className="alert alert-info text-sm">No arguments defined or schema is complex. Use JSON mode.</div>;
+      }
+
+      let currentArgs: any = {};
+      try {
+          currentArgs = JSON.parse(runArgs);
+      } catch (e) {
+          // If invalid JSON, we can't render the form properly based on it.
+          // But we shouldn't crash.
+          console.warn("Invalid JSON in form mode", e);
+      }
+
+      const updateArg = (key: string, value: any) => {
+          const newArgs = { ...currentArgs, [key]: value };
+          setRunArgs(JSON.stringify(newArgs, null, 2));
+      };
+
+      return (
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1">
+              {Object.entries(selectedTool.inputSchema.properties).map(([key, prop]: [string, any]) => {
+                  const isRequired = selectedTool.inputSchema.required?.includes(key);
+                  const inputId = `tool-arg-${key}`;
+                  return (
+                      <div key={key} className="form-control w-full">
+                          <label className="label" htmlFor={inputId}>
+                              <span className="label-text font-medium flex items-center gap-1">
+                                  {key}
+                                  {isRequired && <span className="text-error" title="Required">*</span>}
+                              </span>
+                              <span className="label-text-alt opacity-60">{prop.type}</span>
+                          </label>
+
+                          {prop.description && (
+                              <div className="text-xs text-base-content/70 mb-2">{prop.description}</div>
+                          )}
+
+                          {prop.type === 'boolean' ? (
+                              <input
+                                  id={inputId}
+                                  type="checkbox"
+                                  className="toggle toggle-primary toggle-sm"
+                                  checked={!!currentArgs[key]}
+                                  onChange={(e) => updateArg(key, e.target.checked)}
+                              />
+                          ) : prop.enum ? (
+                              <select
+                                  id={inputId}
+                                  className="select select-bordered select-sm w-full"
+                                  value={currentArgs[key] || ''}
+                                  onChange={(e) => updateArg(key, e.target.value)}
+                              >
+                                  <option value="" disabled>Select {key}</option>
+                                  {prop.enum.map((val: string) => (
+                                      <option key={val} value={val}>{val}</option>
+                                  ))}
+                              </select>
+                          ) : prop.type === 'integer' || prop.type === 'number' ? (
+                               <input
+                                  id={inputId}
+                                  type="number"
+                                  className="input input-bordered input-sm w-full"
+                                  value={currentArgs[key] !== undefined ? currentArgs[key] : ''}
+                                  onChange={(e) => updateArg(key, e.target.value === '' ? undefined : Number(e.target.value))}
+                                  placeholder={prop.default !== undefined ? String(prop.default) : ''}
+                              />
+                          ) : (
+                              <input
+                                  id={inputId}
+                                  type="text"
+                                  className="input input-bordered input-sm w-full"
+                                  value={currentArgs[key] || ''}
+                                  onChange={(e) => updateArg(key, e.target.value)}
+                                  placeholder={prop.default || ''}
+                              />
+                          )}
+                      </div>
+                  );
+              })}
+          </div>
+      );
   };
 
   if (loading) {
@@ -373,37 +463,67 @@ const MCPToolsPage: React.FC = () => {
               {selectedTool.description}
             </p>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Input Schema</span>
-              </label>
-              <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-                <pre className="p-4 overflow-x-auto">
-                  <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-                </pre>
-              </div>
+            <div className="flex justify-end gap-2 mb-2">
+                 <div className="join">
+                    <button
+                        className={`btn btn-xs join-item ${!isJsonMode ? 'btn-primary' : ''}`}
+                        onClick={() => setIsJsonMode(false)}
+                        title="Form View"
+                    >
+                        <FormIcon className="w-3 h-3" /> Form
+                    </button>
+                    <button
+                        className={`btn btn-xs join-item ${isJsonMode ? 'btn-primary' : ''}`}
+                        onClick={() => setIsJsonMode(true)}
+                        title="JSON View"
+                    >
+                        <CodeIcon className="w-3 h-3" /> JSON
+                    </button>
+                 </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Arguments (JSON)</span>
-              </label>
-              <textarea
-                className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
-                value={runArgs}
-                onChange={(e) => {
-                  setRunArgs(e.target.value);
-                  if (jsonError) setJsonError(null);
-                }}
-                placeholder="{}"
-                disabled={isRunning}
-              />
-              {jsonError && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{jsonError}</span>
-                </label>
-              )}
-            </div>
+            {isJsonMode ? (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Arguments (JSON)</span>
+                  </label>
+                  <textarea
+                    className={`textarea textarea-bordered h-32 font-mono text-sm ${jsonError ? 'textarea-error' : ''}`}
+                    value={runArgs}
+                    onChange={(e) => {
+                      setRunArgs(e.target.value);
+                      if (jsonError) setJsonError(null);
+                    }}
+                    placeholder="{}"
+                    disabled={isRunning}
+                  />
+                  {jsonError && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{jsonError}</span>
+                    </label>
+                  )}
+                </div>
+            ) : (
+                <div className="bg-base-200 p-4 rounded-lg">
+                    {renderSchemaForm()}
+                </div>
+            )}
+
+            {!isJsonMode && (
+                <div className="collapse collapse-arrow bg-base-100 border border-base-200">
+                    <input type="checkbox" />
+                    <div className="collapse-title text-sm font-medium">
+                        View Input Schema
+                    </div>
+                    <div className="collapse-content">
+                         <div className="mockup-code bg-base-300 text-xs p-0 min-h-0 mt-2">
+                            <pre className="p-4 overflow-x-auto">
+                            <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            )}
           </div>
         </Modal>
       )}
