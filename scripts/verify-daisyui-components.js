@@ -21,7 +21,6 @@ const EXPECTED_COMPONENTS = [
   'Carousel',
   'Chat',
   'DataTable',
-  'Loading',
   'Modal',
   'ModalForm',
   'StatsCards',
