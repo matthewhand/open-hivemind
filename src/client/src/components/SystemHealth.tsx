@@ -246,7 +246,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Activity className="w-6 h-6 text-primary" />
-            <h2 className="card-title text-xl">System Health Monitor</h2>
+            <h2 className="card-title text-xl">Infrastructure Health</h2>
           </div>
           {lastRefresh && (
             <span className="text-sm text-base-content/70">
@@ -291,7 +291,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 </span>
               </div>
               <span className="text-xs text-base-content/70 mt-1">
-                {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+                {formatBytes((metrics?.memory.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory.total || 0) * 1024 * 1024)}
               </span>
             </div>
           </div>

@@ -124,18 +124,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [refreshInterval]);
 
   const getOverallHealthStatus = () => {
-    if (!systemMetrics || !bots.length) {return 'unknown';}
-
-    // Derive system health from StatusResponse data
-    const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
-      systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
+    if (!bots.length) {return 'unknown';}
 
     const botHealthIssues = bots.filter(bot =>
       bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
     ).length;
 
-    if (systemHealth === 'error' || botHealthIssues > 0) {return 'error';}
-    if (systemHealth === 'warning' || botHealthIssues > 0) {return 'warning';}
+    if (botHealthIssues > 0) {
+      const hasError = bots.some(bot => bot.statusData?.status === 'error');
+      return hasError ? 'error' : 'warning';
+    }
     return 'healthy';
   };
 
@@ -151,7 +149,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const overallStatus = getOverallHealthStatus();
 
   const tabs = [
-    { icon: <Heart className="w-5 h-5" />, label: 'System Health' },
+    { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
   ];
@@ -159,7 +157,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const stats = [
     {
       id: 'health',
-      title: 'System Health',
+      title: 'Ecosystem Status',
       value: overallStatus,
       icon: <Activity className="w-8 h-8" />,
       color: getHealthColor(overallStatus) as any,
