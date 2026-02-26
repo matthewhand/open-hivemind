@@ -227,7 +227,11 @@ Access a catalog of static HTML pages served by the system.
 
 To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright. This workflow allows for on-demand updates to visual documentation.
 
-To regenerate screenshots:
+**Automated Update (GitHub Actions):**
+You can trigger the **Update Screenshots** workflow manually from the Actions tab in GitHub to regenerate and commit new screenshots.
+
+**Manual Update (Local):**
+To regenerate screenshots locally:
 1. Ensure you have installed dependencies: `npm install`
 2. Install Playwright browsers: `npx playwright install chromium`
 3. Run the generation script:
