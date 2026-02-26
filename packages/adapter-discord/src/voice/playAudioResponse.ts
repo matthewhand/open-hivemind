@@ -43,8 +43,22 @@ export async function playAudioResponse(
     const connection = joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId: voiceChannel.guild.id,
-      // Cast required due to version mismatch in discord-api-types between discord.js and @discordjs/voice.
-      // discord.js uses a newer version with 'IsGuest' flag in GuildMemberFlags, which is missing in @discordjs/voice.
+      /**
+       * TYPE CAST RATIONALE: discord-api-types version mismatch
+       *
+       * `discord.js` depends on a newer `discord-api-types` version that added
+       * `GuildMemberFlags.IsGuest` and `GatewayIntentBits.AutoModerationConfiguration`.
+       * `@discordjs/voice` still depends on an older `discord-api-types` version
+       * that does not include these additions.
+       *
+       * As a result, `VoiceAdapterCreator` (from @discordjs/voice) and
+       * `voiceAdapterCreator` (from discord.js) are structurally incompatible at
+       * the TypeScript type level, even though they are compatible at runtime.
+       *
+       * This cast can be removed once @discordjs/voice updates its
+       * discord-api-types peer dependency to match discord.js.
+       * Track: https://github.com/discordjs/discord.js/issues/9928
+       */
       adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
     });
 
