@@ -62,3 +62,18 @@ The Personas (Beta) feature allows you to define distinct AI personalities and s
 2.  **Define Behavior**: Enter a name, description, and the **System Prompt** (e.g., "You are a helpful assistant...").
 3.  **Assign Bots**: In the "Assign to Bots" section, select the bots that should use this persona.
 4.  **Save**: Click **Create Persona** (or **Save Changes**) to apply. The selected bots will now use the new system prompt.
+
+## Bot Management
+
+The Bot Management section allows you to create and configure AI assistants. The simplified creation flow helps you quickly deploy new bots to platforms like Discord, Slack, Mattermost, and Telegram.
+
+![Bot Creation Page](screenshots/bot-create-page.png)
+
+### Creating a New Bot
+
+1.  Navigate to **Bots** in the sidebar and click **Create Bot**.
+2.  **Name & Description**: Use the AI Assist button to generate creative names and descriptions.
+3.  **Platform Selection**: Choose your target messaging platform from the visual grid (Discord, Slack, etc.).
+4.  **Persona**: Select a persona to define the bot's personality. A preview card will show you the persona's details.
+5.  **LLM Provider**: Choose which AI model provider to use, or stick with the system default.
+6.  Click **Create Bot** to finalize.

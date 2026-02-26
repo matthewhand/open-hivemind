@@ -100,6 +100,14 @@ test.describe('Bot Create Page Screenshots', () => {
     // We can check if the select has populated options
     // The "Persona" select should have "Friendly Helper"
     await expect(page.getByRole('combobox').filter({ hasText: 'Default Assistant' })).toBeVisible();
+
+    // Verify new Platform cards are visible
+    await expect(page.getByText('Discord', { exact: true })).toBeVisible();
+    await expect(page.getByText('Slack', { exact: true })).toBeVisible();
+
+    // Verify Persona Preview is visible (Default Assistant is selected by default)
+    await expect(page.getByText('A helpful general-purpose AI assistant.')).toBeVisible();
+
     // Or just wait a bit to be safe as animations might happen
     await page.waitForTimeout(1000);
 
