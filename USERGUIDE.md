@@ -109,6 +109,12 @@ Browse and manage tools available from your connected MCP servers.
 
 ## System
 
+### Demo Mode
+When the application is started without configuration, it enters Demo Mode to showcase features.
+*   **Visual Indicator**: A purple banner appears at the top of the screen.
+*   **Simulated Data**: The system populates with demo bots and conversations.
+*   **Configuration**: The banner provides a quick link to Settings to configure API keys and enable production mode.
+
 ### [Activity Feed](/admin/activity)
 Monitor real-time interactions and events across your bot ecosystem.
 ![Activity Feed](docs/screenshots/activity-page-filters.png)
@@ -227,4 +233,4 @@ To regenerate screenshots:
    npm run generate-docs
    ```
 
-This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
+This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI (including features like Demo Mode banners), and saves the images to `docs/screenshots/`.
