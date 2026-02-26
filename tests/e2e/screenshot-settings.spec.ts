@@ -12,7 +12,27 @@ test.describe('Settings Screenshots', () => {
         json: {
           config: {
             app: {
-              timezone: { value: 'UTC' }
+              name: { value: 'Open-Hivemind Instance' },
+              description: { value: 'Multi-agent AI coordination platform' },
+              timezone: { value: 'UTC' },
+              language: { value: 'en' }
+            },
+            webui: {
+              theme: { value: 'auto' },
+              notifications: { value: true },
+              advancedMode: { value: false }
+            },
+            logging: {
+              enabled: { value: true },
+              level: { value: 'info' }
+            },
+            limits: {
+              maxBots: { value: 10 },
+              timeout: { value: 30 }
+            },
+            health: {
+              enabled: { value: true },
+              interval: { value: 60 }
             }
           },
           _userSettings: {
