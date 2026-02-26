@@ -154,6 +154,14 @@ Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
 *   **Default Persona**: The base personality applied to new bots.
 
+### System Errors
+If you navigate to a page that doesn't exist or encounter a broken link, you will be redirected to the System Error page.
+
+![System Error Page](docs/screenshots/not-found-page.png)
+
+*   **Signal Lost**: A visual indicator that the requested resource cannot be found.
+*   **Return Navigation**: Buttons to easily navigate back to the dashboard or the previous page.
+
 ## AI & Analytics
 
 ### [AI Dashboard](/admin/ai/dashboard)

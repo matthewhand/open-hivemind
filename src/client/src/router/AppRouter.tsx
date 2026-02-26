@@ -14,6 +14,8 @@ import LoadingPage from '../pages/LoadingPage';
 const Login = lazy(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
 
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
+
 // Standalone pages
 const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
 
@@ -213,7 +215,7 @@ const AppRouter: React.FC = () => {
           <Route path="ai/training" element={<BotTrainingDashboard />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );
