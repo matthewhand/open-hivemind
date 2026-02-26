@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { setupAuth, setupScreenshotEnv } from './test-utils';
 
 test.describe('Activity Page Screenshots', () => {
   test.beforeEach(async ({ page }) => {
@@ -118,8 +118,8 @@ test.describe('Activity Page Screenshots', () => {
   });
 
   test('capture Activity page screenshots', async ({ page }) => {
-    // Set viewport
-    await page.setViewportSize({ width: 1280, height: 800 });
+    // Set viewport and reduced motion
+    await setupScreenshotEnv(page);
 
     // Navigate to Activity page
     await page.goto('/admin/activity');

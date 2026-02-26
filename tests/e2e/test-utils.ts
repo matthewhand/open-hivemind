@@ -193,3 +193,15 @@ export const SELECTORS = {
   deleteButton: 'button:has-text("Delete"), button[class*="delete"]',
   editButton: 'button:has-text("Edit"), button[class*="edit"]',
 };
+
+/**
+ * Setup standard environment for screenshots
+ * Sets viewport and emulates reduced motion for consistent rendering
+ */
+export async function setupScreenshotEnv(page: Page) {
+  // Set viewport for consistent screenshots
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  // Emulate reduced motion to disable animations (e.g. StatsCards)
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+}
