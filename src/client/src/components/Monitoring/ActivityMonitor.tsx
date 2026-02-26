@@ -1,22 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Select } from '../DaisyUI';
-import dayjs, { Dayjs } from 'dayjs';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, Badge, Button, Loading, EmptyState } from '../DaisyUI';
+import DataTable from '../DaisyUI/DataTable';
+import SearchFilterBar from '../SearchFilterBar';
+import dayjs from 'dayjs';
 import { useWebSocket } from '../../hooks/useWebSocket';
-
-interface MessageFlowEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
-}
+import { apiService, ActivityEvent } from '../../services/api';
+import { Activity, Clock } from 'lucide-react';
 
 interface FilterOptions {
   agent?: string;
@@ -28,29 +18,69 @@ interface FilterOptions {
 }
 
 const ActivityMonitor: React.FC = () => {
-  const { messages, metrics } = useWebSocket();
-  const [filteredMessages, setFilteredMessages] = useState<MessageFlowEvent[]>([]);
+  const { messages: wsMessages, metrics } = useWebSocket();
+  const [historyMessages, setHistoryMessages] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterOptions>({});
-  const [uniqueAgents, setUniqueAgents] = useState<string[]>([]);
-  const [uniqueProviders, setUniqueProviders] = useState<string[]>([]);
 
-  // Extract unique agents and providers from messages
+  // Initial data fetch
   useEffect(() => {
-    if (messages && messages.length > 0) {
-      const agents = Array.from(new Set(messages.map(msg => msg.botName)));
-      const providers = Array.from(new Set(messages.map(msg => msg.provider)));
-      setUniqueAgents(agents);
-      setUniqueProviders(providers);
+    const fetchHistory = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getActivity({ limit: '100' } as any);
+        if (response && response.events) {
+          setHistoryMessages(response.events);
+        }
+      } catch (error) {
+        console.error('Failed to fetch activity history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      // Apply filters
-      applyFilters(messages);
-    } else {
-      setFilteredMessages([]);
+    fetchHistory();
+  }, []);
+
+  // Combine history and realtime messages
+  const allMessages = useMemo(() => {
+    // Merge history and wsMessages, deduping by ID if necessary
+    // WS messages are likely newer.
+    // Ideally we merge them. For now, let's just use history + wsMessages
+    // Assuming wsMessages accumulates new messages.
+
+    // Create a map by ID to dedupe
+    const messageMap = new Map<string, ActivityEvent>();
+
+    // Add history first
+    historyMessages.forEach(msg => messageMap.set(msg.id, msg));
+
+    // Add/Update with WS messages
+    // We need to cast WS messages to ActivityEvent if they are compatible
+    // The interfaces are slightly different in strictness but mostly compatible
+    wsMessages.forEach((msg: any) => messageMap.set(msg.id, msg));
+
+    return Array.from(messageMap.values()).sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [historyMessages, wsMessages]);
+
+  const uniqueAgents = useMemo(() => Array.from(new Set(allMessages.map(msg => msg.botName))), [allMessages]);
+  const uniqueProviders = useMemo(() => Array.from(new Set(allMessages.map(msg => msg.provider))), [allMessages]);
+
+  const filteredMessages = useMemo(() => {
+    let filtered = [...allMessages];
+
+    // Search Query
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(msg =>
+        msg.botName?.toLowerCase().includes(lowerQuery) ||
+        msg.provider?.toLowerCase().includes(lowerQuery) ||
+        msg.errorMessage?.toLowerCase().includes(lowerQuery)
+      );
     }
-  }, [messages, filters]);
-
-  const applyFilters = (msgs: MessageFlowEvent[]) => {
-    let filtered = [...msgs];
 
     // Filter by agent
     if (filters.agent) {
@@ -81,8 +111,8 @@ const ActivityMonitor: React.FC = () => {
       filtered = filtered.filter(msg => dayjs(msg.timestamp).isBefore(dayjs(filters.endDate)));
     }
 
-    setFilteredMessages(filtered);
-  };
+    return filtered;
+  }, [allMessages, searchQuery, filters]);
 
   const handleFilterChange = (field: keyof FilterOptions, value: any) => {
     setFilters(prev => ({ ...prev, [field]: value }));
@@ -90,6 +120,7 @@ const ActivityMonitor: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({});
+    setSearchQuery('');
   };
 
   // Calculate statistics
@@ -98,47 +129,109 @@ const ActivityMonitor: React.FC = () => {
   const outgoingMessages = filteredMessages.filter(msg => msg.messageType === 'outgoing').length;
   const errorMessages = filteredMessages.filter(msg => msg.status === 'error').length;
 
+  const columns = [
+    {
+      key: 'timestamp',
+      title: 'Time',
+      sortable: true,
+      width: '180px',
+      render: (value: string) => <span className="font-mono text-xs">{dayjs(value).format('YYYY-MM-DD HH:mm:ss')}</span>
+    },
+    {
+      key: 'botName',
+      title: 'Agent',
+      sortable: true,
+      filterable: true,
+      render: (value: string) => <span className="font-medium">{value}</span>
+    },
+    {
+      key: 'provider',
+      title: 'Provider',
+      sortable: true,
+      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>
+    },
+    {
+      key: 'messageType',
+      title: 'Type',
+      sortable: true,
+      render: (value: string) => (
+        <Badge
+          variant={value === 'incoming' ? 'primary' : 'secondary'}
+          size="sm"
+        >
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: 'contentLength',
+      title: 'Length',
+      sortable: true,
+      render: (value: number) => <span className="text-xs">{value} chars</span>
+    },
+    {
+      key: 'processingTime',
+      title: 'Duration',
+      sortable: true,
+      render: (value: number) => value ? <span className="font-mono text-xs">{value}ms</span> : '-'
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      render: (value: string) => (
+        <Badge
+          variant={value === 'success' ? 'success' : value === 'error' ? 'error' : 'warning'}
+          size="sm"
+        >
+          {value}
+        </Badge>
+      )
+    }
+  ];
+
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-6">Activity Monitoring</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Activity Monitoring</h2>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setLoading(true);
+            apiService.getActivity({ limit: '100' } as any).then(res => {
+              if (res?.events) setHistoryMessages(res.events);
+              setLoading(false);
+            });
+          }}
+        >
+          Refresh History
+        </Button>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Total Messages
-            </p>
-            <h3 className="text-2xl font-bold">
-              {totalMessages}
-            </h3>
+            <p className="text-base-content/70 text-sm mb-2">Total Messages</p>
+            <h3 className="text-2xl font-bold">{totalMessages}</h3>
           </Card.Body>
         </Card>
         <Card>
           <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Incoming
-            </p>
-            <h3 className="text-2xl font-bold text-primary">
-              {incomingMessages}
-            </h3>
+            <p className="text-base-content/70 text-sm mb-2">Incoming</p>
+            <h3 className="text-2xl font-bold text-primary">{incomingMessages}</h3>
           </Card.Body>
         </Card>
         <Card>
           <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Outgoing
-            </p>
-            <h3 className="text-2xl font-bold text-secondary">
-              {outgoingMessages}
-            </h3>
+            <p className="text-base-content/70 text-sm mb-2">Outgoing</p>
+            <h3 className="text-2xl font-bold text-secondary">{outgoingMessages}</h3>
           </Card.Body>
         </Card>
         <Card>
           <Card.Body>
-            <p className="text-base-content/70 text-sm mb-2">
-              Errors
-            </p>
+            <p className="text-base-content/70 text-sm mb-2">Errors</p>
             <h3 className={`text-2xl font-bold ${errorMessages > 0 ? 'text-error' : 'text-success'}`}>
               {errorMessages}
             </h3>
@@ -146,145 +239,86 @@ const ActivityMonitor: React.FC = () => {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <Card.Body>
-          <Card.Title>Filters</Card.Title>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-            <Select
-              label="Agent"
-              value={filters.agent || ''}
-              onChange={(value) => handleFilterChange('agent', value || undefined)}
-              options={[
-                { value: '', label: 'All Agents' },
-                ...uniqueAgents.map(agent => ({ value: agent, label: agent })),
-              ]}
-            />
-
-            <Select
-              label="Provider"
-              value={filters.provider || ''}
-              onChange={(value) => handleFilterChange('provider', value || undefined)}
-              options={[
-                { value: '', label: 'All Providers' },
-                ...uniqueProviders.map(provider => ({ value: provider, label: provider })),
-              ]}
-            />
-
-            <Select
-              label="Message Type"
-              value={filters.messageType || ''}
-              onChange={(value) => handleFilterChange('messageType', value || undefined)}
-              options={[
-                { value: '', label: 'All Types' },
-                { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' },
-              ]}
-            />
-
-            <Select
-              label="Status"
-              value={filters.status || ''}
-              onChange={(value) => handleFilterChange('status', value || undefined)}
-              options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'success', label: 'Success' },
-                { value: 'error', label: 'Error' },
-                { value: 'timeout', label: 'Timeout' },
-              ]}
-            />
-
-            <Button
-              variant="secondary" className="btn-outline"
-              onClick={clearFilters}
-              className="self-end"
-            >
-              Clear Filters
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="label">
-                <span className="label-text">Start Date</span>
-              </label>
-              <input
+      {/* Filter Bar */}
+      <SearchFilterBar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search activity..."
+        onClear={clearFilters}
+        filters={[
+          {
+            key: 'agent',
+            value: filters.agent || '',
+            onChange: (val) => handleFilterChange('agent', val || undefined),
+            options: [{ value: '', label: 'All Agents' }, ...uniqueAgents.map(a => ({ value: a, label: a }))],
+            className: 'w-full sm:w-40'
+          },
+          {
+            key: 'provider',
+            value: filters.provider || '',
+            onChange: (val) => handleFilterChange('provider', val || undefined),
+            options: [{ value: '', label: 'All Providers' }, ...uniqueProviders.map(p => ({ value: p, label: p }))],
+            className: 'w-full sm:w-40'
+          },
+          {
+            key: 'status',
+            value: filters.status || '',
+            onChange: (val) => handleFilterChange('status', val || undefined),
+            options: [
+              { value: '', label: 'All Statuses' },
+              { value: 'success', label: 'Success' },
+              { value: 'error', label: 'Error' },
+              { value: 'timeout', label: 'Timeout' }
+            ],
+            className: 'w-full sm:w-32'
+          }
+        ]}
+      >
+        <div className="flex gap-2 items-center">
+             {/* Simple Date Inputs as children */}
+             <input
                 type="datetime-local"
-                className="input input-bordered w-full"
+                className="input input-bordered input-sm w-36" // narrowed for better fit
                 value={filters.startDate || ''}
                 onChange={(e) => handleFilterChange('startDate', e.target.value || undefined)}
+                aria-label="Start Date"
               />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">End Date</span>
-              </label>
+              <span className="text-base-content/50">-</span>
               <input
                 type="datetime-local"
-                className="input input-bordered w-full"
+                className="input input-bordered input-sm w-36"
                 value={filters.endDate || ''}
                 onChange={(e) => handleFilterChange('endDate', e.target.value || undefined)}
+                aria-label="End Date"
               />
-            </div>
-          </div>
-        </Card.Body>
-      </Card>
+        </div>
+      </SearchFilterBar>
 
-      {/* Message Flow Table */}
-      <Card>
-        <Card.Body>
-          <div className="overflow-x-auto">
-            <table className="table table-sm table-zebra">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Agent</th>
-                  <th>Provider</th>
-                  <th>Type</th>
-                  <th>Channel</th>
-                  <th>Length</th>
-                  <th>Processing Time</th>
-                  <th>
-
-                    Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMessages.map((msg) => (
-                  <tr
-                    key={msg.id}
-                    className={msg.status === 'error' ? 'bg-error/10' : ''}
-                  >
-                    <td>{dayjs(msg.timestamp).format('YYYY-MM-DD HH:mm:ss')}</td>
-                    <td>{msg.botName}</td>
-                    <td>{msg.provider}</td>
-                    <td>
-                      <Badge
-                        variant={msg.messageType === 'incoming' ? 'primary' : 'secondary'}
-                        size="sm"
-                      >
-                        {msg.messageType}
-                      </Badge>
-                    </td>
-                    <td>{msg.channelId}</td>
-                    <td>{msg.contentLength}</td>
-                    <td>{msg.processingTime ? `${msg.processingTime}ms` : '-'}</td>
-                    <td>
-                      <Badge
-                        variant={msg.status === 'success' ? 'success' : msg.status === 'error' ? 'error' : 'warning'}
-                        size="sm"
-                      >
-                        {msg.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="mt-6">
+        {loading && allMessages.length === 0 ? (
+          <div className="flex justify-center p-12">
+            <Loading size="lg" />
           </div>
-        </Card.Body>
-      </Card>
+        ) : filteredMessages.length === 0 ? (
+          <EmptyState
+            icon={Activity}
+            title="No activity found"
+            description="Adjust your filters or wait for new activity."
+            actionLabel="Clear Filters"
+            onAction={clearFilters}
+          />
+        ) : (
+          <Card>
+            <DataTable
+              data={filteredMessages}
+              columns={columns as any}
+              loading={loading}
+              pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
+              searchable={false} // We use SearchFilterBar
+            />
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
