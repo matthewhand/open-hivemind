@@ -190,7 +190,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <th>Bot Name</th>
                     <th>Messages</th>
                     <th>Errors</th>
-                    <th>Success Rate</th>
+                    <th>Success %</th>
                   </tr>
                 </thead>
                 <tbody>
