@@ -830,3 +830,55 @@ textarea {
 .tooltip-error::before {
   border-color: hsl(var(--er) / 0.4);
 }
+/* ============================================
+   Hacker Mode (Konami Code)
+   ============================================ */
+html.theme-hacker {
+  /* Override DaisyUI variables with Matrix/Hacker colors (OKLCH) */
+  --b1: 0.1 0.1 140;   /* Deep Green/Black Background */
+  --b2: 0.12 0.1 140;  /* Slightly lighter */
+  --b3: 0.15 0.1 140;
+  --bc: 0.8 0.2 140;   /* Bright Green Content */
+  --p: 0.7 0.25 140;   /* Primary Green */
+  --s: 0.6 0.25 140;   /* Secondary Green */
+  --a: 0.8 0.25 140;   /* Accent Green */
+  --n: 0.2 0.1 140;    /* Neutral */
+
+  --rounded-box: 0;
+  --rounded-btn: 0;
+  --rounded-badge: 0;
+
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+html.theme-hacker body {
+  background-color: oklch(var(--b1)) !important;
+  color: oklch(var(--bc)) !important;
+}
+
+html.theme-hacker * {
+  border-radius: 0 !important;
+  border-color: oklch(var(--p) / 0.5) !important;
+}
+
+html.theme-hacker .card,
+html.theme-hacker .btn,
+html.theme-hacker .navbar,
+html.theme-hacker .menu,
+html.theme-hacker .drawer {
+  background-color: oklch(var(--b2)) !important;
+  border: 1px solid oklch(var(--p)) !important;
+  box-shadow: 0 0 10px oklch(var(--p) / 0.3) !important;
+}
+
+html.theme-hacker h1,
+html.theme-hacker h2,
+html.theme-hacker h3,
+html.theme-hacker h4,
+html.theme-hacker h5,
+html.theme-hacker h6,
+html.theme-hacker span,
+html.theme-hacker p,
+html.theme-hacker a {
+  text-shadow: 0 0 4px oklch(var(--p) / 0.5);
+}

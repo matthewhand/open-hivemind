@@ -9,6 +9,8 @@ The central hub for monitoring your bot ecosystem.
 *   **Bot Status**: View real-time status of all running bots (Online, Offline, Error).
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
+*   **Hacker Mode**: Enter the Konami Code (`↑ ↑ ↓ ↓ ← → ← → B A`) to toggle a terminal-style theme.
+![Hacker Mode](docs/screenshots/hacker-mode.png)
 
 ### [Activity Feed](/admin/activity)
 A comprehensive view of all message processing events and system actions.

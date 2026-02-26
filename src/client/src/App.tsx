@@ -10,6 +10,7 @@ import ToastNotification from './components/DaisyUI/ToastNotification';
 import { BotProvider } from './contexts/BotContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
+import KonamiCodeListener from './components/KonamiCodeListener';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
                 <WebSocketProvider>
                   <BrowserRouter>
                     <ScrollToTop />
+                    <KonamiCodeListener />
                     <AppRouter />
                   </BrowserRouter>
                 </WebSocketProvider>

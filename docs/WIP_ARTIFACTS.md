@@ -8,6 +8,7 @@ This page references screenshots and images that are currently not linked in the
 - ![Guards Modal Enhanced](screenshots/guards-modal-enhanced.png)
 - ![Guards Modal](screenshots/guards-modal.png)
 - ![Guards Page](screenshots/guards-page.png)
+- ![Hacker Mode](screenshots/hacker-mode.png)
 - ![LLM Add Profile Modal](screenshots/llm-add-profile-modal.png)
 - ![LLM Providers List](screenshots/llm-providers-list.png)
 - ![MCP Add Server Modal](screenshots/mcp-add-server-modal.png)
