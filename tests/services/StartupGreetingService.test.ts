@@ -191,6 +191,26 @@ describe('StartupGreetingService', () => {
       expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
     });
 
+    it('should fallback to default message if LLM returns empty response', async () => {
+      mockMessengerService.getDefaultChannel.mockReturnValue('general');
+      (messageConfig.get as jest.Mock).mockReturnValue({
+        disabled: false,
+        use_llm: true,
+      });
+
+      const mockProvider = {
+        supportsChatCompletion: () => true,
+        generateChatCompletion: jest.fn().mockResolvedValue(''),
+      };
+      (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
+
+      service.emit('service-ready', mockMessengerService);
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // It should fall through to the final fallback return statement
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
+    });
+
     it('should strip quotes from LLM response', async () => {
       mockMessengerService.getDefaultChannel.mockReturnValue('general');
       (messageConfig.get as jest.Mock).mockReturnValue({
