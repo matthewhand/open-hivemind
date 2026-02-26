@@ -4,10 +4,12 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logBotAction } from '../middleware/audit';
+import { ActivityLogger } from '../services/ActivityLogger';
 
 const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
+const activityLogger = ActivityLogger.getInstance();
 
 // Apply audit middleware after authentication
 router.use(authenticate, auditMiddleware);
@@ -333,6 +335,113 @@ router.get('/templates', authenticate, (req: Request, res: Response) => {
     success: true,
     data: { templates }
   });
+});
+
+/**
+ * GET /webui/api/bots/:botId/activity
+ * Get activity logs for a specific bot
+ */
+router.get('/:botId/activity', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { botId } = req.params;
+    const { limit = '50', startTime, endTime } = req.query;
+
+    const options: any = {
+      limit: parseInt(limit as string, 10),
+      botName: botId
+    };
+
+    if (startTime) {
+      options.startTime = new Date(startTime as string);
+    }
+    if (endTime) {
+      options.endTime = new Date(endTime as string);
+    }
+
+    const events = await activityLogger.getEvents(options);
+
+    res.json({
+      success: true,
+      data: {
+        botId,
+        events,
+        total: events.length
+      }
+    });
+  } catch (error: any) {
+    debug('Error getting bot activity:', error);
+    res.status(500).json({
+      error: 'Failed to get bot activity',
+      message: error.message || 'An error occurred while retrieving bot activity'
+    });
+  }
+});
+
+/**
+ * GET /webui/api/bots/activity/summary
+ * Get activity summary for all bots
+ */
+router.get('/activity/summary', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { limit = '100' } = req.query;
+
+    const events = await activityLogger.getEvents({
+      limit: parseInt(limit as string, 10)
+    });
+
+    // Aggregate activity by bot
+    const botActivity: Record<string, {
+      name: string;
+      totalEvents: number;
+      successCount: number;
+      errorCount: number;
+      lastActivity: string | null;
+      messageCount: number;
+    }> = {};
+
+    for (const event of events) {
+      const botName = event.botName || 'unknown';
+      if (!botActivity[botName]) {
+        botActivity[botName] = {
+          name: botName,
+          totalEvents: 0,
+          successCount: 0,
+          errorCount: 0,
+          lastActivity: null,
+          messageCount: 0
+        };
+      }
+
+      botActivity[botName].totalEvents++;
+      if (event.status === 'error') {
+        botActivity[botName].errorCount++;
+      } else {
+        botActivity[botName].successCount++;
+      }
+      if (event.messageType === 'outgoing') {
+        botActivity[botName].messageCount++;
+      }
+      if (!botActivity[botName].lastActivity || new Date(event.timestamp) > new Date(botActivity[botName].lastActivity)) {
+        botActivity[botName].lastActivity = event.timestamp;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        summary: Object.values(botActivity),
+        totalEvents: events.length
+      }
+    });
+  } catch (error: any) {
+    debug('Error getting activity summary:', error);
+    res.status(500).json({
+      error: 'Failed to get activity summary',
+      message: error.message || 'An error occurred while retrieving activity summary'
+    });
+  }
 });
 
 export default router;

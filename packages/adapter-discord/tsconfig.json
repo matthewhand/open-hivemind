@@ -1,0 +1,40 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "dist",
+        "declaration": true,
+        "declarationMap": true,
+        "composite": true,
+        "baseUrl": ".",
+        "paths": {
+            "@hivemind/shared-types": [
+                "../shared-types/src"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src/ui",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts",
+        "src/commands",
+        "src/fetchers",
+        "src/handlers",
+        "src/interaction",
+        "src/media",
+        "src/network",
+        "src/providers",
+        "src/utils",
+        "src/voice"
+    ],
+    "references": [
+        {
+            "path": "../shared-types"
+        }
+    ]
+}

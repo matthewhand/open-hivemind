@@ -204,6 +204,44 @@ class ApiService {
     return this.request(`/webui/api/bots/${name}`, { method: 'DELETE' });
   }
 
+  async getBotActivity(botId: string, options: {
+    limit?: number;
+    startTime?: string;
+    endTime?: string;
+  } = {}): Promise<{
+    success: boolean;
+    data: {
+      botId: string;
+      events: ActivityEvent[];
+      total: number;
+    };
+  }> {
+    const params = new URLSearchParams();
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.startTime) params.append('startTime', options.startTime);
+    if (options.endTime) params.append('endTime', options.endTime);
+
+    const query = params.toString();
+    return this.request(`/webui/api/bots/${botId}/activity${query ? `?${query}` : ''}`);
+  }
+
+  async getActivitySummary(limit: number = 100): Promise<{
+    success: boolean;
+    data: {
+      summary: Array<{
+        name: string;
+        totalEvents: number;
+        successCount: number;
+        errorCount: number;
+        lastActivity: string | null;
+        messageCount: number;
+      }>;
+      totalEvents: number;
+    };
+  }> {
+    return this.request(`/webui/api/bots/activity/summary?limit=${limit}`);
+  }
+
   // Secure Configuration Methods
   async getSecureConfigs(): Promise<{ configs: SecureConfig[] }> {
     return this.request('/webui/api/secure-configs');

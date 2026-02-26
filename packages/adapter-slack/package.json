@@ -1,0 +1,30 @@
+{
+    "name": "@hivemind/adapter-slack",
+    "version": "1.0.0",
+    "description": "Slack adapter for Open Hivemind",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "npx tsc",
+        "clean": "rm -rf dist",
+        "test": "echo \"No tests yet\" && exit 0"
+    },
+    "dependencies": {
+        "@slack/web-api": "^7.8.0",
+        "@slack/socket-mode": "^2.0.3",
+        "@slack/rtm-api": "^7.0.2",
+        "@slack/webhook": "^7.0.4",
+        "debug": "^4.3.7"
+    },
+    "peerDependencies": {
+        "@hivemind/shared-types": "*"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.2",
+        "@types/debug": "^4.1.12"
+    },
+    "files": [
+        "dist",
+        "src"
+    ]
+}

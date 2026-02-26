@@ -33,8 +33,9 @@ import {
   PlayArrow as StartIcon,
   Stop as StopIcon,
   ContentCopy as CloneIcon,
+  History as ActivityIcon,
 } from '@mui/icons-material';
-import { apiService, type Bot } from '../services/api';
+import { apiService, type Bot, type ActivityEvent } from '../services/api';
 
 interface BotManagerProps {
   onBotSelect?: (bot: unknown) => void;
@@ -48,6 +49,12 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  // Activity state
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [activityLogs, setActivityLogs] = useState<ActivityEvent[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityBotName, setActivityBotName] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -156,6 +163,28 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
         severity: 'error'
       });
     }
+  };
+
+  const fetchActivityLogs = async (botName: string) => {
+    setActivityLoading(true);
+    setActivityBotName(botName);
+    try {
+      const response = await apiService.getBotActivity(botName, { limit: 50 });
+      setActivityLogs(response.data.events);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to fetch activity logs',
+        severity: 'error'
+      });
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  const handleViewActivity = (botName: string) => {
+    fetchActivityLogs(botName);
+    setActivityDialogOpen(true);
   };
 
   const openEditDialog = (bot: Bot) => {
@@ -292,6 +321,15 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
                         <StopIcon />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="View Activity">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewActivity(bot.name)}
+                        color="info"
+                      >
+                        <ActivityIcon />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Delete">
                       <IconButton
                         size="small"
@@ -423,6 +461,69 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
           <Button onClick={handleEditBot} variant="contained">
             Update Bot
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Activity Logs Dialog */}
+      <Dialog open={activityDialogOpen} onClose={() => setActivityDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Activity Logs - {activityBotName}</DialogTitle>
+        <DialogContent>
+          {activityLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <CircularProgress />
+            </Box>
+          ) : activityLogs.length === 0 ? (
+            <Box py={4} textAlign="center">
+              <Typography variant="body1" color="text.secondary">
+                No activity logs found for this bot.
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Message</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {activityLogs.map((log, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={log.messageType}
+                          size="small"
+                          color={log.messageType === 'outgoing' ? 'primary' : 'default'}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={log.status}
+                          size="small"
+                          color={log.status === 'success' ? 'success' : log.status === 'error' ? 'error' : 'warning'}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {log.errorMessage || `${log.contentLength} characters`}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActivityDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
