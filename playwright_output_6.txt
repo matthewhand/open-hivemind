@@ -1,0 +1,25 @@
+[1A[2K[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 3c4b8efddb02e738beed68b4ad80dcd7
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+[1A[2K[chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+BROWSER LOG: [vite] connecting...
+
+[1A[2KBROWSER LOG: [vite] connected.
+
+[1A[2KBROWSER LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+Global teardown completed
+[1A[2K  1 passed (21.5s)

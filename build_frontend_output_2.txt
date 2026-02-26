@@ -1,0 +1,106 @@
+
+> open-hivemind@1.0.0 build:frontend
+> bash ./scripts/build-frontend.sh
+
+[build:frontend] starting at 2026-02-26T05:10:07+00:00 with NODE_OPTIONS=--max-old-space-size=2048
++ NODE_ENV=production
++ npx vite build
+vite v7.3.1 building client environment for production...
+transforming...
+/*! 🌼 daisyUI 5.1.25 */
+✓ 3217 modules transformed.
+Generated an empty chunk: "daisyui".
+rendering chunks...
+computing gzip size...
+dist/index.html                                     0.79 kB │ gzip:   0.38 kB
+dist/assets/index-BKteZZuZ.css                    248.42 kB │ gzip:  38.46 kB
+dist/assets/daisyui-l0sNRNKZ.js                     0.00 kB │ gzip:   0.02 kB
+dist/assets/check-D1ll6iLZ.js                       0.12 kB │ gzip:   0.13 kB
+dist/assets/message-circle-BF4acr9S.js              0.14 kB │ gzip:   0.15 kB
+dist/assets/plus-DLtDohlU.js                        0.15 kB │ gzip:   0.15 kB
+dist/assets/arrow-right-BZLyBi2x.js                 0.16 kB │ gzip:   0.16 kB
+dist/assets/providers-CRaILIRu.js                   0.16 kB │ gzip:   0.15 kB
+dist/assets/clock-Di6aBzNp.js                       0.18 kB │ gzip:   0.17 kB
+dist/assets/circle-check-big-BpdOu0e4.js            0.18 kB │ gzip:   0.18 kB
+dist/assets/user-BtT4EMvR.js                        0.19 kB │ gzip:   0.18 kB
+dist/assets/info-CtAt2O_4.js                        0.20 kB │ gzip:   0.17 kB
+dist/assets/rotate-ccw-SkDdg7ta.js                  0.20 kB │ gzip:   0.18 kB
+dist/assets/circle-alert-BuEN90oN.js                0.25 kB │ gzip:   0.19 kB
+dist/assets/download-BULGgc48.js                    0.26 kB │ gzip:   0.22 kB
+dist/assets/zap-D15odJBS.js                         0.26 kB │ gzip:   0.20 kB
+dist/assets/refresh-cw-C408yaCW.js                  0.32 kB │ gzip:   0.23 kB
+dist/assets/server-Cf2pmgH0.js                      0.34 kB │ gzip:   0.21 kB
+dist/assets/trash-2-9QaW8FFh.js                     0.35 kB │ gzip:   0.24 kB
+dist/assets/pen-zSA0RyeQ.js                         0.42 kB │ gzip:   0.30 kB
+dist/assets/AnimationComponents-CKhU0rE1.js         0.45 kB │ gzip:   0.32 kB
+dist/assets/Toggle-CJirangO.js                      0.45 kB │ gzip:   0.29 kB
+dist/assets/PlusIcon-DJYM0_sS.js                    0.48 kB │ gzip:   0.35 kB
+dist/assets/cpu-C8TKnqov.js                         0.49 kB │ gzip:   0.26 kB
+dist/assets/ClockIcon-BFToMb8b.js                   0.50 kB │ gzip:   0.37 kB
+dist/assets/sparkles-DVdCBusZ.js                    0.51 kB │ gzip:   0.30 kB
+dist/assets/MagnifyingGlassIcon-Bf7Zx3X6.js         0.53 kB │ gzip:   0.38 kB
+dist/assets/StandaloneActivity-DrNhlY-J.js          0.54 kB │ gzip:   0.35 kB
+dist/assets/PlayIcon-CE2SfXFM.js                    0.58 kB │ gzip:   0.40 kB
+dist/assets/ExclamationTriangleIcon-DlqXieRR.js     0.63 kB │ gzip:   0.45 kB
+dist/assets/useModal-BtGpmJ3t.js                    0.72 kB │ gzip:   0.31 kB
+dist/assets/CpuChipIcon-DkCUR2_4.js                 0.73 kB │ gzip:   0.45 kB
+dist/assets/TrashIcon-DFnrvLrJ.js                   0.87 kB │ gzip:   0.55 kB
+dist/assets/ChartBarIcon-mmZCb7GA.js                0.90 kB │ gzip:   0.50 kB
+dist/assets/ChatBubbleLeftRightIcon-D7Z1c3qm.js     0.97 kB │ gzip:   0.62 kB
+dist/assets/WrenchScrewdriverIcon-6IuRV1PE.js       0.98 kB │ gzip:   0.62 kB
+dist/assets/SparklesIcon-Bwn-WIJK.js                1.07 kB │ gzip:   0.56 kB
+dist/assets/SearchFilterBar-Dl2PLYAu.js             1.19 kB │ gzip:   0.66 kB
+dist/assets/PageHeader-BTN2R7-A.js                  1.63 kB │ gzip:   0.67 kB
+dist/assets/Accordion-nKpWlXIU.js                   1.88 kB │ gzip:   0.86 kB
+dist/assets/HandThumbUpIcon-BgFbhfU0.js             2.35 kB │ gzip:   1.11 kB
+dist/assets/Login-DmJ9tkT3.js                       2.43 kB │ gzip:   1.10 kB
+dist/assets/BotTemplatesPage-D8h2rigu.js            2.82 kB │ gzip:   1.17 kB
+dist/assets/StatusCard-DZ8eSU_e.js                  4.03 kB │ gzip:   1.32 kB
+dist/assets/MetricChart-Dv9zpdvQ.js                 4.12 kB │ gzip:   1.63 kB
+dist/assets/StaticPagesPage-DxYZiuu4.js             4.39 kB │ gzip:   1.58 kB
+dist/assets/ProvidersPage-DWrkyglK.js               4.93 kB │ gzip:   1.56 kB
+dist/assets/ActivityMonitor-DD7i-5i0.js             5.44 kB │ gzip:   1.77 kB
+dist/assets/AlertPanel-CgrIm5vr.js                  5.55 kB │ gzip:   1.80 kB
+dist/assets/BotCreatePage-B4ilwFH5.js               6.00 kB │ gzip:   2.15 kB
+dist/assets/DataTable-gfkef7-l.js                   6.06 kB │ gzip:   2.23 kB
+dist/assets/AnalyticsDashboard-zWuZvH0e.js          6.15 kB │ gzip:   2.41 kB
+dist/assets/SpecsPage-BT2axS-0.js                   6.19 kB │ gzip:   2.48 kB
+dist/assets/BotConfigurationPage-CGtLRwm8.js        6.32 kB │ gzip:   2.32 kB
+dist/assets/MessageProvidersPage-Cted4Z4e.js        6.48 kB │ gzip:   1.93 kB
+dist/assets/SitemapPage-zLifmvVA.js                 6.56 kB │ gzip:   2.39 kB
+dist/assets/StatsCards-DnGYQ65Z.js                  6.63 kB │ gzip:   2.20 kB
+dist/assets/IntegrationsPage-Ba5uNvc0.js            6.64 kB │ gzip:   2.32 kB
+dist/assets/ProviderConfigModal-BsbT5HLY.js         6.81 kB │ gzip:   1.96 kB
+dist/assets/MCPServerManager-Cif0uY17.js            7.10 kB │ gzip:   2.38 kB
+dist/assets/MCPToolsPage-9UXYSn7P.js                7.56 kB │ gzip:   2.73 kB
+dist/assets/ChatPage-CdVANDdv.js                    8.14 kB │ gzip:   2.80 kB
+dist/assets/LLMProvidersPage-BRm2QWdl.js           10.02 kB │ gzip:   3.70 kB
+dist/assets/MonitoringDashboard-B-kM71mK.js        10.53 kB │ gzip:   3.51 kB
+dist/assets/ActivityPage-BA9BSff4.js               11.20 kB │ gzip:   4.31 kB
+dist/assets/CreateBotWizard-CjD2B_WE.js            11.34 kB │ gzip:   2.92 kB
+dist/assets/BotTrainingDashboard-BJVu1Z11.js       11.36 kB │ gzip:   3.11 kB
+dist/assets/GuardsPage-CT1T2vno.js                 11.42 kB │ gzip:   3.22 kB
+dist/assets/react-BZoW56qi.js                      11.48 kB │ gzip:   4.11 kB
+dist/assets/IntelligentDashboard-DO72dj-d.js       12.16 kB │ gzip:   3.44 kB
+dist/assets/ExportPage-CJpBTarU.js                 12.34 kB │ gzip:   4.02 kB
+dist/assets/AIInsightsPanel-BeWiQnE1.js            12.74 kB │ gzip:   3.93 kB
+dist/assets/PersonasPage-aNMIOpOP.js               13.90 kB │ gzip:   4.41 kB
+dist/assets/MCPServersPage-C_8UCenU.js             14.11 kB │ gzip:   4.41 kB
+dist/assets/AnomalyDetection-Dw2i5mZs.js           15.07 kB │ gzip:   4.89 kB
+dist/assets/PredictiveAnalytics-Bn0eyk9C.js        15.72 kB │ gzip:   4.75 kB
+dist/assets/SystemManagement-DJ1t0DQb.js           18.07 kB │ gzip:   4.57 kB
+dist/assets/NaturalLanguageInterface-DIsqwD01.js   18.62 kB │ gzip:   6.01 kB
+dist/assets/ConfigPage-CuNRSdGd.js                 18.65 kB │ gzip:   5.84 kB
+dist/assets/OverviewPage-C6lZtn89.js               21.24 kB │ gzip:   6.44 kB
+dist/assets/MonitoringPage-C_W589Ns.js             21.53 kB │ gzip:   5.59 kB
+dist/assets/SystemSettings-DKmmW_sP.js             26.67 kB │ gzip:   5.35 kB
+dist/assets/BotsPage-BZMiooZb.js                   27.15 kB │ gzip:   6.90 kB
+dist/assets/redux-C8DCu6iA.js                      30.27 kB │ gzip:  11.27 kB
+dist/assets/router-DBejMGzI.js                     35.46 kB │ gzip:  12.78 kB
+dist/assets/DaisyUIShowcase-BZE3jhYM.js            56.67 kB │ gzip:   7.82 kB
+dist/assets/SpecDetailPage-D8CBFO3s.js            122.92 kB │ gzip:  38.22 kB
+dist/assets/index-00KNNZda.js                     403.55 kB │ gzip: 125.01 kB
+dist/assets/charts-Dfvi-GGF.js                    426.07 kB │ gzip: 113.39 kB
+✓ built in 12.71s
++ set +x
+[build:frontend] finished at 2026-02-26T05:10:21+00:00

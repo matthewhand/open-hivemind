@@ -1,0 +1,18 @@
+[1A[2K[2m[WebServer] [22m================================================================
+[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 3d0986c6bbb5f120156d3bb658e4e3c5
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+Global teardown completed
+[1A[2K  1 passed (21.4s)

@@ -1,0 +1,48 @@
+npm warn exec The following package was not found and will be installed: playwright@1.58.2
+Error: Cannot find module '@playwright/test'
+Require stack:
+- /app/playwright.config.ts
+- /home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js
+- /home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js
+- /home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js
+- /home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/cli.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1383:15)
+    at Function.resolveFilename [as _resolveFilename] (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js:247:36)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (/app/playwright.config.ts:1:1)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Module.newCompile2 (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/third_party/pirates.js:46:29)
+    at Object.<anonymous> (node:internal/modules/cjs/loader:1839:10)
+    at Object.newLoader2 [as .ts] (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/third_party/pirates.js:52:22)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at requireOrImport (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js:225:18)
+    at loadUserConfig (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:107:89)
+    at loadConfig (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:119:28)
+    at loadConfigFromFile (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:331:10)
+    at runTests (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js:197:18)
+    at i.<anonymous> (/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js:70:7) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/app/playwright.config.ts',
+    '/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js',
+    '/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js',
+    '/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js',
+    '/home/jules/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/cli.js'
+  ]
+}
+npm notice
+npm notice New minor version of npm available! 11.7.0 -> 11.11.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.11.0
+npm notice To update run: npm install -g npm@11.11.0
+npm notice

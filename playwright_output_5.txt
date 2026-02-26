@@ -1,0 +1,59 @@
+[1A[2K[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22mWARNING: No ADMIN_PASSWORD environment variable found.
+[2m[WebServer] [22mGenerated temporary admin password: 5e45f8ce44aa1905bd8b34512201996f
+[2m[WebServer] [22mPlease change this password immediately or set ADMIN_PASSWORD.
+[2m[WebServer] [22m================================================================
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics] ⛔ SECURITY RISK: Authentication is DISABLED
+
+[1A[2K[2m[WebServer] [22m[startup:diagnostics]    ⚠️  WebUI and API are publicly accessible without authentication!
+[2m[WebServer] [22m[startup:diagnostics]    🚨 This is NOT recommended for internet-facing deployments
+[2m[WebServer] [22m[startup:diagnostics]    💡 Set up authentication by configuring users or enabling auth middleware
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+[1A[2K[chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+BROWSER LOG: [vite] connecting...
+
+[1A[2KBROWSER LOG: [vite] connected.
+
+[1A[2KBROWSER LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER ERROR: Error [ReferenceError]: process is not defined
+    at getEnv (http://localhost:3028/src/services/api.ts:6:5)
+    at http://localhost:3028/src/services/api.ts:9:20
+
+[1A[2K  1) [chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('System Monitoring', { exact: true })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('System Monitoring', { exact: true })[22m
+
+
+      236 |
+      237 |     // Wait for key elements to be visible
+    > 238 |     await expect(page.getByText('System Monitoring', { exact: true })).toBeVisible();
+          |                                                                        ^
+      239 |     await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
+      240 |
+      241 |     // Wait for charts/stats to load (checking for stats cards values)
+        at /app/tests/e2e/screenshot-monitoring.spec.ts:238:72
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/screenshot-monitoring-Moni-ac65a-toring-dashboard-screenshot-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+Global teardown completed
+[1A[2K  1 failed
+    [chromium] › tests/e2e/screenshot-monitoring.spec.ts:230:7 › Monitoring Dashboard Screenshots › capture monitoring dashboard screenshot

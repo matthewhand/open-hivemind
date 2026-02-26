@@ -197,3 +197,19 @@ Browse and manage persisted specifications and design documents.
 Access a catalog of static HTML pages served by the system.
 *   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
 *   **Direct Access**: Open static pages in new tabs for testing or display.
+
+## Documentation Workflow
+
+Screenshots in this guide are automatically generated using Playwright to ensure they reflect the latest UI changes.
+
+To update all screenshots:
+
+```bash
+npm run generate-docs
+```
+
+To update a specific screenshot (e.g., Monitoring Dashboard):
+
+```bash
+npx playwright test tests/e2e/screenshot-monitoring.spec.ts
+```
