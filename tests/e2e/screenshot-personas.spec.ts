@@ -46,7 +46,7 @@ test.describe('Personas Page Screenshots', () => {
       })
     );
 
-    // Mock Personas
+    // Mock Personas with Traits
     const personas = [
       {
         id: 'p1',
@@ -55,6 +55,13 @@ test.describe('Personas Page Screenshots', () => {
         category: 'customer_service',
         systemPrompt: 'You are a helpful customer support agent. You answer questions clearly and politely.',
         isBuiltIn: false,
+        traits: [
+          { name: 'Creativity', value: 20 },
+          { name: 'Empathy', value: 90 },
+          { name: 'Logic', value: 60 },
+          { name: 'Humor', value: 30 },
+          { name: 'Tone', value: 80 },
+        ],
       },
       {
         id: 'p2',
@@ -63,6 +70,13 @@ test.describe('Personas Page Screenshots', () => {
         category: 'technical',
         systemPrompt: 'You are an expert software engineer. You provide concise and correct code snippets.',
         isBuiltIn: true,
+        traits: [
+          { name: 'Creativity', value: 40 },
+          { name: 'Empathy', value: 30 },
+          { name: 'Logic', value: 95 },
+          { name: 'Humor', value: 20 },
+          { name: 'Tone', value: 40 },
+        ],
       },
       {
         id: 'p3',
@@ -71,21 +85,22 @@ test.describe('Personas Page Screenshots', () => {
         category: 'creative',
         systemPrompt: 'You are a creative writer. You use vivid imagery and engaging narratives.',
         isBuiltIn: false,
+        traits: [
+          { name: 'Creativity', value: 95 },
+          { name: 'Empathy', value: 70 },
+          { name: 'Logic', value: 30 },
+          { name: 'Humor', value: 60 },
+          { name: 'Tone', value: 70 },
+        ],
       },
     ];
 
-    await page.route('/api/admin/personas', async (route) => // Note: The client uses /api/personas but sometimes redirects or aliases might exist. Let's mock both just in case or verify.
-      // apiService.getPersonas() -> /api/personas
-      // But in the previous block I read apiService.getPersonas() calls /api/personas.
-      // Wait, let me check the route again.
-      // return this.request<Persona[]>('/api/personas');
-      // So I should mock /api/personas.
+    await page.route('/api/admin/personas', async (route) =>
       route.fulfill({
         status: 200,
         json: personas,
       })
     );
-    // Double mock just to be safe if there is a redirect I missed, or I can just mock /api/personas.
     await page.route('/api/personas', async (route) =>
       route.fulfill({
         status: 200,
@@ -104,6 +119,9 @@ test.describe('Personas Page Screenshots', () => {
     // Wait for key elements to be visible
     await expect(page.getByText('Personas (Beta)', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Customer Support' })).toBeVisible();
+
+    // Wait for the Radar Charts to render (they are within the card)
+    await expect(page.getByText('Personality Profile').first()).toBeVisible();
 
     // Wait for data to load
     await expect(page.getByText('Total Personas')).toBeVisible();

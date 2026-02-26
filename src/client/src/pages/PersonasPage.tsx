@@ -18,11 +18,13 @@ import {
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
+import PersonaRadar from '../components/PersonaRadar';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
   assignedBotNames: string[];
   assignedBotIds: string[]; // Bot IDs are strings in API but let's check Bot type
+  traits: Array<{ name: string; value: number }>; // Use number for Recharts
 }
 
 const categoryOptions = [
@@ -34,6 +36,14 @@ const categoryOptions = [
   { value: 'educational', label: 'Educational' },
   { value: 'entertainment', label: 'Entertainment' },
   { value: 'professional', label: 'Professional' },
+];
+
+const DEFAULT_TRAITS = [
+  { name: 'Creativity', value: 50 },
+  { name: 'Empathy', value: 50 },
+  { name: 'Logic', value: 50 },
+  { name: 'Humor', value: 50 },
+  { name: 'Tone', value: 50 },
 ];
 
 const PersonasPage: React.FC = () => {
@@ -64,6 +74,7 @@ const PersonasPage: React.FC = () => {
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+  const [personaTraits, setPersonaTraits] = useState<{ name: string; value: number }[]>(DEFAULT_TRAITS);
 
   const fetchData = useCallback(async () => {
     try {
@@ -92,6 +103,8 @@ const PersonasPage: React.FC = () => {
           ...p,
           assignedBotNames: assigned.map((b: any) => b.name),
           assignedBotIds: assigned.map((b: any) => b.id),
+          // Ensure traits exist and are properly formatted
+          traits: (p.traits || []).map(t => ({ name: t.name, value: Number(t.value) })),
         };
       });
 
@@ -141,7 +154,7 @@ const PersonasPage: React.FC = () => {
         description: personaDescription || 'Custom Persona',
         category: personaCategory,
         systemPrompt: personaPrompt,
-        traits: [], // Traits not yet exposed in simple UI
+        traits: personaTraits.map(t => ({ ...t, value: Number(t.value) })),
       };
 
       if (cloningPersonaId) {
@@ -150,6 +163,7 @@ const PersonasPage: React.FC = () => {
           description: personaDescription,
           category: personaCategory,
           systemPrompt: personaPrompt,
+          traits: personaTraits.map(t => ({ ...t, value: Number(t.value) })),
         });
       } else if (editingPersona) {
         savedPersona = await apiService.updatePersona(editingPersona.id, personaData);
@@ -206,6 +220,7 @@ const PersonasPage: React.FC = () => {
     setPersonaDescription('');
     setPersonaCategory('general');
     setPersonaPrompt('You are a helpful assistant.');
+    setPersonaTraits(DEFAULT_TRAITS);
     setSelectedBotIds([]);
     setEditingPersona(null);
     setCloningPersonaId(null);
@@ -218,6 +233,7 @@ const PersonasPage: React.FC = () => {
     setPersonaDescription(persona.description);
     setPersonaCategory(persona.category);
     setPersonaPrompt(persona.systemPrompt);
+    setPersonaTraits(persona.traits.length ? persona.traits : DEFAULT_TRAITS);
     setSelectedBotIds([]); // Don't copy assignments by default
     setEditingPersona(null);
     setCloningPersonaId(persona.id);
@@ -234,6 +250,7 @@ const PersonasPage: React.FC = () => {
     setPersonaDescription(persona.description);
     setPersonaCategory(persona.category);
     setPersonaPrompt(persona.systemPrompt);
+    setPersonaTraits(persona.traits.length ? persona.traits : DEFAULT_TRAITS);
     setSelectedBotIds(persona.assignedBotIds);
     setEditingPersona(persona);
     setCloningPersonaId(null);
@@ -246,6 +263,7 @@ const PersonasPage: React.FC = () => {
     setPersonaDescription(persona.description);
     setPersonaCategory(persona.category);
     setPersonaPrompt(persona.systemPrompt);
+    setPersonaTraits(persona.traits.length ? persona.traits : DEFAULT_TRAITS);
     setSelectedBotIds(persona.assignedBotIds);
     setEditingPersona(persona);
     setIsViewMode(true);
@@ -284,6 +302,10 @@ const PersonasPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateTrait = (name: string, value: number) => {
+    setPersonaTraits(prev => prev.map(t => t.name === name ? { ...t, value } : t));
   };
 
   const stats = [
@@ -400,6 +422,17 @@ const PersonasPage: React.FC = () => {
 
               <div className="mb-4 flex-1">
                 <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
+
+                {/* Visual Personality Profile */}
+                {persona.traits && persona.traits.length > 0 && (
+                  <div className="mb-4 border border-base-200 rounded-lg p-2 bg-base-100/50">
+                    <h4 className="text-xs font-bold text-base-content/40 uppercase mb-2 text-center">Personality Profile</h4>
+                    <div className="h-40 w-full flex justify-center">
+                      <PersonaRadar traits={persona.traits} size={160} showLabels={true} />
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-base-200/50 p-3 rounded-lg mb-3">
                   <div className="flex items-center justify-between mb-1">
                     <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
@@ -529,7 +562,33 @@ const PersonasPage: React.FC = () => {
             </select>
           </div>
 
-          <div className="form-control">
+          {/* Personality Traits Editor */}
+          <div className="divider text-xs font-bold uppercase opacity-50">Personality Traits</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-base-200/30 p-4 rounded-lg">
+            {personaTraits.map((trait) => (
+              <div key={trait.name} className="form-control w-full">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-bold">{trait.name}</span>
+                  <span className="label-text-alt badge badge-sm">{trait.value}</span>
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={trait.value}
+                  onChange={(e) => updateTrait(trait.name, parseInt(e.target.value))}
+                  disabled={isViewMode}
+                  className="range range-xs range-primary"
+                />
+                <div className="w-full flex justify-between text-[10px] px-1 opacity-50 mt-1">
+                  <span>Low</span>
+                  <span>High</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="form-control mt-4">
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 System Prompt

@@ -45,3 +45,30 @@ The System Settings page allows you to configure global options for your Open Hi
 2.  Adjust the settings as needed.
 3.  Click **Save Settings** to apply changes.
     *   Note: Some settings may require a server restart to fully take effect.
+
+## Persona Management
+
+Personas define the personality, tone, and system instructions for your bots. You can create reusable personas and assign them to multiple bots.
+
+![Persona Profiles](screenshots/personas-page.png)
+
+### Personality Profiles
+
+Each persona now includes a **Personality Profile** visualized as a radar chart. This allows you to quickly identify the characteristics of a persona at a glance.
+
+You can configure the following traits (0-100):
+-   **Creativity**: How imaginative or strict the responses should be.
+-   **Empathy**: The level of emotional understanding and warmth.
+-   **Logic**: The focus on facts, reasoning, and structure.
+-   **Humor**: The frequency and type of humorous responses.
+-   **Tone**: The formality or casualness of the language.
+
+### Creating a Persona
+
+1.  Navigate to **Personas** in the sidebar.
+2.  Click **Create Persona**.
+3.  Enter a Name and Description.
+4.  Adjust the **Personality Traits** sliders to define the character.
+5.  Write the **System Prompt**.
+6.  (Optional) Select bots to immediately assign this persona to.
+7.  Click **Create Persona**.

@@ -123,7 +123,7 @@ export interface Persona {
   name: string;
   description: string;
   category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
-  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
+  traits: Array<{ name: string; value: string | number; weight?: number; type?: string }>;
   systemPrompt: string;
   isBuiltIn?: boolean;
   createdAt: string;
