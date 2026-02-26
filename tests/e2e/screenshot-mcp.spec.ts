@@ -106,12 +106,16 @@ test.describe('MCP Servers Screenshots', () => {
     // Wait for the page to load and servers to be displayed
     await expect(page.locator('.card').first()).toBeVisible();
 
+    // Wait for StatsCards to be visible (Total Servers)
+    await expect(page.getByText('Total Servers')).toBeVisible();
+
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/mcp-servers-list.png', fullPage: true });
 
     // Click "View Tools" on the first server (Filesystem Server)
-    // Assuming the first card is the Filesystem Server which has tools
-    await page.locator('.card').first().getByRole('button', { name: 'View Tools' }).first().click();
+    // We added a data-testid to make this reliable
+    const viewToolsButton = page.locator('button[data-testid="view-tools-Filesystem Server"]');
+    await viewToolsButton.click({ force: true });
 
     // Wait for modal to be visible and check for tool name
     const toolsModal = page

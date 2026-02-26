@@ -11,8 +11,8 @@ import {
   ArrowPathIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { Server, Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import { Server, Search, Activity, Zap, HardDrive } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
@@ -66,6 +66,30 @@ const MCPServersPage: React.FC = () => {
   const breadcrumbItems = [
     { label: 'MCP', href: '/admin/mcp' },
     { label: 'Servers', href: '/admin/mcp/servers', isActive: true },
+  ];
+
+  const stats = [
+    {
+      id: 'total',
+      title: 'Total Servers',
+      value: servers.length,
+      icon: <Server className="w-8 h-8" />,
+      color: 'primary' as const,
+    },
+    {
+      id: 'active',
+      title: 'Active Connections',
+      value: servers.filter(s => s.status === 'running').length,
+      icon: <Activity className="w-8 h-8" />,
+      color: 'success' as const,
+    },
+    {
+      id: 'tools',
+      title: 'Total Tools',
+      value: servers.reduce((acc, s) => acc + (s.toolCount || 0), 0),
+      icon: <WrenchScrewdriverIcon className="w-8 h-8" />,
+      color: 'secondary' as const,
+    }
   ];
 
   // Fetch real MCP servers from API
@@ -424,6 +448,7 @@ const MCPServersPage: React.FC = () => {
                     <p><strong>Tools:</strong> {server.toolCount}</p>
                     {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
                         <button
+                            data-testid={`view-tools-${server.id}`}
                             className="btn btn-xs btn-ghost text-primary"
                             onClick={() => handleViewTools(server)}
                         >
@@ -514,8 +539,10 @@ const MCPServersPage: React.FC = () => {
       </div>
 
       {servers.length > 0 && (
-        <div className="mb-6">
-          <SearchFilterBar
+        <>
+          <StatsCards stats={stats} isLoading={loading} className="mb-8" />
+          <div className="mb-6">
+            <SearchFilterBar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search servers..."
@@ -533,7 +560,8 @@ const MCPServersPage: React.FC = () => {
               },
             ]}
           />
-        </div>
+          </div>
+        </>
       )}
 
       {alert && !dialogOpen && (
