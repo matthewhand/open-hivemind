@@ -197,3 +197,19 @@ Browse and manage persisted specifications and design documents.
 Access a catalog of static HTML pages served by the system.
 *   **Page Gallery**: Preview special pages like the Enhanced Homepage, Loading Screen, and Screensaver.
 *   **Direct Access**: Open static pages in new tabs for testing or display.
+
+## Documentation Maintenance
+
+### Generating Screenshots
+
+To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright. This workflow allows for on-demand updates to visual documentation.
+
+To regenerate screenshots:
+1. Ensure you have installed dependencies: `npm install`
+2. Install Playwright browsers: `npx playwright install chromium`
+3. Run the generation script:
+   ```bash
+   npm run generate-docs
+   ```
+
+This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the current state of the UI, and saves the images to `docs/screenshots/`.
