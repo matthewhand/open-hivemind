@@ -15,7 +15,6 @@ jest.mock('../../src/managers/BotManager', () => {
     startBot: jest.fn(),
     stopBot: jest.fn(),
     getBotHistory: jest.fn(),
-    getBotsStatus: jest.fn().mockResolvedValue([]),
   };
   return {
     BotManager: {
@@ -29,6 +28,15 @@ jest.mock('../../src/common/auditLogger', () => ({
   AuditLogger: {
     getInstance: jest.fn(() => ({
       getBotActivity: jest.fn(() => []),
+    })),
+  },
+}));
+
+// Mock ActivityLogger
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn(() => ({
+      getEvents: jest.fn(() => []),
     })),
   },
 }));
@@ -174,6 +182,28 @@ describe('Bots Routes', () => {
       getMockManager().stopBot.mockResolvedValue(true);
 
       await request(app).post('/api/bots/bot1/stop').expect(200);
+    });
+  });
+
+  describe('GET /api/bots/:botId/activity', () => {
+    it('should return bot activity logs', async () => {
+      const bot = { id: 'bot1', name: 'Bot 1' };
+      getMockManager().getBot.mockResolvedValue(bot);
+
+      const response = await request(app)
+        .get('/api/bots/bot1/activity')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data.activity)).toBe(true);
+    });
+
+    it('should return 404 if bot not found', async () => {
+      getMockManager().getBot.mockResolvedValue(null);
+
+      await request(app)
+        .get('/api/bots/bot1/activity')
+        .expect(404);
     });
   });
 });

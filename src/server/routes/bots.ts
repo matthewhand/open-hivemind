@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
@@ -141,9 +142,30 @@ router.get('/:id/activity', async (req, res) => {
     const { id } = req.params;
     const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
 
-    // Mock activity logs for now as BotManager doesn't expose them directly
-    // In a real implementation, this would query the activity database
-    const activity: any[] = [];
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    const events = await ActivityLogger.getInstance().getEvents({
+      botName: bot.name,
+      limit,
+    });
+
+    const activity = events
+      .map((event) => ({
+        id: event.id,
+        timestamp: event.timestamp,
+        action: event.messageType.toUpperCase(),
+        details: event.errorMessage || `Message length: ${event.contentLength}`,
+        result: event.status,
+        metadata: {
+          type: 'MESSAGE',
+          channelId: event.channelId,
+          userId: event.userId,
+        },
+      }))
+      .reverse();
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {

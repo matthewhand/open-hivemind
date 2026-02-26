@@ -40,13 +40,16 @@ Connect your bots to messaging services.
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.
-![Bots Page](./docs/images/bots-page.png)
+![Bots Page](docs/screenshots/bots-page.png)
 
 *   **Create Bot**: Define a new bot with a unique name.
 ![Create Bot Modal](./docs/images/create-bot-modal.png)
 
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
 ![Duplicate Bot Modal](./docs/images/clone-bot-modal.png)
+
+*   **View Activity**: Monitor real-time logs and message flow for each bot.
+![Bot Activity Logs](docs/screenshots/bot-details-modal.png)
 
 *   **Link Persona**: Assign a specific personality to the bot.
 *   **Assign Providers**: Choose which LLM and Message Platform the bot uses.
