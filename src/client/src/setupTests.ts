@@ -17,6 +17,10 @@ if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
     open = false;
     returnValue = '';
 
+    constructor() {
+      super();
+    }
+
     show() {
       this.open = true;
       this.setAttribute('open', '');
@@ -36,11 +40,25 @@ if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
   (window as any).HTMLDialogElement = HTMLDialogElement;
 }
 
-// Mock HTMLDialogElement methods if prototype exists
+// Ensure methods are attached to the prototype if they don't exist
+// This handles cases where JSDOM has HTMLDialogElement but not the methods
 if (typeof HTMLDialogElement !== 'undefined') {
-  if (!HTMLDialogElement.prototype.show) HTMLDialogElement.prototype.show = jest.fn();
-  if (!HTMLDialogElement.prototype.showModal) HTMLDialogElement.prototype.showModal = jest.fn();
-  if (!HTMLDialogElement.prototype.close) HTMLDialogElement.prototype.close = jest.fn();
+  if (!HTMLDialogElement.prototype.show) {
+    HTMLDialogElement.prototype.show = function() {
+      this.setAttribute('open', '');
+    };
+  }
+  if (!HTMLDialogElement.prototype.showModal) {
+    HTMLDialogElement.prototype.showModal = function() {
+      this.setAttribute('open', '');
+    };
+  }
+  if (!HTMLDialogElement.prototype.close) {
+    HTMLDialogElement.prototype.close = function() {
+      this.removeAttribute('open');
+      this.dispatchEvent(new Event('close'));
+    };
+  }
 }
 
 // Mock IntersectionObserver
