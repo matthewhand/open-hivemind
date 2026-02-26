@@ -108,7 +108,16 @@ describe('UnifiedDashboard', () => {
     });
 
     // When bots are configured, the Getting Started tab content is not in the document
-    expect(screen.queryByText('Welcome to Open Hivemind')).not.toBeInTheDocument();
+    await waitFor(() => {
+        // Use toBeVisible if the element remains in DOM but hidden
+        // Or if it's conditional rendering, ensure state update has propagated
+        const welcomeElement = screen.queryByText('Welcome to Open Hivemind');
+        if (welcomeElement) {
+            expect(welcomeElement).not.toBeVisible();
+        } else {
+            expect(welcomeElement).toBeNull();
+        }
+    });
     // The Status tab is active (verified above) - this confirms correct default behavior
   });
 

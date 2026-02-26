@@ -12,35 +12,43 @@ global.TextEncoder = TextEncoder as any;
 global.TextDecoder = TextDecoder as any;
 
 // Polyfill HTMLDialogElement for JSDOM environments that don't support it
-if (typeof window !== 'undefined' && !window.HTMLDialogElement) {
-  class HTMLDialogElement extends HTMLElement {
-    open = false;
-    returnValue = '';
+if (typeof window !== 'undefined') {
+  if (!window.HTMLDialogElement) {
+    class HTMLDialogElement extends HTMLElement {
+      open = false;
+      returnValue = '';
 
-    show() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
+      show() {
+        this.open = true;
+        this.setAttribute('open', '');
+      }
 
-    showModal() {
-      this.open = true;
-      this.setAttribute('open', '');
-    }
+      showModal() {
+        this.open = true;
+        this.setAttribute('open', '');
+      }
 
-    close() {
-      this.open = false;
-      this.removeAttribute('open');
-      this.dispatchEvent(new Event('close'));
+      close() {
+        this.open = false;
+        this.removeAttribute('open');
+        this.dispatchEvent(new Event('close'));
+      }
     }
+    (window as any).HTMLDialogElement = HTMLDialogElement;
   }
-  (window as any).HTMLDialogElement = HTMLDialogElement;
-}
 
-// Mock HTMLDialogElement methods if prototype exists
-if (typeof HTMLDialogElement !== 'undefined') {
-  if (!HTMLDialogElement.prototype.show) HTMLDialogElement.prototype.show = jest.fn();
-  if (!HTMLDialogElement.prototype.showModal) HTMLDialogElement.prototype.showModal = jest.fn();
-  if (!HTMLDialogElement.prototype.close) HTMLDialogElement.prototype.close = jest.fn();
+  // Ensure methods are mocked even if prototype exists (some JSDOM versions have it but not implemented)
+  if (window.HTMLDialogElement) {
+    // Use a robust mock function that works in both Jest and Vitest
+    const mockFn = (typeof jest !== 'undefined' && jest.fn) ? jest.fn :
+                   (typeof vi !== 'undefined' && vi.fn) ? vi.fn :
+                   () => {};
+
+    // Unconditionally mock these methods to ensure consistency in tests
+    window.HTMLDialogElement.prototype.show = mockFn();
+    window.HTMLDialogElement.prototype.showModal = mockFn();
+    window.HTMLDialogElement.prototype.close = mockFn();
+  }
 }
 
 // Mock IntersectionObserver

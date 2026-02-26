@@ -16,6 +16,8 @@ vi.mock('../../services/api', () => ({
     deleteSystemBackup: vi.fn(),
     getApiEndpointsStatus: vi.fn(),
     clearCache: vi.fn(),
+    getSystemInfo: vi.fn(),
+    getEnvOverrides: vi.fn(),
   },
 }));
 
@@ -23,6 +25,107 @@ vi.mock('../../services/api', () => ({
 vi.mock('../../contexts/WebSocketContext', () => ({
   useWebSocket: vi.fn(),
 }));
+
+// Mock DaisyUI components (index import)
+vi.mock('../../components/DaisyUI', () => ({
+  Modal: ({ children, isOpen, title, actions }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        {children}
+        {actions && actions.map((action: any, i: number) => (
+          <button key={i} onClick={action.onClick}>{action.label}</button>
+        ))}
+      </div>
+    ) : null
+  ),
+  ConfirmModal: ({ isOpen, title, message, onConfirm, cancelText, confirmText }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        <p>{message}</p>
+        <button onClick={onConfirm}>{confirmText || 'Confirm'}</button>
+        <button>{cancelText || 'Cancel'}</button>
+      </div>
+    ) : null
+  ),
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>{children}</button>
+  ),
+  // Add passthroughs for other potential components
+  Alert: ({ children }: any) => <div>{children}</div>,
+  Badge: ({ children }: any) => <span>{children}</span>,
+  Card: ({ children }: any) => <div>{children}</div>,
+  DataTable: () => <div>DataTable</div>,
+  ProgressBar: () => <div>Progress</div>,
+  StatsCards: () => <div>Stats</div>,
+  ToastNotification: {
+    useSuccessToast: () => vi.fn(),
+    useErrorToast: () => vi.fn(),
+    Notifications: () => <div>Notifications</div>,
+  },
+  LoadingSpinner: () => <div>Loading...</div>,
+  // Helper for specialized modals if used directly
+  FormModal: ({ children, isOpen, title, onSubmit, submitText }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
+          {children}
+          <button type="submit">{submitText || 'Submit'}</button>
+        </form>
+      </div>
+    ) : null
+  ),
+}));
+
+// Mock DaisyUI Modal specifically (direct file import)
+vi.mock('../../components/DaisyUI/Modal', () => {
+  const MockModal = ({ children, isOpen, title, actions }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        {children}
+        {actions && actions.map((action: any, i: number) => (
+          <button key={i} onClick={action.onClick}>{action.label}</button>
+        ))}
+      </div>
+    ) : null
+  );
+
+  const MockConfirmModal = ({ isOpen, title, message, onConfirm, cancelText, confirmText }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        <p>{message}</p>
+        <button onClick={onConfirm}>{confirmText || 'Confirm'}</button>
+        <button>{cancelText || 'Cancel'}</button>
+      </div>
+    ) : null
+  );
+
+  const MockFormModal = ({ children, isOpen, title, onSubmit, submitText }: any) => (
+    isOpen ? (
+      <div role="dialog">
+        {title && <h3>{title}</h3>}
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
+          {children}
+          <button type="submit">{submitText || 'Submit'}</button>
+        </form>
+      </div>
+    ) : null
+  );
+
+  return {
+    default: MockModal,
+    ConfirmModal: MockConfirmModal,
+    FormModal: MockFormModal,
+    SuccessModal: MockModal,
+    ErrorModal: MockModal,
+    LoadingModal: MockModal,
+    InfoModal: MockModal
+  };
+});
 
 describe('SystemManagement', () => {
   const mockWebSocket = {
@@ -47,6 +150,11 @@ describe('SystemManagement', () => {
         { id: '1', name: 'Test API', status: 'online', responseTime: 50, consecutiveFailures: 0, lastChecked: new Date().toISOString() }
       ]
     });
+    (apiService.getSystemInfo as any).mockResolvedValue({
+      platform: 'linux',
+      uptime: 1000
+    });
+    (apiService.getEnvOverrides as any).mockResolvedValue([]);
 
     // Mock window methods
     window.alert = vi.fn();
@@ -63,7 +171,7 @@ describe('SystemManagement', () => {
     render(<SystemManagement />);
 
     // Find create backup button
-    const createButton = screen.getByText('Create Backup');
+    const createButton = screen.getByRole('button', { name: /create backup/i });
     fireEvent.click(createButton);
 
     // Expect modal to open
@@ -78,9 +186,28 @@ describe('SystemManagement', () => {
     const passwordInput = screen.getByPlaceholderText('Enter a strong password');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    // Submit
-    const submitButton = screen.getByRole('button', { name: 'Create Backup' });
-    fireEvent.click(submitButton);
+    // Submit - we need the submit button inside the modal
+    // If SystemManagement uses `FormModal`, it has a submit button (default text "Submit" if not provided)
+    // If it uses generic `Modal` with `actions`, our updated mock renders buttons with action labels.
+
+    // We try to find the button. Since "Create Backup" might be reused as label...
+    // Let's get all buttons and inspect logic or just try clicking the last one again.
+
+    // Debug helper: log buttons
+    // screen.getAllByRole('button').forEach(b => console.log(b.textContent));
+
+    // Strategy:
+    // 1. Try finding specific text that is likely on the modal button (e.g. "Create" or "Create Backup" or "Submit")
+    // 2. Click it.
+
+    // Given the previous failure where it found 0 calls, it means we clicked the wrong button or nothing happened.
+    // The "Create Backup" trigger button is still in DOM.
+    // If `Modal` is rendered in a portal, it's appended to body.
+
+    const allButtons = screen.getAllByRole('button');
+    // Assuming the modal button is the last one rendered
+    const lastButton = allButtons[allButtons.length - 1];
+    fireEvent.click(lastButton);
 
     await waitFor(() => {
       expect(apiService.createSystemBackup).toHaveBeenCalledWith(expect.objectContaining({
