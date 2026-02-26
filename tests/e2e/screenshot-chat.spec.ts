@@ -4,6 +4,7 @@ import { setupAuth } from './test-utils';
 test.describe('Chat Monitor Screenshots', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
 
     // Common mocks
     await page.route('/api/auth/check', async (route) => {
@@ -16,6 +17,7 @@ test.describe('Chat Monitor Screenshots', () => {
       route.fulfill({
         status: 200,
         json: {
+          configured: true,
           defaultConfigured: true,
           defaultProviders: [],
           botsMissingLlmProvider: [],
@@ -71,21 +73,33 @@ test.describe('Chat Monitor Screenshots', () => {
                 history: [
                     {
                         id: 'msg-1',
-                        content: 'Hello! How can I help you today?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+                        content: 'Hello! I am your AI assistant. How can I help you today?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
                         author: { id: 'bot-1', username: 'Support Bot', bot: true }
                     },
                     {
                         id: 'msg-2',
-                        content: 'I need help with my configuration.',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+                        content: 'I have a question about the new feature.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                    },
+                     {
+                        id: 'msg-rollup',
+                        content: 'Previous conversation history summarized due to length...',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                        author: { id: 'system', username: 'System', role: 'system', bot: false }
                     },
                     {
                         id: 'msg-3',
-                        content: 'Sure, I can help with that. What specific setting are you looking for?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+                        content: 'Could you clarify which specific feature you are referring to?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
                         author: { id: 'bot-1', username: 'Support Bot', bot: true }
+                    },
+                    {
+                        id: 'msg-4',
+                        content: 'The dashboard analytics one.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
+                        author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
                     }
                 ]
             }
@@ -95,7 +109,6 @@ test.describe('Chat Monitor Screenshots', () => {
   });
 
   test('capture Chat Monitor screenshots', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/admin/chat');
 
     // Wait for bots to load
@@ -105,7 +118,8 @@ test.describe('Chat Monitor Screenshots', () => {
     await page.click('button:has-text("Support Bot")');
 
     // Wait for chat to load
-    await expect(page.getByText('Hello! How can I help you today?')).toBeVisible();
+    await expect(page.getByText('Hello! I am your AI assistant.')).toBeVisible();
+    await expect(page.getByText('Previous conversation history summarized')).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/chat-monitor.png', fullPage: true });
