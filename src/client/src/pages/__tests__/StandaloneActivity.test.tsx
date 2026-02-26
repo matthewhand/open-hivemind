@@ -20,6 +20,7 @@ vi.mock('../../components/DaisyUI', () => ({
 }));
 
 // Mock API
+// Note: This test verifies optimization logic consolidated in PR #650
 vi.mock('../../services/api', () => ({
   apiService: {
     getActivity: vi.fn(),
