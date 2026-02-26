@@ -92,14 +92,28 @@ test.describe('Bot Templates Page Screenshots', () => {
     await expect(page.getByText('Bot Templates')).toBeVisible();
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
+    // Check search bar is visible
+    await expect(page.getByPlaceholder('Search templates...')).toBeVisible();
+
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
 
     // Take screenshot of the full list
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
+    // Test Interaction: Search
+    await page.getByPlaceholder('Search templates...').fill('Helpful');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.getByText('Code Reviewer')).toBeHidden();
+
+    // Clear search
+    await page.getByPlaceholder('Search templates...').fill('');
+    await page.waitForTimeout(300);
+
     // Test Interaction: Filter by Platform 'Discord'
-    const platformSelect = page.locator('select').nth(0); // First select is Platform
+    // SearchFilterBar's first select should be Platform
+    const platformSelect = page.locator('select').nth(0);
     await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
 
     // Wait for filter to apply

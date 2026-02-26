@@ -65,8 +65,9 @@ Quick-start templates to help you create bots faster.
 ![Bot Templates Page](docs/screenshots/bot-templates-page.png)
 
 *   **Template Gallery**: Browse pre-configured templates with specific personas and provider settings.
+*   **Search**: Find templates by name or description.
 *   **Quick Create**: Use a template to pre-populate the bot creation form.
-*   **Filtering**: Find templates by platform, persona, or LLM provider using the dropdown filters.
+*   **Filtering**: Filter templates by platform, persona, or LLM provider.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
