@@ -59,11 +59,10 @@ module.exports = function handler(req, res) {
 
         const { username, password } = req.body || {};
 
-        // Check password (support serverless environment variable)
-        const adminPassword = process.env.ADMIN_PASSWORD || 'HiveMind-7x9-Secure';
-        if (password === adminPassword.trim()) {
-            // Generate a fake JWT for the serverless session
-            const token = 'serverless-demo-token';
+        // Check password using runtimePassword which is either from env or securely generated
+        if (password === runtimePassword) {
+            // Generate a secure random token for the serverless session
+            const token = crypto.randomBytes(32).toString('hex');
             return res.json({
                 success: true,
                 accessToken: token,
