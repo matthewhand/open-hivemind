@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert, Input, Select, Toggle, Button, Divider } from '../DaisyUI';
 import { Settings as SettingsIcon } from 'lucide-react';
 
@@ -38,6 +38,32 @@ const SettingsGeneral: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Generate timezone options dynamically
+  const timezoneOptions = useMemo(() => {
+    try {
+      // @ts-ignore - Intl.supportedValuesOf is available in modern environments
+      if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
+        // @ts-ignore
+        const timezones = Intl.supportedValuesOf('timeZone');
+        return timezones.map((tz: string) => ({
+          value: tz,
+          label: tz.replace(/_/g, ' '),
+        }));
+      }
+    } catch (e) {
+      console.warn('Failed to load timezones:', e);
+    }
+    // Fallback options
+    return [
+      { value: 'UTC', label: 'UTC' },
+      { value: 'America/New_York', label: 'Eastern Time' },
+      { value: 'America/Los_Angeles', label: 'Pacific Time' },
+      { value: 'Europe/London', label: 'London' },
+      { value: 'Asia/Tokyo', label: 'Tokyo' },
+      { value: 'Australia/Sydney', label: 'Sydney' },
+    ];
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -179,14 +205,7 @@ const SettingsGeneral: React.FC = () => {
               value={settings.timezone}
               onChange={(e) => handleChange('timezone', e.target.value)}
               size="sm"
-              options={[
-                { value: 'UTC', label: 'UTC' },
-                { value: 'America/New_York', label: 'Eastern Time' },
-                { value: 'America/Los_Angeles', label: 'Pacific Time' },
-                { value: 'Europe/London', label: 'London' },
-                { value: 'Asia/Tokyo', label: 'Tokyo' },
-                { value: 'Australia/Sydney', label: 'Sydney' },
-              ]}
+              options={timezoneOptions}
             />
           </div>
 
