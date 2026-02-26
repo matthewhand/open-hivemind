@@ -1,12 +1,8 @@
-// Temporarily disabled due to React 19 compatibility issues
-// TODO: Fix React testing environment for React 19
-
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { Alert } from './Alert';
 
-describe.skip('Alert Component', () => {
+describe('Alert Component', () => {
   it('renders the alert with the correct message', () => {
     render(<Alert status="info" message="This is an info alert." />);
     expect(screen.getByText('This is an info alert.')).toBeInTheDocument();

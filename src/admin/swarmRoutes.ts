@@ -1,20 +1,28 @@
 import { Router, type Request, type Response } from 'express';
-import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
+import { providerRegistry } from '../registries/ProviderRegistry';
 
-export const installer = new SwarmInstaller();
 const swarmRouter = Router();
+
+const getInstaller = () => {
+  const installer = providerRegistry.getInstaller('openswarm');
+  if (!installer) {
+    throw new Error('OpenSwarm installer not registered');
+  }
+  return installer;
+};
 
 // Check system requirements
 swarmRouter.get('/check', async (_req: Request, res: Response) => {
   try {
-    const pythonAvailable = await installer.checkPython();
-    const swarmInstalled = await installer.checkSwarmInstalled();
+    const installer = getInstaller();
+    const pythonAvailable = await installer.checkPrerequisites();
+    const swarmInstalled = await installer.checkInstalled();
 
     res.json({
       ok: true,
       pythonAvailable,
       swarmInstalled,
-      webUIUrl: installer.getSwarmWebUIUrl(),
+      webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
@@ -24,7 +32,8 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
 // Install OpenSwarm
 swarmRouter.post('/install', async (_req: Request, res: Response) => {
   try {
-    const result = await installer.installSwarm();
+    const installer = getInstaller();
+    const result = await installer.install();
     res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
@@ -53,7 +62,8 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
       }
     }
 
-    const result = await installer.startSwarm(port);
+    const installer = getInstaller();
+    const result = await installer.start({ port });
     return res.json({ ok: result.success, message: result.message });
   } catch (error: any) {
     return res.status(500).json({ ok: false, error: error.message });

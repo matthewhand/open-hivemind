@@ -59,10 +59,20 @@ const Modal: React.FC<ModalProps> = ({
     const modal = modalRef.current;
     if (!modal) {return;}
 
+    // Check if showModal is defined (it might not be in JSDOM or some environments without polyfill)
+    if (typeof modal.showModal !== 'function' || typeof modal.close !== 'function') {
+        // Fallback for environments where HTMLDialogElement is not fully supported
+        return;
+    }
+
     if (isOpen) {
-      modal.showModal();
+      if (!modal.open) {
+        modal.showModal();
+      }
     } else {
-      modal.close();
+      if (modal.open) {
+        modal.close();
+      }
     }
   }, [isOpen]);
 
@@ -108,6 +118,10 @@ const Modal: React.FC<ModalProps> = ({
       ref={modalRef} 
       className={`modal ${getPositionClass()} ${className}`}
       onClick={handleBackdropClick}
+      // If isOpen is true and showModal is not supported/called, ensure it's visible via CSS class or open attribute if needed
+      // DaisyUI uses 'modal-open' class usually or just <dialog open>
+      // But for native dialog with DaisyUI, showModal() adds 'open' attribute and backdrop
+      open={isOpen} // Fallback/Sync for React
     >
       <div className={getSizeClass()}>
         {/* Header */}
