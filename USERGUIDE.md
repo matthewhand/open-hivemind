@@ -33,10 +33,12 @@ Manage connections to Large Language Model providers.
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
+![Integrations Panel](docs/images/integrations-panel.png)
+
+*   **Status Indicators**: Quickly see which providers are "Configured" (green badge) or "Not Configured".
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
-*   **Status**: Check connection health for each platform.
 
 ### [Bots](/admin/bots)
 Create and manage individual bot instances.

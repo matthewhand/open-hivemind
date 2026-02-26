@@ -500,7 +500,11 @@ const IntegrationsPanel: React.FC = () => {
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
                         <div className="flex items-center gap-1 mt-0.5">
                           {isLocked && <Badge variant="warning" size="small" className="gap-1 p-1"><LockClosedIcon className="w-2.5 h-2.5" /> Env</Badge>}
-                          {isActive && !isLocked && <Badge variant="success" size="small" className="gap-1 p-1">Active</Badge>}
+                          {isActive ? (
+                             <Badge variant="success" size="small" className="gap-1 p-1"><CheckCircle className="w-2.5 h-2.5" /> Configured</Badge>
+                          ) : (
+                             <Badge variant="ghost" size="small" className="gap-1 p-1 opacity-50">Not Configured</Badge>
+                          )}
                         </div>
                       </div>
                     </div>
