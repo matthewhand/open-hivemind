@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs } from '../components/DaisyUI';
+import { Copy, Check } from 'lucide-react';
 
 interface BotTemplate {
   id: string;
@@ -23,6 +24,8 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
   const [selectedPersona, setSelectedPersona] = useState<string>('All');
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
+  const [selectedTemplate, setSelectedTemplate] = useState<BotTemplate | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/admin/bots' },
@@ -76,6 +79,25 @@ const BotTemplatesPage: React.FC = () => {
     });
   };
 
+  const handleCopyTemplate = async (template: BotTemplate) => {
+    const templateJson = JSON.stringify({
+      name: template.name,
+      description: template.description,
+      messageProvider: template.platform,
+      llmProvider: template.llmProvider,
+      persona: template.persona,
+      tags: template.tags,
+    }, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(templateJson);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   const getPlatformColor = (platform: string) => {
     const colors: Record<string, string> = {
       discord: 'badge-primary',
@@ -124,7 +146,7 @@ const BotTemplatesPage: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mt-6 p-4 bg-base-200 rounded-lg">
-           <div className="form-control w-full max-w-xs">
+          <div className="form-control w-full max-w-xs">
             <label className="label">
               <span className="label-text">Platform</span>
             </label>
@@ -137,7 +159,7 @@ const BotTemplatesPage: React.FC = () => {
             </select>
           </div>
 
-           <div className="form-control w-full max-w-xs">
+          <div className="form-control w-full max-w-xs">
             <label className="label">
               <span className="label-text">Persona</span>
             </label>
@@ -146,20 +168,20 @@ const BotTemplatesPage: React.FC = () => {
               value={selectedPersona}
               onChange={(e) => setSelectedPersona(e.target.value)}
             >
-               {personas.map(p => <option key={p} value={p}>{p === 'All' ? 'All Personas' : p}</option>)}
+              {personas.map(p => <option key={p} value={p}>{p === 'All' ? 'All Personas' : p}</option>)}
             </select>
           </div>
 
-           <div className="form-control w-full max-w-xs">
+          <div className="form-control w-full max-w-xs">
             <label className="label">
               <span className="label-text">LLM Provider</span>
             </label>
-             <select
+            <select
               className="select select-bordered"
               value={selectedLlmProvider}
               onChange={(e) => setSelectedLlmProvider(e.target.value)}
             >
-               {llmProviders.map(p => <option key={p} value={p}>{p === 'All' ? 'All Providers' : p}</option>)}
+              {llmProviders.map(p => <option key={p} value={p}>{p === 'All' ? 'All Providers' : p}</option>)}
             </select>
           </div>
         </div>
@@ -205,10 +227,17 @@ const BotTemplatesPage: React.FC = () => {
 
                 <div className="card-actions mt-auto">
                   <button
-                    className="btn btn-primary w-full"
+                    className="btn btn-primary flex-1"
                     onClick={() => handleUseTemplate(template)}
                   >
                     Use Template
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-square"
+                    onClick={() => handleCopyTemplate(template)}
+                    title="Copy template JSON"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
