@@ -78,7 +78,7 @@ export class ActivityLogger {
           const eventTime = new Date(event.timestamp).getTime();
 
           if (eventTime > endTimeMs) {
-            break;
+            continue;
           }
 
           if (eventTime < startTimeMs) {
