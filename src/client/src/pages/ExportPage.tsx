@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  ArrowDownTrayIcon as DownloadIcon,
-  DocumentTextIcon as DocIcon,
-  CodeBracketIcon as ApiIcon,
-  ArchiveBoxIcon as BackupIcon,
-  PlusIcon,
-  TrashIcon,
-  ArrowPathIcon as RestoreIcon,
-} from '@heroicons/react/24/outline';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState } from '../components/DaisyUI';
+  Download,
+  FileText,
+  Code,
+  Archive,
+  Plus,
+  Trash2,
+  RotateCcw,
+  Search,
+  HardDrive
+} from 'lucide-react';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
 interface Backup {
@@ -29,6 +32,7 @@ const ExportPage: React.FC = () => {
   const [newBackupName, setNewBackupName] = useState('');
   const [newBackupDesc, setNewBackupDesc] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchBackups = useCallback(async () => {
     try {
@@ -166,33 +170,71 @@ const ExportPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const filteredBackups = useMemo(() => {
+    return backups.filter(backup =>
+      backup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      backup.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [backups, searchQuery]);
+
+  const totalSize = useMemo(() => {
+    return backups.reduce((acc, b) => acc + b.size, 0);
+  }, [backups]);
+
+  const stats = [
+    {
+      id: 'total-backups',
+      title: 'Total Backups',
+      value: backups.length,
+      icon: <Archive className="w-8 h-8" />,
+      color: 'primary' as const
+    },
+    {
+      id: 'total-size',
+      title: 'Total Size',
+      value: formatBytes(totalSize),
+      icon: <HardDrive className="w-8 h-8" />,
+      color: 'secondary' as const
+    }
+  ];
+
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={BackupIcon}
+        icon={Archive}
         gradient="secondary"
       />
+
+      <StatsCards stats={stats} isLoading={loading} />
 
       {/* System Backups Section */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
             <div>
               <h2 className="card-title text-xl">System Backups</h2>
               <p className="text-sm text-base-content/70">Create and manage full system configuration backups.</p>
             </div>
-            <button
-              className="btn btn-primary gap-2"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <PlusIcon className="w-4 h-4" /> Create Backup
-            </button>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+               <Button
+                variant="primary"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Create Backup
+              </Button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="table w-full">
+          <SearchFilterBar
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search backups..."
+          />
+
+          <div className="overflow-x-auto mt-4">
+            <table className="table table-zebra w-full">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -215,45 +257,74 @@ const ExportPage: React.FC = () => {
                       <EmptyState
                         title="No backups found"
                         description="Create your first backup to secure your configuration."
-                        icon={BackupIcon}
+                        icon={Archive}
                         variant="noData"
+                        actionLabel="Create Backup"
+                        onAction={() => setCreateModalOpen(true)}
+                      />
+                    </td>
+                  </tr>
+                ) : filteredBackups.length === 0 ? (
+                    <tr>
+                    <td colSpan={5}>
+                      <EmptyState
+                        title="No backups match your search"
+                        description="Try adjusting your search query."
+                        icon={Search}
+                        variant="noResults"
+                        actionLabel="Clear Search"
+                        onAction={() => setSearchQuery('')}
                       />
                     </td>
                   </tr>
                 ) : (
-                  backups.map((backup) => (
+                  filteredBackups.map((backup) => (
                     <tr key={backup.id} className="hover">
-                      <td className="font-bold">{backup.name}</td>
+                      <td className="font-bold">
+                        <div className="flex items-center gap-2">
+                            <Archive className="w-4 h-4 text-base-content/40" />
+                            {backup.name}
+                        </div>
+                      </td>
                       <td className="text-sm text-base-content/70 truncate max-w-xs" title={backup.description}>
                         {backup.description || '-'}
                       </td>
                       <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
-                        <button
-                          className="btn btn-ghost btn-xs tooltip tooltip-left"
-                          data-tip="Restore"
-                          onClick={() => handleRestoreBackup(backup.id)}
-                          disabled={actionLoading === backup.id}
-                        >
-                          <RestoreIcon className="w-4 h-4 text-warning" />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-xs tooltip tooltip-left"
-                          data-tip="Download"
-                          onClick={() => handleDownloadBackup(backup.id, backup.name)}
-                          disabled={actionLoading === backup.id}
-                        >
-                          <DownloadIcon className="w-4 h-4 text-primary" />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-xs tooltip tooltip-left"
-                          data-tip="Delete"
-                          onClick={() => handleDeleteBackup(backup.id)}
-                          disabled={actionLoading === backup.id}
-                        >
-                          <TrashIcon className="w-4 h-4 text-error" />
-                        </button>
+                        <div className="tooltip tooltip-left" data-tip="Restore">
+                            <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => handleRestoreBackup(backup.id)}
+                            disabled={actionLoading === backup.id}
+                            className="text-warning hover:bg-warning/10"
+                            >
+                            <RotateCcw className="w-4 h-4" />
+                            </Button>
+                        </div>
+                        <div className="tooltip tooltip-left" data-tip="Download">
+                            <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => handleDownloadBackup(backup.id, backup.name)}
+                            disabled={actionLoading === backup.id}
+                            className="text-primary hover:bg-primary/10"
+                            >
+                            <Download className="w-4 h-4" />
+                            </Button>
+                        </div>
+                        <div className="tooltip tooltip-left" data-tip="Delete">
+                            <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => handleDeleteBackup(backup.id)}
+                            disabled={actionLoading === backup.id}
+                            className="text-error hover:bg-error/10"
+                            >
+                            <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -269,16 +340,16 @@ const ExportPage: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title flex items-center gap-2">
-              <DocIcon className="w-5 h-5 text-primary" />
+              <FileText className="w-5 h-5 text-primary" />
               Configuration Export
             </h2>
             <p className="text-sm text-base-content/70 mb-4">
               Export the current running configuration as a JSON file. Useful for debugging or manual migration.
             </p>
             <div className="card-actions justify-end mt-auto">
-              <button className="btn btn-outline" onClick={handleExportConfig}>
-                <DownloadIcon className="w-4 h-4 mr-2" /> Export Config
-              </button>
+              <Button variant="outline" onClick={handleExportConfig}>
+                <Download className="w-4 h-4 mr-2" /> Export Config
+              </Button>
             </div>
           </div>
         </div>
@@ -287,19 +358,19 @@ const ExportPage: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title flex items-center gap-2">
-              <ApiIcon className="w-5 h-5 text-secondary" />
+              <Code className="w-5 h-5 text-secondary" />
               API Specifications
             </h2>
             <p className="text-sm text-base-content/70 mb-4">
               Download the OpenAPI specification for integration and development.
             </p>
             <div className="card-actions justify-end gap-2 mt-auto">
-              <button className="btn btn-outline btn-sm" onClick={() => handleDownloadOpenAPI('json')}>
+              <Button size="sm" variant="outline" onClick={() => handleDownloadOpenAPI('json')}>
                 JSON
-              </button>
-              <button className="btn btn-outline btn-sm" onClick={() => handleDownloadOpenAPI('yaml')}>
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleDownloadOpenAPI('yaml')}>
                 YAML
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
+import { setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Export Page Screenshots', () => {
   test('Capture Export Page and Create Backup Modal', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Export Page Screenshots', () => {
     });
 
     // Navigate to Export page
-    await navigateAndWaitReady(page, '/admin/export');
+    await page.goto('/admin/export');
 
     // Wait for content to load properly
     await expect(page.locator('h1:has-text("Export & System Data")')).toBeVisible();
