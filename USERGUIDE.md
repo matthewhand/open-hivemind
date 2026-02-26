@@ -123,7 +123,7 @@ General system configuration.
 ![General Settings](docs/screenshots/settings-general.png)
 
 *   **Instance Information**: Configure instance name and description.
-*   **Localization & Appearance**: Set the system **Timezone** and Theme.
+*   **Localization & Appearance**: Set the system **Timezone**, Theme, and **Screensaver** preferences.
 *   **Logging & Notifications**: Configure log levels and enable system logging.
 *   **System Limits**: Adjust concurrent bots, timeouts, and health check intervals.
 
@@ -155,6 +155,7 @@ A Matrix-inspired digital rain effect that activates during periods of inactivit
 *   **Automatic Activation**: The screensaver engages automatically after a period of user inactivity to prevent screen burn-in and add a visual aesthetic.
 *   **Visuals**: Features a classic green digital rain effect with varying speeds and character sets.
 *   **Restoration**: Activity (mouse movement, clicks, or key presses) instantly restores the previous view.
+*   **Configuration**: Can be enabled or disabled in [Settings](/admin/settings) under "Localization & Appearance".
 
 ### Demo Mode
 When the system is initialized without configuration, it operates in Demo Mode to showcase capabilities.

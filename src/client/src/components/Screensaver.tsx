@@ -28,6 +28,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const moveTimer = useRef<number | null>(null);
   const [forceActive, setForceActive] = useState(false);
+  const [userEnabled, setUserEnabled] = useState(true);
 
   // Check for URL param override for testing/demo
   useEffect(() => {
@@ -39,7 +40,36 @@ const Screensaver: React.FC<ScreensaverProps> = ({
     }
   }, []);
 
-  const isActive = (isIdle || forceActive) && enabled;
+  // Check user settings from localStorage
+  useEffect(() => {
+    const checkSettings = () => {
+      try {
+        const saved = localStorage.getItem('hivemind-settings');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed.screensaver === 'boolean') {
+            setUserEnabled(parsed.screensaver);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to read screensaver settings', e);
+      }
+    };
+
+    checkSettings();
+
+    const handleSettingsUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && typeof customEvent.detail.screensaver === 'boolean') {
+        setUserEnabled(customEvent.detail.screensaver);
+      }
+    };
+
+    window.addEventListener('hivemind-settings-updated', handleSettingsUpdate);
+    return () => window.removeEventListener('hivemind-settings-updated', handleSettingsUpdate);
+  }, []);
+
+  const isActive = (isIdle || forceActive) && enabled && userEnabled;
 
   const randomizePosition = useCallback(() => {
     if (!containerRef.current) return;

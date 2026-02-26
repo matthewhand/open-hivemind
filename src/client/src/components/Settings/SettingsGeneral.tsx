@@ -38,6 +38,35 @@ const SettingsGeneral: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [screensaverEnabled, setScreensaverEnabled] = useState(true);
+
+  // Load screensaver preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hivemind-settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.screensaver === 'boolean') {
+          setScreensaverEnabled(parsed.screensaver);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const handleScreensaverToggle = (enabled: boolean) => {
+    setScreensaverEnabled(enabled);
+    let currentSettings = {};
+    try {
+      currentSettings = JSON.parse(localStorage.getItem('hivemind-settings') || '{}');
+    } catch (e) {
+      // ignore
+    }
+    const newSettings = { ...currentSettings, screensaver: enabled };
+    localStorage.setItem('hivemind-settings', JSON.stringify(newSettings));
+    window.dispatchEvent(new CustomEvent('hivemind-settings-updated', { detail: newSettings }));
+  };
 
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
@@ -223,6 +252,17 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'dark', label: 'Dark' },
               ]}
             />
+          </div>
+
+          <div className="form-control">
+            <label className="label cursor-pointer py-1">
+              <span className="label-text text-sm">Enable Screensaver</span>
+              <Toggle
+                checked={screensaverEnabled}
+                onChange={(e) => handleScreensaverToggle(e.target.checked)}
+                size="sm"
+              />
+            </label>
           </div>
         </div>
 
