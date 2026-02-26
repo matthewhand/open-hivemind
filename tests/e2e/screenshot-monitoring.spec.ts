@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { setupAuth, setupErrorCollection } from './test-utils';
 
 test.describe('Monitoring Dashboard Screenshots', () => {
   test.beforeEach(async ({ page }) => {
+    setupErrorCollection(page);
     await setupAuth(page);
 
     await page.route('/api/auth/check', async (route) => {
@@ -33,31 +34,37 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     // Mock Monitoring specific endpoints
 
     // 1. System Health (used by SystemHealth component)
-    await page.route('/api/health/detailed', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          status: 'healthy',
-          timestamp: new Date().toISOString(),
-          uptime: 3600 * 24 * 5, // 5 days
-          memory: {
-            used: 8 * 1024 * 1024 * 1024, // 8GB
-            total: 16 * 1024 * 1024 * 1024, // 16GB
-            usage: 50,
-          },
-          cpu: {
-            user: 15,
-            system: 5,
-          },
-          system: {
-            platform: 'linux',
-            arch: 'x64',
-            release: '5.15.0',
-            hostname: 'prod-server-01',
-            loadAverage: [0.5, 0.4, 0.3],
-          },
-        },
-      })
+    // Note: The app requests /health/detailed, but in some configs it might be proxied or prefixed.
+    // We mock both to be safe.
+    const healthData = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: 3600 * 24 * 5, // 5 days
+      memory: {
+        used: 8 * 1024, // 8GB (Server returns MB) - Adjusted to match server behavior (MB) so frontend converts it back to GB
+        total: 16 * 1024, // 16GB (Server returns MB)
+        usage: 50,
+      },
+      cpu: {
+        user: 15,
+        system: 5,
+      },
+      system: {
+        platform: 'linux',
+        arch: 'x64',
+        release: '5.15.0',
+        hostname: 'prod-server-01',
+        loadAverage: [0.5, 0.4, 0.3],
+      },
+    };
+
+    await page.route('**/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: healthData })
+    );
+
+    // Also mock /api/health/detailed for backward compatibility or proxy config
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: healthData })
     );
 
     // 2. Dashboard Status (used by MonitoringDashboard to get bot statuses)
@@ -75,112 +82,14 @@ test.describe('Monitoring Dashboard Screenshots', () => {
               messageCount: 1542,
               errorCount: 2,
             },
-            {
-              name: 'InternalHelper',
-              provider: 'slack',
-              llmProvider: 'anthropic',
-              status: 'active',
-              connected: true,
-              messageCount: 89,
-              errorCount: 0,
-            },
-            {
-              name: 'DevBot',
-              provider: 'mattermost',
-              llmProvider: 'local',
-              status: 'warning',
-              connected: true,
-              messageCount: 12,
-              errorCount: 5,
-            },
           ],
           uptime: 3600 * 24 * 5,
         },
       })
     );
 
-    // 3. Config (used by MonitoringDashboard to get bot list)
-    await page.route('/api/config', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          bots: [
-            {
-              name: 'CustomerSupportBot',
-              messageProvider: 'discord',
-              llmProvider: 'openai',
-              persona: 'Customer Service',
-            },
-            {
-              name: 'InternalHelper',
-              messageProvider: 'slack',
-              llmProvider: 'anthropic',
-              persona: 'Assistant',
-            },
-            {
-              name: 'DevBot',
-              messageProvider: 'mattermost',
-              llmProvider: 'local',
-              persona: 'Developer',
-            },
-          ],
-        },
-      })
-    );
-
-    // 4. Activity (used by ActivityMonitor)
-    await page.route('/api/dashboard/api/activity*', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          events: [
-            {
-              id: '1',
-              timestamp: new Date().toISOString(),
-              botName: 'CustomerSupportBot',
-              provider: 'discord',
-              llmProvider: 'openai',
-              messageType: 'incoming',
-              status: 'success',
-              processingTime: 120,
-            },
-            {
-              id: '2',
-              timestamp: new Date(Date.now() - 5000).toISOString(),
-              botName: 'CustomerSupportBot',
-              provider: 'discord',
-              llmProvider: 'openai',
-              messageType: 'outgoing',
-              status: 'success',
-              processingTime: 450,
-            },
-            {
-              id: '3',
-              timestamp: new Date(Date.now() - 15000).toISOString(),
-              botName: 'InternalHelper',
-              provider: 'slack',
-              llmProvider: 'anthropic',
-              messageType: 'incoming',
-              status: 'success',
-              processingTime: 150,
-            },
-            {
-              id: '4',
-              timestamp: new Date(Date.now() - 25000).toISOString(),
-              botName: 'DevBot',
-              provider: 'mattermost',
-              llmProvider: 'local',
-              messageType: 'outgoing',
-              status: 'error',
-              processingTime: 2000,
-            },
-          ],
-        },
-      })
-    );
-
     // 5. API Endpoints Status (used by SystemHealth)
-    await page.route('/health/api-endpoints', async (route) =>
+    await page.route('**/health/api-endpoints', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -232,11 +141,27 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for key elements to be visible
-    await expect(page.getByText('System Monitoring', { exact: true })).toBeVisible();
-    await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
+    // 1. The main dashboard header
+    await expect(page.getByText('Monitoring Dashboard', { exact: true })).toBeVisible();
 
-    // Wait for charts/stats to load (checking for stats cards values)
-    await expect(page.getByText('3/3', { exact: false })).toBeVisible(); // Active Bots
+    // 2. Status Cards (populated from health data)
+    await expect(page.getByText('System Health', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('CPU Load', { exact: true })).toBeVisible();
+    await expect(page.getByText('Memory', { exact: true }).first()).toBeVisible();
+
+    // 3. System Health Component (Detailed info)
+    await expect(page.getByText('System Health Monitor', { exact: true })).toBeVisible();
+
+    // Expand the accordion to show details
+    await page.getByText('Detailed System Information').click({ force: true });
+
+    // Check for specific system info (platform, hostname)
+    await expect(page.getByText('linux', { exact: true })).toBeVisible();
+    await expect(page.getByText('prod-server-01', { exact: true })).toBeVisible();
+
+    // 4. Check API endpoints are listed
+    await expect(page.getByText('Database', { exact: true })).toBeVisible();
+    await expect(page.getByText('Redis', { exact: true })).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/monitoring-dashboard.png', fullPage: true });

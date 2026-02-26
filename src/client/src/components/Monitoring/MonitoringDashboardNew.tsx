@@ -1,38 +1,66 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService } from '../services/api';
-import StatusCard from '../components/Monitoring/StatusCard';
-import MetricChart from '../components/Monitoring/MetricChart';
-import AlertPanel from '../components/Monitoring/AlertPanel';
-import EventStream from '../components/Monitoring/EventStream';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import { apiService } from '../../services/api';
+import StatusCard from './StatusCard';
+import MetricChart from './MetricChart';
+import AlertPanel from './AlertPanel';
+import EventStream from './EventStream';
+import SystemHealth from '../SystemHealth';
+import { Card } from '../../components/DaisyUI';
 
-const MonitoringDashboard: React.FC = () => {
+const MonitoringDashboardNew: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [isLoading, setIsLoading] = useState(false);
+  const [initialMetrics, setInitialMetrics] = useState<any>(null);
 
   useEffect(() => {
     connect();
+
+    // Hybrid approach: Fetch initial health data immediately
+    // This ensures we have data to display even before WebSocket connects
+    // or if WebSocket is unavailable (e.g. in screenshot tests)
+    const fetchInitialData = async () => {
+      try {
+        const data = await apiService.getSystemHealth();
+        setInitialMetrics(data);
+      } catch (error) {
+        console.error('Failed to fetch initial system health:', error);
+      }
+    };
+
+    fetchInitialData();
+
     return () => {
       disconnect();
     };
   }, []);
 
-  const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
+  const wsMetric = performanceMetrics[performanceMetrics.length - 1];
+
+  // Use WS data if available, otherwise fall back to initial API data
+  const currentMetric = wsMetric || (initialMetrics ? {
+    cpuUsage: 0, // CPU % not readily available in single snapshot without calculation
+    memoryUsage: initialMetrics.memory.usage,
+    activeConnections: 0,
+    messageRate: 0,
+    errorRate: 0,
+    responseTime: 0,
+  } : {
     cpuUsage: 0,
     memoryUsage: 0,
     activeConnections: 0,
     messageRate: 0,
     errorRate: 0,
     responseTime: 0,
-  };
+  });
 
   const statusCards = [
     {
       title: 'System Health',
       subtitle: 'Overall Status',
-      status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
+      status: (alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy') as any,
       metrics: [
         { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
         { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
@@ -42,7 +70,7 @@ const MonitoringDashboard: React.FC = () => {
     {
       title: 'Message Throughput',
       subtitle: 'Traffic Analysis',
-      status: 'healthy',
+      status: 'healthy' as any,
       metrics: [
         { label: 'Rate', value: currentMetric.messageRate, unit: '/sec' },
         { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
@@ -52,7 +80,7 @@ const MonitoringDashboard: React.FC = () => {
     {
       title: 'Active Alerts',
       subtitle: 'System Notifications',
-      status: alerts.length > 0 ? 'warning' : 'healthy',
+      status: (alerts.length > 0 ? 'warning' : 'healthy') as any,
       metrics: [
         { label: 'Total', value: alerts.length, icon: '🔔' },
         { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
@@ -62,10 +90,10 @@ const MonitoringDashboard: React.FC = () => {
     {
       title: 'Connection Status',
       subtitle: 'WebSocket & API',
-      status: isConnected ? 'healthy' : 'error',
+      status: (isConnected ? 'healthy' : 'error') as any,
       metrics: [
         { label: 'WebSocket', value: isConnected ? 'Connected' : 'Disconnected', icon: isConnected ? '🟢' : '🔴' },
-        { label: 'API', value: 'Online', icon: '🟢' }, // detailed status could be fetched separately
+        { label: 'API', value: initialMetrics ? 'Online' : 'Checking...', icon: initialMetrics ? '🟢' : '⚪' },
         { label: 'Uptime', value: '99.9%', icon: '⏱️' }
       ]
     }
@@ -172,6 +200,11 @@ const MonitoringDashboard: React.FC = () => {
         />
       </div>
 
+      {/* Detailed System Health Section */}
+      <div className="mb-8">
+        <SystemHealth refreshInterval={refreshInterval} />
+      </div>
+
       {/* Alerts and Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AlertPanel
@@ -200,4 +233,4 @@ const MonitoringDashboard: React.FC = () => {
   );
 };
 
-export default MonitoringDashboard;
+export default MonitoringDashboardNew;
