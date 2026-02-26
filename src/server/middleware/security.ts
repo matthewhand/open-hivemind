@@ -277,27 +277,48 @@ function sanitizeCookies(req: Request): void {
 }
 
 /**
- * Get client IP address from request
+ * Determine whether the direct peer connection comes from a trusted proxy.
+ * Trusted proxies are loopback and private-network addresses — ranges that
+ * cannot be reached from the public internet and are therefore under operator
+ * control.
+ */
+function isTrustedProxy(ip: string | undefined): boolean {
+  if (!ip) return false;
+  // Normalise IPv4-mapped IPv6 addresses (e.g. "::ffff:127.0.0.1" -> "127.0.0.1")
+  const cleanIp = ip.replace(/^::ffff:/, '');
+  return (
+    cleanIp === '127.0.0.1' ||
+    cleanIp === '::1' ||
+    /^10\./.test(cleanIp) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(cleanIp) ||
+    /^192\.168\./.test(cleanIp)
+  );
+}
+
+/**
+ * Get client IP address from request.
+ *
+ * Security note: proxy headers such as X-Forwarded-For are trivially
+ * spoofable by any client.  We only consult them when the immediate TCP peer
+ * (req.socket.remoteAddress) is a trusted proxy address, i.e. a loopback or
+ * RFC-1918 address under operator control.  When the connection comes
+ * directly from the internet the header is ignored entirely and the real
+ * socket address is used instead.
  */
 function getClientIP(req: Request): string {
-  // Check for forwarded IP headers (common with proxies/load balancers)
-  const forwardedFor = req.get('x-forwarded-for');
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+  const remoteAddress = req.socket?.remoteAddress;
+  if (isTrustedProxy(remoteAddress)) {
+    // Only trust X-Forwarded-For when the request arrived via a trusted proxy.
+    const forwarded = req.headers['x-forwarded-for'];
+    const firstIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
+      ?.split(',')[0]
+      ?.trim();
+    // Validate the extracted value looks like an IP address before trusting it.
+    if (firstIp && /^[\d.:a-fA-F]+$/.test(firstIp)) {
+      return firstIp;
+    }
   }
-
-  const realIP = req.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-
-  const clientIP = req.get('x-client-ip');
-  if (clientIP) {
-    return clientIP;
-  }
-
-  // Fall back to connection remote address
-  return req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+  return remoteAddress || 'unknown';
 }
 
 /**
