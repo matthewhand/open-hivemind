@@ -68,6 +68,16 @@ Quick-start templates to help you create bots faster.
 *   **Quick Create**: Use a template to pre-populate the bot creation form.
 *   **Filtering**: Find templates by platform, persona, or LLM provider using the dropdown filters.
 
+### [Live Chat Monitor](/admin/chat)
+Monitor real-time conversations across your bot fleet.
+
+![Live Chat Monitor](docs/screenshots/chat-monitor-search.png)
+
+*   **Real-time Monitoring**: Watch conversations as they happen between bots and users.
+*   **Search & Filter**: Quickly find specific bots or providers using the search bar.
+*   **Export History**: Download the full conversation history for the selected bot as a text file.
+![Chat Export](docs/screenshots/chat-monitor-export.png)
+
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
 ![Personas Page](docs/screenshots/personas-page.png)
