@@ -5,16 +5,3 @@
 
 [dev]
   command = "npm run dev"
-
-# API requests go to the serverless function (Proxy)
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-  force = true
-
-# Catch-all for SPA routing (handled by index.html)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
