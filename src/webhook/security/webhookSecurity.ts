@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import webhookConfig from '@config/webhookConfig';
+import Logger from '@common/logger';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
   // Handle case-insensitive header names; Express normally lowercases, but unit tests pass raw objects
@@ -31,7 +32,7 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
   const requestIp: string = req.ip ?? '';
 
   if (whitelistedIps.length === 0) {
-    console.log('No WEBHOOK_IP_WHITELIST set, allowing all IPs');
+    Logger.warn('No WEBHOOK_IP_WHITELIST set, allowing all IPs');
     next();
     return;
   }
