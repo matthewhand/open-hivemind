@@ -22,10 +22,19 @@ A comprehensive view of all message processing events and system actions.
 ## Configuration
 
 ### [LLM Providers](/admin/providers/llm)
-Manage connections to Large Language Model providers.
-*   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
-*   **System Default**: Define the fallback provider for bots without a specific profile.
-*   **WebUI Intelligence**: Select a provider to power internal AI features.
+Manage connections to Large Language Model providers. This is the first step in setting up your bot ecosystem.
+
+**Workflow: Creating a Provider Profile**
+1.  Navigate to the **LLM Providers** page.
+2.  Click the **Create Profile** button.
+3.  In the modal, select your provider (e.g., OpenAI, Anthropic, Ollama).
+4.  Enter the required credentials (API Key) or endpoint URL.
+5.  Click **Save Profile**.
+
+**Workflow: Setting Defaults**
+Once you have profiles created, you can assign them as system-wide defaults:
+*   **System Default**: This profile will be used by any bot that doesn't have a specific LLM assigned.
+*   **WebUI Intelligence**: This profile powers internal tools like the "Generate Bot Name" feature.
 
 ![LLM Providers List](docs/screenshots/llm-providers-list.png)
 

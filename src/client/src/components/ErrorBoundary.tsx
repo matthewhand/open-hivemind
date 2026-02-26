@@ -64,7 +64,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
             }}>
               Reload
             </button>
-            {process.env.NODE_ENV !== 'production' && this.state.error && (
+            {import.meta.env.MODE !== 'production' && this.state.error && (
               <details open style={{ marginTop: '1rem', maxWidth: 800 }}>
                 <summary style={{ cursor: 'pointer' }}>Error details</summary>
                 <pre style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}>

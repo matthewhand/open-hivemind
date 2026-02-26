@@ -7,7 +7,10 @@ const getEnv = (key: string): string | undefined => {
     return env[key];
   } catch (e) {
     // Fallback to process.env for Node/Jest
-    return (process.env as any)[key];
+    if (typeof process !== 'undefined' && process.env) {
+      return (process.env as any)[key];
+    }
+    return undefined;
   }
 };
 
