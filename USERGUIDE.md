@@ -118,6 +118,12 @@ Monitor real-time interactions and events across your bot ecosystem.
 *   **Export**: Download the activity log as a CSV file for offline analysis.
 *   **Timeline View**: Visualize the sequence of events over time.
 
+### [Demo Mode]
+When enabled, the system displays a banner indicating that it is running in Demo Mode.
+*   **Visual Indicator**: A purple banner at the top of the page.
+*   **Functionality**: Allows exploration of the platform without API configuration.
+*   **Dismissal**: The banner can be dismissed for the current session.
+
 ### [Settings](/admin/settings)
 General system configuration.
 ![General Settings](docs/screenshots/settings-general.png)
