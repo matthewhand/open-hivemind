@@ -5,6 +5,11 @@ This page references screenshots and images that are currently not linked in the
 ## Screenshots
 
 - ![Activity Page](screenshots/activity-page.png)
+- ![Bots Page](screenshots/bots-page.png)
+- ![Clone Bot Modal](screenshots/clone-bot-modal.png)
+- ![Create Backup Modal](screenshots/create-backup-modal.png)
+- ![Create Bot Modal](screenshots/create-bot-modal.png)
+- ![Export Page](screenshots/export-page.png)
 - ![Guards Modal Enhanced](screenshots/guards-modal-enhanced.png)
 - ![Guards Modal](screenshots/guards-modal.png)
 - ![Guards Page](screenshots/guards-page.png)
@@ -15,11 +20,3 @@ This page references screenshots and images that are currently not linked in the
 - ![MCP Tools Modal](screenshots/mcp-tools-modal.png)
 - ![Monitoring Dashboard](screenshots/monitoring-dashboard.png)
 - ![Sitemap Page](screenshots/sitemap-page.png)
-
-## Images
-
-- ![Bots Page](images/bots-page.png)
-- ![Clone Bot Modal](images/clone-bot-modal.png)
-- ![Create Backup Modal](images/create-backup-modal.png)
-- ![Create Bot Modal](images/create-bot-modal.png)
-- ![Export Page](images/export-page.png)

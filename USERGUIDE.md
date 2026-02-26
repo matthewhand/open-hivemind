@@ -10,6 +10,11 @@ The central hub for monitoring your bot ecosystem.
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.
 
+### Demo Mode
+When the system is running in "Demo Mode", a banner will appear at the top of the screen (as seen in screenshots). This indicates that the system is operating without configured API keys or persistence, allowing you to explore the interface safely.
+*   **Visual Indicator**: A purple banner spanning the full width of the content area.
+*   **Functionality**: Most features are available for exploration, but external calls (like LLM generation) may be mocked or limited.
+
 ### [Activity Feed](/admin/activity)
 A comprehensive view of all message processing events and system actions.
 ![Activity Page](docs/screenshots/activity-page-filters.png)
@@ -44,13 +49,13 @@ Create and manage individual bot instances.
 ![Bots Page](docs/screenshots/bots-page.png)
 
 *   **Create Bot**: Define a new bot with a unique name.
-![Create Bot Modal](./docs/images/create-bot-modal.png)
+![Create Bot Modal](docs/screenshots/create-bot-modal.png)
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 ![Create Bot Page](docs/screenshots/bot-create-page.png)
 
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](./docs/images/clone-bot-modal.png)
+![Duplicate Bot Modal](docs/screenshots/clone-bot-modal.png)
 
 *   **View Activity**: Monitor real-time logs and message flow for each bot.
 ![Bot Activity Logs](docs/screenshots/bot-details-modal.png)
@@ -170,6 +175,8 @@ Identify unusual patterns in bot behavior.
 
 ### [AI Assistant](/admin/ai/chat)
 An internal chat interface for admins.
+![Chat Monitor](docs/screenshots/chat-monitor.png)
+
 *   **Test Prompts**: Experiment with prompts before deploying them to bots.
 *   **System Queries**: Ask the AI questions about the system configuration or logs.
 
@@ -183,12 +190,12 @@ A reference for developers extending the WebUI.
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
-![System Backups & Export](docs/images/export-page.png)
+![System Backups & Export](docs/screenshots/export-page.png)
 
 *   **Backup Overview**: View key metrics including total backups, total storage usage, and the date of the latest backup.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
     *   **Create Backup**: Save a snapshot of your current bot and system configuration.
-    ![Create Backup Modal](docs/images/create-backup-modal.png)
+    ![Create Backup Modal](docs/screenshots/create-backup-modal.png)
     *   **Restore**: Revert the system to a previous state from a backup.
     *   **Download**: Save backup files locally for safekeeping.
 *   **Configuration Export**: Export the current running configuration as a JSON file.

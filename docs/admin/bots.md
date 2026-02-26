@@ -41,10 +41,10 @@ The **Bots** page (`/admin/bots`) lists all configured agents.
 ### WebUI Previews
 
 **Bot List View**
-![Bot List](/home/chatgpt/.gemini/antigravity/brain/04cd19a8-58d2-4bdc-939d-ac354299862b/webui_bot_list_verified_1771636322625.png)
+![Bot List](../screenshots/bots-page.png)
 
 **Bot Settings Modal**
-![Settings Modal](/home/chatgpt/.gemini/antigravity/brain/04cd19a8-58d2-4bdc-939d-ac354299862b/webui_bot_settings_modal_verified_1771636344188.png)
+![Settings Modal](../screenshots/bot-details-modal.png)
 
 **Persona Assignment**
-![Persona Assignment](/home/chatgpt/.gemini/antigravity/brain/04cd19a8-58d2-4bdc-939d-ac354299862b/webui_persona_assignment_verified_1771636973758.png)
+![Persona Assignment](../screenshots/personas-page.png)

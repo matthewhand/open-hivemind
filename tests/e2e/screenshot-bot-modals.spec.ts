@@ -12,8 +12,8 @@ test.describe('Documentation Screenshots', () => {
     // Wait for content to load properly
     await page.waitForSelector('h1:has-text("Bot Management")');
 
-    // Screenshot Bots Page
-    await page.screenshot({ path: 'docs/images/bots-page.png', fullPage: true });
+    // Screenshot Bots Page (Already covered by screenshot-bot-activity.spec.ts)
+    // await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
     // Open Create Bot Modal
     const createButton = page
@@ -56,7 +56,7 @@ test.describe('Documentation Screenshots', () => {
     await page.waitForTimeout(500);
 
     // Screenshot Create Bot Modal
-    await page.screenshot({ path: 'docs/images/create-bot-modal.png', fullPage: true });
+    await page.screenshot({ path: 'docs/screenshots/create-bot-modal.png', fullPage: true });
   });
 
   test('Create and Duplicate Bot', async ({ page }) => {
@@ -181,6 +181,6 @@ test.describe('Documentation Screenshots', () => {
     await page.waitForTimeout(500);
 
     // Screenshot
-    await page.screenshot({ path: 'docs/images/clone-bot-modal.png' });
+    await page.screenshot({ path: 'docs/screenshots/clone-bot-modal.png' });
   });
 });

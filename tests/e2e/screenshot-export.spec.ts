@@ -61,7 +61,7 @@ test.describe('Export Page Screenshots', () => {
     await expect(page.getByRole('cell', { name: 'Weekly Backup', exact: true })).toBeVisible();
 
     // Screenshot Export Page
-    await page.screenshot({ path: 'docs/images/export-page.png', fullPage: true });
+    await page.screenshot({ path: 'docs/screenshots/export-page.png', fullPage: true });
 
     // Open Create Backup Modal
     const createButton = page.locator('button:has-text("Create Backup")').first();
@@ -79,6 +79,6 @@ test.describe('Export Page Screenshots', () => {
     await page.waitForTimeout(500);
 
     // Screenshot Create Backup Modal
-    await page.screenshot({ path: 'docs/images/create-backup-modal.png' });
+    await page.screenshot({ path: 'docs/screenshots/create-backup-modal.png' });
   });
 });
