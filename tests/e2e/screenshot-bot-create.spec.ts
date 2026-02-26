@@ -96,20 +96,23 @@ test.describe('Bot Create Page Screenshots', () => {
     await expect(page.getByText('Create New Bot')).toBeVisible();
     await expect(page.getByText('Message Platform')).toBeVisible();
 
-    // Wait for dynamic content (options in select)
-    // We can check if the select has populated options
-    // The "Persona" select should have "Friendly Helper"
-    await expect(page.getByRole('combobox').filter({ hasText: 'Default Assistant' })).toBeVisible();
-
-    // Verify new Platform cards are visible
+    // Verify Platform Buttons are visible
     await expect(page.getByText('Discord', { exact: true })).toBeVisible();
     await expect(page.getByText('Slack', { exact: true })).toBeVisible();
 
-    // Verify Persona Preview is visible (Default Assistant is selected by default)
-    await expect(page.getByText('A helpful general-purpose AI assistant.')).toBeVisible();
+    // Verify Default Persona Preview
+    await expect(page.getByText('A helpful, general-purpose AI assistant')).toBeVisible();
 
-    // Or just wait a bit to be safe as animations might happen
-    await page.waitForTimeout(1000);
+    // Verify LLM Provider Select is visible
+    const llmSelect = page.getByRole('combobox').filter({ hasText: 'Use System Default' });
+    await expect(llmSelect).toBeVisible();
+
+    // Optional: Select a different persona to show dynamic update (and capture that state)
+    // For screenshot purposes, maybe select "Friendly Helper" to show non-default state?
+    // Let's stick to default for a clean "initial state" look, but ensure the preview is there.
+
+    // Wait for animations to settle
+    await page.waitForTimeout(500);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/bot-create-page.png', fullPage: true });

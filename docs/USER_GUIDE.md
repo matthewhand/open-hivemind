@@ -22,6 +22,28 @@ The Live Chat Monitor allows administrators to observe conversations across all 
 3.  The main view will load the recent message history for that bot.
 4.  Click the **Refresh** icon in the header to update the view with new messages.
 
+## Bot Creation
+
+The Bot Creation page provides a streamlined workflow for deploying new AI assistants.
+
+![Bot Create Page](screenshots/bot-create-page.png)
+
+### Features
+
+-   **Visual Platform Selection**: Choose your target messaging platform (Discord, Slack, Mattermost, Telegram) using an intuitive grid interface.
+-   **Persona Preview**: Select a persona and instantly view its description to ensure it matches the bot's intended purpose.
+-   **Intelligent Defaults**: The system automatically detects and suggests the default LLM provider, simplifying configuration.
+-   **AI Assistance**: Use the integrated AI assistant to generate creative names and descriptions for your bot.
+
+### How to Use
+
+1.  Navigate to the **Bots** section and click **Create Bot**.
+2.  Enter a name and description (or use the AI Generate button).
+3.  Select the **Message Platform** by clicking on the corresponding card.
+4.  Choose a **Persona** from the dropdown; verify the details in the preview card.
+5.  Select an **LLM Provider** (or use the system default).
+6.  Click **Create Bot** to deploy.
+
 ## System Configuration
 
 The System Configuration page allows administrators to manage global settings, including instance details, localization, logging, system limits, and health monitoring.
