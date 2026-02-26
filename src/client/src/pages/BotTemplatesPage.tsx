@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs } from '../components/DaisyUI';
-import { Copy, Check } from 'lucide-react';
+import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
+import { Copy, Check, Search } from 'lucide-react';
+import SearchFilterBar from '../components/SearchFilterBar';
 
 interface BotTemplate {
   id: string;
@@ -24,7 +25,7 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
   const [selectedPersona, setSelectedPersona] = useState<string>('All');
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
-  const [selectedTemplate, setSelectedTemplate] = useState<BotTemplate | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
 
   const breadcrumbItems = [
@@ -109,9 +110,29 @@ const BotTemplatesPage: React.FC = () => {
   };
 
   // Derive unique options for filters
-  const platforms = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.platform)))], [templates]);
-  const personas = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.persona)))], [templates]);
-  const llmProviders = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.llmProvider)))], [templates]);
+  const platformOptions = useMemo(() => {
+    const unique = Array.from(new Set(templates.map(t => t.platform)));
+    return [
+      { label: 'All Platforms', value: 'All' },
+      ...unique.map(p => ({ label: p.charAt(0).toUpperCase() + p.slice(1), value: p }))
+    ];
+  }, [templates]);
+
+  const personaOptions = useMemo(() => {
+    const unique = Array.from(new Set(templates.map(t => t.persona)));
+    return [
+      { label: 'All Personas', value: 'All' },
+      ...unique.map(p => ({ label: p, value: p }))
+    ];
+  }, [templates]);
+
+  const llmOptions = useMemo(() => {
+    const unique = Array.from(new Set(templates.map(t => t.llmProvider)));
+    return [
+      { label: 'All Providers', value: 'All' },
+      ...unique.map(p => ({ label: p, value: p }))
+    ];
+  }, [templates]);
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
@@ -119,9 +140,19 @@ const BotTemplatesPage: React.FC = () => {
       const matchPlatform = selectedPlatform === 'All' || t.platform === selectedPlatform;
       const matchPersona = selectedPersona === 'All' || t.persona === selectedPersona;
       const matchLlm = selectedLlmProvider === 'All' || t.llmProvider === selectedLlmProvider;
-      return matchPlatform && matchPersona && matchLlm;
+      const matchSearch = searchTerm === '' ||
+        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchPlatform && matchPersona && matchLlm && matchSearch;
     });
-  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider]);
+  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider, searchTerm]);
+
+  const handleClearFilters = () => {
+    setSelectedPlatform('All');
+    setSelectedPersona('All');
+    setSelectedLlmProvider('All');
+    setSearchTerm('');
+  };
 
   if (loading) {
     return (
@@ -137,54 +168,53 @@ const BotTemplatesPage: React.FC = () => {
       <Breadcrumbs items={breadcrumbItems} />
 
       <div className="mt-4 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          Bot Templates
-        </h1>
-        <p className="text-base-content/70">
-          Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-        </p>
+        <div className="flex justify-between items-center mb-4">
+            <div>
+                <h1 className="text-3xl font-bold mb-2">
+                Bot Templates
+                </h1>
+                <p className="text-base-content/70">
+                Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
+                </p>
+            </div>
+            <button
+                className="btn btn-outline"
+                onClick={() => navigate('/admin/bots/create')}
+            >
+                Create Custom Bot
+            </button>
+        </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mt-6 p-4 bg-base-200 rounded-lg">
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">Platform</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedPlatform}
-              onChange={(e) => setSelectedPlatform(e.target.value)}
-            >
-              {platforms.map(p => <option key={p} value={p}>{p === 'All' ? 'All Platforms' : p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-            </select>
-          </div>
-
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">Persona</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedPersona}
-              onChange={(e) => setSelectedPersona(e.target.value)}
-            >
-              {personas.map(p => <option key={p} value={p}>{p === 'All' ? 'All Personas' : p}</option>)}
-            </select>
-          </div>
-
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text">LLM Provider</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={selectedLlmProvider}
-              onChange={(e) => setSelectedLlmProvider(e.target.value)}
-            >
-              {llmProviders.map(p => <option key={p} value={p}>{p === 'All' ? 'All Providers' : p}</option>)}
-            </select>
-          </div>
-        </div>
+        <SearchFilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search templates..."
+            filters={[
+                {
+                    key: 'platform',
+                    value: selectedPlatform,
+                    onChange: setSelectedPlatform,
+                    options: platformOptions,
+                    className: 'w-full sm:w-40'
+                },
+                {
+                    key: 'persona',
+                    value: selectedPersona,
+                    onChange: setSelectedPersona,
+                    options: personaOptions,
+                    className: 'w-full sm:w-40'
+                },
+                {
+                    key: 'llm',
+                    value: selectedLlmProvider,
+                    onChange: setSelectedLlmProvider,
+                    options: llmOptions,
+                    className: 'w-full sm:w-40'
+                }
+            ]}
+            onClear={handleClearFilters}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -244,24 +274,17 @@ const BotTemplatesPage: React.FC = () => {
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-10">
-            <p className="text-lg text-base-content/60">No templates match your filters.</p>
-            <button className="btn btn-ghost btn-sm mt-2" onClick={() => {
-              setSelectedPlatform('All');
-              setSelectedPersona('All');
-              setSelectedLlmProvider('All');
-            }}>Clear Filters</button>
-          </div>
+            <div className="col-span-full">
+                 <EmptyState
+                    title="No templates found"
+                    description="No templates match your current filters."
+                    actionLabel="Clear Filters"
+                    onAction={handleClearFilters}
+                    icon={Search}
+                    variant="noResults"
+                />
+            </div>
         )}
-      </div>
-
-      <div className="mt-8 text-center">
-        <button
-          className="btn btn-outline"
-          onClick={() => navigate('/admin/bots/create')}
-        >
-          Create Custom Bot
-        </button>
       </div>
     </div>
   );
