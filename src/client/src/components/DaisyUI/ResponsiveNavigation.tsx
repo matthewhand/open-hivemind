@@ -71,21 +71,23 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       )}
 
       {/* MAIN CONTENT - Offset for sidebar */}
-      <main
-        className={`flex-1 min-h-screen p-6 transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'
+      <div
+        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'
           }`}
       >
         {/* Demo Mode Banner */}
         <DemoModeBanner />
 
-        {/* White content card */}
-        <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
-          <div className="mb-4">
-            <LlmStatusBanner />
+        <main className="flex-1 p-6">
+          {/* White content card */}
+          <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
+            <div className="mb-4">
+              <LlmStatusBanner />
+            </div>
+            {children}
           </div>
-          {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
