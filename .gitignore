@@ -200,3 +200,5 @@ config/message-profiles.json
 .codex/
 k8s/
 /*.txt
+archive/
+/api/
