@@ -469,8 +469,11 @@ export class BotManager extends EventEmitter {
 
       // Update bot status in memory
       const updatedBot = { ...bot, isActive: true, lastModified: new Date().toISOString() };
-      this.customBots.set(botId, updatedBot);
-      this.saveCustomBots();
+      const isCustomBot = this.customBots.has(botId);
+      if (isCustomBot) {
+        this.customBots.set(botId, updatedBot);
+        this.saveCustomBots();
+      }
 
       await this.startBotById(botId);
 
@@ -528,8 +531,11 @@ export class BotManager extends EventEmitter {
 
       // Update bot status in memory
       const updatedBot = { ...bot, isActive: false, lastModified: new Date().toISOString() };
-      this.customBots.set(botId, updatedBot);
-      this.saveCustomBots();
+      const isCustomBot = this.customBots.has(botId);
+      if (isCustomBot) {
+        this.customBots.set(botId, updatedBot);
+        this.saveCustomBots();
+      }
 
       // Use integration-agnostic shutdown
       try {
