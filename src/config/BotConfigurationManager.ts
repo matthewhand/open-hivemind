@@ -570,10 +570,9 @@ export class BotConfigurationManager {
     }
 
     // Add OpenSwarm configuration
-    const openswarmBaseUrl = botConfig.get('OPENSWARM_BASE_URL');
-    if (config.llmProvider === 'openswarm' || openswarmBaseUrl !== 'http://localhost:8001/v1') {
+    if (config.llmProvider === 'openswarm') {
       config.openswarm = {
-        baseUrl: openswarmBaseUrl,
+        baseUrl: botConfig.get('OPENSWARM_BASE_URL'),
         apiKey: botConfig.get('OPENSWARM_API_KEY'),
         team: botConfig.get('OPENSWARM_TEAM'),
       };
