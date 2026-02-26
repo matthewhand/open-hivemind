@@ -26,6 +26,7 @@ Manage connections to Large Language Model providers.
 *   **Add Profile**: Configure reusable connection templates for services like OpenAI, Anthropic, Google Gemini, or local models (via Ollama/vLLM).
 *   **System Default**: Define the fallback provider for bots without a specific profile.
 *   **WebUI Intelligence**: Select a provider to power internal AI features.
+*   **Provider Stats**: View total profiles, provider types, and system default status at a glance.
 
 ![LLM Providers List](docs/screenshots/llm-providers-list.png)
 

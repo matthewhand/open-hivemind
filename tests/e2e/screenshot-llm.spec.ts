@@ -19,7 +19,7 @@ test.describe('LLM Providers Screenshots', () => {
       route.fulfill({
         status: 200,
         json: {
-          defaultConfigured: true,
+          configured: true,
           defaultProviders: [{ id: 'openai-default', name: 'OpenAI GPT-4', type: 'openai' }],
           botsMissingLlmProvider: [],
           hasMissing: false,
@@ -97,6 +97,9 @@ test.describe('LLM Providers Screenshots', () => {
     // We look for the "Total Profiles" stat card or the first profile card
     await expect(page.locator('.card').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'GPT-4 Turbo' }).first()).toBeVisible();
+
+    // Wait for stats animation to complete
+    await page.waitForTimeout(1200);
 
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/llm-providers-list.png', fullPage: true });
