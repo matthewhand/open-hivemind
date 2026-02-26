@@ -36,3 +36,24 @@ npx tsc src/netlify/functions/server.ts \
   --moduleResolution node
 
 echo "✅ Netlify build complete!"
+
+# Verification (optional)
+if [[ "${1:-}" == "--verify" ]]; then
+  echo "🔍 Verifying build output structure..."
+  
+  if [ -d "dist" ] && [ -d "dist/client" ]; then
+    echo "✅ dist/client assets found"
+  else
+    echo "❌ dist/client assets missing!"
+    exit 1
+  fi
+
+  if [ -f "dist/netlify/functions/server.js" ]; then
+    echo "✅ Netlify function found"
+  else
+    echo "❌ Netlify function missing!"
+    exit 1
+  fi
+  
+  echo "🎉 All verification checks passed!"
+fi
