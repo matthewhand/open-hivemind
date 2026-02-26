@@ -1,55 +1,84 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, Alert } from '../components/DaisyUI';
+import { Bot, Save, ArrowLeft } from 'lucide-react';
+import {
+  Breadcrumbs,
+  Alert,
+  PageHeader,
+  Button,
+  Input,
+  Textarea,
+  Select,
+} from '../components/DaisyUI';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
+import { apiService } from '../services/api';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { status: llmStatus } = useLlmStatus();
   const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     platform: 'discord',
-    persona: 'friendly-helper',
+    persona: 'default',
     llmProvider: '',
   });
+
+  const [personas, setPersonas] = useState<any[]>([]);
+  const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [personasData, profilesData] = await Promise.all([
+          apiService.getPersonas(),
+          apiService.getLlmProfiles(),
+        ]);
+        setPersonas(personasData || []);
+        setLlmProfiles(profilesData?.profiles?.llm || []);
+      } catch (err) {
+        console.error('Failed to load data', err);
+        setAlert({ type: 'error', message: 'Failed to load configuration data' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const breadcrumbItems = [
-    { label: 'Bots', href: '/uber/bots' },
-    { label: 'Create Bot', href: '/uber/bots/create', isActive: true },
+    { label: 'Bots', href: '/admin/bots' },
+    { label: 'Create Bot', href: '/admin/bots/create', isActive: true },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
+    setAlert(null);
 
     try {
-      const response = await fetch('/api/webui/bots', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          ...(formData.llmProvider ? {} : { llmProvider: undefined }),
-        }),
-      });
+      await apiService.createBot({
+        name: formData.name,
+        description: formData.description,
+        messageProvider: formData.platform,
+        llmProvider: formData.llmProvider || undefined,
+        persona: formData.persona,
+      } as any);
 
-      if (response.ok) {
-        setAlert({ type: 'success', message: 'Bot created successfully!' });
-        setTimeout(() => navigate('/uber/bots'), 2000);
-      } else {
-        const error = await response.json();
-        setAlert({ type: 'error', message: error.message || 'Failed to create bot' });
-      }
+      setAlert({ type: 'success', message: 'Bot created successfully!' });
+      setTimeout(() => navigate('/admin/bots'), 1500);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Network error occurred' });
-    } finally {
+      setAlert({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to create bot',
+      });
       setIsCreating(false);
     }
   };
@@ -59,152 +88,151 @@ const BotCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <h1 className="text-3xl font-bold mt-4 mb-6">
-        Create New Bot
-      </h1>
+      <PageHeader
+        title="Create New Bot"
+        description="Configure a new bot instance with persona and provider settings."
+        icon={Bot}
+        gradient="primary"
+        actions={
+          <Button variant="ghost" onClick={() => navigate('/admin/bots')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Bots
+          </Button>
+        }
+      />
 
       {alert && (
-        <div className="mb-6">
-          <Alert
-            status={alert.type === 'success' ? 'success' : 'error'}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
+        <Alert
+          status={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
       )}
 
-      <div className="card bg-base-100 shadow-xl">
+      <div className="card bg-base-100 shadow-xl max-w-3xl mx-auto">
         <div className="card-body">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Bot Name</span>
-                <AIAssistButton
-                  label="Generate Name"
-                  prompt={`Generate a creative name for a chat bot${
-                    formData.description ? ` that is described as: "${formData.description}"` : ''
-                  }.`}
-                  systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
-                  onSuccess={(result) => handleInputChange('name', result)}
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Bot Name */}
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Bot Name <span className="text-error">*</span></span>
+                  <AIAssistButton
+                    label="Generate Name"
+                    prompt={`Generate a creative name for a chat bot${
+                      formData.description ? ` that is described as: "${formData.description}"` : ''
+                    }.`}
+                    systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
+                    onSuccess={(result) => handleInputChange('name', result)}
+                  />
+                </label>
+                <Input
+                  placeholder="e.g. HelpBot"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
                 />
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-                placeholder="Enter a unique name for your bot"
-              />
-            </div>
+              </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Description</span>
-                <AIAssistButton
-                  label="Generate Description"
-                  prompt={`Generate a short, engaging description (max 2 sentences) for a chat bot${
-                    formData.name ? ` named "${formData.name}"` : ''
-                  }.`}
-                  systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
-                  onSuccess={(result) => handleInputChange('description', result)}
+              {/* Description */}
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Description</span>
+                  <AIAssistButton
+                    label="Generate Description"
+                    prompt={`Generate a short, engaging description (max 2 sentences) for a chat bot${
+                      formData.name ? ` named "${formData.name}"` : ''
+                    }.`}
+                    systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
+                    onSuccess={(result) => handleInputChange('description', result)}
+                  />
+                </label>
+                <Textarea
+                  placeholder="Describe what this bot will do..."
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  className="h-24"
                 />
-              </label>
-              <textarea
-                className="textarea textarea-bordered h-24"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Describe what this bot will do"
-              />
-            </div>
+              </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Platform</span>
-              </label>
-              <select
-                className="select select-bordered w-full"
-                value={formData.platform}
-                onChange={(e) => handleInputChange('platform', e.target.value)}
-              >
-                <option value="discord">Discord</option>
-                <option value="slack">Slack</option>
-                <option value="mattermost">Mattermost</option>
-                <option value="telegram">Telegram</option>
-              </select>
-            </div>
-
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Persona</span>
-              </label>
-              <select
-                className="select select-bordered w-full"
-                value={formData.persona}
-                onChange={(e) => handleInputChange('persona', e.target.value)}
-              >
-                <option value="friendly-helper">Friendly Helper</option>
-                <option value="dev-assistant">Developer Assistant</option>
-                <option value="teacher">Teacher</option>
-              </select>
-            </div>
-
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
-              </label>
-              <select
-                className="select select-bordered w-full"
-                value={formData.llmProvider}
-                onChange={(e) => handleInputChange('llmProvider', e.target.value)}
-              >
-                {defaultLlmConfigured ? (
-                  <option value="">Use default LLM</option>
-                ) : (
-                  <option value="">Select Provider</option>
-                )}
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="openwebui">Open WebUI</option>
-                <option value="flowise">Flowise</option>
-              </select>
-              {!defaultLlmConfigured && (
-                <div className="alert alert-warning mt-2">
-                  <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
-                  <a
-                    className="btn btn-xs btn-outline ml-auto"
-                    href="/admin/integrations/llm"
-                    target="_blank"
-                    rel="noreferrer"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Platform */}
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-semibold">Message Platform <span className="text-error">*</span></span>
+                  </label>
+                  <Select
+                    value={formData.platform}
+                    onChange={(e) => handleInputChange('platform', e.target.value)}
                   >
-                    Configure LLM
-                  </a>
+                    <option value="discord">Discord</option>
+                    <option value="slack">Slack</option>
+                    <option value="mattermost">Mattermost</option>
+                    <option value="telegram">Telegram</option>
+                  </Select>
                 </div>
-              )}
-            </div>
 
-            <div className="flex gap-2 justify-end mt-8">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => navigate('/uber/bots')}
-                disabled={isCreating}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isCreating || !formData.name}
-              >
-                {isCreating ? <span className="loading loading-spinner"></span> : null}
-                {isCreating ? 'Creating...' : 'Create Bot'}
-              </button>
-            </div>
-          </form>
+                {/* Persona */}
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-semibold">Persona</span>
+                  </label>
+                  <Select
+                    value={formData.persona}
+                    onChange={(e) => handleInputChange('persona', e.target.value)}
+                  >
+                    <option value="default">Default Assistant</option>
+                    {personas.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+
+              {/* LLM Provider */}
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">
+                    LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
+                  </span>
+                  <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
+                </label>
+                <Select
+                  value={formData.llmProvider}
+                  onChange={(e) => handleInputChange('llmProvider', e.target.value)}
+                >
+                  <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}</option>
+                  {llmProfiles.map((p) => (
+                    <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                  ))}
+                </Select>
+                {!defaultLlmConfigured && !formData.llmProvider && (
+                  <div className="text-error text-xs mt-1">
+                    System default is not configured. Please select a provider.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  variant="primary"
+                  type="submit"
+                  loading={isCreating}
+                  disabled={!formData.name || (!defaultLlmConfigured && !formData.llmProvider)}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Create Bot
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
