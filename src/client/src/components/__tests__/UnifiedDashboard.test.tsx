@@ -107,12 +107,17 @@ describe('UnifiedDashboard', () => {
       expect(statusTab).toHaveClass('tab-active');
     });
 
-    // When bots are configured, the Getting Started tab content is hidden (but still in DOM)
-    // We check that it is not visible
-    const gettingStartedHeader = screen.queryByText('Welcome to Open Hivemind');
-    expect(gettingStartedHeader).not.toBeVisible();
+    // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
+    // should be hidden because the active tab is 'status'.
+    // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
+    expect(screen.queryByText('Welcome to Open Hivemind')).not.toBeVisible();
 
-    // The Status tab is active (verified above) - this confirms correct default behavior
+    // Alternatively check for hidden class on parent if visible check is flaky in some JSDOM setups
+    // const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });
+    // expect(gettingStartedPanel).toHaveClass('hidden');
+
+    const statusPanel = screen.getByRole('tabpanel', { name: /status/i });
+    expect(statusPanel).not.toHaveClass('hidden');
   });
 
   it('allows switching tabs', async () => {

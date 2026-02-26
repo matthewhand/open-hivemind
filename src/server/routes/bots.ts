@@ -15,7 +15,11 @@ router.get('/', async (req, res) => {
 
     const result = bots.map((bot) => {
       // WebSocketService tracks metrics by bot name, not ID
-      const stats = wsService.getBotStats(bot.name) || { messageCount: 0, errors: [] };
+      const stats = wsService.getBotStats(bot.name) || {
+        messageCount: 0,
+        errors: [],
+        errorCount: 0,
+      };
       return {
         id: bot.id,
         name: bot.name,
@@ -26,7 +30,7 @@ router.get('/', async (req, res) => {
         status: bot.isActive ? 'active' : 'disabled',
         connected: statusMap.get(bot.id) || false,
         messageCount: stats.messageCount,
-        errorCount: stats.errors.length,
+        errorCount: stats.errorCount,
         // Note: config and envOverrides intentionally excluded to avoid exposing sensitive data
       };
     });

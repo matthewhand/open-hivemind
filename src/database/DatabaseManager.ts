@@ -291,6 +291,14 @@ export interface ApprovalRequest {
   tenantId?: string;
 }
 
+export interface AIFeedback {
+  id?: number;
+  recommendationId: string;
+  feedback: string;
+  timestamp: Date;
+  metadata?: Record<string, unknown>;
+}
+
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private config?: DatabaseConfig;
@@ -642,6 +650,17 @@ export class DatabaseManager {
       )
     `);
 
+    // AI Feedback table
+    await this.db!.exec(`
+      CREATE TABLE IF NOT EXISTS ai_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recommendationId TEXT NOT NULL,
+        feedback TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT
+      )
+    `);
+
     debug('Database tables created');
   }
 
@@ -715,6 +734,11 @@ export class DatabaseManager {
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
+
+    // AI Feedback indexes
+    await this.db!.exec(
+      `CREATE INDEX IF NOT EXISTS idx_ai_feedback_recommendation ON ai_feedback(recommendationId)`
+    );
 
     debug('Database indexes created');
   }
@@ -1987,6 +2011,35 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error deleting approval request:', error);
       throw new Error(`Failed to delete approval request: ${error}`);
+    }
+  }
+
+  async storeAIFeedback(feedback: {
+    recommendationId: string;
+    feedback: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<number> {
+    this.ensureConnected();
+
+    try {
+      const result = await this.db!.run(
+        `
+        INSERT INTO ai_feedback (
+          recommendationId, feedback, metadata
+        ) VALUES (?, ?, ?)
+      `,
+        [
+          feedback.recommendationId,
+          feedback.feedback,
+          feedback.metadata ? JSON.stringify(feedback.metadata) : null,
+        ]
+      );
+
+      debug(`AI feedback stored with ID: ${result.lastID}`);
+      return result.lastID as number;
+    } catch (error) {
+      debug('Error storing AI feedback:', error);
+      throw new Error(`Failed to store AI feedback: ${error}`);
     }
   }
 }
