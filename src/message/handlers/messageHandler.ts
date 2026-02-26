@@ -227,6 +227,7 @@ export async function handleMessage(
               if (resolvedBotId) {
                 recordBotActivity(message.getChannelId(), resolvedBotId);
               }
+              commandProcessed = true;
               return;
             }
             await messageProvider.sendMessageToChannel(
