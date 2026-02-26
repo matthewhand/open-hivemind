@@ -131,11 +131,11 @@ export class IdleResponseManager {
     } else {
       // Use actual messenger services with unique identification
       for (const service of messengerServices) {
-        let serviceName = (service as any).providerName || 'generic';
+        let serviceName = (service).providerName || 'generic';
         
         // Handle Discord service with multiple bot instances
-        if (serviceName === 'discord' && (service as any).getAllBots) {
-          const discordService = service as any;
+        if (serviceName === 'discord' && (service).getAllBots) {
+          const discordService = service;
           const bots = discordService.getAllBots();
           
           // Create separate service entries for each Discord bot instance

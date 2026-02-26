@@ -91,7 +91,7 @@ export default class MattermostClient {
       });
       
       const posts = response.data.posts;
-      return Object.values(posts) as MattermostPost[];
+      return Object.values(posts);
     } catch (error: any) {
       console.error('Failed to get channel posts:', error.message);
       return [];

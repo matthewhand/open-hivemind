@@ -163,7 +163,7 @@ class SummarizationEngine {
       // Analyze participants
       const participantStats = this.analyzeParticipants(filteredMessages);
       const topParticipants = Object.entries(participantStats)
-        .map(([name, count]) => ({ name, messageCount: count as number }))
+        .map(([name, count]) => ({ name, messageCount: count }))
         .sort((a, b) => b.messageCount - a.messageCount)
         .slice(0, 5);
 
@@ -419,7 +419,7 @@ class SummarizationEngine {
     });
 
     return Object.entries(hourCounts)
-      .map(([hour, count]) => ({ hour: parseInt(hour), messageCount: count as number }))
+      .map(([hour, count]) => ({ hour: parseInt(hour), messageCount: count }))
       .sort((a, b) => a.hour - b.hour);
   }
 }

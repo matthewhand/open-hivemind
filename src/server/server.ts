@@ -62,13 +62,13 @@ export class WebUIServer {
       origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
       credentials: true
     }));
-    
+
     // Rate limiting (basic implementation)
     this.app.use('/api', (req, res, next) => {
       // Basic rate limiting middleware
       next();
     });
-    
+
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -98,21 +98,30 @@ export class WebUIServer {
 
     // Audit logging for all requests
     this.app.use(auditMiddleware);
-    
+
     // Serve static files for the WebUI
-    this.app.use('/admin', express.static(this.frontendDistPath));
-    this.app.use('/webui', express.static(this.frontendDistPath));
-    
+    // Admin uses the HTML file directly
+    this.app.use('/admin', express.static(join(__dirname, '../admin')));
+
+    // WebUI serves the React app
+    const clientDistPath = join(__dirname, '../client/dist');
+    if (existsSync(clientDistPath)) {
+      this.app.use('/webui', express.static(clientDistPath));
+      debug('Serving WebUI from:', clientDistPath);
+    } else {
+      debug('WebUI dist not found at:', clientDistPath);
+    }
+
     debug('Middleware setup completed');
   }
 
   private setupRoutes(): void {
     // Health check (no auth required)
     this.app.use('/', healthRouter);
-    
+
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
-    
+
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
@@ -122,16 +131,36 @@ export class WebUIServer {
     this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
     this.app.use('/api/config', authenticateToken, configRouter);
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
-    
-    // WebUI application routes (serve React app)
-    this.app.get('/admin/*', (req, res) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'));
+
+    // Admin route - serve the HTML file directly
+    this.app.get('/admin', (req, res) => {
+      const adminHtmlPath = join(__dirname, '../admin/index.html');
+      if (existsSync(adminHtmlPath)) {
+        res.sendFile(adminHtmlPath);
+      } else {
+        res.status(404).send('Admin interface not found');
+      }
     });
-    
+
+    // WebUI routes - serve React app
+    this.app.get('/webui', (req, res) => {
+      const clientIndexPath = join(__dirname, '../client/dist/index.html');
+      if (existsSync(clientIndexPath)) {
+        res.sendFile(clientIndexPath);
+      } else {
+        res.status(404).send('WebUI not built. Run: cd src/client && npm run build');
+      }
+    });
+
     this.app.get('/webui/*', (req, res) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'));
+      const clientIndexPath = join(__dirname, '../client/dist/index.html');
+      if (existsSync(clientIndexPath)) {
+        res.sendFile(clientIndexPath);
+      } else {
+        res.status(404).send('WebUI not built. Run: cd src/client && npm run build');
+      }
     });
-    
+
     // API documentation
     this.app.get('/api', (req, res) => {
       res.json({
@@ -151,7 +180,7 @@ export class WebUIServer {
         documentation: '/api/docs'
       });
     });
-    
+
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
       res.status(404).json({
@@ -160,7 +189,7 @@ export class WebUIServer {
         timestamp: new Date().toISOString()
       });
     });
-    
+
     debug('Routes setup completed');
   }
 
@@ -168,7 +197,7 @@ export class WebUIServer {
     // Global error handler
     this.app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
       debug('Global error handler:', error);
-      
+
       // Don't log client errors
       if (error.status && error.status < 500) {
         res.status(error.status).json({
@@ -177,17 +206,17 @@ export class WebUIServer {
         });
         return;
       }
-      
+
       // Log server errors
       console.error('Server Error:', error);
-      
+
       res.status(500).json({
         error: 'Internal Server Error',
         message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
         timestamp: new Date().toISOString()
       });
     });
-    
+
     debug('Error handling setup completed');
   }
 
@@ -203,7 +232,7 @@ export class WebUIServer {
           console.log(`   Health Check:    http://localhost:${this.port}/health`);
           resolve();
         });
-        
+
         this.server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
             console.error(`❌ Port ${this.port} is already in use`);

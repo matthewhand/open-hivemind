@@ -12,7 +12,7 @@ const debug = Debug('app:playWelcomeMessage');
 const defaultDir = './data/';
 const defaultFileName = 'welcome.mp3';
 
-const audioDir = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string || defaultDir;
+const audioDir = discordConfig.get('DISCORD_AUDIO_FILE_PATH') || defaultDir;
 const outputPath = path.join(audioDir, defaultFileName);
 
 if (!fs.existsSync(audioDir)) {
@@ -48,19 +48,19 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         return;
     }
 
-    const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') as string || 'Welcome to the server!';
+    const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') || 'Welcome to the server!';
     const model = 'tts-1';
     let voice: AllowedVoice = 'fable';
 
     // Use OPENAI_VOICE if it exists and is valid
-    if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE') as string)) {
+    if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE'))) {
         voice = openaiConfig.get('OPENAI_VOICE') as AllowedVoice;
     }
 
     debug('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
-        apiKey: openaiConfig.get('OPENAI_API_KEY') as string || ''
+        apiKey: openaiConfig.get('OPENAI_API_KEY') || ''
     });
 
     if (fs.existsSync(outputPath)) {

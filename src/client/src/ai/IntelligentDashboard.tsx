@@ -25,27 +25,6 @@ import {
 } from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
-interface UserBehavior {
-  userId: string;
-  sessionId: string;
-  timestamp: Date;
-  action: 'view' | 'click' | 'hover' | 'scroll' | 'resize' | 'filter' | 'sort';
-  target: string;
-  metadata: {
-    widgetType?: string;
-    duration?: number;
-    position?: { x: number; y: number };
-    value?: string | number | boolean | Record<string, unknown>;
-    previousValue?: string | number | boolean | Record<string, unknown>;
-  };
-  context: {
-    page: string;
-    viewport: { width: number; height: number };
-    device: 'desktop' | 'tablet' | 'mobile';
-    timezone: string;
-  };
-}
-
 interface BehaviorPattern {
   id: string;
   name: string;
@@ -111,37 +90,6 @@ interface IntelligentDashboardState {
   lastUpdate: Date;
   userFeedback: Record<string, 'liked' | 'disliked'>;
 }
-
-// Mock user behaviors for demonstration (currently unused but available for future expansion)
-const mockUserBehaviors: UserBehavior[] = [
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000),
-    action: 'view',
-    target: 'performance-widget',
-    metadata: { widgetType: 'line-chart', duration: 120 },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 3 * 60 * 1000),
-    action: 'click',
-    target: 'bot-status-widget',
-    metadata: { widgetType: 'status-indicator', position: { x: 150, y: 200 } },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-  {
-    userId: 'user-001',
-    sessionId: 'session-123',
-    timestamp: new Date(Date.now() - 1 * 60 * 1000),
-    action: 'filter',
-    target: 'analytics-widget',
-    metadata: { widgetType: 'bar-chart', value: 'last-7-days', previousValue: 'last-24-hours' },
-    context: { page: 'dashboard', viewport: { width: 1920, height: 1080 }, device: 'desktop', timezone: 'UTC' },
-  },
-];
 
 const mockBehaviorPatterns: BehaviorPattern[] = [
   {

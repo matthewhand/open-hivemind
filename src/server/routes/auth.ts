@@ -365,12 +365,12 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
     });
   }
 
-  const permissions = authManager.getUserPermissions(authReq.user.role);
+  const permissions = authManager.getUserPermissions(authReq.user.roles || ['user']);
 
   res.json({
     success: true,
     data: {
-      role: authReq.user.role,
+      roles: authReq.user.roles,
       permissions,
       user: authReq.user
     }

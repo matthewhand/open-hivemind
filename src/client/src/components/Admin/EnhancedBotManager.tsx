@@ -1,58 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Switch,
-  FormControlLabel,
   Alert,
-  CircularProgress,
-  Fab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Autocomplete,
-  Paper,
+  Box,
+  Button,
+  Collapse,
+  LinearProgress,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
   TablePagination,
-  IconButton,
+  TableRow,
+  TextField,
   Tooltip,
-  Toolbar,
-  alpha,
-  Collapse,
-  LinearProgress,
-  Snackbar
+  Typography
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  PlayArrow as StartIcon,
-  Stop as StopIcon,
-  Refresh as RefreshIcon,
-  Settings as SettingsIcon,
-  CheckCircle as CheckIcon,
   Cancel as CancelIcon,
-  Warning as WarningIcon,
-  ExpandMore as ExpandMoreIcon,
+  CheckCircle as CheckIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
   ExpandLess as ExpandLessIcon,
-  Visibility as ViewIcon,
-  FileCopy as CopyIcon
+  ExpandMore as ExpandMoreIcon,
+  FileCopy as CopyIcon,
+  Refresh as RefreshIcon,
+  ViewIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { green, red, orange, grey } from '@mui/material/colors';
 import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
@@ -70,8 +47,6 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   // Table state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [orderBy, setOrderBy] = useState<keyof Bot>('name');
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [filterText, setFilterText] = useState('');
   const [expandedBots, setExpandedBots] = useState<Set<string>>(new Set());
   

@@ -1,35 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
   Chip,
+  CircularProgress,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Pagination,
+  Select,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Alert,
-  CircularProgress,
   Tabs,
-  Tab,
-  DatePicker,
-  LocalizationProvider,
-  Pagination,
-  Box as MuiBox,
   Tooltip,
-  IconButton
+  Typography
 } from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import {
   LineChart,
@@ -187,20 +183,26 @@ const ActivityMonitor: React.FC = () => {
 
       switch (currentTab) {
         case 0: // Messages
-          setActivities(data.messages || []);
-          setPagination({
-            page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
-            totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
-            totalItems: data.total || 0
-          });
+          {
+            setActivities(data.messages || []);
+            setPagination({
+              page: Math.floor((filter.offset || 0) / (filter.limit || 100)) + 1,
+              totalPages: Math.ceil((data.total || 0) / (filter.limit || 100)),
+              totalItems: data.total || 0
+            });
+          }
           break;
         case 1: // Charts
-          const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
-          const chartData = await chartResponse.json();
-          setChartData(chartData.messageActivity || []);
+          {
+            const chartResponse = await fetch(`/api/admin/activity/chart-data?${queryParams}&interval=${chartInterval}`);
+            const chartData = await chartResponse.json();
+            setChartData(chartData.messageActivity || []);
+          }
           break;
         case 2: // Summary
-          setSummary(data.summary);
+          {
+            setSummary(data.summary);
+          }
           break;
       }
     } catch (err) {

@@ -52,7 +52,7 @@ export class VoiceCommandHandler {
 
   private async speakResponse(text: string): Promise<void> {
     const openai = new OpenAI({
-      apiKey: openaiConfig.get('OPENAI_API_KEY') as string
+      apiKey: openaiConfig.get('OPENAI_API_KEY')
     });
 
     const tempPath = path.join('./temp', `response_${Date.now()}.mp3`);

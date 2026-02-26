@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import Debug from 'debug';
-import { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
+import { User, UserRole, AuthToken, LoginCredentials, RegisterData, JWTPayload } from './types';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+
 
 const debug = Debug('app:AuthManager');
 
@@ -16,7 +17,7 @@ export class AuthManager {
   private readonly bcryptRounds = 12;
 
   // RBAC Permissions
-  private readonly rolePermissions: Record<UserRole, string[]> = {
+  private readonly rolePermissions: Record<string, string[]> = {
     admin: [
       'config:read', 'config:write', 'config:delete',
       'bots:read', 'bots:write', 'bots:delete', 'bots:manage',
@@ -48,6 +49,7 @@ export class AuthManager {
   }
 
   public static getInstance(): AuthManager {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!AuthManager.instance) {
       AuthManager.instance = new AuthManager();
     }
@@ -59,17 +61,17 @@ export class AuthManager {
    */
   private generateSecureSecret(prefix: string): string {
     const secret = crypto.randomBytes(64).toString('hex');
-    
+
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
       const secureConfig = SecureConfigManager.getInstance();
       secureConfig.storeConfig({
         id: `${prefix}_secret`,
         name: `${prefix} Secret`,
-        type: 'auth',
+        type: 'system',
         data: { secret },
         createdAt: new Date().toISOString()
-      } as any).catch(err => {
+      }).catch(err => {
         debug(`Failed to store ${prefix} secret securely:`, err);
       });
     }
@@ -86,7 +88,8 @@ export class AuthManager {
       id: 'admin',
       username: 'admin',
       email: 'admin@localhost',
-      role: 'admin',
+      roles: ['admin'],
+      tenantId: 'default',
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
@@ -136,13 +139,13 @@ export class AuthManager {
     if (!data.password || data.password.length < 6) {
       throw new Error('Password must be at least 6 characters long');
     }
-    
+
     // Check if user already exists by username
     const existingUserByUsername = Array.from(this.users.values()).find(u => u.username === data.username);
     if (existingUserByUsername) {
       throw new Error('User already exists');
     }
-    
+
     // Check if user already exists by email
     const existingUserByEmail = Array.from(this.users.values()).find(u => u.email === data.email);
     if (existingUserByEmail) {
@@ -153,7 +156,8 @@ export class AuthManager {
       id: crypto.randomUUID(),
       username: data.username,
       email: data.email,
-      role: data.role || 'user',
+      roles: [data.role || 'user'],
+      tenantId: 'default', // Default tenant for new users
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
@@ -213,7 +217,7 @@ export class AuthManager {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as any;
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as JWTPayload;
       const user = this.users.get(payload.userId);
 
       if (!user || !user.isActive) {
@@ -256,9 +260,10 @@ export class AuthManager {
       {
         userId: user.id,
         username: user.username,
-        role: user.role,
-        permissions: this.getUserPermissions(user.role)
-      },
+        roles: user.roles,
+        tenantId: user.tenantId,
+        permissions: this.getUserPermissions(user.roles)
+      } as JWTPayload,
       this.jwtSecret,
       { expiresIn: '1h' }
     );
@@ -278,9 +283,9 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): any {
+  public verifyAccessToken(token: string): JWTPayload {
     try {
-      return jwt.verify(token, this.jwtSecret);
+      return jwt.verify(token, this.jwtSecret) as JWTPayload;
     } catch {
       throw new Error('Invalid access token');
     }
@@ -289,15 +294,20 @@ export class AuthManager {
   /**
    * Get user permissions based on role
    */
-  public getUserPermissions(role: UserRole): string[] {
-    return this.rolePermissions[role] || [];
+  public getUserPermissions(roles: string[]): string[] {
+    const permissions = new Set<string>();
+    roles.forEach(role => {
+      const rolePerms = this.rolePermissions[role] || [];
+      rolePerms.forEach(perm => permissions.add(perm));
+    });
+    return Array.from(permissions);
   }
 
   /**
    * Check if user has permission
    */
-  public hasPermission(userRole: UserRole, permission: string): boolean {
-    const permissions = this.getUserPermissions(userRole);
+  public hasPermission(roles: string[], permission: string): boolean {
+    const permissions = this.getUserPermissions(roles);
     return permissions.includes(permission);
   }
 

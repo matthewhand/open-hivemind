@@ -399,7 +399,7 @@ export class SlackService implements IMessengerService {
           
           let llmResponse: string;
           try {
-            const cfg = this.botConfigs.get(botName) as any;
+            const cfg = this.botConfigs.get(botName);
             const llm = cfg?.llm;
             if (llm && (llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
               const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');

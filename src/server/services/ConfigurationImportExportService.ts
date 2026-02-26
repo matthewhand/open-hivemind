@@ -255,7 +255,7 @@ export class ConfigurationImportExportService {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }
-        data = await this.decryptData(data, options.decryptionKey as string);
+        data = await this.decryptData(data, options.decryptionKey);
       }
 
       // Parse data based on format

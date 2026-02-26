@@ -1,42 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
+import {
+  Badge,
+  Box,
+  Card,
+  CardContent,
   Chip,
+  Divider,
   Grid,
-  Button,
-  TextField,
+  IconButton,
   InputAdornment,
   List,
   ListItem,
-  ListItemText,
   ListItemIcon,
-  ListItemButton,
-  Divider,
-  IconButton,
-  Badge,
-  Tooltip
+  ListItemText,
+  TextField,
+  Typography
 } from '@mui/material';
-import { 
+import {
+  Help as HelpIcon,
+  History as HistoryIcon,
   Mic as MicIcon,
   MicOff as MicOffIcon,
   Send as SendIcon,
   SmartToy as AIIcon,
-  History as HistoryIcon,
-  Star as StarIcon,
-  ThumbUp as LikeIcon,
   ThumbDown as DisIcon,
-  Translate as TranslateIcon,
-  VolumeUp as VolumeIcon,
-  Settings as SettingsIcon,
-  Help as HelpIcon,
-  Clear as ClearIcon,
+  ThumbUp as LikeIcon,
   TrendingUp as TrendIcon,
-  Dashboard as DashboardIcon
+  VolumeUp as VolumeIcon
 } from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
@@ -71,9 +63,9 @@ export interface NLEntity {
 export interface NLAction {
   type: 'show-widget' | 'hide-widget' | 'update-widget' | 'filter-data' | 'change-theme' | 'export-data';
   target: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   status: 'pending' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
 }
 
 export interface NLParameter {
@@ -128,7 +120,7 @@ export interface NLContext {
   currentPage: string;
   selectedWidgets: string[];
   timeRange: { start: Date; end: Date };
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   userRole: string;
   permissions: string[];
 }
@@ -337,22 +329,14 @@ interface NaturalLanguageInterfaceProps {
 
 export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> = ({ onCommandExecute }) => {
   const currentUser = useAppSelector(selectUser);
-  const [config, setConfig] = useState<NLConfig>(defaultConfig);
+  const config = defaultConfig;
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [commands, setCommands] = useState<NLCommand[]>(mockCommands);
-  const [context, setContext] = useState<NLContext>({
-    currentPage: 'dashboard',
-    selectedWidgets: [],
-    timeRange: { start: new Date(Date.now() - 24 * 60 * 60 * 1000), end: new Date() },
-    filters: {},
-    userRole: 'admin',
-    permissions: ['view-dashboard', 'manage-widgets'],
-  });
   const [showHelp, setShowHelp] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<unknown>(null);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -363,22 +347,24 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   }, []);
 
   const initializeSpeechRecognition = () => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SpeechRecognition = (window as unknown as typeof SpeechRecognition)?.webkitSpeechRecognition || (window as unknown as typeof SpeechRecognition)?.SpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = config.voiceRecognition.continuous;
       recognitionRef.current.interimResults = config.voiceRecognition.interimResults;
       recognitionRef.current.lang = config.voiceRecognition.language;
       
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+      recognitionRef.current.onresult = (event: unknown) => {
+        const e = event as SpeechRecognitionEvent;
+        const transcript = Array.from(e.results)
+          .map((result) => result[0].transcript)
           .join('');
         setInputText(transcript);
       };
       
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+      recognitionRef.current.onerror = (event: unknown) => {
+        const e = event as SpeechRecognitionErrorEvent;
+        console.error('Speech recognition error:', e.error);
         setIsListening(false);
       };
       
@@ -597,12 +583,6 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
     }
   };
 
-  const toggleFeature = (feature: keyof NLConfig) => {
-    setConfig(prev => ({
-      ...prev,
-      [feature]: !prev[feature],
-    }));
-  };
 
   const speakResponse = (text: string) => {
     if (config.textToSpeech.enabled && 'speechSynthesis' in window) {

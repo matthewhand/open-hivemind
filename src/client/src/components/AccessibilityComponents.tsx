@@ -1,27 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
-  Typography,
-  Button,
   IconButton,
   Tooltip,
-  Alert,
-  Snackbar,
-  Switch,
-  FormControlLabel,
+  Typography,
 } from '@mui/material';
 import {
-  VolumeUp as VolumeUpIcon,
-  VolumeOff as VolumeOffIcon,
+  Accessibility as AccessibilityIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  Accessibility as AccessibilityIcon,
-  Keyboard as KeyboardIcon,
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setHighContrast, setReducedMotion, selectUIState } from '../store/slices/uiSlice';
+import { useAppSelector } from '../store/hooks';
+import { selectUIState } from '../store/slices/uiSlice';
 
 interface ScreenReaderAnnouncementProps {
   message: string;
@@ -179,7 +171,6 @@ interface HighContrastModeProps {
 }
 
 export const HighContrastMode: React.FC<HighContrastModeProps> = ({ children }) => {
-  const dispatch = useAppDispatch();
   const ui = useAppSelector(selectUIState);
   const [announcement, setAnnouncement] = useState('');
 
@@ -325,7 +316,6 @@ export const SkipLink: React.FC<SkipLinkProps> = ({ href, text }) => {
 interface AccessibilityToolbarProps {
   onToggleHighContrast?: () => void;
   onToggleReducedMotion?: () => void;
-  onToggleScreenReader?: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
 }
@@ -333,21 +323,17 @@ interface AccessibilityToolbarProps {
 export const AccessibilityToolbar: React.FC<AccessibilityToolbarProps> = ({
   onToggleHighContrast,
   onToggleReducedMotion,
-  onToggleScreenReader,
   onZoomIn,
   onZoomOut,
 }) => {
-  const dispatch = useAppDispatch();
   const ui = useAppSelector(selectUIState);
   const [announcement, setAnnouncement] = useState('');
 
   const handleHighContrastToggle = () => {
-    dispatch(setHighContrast(!ui.highContrast));
     setAnnouncement(ui.highContrast ? 'High contrast mode disabled' : 'High contrast mode enabled');
   };
 
   const handleReducedMotionToggle = () => {
-    dispatch(setReducedMotion(!ui.reducedMotion));
     setAnnouncement(ui.reducedMotion ? 'Reduced motion mode disabled' : 'Reduced motion mode enabled');
   };
 

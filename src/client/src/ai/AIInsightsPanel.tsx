@@ -1,34 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
   Chip,
+  Collapse,
+  IconButton,
   LinearProgress,
-  Alert,
-  Button,
-  Grid,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  Collapse,
-  IconButton,
+  Typography,
 } from '@mui/material';
 import {
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   AutoAwesome as AutoAwesomeIcon,
+  Error as ErrorIcon,
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
   Insights as InsightsIcon,
   Speed as SpeedIcon,
-  Memory as MemoryIcon,
-  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
@@ -67,8 +59,8 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   maxInsights = 10,
   showConfidence = true,
 }) => {
-  const { metrics, alerts } = useAppSelector(selectPerformance);
-  const { bots, analytics } = useAppSelector(selectDashboard);
+  const { metrics } = useAppSelector(selectPerformance);
+  const { bots } = useAppSelector(selectDashboard);
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
@@ -421,7 +413,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
                       </Typography>
                       <Chip
                         label={insight.severity}
-                        color={getSeverityColor(insight.severity) as any}
+                        color={getSeverityColor(insight.severity)}
                         size="small"
                       />
                       {showConfidence && (

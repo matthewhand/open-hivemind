@@ -219,7 +219,7 @@ export class DiscordMessage implements IMessage {
 
       // Plain array of users or IDs
       if (Array.isArray(users)) {
-        return (users as any[])
+        return (users)
           .map((u) => (typeof u === 'string' ? u : u?.id))
           .filter((id: any): id is string => typeof id === 'string');
       }
@@ -273,7 +273,7 @@ export class DiscordMessage implements IMessage {
 
       // Array of members
       if (Array.isArray(members)) {
-        return (members as any[])
+        return (members)
           .map((m) => (typeof m === 'string' ? m : m?.user?.id))
           .filter((id: any): id is string => typeof id === 'string');
       }

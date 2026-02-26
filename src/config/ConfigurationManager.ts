@@ -58,7 +58,7 @@ export class ConfigurationManager {
             ConfigurationManager.instance = new ConfigurationManager();
             debug('ConfigurationManager instance created');
         }
-        return ConfigurationManager.instance!; // Non-null assertion here
+        return ConfigurationManager.instance; // Non-null assertion here
     }
 
     /**

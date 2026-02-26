@@ -41,7 +41,7 @@ export const webhookService = {
         // Swallow route registration errors when no message service is provided
       }
     } else {
-      configureWebhookRoutes(app, messageService as IMessengerService);
+      configureWebhookRoutes(app, messageService);
     }
 
     log('Webhook service initialized. Ready to accept webhook requests.');

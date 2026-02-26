@@ -59,8 +59,8 @@ export function getMessengerProvider() {
   };
 
   // In tests we exclusively support the { providers: [{ type: string }] } shape
-  const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig as any).providers)
-    ? (messengersConfig as any).providers
+  const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig).providers)
+    ? (messengersConfig).providers
     : [];
 
   const hasType = (type: string) =>
@@ -79,12 +79,12 @@ export function getMessengerProvider() {
           : undefined;
       if (svc) {
         // Ensure provider identity is exposed for tests
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'discord';
+        if (typeof (svc).provider === 'undefined') {
+          (svc).provider = 'discord';
         }
         messengerServices.push(svc);
         gmpDebug(`Initialized Discord provider`);
-        gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc).provider}`);
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Discord provider: ${e?.message || String(e)}`);
@@ -107,12 +107,12 @@ export function getMessengerProvider() {
       }
       if (svc) {
         // Ensure provider identity is exposed for tests
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'slack';
+        if (typeof (svc).provider === 'undefined') {
+          (svc).provider = 'slack';
         }
         messengerServices.push(svc);
         gmpDebug(`Initialized Slack provider`);
-        gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc).provider}`);
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Slack provider: ${e?.message || String(e)}`);
@@ -162,8 +162,8 @@ export function getMessengerProvider() {
           svc = SlackMgr.getInstance();
         }
         if (svc) {
-          if (typeof (svc as any).provider === 'undefined') {
-            (svc as any).provider = 'slack';
+          if (typeof (svc).provider === 'undefined') {
+            (svc).provider = 'slack';
           }
           messengerServices.push(svc);
         }

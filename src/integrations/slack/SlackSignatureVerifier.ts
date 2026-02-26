@@ -48,7 +48,7 @@ export class SlackSignatureVerifier {
     // Prefer a preserved raw body string if provided by upstream middleware
     const bodyStr = (req as any).rawBody && typeof (req as any).rawBody === 'string'
       ? (req as any).rawBody
-      : (typeof req.body === 'string' ? (req.body as string) : JSON.stringify(req.body));
+      : (typeof req.body === 'string' ? (req.body) : JSON.stringify(req.body));
 
     const baseString = `v0:${timestamp}:${bodyStr}`;
     const mySigHex = crypto.createHmac('sha256', this.signingSecret).update(baseString).digest('hex');

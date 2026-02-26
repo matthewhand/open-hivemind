@@ -42,11 +42,11 @@ export const requirePermission = (permission: string) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    if (!authManager.hasPermission(user.role, permission)) {
+    if (!authManager.hasPermission(user.roles, permission)) {
       return res.status(403).json({
         error: 'Insufficient permissions',
         required: permission,
-        userRole: user.role
+        userRoles: user.roles
       });
     }
 
@@ -60,11 +60,11 @@ export const requireRole = (role: string) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (req.user.role !== role) {
+    if (!req.user.roles?.includes(role)) {
       return res.status(403).json({
         error: 'Insufficient role',
         required: role,
-        userRole: req.user.role
+        userRoles: req.user.roles
       });
     }
 

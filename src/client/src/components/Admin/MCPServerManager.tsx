@@ -50,7 +50,6 @@ import {
   Refresh as RefreshIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
-import { green, red, orange } from '@mui/material/colors';
 
 interface MCPServer {
   name: string;

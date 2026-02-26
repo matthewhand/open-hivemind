@@ -383,7 +383,7 @@ export const Discord = {
         const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
         if (enabled) {
           const defaultChannel = this.getDefaultChannel();
-          const candidates = Array.from(new Set([channelId, defaultChannel].filter(Boolean))) as string[];
+          const candidates = Array.from(new Set([channelId, defaultChannel].filter(Boolean)));
           if (candidates.length > 0) {
             const picked = pickBestChannel(candidates, {
               provider: 'discord',

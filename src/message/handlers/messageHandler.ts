@@ -116,7 +116,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // LLM processing
     const startTime = Date.now();
-    const metadata = { ...message.metadata, channelId: message.getChannelId(), botId: botId } as any;
+    const metadata = { ...message.metadata, channelId: message.getChannelId(), botId: botId };
     const payload = {
       text: processedMessage,
       history: historyMessages.map((m) => ({ role: m.role, content: m.getText() })),

@@ -1,0 +1,64 @@
+{
+  "toolSettings": {},
+  "bots": [],
+  "botDisabledStates": {
+    "seneca": {
+      "disabled": false
+    },
+    "sartre": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T02:50:41.950Z"
+    },
+    "nietzsche": {
+      "disabled": false
+    },
+    "joyce": {
+      "disabled": false
+    },
+    "cioran": {
+      "disabled": false
+    },
+    "galileo": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:27.750Z"
+    },
+    "lacan": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:29.079Z"
+    },
+    "schopenhauer": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:30.265Z"
+    },
+    "baudrillard": {
+      "disabled": false
+    },
+    "foucault": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:36.627Z"
+    },
+    "aristotle": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:39.134Z"
+    },
+    "slack-bot-1": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:40.318Z"
+    },
+    "discord-bot-2": {
+      "disabled": true,
+      "disabledAt": "2025-12-27T01:09:41.085Z"
+    }
+  },
+  "generalSettings": {
+    "app.name": "JS Test Instance",
+    "app.description": "Multi-agent AI coordination platform",
+    "logging.level": "info",
+    "logging.enabled": true,
+    "app.logLevel": "debug",
+    "auth.enabled": true,
+    "rateLimit.enabled": true,
+    "rateLimit.maxRequests": 100,
+    "rateLimit.windowMs": 60000
+  }
+}

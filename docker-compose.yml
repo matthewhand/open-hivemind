@@ -7,6 +7,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - NODE_OPTIONS="--max-old-space-size=256"
     env_file:
       - .env
     restart: unless-stopped
@@ -29,7 +30,8 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     depends_on:
-      - hivemind
+      hivemind:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana:latest

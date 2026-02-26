@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import { MetricsCollector } from '../monitoring/MetricsCollector';
 
 import type { Response } from 'node-fetch';
 
@@ -198,6 +199,7 @@ export class ApiMonitorService extends EventEmitter {
   private async checkEndpoint(id: string): Promise<void> {
     const config = this.endpoints.get(id);
     const status = this.statuses.get(id);
+    const metricsCollector = MetricsCollector.getInstance();
 
     if (!config || !status) {
       return;
@@ -214,6 +216,8 @@ export class ApiMonitorService extends EventEmitter {
       status.statusCode = response.status;
       status.totalChecks++;
 
+      metricsCollector.recordResponseTime(responseTime);
+
       if (this.isSuccessfulResponse(config, response)) {
         status.status = this.getStatusFromResponseTime(responseTime);
         status.consecutiveFailures = 0;
@@ -225,6 +229,8 @@ export class ApiMonitorService extends EventEmitter {
         status.averageResponseTime =
           (status.averageResponseTime * (status.successfulChecks - 1) + responseTime) /
           status.successfulChecks;
+
+        metricsCollector.incrementMessages(); // Count successful API checks
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -236,6 +242,9 @@ export class ApiMonitorService extends EventEmitter {
       status.consecutiveFailures++;
       status.totalChecks++;
       status.errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      metricsCollector.recordResponseTime(responseTime);
+      metricsCollector.incrementErrors();
 
       debug(`Endpoint check failed: ${config.name} - ${status.errorMessage}`);
     }

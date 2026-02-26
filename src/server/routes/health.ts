@@ -1,10 +1,13 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import AdvancedMonitor from '../../monitoring/AdvancedMonitor';
+import { MetricsCollector } from '../../monitoring/MetricsCollector';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import Debug from 'debug';
 
 const debug = Debug('app:healthRoutes');
 const router = Router();
 const monitor = AdvancedMonitor.getInstance();
+const metricsCollector = MetricsCollector.getInstance();
 
 // Start monitoring when the module is loaded
 monitor.startMonitoring();
@@ -116,6 +119,63 @@ router.get('/health/alerts', (req, res) => {
   }
 });
 
+// Anomalies endpoint
+router.get('/health/anomalies', async (req: Request, res: Response) => {
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    const activeOnly = req.query.active !== 'false';
+    let anomalies;
+
+    if (activeOnly) {
+      anomalies = await dbManager.getActiveAnomalies();
+    } else {
+      anomalies = await dbManager.getAnomalies();
+    }
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      anomalies,
+      total: anomalies.length,
+      active: anomalies.filter((a: any) => !a.resolved).length
+    });
+  } catch (error) {
+    debug('Anomalies endpoint error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve anomalies',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Resolve anomaly endpoint
+router.post('/health/anomalies/:id/resolve', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const dbManager = DatabaseManager.getInstance();
+    const resolved = await dbManager.resolveAnomaly(id);
+
+    if (resolved) {
+      res.json({
+        success: true,
+        message: `Anomaly ${id} resolved`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: `Anomaly ${id} not found or already resolved`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    debug('Resolve anomaly endpoint error:', error);
+    res.status(500).json({
+      error: 'Failed to resolve anomaly',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Resolve alert endpoint
 router.post('/health/alerts/:alertId/resolve', (req, res) => {
   try {
@@ -198,41 +258,28 @@ router.get('/health/live', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/health/metrics/prometheus', (req, res) => {
+router.get('/health/metrics/prometheus', async (req, res) => {
   try {
+    const prometheusMetrics = await metricsCollector.getPrometheusFormat();
+
+    // Add custom health metrics if not covered by prom-client defaults
     const metrics = monitor.getMetricsSummary();
-    const systemMetrics = monitor.getSystemMetrics(1)[0];
+    let additionalMetrics = '';
 
-    let prometheusOutput = '# HELP openhivemind_uptime_seconds Service uptime in seconds\n';
-    prometheusOutput += '# TYPE openhivemind_uptime_seconds gauge\n';
-    prometheusOutput += `openhivemind_uptime_seconds ${process.uptime()}\n\n`;
+    additionalMetrics += `# HELP openhivemind_active_alerts Number of active alerts\n`;
+    additionalMetrics += `# TYPE openhivemind_active_alerts gauge\n`;
+    additionalMetrics += `openhivemind_active_alerts ${metrics.health.alerts.filter((a: any) => !a.resolved).length}\n\n`;
 
-    prometheusOutput += '# HELP openhivemind_memory_usage_bytes Memory usage in bytes\n';
-    prometheusOutput += '# TYPE openhivemind_memory_usage_bytes gauge\n';
-    prometheusOutput += `openhivemind_memory_usage_bytes ${process.memoryUsage().heapUsed}\n\n`;
-
-    if (systemMetrics) {
-      prometheusOutput += '# HELP openhivemind_cpu_usage_percent CPU usage percentage\n';
-      prometheusOutput += '# TYPE openhivemind_cpu_usage_percent gauge\n';
-      prometheusOutput += `openhivemind_cpu_usage_percent ${systemMetrics.cpu.usage}\n\n`;
-
-      prometheusOutput += '# HELP openhivemind_memory_usage_percent Memory usage percentage\n';
-      prometheusOutput += '# TYPE openhivemind_memory_usage_percent gauge\n';
-      prometheusOutput += `openhivemind_memory_usage_percent ${systemMetrics.memory.usagePercent}\n\n`;
-    }
-
-    prometheusOutput += '# HELP openhivemind_active_alerts Number of active alerts\n';
-    prometheusOutput += '# TYPE openhivemind_active_alerts gauge\n';
-    prometheusOutput += `openhivemind_active_alerts ${metrics.health.alerts.filter((a: any) => !a.resolved).length}\n\n`;
-
-    prometheusOutput += '# HELP openhivemind_health_status Health status (0=healthy, 1=degraded, 2=unhealthy)\n';
-    prometheusOutput += '# TYPE openhivemind_health_status gauge\n';
+    additionalMetrics += `# HELP openhivemind_health_status Health status (0=healthy, 1=degraded, 2=unhealthy)\n`;
+    additionalMetrics += `# TYPE openhivemind_health_status gauge\n`;
     const healthValue = metrics.health.overall === 'healthy' ? 0 :
                        metrics.health.overall === 'degraded' ? 1 : 2;
-    prometheusOutput += `openhivemind_health_status ${healthValue}\n`;
+    additionalMetrics += `openhivemind_health_status ${healthValue}\n\n`;
+
+    const fullMetrics = prometheusMetrics + additionalMetrics;
 
     res.set('Content-Type', 'text/plain; charset=utf-8');
-    res.send(prometheusOutput);
+    res.send(fullMetrics);
   } catch (error) {
     debug('Prometheus metrics endpoint error:', error);
     res.status(500).send('# Error generating Prometheus metrics\n');

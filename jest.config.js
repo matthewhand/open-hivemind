@@ -28,6 +28,7 @@ const unitIntegrationProject = {
     'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/tests/__mocks__/discord.js.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
+  globalSetup: '<rootDir>/tests/jest.teardown.ts',
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
@@ -69,6 +70,11 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['html', 'text', 'lcov'],
+  forceExit: true, // Force Jest to exit after tests complete
+  detectOpenHandles: true, // Detect open handles that prevent Jest from exiting
+  maxWorkers: 1, // Run tests sequentially to avoid race conditions
+  testTimeout: 30000, // Increase timeout for all tests
+  verbose: true, // Show more detailed test output
   
   projects,
 };

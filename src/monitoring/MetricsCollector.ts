@@ -1,3 +1,5 @@
+import { Counter, Histogram, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
+
 export interface Metrics {
   messagesProcessed: number;
   activeConnections: number;
@@ -9,14 +11,61 @@ export interface Metrics {
 
 export class MetricsCollector {
   private static instance: MetricsCollector;
-  private metrics: Metrics = {
-    messagesProcessed: 0,
-    activeConnections: 0,
-    responseTime: [],
-    errors: 0,
-    uptime: Date.now(),
-    llmTokenUsage: 0,
-  };
+  private registry: Registry;
+  private messagesProcessed: Counter<string>;
+  private activeConnections: Gauge<string>;
+  private responseTime: Histogram<string>;
+  private errors: Counter<string>;
+  private uptime: Gauge<string>;
+  private llmTokenUsage: Counter<string>;
+
+  private constructor() {
+    this.registry = new Registry();
+    collectDefaultMetrics({ register: this.registry });
+
+    this.messagesProcessed = new Counter({
+      name: 'hivemind_messages_total',
+      help: 'Total messages processed',
+      registers: [this.registry],
+    });
+
+    this.activeConnections = new Gauge({
+      name: 'hivemind_active_connections',
+      help: 'Current active connections',
+      registers: [this.registry],
+    });
+
+    this.responseTime = new Histogram({
+      name: 'hivemind_response_time_ms',
+      help: 'Response time in milliseconds',
+      registers: [this.registry],
+    });
+
+    this.errors = new Counter({
+      name: 'hivemind_errors_total',
+      help: 'Total errors encountered',
+      registers: [this.registry],
+    });
+
+    this.uptime = new Gauge({
+      name: 'hivemind_uptime_seconds',
+      help: 'Uptime in seconds',
+      registers: [this.registry],
+    });
+
+    this.llmTokenUsage = new Counter({
+      name: 'hivemind_llm_token_usage_total',
+      help: 'Total LLM token usage',
+      registers: [this.registry],
+    });
+
+    this.startTime = Date.now();
+    this.uptime.set(0); // Will be updated on query
+    this.responseTimes = [];
+  }
+
+  private startTime: number;
+  private responseTimes: number[] = [];
 
   static getInstance(): MetricsCollector {
     if (!MetricsCollector.instance) {
@@ -26,64 +75,53 @@ export class MetricsCollector {
   }
 
   incrementMessages(): void {
-    this.metrics.messagesProcessed++;
+    this.messagesProcessed.inc();
   }
 
   recordResponseTime(time: number): void {
-    this.metrics.responseTime.push(time);
-    if (this.metrics.responseTime.length > 100) {
-      this.metrics.responseTime.shift();
+    this.responseTime.observe(time);
+    this.responseTimes.push(time);
+    if (this.responseTimes.length > 100) {
+      this.responseTimes.shift();
     }
   }
 
   incrementErrors(): void {
-    this.metrics.errors++;
+    this.errors.inc();
   }
 
   setActiveConnections(count: number): void {
-    this.metrics.activeConnections = count;
+    this.activeConnections.set(count);
   }
 
   recordLlmTokenUsage(tokens: number): void {
-    this.metrics.llmTokenUsage += tokens;
+    this.llmTokenUsage.inc(tokens);
   }
 
-  getMetrics(): Metrics {
+  async getMetrics(): Promise<Metrics> {
+    const currentUptime = Math.floor((Date.now() - this.startTime) / 1000);
+    this.uptime.set(currentUptime);
+
+    const messagesProcessedMetric = await this.messagesProcessed.get();
+    const activeConnectionsMetric = await this.activeConnections.get();
+    const errorsMetric = await this.errors.get();
+    const llmTokenUsageMetric = await this.llmTokenUsage.get();
+
     return {
-      ...this.metrics,
-      uptime: Date.now() - this.metrics.uptime,
+      messagesProcessed: (messagesProcessedMetric.values[0]?.value) || 0,
+      activeConnections: (activeConnectionsMetric.values[0]?.value) || 0,
+      responseTime: [...this.responseTimes],
+      errors: (errorsMetric.values[0]?.value) || 0,
+      uptime: currentUptime,
+      llmTokenUsage: (llmTokenUsageMetric.values[0]?.value) || 0,
     };
   }
 
-  getPrometheusFormat(): string {
-    const m = this.getMetrics();
-    const avgResponseTime =
-      m.responseTime.length > 0
-        ? m.responseTime.reduce((a, b) => a + b, 0) / m.responseTime.length
-        : 0;
+  async getPrometheusFormat(): Promise<string> {
+    return await this.registry.metrics();
+  }
 
-    return `# HELP hivemind_messages_total Total messages processed
-# TYPE hivemind_messages_total counter
-hivemind_messages_total ${m.messagesProcessed}
-
-# HELP hivemind_active_connections Current active connections
-# TYPE hivemind_active_connections gauge
-hivemind_active_connections ${m.activeConnections}
-
-# HELP hivemind_response_time_ms Average response time in milliseconds
-# TYPE hivemind_response_time_ms gauge
-hivemind_response_time_ms ${avgResponseTime}
-
-# HELP hivemind_errors_total Total errors encountered
-# TYPE hivemind_errors_total counter
-hivemind_errors_total ${m.errors}
-
-# HELP hivemind_uptime_seconds Uptime in seconds
-# TYPE hivemind_uptime_seconds gauge
-hivemind_uptime_seconds ${Math.floor(m.uptime / 1000)}
-
-# HELP hivemind_llm_token_usage_total Total LLM token usage
-# TYPE hivemind_llm_token_usage_total counter
-hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
+  getRegistry(): Registry {
+    return this.registry;
   }
 }

@@ -184,7 +184,6 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   children,
   containerVariants = staggerContainerVariants,
   itemVariants = staggerItemVariants,
-  config = defaultTransition,
   ...props
 }) => {
   return (

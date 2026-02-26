@@ -449,7 +449,7 @@ if (_origGet) {
   (messageConfig as any).get = (key: string) => {
     if (key === 'CHANNEL_BONUSES' || key === 'CHANNEL_PRIORITIES') {
       const props = _getProps ? _getProps() : undefined;
-      const val = props ? (props as any)[key] : _origGet(key);
+      const val = props ? (props)[key] : _origGet(key);
       return val ?? {};
     }
     return _origGet(key);

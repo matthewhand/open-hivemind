@@ -13,14 +13,14 @@ const router = Router();
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@integrations/slack/SlackService').default as any;
+      const svc = require('@integrations/slack/SlackService').default;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@integrations/discord/DiscordService') as any;
+      const svc = require('@integrations/discord/DiscordService');
       const instance = svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;

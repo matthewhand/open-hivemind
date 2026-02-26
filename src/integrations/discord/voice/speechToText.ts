@@ -7,7 +7,7 @@ const debug = Debug('app:discord:stt');
 
 export async function transcribeAudio(audioPath: string): Promise<string> {
   const openai = new OpenAI({
-    apiKey: openaiConfig.get('OPENAI_API_KEY') as string
+    apiKey: openaiConfig.get('OPENAI_API_KEY')
   });
 
   try {

@@ -1,52 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  Grid,
+import {
+  Alert,
+  Box,
   Button,
-  LinearProgress,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Grid,
+  Paper,
+  Slider,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Slider,
-  FormControlLabel,
-  Switch,
-  CircularProgress
+  Typography
 } from '@mui/material';
-import { 
-  Warning as WarningIcon,
-  TrendingUp as TrendIcon,
-  Speed as SpeedIcon,
+import {
   Assessment as AssessmentIcon,
-  Settings as SettingsIcon,
-  FilterList as FilterIcon,
-  Notifications as NotificationIcon,
   CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
   Refresh as RefreshIcon,
+  Settings as SettingsIcon,
   Visibility as ViewIcon,
-  Block as BlockIcon,
-  Timeline as TimelineIcon
+  Warning as WarningIcon
 } from '@mui/icons-material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import io, { Socket } from 'socket.io-client';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
 export interface AnomalyConfig {
@@ -407,7 +395,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
   });
   
   const [state, setState] = useState<AnomalyState>({
-    events: generateMockAnomalies(),
+    events: [],
     algorithms: mockAlgorithms,
     activeAlgorithms: mockAlgorithms.filter(a => a.isActive).map(a => a.id),
     metrics: {
@@ -428,14 +416,74 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
   });
   
   const [selectedEvent, setSelectedEvent] = useState<AnomalyEvent | null>(null);
-  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  // Initialize metrics
+  // WebSocket connection
   useEffect(() => {
-    updateMetrics();
-  }, [state.events]);
+    const socketIo = io(process.env.REACT_APP_API_URL || 'http://localhost:3000', {
+      path: '/webui/socket.io',
+      transports: ['websocket', 'polling'],
+      autoConnect: true,
+    });
+
+    socketIo.on('connect', () => {
+      console.log('Connected to WebSocket for anomaly detection');
+    });
+
+    socketIo.on('alert_update', (alert) => {
+      // Add anomaly alert to state
+      setState(prev => ({
+        ...prev,
+        alerts: [...prev.alerts, alert],
+      }));
+
+      if (onAnomalyDetected) {
+        onAnomalyDetected(alert as any);
+      }
+    });
+
+    socketIo.on('anomalyDetected', (anomaly) => {
+      setState(prev => ({
+        ...prev,
+        events: [...prev.events, anomaly],
+      }));
+
+      updateMetrics();
+    });
+
+    setSocket(socketIo);
+
+    return () => {
+      socketIo.disconnect();
+    };
+  }, [onAnomalyDetected]);
+
+  // Fetch initial anomalies
+  useEffect(() => {
+    const fetchAnomalies = async () => {
+      try {
+        const response = await fetch('/api/health/anomalies');
+        if (response.ok) {
+          const data = await response.json();
+          setState(prev => ({
+            ...prev,
+            events: data.anomalies || [],
+          }));
+          updateMetrics();
+        }
+      } catch (error) {
+        console.error('Failed to fetch anomalies:', error);
+      }
+    };
+
+    fetchAnomalies();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAnomalies, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const updateMetrics = () => {
     const metrics: AnomalyMetrics = {
@@ -454,7 +502,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
       }, {} as Record<string, number>),
       falsePositiveRate: 0.05,
       detectionRate: 0.85,
-      averageConfidence: state.events.reduce((sum, e) => sum + e.confidence, 0) / state.events.length,
+      averageConfidence: state.events.reduce((sum, e) => sum + e.confidence, 0) / state.events.length || 0,
       responseTime: 150,
     };
     
@@ -465,25 +513,23 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     setIsLoading(true);
     setState(prev => ({ ...prev, isDetecting: true }));
     
-    // Simulate detection process
-    setTimeout(() => {
-      const newEvents = generateMockAnomalies();
-      setState(prev => ({
-        ...prev,
-        events: [...prev.events, ...newEvents].slice(-100), // Keep last 100 events
-        isDetecting: false,
-        lastDetection: new Date(),
-      }));
-      
-      // Trigger callback for new anomalies
-      newEvents.forEach(event => {
-        if (onAnomalyDetected) {
-          onAnomalyDetected(event);
-        }
-      });
-      
+    try {
+      const response = await fetch('/api/health/anomalies');
+      if (response.ok) {
+        const data = await response.json();
+        setState(prev => ({
+          ...prev,
+          events: data.anomalies || [],
+          isDetecting: false,
+          lastDetection: new Date(),
+        }));
+        updateMetrics();
+      }
+    } catch (error) {
+      console.error('Failed to run anomaly detection:', error);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const acknowledgeAnomaly = (eventId: string) => {

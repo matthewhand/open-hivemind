@@ -1,12 +1,14 @@
 import { Request } from 'express';
 
-export type UserRole = 'admin' | 'user' | 'viewer';
+export type UserRole = string;
 
 export interface User {
   id: string;
   username: string;
   email: string;
-  role: UserRole;
+  roles: UserRole[];
+  permissions?: string[];
+  tenantId: string;
   isActive: boolean;
   createdAt: string;
   lastLogin: string | null;
@@ -35,7 +37,8 @@ export interface RegisterData {
 export interface JWTPayload {
   userId: string;
   username: string;
-  role: UserRole;
+  roles: UserRole[];
+  tenantId: string;
   permissions: string[];
   iat?: number;
   exp?: number;
@@ -44,6 +47,8 @@ export interface JWTPayload {
 export interface AuthMiddlewareRequest extends Request {
   user?: User;
   permissions?: string[];
+  tenantId?: string;
+  roles?: UserRole[];
 }
 
 export interface PermissionCheck {

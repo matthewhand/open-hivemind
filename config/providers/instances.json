@@ -1,0 +1,16 @@
+{
+  "message": [],
+  "llm": [
+    {
+      "id": "openai-default",
+      "type": "openai",
+      "category": "llm",
+      "name": "Default OpenAI",
+      "enabled": true,
+      "config": {
+        "apiKey": "sk-DEADBEEFCAFE",
+        "model": "gpt-4"
+      }
+    }
+  ]
+}

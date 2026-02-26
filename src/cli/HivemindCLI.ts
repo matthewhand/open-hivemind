@@ -5,11 +5,8 @@ import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-
-const debug = Debug('app:HivemindCLI');
 
 export class HivemindCLI {
   private program: Command;
@@ -270,15 +267,6 @@ export class HivemindCLI {
       console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
       return;
     }
-
-    const botConfig = {
-      name: options.name,
-      messageProvider: options.provider,
-      llmProvider: options.llm,
-      token: options.token,
-      enabled: true,
-      createdAt: new Date().toISOString()
-    };
 
     // Here you would save to configuration
     console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));

@@ -23,7 +23,7 @@ export async function setupVoiceChannel(client: Client, channelId: string): Prom
     }
 
     const guildChannel = channel as GuildChannel;
-    const voiceChannel = channel as VoiceChannel;
+    const voiceChannel = channel;
 
     if (!('guild' in guildChannel)) {
       debug('Voice channel does not belong to a guild');

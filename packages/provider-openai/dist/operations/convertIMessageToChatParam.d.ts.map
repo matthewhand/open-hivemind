@@ -1,0 +1,1 @@
+{"version":3,"file":"convertIMessageToChatParam.d.ts","sourceRoot":"","sources":["../../src/operations/convertIMessageToChatParam.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,kCAAkC,CAAC;AAEjE;;;;GAIG;AACH,wBAAgB,0BAA0B,CAAC,OAAO,EAAE,QAAQ,GAAG;IAAE,IAAI,EAAE,MAAM,CAAC;IAAC,OAAO,EAAE,MAAM,CAAC;IAAC,IAAI,CAAC,EAAE,MAAM,CAAA;CAAE,CAM9G"}
