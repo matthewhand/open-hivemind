@@ -6,31 +6,34 @@
 [dev]
   command = "npm run dev"
 
+# API requests go to the serverless function
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
   status = 200
 
+# Specific SPA routes handled by index.html (200 rewrite)
 [[redirects]]
   from = "/webui/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
 [[redirects]]
   from = "/health/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
 [[redirects]]
   from = "/dashboard/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
 [[redirects]]
   from = "/admin/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
+# Catch-all for SPA (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
