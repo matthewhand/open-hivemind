@@ -126,6 +126,7 @@ General system configuration.
 *   **Localization & Appearance**: Set the system **Timezone** and Theme.
 *   **Logging & Notifications**: Configure log levels and enable system logging.
 *   **System Limits**: Adjust concurrent bots, timeouts, and health check intervals.
+*   **Deep Linking**: Settings tabs (General, Messaging, Security) are now URL-addressable, allowing you to bookmark or share links to specific configuration sections (e.g., `/admin/settings?tab=security`).
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
