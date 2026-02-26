@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -56,6 +56,8 @@ const PersonasPage: React.FC = () => {
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
+  const [viewingPersona, setViewingPersona] = useState<Persona | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -237,6 +239,11 @@ const PersonasPage: React.FC = () => {
     setShowEditModal(true);
   };
 
+  const openViewModal = (persona: Persona) => {
+    setViewingPersona(persona);
+    setShowViewModal(true);
+  };
+
   const handleDeletePersona = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);
     if (!persona) { return; }
@@ -415,11 +422,16 @@ const PersonasPage: React.FC = () => {
 
                 {persona.assignedBotNames.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {persona.assignedBotNames.map(botName => (
+                    {persona.assignedBotNames.slice(0, 3).map(botName => (
                       <Badge key={botName} variant="secondary" size="small" style="outline">
                         {botName}
                       </Badge>
                     ))}
+                    {persona.assignedBotNames.length > 3 && (
+                      <Badge variant="ghost" size="small" style="outline">
+                        +{persona.assignedBotNames.length - 3} more
+                      </Badge>
+                    )}
                   </div>
                 ) : (
                   <span className="text-sm text-base-content/40 italic">No bots assigned</span>
@@ -427,6 +439,9 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                <Button variant="ghost" size="sm" onClick={() => openViewModal(persona)} title="View Details">
+                  <Eye className="w-4 h-4" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
                   <Copy className="w-4 h-4 mr-1" /> Clone
                 </Button>
@@ -450,6 +465,55 @@ const PersonasPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* View Modal */}
+      <Modal
+        isOpen={showViewModal}
+        onClose={() => { setShowViewModal(false); setViewingPersona(null); }}
+        title={viewingPersona ? `View Persona: ${viewingPersona.name}` : 'Persona Details'}
+        size="lg"
+      >
+        {viewingPersona && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-xs font-bold text-base-content/50 uppercase mb-1">Description</h3>
+              <p className="text-base-content/80">{viewingPersona.description}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-base-content/50 uppercase mb-1">Category</h3>
+              <Badge variant="neutral" size="small">{viewingPersona.category}</Badge>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xs font-bold text-base-content/50 uppercase">System Prompt</h3>
+                <Button size="sm" variant="ghost" onClick={() => handleCopyPrompt(viewingPersona.systemPrompt)}>
+                  <Copy className="w-3 h-3 mr-1" /> Copy
+                </Button>
+              </div>
+              <div className="bg-base-200 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap max-h-60 overflow-y-auto">
+                {viewingPersona.systemPrompt}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-base-content/50 uppercase mb-2">Assigned Bots ({viewingPersona.assignedBotNames.length})</h3>
+              {viewingPersona.assignedBotNames.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {viewingPersona.assignedBotNames.map(botName => (
+                    <Badge key={botName} variant="secondary" size="md">
+                      {botName}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm italic opacity-50">No bots assigned</p>
+              )}
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button variant="ghost" onClick={() => setShowViewModal(false)}>Close</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Create/Edit Modal */}
       <Modal
