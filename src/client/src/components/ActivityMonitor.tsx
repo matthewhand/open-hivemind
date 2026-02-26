@@ -36,7 +36,24 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
   const fetchActivity = useCallback(async () => {
     try {
       const response = await apiService.getActivity();
-      setEvents(response.events);
+
+      setEvents((prevEvents) => {
+        // Optimization: prevent unnecessary re-renders if data hasn't changed.
+        // We check length and first/last item IDs to detect changes efficiently without deep comparison.
+        if (prevEvents.length === response.events.length && prevEvents.length > 0) {
+          const firstMatch = prevEvents[0].id === response.events[0].id;
+          const lastMatch =
+            prevEvents[prevEvents.length - 1].id === response.events[response.events.length - 1].id;
+          if (firstMatch && lastMatch) {
+            return prevEvents;
+          }
+        } else if (prevEvents.length === 0 && response.events.length === 0) {
+          return prevEvents;
+        }
+
+        return response.events;
+      });
+
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch activity:', error);

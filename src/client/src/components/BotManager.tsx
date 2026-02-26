@@ -372,7 +372,7 @@ const BotManager: React.FC = () => {
       {/* Create Bot Modal */}
       <Modal isOpen={createDialogOpen} onClose={() => { setCreateDialogOpen(false); resetForm(); }} title="Create New Bot">
         <div className="space-y-4 py-4">
-          <div className="form-control"><label className="label"><span className="label-text">Bot Name *</span></label><Input value={botName} onChange={(e) => setBotName(e.target.value)} /></div>
+          <Input label="Bot Name *" value={botName} onChange={(e) => setBotName(e.target.value)} />
           <div className="form-control"><label className="label"><span className="label-text">Message Provider</span></label><Select value={messageProvider} onChange={(e) => setMessageProvider(e.target.value)} options={[{ value: 'discord', label: 'Discord' }, { value: 'slack', label: 'Slack' }, { value: 'mattermost', label: 'Mattermost' }]} /></div>
           <div className="form-control">
             <label className="label">
@@ -397,8 +397,8 @@ const BotManager: React.FC = () => {
               </div>
             )}
           </div>
-          {messageProvider === 'discord' && <div className="form-control"><label className="label"><span className="label-text">Discord Bot Token</span></label><Input type="password" value={discordToken} onChange={(e) => setDiscordToken(e.target.value)} /></div>}
-          {llmProvider === 'openai' && <div className="form-control"><label className="label"><span className="label-text">OpenAI API Key</span></label><Input type="password" value={openaiApiKey} onChange={(e) => setOpenaiApiKey(e.target.value)} /></div>}
+          {messageProvider === 'discord' && <Input label="Discord Bot Token" type="password" value={discordToken} onChange={(e) => setDiscordToken(e.target.value)} />}
+          {llmProvider === 'openai' && <Input label="OpenAI API Key" type="password" value={openaiApiKey} onChange={(e) => setOpenaiApiKey(e.target.value)} />}
         </div>
         <div className="modal-action">
           <Button onClick={() => { setCreateDialogOpen(false); resetForm(); }} variant="ghost">Cancel</Button>
@@ -410,7 +410,7 @@ const BotManager: React.FC = () => {
       <Modal isOpen={cloneDialogOpen} onClose={() => { setCloneDialogOpen(false); resetForm(); }} title="Clone Bot">
         <div className="py-4">
           <p className="mb-4 text-sm">Clone bot "{selectedBot?.name}" with a new name:</p>
-          <div className="form-control"><label className="label"><span className="label-text">New Bot Name</span></label><Input value={newBotName} onChange={(e) => setNewBotName(e.target.value)} /></div>
+          <Input label="New Bot Name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} />
         </div>
         <div className="modal-action">
           <Button onClick={() => { setCloneDialogOpen(false); resetForm(); }} variant="ghost">Cancel</Button>
@@ -449,8 +449,8 @@ const BotManager: React.FC = () => {
       <Modal isOpen={bulkCloneDialogOpen} onClose={() => setBulkCloneDialogOpen(false)} title={`Bulk Clone ${selectedBots.size} Bot(s)`}>
         <div className="space-y-4 py-4">
           <Alert status="info" message="A new name will be generated for each selected bot: prefix + originalName + suffix" />
-          <div className="form-control"><label className="label"><span className="label-text">Prefix</span></label><Input value={bulkClonePrefix} onChange={(e) => setBulkClonePrefix(e.target.value)} placeholder="(optional)" /></div>
-          <div className="form-control"><label className="label"><span className="label-text">Suffix</span></label><Input value={bulkCloneSuffix} onChange={(e) => setBulkCloneSuffix(e.target.value)} /></div>
+          <Input label="Prefix" value={bulkClonePrefix} onChange={(e) => setBulkClonePrefix(e.target.value)} placeholder="(optional)" />
+          <Input label="Suffix" value={bulkCloneSuffix} onChange={(e) => setBulkCloneSuffix(e.target.value)} />
           <div>
             <p className="text-xs text-base-content/70 mb-2">Preview:</p>
             <ul className="list-disc list-inside max-h-32 overflow-auto bg-base-200 p-3 rounded-box text-sm">

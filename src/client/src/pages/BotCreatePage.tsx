@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send } from 'lucide-react';
+import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
 import {
   Breadcrumbs,
   Alert,
@@ -89,12 +89,13 @@ const BotCreatePage: React.FC = () => {
   };
 
   const platforms = [
-    { id: 'discord', label: 'Discord', icon: Gamepad2 },
-    { id: 'slack', label: 'Slack', icon: Hash },
-    { id: 'mattermost', label: 'Mattermost', icon: MessageSquare },
-    { id: 'telegram', label: 'Telegram', icon: Send },
+    { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
+    { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
+    { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
   ];
 
+  const selectedPersona = personas.find(p => p.id === formData.persona);
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
@@ -120,148 +121,177 @@ const BotCreatePage: React.FC = () => {
         />
       )}
 
-      <div className="card bg-base-100 shadow-xl max-w-3xl mx-auto">
+      <div className="card bg-base-100 shadow-xl max-w-4xl mx-auto">
         <div className="card-body">
           {loading ? (
             <div className="flex justify-center py-12">
               <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Bot Name */}
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">Bot Name <span className="text-error">*</span></span>
-                  <AIAssistButton
-                    label="Generate Name"
-                    prompt={`Generate a creative name for a chat bot${
-                      formData.description ? ` that is described as: "${formData.description}"` : ''
-                    }.`}
-                    systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
-                    onSuccess={(result) => handleInputChange('name', result)}
-                  />
-                </label>
-                <Input
-                  placeholder="e.g. HelpBot"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Bot Identity Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Bot Identity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text font-medium">Bot Name <span className="text-error">*</span></span>
+                      <AIAssistButton
+                        label="Generate Name"
+                        prompt={`Generate a creative name for a chat bot${formData.description ? ` that is described as: "${formData.description}"` : ''
+                          }.`}
+                        systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
+                        onSuccess={(result) => handleInputChange('name', result)}
+                      />
+                    </label>
+                    <Input
+                      placeholder="e.g. HelpBot"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      required
+                      className="input-bordered"
+                    />
+                  </div>
+
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text font-medium">Description</span>
+                      <AIAssistButton
+                        label="Generate Description"
+                        prompt={`Generate a short, engaging description (max 2 sentences) for a chat bot${formData.name ? ` named "${formData.name}"` : ''
+                          }.`}
+                        systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
+                        onSuccess={(result) => handleInputChange('description', result)}
+                      />
+                    </label>
+                    <Textarea
+                      placeholder="Describe what this bot will do..."
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      className="h-24 textarea-bordered"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Description */}
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">Description</span>
-                  <AIAssistButton
-                    label="Generate Description"
-                    prompt={`Generate a short, engaging description (max 2 sentences) for a chat bot${
-                      formData.name ? ` named "${formData.name}"` : ''
-                    }.`}
-                    systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
-                    onSuccess={(result) => handleInputChange('description', result)}
-                  />
-                </label>
-                <Textarea
-                  placeholder="Describe what this bot will do..."
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="h-24"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Platform */}
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text font-semibold">Message Platform <span className="text-error">*</span></span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {platforms.map((p) => (
+              {/* Platform Selection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Message Platform</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {platforms.map((platform) => {
+                    const Icon = platform.icon;
+                    const isSelected = formData.platform === platform.id;
+                    return (
                       <div
-                        key={p.id}
-                        onClick={() => handleInputChange('platform', p.id)}
+                        key={platform.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleInputChange('platform', platform.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleInputChange('platform', platform.id);
+                          }
+                        }}
                         className={`
-                          cursor-pointer border rounded-lg p-3 flex flex-col items-center justify-center gap-2 transition-all
-                          ${formData.platform === p.id
-                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                            : 'border-base-300 hover:border-base-content/30 hover:bg-base-200/50'}
+                          cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md
+                          flex flex-col items-center justify-center gap-2 relative
+                          ${isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-base-200 hover:border-primary/50 bg-base-100'}
                         `}
                       >
-                        <p.icon className={`w-6 h-6 ${formData.platform === p.id ? 'text-primary' : 'text-base-content/60'}`} />
-                        <span className={`text-xs font-medium ${formData.platform === p.id ? 'text-primary' : 'text-base-content/80'}`}>
-                          {p.label}
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 text-primary">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                        <Icon className={`w-8 h-8 ${platform.color}`} />
+                        <span className={`font-medium ${isSelected ? 'text-primary' : ''}`}>
+                          {platform.name}
                         </span>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
+              </div>
 
-                {/* Persona */}
-                <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text font-semibold">Persona</span>
-                  </label>
-                  <Select
-                    value={formData.persona}
-                    onChange={(e) => handleInputChange('persona', e.target.value)}
-                  >
-                    <option value="default">Default Assistant</option>
-                    {personas.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </Select>
+              {/* Persona & Intelligence */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Intelligence & Personality</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Persona */}
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text font-medium">Persona</span>
+                    </label>
+                    <Select
+                      value={formData.persona}
+                      onChange={(e) => handleInputChange('persona', e.target.value)}
+                      className="select-bordered w-full"
+                    >
+                      <option value="default">Default Assistant</option>
+                      {personas.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </Select>
 
-                  {/* Persona Preview */}
-                  <div className="mt-2 p-3 bg-base-200/50 rounded-lg text-sm border-l-4 border-secondary">
-                    <div className="font-semibold text-secondary">
-                      {formData.persona === 'default'
-                        ? 'Default Assistant'
-                        : personas.find(p => p.id === formData.persona)?.name || 'Unknown Persona'}
+                    {/* Persona Preview Card */}
+                    <div className="mt-3 p-4 bg-base-200/50 rounded-lg border border-base-200 text-sm">
+                      <div className="font-semibold mb-1">
+                        {formData.persona === 'default' ? 'Default Assistant' : selectedPersona?.name}
+                      </div>
+                      <div className="text-base-content/70 italic">
+                        {formData.persona === 'default'
+                          ? "A helpful, general-purpose AI assistant ready to answer questions and assist with tasks."
+                          : selectedPersona?.description || "No description available."}
+                      </div>
                     </div>
-                    <div className="text-base-content/70 italic mt-1 text-xs">
-                      {formData.persona === 'default'
-                        ? 'A helpful general-purpose AI assistant.'
-                        : personas.find(p => p.id === formData.persona)?.description || 'No description available.'}
-                    </div>
+                  </div>
+
+                  {/* LLM Provider */}
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text font-medium">
+                        LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
+                      </span>
+                      <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
+                    </label>
+                    <Select
+                      value={formData.llmProvider}
+                      onChange={(e) => handleInputChange('llmProvider', e.target.value)}
+                      className="select-bordered w-full"
+                    >
+                      <option value="">
+                        {defaultLlmConfigured
+                          ? `Use System Default ${llmStatus?.defaultProviders?.[0]?.name ? `(${llmStatus.defaultProviders[0].name})` : ''}`
+                          : 'Select Provider...'}
+                      </option>
+                      {llmProfiles.map((p) => (
+                        <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                      ))}
+                    </Select>
+                    {!defaultLlmConfigured && !formData.llmProvider && (
+                      <div className="text-error text-xs mt-1">
+                        System default is not configured. Please select a provider.
+                      </div>
+                    )}
+                    {defaultLlmConfigured && !formData.llmProvider && (
+                      <div className="text-success text-xs mt-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Using system default configuration
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* LLM Provider */}
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">
-                    LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
-                  </span>
-                  <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
-                </label>
-                <Select
-                  value={formData.llmProvider}
-                  onChange={(e) => handleInputChange('llmProvider', e.target.value)}
-                >
-                  <option value="">
-                    {defaultLlmConfigured
-                      ? `Use System Default (${defaultProviderName || 'Configured'})`
-                      : 'Select Provider...'}
-                  </option>
-                  {llmProfiles.map((p) => (
-                    <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
-                  ))}
-                </Select>
-                {!defaultLlmConfigured && !formData.llmProvider && (
-                  <div className="text-error text-xs mt-1">
-                    System default is not configured. Please select a provider.
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-6 border-t">
                 <Button
                   variant="primary"
                   type="submit"
                   loading={isCreating}
                   disabled={!formData.name || (!defaultLlmConfigured && !formData.llmProvider)}
+                  className="btn-wide"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Create Bot

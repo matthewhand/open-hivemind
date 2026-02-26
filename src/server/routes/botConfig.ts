@@ -241,9 +241,14 @@ router.post(
  * PUT /webui/api/bot-config/:botId
  * Update an existing bot configuration (admin only)
  */
-router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
-  try {
+router.put(
+  '/:botId',
+  requireAdmin,
+  validateBotConfigUpdate,
+  sanitizeBotConfig,
+  async (req: AuditedRequest, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    try {
     const { botId } = req.params;
     const updates = req.body;
 
