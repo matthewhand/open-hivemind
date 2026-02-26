@@ -7,19 +7,6 @@ import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
 import { getMcpServerProfileByKey } from './mcpServerProfiles';
 
-// Define BotOverride interface locally since it's not exported
-interface BotOverride {
-  messageProvider?: string;
-  llmProvider?: string;
-  llmProfile?: string;
-  responseProfile?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: unknown[];
-  mcpGuard?: unknown;
-  mcpGuardProfile?: string;
-  mcpServerProfile?: string;
-}
 import type {
   BotConfig,
   MessageProvider,
@@ -27,6 +14,7 @@ import type {
   McpServerConfig,
   McpGuardConfig,
   ConfigurationValidationResult,
+  BotOverride,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
 
