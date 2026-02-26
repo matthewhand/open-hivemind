@@ -199,3 +199,4 @@ config/message-profiles.json
 .jules
 .codex/
 k8s/
+/*.txt
