@@ -126,16 +126,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const getOverallHealthStatus = () => {
     if (!systemMetrics || !bots.length) {return 'unknown';}
 
-    // Derive system health from StatusResponse data
-    const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
-      systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
+    const hasSystemError = systemMetrics.bots.some(bot => bot.status === 'error');
+    const hasBotError = bots.some(bot => bot.statusData?.status === 'error');
 
-    const botHealthIssues = bots.filter(bot =>
-      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
-    ).length;
+    if (hasSystemError || hasBotError) {return 'error';}
 
-    if (systemHealth === 'error' || botHealthIssues > 0) {return 'error';}
-    if (systemHealth === 'warning' || botHealthIssues > 0) {return 'warning';}
+    const hasSystemWarning = systemMetrics.bots.some(bot => bot.status === 'warning');
+    const hasBotWarning = bots.some(bot => bot.statusData?.status === 'warning');
+
+    if (hasSystemWarning || hasBotWarning) {return 'warning';}
+
     return 'healthy';
   };
 

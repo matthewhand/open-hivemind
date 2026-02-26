@@ -291,7 +291,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 </span>
               </div>
               <span className="text-xs text-base-content/70 mt-1">
-                {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
+                {formatBytes((metrics?.memory.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory.total || 0) * 1024 * 1024)}
               </span>
             </div>
           </div>
