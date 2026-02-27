@@ -79,6 +79,12 @@ test.describe('MCP Tools Screenshots', () => {
                         type: 'boolean',
                         description: 'Whether the output should include headers',
                       },
+                      outputFormat: {
+                        type: 'string',
+                        enum: ['csv', 'json', 'yaml'],
+                        default: 'json',
+                        description: 'Format of the output data',
+                      },
                     },
                     required: ['filePath', 'filterColumn'],
                   },
@@ -114,24 +120,21 @@ test.describe('MCP Tools Screenshots', () => {
     await expect(modal).toBeVisible();
 
     // Verify form fields
-    // Using getByText for labels because "filePath *" includes the asterisk which might be in a separate span or part of the text
     await expect(modal.getByText('filePath')).toBeVisible();
     await expect(modal.getByText('minValue')).toBeVisible();
+    // Use first() because outputFormat appears in both label and option (if not yet selected or as placeholder)
+    await expect(modal.getByText('outputFormat').first()).toBeVisible();
 
     // Fill form (to show active state)
-    // Note: inputs are associated with labels implicitly via layout or proximity, but since I didn't use htmlFor/id, getByLabel might fail if not properly associated.
-    // In SchemaForm, I used:
-    // <label className="label">
-    //   <span className="label-text font-medium">{key} ...</span>
-    // </label>
-    // <input ... />
-    // They are siblings in a div, not nested or linked by ID.
-    // So getByLabel won't work automatically. I need to target inputs relative to labels or by placeholder.
-
     await modal.locator('input[placeholder="Enter text..."]').first().fill('/data/sales_2024.csv');
     await modal.locator('input[placeholder="Enter text..."]').nth(1).fill('revenue');
     await modal.locator('input[placeholder="Enter number..."]').first().fill('1000');
     await modal.locator('.checkbox').check();
+
+    // Check if default value is selected in dropdown
+    await expect(modal.locator('select').first()).toHaveValue('json');
+    // Change selection
+    await modal.locator('select').first().selectOption('csv');
 
     // Screenshot modal
     await page.screenshot({ path: 'docs/screenshots/mcp-tool-run-modal.png' });

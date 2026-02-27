@@ -31,6 +31,23 @@ const SchemaForm: React.FC<{
     return <div className="text-sm text-base-content/50">No arguments required.</div>;
   }
 
+  // Initialize default values on mount
+  useEffect(() => {
+    const defaults: any = {};
+    let hasDefaults = false;
+    Object.entries(schema.properties).forEach(([key, prop]: [string, any]) => {
+      if (prop.default !== undefined && value[key] === undefined) {
+        defaults[key] = prop.default;
+        hasDefaults = true;
+      }
+    });
+
+    if (hasDefaults) {
+      onChange({ ...value, ...defaults });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
+
   const handleChange = (key: string, val: any) => {
     onChange({ ...value, [key]: val });
   };
@@ -41,6 +58,7 @@ const SchemaForm: React.FC<{
         const isRequired = schema.required?.includes(key);
         const description = prop.description;
         const type = prop.type;
+        const enums = prop.enum;
 
         return (
           <div key={key} className="form-control w-full">
@@ -55,7 +73,21 @@ const SchemaForm: React.FC<{
               </label>
             )}
 
-            {type === 'boolean' ? (
+            {enums ? (
+              <select
+                className="select select-bordered w-full"
+                value={value[key] || ''}
+                onChange={(e) => handleChange(key, e.target.value)}
+                disabled={disabled}
+              >
+                <option value="" disabled>Select {key}...</option>
+                {enums.map((option: any) => (
+                  <option key={String(option)} value={option}>
+                    {String(option)}
+                  </option>
+                ))}
+              </select>
+            ) : type === 'boolean' ? (
               <input
                 type="checkbox"
                 className="checkbox"
