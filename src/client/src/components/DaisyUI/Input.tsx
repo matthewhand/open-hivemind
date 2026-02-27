@@ -1,5 +1,6 @@
-import React, { forwardRef, useId } from 'react';
+import React, { forwardRef, useId, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { Eye, EyeOff } from 'lucide-react';
 
 export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
   variant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
@@ -32,12 +33,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       error,
       helperText,
       id: providedId,
+      type = 'text',
       ...props
     },
     ref,
   ) => {
     const uniqueId = useId();
     const id = providedId || uniqueId;
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === 'password';
 
     const variantClasses = {
       primary: 'input-primary',
@@ -65,6 +69,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ghost && 'input-ghost',
       appliedVariant && variantClasses[appliedVariant],
       size && sizeClasses[size],
+      isPassword && !suffix && !loading ? 'pr-10' : '',
       className,
     );
 
@@ -80,6 +85,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={id}
+          type={isPassword ? (showPassword ? 'text' : 'password') : type}
           disabled={disabled || loading}
           className={inputClasses}
           aria-invalid={!!error}
@@ -88,14 +94,36 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           }
           {...props}
         />
-        {suffix && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="text-base-content/60 sm:text-sm">{suffix}</span>
-          </div>
-        )}
-        {loading && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <span className="loading loading-spinner"></span>
+
+        {/* Render password toggle or suffix */}
+        {(isPassword || suffix || loading) && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-2 pointer-events-none z-10">
+            {isPassword && !disabled && !loading && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary pointer-events-auto"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            )}
+
+            {suffix && (
+              <div className="flex items-center pointer-events-auto">
+                <span className="text-base-content/60 sm:text-sm">{suffix}</span>
+              </div>
+            )}
+
+            {loading && (
+              <div className="flex items-center">
+                <span className="loading loading-spinner w-4 h-4"></span>
+              </div>
+            )}
           </div>
         )}
       </div>

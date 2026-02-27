@@ -20,6 +20,7 @@
     "classnames": "^2.5.1",
     "daisyui": "^5.1.25",
     "dompurify": "^3.3.1",
+    "framer-motion": "^12.34.3",
     "lucide-react": "^0.460.0",
     "prop-types": "^15.8.1",
     "react": "^19.1.1",

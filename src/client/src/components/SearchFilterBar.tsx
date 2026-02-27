@@ -10,6 +10,7 @@ export interface FilterConfig {
   options: SelectOption[];
   className?: string;
   placeholder?: string;
+  ariaLabel?: string;
 }
 
 export interface SearchFilterBarProps {
@@ -75,6 +76,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
                 onChange={(e) => filter.onChange(e.target.value)}
                 options={filter.options}
                 size="sm"
+                aria-label={filter.ariaLabel || filter.placeholder || `Filter by ${filter.key}`}
               />
             </div>
           ))}
