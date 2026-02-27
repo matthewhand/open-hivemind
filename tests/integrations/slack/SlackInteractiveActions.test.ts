@@ -1,5 +1,5 @@
-import { SlackInteractiveActions } from '../../../packages/adapter-slack/src/SlackInteractiveActions';
-import { SlackService } from '../../../packages/adapter-slack/src/SlackService';
+import { SlackInteractiveActions } from '@src/integrations/slack/SlackInteractiveActions';
+import { SlackService } from '@src/integrations/slack/SlackService';
 
 // Create a proper mock type
 type MockedSlackService = {

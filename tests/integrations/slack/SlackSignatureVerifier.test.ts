@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
-import { SlackSignatureVerifier } from '../../../packages/adapter-slack/src/SlackSignatureVerifier';
+import { SlackSignatureVerifier } from '@src/integrations/slack/SlackSignatureVerifier';
 
 const mockRequest = (headers: Record<string, string>, body: object = {}) => ({
   headers,

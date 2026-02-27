@@ -24,7 +24,7 @@ describe('SlackMessageProvider unit', () => {
 
   test('a) getClientId delegates to SlackService.getInstance().getClientId()', async () => {
     const { SlackMessageProvider } =
-      await import('../../../../packages/adapter-slack/src/providers/SlackMessageProvider');
+      await import('../@src/integrations/slack/providers/SlackMessageProvider');
     const provider = new SlackMessageProvider();
 
     const clientId = provider.getClientId();
@@ -38,7 +38,7 @@ describe('SlackMessageProvider unit', () => {
 
   test('b) sendMessageToChannel delegates to slackService.sendMessageToChannel with args', async () => {
     const { SlackMessageProvider } =
-      await import('../../../../packages/adapter-slack/src/providers/SlackMessageProvider');
+      await import('../@src/integrations/slack/providers/SlackMessageProvider');
     const provider = new SlackMessageProvider();
 
     const channel = 'C123';
@@ -58,7 +58,7 @@ describe('SlackMessageProvider unit', () => {
 
   test('c) getMessages delegates to slackService.fetchMessages', async () => {
     const { SlackMessageProvider } =
-      await import('../../../../packages/adapter-slack/src/providers/SlackMessageProvider');
+      await import('../@src/integrations/slack/providers/SlackMessageProvider');
     const provider = new SlackMessageProvider();
 
     const channel = 'C456';
