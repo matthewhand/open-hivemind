@@ -88,7 +88,7 @@ importers:
         specifier: ^19.1.10
         version: 19.2.14
       '@types/react-dom':
-        specifier: ^19.1.7
+        specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^5.0.0
