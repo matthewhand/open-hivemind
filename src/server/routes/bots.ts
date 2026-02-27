@@ -2,10 +2,14 @@ import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { authenticate } from '../../auth/middleware';
 
 const router = Router();
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
+
+// Apply authentication middleware to all bot routes
+router.use(authenticate);
 
 // GET /api/bots - List all bots with status
 router.get('/', async (req, res) => {
