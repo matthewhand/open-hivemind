@@ -8,6 +8,9 @@ import { authenticate, requireAdmin } from '../auth/middleware';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
 import { serializeSchema } from '../utils/schemaSerializer';
+import { Discord } from '@hivemind/adapter-discord';
+import { SlackService } from '@hivemind/adapter-slack';
+import type { IBotInfo } from '../types/botInfo';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
