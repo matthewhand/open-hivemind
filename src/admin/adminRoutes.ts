@@ -185,11 +185,22 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
-      return res
-        .status(400)
-        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+      return res.json({ ok: true, message: `Created ${provider.label} bot` });
+    } catch (e) {
+      const message = (e as Error)?.message || String(e);
+      logAdminAction(
+        req,
+        `CREATE_${providerId.toUpperCase()}_BOT`,
+        `${providerId}-bots/${req.body?.name || 'unknown'}`,
+        'failure',
+        `Failed to create ${provider.label} bot: ${message}`
+      );
+      return res.status(500).json({ ok: false, error: message });
     }
+  }
+);
 
+/*
     // Persist to config/providers/messengers.json for demo persistence
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
@@ -245,8 +256,7 @@ adminRouter.post(
     } catch (e) {
       debug('Runtime addBot failed (continue, config was persisted):', e);
     }
-  }
-);
+*/
 
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('slack') as IMessageProvider;
@@ -407,6 +417,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e) {
+      debug('Slack reload error', e);
     }
 
     try {
