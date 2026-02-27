@@ -44,7 +44,7 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
   try {
     try {
       await fs.promises.access(personasDir);
-    } catch {
+    } catch (e: unknown) {
       return fallback;
     }
 
@@ -114,7 +114,7 @@ adminRouter.get('/status', async (_req: Request, res: Response) => {
       slackInfo,
       discordInfo,
     });
-  } catch {
+  } catch (e: unknown) {
     res.json({ ok: true, bots: [] });
   }
 });
@@ -202,7 +202,7 @@ adminRouter.post(
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (e) {
+    } catch (e: unknown) {
       if ((e as { code?: string }).code === 'ENOENT') {
         // File doesn't exist yet, start with empty config
       } else {
@@ -211,9 +211,14 @@ adminRouter.post(
       }
     }
     cfg.slack = cfg.slack || {};
-    cfg.slack.mode = cfg.slack.mode || mode || 'socket';
+    cfg.slack.mode = cfg.slack.mode || req.body?.mode || 'socket';
     cfg.slack.instances = cfg.slack.instances || [];
-    cfg.slack.instances.push({ name, token: botToken, signingSecret, llm });
+    cfg.slack.instances.push({
+      name: req.body?.name,
+      token: req.body?.botToken,
+      signingSecret: req.body?.signingSecret,
+      llm: req.body?.llm,
+    });
 
     try {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
@@ -227,16 +232,16 @@ adminRouter.post(
     try {
       const slack = SlackService.getInstance();
       const instanceCfg = {
-        name,
+        name: req.body?.name,
         slack: {
-          botToken,
-          signingSecret,
-          appToken: appToken || '',
-          defaultChannelId: defaultChannelId || '',
-          joinChannels: joinChannels || '',
-          mode: mode || 'socket',
+          botToken: req.body?.botToken,
+          signingSecret: req.body?.signingSecret,
+          appToken: req.body?.appToken || '',
+          defaultChannelId: req.body?.defaultChannelId || '',
+          joinChannels: req.body?.joinChannels || '',
+          mode: req.body?.mode || 'socket',
         },
-        llm,
+        llm: req.body?.llm,
       };
       // Cast slack to unknown to access addBot which might be dynamically added or not in type def
       await (slack as unknown as { addBot: (cfg: typeof instanceCfg) => Promise<void> }).addBot?.(
@@ -298,7 +303,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (e) {
+    } catch (e: unknown) {
       if ((e as { code?: string }).code === 'ENOENT') {
         // File doesn't exist yet, start with empty config
       } else {
