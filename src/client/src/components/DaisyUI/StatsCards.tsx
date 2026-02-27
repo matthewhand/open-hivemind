@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
+import { animate } from 'framer-motion';
 
 interface StatItem {
   id: string;
@@ -53,49 +54,41 @@ const iconMap: Record<string, React.ReactNode> = {
   'wifi': <Wifi className="w-8 h-8" />,
 };
 
-const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
-  const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({});
+// Extracted formatting logic
+const formatStatValue = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return Math.round(value).toLocaleString();
+};
 
-  // Animate numbers when they change
+const AnimatedCounter: React.FC<{ value: number; id: string; className?: string }> = ({ value, id, className }) => {
+  const nodeRef = useRef<HTMLParagraphElement>(null);
+  const prevValueRef = useRef<number>(0);
+
   useEffect(() => {
-    const timers: ReturnType<typeof setInterval>[] = [];
+    const node = nodeRef.current;
+    if (!node) return;
 
-    stats.forEach(stat => {
-      if (typeof stat.value === 'number') {
-        const startValue = animatedValues[stat.id] || 0;
-        const endValue = stat.value;
-
-        // Optimization: Don't animate if value hasn't changed
-        if (startValue === endValue) return;
-
-        const duration = 1000;
-        const steps = 60;
-        const increment = (endValue - startValue) / steps;
-
-        let currentStep = 0;
-        const timer = setInterval(() => {
-          currentStep++;
-          const currentValue = startValue + (increment * currentStep);
-
-          setAnimatedValues(prev => ({
-            ...prev,
-            [stat.id]: currentStep >= steps ? endValue : currentValue,
-          }));
-
-          if (currentStep >= steps) {
-            clearInterval(timer);
-          }
-        }, duration / steps);
-
-        timers.push(timer);
-      }
+    const controls = animate(prevValueRef.current, value, {
+      duration: 1,
+      onUpdate: (latest) => {
+        node.textContent = formatStatValue(latest);
+      },
     });
 
-    return () => {
-      timers.forEach(timer => clearInterval(timer));
-    };
-  }, [stats]);
+    prevValueRef.current = value;
 
+    return () => controls.stop();
+  }, [value]);
+
+  return <p ref={nodeRef} className={className}>{formatStatValue(prevValueRef.current)}</p>;
+};
+
+
+const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
   const getGradientBg = (color?: string) => {
     switch (color) {
     case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
@@ -160,20 +153,6 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     return icon;
   };
 
-  const formatValue = (value: number | string, statId: string) => {
-    if (typeof value === 'string') {return value;}
-
-    const animatedValue = animatedValues[statId] || value;
-
-    if (animatedValue >= 1000000) {
-      return `${(animatedValue / 1000000).toFixed(1)}M`;
-    } else if (animatedValue >= 1000) {
-      return `${(animatedValue / 1000).toFixed(1)}K`;
-    }
-
-    return Math.round(animatedValue).toLocaleString();
-  };
-
   if (isLoading) {
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
@@ -215,9 +194,18 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
                 <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
                   {stat.title}
                 </p>
-                <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
-                  {formatValue(stat.value, stat.id)}
-                </p>
+
+                {typeof stat.value === 'number' ? (
+                  <AnimatedCounter
+                    value={stat.value}
+                    id={stat.id}
+                    className={`text-3xl font-bold ${getStatColor(stat.color)}`}
+                  />
+                ) : (
+                  <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
+                    {stat.value}
+                  </p>
+                )}
 
                 {stat.change !== undefined && (
                   <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>

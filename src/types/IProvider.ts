@@ -1,4 +1,4 @@
-import { Config } from 'convict';
+import { type Config } from 'convict';
 
 export interface IProvider<TConfig = any> {
   /**
