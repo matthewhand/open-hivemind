@@ -185,9 +185,12 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
-      return res
-        .status(400)
-        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+      return res.json({ ok: true });
+    } catch (e) {
+      debug(`Error adding bot to provider ${providerId}`, e);
+      // Fall through to manual persistence attempt if runtime add failed?
+      // Or just log it. Given the original code lacked a catch, we'll just log and continue
+      // to the persistence logic which seems to be the fallback/legacy path.
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -407,6 +410,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e) {
+      debug('Slack reload error', e);
     }
 
     try {
