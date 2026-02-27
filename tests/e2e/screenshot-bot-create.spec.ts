@@ -94,7 +94,9 @@ test.describe('Bot Create Page Screenshots', () => {
 
     // Wait for the page to load and specific elements to be visible
     await expect(page.getByText('Create New Bot')).toBeVisible();
-    await expect(page.getByText('Message Platform')).toBeVisible();
+
+    // Use filter to be specific about which 'Message Platform' text we want (the heading)
+    await expect(page.locator('h3').filter({ hasText: 'Message Platform' })).toBeVisible();
 
     // Verify Platform Buttons are visible
     await expect(page.getByText('Discord', { exact: true })).toBeVisible();

@@ -185,6 +185,16 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Infrastructure Health**: Real-time metrics for CPU, Memory, and API endpoint status.
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 
+### [System Management](/admin/system-management)
+Manage configuration, alerts, and system health.
+
+![System Management](screenshots/system-management-page.png)
+
+*   **Alert Management**: Monitor and acknowledge system alerts.
+*   **System Configuration**: Fine-tune settings like refresh intervals, log levels, and resource thresholds.
+*   **Backup History**: Create and restore manual backups, and view automatic backup logs.
+*   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
+
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
 *   **Default LLM**: The fallback provider if none is specified for a bot.
