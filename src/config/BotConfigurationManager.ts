@@ -7,6 +7,19 @@ import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
 import { getMcpServerProfileByKey } from './mcpServerProfiles';
 
+// Define BotOverride interface locally since it's not exported
+interface BotOverride {
+  messageProvider?: string;
+  llmProvider?: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: unknown[];
+  mcpGuard?: unknown;
+  mcpGuardProfile?: string;
+  mcpServerProfile?: string;
+}
 import type {
   BotConfig,
   MessageProvider,
@@ -14,9 +27,9 @@ import type {
   McpServerConfig,
   McpGuardConfig,
   ConfigurationValidationResult,
-  BotOverride,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
+import { BotConfigSchema } from './schema';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -1145,29 +1158,29 @@ export class BotConfigurationManager {
   }
 
   /**
-   * Validate configuration
+   * Validate configuration using Zod
    */
   public validateConfiguration(config: unknown): ConfigurationValidationResult {
+    const result = BotConfigSchema.safeParse(config);
+
+    if (!result.success) {
+      const errors = result.error.errors.map(err =>
+        `${err.path.join('.')}: ${err.message}`
+      );
+
+      return {
+        isValid: false,
+        errors,
+        warnings: [],
+      };
+    }
+
+    // Additional custom validation logic if needed (e.g. at least one provider)
+    const validConfig = result.data;
     const errors: string[] = [];
 
-    const configObj = config as Record<string, unknown>;
-
-    if (!configObj.name) {
-      errors.push('Bot name is required');
-    }
-
-    if (!configObj.discord && !configObj.slack && !configObj.mattermost) {
+    if (!validConfig.discord && !validConfig.slack && !validConfig.mattermost) {
       errors.push('At least one platform configuration is required');
-    }
-
-    const discordConfig = configObj.discord as Record<string, unknown>;
-    if (discordConfig && !discordConfig.botToken) {
-      errors.push('Discord bot token is required');
-    }
-
-    const slackConfig = configObj.slack as Record<string, unknown>;
-    if (slackConfig && !slackConfig.botToken) {
-      errors.push('Slack bot token is required');
     }
 
     return {

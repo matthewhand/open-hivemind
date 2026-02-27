@@ -1,6 +1,7 @@
 import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
+import { join } from 'path';
 
 // Create Express app
 const app = express();
@@ -12,6 +13,22 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }));
+
+// Resolve frontend path for Netlify
+const frontendDistPath = join(process.cwd(), 'dist', 'client', 'dist');
+
+// Serve static files
+app.use('/admin', express.static(frontendDistPath));
+app.use('/webui', express.static(frontendDistPath));
+
+// Health check route (must be before wildcard)
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
 
 // API documentation
 app.get('/api', (req, res) => {
@@ -41,14 +58,23 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// SPA fallbacks
+app.get('/admin/*', (req, res) => {
+  res.sendFile(join(frontendDistPath, 'index.html'));
+});
+
+app.get('/webui/*', (req, res) => {
+  res.sendFile(join(frontendDistPath, 'index.html'));
+});
+
 // API fallback - return 404 for unknown API routes
 app.get('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Root handler for the function itself (if accessed directly)
-app.get('/', (req, res) => {
-  res.json({ status: 'Open-Hivemind API Function Operational' });
+// Root fallback
+app.get('*', (req, res) => {
+  res.sendFile(join(frontendDistPath, 'index.html'));
 });
 
 // Export handler for Netlify Functions
