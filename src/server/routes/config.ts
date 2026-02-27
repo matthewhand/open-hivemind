@@ -49,6 +49,40 @@ import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { IProvider } from '../../types/IProvider';
 
+/**
+ * Validates that a config name is safe to use in file paths.
+ * Only allows alphanumeric characters, hyphens, and underscores.
+ * Prevents path traversal attacks.
+ */
+function isValidConfigName(configName: string): boolean {
+  // Config names must:
+  // 1. Be 1-64 characters long
+  // 2. Only contain lowercase letters, numbers, hyphens, and underscores
+  // 3. Not start or end with a hyphen or underscore
+  // 4. Not contain consecutive hyphens or underscores
+  const validConfigNamePattern = /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/;
+  return (
+    typeof configName === 'string' &&
+    configName.length >= 1 &&
+    configName.length <= 64 &&
+    validConfigNamePattern.test(configName) &&
+    !configName.includes('--') &&
+    !configName.includes('__') &&
+    !configName.includes('_-') &&
+    !configName.includes('-_')
+  );
+}
+
+/**
+ * Validates that a file path is within an allowed base directory.
+ * Prevents path traversal by resolving the path and checking the prefix.
+ */
+function isPathWithinAllowed(targetPath: string, allowedBasePath: string): boolean {
+  const resolvedTarget = path.resolve(targetPath);
+  const resolvedBase = path.resolve(allowedBasePath);
+  return resolvedTarget.startsWith(resolvedBase + path.sep) || resolvedTarget === resolvedBase;
+}
+
 const debug = Debug('app:server:routes:config');
 const router = Router();
 
@@ -476,11 +510,11 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
-    if (
-      configName &&
-      (configName.includes('..') || configName.includes('/') || configName.includes('\\'))
-    ) {
-      return res.status(400).json({ error: 'Invalid config name: path traversal detected' });
+    if (configName && !isValidConfigName(configName)) {
+      return res.status(400).json({
+        error: 'Invalid config name',
+        message: 'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
+      });
     }
 
     if (!configName) {
@@ -538,6 +572,14 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     }
 
     const targetPath = path.join(configDir, targetFile);
+
+    // Security: Ensure the target path is within the config directory
+    if (!isPathWithinAllowed(targetPath, configDir)) {
+      return res.status(400).json({
+        error: 'Invalid config path',
+        message: 'Path traversal detected',
+      });
+    }
 
     // Read existing file if not creating new
     let fileContent: any = {};
