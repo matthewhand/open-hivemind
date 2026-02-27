@@ -1,15 +1,15 @@
 import { KnownBlock } from '@slack/web-api';
 import messageConfig from '@src/config/messageConfig';
 import slackConfig from '@src/config/slackConfig';
-import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
-import { SlackWelcomeHandler } from '@src/integrations/slack/SlackWelcomeHandler';
+import { SlackBotManager } from '../../../packages/adapter-slack/src/SlackBotManager';
+import { SlackWelcomeHandler } from '../../../packages/adapter-slack/src/SlackWelcomeHandler';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 
 // Mock dependencies
 jest.mock('@src/config/slackConfig');
 jest.mock('@src/config/messageConfig');
 jest.mock('@src/llm/getLlmProvider');
-jest.mock('@src/integrations/slack/SlackBotManager');
+jest.mock('../../../packages/adapter-slack/src/SlackBotManager');
 
 describe('SlackWelcomeHandler', () => {
   let handler: SlackWelcomeHandler;

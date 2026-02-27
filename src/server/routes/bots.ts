@@ -42,6 +42,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/bots/:id - Get a single bot
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+    return res.json({ success: true, bot });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/bots - Create a new bot
 router.post('/', async (req, res) => {
   try {

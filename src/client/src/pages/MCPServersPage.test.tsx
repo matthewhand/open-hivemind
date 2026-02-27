@@ -120,12 +120,10 @@ describe('MCPServersPage', () => {
     });
 
     // Find the "Start" button (PlayIcon)
-    // The button uses a tooltip data-tip="Connect"
-    const startButton = container!.querySelector('button[data-tip="Connect"]');
-    if (!startButton) throw new Error('Start button not found');
+    const connectButton = screen.getByRole('button', { name: /Connect Test Server/i });
 
     await act(async () => {
-      fireEvent.click(startButton);
+      fireEvent.click(connectButton);
     });
 
     // Check if the correct API was called

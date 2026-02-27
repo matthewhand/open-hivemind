@@ -5,6 +5,19 @@ import type { IMessengerService } from '@message/interfaces/IMessengerService';
 const debug = Debug('app:ShutdownCoordinator');
 
 /**
+ * Shutdown phases enum.
+ */
+export enum ShutdownPhase {
+  IDLE = 'idle',
+  STOP_ACCEPTING = 'stopAccepting',
+  DRAIN_REQUESTS = 'drainRequests',
+  STOP_BACKGROUND = 'stopBackground',
+  DISCONNECT_EXTERNAL = 'disconnectExternal',
+  FINAL_CLEANUP = 'finalCleanup',
+  COMPLETE = 'complete',
+}
+
+/**
  * Interface for services that can be shut down gracefully.
  */
 export interface IShutdownable {
@@ -52,6 +65,8 @@ export class ShutdownCoordinator {
 
   private isShuttingDown = false;
   private shutdownPromise: Promise<void> | null = null;
+  private currentPhase: ShutdownPhase = ShutdownPhase.IDLE;
+  private shutdownReason: string | null = null;
 
   // Resource references
   private httpServer: HttpServer | null = null;
@@ -186,6 +201,7 @@ export class ShutdownCoordinator {
     }
 
     this.isShuttingDown = true;
+    this.shutdownReason = signal;
     console.log(`\n🛑 Shutdown initiated by ${signal}`);
     console.log('⏱️  Starting graceful shutdown sequence...');
 
@@ -201,16 +217,20 @@ export class ShutdownCoordinator {
       await this.executeShutdownSequence();
       console.log('✅ Graceful shutdown completed successfully');
       clearTimeout(forceExitTimer);
-      if (process.env.NODE_ENV !== 'test') {
-        process.exit(exitCode);
-      }
+      this.exitProcess(exitCode);
     } catch (error) {
       console.error('❌ Error during shutdown:', error);
       clearTimeout(forceExitTimer);
-      if (process.env.NODE_ENV !== 'test') {
-        process.exit(1);
-      }
+      this.exitProcess(1);
     }
+  }
+
+  /**
+   * Exit the process.
+   * Extracted for testing purposes.
+   */
+  protected exitProcess(code: number): void {
+    process.exit(code);
   }
 
   /**
@@ -221,6 +241,8 @@ export class ShutdownCoordinator {
 
     // Execute each phase in order
     for (const phaseConfig of this.phaseConfigs) {
+      // Update current phase
+      this.currentPhase = phaseConfig.name as ShutdownPhase;
       const phaseStart = Date.now();
 
       try {
@@ -243,6 +265,7 @@ export class ShutdownCoordinator {
     const totalDuration = Date.now() - startTime;
     console.log(`\n📊 Shutdown completed in ${totalDuration}ms`);
     this.logPhaseSummary();
+    this.currentPhase = ShutdownPhase.COMPLETE;
   }
 
   /**
@@ -451,6 +474,20 @@ export class ShutdownCoordinator {
    */
   public getPhaseResults(): Map<string, { success: boolean; duration: number; error?: Error }> {
     return new Map(this.phaseResults);
+  }
+
+  /**
+   * Get the current shutdown phase.
+   */
+  public getCurrentPhase(): ShutdownPhase {
+    return this.currentPhase;
+  }
+
+  /**
+   * Get the reason for shutdown.
+   */
+  public getShutdownReason(): string | null {
+    return this.shutdownReason;
   }
 }
 

@@ -1,4 +1,4 @@
-import { SlackService } from '@src/integrations/slack/SlackService';
+import { SlackService } from '../../../packages/adapter-slack/src/SlackService';
 
 const REAL_SLACK_TOKEN = process.env.REAL_SLACK_TOKEN;
 const REAL_SLACK_CHANNEL = process.env.REAL_SLACK_CHANNEL;

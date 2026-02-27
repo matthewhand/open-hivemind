@@ -22,20 +22,19 @@ export interface TimelineProps {
   onEventClick?: (event: TimelineEvent) => void
 }
 
-// Improved accessibility with ARIA labels and keyboard navigation
-const getEventIcon = (type: EventType): string => {
+const getEventIcon = (type: EventType): React.ReactNode => {
   switch (type) {
-    case 'success':
-      return '✓'
-    case 'error':
-      return '✗'
-    case 'warning':
-      return '⚠'
-    case 'info':
-      return 'ℹ'
-    case 'neutral':
-    default:
-      return '○'
+  case 'success':
+    return <span role="img" aria-label="success">✓</span>;
+  case 'error':
+    return <span role="img" aria-label="error">✗</span>;
+  case 'warning':
+    return <span role="img" aria-label="warning">⚠</span>;
+  case 'info':
+    return <span role="img" aria-label="info">ℹ</span>;
+  case 'neutral':
+  default:
+    return <span role="img" aria-label="neutral">○</span>;
   }
 }
 
@@ -117,8 +116,16 @@ const Timeline: React.FC<TimelineProps> = ({
   return (
     <div className={`timeline ${className}`} ref={timelineRef} role="list" aria-label="Timeline of events">
       {sortedEvents.map((event, index) => {
-        const isExpanded = expandedEvents.has(event.id)
-        const isLast = index === sortedEvents.length - 1
+        const isExpanded = expandedEvents.has(event.id);
+        const isLast = index === sortedEvents.length - 1;
+        const isInteractive = viewMode === 'compact' || !!onEventClick;
+
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (isInteractive && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            handleEventClick(event);
+          }
+        };
 
         return (
           <div key={event.id} className={`timeline-item ${getEventColorClass(event.type)}`} role="listitem">
@@ -135,17 +142,14 @@ const Timeline: React.FC<TimelineProps> = ({
             {/* Event content */}
             <div className="timeline-end">
               <div
-                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'}`}
-                onClick={() => handleEventClick(event)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleEventClick(event)
-                  }
-                }}
-                aria-label={`Event: ${event.title}. ${event.description || ''}`}
+                className={`card bg-base-100 shadow-sm transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'} ${
+                  isInteractive ? 'cursor-pointer hover:shadow-md' : ''
+                }`}
+                onClick={isInteractive ? () => handleEventClick(event) : undefined}
+                role={isInteractive ? 'button' : undefined}
+                tabIndex={isInteractive ? 0 : undefined}
+                onKeyDown={isInteractive ? handleKeyDown : undefined}
+                aria-expanded={viewMode === 'compact' ? isExpanded : undefined}
               >
                 <div className="card-body p-0">
                   {/* Event header */}

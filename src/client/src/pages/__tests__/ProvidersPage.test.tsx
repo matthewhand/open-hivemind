@@ -1,16 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect } from 'vitest';
 import ProvidersPage from '../ProvidersPage';
 
 // Mock useNavigate
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', () => ({
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
 // Mock DaisyUI components to simplify testing
-vi.mock('../../components/DaisyUI', () => ({
+jest.mock('../../components/DaisyUI', () => ({
   Card: ({ children, className }: any) => <div data-testid="card" className={className}>{children}</div>,
   Button: ({ children, onClick, className }: any) => <button onClick={onClick} className={className}>{children}</button>,
   Badge: ({ children, variant }: any) => <span data-testid={`badge-${variant}`}>{children}</span>,
@@ -19,7 +18,7 @@ vi.mock('../../components/DaisyUI', () => ({
 
 describe('ProvidersPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('renders provider categories correctly', () => {

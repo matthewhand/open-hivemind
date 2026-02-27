@@ -1,7 +1,7 @@
 import React, { forwardRef, useId } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> & {
+export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
   variant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   bordered?: boolean;

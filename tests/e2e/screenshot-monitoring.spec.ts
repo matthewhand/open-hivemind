@@ -14,6 +14,22 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );
+    await page.route(
+      '/api/config/global',
+      async (route) => route.fulfill({ status: 200, json: { bots: [] } }) // config/global returns object with sections
+    );
+    await page.route('/api/config/llm-profiles', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+    await page.route('/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+    await page.route('/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { enabled: false } })
+    );
+    await page.route('/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
+    );
 
     // Mock Monitoring specific endpoints
 
@@ -143,11 +159,24 @@ test.describe('Monitoring Dashboard Screenshots', () => {
               errorCount: 0,
             },
             {
-              name: 'DevBot',
-              status: 'warning', // Warning to show it handles it, but not error
-              connected: true,
-              messageCount: 12,
-              errorCount: 1,
+              id: '3',
+              timestamp: new Date(Date.now() - 15000).toISOString(),
+              botName: 'InternalHelper',
+              provider: 'slack',
+              llmProvider: 'anthropic',
+              messageType: 'incoming',
+              status: 'success',
+              processingTime: 150,
+            },
+            {
+              id: '4',
+              timestamp: new Date(Date.now() - 25000).toISOString(),
+              botName: 'DevBot',
+              provider: 'mattermost',
+              llmProvider: 'local',
+              messageType: 'outgoing',
+              status: 'error',
+              processingTime: 2000,
             },
           ],
           uptime: 3600 * 24 * 5,
@@ -155,14 +184,49 @@ test.describe('Monitoring Dashboard Screenshots', () => {
       })
     );
 
-    // Mock Activity
-    await page.route('**/api/dashboard/api/activity*', async (route) =>
+    // 5. API Endpoints Status (used by SystemHealth)
+    await page.route('/health/api-endpoints', async (route) =>
       route.fulfill({
         status: 200,
         json: {
-          events: [],
-          timeline: [],
-          agentMetrics: []
+          overall: {
+            status: 'healthy',
+            message: 'All systems operational',
+            stats: {
+              total: 3,
+              online: 3,
+              slow: 0,
+              offline: 0,
+              error: 0,
+            },
+          },
+          endpoints: [
+            {
+              id: '1',
+              name: 'Database',
+              url: 'postgres://localhost:5432',
+              status: 'online',
+              responseTime: 5,
+              lastChecked: new Date().toISOString(),
+            },
+            {
+              id: '2',
+              name: 'Redis',
+              url: 'redis://localhost:6379',
+              status: 'online',
+              responseTime: 2,
+              lastChecked: new Date().toISOString(),
+            },
+            {
+              id: '3',
+              name: 'LLM API',
+              url: 'https://api.openai.com',
+              status: 'online',
+              responseTime: 150,
+              lastChecked: new Date().toISOString(),
+            },
+          ],
+          timestamp: new Date().toISOString(),
         },
       })
     );

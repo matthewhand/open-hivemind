@@ -31,7 +31,7 @@ describe('Sitemap API Endpoints', () => {
     const response = await request(app).get('/sitemap').expect(200);
     expect(response.text).toContain('<!DOCTYPE html>');
     expect(response.text).toContain('Open-Hivemind Sitemap');
-    // "User Dashboard" entry likely removed or renamed
-    expect(response.text).toContain('AI & Intelligence'); // Updated section title check
+    expect(response.text).toContain('User Dashboard');
+    expect(response.text).toContain('AI & Intelligence');
   });
 });

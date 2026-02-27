@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupTestWithErrorDetection } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Export Page Screenshots', () => {
   test('Capture Export Page and Create Backup Modal', async ({ page }) => {

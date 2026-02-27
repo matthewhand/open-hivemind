@@ -1,60 +1,49 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
 
 // Mock apiService
-vi.mock('../../services/api', () => ({
+jest.mock('../../services/api', () => ({
   apiService: {
-    getGlobalConfig: vi.fn(),
-    listSystemBackups: vi.fn(),
-    createSystemBackup: vi.fn(),
-    updateGlobalConfig: vi.fn(),
-    restoreSystemBackup: vi.fn(),
-    deleteSystemBackup: vi.fn(),
-    getApiEndpointsStatus: vi.fn(),
-    clearCache: vi.fn(),
+    getGlobalConfig: jest.fn(),
+    listSystemBackups: jest.fn(),
+    createSystemBackup: jest.fn(),
+    updateGlobalConfig: jest.fn(),
+    restoreSystemBackup: jest.fn(),
+    deleteSystemBackup: jest.fn(),
+    getApiEndpointsStatus: jest.fn(),
+    getSystemInfo: jest.fn(),
+    getEnvOverrides: jest.fn(),
+    clearCache: jest.fn(),
   },
 }));
 
 // Mock useWebSocket
-vi.mock('../../contexts/WebSocketContext', () => ({
-  useWebSocket: vi.fn(),
+jest.mock('../../contexts/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
 }));
 
-// Mock Modal since JSDOM doesn't support dialog fully
-vi.mock('../../components/DaisyUI/Modal', () => {
-  return {
-    __esModule: true,
-    default: ({ isOpen, children, title }: any) => {
-      if (!isOpen) return null;
-      return (
-        <div role="dialog" aria-label={title}>
-          {title && <h2>{title}</h2>}
-          {children}
+// Mock Modal component to avoid JSDOM <dialog> issues
+jest.mock('../../components/DaisyUI/Modal', () => {
+  return ({ isOpen, children, title, actions }: any) => (
+    isOpen ? (
+      <div role="dialog" aria-modal="true">
+        <h3>{title}</h3>
+        {children}
+        <div className="modal-action">
+          {actions?.map((action: any, index: number) => (
+            <button key={index} onClick={action.onClick}>{action.label}</button>
+          ))}
         </div>
-      );
-    },
-    // Export named exports as well if they are used
-    ConfirmModal: ({ isOpen, onConfirm }: any) => isOpen ? <button onClick={onConfirm}>Confirm</button> : null,
-    FormModal: ({ isOpen, onSubmit, children, title }: any) => {
-        if (!isOpen) return null;
-        return (
-            <div role="dialog" aria-label={title}>
-                <h2>{title}</h2>
-                <form onSubmit={(e) => { e.preventDefault(); onSubmit(new FormData(e.target as HTMLFormElement)); }}>
-                    {children}
-                    <button type="submit">Submit</button>
-                </form>
-            </div>
-        )
-    }
-  };
+      </div>
+    ) : null
+  );
 });
 
 describe('SystemManagement', () => {
+
   const mockWebSocket = {
     alerts: [],
     performanceMetrics: [],
@@ -62,15 +51,17 @@ describe('SystemManagement', () => {
     socket: null,
     messageFlow: [],
     botStats: [],
-    connect: vi.fn(),
-    disconnect: vi.fn(),
+    connect: jest.fn(),
+    disconnect: jest.fn(),
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     (WebSocketContext.useWebSocket as any).mockReturnValue(mockWebSocket);
     (apiService.getGlobalConfig as any).mockResolvedValue({ _userSettings: { values: {} } });
     (apiService.listSystemBackups as any).mockResolvedValue([]);
+    (apiService.getSystemInfo as any).mockResolvedValue({ systemInfo: { platform: 'linux', arch: 'x64', nodeVersion: 'v20.0.0', uptime: 1000, memory: { rss: 1000000 }, database: { connected: true } } });
+    (apiService.getEnvOverrides as any).mockResolvedValue({ data: { envVars: {} } });
     (apiService.getApiEndpointsStatus as any).mockResolvedValue({
       overall: { status: 'healthy', stats: { total: 1, online: 1, error: 0 } },
       endpoints: [
@@ -79,8 +70,8 @@ describe('SystemManagement', () => {
     });
 
     // Mock window methods
-    window.alert = vi.fn();
-    window.confirm = vi.fn(() => true);
+    window.alert = jest.fn();
+    window.confirm = jest.fn(() => true);
   });
 
   it('renders system management page', async () => {
@@ -93,7 +84,7 @@ describe('SystemManagement', () => {
     render(<SystemManagement />);
 
     // Find create backup button
-    const createButton = screen.getByText('Create Backup');
+    const createButton = screen.getByRole('button', { name: /Create Backup/i });
     fireEvent.click(createButton);
 
     // Expect modal to open
@@ -101,9 +92,7 @@ describe('SystemManagement', () => {
     expect(modalTitle).toBeInTheDocument();
 
     // Check encryption
-    // In DaisyUI toggle/checkbox often doesn't have a label element directly associated via 'for' attribute in the way getByLabelText expects if custom structure is used.
-    // We'll try to find by role 'checkbox'
-    const encryptCheckbox = screen.getByRole('checkbox', { name: /encrypt backup/i });
+    const encryptCheckbox = await screen.findByLabelText(/Encrypt Backup/i);
     fireEvent.click(encryptCheckbox);
 
     // Enter password

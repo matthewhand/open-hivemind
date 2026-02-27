@@ -21,7 +21,7 @@ const ProvidersPage: React.FC = () => {
       title: 'Message Providers',
       description: 'Configure Discord, Telegram, Slack, and Webhook providers for bot communication',
       icon: <MessageIcon className="w-12 h-12" />,
-      color: 'primary',
+      color: 'primary' as const,
       providers: ['Discord', 'Telegram', 'Slack', 'Webhook'],
       action: () => navigate('/admin/providers/message'),
       features: [
@@ -35,7 +35,7 @@ const ProvidersPage: React.FC = () => {
       title: 'LLM Providers',
       description: 'Set up OpenAI, Anthropic, Ollama, and custom LLM providers for AI responses',
       icon: <LLMIcon className="w-12 h-12" />,
-      color: 'secondary',
+      color: 'secondary' as const,
       providers: ['OpenAI', 'Anthropic', 'Ollama', 'Custom'],
       action: () => navigate('/admin/providers/llm'),
       features: [
@@ -74,7 +74,7 @@ const ProvidersPage: React.FC = () => {
                     <p className="text-base-content/60 mt-1">{category.description}</p>
                   </div>
                 </div>
-                <Badge variant={category.color} size="sm">
+                <Badge variant={category.color} size="small">
                   {category.providers.length} types
                 </Badge>
               </div>
@@ -84,7 +84,7 @@ const ProvidersPage: React.FC = () => {
                 <h3 className="text-sm font-semibold text-base-content/80 mb-3">Available Providers</h3>
                 <div className="flex flex-wrap gap-2">
                   {category.providers.map((provider) => (
-                    <Badge key={provider} color="neutral" variant="secondary" className="btn-outline text-xs">
+                    <Badge key={provider} variant="neutral" className="btn-outline text-xs">
                       {provider}
                     </Badge>
                   ))}

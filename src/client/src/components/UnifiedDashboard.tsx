@@ -262,7 +262,7 @@ const UnifiedDashboard: React.FC = () => {
         title: 'Active Bots',
         value: activeBotCount,
         change: bots.length === 0 ? 0 : Math.round((activeBotCount / bots.length) * 100),
-        changeType: activeBotCount >= bots.length / 2 ? 'increase' : 'decrease',
+        changeType: (activeBotCount >= bots.length / 2 ? 'increase' : 'decrease') as 'increase' | 'decrease',
         icon: '🤖',
         description: `${activeBotCount} of ${bots.length} agents online`,
         color: 'success' as const,
@@ -272,7 +272,7 @@ const UnifiedDashboard: React.FC = () => {
         title: 'Messages Today',
         value: totalMessages,
         change: totalMessages > 0 ? Math.min(100, Math.round(totalMessages / 50)) : 0,
-        changeType: totalMessages > 0 ? 'increase' : 'neutral',
+        changeType: (totalMessages > 0 ? 'increase' : 'neutral') as 'increase' | 'neutral',
         icon: '💬',
         description: `${activeConnections} live conversations`,
         color: 'secondary' as const,
@@ -282,7 +282,7 @@ const UnifiedDashboard: React.FC = () => {
         title: 'Error Rate',
         value: `${errorRatePercent}%`,
         change: errorRatePercent,
-        changeType: errorRatePercent <= 2 ? 'decrease' : 'increase',
+        changeType: (errorRatePercent <= 2 ? 'decrease' : 'increase') as 'decrease' | 'increase',
         icon: '🚨',
         description: `${totalErrors} errors observed`,
         color: errorRatePercent <= 2 ? 'success' as const : 'warning' as const,
@@ -293,7 +293,7 @@ const UnifiedDashboard: React.FC = () => {
         value: uptimeDisplay,
         icon: '⏱️',
         description: `Up since ${uptimeDisplay === '—' ? '—' : 'last restart'}`,
-        color: 'accent' as const,
+        color: 'secondary' as const,
       },
     ],
     [activeBotCount, bots.length, totalMessages, activeConnections, errorRatePercent, totalErrors, uptimeDisplay],
@@ -743,7 +743,7 @@ const UnifiedDashboard: React.FC = () => {
                     <Badge variant="primary" size="small">
                       ENV&nbsp;{environment.toUpperCase()}
                     </Badge>
-                    <Badge variant="accent" size="small">
+                    <Badge variant="secondary" size="small">
                       Version&nbsp;{systemVersion}
                     </Badge>
                     <Badge variant="secondary" size="small">

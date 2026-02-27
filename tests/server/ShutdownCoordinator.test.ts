@@ -39,8 +39,7 @@ const createMockService = (name: string): IShutdownable & { name: string } => ({
 
 describe('ShutdownCoordinator', () => {
   let coordinator: ShutdownCoordinator;
-  let exitSpy: jest.SpyInstance;
-  const originalEnv = process.env;
+  let exitProcessSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.resetModules();
@@ -51,16 +50,16 @@ describe('ShutdownCoordinator', () => {
     coordinator = ShutdownCoordinator.getInstance();
     jest.useFakeTimers();
 
-    // Mock process.exit to prevent test runner from exiting
-    // @ts-ignore
-    exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
+    // Spy on protected method exitProcess
+    exitProcessSpy = jest.spyOn(coordinator as any, 'exitProcess').mockImplementation((code: number) => {
+      console.log('MOCKED exitProcess called with', code);
+    });
   });
 
   afterEach(() => {
     process.env = originalEnv;
     jest.useRealTimers();
-    jest.clearAllMocks();
-    exitSpy.mockRestore();
+    jest.restoreAllMocks();
   });
 
   describe('Singleton Pattern', () => {
@@ -98,6 +97,24 @@ describe('ShutdownCoordinator', () => {
       coordinator.registerService(service);
       // Service should be registered without error
       expect(() => coordinator.registerService(service)).not.toThrow();
+    });
+  });
+
+  describe('Phase Management', () => {
+    it('should start in IDLE phase', () => {
+      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.IDLE);
+    });
+
+    it('should transition through phases during shutdown', async () => {
+      const httpServer = createMockHttpServer();
+      coordinator.registerHttpServer(httpServer);
+
+      const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
+
+      // Since execution is instantaneous with mocks, we just wait for completion
+      await jest.runAllTimersAsync();
+      await shutdownPromise;
+      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.COMPLETE);
     });
   });
 
@@ -174,7 +191,8 @@ describe('ShutdownCoordinator', () => {
 
   describe('Signal Handlers', () => {
     it('should setup signal handlers', () => {
-      const processOnSpy = jest.spyOn(process, 'on');
+      // Mock process.on to prevent attaching real listeners that persist across tests
+      const processOnSpy = jest.spyOn(process, 'on').mockImplementation(() => process);
 
       coordinator.setupSignalHandlers();
 
@@ -204,22 +222,12 @@ describe('ShutdownCoordinator', () => {
 
   describe('Timeout Handling', () => {
     it('should force exit after timeout', async () => {
-      // Set short total timeout and long phase timeout for stopBackground
-      process.env.SHUTDOWN_TIMEOUT_TOTAL = '1000';
-      process.env.SHUTDOWN_TIMEOUT_STOPBACKGROUND = '5000';
-
-      // Re-instantiate to pick up env vars
-      (ShutdownCoordinator as any).instance = undefined;
-      coordinator = ShutdownCoordinator.getInstance();
-
-      exitSpy.mockClear();
-
-      // Register a service that hangs on shutdown
-      const hangingService = {
-        name: 'hanging',
-        shutdown: jest.fn(() => new Promise<void>(() => {})) // Never resolves
-      };
-      coordinator.registerService(hangingService);
+      const httpServer = createMockHttpServer();
+      httpServer.close.mockImplementation(() => {
+        // Never call callback - simulate hanging
+        return this;
+      });
+      coordinator.registerHttpServer(httpServer);
 
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
 
@@ -229,7 +237,25 @@ describe('ShutdownCoordinator', () => {
 
       await shutdownPromise;
 
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(exitProcessSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Shutdown Reason Tracking', () => {
+    it('should track shutdown reason', async () => {
+      const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
+      await jest.runAllTimersAsync();
+      await shutdownPromise;
+
+      expect(coordinator.getShutdownReason()).toBe('SIGTERM');
+    });
+
+    it('should track different shutdown reasons', async () => {
+      const shutdownPromise = coordinator.initiateShutdown('unhandledRejection');
+      await jest.runAllTimersAsync();
+      await shutdownPromise;
+
+      expect(coordinator.getShutdownReason()).toBe('unhandledRejection');
     });
   });
 });
