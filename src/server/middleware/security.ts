@@ -9,6 +9,9 @@ const debug = Debug('app:securityMiddleware');
 // unloaded and never bleeds between jest test runs after jest.resetModules().
 const rateLimitStore = new Map<string, { requests: number[]; resetTime: number }>();
 
+// Cache trusted proxies at module load time for performance
+let cachedTrustedProxies: string[] | null = null;
+
 /**
  * Security middleware that adds comprehensive security headers
  * to protect against common web vulnerabilities
@@ -151,7 +154,7 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
     rateLimitStore.set(key, { requests: [], resetTime: now + windowMs });
   }
 
-  const clientData = rateLimitStore.get(key)!
+  const clientData = rateLimitStore.get(key)!;
 
   // Clean up old requests
   clientData.requests = clientData.requests.filter(
@@ -277,48 +280,227 @@ function sanitizeCookies(req: Request): void {
 }
 
 /**
- * Determine whether the direct peer connection comes from a trusted proxy.
- * Trusted proxies are loopback and private-network addresses — ranges that
- * cannot be reached from the public internet and are therefore under operator
- * control.
+ * Configuration for trusted proxies
+ * Can be set via TRUSTED_PROXIES env variable (comma-separated)
+ * Defaults to common local/internal network addresses
  */
-function isTrustedProxy(ip: string | undefined): boolean {
-  if (!ip) return false;
-  // Normalise IPv4-mapped IPv6 addresses (e.g. "::ffff:127.0.0.1" -> "127.0.0.1")
-  const cleanIp = ip.replace(/^::ffff:/, '');
-  return (
-    cleanIp === '127.0.0.1' ||
-    cleanIp === '::1' ||
-    /^10\./.test(cleanIp) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(cleanIp) ||
-    /^192\.168\./.test(cleanIp)
-  );
+function getTrustedProxies(): string[] {
+  // Return cached value if available
+  if (cachedTrustedProxies !== null) {
+    return cachedTrustedProxies;
+  }
+
+  const envProxies = process.env.TRUSTED_PROXIES;
+  if (envProxies) {
+    const proxies: string[] = [];
+    const entries = envProxies
+      .split(',')
+      .map((ip) => ip.trim())
+      .filter(Boolean);
+
+    for (const entry of entries) {
+      // Allow wildcard
+      if (entry === '*') {
+        proxies.push(entry);
+        continue;
+      }
+
+      // Validate CIDR notation
+      if (entry.includes('/')) {
+        const [network, prefix] = entry.split('/');
+        const prefixNum = parseInt(prefix, 10);
+        if (
+          !isNaN(prefixNum) &&
+          prefixNum >= 0 &&
+          prefixNum <= 32 &&
+          network.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)
+        ) {
+          proxies.push(entry);
+        } else {
+          debug('Warning: Invalid CIDR in TRUSTED_PROXIES:', entry);
+        }
+        continue;
+      }
+
+      // Validate IP address (basic check)
+      if (
+        entry.match(/^(\d{1,3}\.){3}\d{1,3}$/) ||
+        entry.match(/^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/) ||
+        entry === '::1'
+      ) {
+        proxies.push(entry);
+      } else {
+        debug('Warning: Invalid IP in TRUSTED_PROXIES:', entry);
+      }
+    }
+
+    cachedTrustedProxies = proxies;
+    return proxies;
+  }
+
+  // Default trusted proxies - localhost and private network ranges
+  cachedTrustedProxies = [
+    '127.0.0.1',
+    '::1',
+    '::ffff:127.0.0.1',
+    '10.0.0.0/8',
+    '172.16.0.0/12',
+    '192.168.0.0/16',
+  ];
+  return cachedTrustedProxies;
 }
 
 /**
- * Get client IP address from request.
- *
- * Security note: proxy headers such as X-Forwarded-For are trivially
- * spoofable by any client.  We only consult them when the immediate TCP peer
- * (req.socket.remoteAddress) is a trusted proxy address, i.e. a loopback or
- * RFC-1918 address under operator control.  When the connection comes
- * directly from the internet the header is ignored entirely and the real
- * socket address is used instead.
+ * Check if an IP address matches a trusted proxy
+ * Supports CIDR notation for ranges
  */
-function getClientIP(req: Request): string {
-  const remoteAddress = req.socket?.remoteAddress;
-  if (isTrustedProxy(remoteAddress)) {
-    // Only trust X-Forwarded-For when the request arrived via a trusted proxy.
-    const forwarded = req.headers['x-forwarded-for'];
-    const firstIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
-      ?.split(',')[0]
-      ?.trim();
-    // Validate the extracted value looks like an IP address before trusting it.
-    if (firstIp && /^[\d.:a-fA-F]+$/.test(firstIp)) {
-      return firstIp;
+function isTrustedProxy(ip: string): boolean {
+  const trustedProxies = getTrustedProxies();
+
+  for (const trusted of trustedProxies) {
+    // Check for exact match
+    if (!trusted.includes('/')) {
+      if (ip === trusted || ip === `::ffff:${trusted}`) {
+        return true;
+      }
+    } else if (ip === trusted) {
+      return true;
+    }
+
+    // Check for wildcard (allow all) - only '*' is supported, not '0.0.0.0'
+    if (trusted === '*') {
+      return true;
+    }
+
+    // Check CIDR notation
+    if (trusted.includes('/')) {
+      if (isIPInCIDR(ip, trusted)) {
+        return true;
+      }
     }
   }
-  return remoteAddress || 'unknown';
+
+  return false;
+}
+
+/**
+ * Validate and sanitize an IP address
+ * Returns null if the IP is invalid or potentially malicious
+ */
+function validateIP(ip: string): string | null {
+  if (!ip || typeof ip !== 'string') {
+    return null;
+  }
+
+  // Trim whitespace
+  ip = ip.trim();
+
+  // Reject IPs with suspicious characters (prevent header injection)
+  if (/[\r\n\0]/.test(ip)) {
+    return null;
+  }
+
+  // Handle IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
+  const ipv4Match = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (ipv4Match) {
+    ip = ipv4Match[1];
+  }
+
+  // Validate IPv4 format
+  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const ipv4Result = ip.match(ipv4Regex);
+  if (ipv4Result) {
+    const [, a, b, c, d] = ipv4Result;
+    const octets = [a, b, c, d];
+    for (const octet of octets) {
+      // Reject leading zeros (octal confusion attack) - only "0" is allowed
+      if (octet.length > 1 && octet.startsWith('0')) {
+        return null;
+      }
+      const num = parseInt(octet, 10);
+      if (isNaN(num) || num < 0 || num > 255) {
+        return null;
+      }
+    }
+    return ip;
+  }
+
+  // Validate IPv6 format (basic check)
+  // IPv6 can be compressed, so we just check for valid hex characters and colons
+  const ipv6Regex =
+    /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$|^::1$/;
+  if (ipv6Regex.test(ip)) {
+    return ip;
+  }
+
+  return null;
+}
+
+/**
+ * Get the immediate connection IP (not from headers)
+ * This is the IP that actually connected to the server
+ */
+function getConnectionIP(req: Request): string {
+  const remoteAddress = req.socket?.remoteAddress || 'unknown';
+  const validated = validateIP(remoteAddress);
+  return validated || 'unknown';
+}
+
+/**
+ * Get client IP address from request
+ *
+ * SECURITY: This function now validates that proxy headers are only trusted
+ * when the request comes from a trusted proxy. This prevents IP spoofing attacks
+ * where an attacker could set X-Forwarded-For to 127.0.0.1 to bypass access controls.
+ */
+function getClientIP(req: Request): string {
+  // Get the actual connection IP
+  const connectionIP = getConnectionIP(req);
+
+  // Only trust proxy headers if the connection comes from a trusted proxy
+  if (!isTrustedProxy(connectionIP)) {
+    debug('Untrusted proxy - using connection IP:', connectionIP);
+    return connectionIP;
+  }
+
+  // Trust proxy headers - check in order of preference
+  // X-Forwarded-For can contain multiple IPs (client, proxy1, proxy2, ...)
+  // The first IP is the original client
+  const forwardedFor = req.get('x-forwarded-for');
+  if (forwardedFor) {
+    // X-Forwarded-For can contain multiple IPs separated by commas
+    // We take the first one as the client IP, but validate it
+    const ips = forwardedFor.split(',').map((ip) => ip.trim());
+    for (const ip of ips) {
+      const validated = validateIP(ip);
+      if (validated) {
+        debug('Using X-Forwarded-For IP:', validated, 'via trusted proxy:', connectionIP);
+        return validated;
+      }
+    }
+  }
+
+  const realIP = req.get('x-real-ip');
+  if (realIP) {
+    const validated = validateIP(realIP);
+    if (validated) {
+      debug('Using X-Real-IP:', validated, 'via trusted proxy:', connectionIP);
+      return validated;
+    }
+  }
+
+  const clientIP = req.get('x-client-ip');
+  if (clientIP) {
+    const validated = validateIP(clientIP);
+    if (validated) {
+      debug('Using X-Client-IP:', validated, 'via trusted proxy:', connectionIP);
+      return validated;
+    }
+  }
+
+  // Fall back to connection remote address
+  debug('No proxy headers found, using connection IP:', connectionIP);
+  return connectionIP;
 }
 
 /**
@@ -353,7 +535,7 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
 
   // Check if IP is in whitelist
   const isAllowed = whitelist.some((allowedIP) => {
-    if (allowedIP === '*' || allowedIP === '0.0.0.0') {
+    if (allowedIP === '*') {
       return true; // Allow all
     }
     if (allowedIP.includes('/')) {
@@ -374,7 +556,6 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
     res.status(403).json({
       error: 'Access Denied',
       message: 'Your IP address is not authorized to access this resource.',
-      ip: clientIP,
     });
     return;
   }
@@ -384,28 +565,85 @@ export function ipWhitelist(req: Request, res: Response, next: NextFunction): vo
 }
 
 /**
- * Basic CIDR check for IP ranges
+ * Convert IPv4 address to numeric representation for comparison
+ * Returns NaN for invalid IP addresses
+ */
+function ipToLong(ip: string): number {
+  // Validate IP format first
+  if (!ip || typeof ip !== 'string') {
+    return NaN;
+  }
+
+  const parts = ip.split('.');
+  if (parts.length !== 4) {
+    return NaN;
+  }
+
+  const nums = parts.map((p) => parseInt(p, 10));
+
+  // Validate each octet is a number between 0-255
+  for (const num of nums) {
+    if (isNaN(num) || num < 0 || num > 255) {
+      return NaN;
+    }
+  }
+
+  return (nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3];
+}
+
+/**
+ * Check if an IP address is in a CIDR range
+ * Supports both IPv4 and IPv4-mapped IPv6 addresses
+ * Note: IPv6 CIDR ranges are not currently supported
  */
 function isIPInCIDR(ip: string, cidr: string): boolean {
   try {
-    const [network, prefix] = cidr.split('/');
-    const prefixLen = parseInt(prefix);
+    // Handle IPv4-mapped IPv6 addresses
+    let cleanIP = ip;
+    const ipv4Match = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+    if (ipv4Match) {
+      cleanIP = ipv4Match[1];
+    }
 
-    // Simple implementation - in production you'd use a proper library
-    if (
-      ip.startsWith(
-        network
-          .split('.')
-          .slice(0, Math.floor(prefixLen / 8))
-          .join('.')
-      )
-    ) {
+    // Only support IPv4 CIDR for now - warn if IPv6 CIDR is provided
+    if (!cleanIP.includes('.') || cleanIP.includes(':')) {
+      return false;
+    }
+
+    // Validate CIDR network part is IPv4
+    const [network, prefixStr] = cidr.split('/');
+    if (!network.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
+      debug('Warning: IPv6 CIDR not supported:', cidr);
+      return false;
+    }
+
+    const prefix = parseInt(prefixStr, 10);
+
+    if (isNaN(prefix) || prefix < 0 || prefix > 32) {
+      return false;
+    }
+
+    const ipLong = ipToLong(cleanIP);
+    const networkLong = ipToLong(network);
+
+    // Validate IP conversions succeeded
+    if (isNaN(ipLong) || isNaN(networkLong)) {
+      return false;
+    }
+
+    // Handle /0 prefix specially - it should match all IPs
+    // Note: JavaScript shift is modulo 32, so -1 << 32 === -1, not 0
+    if (prefix === 0) {
       return true;
     }
+
+    const mask = -1 << (32 - prefix);
+
+    return (ipLong & mask) === (networkLong & mask);
   } catch (e) {
     debug('CIDR parsing error:', e);
+    return false;
   }
-  return false;
 }
 
 /**
