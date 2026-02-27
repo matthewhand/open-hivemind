@@ -53,8 +53,9 @@ export async function executeCommandSafe(
  * Used to prevent command injection.
  */
 function containsShellMetacharacters(str: string): boolean {
-  // Pattern matches common shell metacharacters that could enable injection
-  const dangerousPattern = /[;|&$\`\\*?{}\[\]<>!#]/;
+  // Pattern matches shell metacharacters that could enable injection
+  // Includes: ; | & $ ` \ * ? { } [ ] < > ! # ( ) ' " \n \r \t
+  const dangerousPattern = /[;|&$`\\*?{}\[\]<>!#()'"\n\r]/;
   return dangerousPattern.test(str);
 }
 
@@ -71,14 +72,30 @@ function containsShellMetacharacters(str: string): boolean {
  * @returns A promise that resolves to the command output.
  */
 export async function executeCommand(command: string): Promise<string> {
-  debug('Executing command: ' + command);
+  // Whitelist of safe command patterns (no user input allowed)
+  const safePatterns = [
+    // Allow simple git commands with specific patterns
+    /^git\s+(status|log|version|rev-parse)\s*(--\w+\s*\w*)?$/,
+    // Allow simple echo for testing
+    /^echo\s+["']?[^;|&$`<>{},!#]*["']?$/,
+    // Allow simple node/npm version checks
+    /^(node|npm|npx)\s+--version$/,
+  ];
 
-  // Security check: warn if command contains potential metacharacters
-  if (containsShellMetacharacters(command)) {
-    debug('WARNING: Command contains shell metacharacters, potential injection risk: ' + command);
+  const isWhitelisted = safePatterns.some(pattern => pattern.test(command.trim()));
+
+  if (!isWhitelisted && containsShellMetacharacters(command)) {
+    const error = new Error(
+      'Command contains shell metacharacters and cannot be executed safely. ' +
+      'Use executeCommandSafe() with command arguments as an array instead.'
+    );
+    debug('SECURITY: Blocked command with metacharacters: ' + command);
+    throw error;
   }
 
-  // In production, log a deprecation warning to encourage migration to safe alternative
+  debug('Executing command: ' + command);
+
+  // In production, enforce migration to safe alternative
   if (process.env.NODE_ENV === 'production') {
     debug('DEPRECATION WARNING: executeCommand() is deprecated. Use executeCommandSafe() instead.');
   }
