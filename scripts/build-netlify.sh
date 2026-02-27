@@ -35,4 +35,8 @@ npx tsc src/netlify/functions/server.ts \
   --skipLibCheck \
   --moduleResolution node
 
+# 5. Verification
+echo "🔹 Running post-build verification..."
+node scripts/verify-build.js
+
 echo "✅ Netlify build complete!"
