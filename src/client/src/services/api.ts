@@ -382,8 +382,15 @@ class ApiService {
     const url = buildUrl(endpoint);
     const method = options?.method?.toUpperCase() || 'GET';
 
+    // Handle timeout + abort signal chain
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
+    const timeoutId = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
+
+    // Chain external signal if provided
+    const abortHandler = () => controller.abort();
+    if (options?.signal) {
+      options.signal.addEventListener('abort', abortHandler);
+    }
 
     try {
       const authHeaders = this.getAuthHeaders();
@@ -406,7 +413,12 @@ class ApiService {
         },
         signal: controller.signal,
       });
-      clearTimeout(id);
+      clearTimeout(timeoutId);
+
+      // Clean up external signal listener to prevent memory leaks
+      if (options?.signal) {
+        options.signal.removeEventListener('abort', abortHandler);
+      }
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
@@ -586,14 +598,15 @@ class ApiService {
     llmProvider?: string;
     from?: string;
     to?: string;
+    signal?: AbortSignal; // Add signal support for cancellation
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) { query.append(key, value); }
+      if (key !== 'signal' && value) { query.append(key, value as string); }
     });
     const search = query.toString();
     const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
-    return this.request<ActivityResponse>(endpoint);
+    return this.request<ActivityResponse>(endpoint, { signal: params.signal });
   }
 
   async clearCache(): Promise<{ success: boolean; message: string }> {

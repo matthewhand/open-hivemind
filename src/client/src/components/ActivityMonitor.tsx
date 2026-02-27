@@ -33,42 +33,50 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
   const [isMonitoring, setIsMonitoring] = useState(autoRefresh);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const fetchActivity = useCallback(async () => {
+  const fetchActivity = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await apiService.getActivity();
+      const response = await apiService.getActivity({ signal });
 
       setEvents((prevEvents) => {
         // Optimization: prevent unnecessary re-renders if data hasn't changed.
-        // We check length and first/last item IDs to detect changes efficiently without deep comparison.
-        if (prevEvents.length === response.events.length && prevEvents.length > 0) {
-          const firstMatch = prevEvents[0].id === response.events[0].id;
-          const lastMatch =
-            prevEvents[prevEvents.length - 1].id === response.events[response.events.length - 1].id;
-          if (firstMatch && lastMatch) {
-            return prevEvents;
-          }
-        } else if (prevEvents.length === 0 && response.events.length === 0) {
-          return prevEvents;
-        }
+        // Deep comparison is expensive, but checking length and key fields (ID + Status) is efficient.
+        const hasChanged =
+          prevEvents.length !== response.events.length ||
+          response.events.some((event, index) => {
+            const prev = prevEvents[index];
+            return !prev || prev.id !== event.id || prev.status !== event.status;
+          });
 
-        return response.events;
+        return hasChanged ? response.events : prevEvents;
       });
 
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Failed to fetch activity:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Failed to fetch activity:', error);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchActivity();
+    const controller = new AbortController();
+    fetchActivity(controller.signal);
 
     if (isMonitoring) {
-      const interval = setInterval(fetchActivity, 5000);
-      return () => clearInterval(interval);
+      const interval = setInterval(() => {
+        fetchActivity(controller.signal);
+      }, 5000);
+      return () => {
+        clearInterval(interval);
+        controller.abort();
+      };
     }
+
+    return () => {
+      controller.abort();
+    };
   }, [isMonitoring, fetchActivity]);
 
   const columns = useMemo(() => [
