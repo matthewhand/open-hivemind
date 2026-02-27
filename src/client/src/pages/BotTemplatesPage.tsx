@@ -196,21 +196,24 @@ const BotTemplatesPage: React.FC = () => {
                     value: selectedPlatform,
                     onChange: setSelectedPlatform,
                     options: platformOptions,
-                    className: 'w-full sm:w-40'
+                    className: 'w-full sm:w-40',
+                    ariaLabel: 'Filter by platform'
                 },
                 {
                     key: 'persona',
                     value: selectedPersona,
                     onChange: setSelectedPersona,
                     options: personaOptions,
-                    className: 'w-full sm:w-40'
+                    className: 'w-full sm:w-40',
+                    ariaLabel: 'Filter by persona'
                 },
                 {
                     key: 'llm',
                     value: selectedLlmProvider,
                     onChange: setSelectedLlmProvider,
                     options: llmOptions,
-                    className: 'w-full sm:w-40'
+                    className: 'w-full sm:w-40',
+                    ariaLabel: 'Filter by LLM provider'
                 }
             ]}
             onClear={handleClearFilters}

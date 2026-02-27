@@ -75,4 +75,72 @@ describe('SearchFilterBar', () => {
     const input = screen.getByRole('textbox');
     expect(input).toHaveClass('pr-10');
   });
+
+  it('renders filters with provided aria-label', () => {
+    const filters = [
+      {
+        key: 'platform',
+        value: 'all',
+        onChange: jest.fn(),
+        options: [{ label: 'All Platforms', value: 'all' }],
+        ariaLabel: 'Filter by platform'
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={filters}
+      />
+    );
+
+    const select = screen.getByLabelText('Filter by platform');
+    expect(select).toBeInTheDocument();
+  });
+
+  it('renders filters with fallback aria-label from placeholder', () => {
+    const filters = [
+      {
+        key: 'platform',
+        value: 'all',
+        onChange: jest.fn(),
+        options: [{ label: 'All Platforms', value: 'all' }],
+        placeholder: 'Select Platform'
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={filters}
+      />
+    );
+
+    const select = screen.getByLabelText('Select Platform');
+    expect(select).toBeInTheDocument();
+  });
+
+  it('renders filters with fallback aria-label from key', () => {
+    const filters = [
+      {
+        key: 'platform',
+        value: 'all',
+        onChange: jest.fn(),
+        options: [{ label: 'All Platforms', value: 'all' }]
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={filters}
+      />
+    );
+
+    const select = screen.getByLabelText('Filter by platform');
+    expect(select).toBeInTheDocument();
+  });
 });

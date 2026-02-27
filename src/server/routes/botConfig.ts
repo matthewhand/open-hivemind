@@ -249,125 +249,126 @@ router.put(
   async (req: AuditedRequest, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
-    const { botId } = req.params;
-    const updates = req.body;
+      const { botId } = req.params;
+      const updates = req.body;
 
-    // Get existing bot for comparison
-    const existingBot = botConfigManager.getBot(botId);
-    if (!existingBot) {
-      logConfigChange(req, 'UPDATE', botId, 'failure', 'Bot configuration not found');
-      return res.status(404).json({
-        error: 'Bot configuration not found',
-        message: `Bot configuration with ID ${botId} not found`,
-      });
-    }
-
-    // Validate updated configuration using convict schema
-    const schemaValidationResult = configValidator.validateBotConfigWithSchema({
-      ...existingBot,
-      ...updates,
-    });
-    if (!schemaValidationResult.isValid) {
-      logConfigChange(
-        req,
-        'UPDATE',
-        botId,
-        'failure',
-        `Schema validation failed: ${schemaValidationResult.errors.join(', ')}`
-      );
-      return res.status(400).json({
-        error: 'Schema validation error',
-        message: 'Configuration schema validation failed',
-        details: schemaValidationResult.errors,
-      });
-    }
-
-    // Additional business logic validation
-    const businessValidationResult = configValidator.validateBotConfig({
-      ...existingBot,
-      ...updates,
-    });
-    if (!businessValidationResult.isValid) {
-      logConfigChange(
-        req,
-        'UPDATE',
-        botId,
-        'failure',
-        `Business validation failed: ${businessValidationResult.errors.join(', ')}`
-      );
-      return res.status(400).json({
-        error: 'Business validation error',
-        message: 'Configuration business validation failed',
-        details: businessValidationResult.errors,
-        warnings: businessValidationResult.warnings,
-        suggestions: businessValidationResult.suggestions,
-      });
-    }
-
-    const dbManager = DatabaseManager.getInstance();
-    if (!dbManager.isConnected()) {
-      return res.status(503).json({ error: 'Database not connected' });
-    }
-
-    if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Create approval request for the configuration change
-    const diff = JSON.stringify({
-      old: existingBot,
-      new: { ...existingBot, ...updates },
-    });
-
-    const approvalRequestId = await dbManager.createApprovalRequest({
-      resourceType: 'BotConfiguration',
-      resourceId: parseInt(botId),
-      changeType: 'UPDATE',
-      requestedBy: req.user?.username || 'unknown',
-      diff,
-      status: 'pending',
-    });
-
-    logConfigChange(
-      req,
-      'UPDATE',
-      botId,
-      'success',
-      'Bot configuration update submitted for approval',
-      {
-        oldValue: existingBot,
-        newValue: { ...existingBot, ...updates },
+      // Get existing bot for comparison
+      const existingBot = botConfigManager.getBot(botId);
+      if (!existingBot) {
+        logConfigChange(req, 'UPDATE', botId, 'failure', 'Bot configuration not found');
+        return res.status(404).json({
+          error: 'Bot configuration not found',
+          message: `Bot configuration with ID ${botId} not found`,
+        });
       }
-    );
 
-    return res.json({
-      success: true,
-      message: 'Bot configuration update requires approval.',
-      approvalRequestId,
-    });
-  } catch (error: any) {
-    if (error instanceof ConfigurationError) {
-      debug('Database not configured for bot configuration update');
-      logConfigChange(req, 'UPDATE', req.params.botId, 'failure', error.message);
-      return res.status(503).json({
-        error: 'Database not configured',
-        message: error.message,
+      // Validate updated configuration using convict schema
+      const schemaValidationResult = configValidator.validateBotConfigWithSchema({
+        ...existingBot,
+        ...updates,
+      });
+      if (!schemaValidationResult.isValid) {
+        logConfigChange(
+          req,
+          'UPDATE',
+          botId,
+          'failure',
+          `Schema validation failed: ${schemaValidationResult.errors.join(', ')}`
+        );
+        return res.status(400).json({
+          error: 'Schema validation error',
+          message: 'Configuration schema validation failed',
+          details: schemaValidationResult.errors,
+        });
+      }
+
+      // Additional business logic validation
+      const businessValidationResult = configValidator.validateBotConfig({
+        ...existingBot,
+        ...updates,
+      });
+      if (!businessValidationResult.isValid) {
+        logConfigChange(
+          req,
+          'UPDATE',
+          botId,
+          'failure',
+          `Business validation failed: ${businessValidationResult.errors.join(', ')}`
+        );
+        return res.status(400).json({
+          error: 'Business validation error',
+          message: 'Configuration business validation failed',
+          details: businessValidationResult.errors,
+          warnings: businessValidationResult.warnings,
+          suggestions: businessValidationResult.suggestions,
+        });
+      }
+
+      const dbManager = DatabaseManager.getInstance();
+      if (!dbManager.isConnected()) {
+        return res.status(503).json({ error: 'Database not connected' });
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Create approval request for the configuration change
+      const diff = JSON.stringify({
+        old: existingBot,
+        new: { ...existingBot, ...updates },
+      });
+
+      const approvalRequestId = await dbManager.createApprovalRequest({
+        resourceType: 'BotConfiguration',
+        resourceId: parseInt(botId),
+        changeType: 'UPDATE',
+        requestedBy: req.user?.username || 'unknown',
+        diff,
+        status: 'pending',
+      });
+
+      logConfigChange(
+        req,
+        'UPDATE',
+        botId,
+        'success',
+        'Bot configuration update submitted for approval',
+        {
+          oldValue: existingBot,
+          newValue: { ...existingBot, ...updates },
+        }
+      );
+
+      return res.json({
+        success: true,
+        message: 'Bot configuration update requires approval.',
+        approvalRequestId,
+      });
+    } catch (error: any) {
+      if (error instanceof ConfigurationError) {
+        debug('Database not configured for bot configuration update');
+        logConfigChange(req, 'UPDATE', req.params.botId, 'failure', error.message);
+        return res.status(503).json({
+          error: 'Database not configured',
+          message: error.message,
+        });
+      }
+      debug('Error updating bot configuration:', error);
+      logConfigChange(
+        req,
+        'UPDATE',
+        req.params.botId,
+        'failure',
+        `Failed to update bot configuration: ${error.message}`
+      );
+      return res.status(400).json({
+        error: 'Failed to update bot configuration',
+        message: error.message || 'An error occurred while updating bot configuration',
       });
     }
-    debug('Error updating bot configuration:', error);
-    logConfigChange(
-      req,
-      'UPDATE',
-      req.params.botId,
-      'failure',
-      `Failed to update bot configuration: ${error.message}`
-    );
-    return res.status(400).json({
-      error: 'Failed to update bot configuration',
-      message: error.message || 'An error occurred while updating bot configuration',
-    });
   }
-});
+);
 
 router.post(
   '/:botId/apply-update',

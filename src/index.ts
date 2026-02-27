@@ -38,10 +38,10 @@ import StartupGreetingService from '@src/services/StartupGreetingService';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
-import { Message } from './types/messages';
-import startupDiagnostics from './utils/startupDiagnostics';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
+import { Message } from './types/messages';
+import startupDiagnostics from './utils/startupDiagnostics';
 
 require('dotenv/config');
 
@@ -189,8 +189,6 @@ if (process.env.NODE_ENV !== 'development') {
     }
   });
 }
-
-
 
 // Serve static files from webui dist directory
 // Serve static files from webui dist directory (Production Only)
