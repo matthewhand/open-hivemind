@@ -185,6 +185,10 @@ export function getTaskLlm(
       ? opts.fallbackProviders
       : getLlmProvider();
 
+  if (!fallbackProviders || fallbackProviders.length === 0) {
+    throw new Error('No LLM providers available for task routing');
+  }
+
   if (!providerRef) {
     return {
       provider: fallbackProviders[0],

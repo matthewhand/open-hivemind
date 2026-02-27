@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 def find_orphans(root_dir):
     all_files = []
@@ -57,9 +58,17 @@ def find_orphans(root_dir):
     return orphans
 
 if __name__ == "__main__":
-    root_dir = "/home/chatgpt/open-hivemind/src/client/src"
+    if len(sys.argv) < 2:
+        print("Usage: python find_orphans.py <root_dir>")
+        print("Example: python find_orphans.py src/client/src")
+        sys.exit(1)
+
+    root_dir = sys.argv[1]
+    if not os.path.isabs(root_dir):
+        root_dir = os.path.abspath(root_dir)
+
     orphans = find_orphans(root_dir)
     
-    print("Potential Orphaned Components:")
+    print(f"Potential Orphaned Components in {root_dir}:")
     for orphan in sorted(orphans):
         print(f"- {orphan}")

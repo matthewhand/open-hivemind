@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, Badge, Button, Alert, DataTable } from './DaisyUI';
 import {
   Activity,
@@ -10,8 +10,11 @@ import {
   Clock,
   MessageCircle,
   AlertCircle,
+  EyeOff,
 } from 'lucide-react';
 import { apiService, ActivityEvent } from '../services/api';
+import { usePageVisibility } from '../hooks/usePageVisibility';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
   switch (status) {
@@ -32,6 +35,14 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
   const [loading, setLoading] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(autoRefresh);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  // Visibility hooks for "Schrödinger's Polling"
+  const isPageVisible = usePageVisibility();
+  const componentRef = useRef<HTMLDivElement>(null);
+  const isComponentVisible = useIntersectionObserver(componentRef);
+
+  // Derived visibility state
+  const shouldPoll = isMonitoring && isPageVisible && isComponentVisible;
 
   const fetchActivity = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -60,24 +71,27 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
     }
   }, []);
 
+  // Initial fetch on mount
   useEffect(() => {
     const controller = new AbortController();
     fetchActivity(controller.signal);
+    return () => controller.abort();
+  }, [fetchActivity]);
 
-    if (isMonitoring) {
-      const interval = setInterval(() => {
-        fetchActivity(controller.signal);
-      }, 5000);
-      return () => {
-        clearInterval(interval);
-        controller.abort();
-      };
-    }
+  // Polling logic
+  useEffect(() => {
+    if (!shouldPoll) return;
+
+    const controller = new AbortController();
+    const interval = setInterval(() => {
+      fetchActivity(controller.signal);
+    }, 5000);
 
     return () => {
+      clearInterval(interval);
       controller.abort();
     };
-  }, [isMonitoring, fetchActivity]);
+  }, [shouldPoll, fetchActivity]);
 
   const columns = useMemo(() => [
     {
@@ -136,7 +150,7 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
   const paginationConfig = useMemo(() => ({ pageSize: 10 }), []);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6" ref={componentRef}>
       <Card className="shadow-lg border-l-4 border-info">
         <div className="card-body">
           <div className="flex items-center justify-between">
@@ -144,9 +158,14 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
               <Activity className="w-8 h-8 text-info" />
               <div>
                 <h2 className="card-title text-2xl">Activity Monitor</h2>
-                <p className="text-sm opacity-70">
-                  Real-time system activity tracking • Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
+                <div className="flex items-center gap-2 text-sm opacity-70">
+                  <span>Real-time system activity tracking • Last updated: {lastUpdated.toLocaleTimeString()}</span>
+                  {!shouldPoll && isMonitoring && (
+                    <span className="badge badge-ghost badge-sm gap-1" title="Polling paused to save resources">
+                      <EyeOff className="w-3 h-3" /> Paused (Hidden)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">

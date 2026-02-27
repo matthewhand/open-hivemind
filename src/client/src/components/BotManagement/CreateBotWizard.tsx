@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import Input from '../DaisyUI/Input';
 
 interface CreateBotWizardProps {
     onCancel: () => void;
@@ -139,17 +140,13 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
             <div className="flex-1 overflow-y-auto px-1">
                 {step === 1 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Bot Name <span className="text-error">*</span></span></label>
-                            <input
-                                type="text"
-                                placeholder="e.g. HelpBot"
-                                className="input input-bordered w-full"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                autoFocus
-                            />
-                        </div>
+                        <Input
+                            label={<span>Bot Name <span className="text-error">*</span></span>}
+                            placeholder="e.g. HelpBot"
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            autoFocus
+                        />
 
                         <div className="form-control">
                             <textarea

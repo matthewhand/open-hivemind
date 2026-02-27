@@ -168,13 +168,15 @@ export async function handleMessage(
         const llmProviders = await getLlmProvider();
 
         if (messageProviders.length === 0) {
+          console.error('No message provider available');
           logger('No message provider available');
-          return 'Error: No message provider available';
+          return null;
         }
 
         if (llmProviders.length === 0) {
+          console.error('No LLM provider available');
           logger('No LLM provider available');
-          return 'Error: No LLM provider available';
+          return null;
         }
 
         const messageProvider = messageProviders[0];
@@ -227,6 +229,7 @@ export async function handleMessage(
               if (resolvedBotId) {
                 recordBotActivity(message.getChannelId(), resolvedBotId);
               }
+              commandProcessed = true;
               return;
             }
             await messageProvider.sendMessageToChannel(
@@ -804,7 +807,7 @@ export async function handleMessage(
           });
         } catch {}
 
-        while (retryCount <= MAX_DUPLICATE_RETRIES) {
+        while (retryCount < MAX_DUPLICATE_RETRIES) {
           const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
 
           const metadata = {
@@ -1194,7 +1197,8 @@ export async function handleMessage(
         console.info(
           `❌ INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
-        return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
+        console.error(`Error processing message: ${error instanceof Error ? error.message : String(error)}`);
+        return null;
       } finally {
         stopTyping = true;
         // Stop typing indicator interval if running.

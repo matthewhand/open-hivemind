@@ -29,6 +29,8 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 
 ## Core Functionality
 
+![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
+
 *   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
 *   **Unified Voice**: Maintain consistent identities across different platforms.
 *   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
@@ -102,9 +104,9 @@ For a detailed walkthrough of every menu item and feature, please refer to the [
 
 ## Documentation
 
-*   [User Guide](USERGUIDE.md): Detailed explanation of all WebUI features.
-*   [Installation Guide](docs/installation.md): Advanced deployment options and configurations.
-*   [Package Documentation](PACKAGE.md): Deep dives into platform specifics.
+*   [User Guide](docs/USER_GUIDE.md): Detailed explanation of all WebUI features.
+*   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
+*   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
 
 ## License
 

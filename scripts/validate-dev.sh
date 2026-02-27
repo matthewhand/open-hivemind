@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REQUIRED_NODE_VERSION="18"
 REQUIRED_NPM_VERSION="8"
 
@@ -137,17 +137,17 @@ validate_environment_files() {
     cd "$PROJECT_ROOT"
 
     # Check for .env files
-    if [[ -f ".env.example" ]]; then
-        log_success ".env.example exists"
+    if [[ -f ".env.sample" ]]; then
+        log_success ".env.sample exists"
 
         if [[ -f ".env" ]]; then
             log_success ".env exists"
         else
-            log_warning ".env not found - copy from .env.example"
+            log_warning ".env not found - copy from .env.sample"
             ((VALIDATIONS_FAILED++))
         fi
     else
-        log_warning ".env.example not found"
+        log_warning ".env.sample not found"
     fi
 
     # Check for config directory

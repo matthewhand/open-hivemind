@@ -382,15 +382,8 @@ class ApiService {
     const url = buildUrl(endpoint);
     const method = options?.method?.toUpperCase() || 'GET';
 
-    // Handle timeout + abort signal chain
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
-
-    // Chain external signal if provided
-    const abortHandler = () => controller.abort();
-    if (options?.signal) {
-      options.signal.addEventListener('abort', abortHandler);
-    }
+    const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
 
     try {
       const authHeaders = this.getAuthHeaders();
@@ -413,12 +406,7 @@ class ApiService {
         },
         signal: controller.signal,
       });
-      clearTimeout(timeoutId);
-
-      // Clean up external signal listener to prevent memory leaks
-      if (options?.signal) {
-        options.signal.removeEventListener('abort', abortHandler);
-      }
+      clearTimeout(id);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
@@ -598,15 +586,14 @@ class ApiService {
     llmProvider?: string;
     from?: string;
     to?: string;
-    signal?: AbortSignal; // Add signal support for cancellation
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (key !== 'signal' && value) { query.append(key, value as string); }
+      if (value) { query.append(key, value); }
     });
     const search = query.toString();
     const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
-    return this.request<ActivityResponse>(endpoint, { signal: params.signal });
+    return this.request<ActivityResponse>(endpoint);
   }
 
   async clearCache(): Promise<{ success: boolean; message: string }> {
@@ -892,6 +879,14 @@ class ApiService {
 
   async getEnvOverrides(): Promise<any> {
     return this.request('/api/admin/env-overrides');
+  }
+
+  async startBot(botId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/bots/${botId}/start`, { method: 'POST' });
+  }
+
+  async stopBot(botId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/bots/${botId}/stop`, { method: 'POST' });
   }
 }
 

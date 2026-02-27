@@ -1,1 +1,0 @@
-import{aJ as f,aK as c,ac as i,aL as S}from"./index-RnQI40tk.js";function u(o){const{elementType:s,externalSlotProps:t,ownerState:e,skipResolvingSlotProps:n=!1,...p}=o,r=n?{}:f(t,e),{props:a,internalRef:l}=c({...p,externalSlotProps:r}),P=i(l,r?.ref,o.additionalProps?.ref);return S(s,{...a,ref:P},e)}export{u};

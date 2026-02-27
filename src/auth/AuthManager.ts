@@ -171,9 +171,9 @@ export class AuthManager {
    */
   public async register(data: RegisterData): Promise<User> {
     // Validate password strength
-    if (!data.password || data.password.length < 6) {
+    if (!data.password || data.password.length < 8) {
       throw new ValidationError(
-        'Password must be at least 6 characters long',
+        'Password must be at least 8 characters long',
         'PASSWORD_TOO_SHORT'
       );
     }
@@ -206,7 +206,11 @@ export class AuthManager {
     this.users.set(user.id, user);
     debug(`User registered: ${user.username}`);
 
-    return { ...user, passwordHash: undefined }; // Don't return password hash
+    // Destructure to omit passwordHash — setting it to undefined leaves the
+    // key present in JSON output; omitting via destructuring removes it entirely.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _ph, ...safeUser } = user;
+    return safeUser;
   }
 
   /**
@@ -239,10 +243,12 @@ export class AuthManager {
 
     debug(`User logged in: ${user.username}`);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _ph, ...safeUser } = user;
     return {
       accessToken,
       refreshToken,
-      user: { ...user, passwordHash: undefined },
+      user: safeUser,
       expiresIn: 3600, // 1 hour
     };
   }
@@ -271,10 +277,12 @@ export class AuthManager {
       this.refreshTokens.delete(refreshToken);
       this.refreshTokens.add(newRefreshToken);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash: _ph, ...safeUser } = user;
       return {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
-        user: { ...user, passwordHash: undefined },
+        user: safeUser,
         expiresIn: 3600,
       };
     } catch {
@@ -346,7 +354,9 @@ export class AuthManager {
   public getUser(userId: string): User | null {
     const user = this.users.get(userId);
     if (user) {
-      return { ...user, passwordHash: undefined };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash: _ph, ...safeUser } = user;
+      return safeUser;
     }
     return null;
   }
@@ -366,10 +376,11 @@ export class AuthManager {
    * Get all users (admin only)
    */
   public getAllUsers(): User[] {
-    return Array.from(this.users.values()).map((user) => ({
-      ...user,
-      passwordHash: undefined,
-    }));
+    return Array.from(this.users.values()).map((user) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash: _ph, ...safeUser } = user;
+      return safeUser;
+    });
   }
 
   /**
@@ -384,7 +395,9 @@ export class AuthManager {
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
 
-    return { ...updatedUser, passwordHash: undefined };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _ph, ...safeUser } = updatedUser;
+    return safeUser;
   }
 
   /**

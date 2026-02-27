@@ -940,7 +940,31 @@ export class DatabaseManager {
   }
 
   async getMessages(channelId: string, limit = 50, offset = 0): Promise<MessageRecord[]> {
-    return this.getMessageHistory(channelId, limit);
+    if (!this.db || !this.connected) {
+      return [];
+    }
+
+    try {
+      const rows = await this.db!.all(
+        `SELECT * FROM messages WHERE channelId = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?`,
+        [channelId, limit, offset]
+      );
+
+      return rows.map((row) => ({
+        id: row.id,
+        messageId: row.messageId,
+        channelId: row.channelId,
+        content: row.content,
+        authorId: row.authorId,
+        authorName: row.authorName,
+        timestamp: new Date(row.timestamp),
+        provider: row.provider,
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      }));
+    } catch (error) {
+      debug('Error retrieving messages with offset:', error);
+      return [];
+    }
   }
 
   async storeConversationSummary(summary: ConversationSummary): Promise<number> {

@@ -7,19 +7,6 @@ import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
 import { getMcpServerProfileByKey } from './mcpServerProfiles';
 
-// Define BotOverride interface locally since it's not exported
-interface BotOverride {
-  messageProvider?: string;
-  llmProvider?: string;
-  llmProfile?: string;
-  responseProfile?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: unknown[];
-  mcpGuard?: unknown;
-  mcpGuardProfile?: string;
-  mcpServerProfile?: string;
-}
 import type {
   BotConfig,
   MessageProvider,
@@ -27,6 +14,7 @@ import type {
   McpServerConfig,
   McpGuardConfig,
   ConfigurationValidationResult,
+  BotOverride,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
 
@@ -582,10 +570,9 @@ export class BotConfigurationManager {
     }
 
     // Add OpenSwarm configuration
-    const openswarmBaseUrl = botConfig.get('OPENSWARM_BASE_URL');
-    if (config.llmProvider === 'openswarm' || openswarmBaseUrl !== 'http://localhost:8001/v1') {
+    if (config.llmProvider === 'openswarm') {
       config.openswarm = {
-        baseUrl: openswarmBaseUrl,
+        baseUrl: botConfig.get('OPENSWARM_BASE_URL'),
         apiKey: botConfig.get('OPENSWARM_API_KEY'),
         team: botConfig.get('OPENSWARM_TEAM'),
       };

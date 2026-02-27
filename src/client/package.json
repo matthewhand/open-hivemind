@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173 --host",
-    "build": "./node_modules/.bin/tsc && ./node_modules/.bin/vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "npx vitest run",
@@ -21,6 +21,7 @@
     "daisyui": "^5.1.25",
     "dompurify": "^3.3.1",
     "lucide-react": "^0.460.0",
+    "prop-types": "^15.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",

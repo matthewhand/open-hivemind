@@ -52,9 +52,9 @@ RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
     echo "INCLUDE_NODE_TOOLS=${INCLUDE_NODE_TOOLS}" >> .env.features && \
     echo "INCLUDE_FFMPEG=${INCLUDE_FFMPEG}" >> .env.features
 
-EXPOSE 3000
+EXPOSE 3028
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD curl -f http://localhost:3028/health || exit 1
 
 CMD ["npm", "start"]

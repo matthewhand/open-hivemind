@@ -1,8 +1,5 @@
 # 🚀 Open-Hivemind TODO
 
-Navigation: [Docs Index](../README.md) | [Development Guide](development.md) | [User Guide](user-guide.md)
-
-
 ## 🎨 DaisyUI WebUI Transformation - AMBITIOUS IMPLEMENTATION PLAN
 
 ### **Phase 1: Setup & Infrastructure (✅ COMPLETED)**
@@ -10,101 +7,101 @@ Navigation: [Docs Index](../README.md) | [Development Guide](development.md) | [
 - [✅] **Configure Tailwind** with DaisyUI themes and custom configuration
 - [ ] **Create design system** documentation with component library
 
-### **Phase 2: 5 Core DaisyUI Components Implementation (🚧 IN PROGRESS)**
+### **Phase 2: 5 Core DaisyUI Components Implementation (✅ COMPLETED)**
 
 #### **1. 🧭 Drawer Navigation System**
-- [ ] Replace basic routing with **DaisyUI Drawer** for slide-out navigation
-- [ ] Implement **responsive drawer** that collapses on mobile
-- [ ] Add **breadcrumb navigation** within drawer
-- [ ] **Nested menu structure** for admin sections (Bots, MCP, Activity, etc.)
-- [ ] **Quick actions menu** with keyboard shortcuts
+- [✅] Replace basic routing with **DaisyUI Drawer** for slide-out navigation
+- [✅] Implement **responsive drawer** that collapses on mobile
+- [✅] Add **breadcrumb navigation** within drawer
+- [✅] **Nested menu structure** for admin sections (Bots, MCP, Activity, etc.)
+- [✅] **Quick actions menu** with keyboard shortcuts
 
 #### **2. 📊 Stats Cards Dashboard**
-- [ ] Transform system status into **DaisyUI Stats** cards
-- [ ] **Real-time animated counters** for bot counts, messages, uptime
-- [ ] **Color-coded status indicators** (success, warning, error themes)
-- [ ] **Interactive hover effects** with detailed tooltips
-- [ ] **Responsive grid layout** for different screen sizes
+- [✅] Transform system status into **DaisyUI Stats** cards
+- [✅] **Real-time animated counters** for bot counts, messages, uptime
+- [✅] **Color-coded status indicators** (success, warning, error themes)
+- [✅] **Interactive hover effects** with detailed tooltips
+- [✅] **Responsive grid layout** for different screen sizes
 
 #### **3. 📋 Table with Pagination & Filtering**
-- [ ] Replace Material-UI tables with **DaisyUI Table** component
-- [ ] **Advanced filtering** with DaisyUI form controls
-- [ ] **Sortable columns** with visual indicators
-- [ ] **Row actions dropdown** with DaisyUI menu
-- [ ] **Bulk selection** with checkboxes and batch operations
+- [✅] Replace Material-UI tables with **DaisyUI Table** component
+- [✅] **Advanced filtering** with DaisyUI form controls
+- [✅] **Sortable columns** with visual indicators
+- [✅] **Row actions dropdown** with DaisyUI menu
+- [✅] **Bulk selection** with checkboxes and batch operations
 
 #### **4. 🔔 Toast Notification System**
-- [ ] Implement **DaisyUI Alert** components for notifications
-- [ ] **Real-time toast notifications** for bot actions
-- [ ] **Notification center** with notification history
-- [ ] **Categorized notifications** (success, warning, error, info)
-- [ ] **Auto-dismiss timers** with user preferences
+- [✅] Implement **DaisyUI Alert** components for notifications
+- [✅] **Real-time toast notifications** for bot actions
+- [✅] **Notification center** with notification history
+- [✅] **Categorized notifications** (success, warning, error, info)
+- [✅] **Auto-dismiss timers** with user preferences
 
 #### **5. 📝 Modal Forms & Configuration**
-- [ ] Replace dialog forms with **DaisyUI Modal** components
-- [ ] **Multi-step wizard modals** for bot creation
-- [ ] **Form validation** with DaisyUI form controls
-- [ ] **Dynamic form fields** based on provider selection
-- [ ] **Preview mode** for configuration before saving
+- [✅] Replace dialog forms with **DaisyUI Modal** components
+- [✅] **Multi-step wizard modals** for bot creation
+- [✅] **Form validation** with DaisyUI form controls
+- [✅] **Dynamic form fields** based on provider selection
+- [✅] **Preview mode** for configuration before saving
 ### **Phase 2.5: All 63 DaisyUI Component Features Implementation (🎯 PENDING)**
 
 #### **1. Alerts & Prompts (5 components)**
-- [ ] Alert
-- [ ] Badge
-- [ ] Breadcrumb
-- [ ] Button
-- [ ] Card
+- [✅] Alert (standardized across all components)
+- [✅] Badge (standardized variant prop)
+- [✅] Breadcrumb
+- [✅] Button
+- [✅] Card
 
 #### **2. Data Display (8 components)**
-- [ ] Chat Bubble
+- [✅] Chat Bubble
 - [ ] Collapse
-- [ ] Countdown
+- [✅] Countdown
 - [ ] Diff
 - [ ] Indicator
-- [ ] Progress
-- [ ] Stat
-- [ ] Table
+- [✅] Progress
+- [✅] Stat
+- [✅] Table
 
 #### **3. Data Input (12 components)**
-- [ ] Checkbox
+- [✅] Checkbox
 - [ ] Date Picker
-- [ ] File Input
-- [ ] Input
+- [✅] File Input
+- [✅] Input
 - [ ] Input Group
 - [ ] Masked Input
-- [ ] Radio
-- [ ] Range
-- [ ] Rating
-- [ ] Select
+- [✅] Radio
+- [✅] Range
+- [✅] Rating
+- [✅] Select
 - [ ] Swap
-- [ ] Textarea
+- [✅] Textarea
 
 #### **4. Feedback (6 components)**
-- [ ] Loading
-- [ ] Progress
-- [ ] Toast
-- [ ] Tooltip
-- [ ] Alert (duplicate - already covered)
-- [ ] Modal
+- [✅] Loading (native spinner pattern)
+- [✅] Progress
+- [✅] Toast (native toast pattern)
+- [✅] Tooltip
+- [✅] Alert (duplicate - already covered)
+- [✅] Modal
 
 #### **5. Layout (10 components)**
 - [ ] Artboard
-- [ ] Avatar
-- [ ] Badge (duplicate - already covered)
-- [ ] Card (duplicate - already covered)
-- [ ] Divider
-- [ ] Drawer
+- [✅] Avatar
+- [✅] Badge (duplicate - already covered)
+- [✅] Card (duplicate - already covered)
+- [✅] Divider
+- [✅] Drawer
 - [ ] Footer
-- [ ] Hero
+- [✅] Hero
 - [ ] Indicator (duplicate - already covered)
 - [ ] Stack
 
 #### **6. Navigation (7 components)**
-- [ ] Breadcrumb (duplicate - already covered)
-- [ ] Button (duplicate - already covered)
+- [✅] Breadcrumb (duplicate - already covered)
+- [✅] Button (duplicate - already covered)
 - [ ] Link
-- [ ] Menu
-- [ ] Navbar
+- [✅] Menu
+- [✅] Navbar
 - [ ] Steps
 - [ ] Tab
 
@@ -201,6 +198,74 @@ src/api/routes/config.ts
     - Converted tests from callback-based patterns to `async/await` to prevent race conditions.
     - Implemented robust timeout protection and enhanced test cleanup procedures to ensure test isolation.
     - Improved singleton pattern management for test environments.
+
+---
+
+## Web Rendering Blockers and Fixes (Action Plan)
+
+Context: The app currently fails to render a website. This checklist captures root causes and concrete steps to fix, without changing scope beyond rendering and startup.
+
+1) Align frontend build output with server static path
+- Problem: Server prefers `dist/client/dist` then `src/client/dist`. Vite outputs to `src/client/dist` but nothing places assets under `dist/` for prod-only deployments.
+- Fix options:
+  - A: Configure Vite build output to `dist/client/dist` so prod-only runs can serve assets from `dist/`.
+  - B: Add a post-build copy step to move `src/client/dist` → `dist/client/dist` after `npm run build:frontend`.
+- Files: `src/index.ts`, `src/client/vite.config.ts`, `package.json` (scripts)
+- Acceptance: `GET /` serves `index.html` (200) when running `npm run build && npm start` from a clean environment with only `dist/` available.
+
+2) Fix Docker build/run pipeline
+- Problems:
+  - Dockerfile installs prod deps only, but build needs devDependencies (TypeScript + Vite) → build fails/partial.
+  - `npm start` uses `cross-env` (devDep) and may be missing at runtime.
+  - EXPOSE/healthcheck use port 3000; app listens on 3028 unless `PORT` is set.
+- Fix options:
+  - Use multi-stage build: install devDeps → build → prune devDeps for runtime layer.
+  - Make `cross-env` available at runtime or remove its usage in `start` script.
+  - Standardize port to 3000 or 3028 across Dockerfile and app env.
+- Files: `Dockerfile`, `package.json`
+- Acceptance: `docker build` succeeds; container serves UI and healthcheck passes.
+
+3) Standardize ports across code, docs, and compose
+- Problem: Code defaults to 3028; Docker and docs reference 3000; README mentions 5005 in places. Leads to “nothing there” when visiting the wrong port.
+- Fix:
+  - Choose a default port (e.g., 3028) and make Docker EXPOSE/healthcheck, compose, and docs match. Or switch app default to 3000 and update `.env`/tests/docs consistently.
+- Files: `Dockerfile`, `docker-compose.yml`, `README.md`, `.env`
+- Acceptance: One consistent port in code and docs; starting via any supported method serves the site at the documented URL.
+
+4) Dev workflow clarity and port collisions
+- Problem: `dev:frontend` runs Vite on 3028 while backend also defaults to 3028 during dev; can collide.
+- Fix:
+  - Keep unified dev on a single port via backend serving the built frontend.
+  - Run isolated UI on a different port (e.g., Vite 5173), clearly documented.
+- Files: `package.json`, `src/client/vite.config.ts`, `README.md`
+- Acceptance: `npm run dev` boots unified server and serves UI without clashes; `npm run dev:frontend` runs standalone UI on a different port.
+
+5) Ensure initial UI doesn’t break on auth-protected APIs
+- Problem: Several `/webui/*` APIs are behind auth middleware; if frontend makes unauthenticated calls during boot and doesn’t handle 401s, first paint can appear broken.
+- Fix:
+  - Confirm the initial shell renders without gated calls; handle 401s gracefully (show login/notice) rather than failing silently.
+- Files: `src/index.ts`, `src/server/routes/*`, `src/client/src/*`
+- Acceptance: Visiting `/` renders app shell; any unauthorized API requests are handled with visible UI states (not blank screens).
+
+6) Commentary consistency in `src/index.ts`
+- Problem: Comment says API routes must come before static, but static is mounted early. Not necessarily wrong, but confusing.
+- Fix:
+  - Update comments or re-order mounting to match intent.
+- Files: `src/index.ts`
+- Acceptance: Comments match behavior, reducing confusion during future changes.
+
+7) Public vs. app index expectations
+- Problem: There is a `public/index.html` with Vite asset references, but root route serves the built app `index.html` under `src/client/dist`.
+- Fix:
+  - Document intended usage; ensure no one expects `public/index.html` to be the SPA entry.
+- Files: `README.md`, `src/index.ts`, `public/index.html`
+- Acceptance: Docs clarify which index is served; no ambiguity for contributors.
+
+Validation Steps (post-fixes)
+- `npm ci && npm run build && npm start` → `GET /` returns 200 with HTML; assets resolve (no 404s) and console shows no module errors.
+- Docker build/run path serves the same UI on the documented port; healthcheck succeeds.
+- `npm run dev` serves UI at documented URL with stable reloads; no port conflicts.
+
 
 **Note**: The 2 remaining failing test suites are infrastructure-related and do not affect core functionality.
 
@@ -432,7 +497,7 @@ Phase 1 implementation is **COMPLETE** ✅ with all planned features plus **THRE
 - [`src/auth/AuthManager.ts`](src/auth/AuthManager.ts)
 - [`tests/auth/middleware.test.ts`](tests/auth/middleware.test.ts)
 - [`tests/unit/admin/adminRoutes.test.ts`](tests/unit/admin/adminRoutes.test.ts)
-- [`todo.md`](todo.md)
+- [`TODO.md`](TODO.md)
 - [`src/webui/services/WebSocketService.ts`](src/webui/services/WebSocketService.ts)
 
 **Impact**: 67 tests now passing across 4 test suites
@@ -455,9 +520,4 @@ Phase 1 implementation is **COMPLETE** ✅ with all planned features plus **THRE
 - New webui routes and components
 - Comprehensive test coverage
 
-**Impact**: This commit improves the project configuration structure and adds new webui components, enhancing the overall functionality and maintainability of the application.- Tighten Slack and Mattermost parity with Discord (context caching, wakewords, experimental flag cleanup)
-- Complete or remove the Discord voice pipeline to avoid unfinished features
-- Expand MCP integration in the WebUI (tool discovery surfacing, usage limits, audit logs)
-- Enhance monitoring dashboards with per-agent health, rate limit, and LLM latency metrics
-- Add integration tests for Mattermost/MCP paths and smoke tests for WebUI tool guard editing
-- Build a guided onboarding wizard that validates tokens, MCP connectivity, and persona assignment before launch
+**Impact**: This commit improves the project configuration structure and adds new webui components, enhancing the overall functionality and maintainability of the application.

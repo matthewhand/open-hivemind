@@ -65,10 +65,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Failed to parse stored auth data:', error);
         // Don't logout - just don't set the user
       }
-    } else {
-      // Auto-login for development/demo mode: create a dev user automatically
-      // This allows accessing all admin routes without manual login
-      console.info('[AuthContext] No stored auth found - creating development user');
+    } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
+      // Auto-login is ONLY active when explicitly enabled via VITE_AUTO_LOGIN=true
+      // in a Vite development build (import.meta.env.DEV === true).
+      // This prevents any unauthenticated user from being silently promoted to
+      // owner in staging, preview, or production environments.
+      console.info('[AuthContext] DEV + VITE_AUTO_LOGIN=true: creating development user');
       const devUser: User = {
         id: 'dev-user',
         username: 'developer',
@@ -86,6 +88,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('auth_tokens', JSON.stringify(devTokens));
       localStorage.setItem('auth_user', JSON.stringify(devUser));
     }
+    // In all other cases (production, staging, CI previews) we leave the user
+    // unauthenticated.  The rest of the app already handles a null user / null
+    // tokens state and will redirect to the login page as expected.
 
     setIsLoading(false);
   }, []);
@@ -135,14 +140,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (data.success) {
+        const { accessToken, refreshToken, expiresIn } = data.data;
         const authTokens: AuthTokens = {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresIn: data.expiresIn,
+          accessToken,
+          refreshToken,
+          expiresIn,
         };
 
         // Get user info from token (or mock if serverless token)
-        const userInfo = await verifyToken(data.accessToken);
+        const userInfo = await verifyToken(accessToken);
 
         setTokens(authTokens);
         setUser(userInfo);
@@ -201,9 +207,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data.success) {
         const newTokens: AuthTokens = {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          expiresIn: data.expiresIn,
+          accessToken: data.data.accessToken,
+          refreshToken: data.data.refreshToken,
+          expiresIn: data.data.expiresIn,
         };
 
         setTokens(newTokens);

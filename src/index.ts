@@ -100,17 +100,9 @@ if (!fs.existsSync(frontendDistPath)) {
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();
 
-// Add error handling for unhandled rejections and exceptions
-// These will trigger graceful shutdown via ShutdownCoordinator
-process.on('unhandledRejection', (reason, promise) => {
-  appLogger.error('Unhandled promise rejection', { promise, reason });
-  shutdownCoordinator.initiateShutdown('unhandledRejection');
-});
-
-process.on('uncaughtException', (error) => {
-  appLogger.error('Uncaught exception', { error });
-  shutdownCoordinator.initiateShutdown('uncaughtException');
-});
+// Unhandled rejection and uncaught exception handlers are registered by
+// ShutdownCoordinator.setupSignalHandlers() (called below) — do not register
+// them here a second time to avoid duplicate listeners.
 
 const app = express();
 debug('Messenger services are being initialized...');
@@ -198,8 +190,7 @@ if (process.env.NODE_ENV !== 'development') {
   });
 }
 
-// Serve static files from public directory
-app.use(express.static(path.join(process.cwd(), 'public')));
+
 
 // Serve static files from webui dist directory
 // Serve static files from webui dist directory (Production Only)
