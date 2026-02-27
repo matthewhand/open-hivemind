@@ -31,6 +31,9 @@ router.get('/', (req, res) => {
 
 // Detailed health check
 router.get('/detailed', (req, res) => {
+  // Check for authentication to prevent leaking sensitive system info
+  const isAuthenticated = !!(req as any).user;
+
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -43,7 +46,8 @@ router.get('/detailed', (req, res) => {
   // Calculate overall health status
   const healthStatus = calculateHealthStatus(memoryUsage, recentErrors, metrics);
 
-  const healthData = {
+  // Base health data safe for public consumption
+  const healthData: any = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
     checks: {
@@ -51,8 +55,12 @@ router.get('/detailed', (req, res) => {
       configuration: { status: 'healthy' },
       services: { status: 'healthy' },
     },
-    uptime: uptime,
-    memory: {
+  };
+
+  // Only include sensitive system details if authenticated
+  if (isAuthenticated) {
+    healthData.uptime = uptime;
+    healthData.memory = {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
       usage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100), // %
@@ -60,43 +68,43 @@ router.get('/detailed', (req, res) => {
         (Math.round(memoryUsage.heapUsed / 1024 / 1024) /
           Math.round(memoryUsage.heapTotal / 1024 / 1024)) *
         100, // % based on rounded values
-    },
-    cpu: {
+    };
+    healthData.cpu = {
       user: Math.round(cpuUsage.user / 1000), // microseconds to milliseconds
       system: Math.round(cpuUsage.system / 1000), // microseconds to milliseconds
-    },
-    system: {
+    };
+    healthData.system = {
       platform: os.platform(),
       arch: os.arch(),
       release: os.release(),
       hostname: os.hostname(),
       loadAverage: os.loadavg(),
       nodeVersion: process.version,
-    },
-    errors: {
+    };
+    healthData.errors = {
       total: metrics.errors,
       recent: recentErrors,
       rate: calculateErrorRate(recentErrors, 60), // errors per minute
       byType: errorStats,
       health: healthStatus.errorHealth,
-    },
-    recovery: {
+    };
+    healthData.recovery = {
       circuitBreakers: Object.keys(recoveryStats).length,
       activeFallbacks: Object.values(recoveryStats).reduce(
         (sum, stats) => sum + stats.fallbacks,
         0
       ),
       stats: recoveryStats,
-    },
-    performance: {
+    };
+    healthData.performance = {
       messagesProcessed: metrics.messagesProcessed,
       averageResponseTime:
         metrics.responseTime.length > 0
           ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
           : 0,
       llmUsage: metrics.llmTokenUsage,
-    },
-  };
+    };
+  }
 
   return res.json(healthData);
 });
