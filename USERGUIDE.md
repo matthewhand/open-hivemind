@@ -66,7 +66,7 @@ Quick-start templates to help you create bots faster.
 
 *   **Template Gallery**: Browse pre-configured templates with specific personas and provider settings.
 *   **Quick Create**: Use a template to pre-populate the bot creation form.
-*   **Search & Filter**: Find templates by name or description using the search bar, or filter by platform, persona, and LLM provider.
+*   **Filtering**: Find templates by platform, persona, or LLM provider using the dropdown filters.
 
 ### [Personas](/admin/personas)
 Define the personality and behavior of your bots.
@@ -102,13 +102,9 @@ Manage Model Context Protocol servers to extend bot capabilities with external t
 
 ### [MCP Tools](/admin/mcp/tools)
 Browse and manage tools available from your connected MCP servers.
-![MCP Tools List](docs/screenshots/mcp-tools-list.png)
-
 *   **Tool Registry**: View all available tools, their descriptions, and server origins.
 *   **Schema Inspection**: View input and output schemas for each tool.
-*   **Tool Execution**: Test tools directly. The interface provides a user-friendly **Form Mode** (based on the tool's schema) and a **JSON Mode** for advanced input.
-![MCP Tool Run Modal](docs/screenshots/mcp-tool-run-modal.png)
-
+*   **Tool Execution**: Test tools directly by providing JSON arguments and viewing the output.
 *   **Enable/Disable**: Toggle individual tools on or off.
 
 ## System
@@ -130,7 +126,6 @@ General system configuration.
 *   **Localization & Appearance**: Set the system **Timezone** and Theme.
 *   **Logging & Notifications**: Configure log levels and enable system logging.
 *   **System Limits**: Adjust concurrent bots, timeouts, and health check intervals.
-*   **Deep Linking**: Settings tabs (General, Messaging, Security) are now reflected in the URL (e.g., `/admin/settings?tab=security`), allowing you to bookmark or share specific configuration pages.
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.

@@ -411,6 +411,9 @@ const PersonasPage: React.FC = () => {
                       >
                         <Copy className="w-3 h-3" />
                       </button>
+                      <div className="tooltip tooltip-left" data-tip="The core instructions that define the AI's behavior">
+                        <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                      </div>
                     </div>
                   </div>
                   <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
@@ -420,6 +423,9 @@ const PersonasPage: React.FC = () => {
 
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-medium text-base-content/50 uppercase">Assigned Bots</h4>
+                  <div className="tooltip tooltip-left" data-tip="Bots currently using this persona">
+                    <Info className="w-3 h-3 text-base-content/30 cursor-help" />
+                  </div>
                 </div>
 
                 {persona.assignedBotNames.length > 0 ? (

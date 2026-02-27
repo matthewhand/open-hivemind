@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
-import { Copy, Check, Search } from 'lucide-react';
-import SearchFilterBar from '../components/SearchFilterBar';
+import { Breadcrumbs, Modal } from '../components/DaisyUI';
+import { Copy, Check, Filter, X, Eye, FileJson } from 'lucide-react';
 
 interface BotTemplate {
   id: string;
@@ -25,8 +24,9 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
   const [selectedPersona, setSelectedPersona] = useState<string>('All');
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
-  const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<BotTemplate | null>(null);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/admin/bots' },
@@ -66,7 +66,6 @@ const BotTemplatesPage: React.FC = () => {
   }, []);
 
   const handleUseTemplate = (template: BotTemplate) => {
-    // In real app, this would pre-populate the create form
     navigate('/admin/bots/create', {
       state: {
         template: {
@@ -99,6 +98,11 @@ const BotTemplatesPage: React.FC = () => {
     }
   };
 
+  const openPreview = (template: BotTemplate) => {
+    setSelectedTemplate(template);
+    setPreviewModalOpen(true);
+  };
+
   const getPlatformColor = (platform: string) => {
     const colors: Record<string, string> = {
       discord: 'badge-primary',
@@ -110,29 +114,9 @@ const BotTemplatesPage: React.FC = () => {
   };
 
   // Derive unique options for filters
-  const platformOptions = useMemo(() => {
-    const unique = Array.from(new Set(templates.map(t => t.platform)));
-    return [
-      { label: 'All Platforms', value: 'All' },
-      ...unique.map(p => ({ label: p.charAt(0).toUpperCase() + p.slice(1), value: p }))
-    ];
-  }, [templates]);
-
-  const personaOptions = useMemo(() => {
-    const unique = Array.from(new Set(templates.map(t => t.persona)));
-    return [
-      { label: 'All Personas', value: 'All' },
-      ...unique.map(p => ({ label: p, value: p }))
-    ];
-  }, [templates]);
-
-  const llmOptions = useMemo(() => {
-    const unique = Array.from(new Set(templates.map(t => t.llmProvider)));
-    return [
-      { label: 'All Providers', value: 'All' },
-      ...unique.map(p => ({ label: p, value: p }))
-    ];
-  }, [templates]);
+  const platforms = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.platform)))], [templates]);
+  const personas = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.persona)))], [templates]);
+  const llmProviders = useMemo(() => ['All', ...Array.from(new Set(templates.map(t => t.llmProvider)))], [templates]);
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
@@ -140,19 +124,34 @@ const BotTemplatesPage: React.FC = () => {
       const matchPlatform = selectedPlatform === 'All' || t.platform === selectedPlatform;
       const matchPersona = selectedPersona === 'All' || t.persona === selectedPersona;
       const matchLlm = selectedLlmProvider === 'All' || t.llmProvider === selectedLlmProvider;
-      const matchSearch = searchTerm === '' ||
-        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchPlatform && matchPersona && matchLlm && matchSearch;
+      return matchPlatform && matchPersona && matchLlm;
     });
-  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider, searchTerm]);
+  }, [templates, selectedPlatform, selectedPersona, selectedLlmProvider]);
 
-  const handleClearFilters = () => {
+  const clearFilters = () => {
     setSelectedPlatform('All');
     setSelectedPersona('All');
     setSelectedLlmProvider('All');
-    setSearchTerm('');
   };
+
+  const hasActiveFilters = selectedPlatform !== 'All' || selectedPersona !== 'All' || selectedLlmProvider !== 'All';
+
+  const FilterSection = ({ title, options, selected, onSelect }: { title: string, options: string[], selected: string, onSelect: (val: string) => void }) => (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-bold text-base-content/50 uppercase tracking-wider">{title}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map(option => (
+          <button
+            key={option}
+            onClick={() => onSelect(option)}
+            className={`btn btn-sm ${selected === option ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+          >
+            {option === 'All' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -168,53 +167,48 @@ const BotTemplatesPage: React.FC = () => {
       <Breadcrumbs items={breadcrumbItems} />
 
       <div className="mt-4 mb-8">
-        <div className="flex justify-between items-center mb-4">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">
-                Bot Templates
-                </h1>
-                <p className="text-base-content/70">
-                Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-                </p>
-            </div>
-            <button
-                className="btn btn-outline"
-                onClick={() => navigate('/admin/bots/create')}
-            >
-                Create Custom Bot
-            </button>
-        </div>
+        <h1 className="text-3xl font-bold mb-2">
+          Bot Templates
+        </h1>
+        <p className="text-base-content/70">
+          Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
+        </p>
 
-        {/* Filters */}
-        <SearchFilterBar
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search templates..."
-            filters={[
-                {
-                    key: 'platform',
-                    value: selectedPlatform,
-                    onChange: setSelectedPlatform,
-                    options: platformOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'persona',
-                    value: selectedPersona,
-                    onChange: setSelectedPersona,
-                    options: personaOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'llm',
-                    value: selectedLlmProvider,
-                    onChange: setSelectedLlmProvider,
-                    options: llmOptions,
-                    className: 'w-full sm:w-40'
-                }
-            ]}
-            onClear={handleClearFilters}
-        />
+        {/* Improved Filters */}
+        <div className="mt-6 p-6 bg-base-100 border border-base-200 rounded-xl shadow-sm">
+          <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-base-content/70">
+            <Filter className="w-4 h-4" />
+            Filter Templates
+            {hasActiveFilters && (
+               <button onClick={clearFilters} className="btn btn-ghost btn-xs text-error ml-auto">
+                 <X className="w-3 h-3 mr-1" /> Clear Filters
+               </button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <FilterSection
+              title="Platform"
+              options={platforms}
+              selected={selectedPlatform}
+              onSelect={setSelectedPlatform}
+            />
+            <div className="divider my-0"></div>
+            <FilterSection
+              title="Persona"
+              options={personas}
+              selected={selectedPersona}
+              onSelect={setSelectedPersona}
+            />
+             <div className="divider my-0"></div>
+             <FilterSection
+              title="LLM Provider"
+              options={llmProviders}
+              selected={selectedLlmProvider}
+              onSelect={setSelectedLlmProvider}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -222,7 +216,7 @@ const BotTemplatesPage: React.FC = () => {
           filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className={`card bg-base-100 shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
+              className={`card bg-base-100 shadow-xl h-full border transition-all hover:shadow-2xl ${template.featured ? 'border-primary border-2' : 'border-base-200'
                 }`}
             >
               <div className="card-body">
@@ -235,7 +229,7 @@ const BotTemplatesPage: React.FC = () => {
                   )}
                 </div>
 
-                <p className="text-sm text-base-content/70 mb-4">
+                <p className="text-sm text-base-content/70 mb-4 min-h-[3rem]">
                   {template.description}
                 </p>
 
@@ -249,13 +243,13 @@ const BotTemplatesPage: React.FC = () => {
 
                 <div className="flex flex-wrap gap-1 mb-4">
                   {template.tags.map((tag) => (
-                    <div key={tag} className="badge badge-ghost badge-sm">
-                      {tag}
+                    <div key={tag} className="badge badge-ghost badge-sm opacity-70">
+                      #{tag}
                     </div>
                   ))}
                 </div>
 
-                <div className="card-actions mt-auto">
+                <div className="card-actions mt-auto pt-4 border-t border-base-200">
                   <button
                     className="btn btn-primary flex-1"
                     onClick={() => handleUseTemplate(template)}
@@ -263,29 +257,83 @@ const BotTemplatesPage: React.FC = () => {
                     Use Template
                   </button>
                   <button
-                    className="btn btn-ghost btn-square"
-                    onClick={() => handleCopyTemplate(template)}
-                    title="Copy template JSON"
+                    className="btn btn-ghost btn-square tooltip"
+                    data-tip="Preview Configuration"
+                    onClick={() => openPreview(template)}
                   >
-                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                     <Eye className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             </div>
           ))
         ) : (
-            <div className="col-span-full">
-                 <EmptyState
-                    title="No templates found"
-                    description="No templates match your current filters."
-                    actionLabel="Clear Filters"
-                    onAction={handleClearFilters}
-                    icon={Search}
-                    variant="noResults"
-                />
-            </div>
+          <div className="col-span-full py-16 text-center border-2 border-dashed border-base-300 rounded-xl">
+            <p className="text-lg font-medium text-base-content/60">No templates match your filters.</p>
+            <button className="btn btn-primary btn-sm mt-4" onClick={clearFilters}>
+              Reset All Filters
+            </button>
+          </div>
         )}
       </div>
+
+      <div className="mt-12 text-center">
+        <p className="text-base-content/50 mb-4 text-sm">Don't see what you need?</p>
+        <button
+          className="btn btn-outline gap-2"
+          onClick={() => navigate('/admin/bots/create')}
+        >
+          Create Custom Bot from Scratch
+        </button>
+      </div>
+
+      {/* Template Preview Modal */}
+      {selectedTemplate && (
+        <Modal
+          isOpen={previewModalOpen}
+          onClose={() => setPreviewModalOpen(false)}
+          title={`Preview: ${selectedTemplate.name}`}
+          size="lg"
+        >
+          <div className="space-y-4">
+             <div className="flex items-center justify-between bg-base-200 p-3 rounded-lg">
+                <div className="flex gap-2">
+                   <div className={`badge ${getPlatformColor(selectedTemplate.platform)}`}>
+                    {selectedTemplate.platform}
+                   </div>
+                   <div className="badge badge-outline">{selectedTemplate.persona}</div>
+                   <div className="badge badge-outline">{selectedTemplate.llmProvider}</div>
+                </div>
+                <button
+                  className="btn btn-xs btn-ghost gap-1"
+                  onClick={() => handleCopyTemplate(selectedTemplate)}
+                >
+                  {copied ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
+                  Copy JSON
+                </button>
+             </div>
+
+             <div className="mockup-code bg-base-300 text-base-content p-4 max-h-[400px] overflow-auto text-xs">
+               <pre><code>{JSON.stringify({
+                  name: selectedTemplate.name,
+                  description: selectedTemplate.description,
+                  messageProvider: selectedTemplate.platform,
+                  llmProvider: selectedTemplate.llmProvider,
+                  persona: selectedTemplate.persona,
+                  tags: selectedTemplate.tags,
+                }, null, 2)}</code></pre>
+             </div>
+
+             <div className="modal-action">
+                <button className="btn btn-ghost" onClick={() => setPreviewModalOpen(false)}>Close</button>
+                <button className="btn btn-primary" onClick={() => {
+                   setPreviewModalOpen(false);
+                   handleUseTemplate(selectedTemplate);
+                }}>Use This Template</button>
+             </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

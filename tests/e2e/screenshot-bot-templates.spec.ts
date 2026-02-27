@@ -29,96 +29,85 @@ test.describe('Bot Templates Page Screenshots', () => {
     await page.route('/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: {} })
     );
-    await page.route('/api/personas', async (route) => {
-        await route.fulfill({ status: 200, json: [] });
-    });
 
-
-    // Mock Templates API (using the correct endpoint /api/bot-config/templates and object structure)
+    // Mock Templates API
     await page.route('/api/bot-config/templates', async (route) => {
-      const templates = {
-        discord_basic: {
-          name: 'Helpful Assistant',
-          description: 'A general purpose assistant that can help with various tasks.',
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          persona: 'Helpful', // Injected for frontend filtering test
-          tags: ['general', 'assistant'],
-        },
-        slack_coder: {
-          name: 'Code Reviewer',
-          description: 'Expert in analyzing code and suggesting improvements.',
-          messageProvider: 'slack',
-          llmProvider: 'anthropic',
-          persona: 'Technical',
-          tags: ['coding', 'dev'],
-        },
-        telegram_fun: {
-          name: 'Fun Chatbot',
-          description: 'A witty bot for casual conversations.',
-          messageProvider: 'telegram',
-          llmProvider: 'local',
-          persona: 'Witty',
-          tags: ['fun', 'social'],
-        },
-        mattermost_support: {
-           name: 'Customer Support',
-           description: 'Handles customer queries efficiently.',
-           messageProvider: 'mattermost',
-           llmProvider: 'openai',
-           persona: 'Professional',
-           tags: ['support', 'business'],
-        }
-      };
-
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          data: { templates }
+          data: {
+            templates: {
+              'discord-helper': {
+                name: 'Helpful Assistant',
+                description: 'A general purpose assistant for Discord servers.',
+                messageProvider: 'discord',
+                llmProvider: 'openai',
+                persona: 'Helpful',
+                tags: ['general', 'assistant'],
+              },
+              'slack-coder': {
+                name: 'Code Reviewer',
+                description: 'Expert in analyzing code snippets and suggesting improvements.',
+                messageProvider: 'slack',
+                llmProvider: 'anthropic',
+                persona: 'Technical',
+                tags: ['coding', 'dev'],
+              },
+              'telegram-fun': {
+                name: 'Fun Chatbot',
+                description: 'A witty bot for casual conversations on Telegram.',
+                messageProvider: 'telegram',
+                llmProvider: 'local',
+                persona: 'Witty',
+                tags: ['fun', 'social'],
+              },
+            }
+          }
         }),
       });
     });
   });
 
-  test('capture Bot Templates page screenshots', async ({ page }) => {
+  test('capture Bot Templates page interactions', async ({ page }) => {
     // Set viewport
-    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 900 });
 
     // Navigate to Templates page
     await page.goto('/admin/bots/templates');
 
-    // Wait for the page to load and content to be visible
+    // Wait for the page content
     await expect(page.getByText('Bot Templates')).toBeVisible();
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
 
-    // Wait a bit for images/badges to render
-    await page.waitForTimeout(500);
-
-    // Take screenshot of the full list
+    // 1. Capture Initial State (All Templates)
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
 
-    // Test Interaction: Search for 'Code'
-    const searchInput = page.getByPlaceholder('Search templates...');
-    await searchInput.fill('Code');
-    await page.waitForTimeout(300);
-    await expect(page.getByText('Code Reviewer')).toBeVisible();
-    await expect(page.getByText('Helpful Assistant')).toBeHidden();
+    // 2. Test Filter Interaction (Click 'Discord' pill)
+    // Note: The text on the button might be 'Discord' (capitalized)
+    await page.getByRole('button', { name: 'Discord', exact: true }).click();
 
-    // Clear search
-    await searchInput.clear();
-    await page.waitForTimeout(300);
+    // Wait for filter
     await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.getByText('Code Reviewer')).toBeHidden();
 
-    // Test Interaction: Filter by Platform 'Discord'
-    const platformSelect = page.locator('select').nth(0); // First select is Platform
-    await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
+    // 3. Test Preview Modal
+    // Click the eye icon (Preview) on the visible card
+    await page.locator('.card').first().getByRole('button', { name: 'Preview Configuration' }).click();
 
-    // Wait for filter to apply
-    await page.waitForTimeout(300);
+    // Verify Modal
+    await expect(page.getByText('Preview: Helpful Assistant')).toBeVisible();
+    await expect(page.locator('.mockup-code')).toBeVisible();
 
-    // Verify filtering
-    await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
-    await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+    // Capture Modal State
+    await page.screenshot({ path: 'docs/screenshots/bot-templates-modal.png' });
+
+    // Close Modal
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(page.getByText('Preview: Helpful Assistant')).toBeHidden();
+
+    // 4. Clear Filters
+    await page.getByRole('button', { name: 'Clear Filters' }).click();
+    await expect(page.getByText('Code Reviewer')).toBeVisible();
   });
 });

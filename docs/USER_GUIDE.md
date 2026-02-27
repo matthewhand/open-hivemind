@@ -43,33 +43,26 @@ The System Configuration page allows administrators to manage global settings, i
 2.  Adjust the settings as needed.
 3.  Click **Save Settings** to apply changes.
 
-## Personas Management
-
-The Personas (Beta) feature allows you to define distinct AI personalities and system prompts that can be assigned to one or more bots. This centralizes the management of bot behaviors.
-
-![Personas Management](screenshots/personas-page.png)
-
-### Features
-
--   **Persona Library**: Create, edit, and delete custom personas. Built-in personas (like "Technical Assistant") are read-only but can be cloned.
--   **System Prompts**: Define the core instructions (System Prompt) for the AI.
--   **Bulk Assignment**: Assign a persona to multiple bots simultaneously.
--   **Real-time Updates**: Changes to a persona (e.g., updating the prompt) are immediately reflected across all assigned bots.
-
-### Workflow
-
-1.  **Create a Persona**: Click the **Create Persona** button.
-2.  **Define Behavior**: Enter a name, description, and the **System Prompt** (e.g., "You are a helpful assistant...").
-3.  **Assign Bots**: In the "Assign to Bots" section, select the bots that should use this persona.
-4.  **Save**: Click **Create Persona** (or **Save Changes**) to apply. The selected bots will now use the new system prompt.
-
 ## Bot Management
 
 The Bot Management section allows you to create and configure AI assistants. The simplified creation flow helps you quickly deploy new bots to platforms like Discord, Slack, Mattermost, and Telegram.
 
-![Bot Creation Page](screenshots/bot-create-page.png)
+### Bot Templates
+
+Get started quickly with pre-configured templates. These templates include optimal settings for different use cases like customer support, code review, or casual conversation.
+
+![Bot Templates Page](screenshots/bot-templates-page.png)
+
+#### Features
+-   **Filtering**: Quickly find templates by Platform, Persona, or LLM Provider using the interactive filter pills.
+-   **Preview**: View the full configuration JSON of a template before using it.
+-   **One-Click Use**: Instantly create a new bot based on a template.
+
+![Template Preview Modal](screenshots/bot-templates-modal.png)
 
 ### Creating a New Bot
+
+![Bot Creation Page](screenshots/bot-create-page.png)
 
 1.  Navigate to **Bots** in the sidebar and click **Create Bot**.
 2.  **Name & Description**: Use the AI Assist button to generate creative names and descriptions.
