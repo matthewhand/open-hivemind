@@ -273,7 +273,7 @@ function ipToLong(ip: string): number {
     }
   }
 
-  return (nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3];
+  return ((nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3]) >>> 0;
 }
 
 /**
@@ -313,7 +313,7 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
       return true;
     }
 
-    const mask = -1 << (32 - prefix);
+    const mask = (-1 << (32 - prefix)) >>> 0;
 
     return (ipLong & mask) === (networkLong & mask);
   } catch (e) {
@@ -321,20 +321,38 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
   }
 }
 
+let _trustedProxiesCache: { envValue: string | undefined; proxies: string[] } | null = null;
+
 /**
- * Get list of trusted proxies from environment or defaults
+ * Get list of trusted proxies from environment or defaults.
+ * Result is cached based on the env var value to avoid re-parsing on every request.
  */
 function getTrustedProxies(): string[] {
-  const envProxies = process.env.TRUSTED_PROXIES;
-  if (envProxies) {
-    return envProxies
+  const envValue = process.env.TRUSTED_PROXIES;
+  if (_trustedProxiesCache && _trustedProxiesCache.envValue === envValue) {
+    return _trustedProxiesCache.proxies;
+  }
+
+  let proxies: string[];
+  if (envValue) {
+    proxies = envValue
       .split(',')
       .map((ip) => ip.trim())
       .filter(Boolean);
+  } else {
+    // Default trusted proxies - localhost and private network ranges
+    proxies = [
+      '127.0.0.1',
+      '::1',
+      '::ffff:127.0.0.1',
+      '10.0.0.0/8',
+      '172.16.0.0/12',
+      '192.168.0.0/16',
+    ];
   }
 
-  // Default trusted proxies - localhost and private network ranges
-  return ['127.0.0.1', '::1', '::ffff:127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+  _trustedProxiesCache = { envValue, proxies };
+  return proxies;
 }
 
 /**
@@ -657,3 +675,6 @@ export {
   adminRateLimiter as adminLimiter,
   apiRateLimiter as apiLimiter,
 };
+
+// Export helper functions for testing
+export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey };
