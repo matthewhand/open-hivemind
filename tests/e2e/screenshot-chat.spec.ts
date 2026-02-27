@@ -73,14 +73,8 @@ test.describe('Chat Monitor Screenshots', () => {
                 history: [
                     {
                         id: 'msg-1',
-                        content: 'Hello! I am your AI assistant. How can I help you today?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
-                    },
-                    {
-                        id: 'msg-2',
-                        content: 'I have a question about the new feature.',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
+                        content: 'Hi, I am having trouble with the bot configuration.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
                     },
                      {
@@ -90,15 +84,45 @@ test.describe('Chat Monitor Screenshots', () => {
                         author: { id: 'system', username: 'System', role: 'system', bot: false }
                     },
                     {
-                        id: 'msg-3',
-                        content: 'Could you clarify which specific feature you are referring to?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+                        id: 'msg-2',
+                        content: 'Hello Alice! I can help with that. What seems to be the issue?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 29).toISOString(),
                         author: { id: 'bot-1', username: 'Support Bot', bot: true }
                     },
                     {
+                        id: 'msg-3',
+                        content: 'I cannot seem to connect to the Discord provider.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
+                        author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                    },
+                    {
                         id: 'msg-4',
-                        content: 'The dashboard analytics one.',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
+                        content: 'Have you checked your token?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 27).toISOString(),
+                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
+                    },
+                    {
+                        id: 'msg-5',
+                        content: 'Make sure it is valid and has the correct permissions.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 26.5).toISOString(),
+                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
+                    },
+                    {
+                         id: 'msg-6',
+                         content: 'Ah, I see. I was using the wrong token. It works now!',
+                         createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                    },
+                    {
+                        id: 'msg-7',
+                        content: 'Great! Is there anything else I can help you with?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
+                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
+                    },
+                     {
+                        id: 'msg-8',
+                        content: 'No, that is all. Thanks!',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 23).toISOString(),
                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
                     }
                 ]
@@ -118,8 +142,7 @@ test.describe('Chat Monitor Screenshots', () => {
     await page.click('button:has-text("Support Bot")');
 
     // Wait for chat to load
-    await expect(page.getByText('Hello! I am your AI assistant.')).toBeVisible();
-    await expect(page.getByText('Previous conversation history summarized')).toBeVisible();
+    await expect(page.getByText('Hello Alice! I can help with that.')).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/chat-monitor.png', fullPage: true });
