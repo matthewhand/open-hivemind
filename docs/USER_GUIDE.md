@@ -107,6 +107,10 @@ Manage connections to Large Language Model providers.
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
+
+![Message Platforms List](screenshots/message-providers-list.png)
+![Add Message Provider](screenshots/message-add-provider-modal.png)
+
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
