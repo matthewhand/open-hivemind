@@ -4,6 +4,9 @@ import { RateLimitError } from '../../types/errorClasses';
 
 const debug = Debug('app:securityMiddleware');
 
+// Cache trusted proxies at module load time for performance
+let cachedTrustedProxies: string[] | null = null;
+
 /**
  * Security middleware that adds comprehensive security headers
  * to protect against common web vulnerabilities
@@ -282,6 +285,11 @@ function sanitizeCookies(req: Request): void {
  * Defaults to common local/internal network addresses
  */
 function getTrustedProxies(): string[] {
+  // Return cached value if available
+  if (cachedTrustedProxies !== null) {
+    return cachedTrustedProxies;
+  }
+
   const envProxies = process.env.TRUSTED_PROXIES;
   if (envProxies) {
     const proxies: string[] = [];
@@ -314,11 +322,12 @@ function getTrustedProxies(): string[] {
       }
     }
 
+    cachedTrustedProxies = proxies;
     return proxies;
   }
 
   // Default trusted proxies - localhost and private network ranges
-  return [
+  cachedTrustedProxies = [
     '127.0.0.1',
     '::1',
     '::ffff:127.0.0.1',
@@ -326,6 +335,7 @@ function getTrustedProxies(): string[] {
     '172.16.0.0/12',
     '192.168.0.0/16',
   ];
+  return cachedTrustedProxies;
 }
 
 /**
@@ -337,7 +347,11 @@ function isTrustedProxy(ip: string): boolean {
 
   for (const trusted of trustedProxies) {
     // Check for exact match
-    if (ip === trusted || ip === `::ffff:${trusted}`) {
+    if (!trusted.includes('/')) {
+      if (ip === trusted || ip === `::ffff:${trusted}`) {
+        return true;
+      }
+    } else if (ip === trusted) {
       return true;
     }
 
@@ -385,11 +399,18 @@ function validateIP(ip: string): string | null {
   const ipv4Result = ip.match(ipv4Regex);
   if (ipv4Result) {
     const [, a, b, c, d] = ipv4Result;
-    if (parseInt(a) <= 255 && parseInt(b) <= 255 && 
-        parseInt(c) <= 255 && parseInt(d) <= 255) {
-      return ip;
+    const octets = [a, b, c, d];
+    for (const octet of octets) {
+      // Reject leading zeros (octal confusion attack) - only "0" is allowed
+      if (octet.length > 1 && octet.startsWith('0')) {
+        return null;
+      }
+      const num = parseInt(octet, 10);
+      if (isNaN(num) || num < 0 || num > 255) {
+        return null;
+      }
     }
-    return null;
+    return ip;
   }
   
   // Validate IPv6 format (basic check)
@@ -407,7 +428,7 @@ function validateIP(ip: string): string | null {
  * This is the IP that actually connected to the server
  */
 function getConnectionIP(req: Request): string {
-  const remoteAddress = req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+  const remoteAddress = req.socket?.remoteAddress || 'unknown';
   const validated = validateIP(remoteAddress);
   return validated || 'unknown';
 }
