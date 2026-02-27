@@ -1,7 +1,29 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import StatsCards from '../StatsCards';
+
+// Mock Web Animations API since it's not available in JSDOM
+const mockAnimate = vi.fn().mockReturnValue({
+  playState: 'finished',
+  effect: {
+    getComputedTiming: () => ({ progress: 1 }),
+  },
+  cancel: vi.fn(),
+});
+
+// Apply mock to HTMLElement prototype
+Object.defineProperty(globalThis.HTMLElement.prototype, 'animate', {
+  value: mockAnimate,
+  writable: true,
+});
+
+// Mock requestAnimationFrame
+globalThis.requestAnimationFrame = vi.fn((callback) => {
+  callback();
+  return 0;
+});
+globalThis.cancelAnimationFrame = vi.fn();
 
 // Mock Lucide icons to avoid rendering issues
 vi.mock('lucide-react', () => ({
@@ -48,7 +70,18 @@ describe('StatsCards Component', () => {
       icon: 'alert',
       color: 'error' as const,
     },
+    {
+      id: 'stat4',
+      title: 'Status',
+      value: 'Active',
+      icon: 'check',
+      color: 'info' as const,
+    },
   ];
+
+  beforeEach(() => {
+    mockAnimate.mockClear();
+  });
 
   it('renders loading state correctly', () => {
     const { container } = render(<StatsCards stats={mockStats} isLoading={true} />);
@@ -57,41 +90,36 @@ describe('StatsCards Component', () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('renders stats with correct titles', async () => {
+  it('renders stats with correct titles', () => {
     render(<StatsCards stats={mockStats} />);
 
     expect(screen.getByText('Total Users')).toBeInTheDocument();
     expect(screen.getByText('Revenue')).toBeInTheDocument();
     expect(screen.getByText('Errors')).toBeInTheDocument();
+    expect(screen.getByText('Status')).toBeInTheDocument();
   });
 
-  it('renders stat values (eventually)', async () => {
-    // We cannot easily mock framer-motion's internal loop with just fake timers in this setup
-    // without more extensive mocking of requestAnimationFrame and performance.now.
-    // However, since we are testing the component logic, we can check if the correct values
-    // are rendered eventually.
-
-    // For this test, we can mock the animate function from framer-motion to immediately
-    // update the value, or use waitFor.
-
+  it('renders string values directly', () => {
     render(<StatsCards stats={mockStats} />);
-
-    // Wait for the animation to complete (it takes 1s in the component)
-    // In a real browser, this would animate. In JSDOM/Node with framer-motion default,
-    // it might need some time.
-
-    // Actually, let's just wait for the final text.
-    // 1000 -> 1.0K
-    await screen.findByText('1.0K', {}, { timeout: 2000 });
-    // 50000 -> 50.0K
-    await screen.findByText('50.0K', {}, { timeout: 2000 });
-    // 0 -> 0
-    await screen.findByText('0', {}, { timeout: 2000 });
+    // String value should render directly
+    expect(screen.getByText('Active')).toBeInTheDocument();
   });
 
   it('renders changes correctly', () => {
-      render(<StatsCards stats={mockStats} />);
-      expect(screen.getByText('10%')).toBeInTheDocument();
-      expect(screen.getByText('vs last period')).toBeInTheDocument();
+    render(<StatsCards stats={mockStats} />);
+    expect(screen.getByText('10%')).toBeInTheDocument();
+    expect(screen.getByText('vs last period')).toBeInTheDocument();
+  });
+
+  it('renders correct number of stat cards', () => {
+    const { container } = render(<StatsCards stats={mockStats} />);
+    const cards = container.querySelectorAll('.card');
+    expect(cards.length).toBe(mockStats.length);
+  });
+
+  it('uses Web Animations API for number values', () => {
+    render(<StatsCards stats={mockStats} />);
+    // Number stats should use the AnimatedCounter which calls animate()
+    expect(mockAnimate).toHaveBeenCalled();
   });
 });

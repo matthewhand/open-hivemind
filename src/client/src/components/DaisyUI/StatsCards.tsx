@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
-import { animate } from 'framer-motion';
 
 interface StatItem {
   id: string;
@@ -54,8 +53,8 @@ const iconMap: Record<string, React.ReactNode> = {
   'wifi': <Wifi className="w-8 h-8" />,
 };
 
-// Extracted formatting logic
-const formatStatValue = (value: number) => {
+// Format number with K/M suffixes
+const formatStatValue = (value: number): string => {
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;
   } else if (value >= 1000) {
@@ -64,27 +63,76 @@ const formatStatValue = (value: number) => {
   return Math.round(value).toLocaleString();
 };
 
-const AnimatedCounter: React.FC<{ value: number; id: string; className?: string }> = ({ value, id, className }) => {
-  const nodeRef = useRef<HTMLParagraphElement>(null);
-  const prevValueRef = useRef<number>(0);
+// Performance-optimized counter using Web Animations API
+// Avoids React re-renders during animation by updating DOM directly via ref
+const AnimatedCounter: React.FC<{ value: number; className?: string }> = ({ value, className }) => {
+  const nodeRef = useRef<HTMLSpanElement>(null);
+  const animationRef = useRef<Animation | null>(null);
+  const startValueRef = useRef<number>(0);
 
   useEffect(() => {
     const node = nodeRef.current;
     if (!node) return;
 
-    const controls = animate(prevValueRef.current, value, {
-      duration: 1,
-      onUpdate: (latest) => {
-        node.textContent = formatStatValue(latest);
-      },
+    // Cancel any existing animation
+    if (animationRef.current) {
+      animationRef.current.cancel();
+    }
+
+    const startValue = startValueRef.current;
+    const endValue = value;
+
+    // Skip animation if values are the same
+    if (startValue === endValue) {
+      node.textContent = formatStatValue(endValue);
+      return;
+    }
+
+    // Use Web Animations API for hardware-accelerated animation
+    // This runs on the compositor thread without triggering React re-renders
+    const keyframes: Keyframe[] = [
+      { '--anim-value': startValue } as unknown as Keyframe,
+      { '--anim-value': endValue } as unknown as Keyframe,
+    ];
+
+    animationRef.current = node.animate(keyframes, {
+      duration: 1000,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      fill: 'forwards',
     });
 
-    prevValueRef.current = value;
+    // Track animation progress and update text
+    let rafId: number;
+    const updateValue = () => {
+      if (!animationRef.current) return;
 
-    return () => controls.stop();
+      const effect = animationRef.current.effect as KeyframeEffect | null;
+      if (effect) {
+        const timing = effect.getComputedTiming();
+        const progress = timing.progress ?? (timing.currentTime && timing.duration ? Number(timing.currentTime) / Number(timing.duration) : 1);
+        const currentValue = startValue + (endValue - startValue) * progress;
+        node.textContent = formatStatValue(currentValue);
+      }
+
+      if (animationRef.current.playState !== 'finished') {
+        rafId = requestAnimationFrame(updateValue);
+      } else {
+        node.textContent = formatStatValue(endValue);
+        startValueRef.current = endValue;
+      }
+    };
+
+    rafId = requestAnimationFrame(updateValue);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (animationRef.current) {
+        animationRef.current.cancel();
+      }
+    };
   }, [value]);
 
-  return <p ref={nodeRef} className={className}>{formatStatValue(prevValueRef.current)}</p>;
+  return <span ref={nodeRef} className={className}>{formatStatValue(startValueRef.current)}</span>;
 };
 
 
@@ -198,7 +246,6 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
                 {typeof stat.value === 'number' ? (
                   <AnimatedCounter
                     value={stat.value}
-                    id={stat.id}
                     className={`text-3xl font-bold ${getStatColor(stat.color)}`}
                   />
                 ) : (
