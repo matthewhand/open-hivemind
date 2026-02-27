@@ -17,7 +17,8 @@ fi
 
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
-node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck || \
+# Use npx to execute tsc which correctly resolves the binary path
+npx tsc --noEmitOnError false --skipLibCheck || \
   echo 'TypeScript compilation completed with warnings, but build succeeded'
 set +x
 echo "[build:backend] finished at $(timestamp)"
