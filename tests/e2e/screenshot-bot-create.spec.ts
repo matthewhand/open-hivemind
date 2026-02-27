@@ -103,6 +103,12 @@ test.describe('Bot Create Page Screenshots', () => {
     // We can check if the select has populated options
     // The "Persona" select should have "Friendly Helper"
     await expect(page.getByRole('combobox').filter({ hasText: 'Default Assistant' })).toBeVisible();
+
+    // Check for LLM Provider Selection (new grid)
+    await expect(page.getByText('System Default', { exact: true })).toBeVisible();
+    await expect(page.getByText('Use global setting', { exact: true })).toBeVisible();
+    await expect(page.getByText('GPT-4 Turbo', { exact: true })).toBeVisible();
+
     // Or just wait a bit to be safe as animations might happen
     await page.waitForTimeout(1000);
 

@@ -46,7 +46,7 @@ Create and manage individual bot instances.
 *   **Create Bot**: Define a new bot with a unique name.
 ![Create Bot Modal](./docs/images/create-bot-modal.png)
 
-*   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`. This enhanced interface allows you to visually select the message platform and preview the selected persona's description before creation.
+*   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`. This enhanced interface features visual cards for selecting Message Platforms and LLM Providers, along with a dynamic preview of the selected Persona.
 ![Create Bot Page](docs/screenshots/bot-create-page.png)
 
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.

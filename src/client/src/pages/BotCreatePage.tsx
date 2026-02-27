@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Save, Gamepad2, Hash, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Bot, Save, Gamepad2, Hash, MessageSquare, Send, CheckCircle2, Sparkles, Brain, Cpu, Zap, Server, Globe, AlertCircle } from 'lucide-react';
 import {
   Breadcrumbs,
   Alert,
@@ -98,6 +98,15 @@ const BotCreatePage: React.FC = () => {
     { id: 'mattermost', name: 'Mattermost', icon: MessageSquare },
     { id: 'telegram', name: 'Telegram', icon: Send },
   ];
+
+  const getProviderIcon = (provider: string) => {
+    if (provider.includes('openai')) return Sparkles;
+    if (provider.includes('anthropic')) return Brain;
+    if (provider.includes('google')) return Globe;
+    if (provider.includes('mistral') || provider.includes('meta')) return Zap;
+    if (provider.includes('ollama') || provider.includes('local')) return Server;
+    return Cpu;
+  };
 
   return (
     <div className="space-y-6">
@@ -225,24 +234,67 @@ const BotCreatePage: React.FC = () => {
                 </div>
 
                 {/* LLM Provider */}
-                <div className="form-control w-full">
+                <div className="form-control w-full col-span-1 md:col-span-2">
                   <label className="label">
                     <span className="label-text font-semibold">
                       LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
                     </span>
                     <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
                   </label>
-                  <Select
-                    value={formData.llmProvider}
-                    onChange={(e) => handleInputChange('llmProvider', e.target.value)}
-                  >
-                    <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider...'}</option>
-                    {llmProfiles.map((p) => (
-                      <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
-                    ))}
-                  </Select>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-1">
+                    {/* System Default Option */}
+                    {defaultLlmConfigured && (
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('llmProvider', '')}
+                        className={`text-left p-3 rounded-lg border transition-all hover:shadow-md flex items-center gap-3 ${
+                          formData.llmProvider === ''
+                            ? 'border-primary bg-primary/10'
+                            : 'border-base-300 bg-base-100 hover:bg-base-200'
+                        }`}
+                      >
+                        <div className="bg-base-200 p-2 rounded-full">
+                          <Cpu className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">System Default</div>
+                          <div className="text-xs text-base-content/60">Use global setting</div>
+                        </div>
+                        {formData.llmProvider === '' && <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />}
+                      </button>
+                    )}
+
+                    {/* Available Profiles */}
+                    {llmProfiles.map((p) => {
+                      const Icon = getProviderIcon(p.provider);
+                      return (
+                        <button
+                          key={p.key}
+                          type="button"
+                          onClick={() => handleInputChange('llmProvider', p.key)}
+                          className={`text-left p-3 rounded-lg border transition-all hover:shadow-md flex items-center gap-3 ${
+                            formData.llmProvider === p.key
+                              ? 'border-primary bg-primary/10'
+                              : 'border-base-300 bg-base-100 hover:bg-base-200'
+                          }`}
+                        >
+                          <div className="bg-base-200 p-2 rounded-full">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-sm truncate" title={p.name}>{p.name}</div>
+                            <div className="text-xs text-base-content/60 truncate capitalize">{p.provider}</div>
+                          </div>
+                          {formData.llmProvider === p.key && <CheckCircle2 className="w-4 h-4 text-primary ml-auto flex-shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   {!defaultLlmConfigured && !formData.llmProvider && (
-                    <div className="text-error text-xs mt-1">
+                    <div className="text-error text-xs mt-2 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
                       System default is not configured. Please select a provider.
                     </div>
                   )}
