@@ -1,6 +1,8 @@
 import { Request } from 'express';
 import {
   getClientKey,
+  getTrustedProxies,
+  ipToLong,
   isIPInCIDR,
   isTrustedProxy,
   validateIP,
@@ -67,6 +69,47 @@ describe('Rate Limiter IP Extraction Security', () => {
         '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
       );
       expect(validateIP('fe80::1')).toBe('fe80::1');
+    });
+  });
+
+  describe('ipToLong Conversion', () => {
+    it('should convert IPv4 addresses to numeric representation', () => {
+      expect(ipToLong('0.0.0.0')).toBe(0);
+      expect(ipToLong('192.168.1.1')).toBe(0xc0a80101); // 3232235777
+      expect(ipToLong('255.255.255.255')).toBe(0xffffffff); // 4294967295
+    });
+
+    it('should handle IPs with first octet >= 128 (no signed overflow)', () => {
+      // These IPs would cause signed 32-bit overflow with bitwise shift
+      expect(ipToLong('128.0.0.1')).toBe(2147483649);
+      expect(ipToLong('200.100.50.25')).toBe(0xc8643219); // 3365965337
+      expect(ipToLong('255.0.0.0')).toBe(0xff000000); // 4278190080
+    });
+
+    it('should return NaN for invalid IPs', () => {
+      expect(ipToLong('not-an-ip')).toBeNaN();
+      expect(ipToLong('192.168.1')).toBeNaN();
+      expect(ipToLong('192.168.1.256')).toBeNaN();
+      expect(ipToLong('')).toBeNaN();
+    });
+  });
+
+  describe('getTrustedProxies Caching', () => {
+    it('should return default proxies when env is not set', () => {
+      delete process.env.TRUSTED_PROXIES;
+      const proxies = getTrustedProxies();
+      expect(proxies).toContain('127.0.0.1');
+      expect(proxies).toContain('10.0.0.0/8');
+      expect(proxies).toContain('192.168.0.0/16');
+    });
+
+    it('should parse custom proxies from environment', () => {
+      process.env.TRUSTED_PROXIES = '1.2.3.4, 5.6.7.8, 10.0.0.1';
+      const proxies = getTrustedProxies();
+      expect(proxies).toEqual(['1.2.3.4', '5.6.7.8', '10.0.0.1']);
+
+      // Clean up
+      delete process.env.TRUSTED_PROXIES;
     });
   });
 

@@ -253,7 +253,9 @@ function validateIP(ip: string): string | null {
 }
 
 /**
- * Convert IPv4 address to numeric representation for comparison
+ * Convert IPv4 address to numeric representation for comparison.
+ * Uses multiplication instead of bitwise shift to avoid signed 32-bit overflow
+ * for IPs with first octet >= 128.
  */
 function ipToLong(ip: string): number {
   if (!ip || typeof ip !== 'string') {
@@ -273,7 +275,7 @@ function ipToLong(ip: string): number {
     }
   }
 
-  return ((nums[0] << 24) + (nums[1] << 16) + (nums[2] << 8) + nums[3]) >>> 0;
+  return nums[0] * 0x1000000 + nums[1] * 0x10000 + nums[2] * 0x100 + nums[3];
 }
 
 /**
@@ -677,4 +679,4 @@ export {
 };
 
 // Export helper functions for testing
-export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey };
+export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey, ipToLong, getTrustedProxies };
