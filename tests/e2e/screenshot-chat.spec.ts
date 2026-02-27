@@ -73,32 +73,38 @@ test.describe('Chat Monitor Screenshots', () => {
                 history: [
                     {
                         id: 'msg-1',
-                        content: 'Hi, I am having trouble with the bot configuration.',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                        content: 'Hi, I have a question about the advanced settings.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
                         author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
-                    },
-                     {
-                        id: 'msg-rollup',
-                        content: 'Previous conversation history summarized due to length...',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-                        author: { id: 'system', username: 'System', role: 'system', bot: false }
                     },
                     {
                         id: 'msg-2',
-                        content: 'Hello Alice! I can help with that. What seems to be the issue?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 29).toISOString(),
+                        content: 'Hello Alice! I can certainly help you with that. Which settings are you referring to?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 + 1000 * 60).toISOString(),
                         author: { id: 'bot-1', username: 'Support Bot', bot: true }
                     },
                     {
                         id: 'msg-3',
-                        content: 'I cannot seem to connect to the Discord provider.',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
-                        author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                        content: 'Previous conversation history has been summarized due to length.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                        author: { id: 'system', username: 'System', role: 'system', bot: false }
                     },
                     {
                         id: 'msg-4',
-                        content: 'Have you checked your token?',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 27).toISOString(),
+                        content: 'I see. For the LLM provider configuration, you need to set the API key first.',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+                        author: { id: 'bot-1', username: 'Support Bot', bot: true }
+                    },
+                    {
+                        id: 'msg-5',
+                        content: 'Got it, thanks! One more thing, how do I change the persona?',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
+                        author: { id: 'user-1', username: 'Alice', bot: false, avatar: 'https://ui-avatars.com/api/?name=Alice' }
+                    },
+                    {
+                        id: 'msg-6',
+                        content: 'You can update the persona in the Bot Settings tab. Just look for the "Persona" field.',
+                        createdAt: new Date(Date.now() - 1000 * 30).toISOString(),
                         author: { id: 'bot-1', username: 'Support Bot', bot: true }
                     },
                     {
@@ -142,7 +148,10 @@ test.describe('Chat Monitor Screenshots', () => {
     await page.click('button:has-text("Support Bot")');
 
     // Wait for chat to load
-    await expect(page.getByText('Hello Alice! I can help with that.')).toBeVisible();
+    await expect(page.getByText('Hi, I have a question about the advanced settings.')).toBeVisible();
+
+    // Verify rollup message is visible
+    await expect(page.getByText('Previous conversation history has been summarized due to length.')).toBeVisible();
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/chat-monitor.png', fullPage: true });
