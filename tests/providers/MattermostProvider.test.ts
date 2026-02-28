@@ -1,6 +1,6 @@
-import { MattermostProvider } from '../../src/providers/MattermostProvider';
 import { MattermostService } from '@hivemind/adapter-mattermost';
 import mattermostConfig from '../../src/config/mattermostConfig';
+import { MattermostProvider } from '../../src/providers/MattermostProvider';
 
 // Mock dependencies
 jest.mock('@hivemind/adapter-mattermost', () => ({

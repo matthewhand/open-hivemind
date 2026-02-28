@@ -76,6 +76,9 @@ test.describe('Personas Copy Functionality', () => {
     await expect(toast).toContainText('System prompt copied to clipboard');
 
     // Take a screenshot for verification
-    await page.screenshot({ path: 'docs/screenshots/verification-personas-copy.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/verification-personas-copy.png',
+      fullPage: true,
+    });
   });
 });

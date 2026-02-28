@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';

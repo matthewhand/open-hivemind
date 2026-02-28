@@ -1,5 +1,5 @@
-import { ILLMProvider } from '../types/IProvider';
 import openaiConfig, { OpenAIConfig } from '../config/openaiConfig';
+import { ILLMProvider } from '../types/IProvider';
 
 export class OpenAIProvider implements ILLMProvider<OpenAIConfig> {
   id = 'openai';

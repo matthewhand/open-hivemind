@@ -121,11 +121,13 @@ describe('Logger', () => {
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
-        errorMessage, {
-        name: 'Error',
-        message: 'Test error',
-        stack: expect.stringContaining('Error: Test error'),
-      });
+        errorMessage,
+        {
+          name: 'Error',
+          message: 'Test error',
+          stack: expect.stringContaining('Error: Test error'),
+        }
+      );
 
       const complexError = new Error('Validation failed');
       complexError.stack = 'Error: Validation failed\n    at validateUser (user.ts:45:15)';
@@ -134,11 +136,13 @@ describe('Logger', () => {
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
-        'Validation error:', {
-        name: 'Error',
-        message: 'Validation failed',
-        stack: 'Error: Validation failed\n    at validateUser (user.ts:45:15)',
-      });
+        'Validation error:',
+        {
+          name: 'Error',
+          message: 'Validation failed',
+          stack: 'Error: Validation failed\n    at validateUser (user.ts:45:15)',
+        }
+      );
     });
   });
 

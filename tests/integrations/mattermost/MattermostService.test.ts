@@ -173,6 +173,7 @@ jest.mock('@hivemind/adapter-mattermost', () => {
       return null;
     }
   }
+});
 
 // Mock the dependencies FIRST before importing/using them
 jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
