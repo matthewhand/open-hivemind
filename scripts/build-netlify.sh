@@ -43,6 +43,20 @@ npx tsc src/netlify/functions/server.ts \
   --skipLibCheck \
   --moduleResolution node
 
+echo "🔹 Setting up dependencies for Netlify Functions..."
+# Netlify functions need their own package.json if they rely on external modules not bundled
+cat <<EOF > dist/netlify/functions/package.json
+{
+  "name": "open-hivemind-functions",
+  "version": "1.0.0",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "serverless-http": "^3.2.0"
+  }
+}
+EOF
+
 # 6. Verification
 echo "🔹 Build artifacts:"
 ls -F dist/client/
