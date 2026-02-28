@@ -129,8 +129,8 @@ describe('ActivityPage', () => {
         render(<ActivityPage />);
 
         await waitFor(() => {
-            expect(screen.getByText('No activity yet')).toBeInTheDocument();
-            expect(screen.getByText('Events will appear here as your bots process messages')).toBeInTheDocument();
+            expect(screen.getByText("No activity yet")).toBeInTheDocument();
+            expect(screen.getByText("Events will appear here as your bots process messages")).toBeInTheDocument();
         });
     });
 
