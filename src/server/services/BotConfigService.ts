@@ -239,7 +239,7 @@ export class BotConfigService {
     try {
       this.ensureDatabaseEnabled('list bot configurations by provider');
       const allConfigs = await this.getAllBotConfigs();
-      return allConfigs.filter((config) => config.messageProvider === provider);
+      return allConfigs.filter(config => config.messageProvider === provider);
     } catch (error) {
       debug('Error getting bot configurations by provider:', error);
       throw error;

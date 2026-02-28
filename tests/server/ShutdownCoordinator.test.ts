@@ -51,11 +51,9 @@ describe('ShutdownCoordinator', () => {
     jest.useFakeTimers();
 
     // Spy on protected method exitProcess
-    exitProcessSpy = jest
-      .spyOn(coordinator as any, 'exitProcess')
-      .mockImplementation((code: number) => {
-        console.log('MOCKED exitProcess called with', code);
-      });
+    exitProcessSpy = jest.spyOn(coordinator as any, 'exitProcess').mockImplementation((code: number) => {
+      console.log('MOCKED exitProcess called with', code);
+    });
   });
 
   afterEach(() => {

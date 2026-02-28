@@ -1,9 +1,9 @@
+import { IMessageProvider } from '../types/IProvider';
+import { Discord, DiscordService } from '@hivemind/adapter-discord';
+import discordConfig, { DiscordConfig } from '../config/discordConfig';
 import fs from 'fs';
 import path from 'path';
-import { Discord, type DiscordService } from '@hivemind/adapter-discord';
-import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
-import { type IMessageProvider } from '../types/IProvider';
 
 export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   id = 'discord';
@@ -39,10 +39,10 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       discordInfo = bots.map((b) => ({
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
-        connected: true,
+        connected: true
       }));
     } catch (e) {
-      // Ignore if not initialized
+       // Ignore if not initialized
     }
     return {
       ok: true,
@@ -52,8 +52,8 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   getBotNames() {
-    // Not strictly used by adminRoutes logic for Discord, but we can implement it
-    return [];
+     // Not strictly used by adminRoutes logic for Discord, but we can implement it
+     return [];
   }
 
   async getBots() {
@@ -64,7 +64,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   async addBot(config: any) {
     const { name, token, llm } = config;
     if (!token) {
-      throw new Error('token is required');
+        throw new Error('token is required');
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -75,7 +75,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
     } catch (e: any) {
-      // Ignore
+       // Ignore
     }
     cfg.discord = cfg.discord || {};
     cfg.discord.instances = cfg.discord.instances || [];
@@ -92,7 +92,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const ds = this.discordService;
     const instanceCfg = { name: name || '', token, llm };
     if (ds.addBot) {
-      await ds.addBot(instanceCfg);
+        await ds.addBot(instanceCfg);
     }
   }
 
@@ -104,22 +104,24 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
     } catch (e: any) {
-      return { added: 0 };
+        return { added: 0 };
     }
 
     let added = 0;
     const ds = this.discordService;
     const bots = (ds.getAllBots?.() || []) as IBotInfo[];
-    const have = new Set(bots.map((b) => b?.config?.discord?.token || b?.config?.token));
+    const have = new Set(
+        bots.map((b) => b?.config?.discord?.token || b?.config?.token)
+    );
     const instances = cfg.discord?.instances || [];
     for (const inst of instances) {
-      if (inst.token && !have.has(inst.token)) {
-        const instanceCfg = { name: inst.name || '', token: inst.token, llm: inst.llm };
-        if (ds.addBot) {
-          await ds.addBot(instanceCfg);
-          added++;
+        if (inst.token && !have.has(inst.token)) {
+          const instanceCfg = { name: inst.name || '', token: inst.token, llm: inst.llm };
+          if (ds.addBot) {
+              await ds.addBot(instanceCfg);
+              added++;
+          }
         }
-      }
     }
     return { added };
   }

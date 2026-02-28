@@ -1,6 +1,6 @@
-import { execFile } from 'child_process';
 import fs from 'fs';
 import util from 'util';
+import { execFile } from 'child_process';
 import Debug from 'debug';
 
 const debug = Debug('app:utils');
@@ -82,12 +82,12 @@ export async function executeCommand(command: string): Promise<string> {
     /^(node|npm|npx)\s+--version$/,
   ];
 
-  const isWhitelisted = safePatterns.some((pattern) => pattern.test(command.trim()));
+  const isWhitelisted = safePatterns.some(pattern => pattern.test(command.trim()));
 
   if (!isWhitelisted && containsShellMetacharacters(command)) {
     const error = new Error(
       'Command contains shell metacharacters and cannot be executed safely. ' +
-        'Use executeCommandSafe() with command arguments as an array instead.'
+      'Use executeCommandSafe() with command arguments as an array instead.'
     );
     debug('SECURITY: Blocked command with metacharacters: ' + command);
     throw error;

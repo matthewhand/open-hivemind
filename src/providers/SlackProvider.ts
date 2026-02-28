@@ -1,16 +1,15 @@
+import { IMessageProvider } from '../types/IProvider';
+import { SlackService } from '@hivemind/adapter-slack';
+import slackConfig, { SlackConfig } from '../config/slackConfig';
 import fs from 'fs';
 import path from 'path';
-import { SlackService } from '@hivemind/adapter-slack';
-import slackConfig, { type SlackConfig } from '../config/slackConfig';
-import { type IMessageProvider } from '../types/IProvider';
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;
   docsUrl = 'https://api.slack.com/apps';
-  helpText =
-    'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
+  helpText = 'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
   private slackService: SlackService;
 
   constructor(slackService?: SlackService) {
@@ -113,7 +112,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     };
 
     if ((slack as any).addBot) {
-      await (slack as any).addBot(instanceCfg);
+        await (slack as any).addBot(instanceCfg);
     }
   }
 
@@ -125,7 +124,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
     } catch (e: any) {
-      return { added: 0 };
+        return { added: 0 };
     }
 
     let added = 0;
@@ -133,25 +132,25 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const existing = new Set(slack.getBotNames());
     const instances = cfg.slack?.instances || [];
     for (const inst of instances) {
-      const nm = inst.name || '';
-      if (!nm || !existing.has(nm)) {
-        const instanceCfg = {
-          name: nm || `Bot${Date.now()}`,
-          slack: {
-            botToken: inst.token,
-            signingSecret: inst.signingSecret || '',
-            mode: cfg.slack?.mode || 'socket',
-            appToken: inst.appToken || '',
-            defaultChannelId: inst.defaultChannelId || '',
-            joinChannels: inst.joinChannels || '',
-          },
-          llm: inst.llm,
-        };
-        if ((slack as any).addBot) {
-          await (slack as any).addBot(instanceCfg);
-          added++;
+        const nm = inst.name || '';
+        if (!nm || !existing.has(nm)) {
+           const instanceCfg = {
+                name: nm || `Bot${Date.now()}`,
+                slack: {
+                  botToken: inst.token,
+                  signingSecret: inst.signingSecret || '',
+                  mode: cfg.slack?.mode || 'socket',
+                  appToken: inst.appToken || '',
+                  defaultChannelId: inst.defaultChannelId || '',
+                  joinChannels: inst.joinChannels || ''
+                },
+                llm: inst.llm
+           };
+           if ((slack as any).addBot) {
+               await (slack as any).addBot(instanceCfg);
+               added++;
+           }
         }
-      }
     }
     return { added };
   }

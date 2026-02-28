@@ -3,12 +3,10 @@ import { setupAuth } from './test-utils';
 
 test.describe('Activity Monitor Screenshots', () => {
   test('capture activity monitor screenshot', async ({ page }) => {
-    page.on('console', (msg) => console.log(`BROWSER: ${msg.text()}`));
-    page.on('pageerror', (exception) => console.log(`BROWSER ERROR: ${exception}`));
-    page.on('request', (request) => console.log(`REQUEST: ${request.method()} ${request.url()}`));
-    page.on('requestfailed', (request) =>
-      console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`)
-    );
+    page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
+    page.on('pageerror', exception => console.log(`BROWSER ERROR: ${exception}`));
+    page.on('request', request => console.log(`REQUEST: ${request.method()} ${request.url()}`));
+    page.on('requestfailed', request => console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`));
 
     // Setup authentication
     await setupAuth(page);
@@ -28,19 +26,19 @@ test.describe('Activity Monitor Screenshots', () => {
 
     // Mock Status for Dashboard
     await page.route('**/api/dashboard/api/status', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          bots: [
-            { name: 'CustomerSupport', status: 'healthy', connected: true },
-            { name: 'DevAssistant', status: 'healthy', connected: true },
-          ],
-          uptime: 1000,
-        },
-      })
+        route.fulfill({
+          status: 200,
+          json: {
+            bots: [
+              { name: 'CustomerSupport', status: 'healthy', connected: true },
+              { name: 'DevAssistant', status: 'healthy', connected: true },
+            ],
+            uptime: 1000,
+          },
+        })
     );
 
-    await page.route('**/api/health/detailed', async (route) =>
+     await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -49,30 +47,15 @@ test.describe('Activity Monitor Screenshots', () => {
           uptime: 3600,
           memory: { used: 1024, total: 4096, usage: 25 },
           cpu: { user: 100, system: 50 },
-          system: {
-            platform: 'linux',
-            arch: 'x64',
-            release: '1.0.0',
-            hostname: 'host',
-            loadAverage: [0.1, 0.1, 0.1],
-          },
+          system: { platform: 'linux', arch: 'x64', release: '1.0.0', hostname: 'host', loadAverage: [0.1, 0.1, 0.1] },
         },
       })
     );
-    await page.route('**/health/api-endpoints', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          overall: {
-            status: 'healthy',
-            stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
-          },
-          endpoints: [],
-        },
-      })
+     await page.route('**/health/api-endpoints', async (route) =>
+      route.fulfill({ status: 200, json: { overall: { status: 'healthy', stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 } }, endpoints: [] } })
     );
 
-    await page.route('**/api/config', async (route) =>
+     await page.route('**/api/config', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -83,6 +66,7 @@ test.describe('Activity Monitor Screenshots', () => {
         },
       })
     );
+
 
     // Mock Activity Data
     const now = new Date();
@@ -113,7 +97,7 @@ test.describe('Activity Monitor Screenshots', () => {
         status: 'success',
         processingTime: 450,
       },
-      {
+       {
         id: '3',
         timestamp: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
         botName: 'DevAssistant',
@@ -155,7 +139,7 @@ test.describe('Activity Monitor Screenshots', () => {
             llmProviders: ['openai', 'anthropic'],
           },
           timeline: [],
-          agentMetrics: [],
+          agentMetrics: []
         },
       });
     });

@@ -30,8 +30,9 @@ test.describe('Bot Templates Page Screenshots', () => {
       route.fulfill({ status: 200, json: {} })
     );
     await page.route('/api/personas', async (route) => {
-      await route.fulfill({ status: 200, json: [] });
+        await route.fulfill({ status: 200, json: [] });
     });
+
 
     // Mock Templates API (using the correct endpoint /api/bot-config/templates and object structure)
     await page.route('/api/bot-config/templates', async (route) => {
@@ -61,20 +62,20 @@ test.describe('Bot Templates Page Screenshots', () => {
           tags: ['fun', 'social'],
         },
         mattermost_support: {
-          name: 'Customer Support',
-          description: 'Handles customer queries efficiently.',
-          messageProvider: 'mattermost',
-          llmProvider: 'openai',
-          persona: 'Professional',
-          tags: ['support', 'business'],
-        },
+           name: 'Customer Support',
+           description: 'Handles customer queries efficiently.',
+           messageProvider: 'mattermost',
+           llmProvider: 'openai',
+           persona: 'Professional',
+           tags: ['support', 'business'],
+        }
       };
 
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          data: { templates },
+          data: { templates }
         }),
       });
     });

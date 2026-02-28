@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
+import { authenticateToken } from '../middleware/auth';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
-import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 

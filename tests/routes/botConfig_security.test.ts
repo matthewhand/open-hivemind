@@ -46,9 +46,7 @@ jest.mock('../../src/server/services/ConfigurationValidator', () => {
   return {
     ConfigurationValidator: jest.fn().mockImplementation(() => ({
       validateBotConfigWithSchema: jest.fn().mockReturnValue({ isValid: true, errors: [] }),
-      validateBotConfig: jest
-        .fn()
-        .mockReturnValue({ isValid: true, errors: [], warnings: [], suggestions: [] }),
+      validateBotConfig: jest.fn().mockReturnValue({ isValid: true, errors: [], warnings: [], suggestions: [] }),
     })),
   };
 });
@@ -88,7 +86,9 @@ describe('Bot Config Security Reproduction', () => {
       name: 'Invalid Name!',
     };
 
-    const res = await request(app).put('/api/bot-config/bot123').send(invalidUpdate);
+    const res = await request(app)
+      .put('/api/bot-config/bot123')
+      .send(invalidUpdate);
 
     // DESIRED BEHAVIOR: 400 Bad Request
     expect(res.status).toBe(400);

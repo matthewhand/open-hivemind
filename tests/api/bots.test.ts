@@ -96,15 +96,13 @@ describe('Bots Routes', () => {
       // The actual response will be transformed by the route handler
       // We expect an array of bot objects with additional properties like connected, messageCount, etc.
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body[0]).toEqual(
-        expect.objectContaining({
-          id: 'bot1',
-          name: 'Bot 1',
-          connected: false,
-          messageCount: 0,
-          errorCount: 0,
-        })
-      );
+      expect(response.body[0]).toEqual(expect.objectContaining({
+        id: 'bot1',
+        name: 'Bot 1',
+        connected: false,
+        messageCount: 0,
+        errorCount: 0
+      }));
     });
   });
 
@@ -188,7 +186,9 @@ describe('Bots Routes', () => {
       const bot = { id: 'bot1', name: 'Bot 1' };
       getMockManager().getBot.mockResolvedValue(bot);
 
-      const response = await request(app).get('/api/bots/bot1/activity').expect(200);
+      const response = await request(app)
+        .get('/api/bots/bot1/activity')
+        .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.data.activity)).toBe(true);
@@ -197,7 +197,9 @@ describe('Bots Routes', () => {
     it('should return 404 if bot not found', async () => {
       getMockManager().getBot.mockResolvedValue(null);
 
-      await request(app).get('/api/bots/bot1/activity').expect(404);
+      await request(app)
+        .get('/api/bots/bot1/activity')
+        .expect(404);
     });
   });
 });

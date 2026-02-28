@@ -5,7 +5,6 @@ import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
-import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -30,31 +29,19 @@ router.get('/', (req, res) => {
   });
 });
 
-// Detailed health check - requires authentication for full details
-router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
+// Detailed health check
+router.get('/detailed', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
-  const metrics = MetricsCollector.getInstance().getMetrics();
-
-  // Calculate overall health status
-  const recentErrors = ErrorLogger.getInstance().getRecentErrorCount(60000);
-  const healthStatus = calculateHealthStatus(memoryUsage, recentErrors, metrics);
-
-  // Sanitized response for unauthenticated users
-  if (!req.user) {
-    const sanitizedHealthData = {
-      status: healthStatus.status,
-      timestamp: new Date().toISOString(),
-      uptime: uptime,
-    };
-    return res.json(sanitizedHealthData);
-  }
-
-  // Full detailed response for authenticated users
   const cpuUsage = process.cpuUsage();
+  const metrics = MetricsCollector.getInstance().getMetrics();
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
+  const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
   const recoveryStats = globalRecoveryManager.getAllStats();
+
+  // Calculate overall health status
+  const healthStatus = calculateHealthStatus(memoryUsage, recentErrors, metrics);
 
   const healthData = {
     status: healthStatus.status,

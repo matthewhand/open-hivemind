@@ -1,15 +1,7 @@
 import { EventEmitter } from 'events';
+import { ProviderMetricsCollector, type ProviderType, type ProviderStatus } from './ProviderMetricsCollector';
 import { BusinessKpiCollector } from './BusinessKpiCollector';
-import {
-  IntegrationAnomalyDetector,
-  type AnomalySeverity,
-  type IntegrationAnomaly,
-} from './IntegrationAnomalyDetector';
-import {
-  ProviderMetricsCollector,
-  type ProviderStatus,
-  type ProviderType,
-} from './ProviderMetricsCollector';
+import { IntegrationAnomalyDetector, type IntegrationAnomaly, type AnomalySeverity } from './IntegrationAnomalyDetector';
 
 /**
  * Alert level
@@ -91,168 +83,25 @@ export interface AlertStats {
  */
 const DEFAULT_THRESHOLDS: AlertThreshold[] = [
   // Provider thresholds
-  {
-    id: 'provider_error_rate',
-    name: 'High Error Rate',
-    source: 'provider',
-    metric: 'errorRate',
-    condition: 'gt',
-    value: 10,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'Error rate {{value}}% exceeds threshold {{threshold}}%',
-  },
-  {
-    id: 'provider_critical_error',
-    name: 'Critical Error Rate',
-    source: 'provider',
-    metric: 'errorRate',
-    condition: 'gt',
-    value: 50,
-    enabled: true,
-    cooldown: 60000,
-    severity: 'critical',
-    messageTemplate: 'Critical error rate {{value}}% detected',
-  },
-  {
-    id: 'provider_latency',
-    name: 'High Latency',
-    source: 'provider',
-    metric: 'responseTime',
-    condition: 'gt',
-    value: 5000,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'Response time {{value}}ms exceeds threshold',
-  },
-  {
-    id: 'provider_unhealthy',
-    name: 'Provider Unhealthy',
-    source: 'provider',
-    metric: 'status',
-    condition: 'eq',
-    value: 3,
-    enabled: true,
-    cooldown: 60000,
-    severity: 'critical',
-    messageTemplate: 'Provider {{metric}} is unhealthy',
-  },
-  {
-    id: 'provider_rate_limit',
-    name: 'Rate Limit Hit',
-    source: 'provider',
-    metric: 'rateLimitHits',
-    condition: 'gt',
-    value: 0,
-    enabled: true,
-    cooldown: 60000,
-    severity: 'warning',
-    messageTemplate: 'Rate limit hit for provider',
-  },
+  { id: 'provider_error_rate', name: 'High Error Rate', source: 'provider', metric: 'errorRate', condition: 'gt', value: 10, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'Error rate {{value}}% exceeds threshold {{threshold}}%' },
+  { id: 'provider_critical_error', name: 'Critical Error Rate', source: 'provider', metric: 'errorRate', condition: 'gt', value: 50, enabled: true, cooldown: 60000, severity: 'critical', messageTemplate: 'Critical error rate {{value}}% detected' },
+  { id: 'provider_latency', name: 'High Latency', source: 'provider', metric: 'responseTime', condition: 'gt', value: 5000, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'Response time {{value}}ms exceeds threshold' },
+  { id: 'provider_unhealthy', name: 'Provider Unhealthy', source: 'provider', metric: 'status', condition: 'eq', value: 3, enabled: true, cooldown: 60000, severity: 'critical', messageTemplate: 'Provider {{metric}} is unhealthy' },
+  { id: 'provider_rate_limit', name: 'Rate Limit Hit', source: 'provider', metric: 'rateLimitHits', condition: 'gt', value: 0, enabled: true, cooldown: 60000, severity: 'warning', messageTemplate: 'Rate limit hit for provider' },
 
   // LLM provider thresholds
-  {
-    id: 'llm_latency_high',
-    name: 'High LLM Latency',
-    source: 'provider',
-    metric: 'latency',
-    condition: 'gt',
-    value: 30000,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'LLM latency {{value}}ms exceeds threshold',
-  },
-  {
-    id: 'llm_cost_high',
-    name: 'High LLM Cost',
-    source: 'provider',
-    metric: 'totalCost',
-    condition: 'gt',
-    value: 100,
-    enabled: true,
-    cooldown: 3600000,
-    severity: 'warning',
-    messageTemplate: 'LLM cost ${{value}} exceeds daily threshold',
-  },
-  {
-    id: 'llm_error_rate',
-    name: 'LLM Error Rate',
-    source: 'provider',
-    metric: 'llmErrorRate',
-    condition: 'gt',
-    value: 5,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'LLM error rate {{value}}% exceeds threshold',
-  },
+  { id: 'llm_latency_high', name: 'High LLM Latency', source: 'provider', metric: 'latency', condition: 'gt', value: 30000, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'LLM latency {{value}}ms exceeds threshold' },
+  { id: 'llm_cost_high', name: 'High LLM Cost', source: 'provider', metric: 'totalCost', condition: 'gt', value: 100, enabled: true, cooldown: 3600000, severity: 'warning', messageTemplate: 'LLM cost ${{value}} exceeds daily threshold' },
+  { id: 'llm_error_rate', name: 'LLM Error Rate', source: 'provider', metric: 'llmErrorRate', condition: 'gt', value: 5, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'LLM error rate {{value}}% exceeds threshold' },
 
   // KPI thresholds
-  {
-    id: 'kpi_response_time',
-    name: 'KPI Response Time',
-    source: 'kpi',
-    metric: 'average_response_time',
-    condition: 'gt',
-    value: 2000,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'Average response time exceeds target',
-  },
-  {
-    id: 'kpi_success_rate',
-    name: 'KPI Success Rate',
-    source: 'kpi',
-    metric: 'request_success_rate',
-    condition: 'lt',
-    value: 95,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'critical',
-    messageTemplate: 'Request success rate below threshold',
-  },
-  {
-    id: 'kpi_daily_spend',
-    name: 'KPI Daily Spend',
-    source: 'kpi',
-    metric: 'daily_llm_spend',
-    condition: 'gt',
-    value: 100,
-    enabled: true,
-    cooldown: 3600000,
-    severity: 'warning',
-    messageTemplate: 'Daily LLM spend exceeds budget',
-  },
+  { id: 'kpi_response_time', name: 'KPI Response Time', source: 'kpi', metric: 'average_response_time', condition: 'gt', value: 2000, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'Average response time exceeds target' },
+  { id: 'kpi_success_rate', name: 'KPI Success Rate', source: 'kpi', metric: 'request_success_rate', condition: 'lt', value: 95, enabled: true, cooldown: 300000, severity: 'critical', messageTemplate: 'Request success rate below threshold' },
+  { id: 'kpi_daily_spend', name: 'KPI Daily Spend', source: 'kpi', metric: 'daily_llm_spend', condition: 'gt', value: 100, enabled: true, cooldown: 3600000, severity: 'warning', messageTemplate: 'Daily LLM spend exceeds budget' },
 
   // System thresholds
-  {
-    id: 'system_memory',
-    name: 'High Memory Usage',
-    source: 'system',
-    metric: 'memoryUsage',
-    condition: 'gt',
-    value: 90,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'Memory usage {{value}}% exceeds threshold',
-  },
-  {
-    id: 'system_cpu',
-    name: 'High CPU Usage',
-    source: 'system',
-    metric: 'cpuUsage',
-    condition: 'gt',
-    value: 90,
-    enabled: true,
-    cooldown: 300000,
-    severity: 'warning',
-    messageTemplate: 'CPU usage {{value}}% exceeds threshold',
-  },
+  { id: 'system_memory', name: 'High Memory Usage', source: 'system', metric: 'memoryUsage', condition: 'gt', value: 90, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'Memory usage {{value}}% exceeds threshold' },
+  { id: 'system_cpu', name: 'High CPU Usage', source: 'system', metric: 'cpuUsage', condition: 'gt', value: 90, enabled: true, cooldown: 300000, severity: 'warning', messageTemplate: 'CPU usage {{value}}% exceeds threshold' },
 ];
 
 /**
@@ -377,8 +226,7 @@ export class EnhancedAlertManager extends EventEmitter {
               value = provider.rateLimitHits;
               break;
             case 'status':
-              metricValue =
-                provider.status === 'healthy' ? 1 : provider.status === 'degraded' ? 2 : 3;
+              metricValue = provider.status === 'healthy' ? 1 : provider.status === 'degraded' ? 2 : 3;
               value = metricValue;
               break;
           }
@@ -451,11 +299,7 @@ export class EnhancedAlertManager extends EventEmitter {
   /**
    * Evaluate a threshold
    */
-  private evaluateThreshold(
-    threshold: AlertThreshold,
-    value: number,
-    context?: Record<string, any>
-  ): void {
+  private evaluateThreshold(threshold: AlertThreshold, value: number, context?: Record<string, any>): void {
     let triggered = false;
 
     switch (threshold.condition) {
@@ -489,14 +333,10 @@ export class EnhancedAlertManager extends EventEmitter {
   /**
    * Trigger an alert
    */
-  private triggerAlert(
-    threshold: AlertThreshold,
-    value: number,
-    context?: Record<string, any>
-  ): void {
+  private triggerAlert(threshold: AlertThreshold, value: number, context?: Record<string, any>): void {
     // Check cooldown
     const recentAlert = Array.from(this.alerts.values())
-      .filter((a) => a.source === threshold.source && a.metric === threshold.metric)
+      .filter(a => a.source === threshold.source && a.metric === threshold.metric)
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
     if (recentAlert && Date.now() - recentAlert.timestamp < threshold.cooldown) {
@@ -538,14 +378,9 @@ export class EnhancedAlertManager extends EventEmitter {
    * Handle anomaly detected
    */
   private handleAnomaly(anomaly: IntegrationAnomaly): void {
-    const level: AlertLevel =
-      anomaly.severity === 'critical'
-        ? 'emergency'
-        : anomaly.severity === 'high'
-          ? 'critical'
-          : anomaly.severity === 'medium'
-            ? 'warning'
-            : 'info';
+    const level: AlertLevel = anomaly.severity === 'critical' ? 'emergency' :
+                              anomaly.severity === 'high' ? 'critical' :
+                              anomaly.severity === 'medium' ? 'warning' : 'info';
 
     const id = `alert_anomaly_${++this.idCounter}_${Date.now()}`;
     const alert: EnhancedAlert = {
@@ -639,7 +474,7 @@ export class EnhancedAlertManager extends EventEmitter {
   getAlerts(status?: AlertStatus): EnhancedAlert[] {
     let alerts = Array.from(this.alerts.values());
     if (status) {
-      alerts = alerts.filter((a) => a.status === status);
+      alerts = alerts.filter(a => a.status === status);
     }
     return alerts.sort((a, b) => b.timestamp - a.timestamp);
   }
@@ -682,17 +517,9 @@ export class EnhancedAlertManager extends EventEmitter {
     const alerts = Array.from(this.alerts.values());
 
     const byLevel: Record<AlertLevel, number> = { info: 0, warning: 0, critical: 0, emergency: 0 };
-    const bySource: Record<AlertSource, number> = {
-      provider: 0,
-      kpi: 0,
-      anomaly: 0,
-      system: 0,
-      custom: 0,
-    };
+    const bySource: Record<AlertSource, number> = { provider: 0, kpi: 0, anomaly: 0, system: 0, custom: 0 };
 
-    let active = 0,
-      acknowledged = 0,
-      resolved = 0;
+    let active = 0, acknowledged = 0, resolved = 0;
 
     for (const alert of alerts) {
       byLevel[alert.level]++;
@@ -723,12 +550,7 @@ export class EnhancedAlertManager extends EventEmitter {
   /**
    * Create custom alert
    */
-  createCustomAlert(
-    level: AlertLevel,
-    title: string,
-    message: string,
-    metadata?: Record<string, any>
-  ): void {
+  createCustomAlert(level: AlertLevel, title: string, message: string, metadata?: Record<string, any>): void {
     const id = `alert_custom_${++this.idCounter}_${Date.now()}`;
     const alert: EnhancedAlert = {
       id,

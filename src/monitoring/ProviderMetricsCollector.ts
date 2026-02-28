@@ -3,17 +3,7 @@ import { EventEmitter } from 'events';
 /**
  * Provider types supported by the system
  */
-export type ProviderType =
-  | 'discord'
-  | 'slack'
-  | 'mattermost'
-  | 'openai'
-  | 'flowise'
-  | 'openwebui'
-  | 'openswarm'
-  | 'perplexity'
-  | 'replicate'
-  | 'n8n';
+export type ProviderType = 'discord' | 'slack' | 'mattermost' | 'openai' | 'flowise' | 'openwebui' | 'openswarm' | 'perplexity' | 'replicate' | 'n8n';
 
 /**
  * Status of a provider
@@ -103,96 +93,16 @@ export interface ProviderMonitoringConfig {
  */
 const DEFAULT_CONFIG: ProviderMonitoringConfig = {
   providers: [
-    {
-      provider: 'discord',
-      type: 'message',
-      enabled: true,
-      checkInterval: 30000,
-      timeout: 5000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'slack',
-      type: 'message',
-      enabled: true,
-      checkInterval: 30000,
-      timeout: 5000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'mattermost',
-      type: 'message',
-      enabled: true,
-      checkInterval: 30000,
-      timeout: 5000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'openai',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'flowise',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'openwebui',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'openswarm',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'perplexity',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'replicate',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
-    {
-      provider: 'n8n',
-      type: 'llm',
-      enabled: true,
-      checkInterval: 60000,
-      timeout: 10000,
-      retries: 3,
-      consecutiveFailuresThreshold: 5,
-    },
+    { provider: 'discord', type: 'message', enabled: true, checkInterval: 30000, timeout: 5000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'slack', type: 'message', enabled: true, checkInterval: 30000, timeout: 5000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'mattermost', type: 'message', enabled: true, checkInterval: 30000, timeout: 5000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'openai', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'flowise', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'openwebui', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'openswarm', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'perplexity', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'replicate', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
+    { provider: 'n8n', type: 'llm', enabled: true, checkInterval: 60000, timeout: 10000, retries: 3, consecutiveFailuresThreshold: 5 },
   ],
   historySize: 1000,
   aggregationInterval: 60000,
@@ -239,15 +149,7 @@ export class ProviderMetricsCollector extends EventEmitter {
     }
 
     // Initialize LLM providers
-    const llmProviderTypes: ProviderType[] = [
-      'openai',
-      'flowise',
-      'openwebui',
-      'openswarm',
-      'perplexity',
-      'replicate',
-      'n8n',
-    ];
+    const llmProviderTypes: ProviderType[] = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
     for (const provider of llmProviderTypes) {
       this.llmProviders.set(provider, this.createDefaultLlmMetrics(provider));
     }
@@ -386,14 +288,7 @@ export class ProviderMetricsCollector extends EventEmitter {
         metrics.modelName = modelName;
       }
 
-      this.emit('llmRequest', {
-        provider,
-        latency,
-        tokens,
-        cost,
-        success,
-        metrics: { ...metrics },
-      });
+      this.emit('llmRequest', { provider, latency, tokens, cost, success, metrics: { ...metrics } });
     }
   }
 
@@ -533,11 +428,7 @@ export class ProviderMetricsCollector extends EventEmitter {
   /**
    * Update rate limit remaining
    */
-  updateRateLimitRemaining(
-    provider: ProviderType,
-    remaining: number,
-    type: 'message' | 'llm'
-  ): void {
+  updateRateLimitRemaining(provider: ProviderType, remaining: number, type: 'message' | 'llm'): void {
     if (type === 'message') {
       const metrics = this.messageProviders.get(provider);
       if (metrics) {
@@ -646,18 +537,12 @@ export class ProviderMetricsCollector extends EventEmitter {
     const messageProviders = this.getAllMessageProviderMetrics();
     const llmProviders = this.getAllLlmProviderMetrics();
 
-    const totalMessagesProcessed = messageProviders.reduce(
-      (sum, p) => sum + p.messagesReceived + p.messagesSent,
-      0
-    );
+    const totalMessagesProcessed = messageProviders.reduce((sum, p) => sum + p.messagesReceived + p.messagesSent, 0);
     const totalLlmRequests = llmProviders.reduce((sum, p) => sum + p.requestsTotal, 0);
 
     // Determine overall health
     let overallHealth: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    const allStatuses = [
-      ...messageProviders.map((p) => p.status),
-      ...llmProviders.map((p) => p.status),
-    ];
+    const allStatuses = [...messageProviders.map(p => p.status), ...llmProviders.map(p => p.status)];
     if (allStatuses.includes('unhealthy')) {
       overallHealth = 'unhealthy';
     } else if (allStatuses.includes('degraded')) {
@@ -720,7 +605,7 @@ export class ProviderMetricsCollector extends EventEmitter {
           provider: config.provider,
           type: 'message',
           status: metrics.status,
-          metrics: { ...metrics },
+          metrics: { ...metrics }
         });
       }
     } else {
@@ -731,7 +616,7 @@ export class ProviderMetricsCollector extends EventEmitter {
           provider: config.provider,
           type: 'llm',
           status: metrics.status,
-          metrics: { ...metrics },
+          metrics: { ...metrics }
         });
       }
     }
@@ -786,14 +671,7 @@ export class ProviderMetricsCollector extends EventEmitter {
     for (const [provider, metrics] of this.messageProviders) {
       output += `# HELP hivemind_message_provider_status Status of message provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
       output += `# TYPE hivemind_message_provider_status gauge\n`;
-      const statusValue =
-        metrics.status === 'healthy'
-          ? 1
-          : metrics.status === 'degraded'
-            ? 2
-            : metrics.status === 'unhealthy'
-              ? 3
-              : 0;
+      const statusValue = metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : metrics.status === 'unhealthy' ? 3 : 0;
       output += `hivemind_message_provider_status{provider="${provider}"} ${statusValue} ${timestamp}\n`;
 
       output += `# HELP hivemind_messages_received Total messages received\n`;
@@ -817,14 +695,7 @@ export class ProviderMetricsCollector extends EventEmitter {
     for (const [provider, metrics] of this.llmProviders) {
       output += `# HELP hivemind_llm_provider_status Status of LLM provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
       output += `# TYPE hivemind_llm_provider_status gauge\n`;
-      const statusValue =
-        metrics.status === 'healthy'
-          ? 1
-          : metrics.status === 'degraded'
-            ? 2
-            : metrics.status === 'unhealthy'
-              ? 3
-              : 0;
+      const statusValue = metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : metrics.status === 'unhealthy' ? 3 : 0;
       output += `hivemind_llm_provider_status{provider="${provider}"} ${statusValue} ${timestamp}\n`;
 
       output += `# HELP hivemind_llm_requests_total Total LLM requests\n`;

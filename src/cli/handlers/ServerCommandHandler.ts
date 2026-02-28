@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { type Command } from 'commander';
-import { type CommandHandler } from './CommandHandler';
+import { Command } from 'commander';
+import { CommandHandler } from './CommandHandler';
 
 export class ServerCommandHandler implements CommandHandler {
   public setup(program: Command): void {

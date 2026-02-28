@@ -1,5 +1,5 @@
-import openaiConfig from '../../src/config/openaiConfig';
 import { OpenAIProvider } from '../../src/providers/OpenAIProvider';
+import openaiConfig from '../../src/config/openaiConfig';
 
 describe('OpenAIProvider', () => {
   let provider: OpenAIProvider;

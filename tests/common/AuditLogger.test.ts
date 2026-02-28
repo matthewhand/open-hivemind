@@ -105,7 +105,7 @@ describe('AuditLogger', () => {
           resource: `res_${i}`,
           result: 'success',
           details: `detail_${i}`,
-          metadata: { botId: i % 4 === 0 ? 'bot1' : 'bot2' },
+          metadata: { botId: i % 4 === 0 ? 'bot1' : 'bot2' }
         });
       }
       await logger.waitForQueueDrain();
@@ -126,21 +126,21 @@ describe('AuditLogger', () => {
 
     it('should getAuditEventsByUser', async () => {
       const events = await logger.getAuditEventsByUser('userA', 10);
-      expect(events.every((e) => e.user === 'userA')).toBe(true);
+      expect(events.every(e => e.user === 'userA')).toBe(true);
       // userA are even numbers: 14, 12, 10
       expect(events[0].resource).toBe('res_14');
     });
 
     it('should getAuditEventsByAction', async () => {
       const events = await logger.getAuditEventsByAction('ACTION_X', 10);
-      expect(events.every((e) => e.action === 'ACTION_X')).toBe(true);
+      expect(events.every(e => e.action === 'ACTION_X')).toBe(true);
       // ACTION_X are multiples of 3: 12, 9, 6
       expect(events[0].resource).toBe('res_12');
     });
 
     it('should getBotActivity', async () => {
       const events = await logger.getBotActivity('bot1', 10);
-      expect(events.every((e) => e.metadata?.botId === 'bot1')).toBe(true);
+      expect(events.every(e => e.metadata?.botId === 'bot1')).toBe(true);
       // bot1 are multiples of 4: 12, 8, 4, 0
       expect(events[0].resource).toBe('res_12');
     });

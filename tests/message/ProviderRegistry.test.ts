@@ -1,14 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import type { IMessengerService } from '../../src/message/interfaces/IMessengerService';
 import {
-  getLoadedProviders,
   getMessengerServiceByProvider,
   getRegisteredProviders,
   isProviderRegistered,
-  refreshProviders,
+  getLoadedProviders,
   unloadProvider,
+  refreshProviders,
 } from '../../src/message/ProviderRegistry';
+import type { IMessengerService } from '../../src/message/interfaces/IMessengerService';
 
 // Mock fs and path
 jest.mock('fs');
@@ -103,11 +103,7 @@ describe('ProviderRegistry', () => {
       mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const p = filePath.toString();
         if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
+        if (p.includes('validprovider') && (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))) return true;
         return false;
       });
 
@@ -131,11 +127,7 @@ describe('ProviderRegistry', () => {
       mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const p = filePath.toString();
         if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
+        if (p.includes('validprovider') && (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))) return true;
         return false;
       });
 
@@ -158,24 +150,20 @@ describe('ProviderRegistry', () => {
     });
 
     it('should return null for non-existent provider', async () => {
-      mockFs.existsSync.mockReturnValue(true);
-      (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
+       mockFs.existsSync.mockReturnValue(true);
+       (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
 
-      refreshProviders();
+       refreshProviders();
 
-      const service = await getMessengerServiceByProvider('nonexistent');
-      expect(service).toBeNull();
+       const service = await getMessengerServiceByProvider('nonexistent');
+       expect(service).toBeNull();
     });
 
     it('should return null if provider has no valid factory', async () => {
       mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const p = filePath.toString();
         if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('missingfactory') &&
-          (p.endsWith('MissingfactoryService.ts') || p.endsWith('MissingfactoryService.js'))
-        )
-          return true;
+        if (p.includes('missingfactory') && (p.endsWith('MissingfactoryService.ts') || p.endsWith('MissingfactoryService.js'))) return true;
         return false;
       });
 
@@ -193,11 +181,7 @@ describe('ProviderRegistry', () => {
       mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const p = filePath.toString();
         if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('invalidservice') &&
-          (p.endsWith('InvalidserviceService.ts') || p.endsWith('InvalidserviceService.js'))
-        )
-          return true;
+        if (p.includes('invalidservice') && (p.endsWith('InvalidserviceService.ts') || p.endsWith('InvalidserviceService.js'))) return true;
         return false;
       });
 
@@ -214,15 +198,11 @@ describe('ProviderRegistry', () => {
 
   describe('Management', () => {
     it('should unload provider', async () => {
-      // Setup valid provider
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+       // Setup valid provider
+       mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const p = filePath.toString();
         if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
+        if (p.includes('validprovider') && (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))) return true;
         return false;
       });
       (mockFs.readdirSync as jest.Mock).mockReturnValue([
@@ -239,39 +219,35 @@ describe('ProviderRegistry', () => {
     });
 
     it('should refresh providers', () => {
-      // Initial state
-      mockFs.existsSync.mockReturnValue(true);
-      (mockFs.readdirSync as jest.Mock).mockReturnValue([
-        { name: 'validprovider', isDirectory: () => true },
-      ]);
+        // Initial state
+        mockFs.existsSync.mockReturnValue(true);
+        (mockFs.readdirSync as jest.Mock).mockReturnValue([
+            { name: 'validprovider', isDirectory: () => true },
+        ]);
 
-      refreshProviders();
+        refreshProviders();
 
-      expect(isProviderRegistered('validprovider')).toBe(true);
+        expect(isProviderRegistered('validprovider')).toBe(true);
 
-      (mockFs.readdirSync as jest.Mock).mockClear();
+        (mockFs.readdirSync as jest.Mock).mockClear();
 
-      // Change FS state
-      (mockFs.readdirSync as jest.Mock).mockReturnValue([
-        { name: 'newprovider', isDirectory: () => true },
-      ]);
-      // Also ensure newprovider file check passes
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
-        const p = filePath.toString();
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('newprovider') &&
-          (p.endsWith('NewproviderService.ts') || p.endsWith('NewproviderService.js'))
-        )
-          return true;
-        return false;
-      });
+        // Change FS state
+        (mockFs.readdirSync as jest.Mock).mockReturnValue([
+            { name: 'newprovider', isDirectory: () => true },
+        ]);
+        // Also ensure newprovider file check passes
+        mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+            const p = filePath.toString();
+            if (p.endsWith('integrations')) return true;
+            if (p.includes('newprovider') && (p.endsWith('NewproviderService.ts') || p.endsWith('NewproviderService.js'))) return true;
+            return false;
+        });
 
-      refreshProviders();
+        refreshProviders();
 
-      expect(mockFs.readdirSync).toHaveBeenCalledTimes(1);
-      expect(isProviderRegistered('newprovider')).toBe(true);
-      expect(isProviderRegistered('validprovider')).toBe(false);
+        expect(mockFs.readdirSync).toHaveBeenCalledTimes(1);
+        expect(isProviderRegistered('newprovider')).toBe(true);
+        expect(isProviderRegistered('validprovider')).toBe(false);
     });
   });
 });

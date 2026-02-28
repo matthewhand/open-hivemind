@@ -2,7 +2,7 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { type IToolInstaller } from '../../types/IToolInstaller';
+import { IToolInstaller } from '../../types/IToolInstaller';
 
 const execAsync = promisify(exec);
 

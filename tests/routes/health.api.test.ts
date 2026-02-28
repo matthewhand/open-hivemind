@@ -1,23 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { jest } from '@jest/globals';
 import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
 import { runRoute } from '../helpers/expressRunner';
-
-// Mock auth middleware before importing the router
-jest.mock('../../src/server/middleware/auth', () => ({
-  optionalAuth: (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      if (token === 'valid-token') {
-        req.user = { userId: 'test-user', role: 'admin' };
-      }
-    }
-    next();
-  },
-}));
 
 describe('Health Routes - API Monitoring', () => {
   let app: express.Application;
@@ -317,24 +302,8 @@ describe('Health Routes - API Monitoring', () => {
   });
 
   describe('GET /health/detailed', () => {
-    it('should return sanitized data for unauthenticated requests', async () => {
+    it('should return detailed system health', async () => {
       const response = await request(app).get('/health/detailed');
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('status');
-      expect(response.body).toHaveProperty('timestamp');
-      expect(response.body).toHaveProperty('uptime');
-      // Should NOT have sensitive data for unauthenticated requests
-      expect(response.body).not.toHaveProperty('memory');
-      expect(response.body).not.toHaveProperty('cpu');
-      expect(response.body).not.toHaveProperty('system');
-      expect(response.body).not.toHaveProperty('errors');
-    });
-
-    it('should return detailed system health for authenticated requests', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
@@ -363,10 +332,8 @@ describe('Health Routes - API Monitoring', () => {
       expect(response.body.uptime).toBeGreaterThanOrEqual(0);
     });
 
-    it('should return valid memory usage for authenticated requests', async () => {
-      const response = await request(app)
-        .get('/health/detailed')
-        .set('Authorization', 'Bearer valid-token');
+    it('should return valid memory usage', async () => {
+      const response = await request(app).get('/health/detailed');
       expect(response.body.memory.used).toBeGreaterThan(0);
       expect(response.body.memory.total).toBeGreaterThan(0);
       expect(response.body.memory.usage).toBeGreaterThanOrEqual(0);

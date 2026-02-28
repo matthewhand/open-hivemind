@@ -1,5 +1,5 @@
+import { ILLMProvider } from '../types/IProvider';
 import flowiseConfig from '../config/flowiseConfig';
-import { type ILLMProvider } from '../types/IProvider';
 
 export class FlowiseProvider implements ILLMProvider {
   id = 'flowise';

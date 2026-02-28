@@ -8,16 +8,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 /**
  * Log source
  */
-export type LogSource =
-  | 'server'
-  | 'discord'
-  | 'slack'
-  | 'mattermost'
-  | 'llm'
-  | 'mcp'
-  | 'database'
-  | 'security'
-  | 'custom';
+export type LogSource = 'server' | 'discord' | 'slack' | 'mattermost' | 'llm' | 'mcp' | 'database' | 'security' | 'custom';
 
 /**
  * Aggregated log entry
@@ -235,33 +226,32 @@ export class LogAggregator extends EventEmitter {
     let results = this.logs;
 
     if (query.startTime) {
-      results = results.filter((log) => log.timestamp >= query.startTime!);
+      results = results.filter(log => log.timestamp >= query.startTime!);
     }
     if (query.endTime) {
-      results = results.filter((log) => log.timestamp <= query.endTime!);
+      results = results.filter(log => log.timestamp <= query.endTime!);
     }
     if (query.levels && query.levels.length > 0) {
-      results = results.filter((log) => query.levels!.includes(log.level));
+      results = results.filter(log => query.levels!.includes(log.level));
     }
     if (query.sources && query.sources.length > 0) {
-      results = results.filter((log) => query.sources!.includes(log.source));
+      results = results.filter(log => query.sources!.includes(log.source));
     }
     if (query.search) {
       const search = query.search.toLowerCase();
-      results = results.filter(
-        (log) =>
-          log.message.toLowerCase().includes(search) ||
-          (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(search))
+      results = results.filter(log =>
+        log.message.toLowerCase().includes(search) ||
+        (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(search))
       );
     }
     if (query.traceId) {
-      results = results.filter((log) => log.traceId === query.traceId);
+      results = results.filter(log => log.traceId === query.traceId);
     }
     if (query.botName) {
-      results = results.filter((log) => log.botName === query.botName);
+      results = results.filter(log => log.botName === query.botName);
     }
     if (query.provider) {
-      results = results.filter((log) => log.provider === query.provider);
+      results = results.filter(log => log.provider === query.provider);
     }
 
     // Sort by timestamp descending
@@ -280,7 +270,7 @@ export class LogAggregator extends EventEmitter {
    */
   getStats(timeWindowMs: number = 3600000): LogStats {
     const cutoff = Date.now() - timeWindowMs;
-    const recentLogs = this.logs.filter((log) => log.timestamp >= cutoff);
+    const recentLogs = this.logs.filter(log => log.timestamp >= cutoff);
 
     const byLevel: Record<LogLevel, number> = {
       debug: 0,
@@ -312,18 +302,16 @@ export class LogAggregator extends EventEmitter {
     const warningCount = byLevel.warn;
 
     const recentErrors = this.logs
-      .filter((log) => log.level === 'error' || log.level === 'fatal')
+      .filter(log => log.level === 'error' || log.level === 'fatal')
       .slice(0, 10);
 
     // Time series
     const bucketSize = Math.floor(timeWindowMs / 60); // 60 buckets
     const timeSeries: { timestamp: number; count: number }[] = [];
     for (let i = 0; i < 60; i++) {
-      const bucketStart = cutoff + i * bucketSize;
+      const bucketStart = cutoff + (i * bucketSize);
       const bucketEnd = bucketStart + bucketSize;
-      const count = recentLogs.filter(
-        (log) => log.timestamp >= bucketStart && log.timestamp < bucketEnd
-      ).length;
+      const count = recentLogs.filter(log => log.timestamp >= bucketStart && log.timestamp < bucketEnd).length;
       timeSeries.push({ timestamp: bucketStart, count });
     }
 
@@ -342,9 +330,7 @@ export class LogAggregator extends EventEmitter {
    * Get logs by trace
    */
   getLogsByTrace(traceId: string): LogEntry[] {
-    return this.logs
-      .filter((log) => log.traceId === traceId)
-      .sort((a, b) => a.timestamp - b.timestamp);
+    return this.logs.filter(log => log.traceId === traceId).sort((a, b) => a.timestamp - b.timestamp);
   }
 
   /**
@@ -381,7 +367,7 @@ export class LogAggregator extends EventEmitter {
       case 'error_rate': {
         if (entry.level !== 'error' && entry.level !== 'fatal') return false;
         const recentErrors = this.logs.filter(
-          (log) => (log.level === 'error' || log.level === 'fatal') && log.timestamp >= windowStart
+          log => (log.level === 'error' || log.level === 'fatal') && log.timestamp >= windowStart
         ).length;
         return threshold ? recentErrors >= threshold : false;
       }
@@ -394,7 +380,7 @@ export class LogAggregator extends EventEmitter {
       case 'warning_rate': {
         if (entry.level !== 'warn') return false;
         const recentWarnings = this.logs.filter(
-          (log) => log.level === 'warn' && log.timestamp >= windowStart
+          log => log.level === 'warn' && log.timestamp >= windowStart
         ).length;
         return threshold ? recentWarnings >= threshold : false;
       }
@@ -444,7 +430,7 @@ export class LogAggregator extends EventEmitter {
    */
   getErrorLogs(limit: number = 100): LogEntry[] {
     return this.logs
-      .filter((log) => log.level === 'error' || log.level === 'fatal')
+      .filter(log => log.level === 'error' || log.level === 'fatal')
       .slice(-limit)
       .reverse();
   }

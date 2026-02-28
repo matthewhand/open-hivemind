@@ -1,8 +1,10 @@
 import { EventEmitter } from 'events';
+import type { Application } from 'express';
 import retry from 'async-retry';
 import Debug from 'debug';
-import type { Application } from 'express';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
+// Routing (feature-flagged parity)
+import messageConfig from '@config/messageConfig';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
   ApiError,
@@ -12,12 +14,10 @@ import {
   ValidationError,
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
-// Routing (feature-flagged parity)
-import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import { MattermostClient } from '@hivemind/adapter-mattermost';
+import MattermostClient from './mattermostClient';
 
 const debug = Debug('app:MattermostService:verbose');
 
@@ -331,7 +331,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
+            const { MattermostMessage } = await import('./MattermostMessage');
             const mattermostMsg = new MattermostMessage(post, username, {
               isBot,
               botUsername,

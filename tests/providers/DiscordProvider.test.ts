@@ -1,7 +1,7 @@
+import { DiscordProvider } from '../../src/providers/DiscordProvider';
+import { Discord } from '@hivemind/adapter-discord';
 import fs from 'fs';
 import path from 'path';
-import { Discord } from '@hivemind/adapter-discord';
-import { DiscordProvider } from '../../src/providers/DiscordProvider';
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -14,23 +14,23 @@ jest.mock('fs', () => ({
 }));
 
 jest.mock('path', () => ({
-  ...jest.requireActual('path'),
-  join: jest.fn((...args) => args.join('/')),
-  dirname: jest.fn((p) => p.split('/').slice(0, -1).join('/')),
+    ...jest.requireActual('path'),
+    join: jest.fn((...args) => args.join('/')),
+    dirname: jest.fn((p) => p.split('/').slice(0, -1).join('/')),
 }));
 
 // Mock Discord Service
 const mockDiscordInstance = {
-  getAllBots: jest.fn().mockReturnValue([]),
-  addBot: jest.fn().mockResolvedValue(undefined),
+    getAllBots: jest.fn().mockReturnValue([]),
+    addBot: jest.fn().mockResolvedValue(undefined),
 };
 
 jest.mock('@hivemind/adapter-discord', () => ({
   Discord: {
     DiscordService: {
-      getInstance: jest.fn(() => mockDiscordInstance),
-    },
-  },
+        getInstance: jest.fn(() => mockDiscordInstance),
+    }
+  }
 }));
 
 describe('DiscordProvider', () => {
@@ -40,9 +40,7 @@ describe('DiscordProvider', () => {
     jest.clearAllMocks();
     provider = new DiscordProvider();
 
-    (fs.promises.readFile as jest.Mock).mockResolvedValue(
-      JSON.stringify({ discord: { instances: [] } })
-    );
+    (fs.promises.readFile as jest.Mock).mockResolvedValue(JSON.stringify({ discord: { instances: [] } }));
     (fs.promises.mkdir as jest.Mock).mockResolvedValue(undefined);
     (fs.promises.writeFile as jest.Mock).mockResolvedValue(undefined);
   });
@@ -69,7 +67,7 @@ describe('DiscordProvider', () => {
 
   it('should get status', async () => {
     mockDiscordInstance.getAllBots.mockReturnValue([
-      { botUserName: 'TestBot', config: { name: 'TestBot' } },
+        { botUserName: 'TestBot', config: { name: 'TestBot' } }
     ]);
 
     const status = await provider.getStatus();
@@ -90,12 +88,10 @@ describe('DiscordProvider', () => {
     expect(writtenConfig.discord.instances[0].token).toBe('token123');
 
     // Verify runtime add
-    expect(mockDiscordInstance.addBot).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mockDiscordInstance.addBot).toHaveBeenCalledWith(expect.objectContaining({
         name: 'newDiscordBot',
-        token: 'token123',
-      })
-    );
+        token: 'token123'
+    }));
   });
 
   it('should throw error when adding bot without token', async () => {
@@ -105,9 +101,11 @@ describe('DiscordProvider', () => {
   it('should reload configuration', async () => {
     // Mock fs to return existing bots
     const mockFileContent = JSON.stringify({
-      discord: {
-        instances: [{ name: 'bot1', token: 'token1', llm: 'openai' }],
-      },
+        discord: {
+            instances: [
+                { name: 'bot1', token: 'token1', llm: 'openai' }
+            ]
+        }
     });
     (fs.promises.readFile as jest.Mock).mockResolvedValue(mockFileContent);
 
@@ -118,11 +116,9 @@ describe('DiscordProvider', () => {
 
     expect(result.added).toBe(1); // bot1 should be added
     expect(mockDiscordInstance.addBot).toHaveBeenCalledTimes(1);
-    expect(mockDiscordInstance.addBot).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(mockDiscordInstance.addBot).toHaveBeenCalledWith(expect.objectContaining({
         name: 'bot1',
-        token: 'token1',
-      })
-    );
+        token: 'token1'
+    }));
   });
 });

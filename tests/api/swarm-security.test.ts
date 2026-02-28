@@ -4,9 +4,9 @@ import express from 'express';
 import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
 import { AuthManager } from '../../src/auth/AuthManager';
-import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
-import { providerRegistry } from '../../src/registries/ProviderRegistry';
 import { authenticateToken } from '../../src/server/middleware/auth';
+import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
 
 // Mock AuthManager
 jest.mock('../../src/auth/AuthManager');

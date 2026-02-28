@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
+import { randomUUID } from 'crypto';
 
 /**
  * Trace event types
@@ -95,9 +95,7 @@ export interface TraceExporter {
 export class ConsoleTraceExporter implements TraceExporter {
   async export(spans: TraceSpan[]): Promise<void> {
     for (const span of spans) {
-      console.log(
-        `[TRACE] ${span.operationName} - ${span.duration?.toFixed(2)}ms - ${span.status}`
-      );
+      console.log(`[TRACE] ${span.operationName} - ${span.duration?.toFixed(2)}ms - ${span.status}`);
     }
   }
 }
@@ -143,10 +141,7 @@ export class TracingService extends EventEmitter {
   /**
    * Start a new trace
    */
-  startTrace(
-    operationName: string,
-    tags?: Record<string, string | number | boolean>
-  ): TraceContext {
+  startTrace(operationName: string, tags?: Record<string, string | number | boolean>): TraceContext {
     const traceId = randomUUID();
     const spanId = this.generateSpanId();
 
@@ -212,11 +207,7 @@ export class TracingService extends EventEmitter {
   /**
    * End a span
    */
-  endSpan(
-    spanId: string,
-    status: SpanStatus = 'ok',
-    tags?: Record<string, string | number | boolean>
-  ): void {
+  endSpan(spanId: string, status: SpanStatus = 'ok', tags?: Record<string, string | number | boolean>): void {
     const span = this.activeSpans.get(spanId);
     if (!span) return;
 
@@ -242,11 +233,7 @@ export class TracingService extends EventEmitter {
   /**
    * Add log to a span
    */
-  logSpan(
-    spanId: string,
-    message: string,
-    fields?: Record<string, string | number | boolean>
-  ): void {
+  logSpan(spanId: string, message: string, fields?: Record<string, string | number | boolean>): void {
     const span = this.activeSpans.get(spanId);
     if (!span) return;
 
@@ -283,11 +270,7 @@ export class TracingService extends EventEmitter {
   /**
    * Record an error in a span
    */
-  recordError(
-    spanId: string,
-    error: Error,
-    tags?: Record<string, string | number | boolean>
-  ): void {
+  recordError(spanId: string, error: Error, tags?: Record<string, string | number | boolean>): void {
     const span = this.activeSpans.get(spanId);
     if (!span) return;
 
@@ -313,7 +296,7 @@ export class TracingService extends EventEmitter {
    * Get trace context from headers (for propagation)
    */
   extractContext(headers: Record<string, string | string[] | undefined>): TraceContext | null {
-    const traceId = (headers['x-trace-id'] as string) || (headers['traceparent'] as string);
+    const traceId = headers['x-trace-id'] as string || headers['traceparent'] as string;
     const spanId = headers['x-span-id'] as string;
     const parentSpanId = headers['x-parent-span-id'] as string;
 
@@ -349,7 +332,7 @@ export class TracingService extends EventEmitter {
    * Get spans for a specific trace
    */
   getTraceSpans(traceId: string): TraceSpan[] {
-    return this.completedSpans.filter((span) => span.traceId === traceId);
+    return this.completedSpans.filter(span => span.traceId === traceId);
   }
 
   /**
@@ -369,15 +352,12 @@ export class TracingService extends EventEmitter {
     errorCount: number;
     averageDuration: number;
   } {
-    const errorCount = this.completedSpans.filter((s) => s.status === 'error').length;
-    const durations = this.completedSpans
-      .filter((s) => s.duration !== undefined)
-      .map((s) => s.duration!);
-    const averageDuration =
-      durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+    const errorCount = this.completedSpans.filter(s => s.status === 'error').length;
+    const durations = this.completedSpans.filter(s => s.duration !== undefined).map(s => s.duration!);
+    const averageDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
 
     // Count unique traces
-    const traceIds = new Set(this.completedSpans.map((s) => s.traceId));
+    const traceIds = new Set(this.completedSpans.map(s => s.traceId));
 
     return {
       totalTraces: traceIds.size,
@@ -455,13 +435,13 @@ export class TracingService extends EventEmitter {
    */
   getTraceTree(traceId: string): object {
     const spans = this.getTraceSpans(traceId);
-    const spanMap = new Map(spans.map((s) => [s.spanId, s]));
+    const spanMap = new Map(spans.map(s => [s.spanId, s]));
 
     // Build tree structure
-    const rootSpans = spans.filter((s) => !s.parentSpanId || !spanMap.has(s.parentSpanId));
+    const rootSpans = spans.filter(s => !s.parentSpanId || !spanMap.has(s.parentSpanId));
 
     const buildTree = (span: TraceSpan): object => {
-      const children = spans.filter((s) => s.parentSpanId === span.spanId);
+      const children = spans.filter(s => s.parentSpanId === span.spanId);
       return {
         ...span,
         children: children.map(buildTree),

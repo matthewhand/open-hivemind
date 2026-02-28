@@ -1,9 +1,9 @@
 import 'reflect-metadata';
+import { StartupGreetingService } from '../../src/services/StartupGreetingService';
+import { GreetingStateManager } from '../../src/services/GreetingStateManager';
 import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import Logger from '@common/logger';
-import { GreetingStateManager } from '../../src/services/GreetingStateManager';
-import { StartupGreetingService } from '../../src/services/StartupGreetingService';
 
 // Mock Logger
 jest.mock('@common/logger', () => {
@@ -61,13 +61,11 @@ describe('StartupGreetingService', () => {
 
   // Access mocked logger functions
   // Logger is the default export, which is our mocked object
-  const { mockInfo, mockWarn, mockError } = Logger as any;
+  const { mockInfo, mockWarn, mockError } = (Logger as any);
 
   // Access mocked GreetingStateManager instance
   // We need to require it because it's not part of the standard export type
-  const {
-    mockInstance: mockGreetingStateManagerInstance,
-  } = require('../../src/services/GreetingStateManager');
+  const { mockInstance: mockGreetingStateManagerInstance } = require('../../src/services/GreetingStateManager');
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -118,7 +116,7 @@ describe('StartupGreetingService', () => {
       service.emit('service-ready', mockMessengerService);
 
       // Wait a bit since the handler is async
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockInfo).toHaveBeenCalledWith('Greeting message is disabled by configuration.');
       expect(mockMessengerService.sendMessageToChannel).not.toHaveBeenCalled();
@@ -128,12 +126,9 @@ describe('StartupGreetingService', () => {
       mockMessengerService.getDefaultChannel.mockReturnValue(undefined);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(mockWarn).toHaveBeenCalledWith(
-        expect.stringContaining('No default channel configured'),
-        expect.anything()
-      );
+      expect(mockWarn).toHaveBeenCalledWith(expect.stringContaining('No default channel configured'), expect.anything());
       expect(mockMessengerService.sendMessageToChannel).not.toHaveBeenCalled();
     });
 
@@ -142,12 +137,9 @@ describe('StartupGreetingService', () => {
       mockGreetingStateManagerInstance.hasGreetingBeenSent.mockReturnValue(true);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(mockInfo).toHaveBeenCalledWith(
-        'Greeting already sent for this service and channel',
-        expect.anything()
-      );
+      expect(mockInfo).toHaveBeenCalledWith('Greeting already sent for this service and channel', expect.anything());
       expect(mockMessengerService.sendMessageToChannel).not.toHaveBeenCalled();
     });
 
@@ -155,13 +147,10 @@ describe('StartupGreetingService', () => {
       mockMessengerService.getDefaultChannel.mockReturnValue('general');
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Welcome!');
-      expect(mockGreetingStateManagerInstance.markGreetingAsSent).toHaveBeenCalledWith(
-        'MockService-general',
-        'general'
-      );
+      expect(mockGreetingStateManagerInstance.markGreetingAsSent).toHaveBeenCalledWith('MockService-general', 'general');
     });
 
     it('should use LLM when configured', async () => {
@@ -178,14 +167,11 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(getLlmProvider).toHaveBeenCalled();
       expect(mockProvider.generateChatCompletion).toHaveBeenCalled();
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'LLM Welcome Message'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'LLM Welcome Message');
     });
 
     it('should fallback to default message if LLM fails', async () => {
@@ -199,13 +185,10 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockRejectedValue(new Error('LLM Error'));
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockError).toHaveBeenCalledWith('Failed to generate LLM greeting', expect.anything());
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Hello! I am online and ready to assist.'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
     });
 
     it('should fallback to default message if LLM returns empty response', async () => {
@@ -222,13 +205,10 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // It should fall through to the final fallback return statement
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Hello! I am online and ready to assist.'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
     });
 
     it('should strip quotes from LLM response', async () => {
@@ -245,12 +225,9 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Quoted Message'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Quoted Message');
     });
 
     it('should fallback to default message if no LLM providers available', async () => {
@@ -263,13 +240,10 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockWarn).toHaveBeenCalledWith('No LLM providers available for greeting generation');
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Hello! I am online and ready to assist.'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
     });
 
     it('should use generateCompletion if chat completion is not supported', async () => {
@@ -287,13 +261,10 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockProvider.generateCompletion).toHaveBeenCalled();
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Completion Welcome Message'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Completion Welcome Message');
     });
 
     it('should fallback to default message if no completion method supported', async () => {
@@ -310,12 +281,9 @@ describe('StartupGreetingService', () => {
       (getLlmProvider as jest.Mock).mockResolvedValue([mockProvider]);
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith(
-        'general',
-        'Hello! I am online and ready to assist.'
-      );
+      expect(mockMessengerService.sendMessageToChannel).toHaveBeenCalledWith('general', 'Hello! I am online and ready to assist.');
     });
 
     it('should handle errors in handleServiceReady', async () => {
@@ -323,7 +291,7 @@ describe('StartupGreetingService', () => {
       mockMessengerService.sendMessageToChannel.mockRejectedValue(new Error('Send failed'));
 
       service.emit('service-ready', mockMessengerService);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockError).toHaveBeenCalledWith('Failed to send greeting message', expect.anything());
     });

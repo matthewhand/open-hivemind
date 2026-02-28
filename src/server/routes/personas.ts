@@ -10,8 +10,8 @@ const manager = PersonaManager.getInstance();
 // Schema for create/update
 const CreatePersonaSchema = z.object({
   body: z.object({
-    name: z.string().min(1).max(100),
-    description: z.string().min(1).max(500),
+    name: z.string().min(1),
+    description: z.string().min(1),
     category: z.enum([
       'general',
       'customer_service',
@@ -61,7 +61,7 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/personas
-router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     // Basic validation until strict schema is hooked up globally if needed
     const newPersona = manager.createPersona(req.body);

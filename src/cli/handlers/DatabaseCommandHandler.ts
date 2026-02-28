@@ -1,8 +1,8 @@
+import { Command } from 'commander';
 import chalk from 'chalk';
-import { type Command } from 'commander';
 import inquirer from 'inquirer';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { type CommandHandler } from './CommandHandler';
+import { CommandHandler } from './CommandHandler';
 
 export class DatabaseCommandHandler implements CommandHandler {
   private dbManager: DatabaseManager;

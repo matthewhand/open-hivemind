@@ -1,8 +1,8 @@
 import express from 'express';
 import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
-import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
 
 // Mock the SwarmInstaller to return successful responses
 jest.mock('@src/integrations/openswarm/SwarmInstaller', () => {
@@ -12,7 +12,9 @@ jest.mock('@src/integrations/openswarm/SwarmInstaller', () => {
       checkPrerequisites: jest.fn().mockResolvedValue(true),
       checkInstalled: jest.fn().mockResolvedValue(false),
       getWebUIUrl: jest.fn().mockReturnValue('http://localhost:8000'),
-      install: jest.fn().mockResolvedValue({ success: true, message: 'Installed successfully' }),
+      install: jest
+        .fn()
+        .mockResolvedValue({ success: true, message: 'Installed successfully' }),
       start: jest.fn().mockResolvedValue({ success: true, message: 'Started successfully' }),
     })),
   };

@@ -23,56 +23,56 @@ describe('Schema Serialization', () => {
       prop1: {
         doc: 'Test',
         format: String,
-        default: '',
+        default: ''
       },
       prop2: {
-        format: Number,
+        format: Number
       },
       prop3: {
-        format: Boolean,
+        format: Boolean
       },
       prop4: {
-        format: Object,
+        format: Object
       },
       prop5: {
-        format: Array,
-      },
+        format: Array
+      }
     };
 
     const expected = {
       prop1: {
         doc: 'Test',
         format: 'String',
-        default: '',
+        default: ''
       },
       prop2: {
-        format: 'Number',
+        format: 'Number'
       },
       prop3: {
-        format: 'Boolean',
+        format: 'Boolean'
       },
       prop4: {
-        format: 'Object',
+        format: 'Object'
       },
       prop5: {
-        format: 'Array',
-      },
+        format: 'Array'
+      }
     };
 
     expect(serializeSchema(schema)).toEqual(expected);
   });
 
   it('should handle custom function format', () => {
-    function CustomFormat() {}
+    function CustomFormat() { }
     const schema = {
       prop: {
-        format: CustomFormat,
-      },
+        format: CustomFormat
+      }
     };
     expect(serializeSchema(schema)).toEqual({
       prop: {
-        format: 'CustomFormat',
-      },
+        format: 'CustomFormat'
+      }
     });
   });
 
@@ -81,35 +81,35 @@ describe('Schema Serialization', () => {
     const schema = {
       doc: 'Test',
       format: String,
-      default: 'foo',
+      default: 'foo'
     };
     const result = serializeSchema(schema);
     expect(result).toEqual({
       doc: 'Test',
       format: 'String',
-      default: 'foo',
+      default: 'foo'
     });
   });
 
   it('should handle anonymous function format by falling back to custom', () => {
-    const anonFuncs = [() => {}];
+    const anonFuncs = [() => { }];
     const schema = {
       prop: {
-        format: anonFuncs[0],
-      },
+        format: anonFuncs[0]
+      }
     };
     expect(serializeSchema(schema)).toEqual({
       prop: {
-        format: 'custom',
-      },
+        format: 'custom'
+      }
     });
   });
 
   it('should handle string formats', () => {
     const schema = {
       prop: {
-        format: 'int',
-      },
+        format: 'int'
+      }
     };
     expect(serializeSchema(schema)).toEqual(schema);
   });
