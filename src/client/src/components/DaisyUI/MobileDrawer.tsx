@@ -146,7 +146,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
             <HamburgerMenu
               onClick={toggleDrawer}
               isOpen={isOpen}
-              className="btn-sm"
+              className=""
             />
           </div>
           <div className="navbar-center">

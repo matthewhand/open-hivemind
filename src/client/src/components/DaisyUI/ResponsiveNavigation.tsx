@@ -51,7 +51,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
           <span className="font-semibold text-base-content">Hivemind</span>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="btn btn-ghost btn-sm btn-square"
+            className="btn btn-ghost btn-square"
           >
             {isMobileMenuOpen ? <X size={24} /> : <MenuIcon size={24} />}
           </button>
