@@ -22,12 +22,20 @@ else
   exit 1
 fi
 
-# 4. Generate _redirects
-echo "🔹 Generating _redirects..."
+# 4. Generate _redirects and _headers
+echo "🔹 Generating _redirects and _headers..."
 # Note: 200! means force=true
 cat <<EOF > dist/client/_redirects
 /api/*  /.netlify/functions/server  200!
 /*      /index.html                 200
+EOF
+
+cat <<EOF > dist/client/_headers
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
 EOF
 
 # 5. Compiling Serverless Function
