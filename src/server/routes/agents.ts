@@ -163,6 +163,19 @@ router.get('/', async (req, res) => {
 // POST /api/agents - Create new agent
 router.post('/', async (req, res) => {
   try {
+    const { name, messageProvider, llmProvider } = req.body;
+    if (
+      typeof name !== 'string' ||
+      name.trim() === '' ||
+      name.length > 100 ||
+      typeof messageProvider !== 'string' ||
+      messageProvider.trim() === '' ||
+      typeof llmProvider !== 'string' ||
+      llmProvider.trim() === ''
+    ) {
+      return res.status(400).json({ error: 'name, messageProvider, and llmProvider are required' });
+    }
+
     const agentData: Omit<AgentConfig, 'id'> = req.body;
 
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
@@ -198,6 +211,26 @@ router.post('/', async (req, res) => {
 // PUT /api/agents/:id - Update agent
 router.put('/:id', async (req, res) => {
   try {
+    const { name, messageProvider, llmProvider } = req.body;
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim() === '' || name.length > 100) {
+        return res.status(400).json({ error: 'name, messageProvider, and llmProvider are required' });
+      }
+    }
+
+    if (messageProvider !== undefined) {
+      if (typeof messageProvider !== 'string' || messageProvider.trim() === '') {
+        return res.status(400).json({ error: 'name, messageProvider, and llmProvider are required' });
+      }
+    }
+
+    if (llmProvider !== undefined) {
+      if (typeof llmProvider !== 'string' || llmProvider.trim() === '') {
+        return res.status(400).json({ error: 'name, messageProvider, and llmProvider are required' });
+      }
+    }
+
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
 

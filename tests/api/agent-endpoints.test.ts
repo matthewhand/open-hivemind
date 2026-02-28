@@ -86,6 +86,14 @@ describe('Agent API Endpoints', () => {
       expect(response.body.agent).toHaveProperty('id');
       expect(response.body.agent.name).toBe('Test Agent');
     });
+
+    it('should return 400 when missing required fields', async () => {
+      const newAgent = {
+        name: 'Test Agent',
+      };
+      const response = await request(app).post('/api/agents').send(newAgent);
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('GET /api/agents/personas', () => {
@@ -131,6 +139,22 @@ describe('Agent API Endpoints', () => {
 
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.agent.name).toBe('Updated Agent Name');
+    });
+
+    it('should return 400 when updating with invalid name', async () => {
+      const newAgent = {
+        name: 'Agent to Update',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        mcpServers: [],
+        mcpGuard: { enabled: false, type: 'owner', allowedUserIds: [] },
+        isActive: true,
+      };
+      const createResponse = await request(app).post('/api/agents').send(newAgent);
+      const agentId = createResponse.body.agent.id;
+      const updates = { name: '' };
+      const updateResponse = await request(app).put(`/api/agents/${agentId}`).send(updates);
+      expect(updateResponse.status).toBe(400);
     });
   });
 
