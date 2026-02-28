@@ -1,10 +1,8 @@
 import { EventEmitter } from 'events';
-import type { Application } from 'express';
 import retry from 'async-retry';
 import Debug from 'debug';
+import type { Application } from 'express';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
-// Routing (feature-flagged parity)
-import messageConfig from '@config/messageConfig';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
   ApiError,
@@ -14,10 +12,12 @@ import {
   ValidationError,
 } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
+// Routing (feature-flagged parity)
+import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import MattermostClient from './mattermostClient';
+import { MattermostClient } from '@hivemind/adapter-mattermost';
 
 const debug = Debug('app:MattermostService:verbose');
 
@@ -41,7 +41,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private channels: Map<string, string> = new Map();
   private botConfigs: Map<string, any> = new Map();
   private app?: Application;
-  
+
   // Health tracking
   private lastHealthCheck: Map<string, Date> = new Map();
   private healthStatus: Map<string, 'healthy' | 'degraded' | 'unhealthy'> = new Map();
@@ -107,7 +107,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
       username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
     });
-    
+
     // Initialize health tracking
     this.healthStatus.set(botName, 'healthy');
     this.connectionErrors.set(botName, 0);
@@ -134,7 +134,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           userId: client.getCurrentUserId?.() || botConfig.userId,
           username: client.getCurrentUsername?.() || botConfig.username,
         });
-        
+
         // Update health status after successful connection
         this.healthStatus.set(botName, 'healthy');
         this.connectionErrors.set(botName, 0);
@@ -227,11 +227,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
       const duration = Date.now() - startTime;
       metrics.incrementMessages();
       metrics.recordResponseTime(duration);
-      
+
       // Update activity tracking
       this.lastActivity.set(botName, new Date());
       this.healthStatus.set(botName, 'healthy');
-      
+
       // Record WebSocket monitoring event for successful message
       try {
         const ws = require('@src/server/services/WebSocketService')
@@ -247,16 +247,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'success',
         });
       } catch {}
-      
+
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
-      
+
       // Update connection error tracking
       this.connectionErrors.set(botName, (this.connectionErrors.get(botName) || 0) + 1);
-      
+
       // Determine health status based on error count
       const errorCount = this.connectionErrors.get(botName) || 0;
       if (errorCount >= 5) {
@@ -264,11 +264,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
       } else if (errorCount >= 1) {
         this.healthStatus.set(botName, 'degraded');
       }
-      
+
       debug(
         `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
-      
+
       // Record WebSocket monitoring event for failed message
       try {
         const ws = require('@src/server/services/WebSocketService')
@@ -331,7 +331,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const { MattermostMessage } = await import('./MattermostMessage');
+            const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
             const mattermostMsg = new MattermostMessage(post, username, {
               isBot,
               botUsername,
@@ -367,19 +367,19 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       const duration = Date.now() - startTime;
       metrics.recordResponseTime(duration);
-      
+
       // Update activity tracking
       this.lastActivity.set(targetBot, new Date());
-      
+
       debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
-      
+
       // Update connection error tracking
       this.connectionErrors.set(targetBot, (this.connectionErrors.get(targetBot) || 0) + 1);
-      
+
       debug(
         `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
       );
@@ -540,13 +540,13 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public async shutdown(): Promise<void> {
     debug('Shutting down MattermostService...');
-    
+
     // Clear health tracking maps
     this.lastHealthCheck.clear();
     this.healthStatus.clear();
     this.connectionErrors.clear();
     this.lastActivity.clear();
-    
+
     MattermostService.instance = undefined;
   }
 

@@ -1,6 +1,6 @@
-import { IMessageProvider } from '../types/IProvider';
 import { MattermostService } from '@hivemind/adapter-mattermost';
-import mattermostConfig, { MattermostConfig } from '../config/mattermostConfig';
+import mattermostConfig, { type MattermostConfig } from '../config/mattermostConfig';
+import { type IMessageProvider } from '../types/IProvider';
 
 export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   id = 'mattermost';
@@ -22,7 +22,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   }
 
   async getStatus() {
-     // TODO: Implement actual status check
+    // TODO: Implement actual status check
     return {
       ok: true,
       bots: [],
@@ -35,7 +35,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   }
 
   async getBots() {
-      return [];
+    return [];
   }
 
   async addBot(config: any) {

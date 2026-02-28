@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { jest } from '@jest/globals';
+import healthRouter from '../src/server/routes/health';
 
 // Mock auth middleware before importing the router
 jest.mock('../src/server/middleware/auth', () => ({
@@ -15,8 +16,6 @@ jest.mock('../src/server/middleware/auth', () => ({
     next();
   },
 }));
-
-import healthRouter from '../src/server/routes/health';
 
 describe('Security Check: /health/detailed Information Disclosure', () => {
   let app: express.Application;

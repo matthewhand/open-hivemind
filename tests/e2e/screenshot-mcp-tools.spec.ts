@@ -64,17 +64,17 @@ test.describe('MCP Tools Screenshots', () => {
                     properties: {
                       city: {
                         type: 'string',
-                        description: 'The name of the city (e.g., "Paris")'
+                        description: 'The name of the city (e.g., "Paris")',
                       },
                       days: {
                         type: 'integer',
-                        description: 'Number of days to forecast (1-7)'
+                        description: 'Number of days to forecast (1-7)',
                       },
                       detailed: {
                         type: 'boolean',
-                        description: 'Include detailed wind and pressure data'
-                      }
-                    }
+                        description: 'Include detailed wind and pressure data',
+                      },
+                    },
                   },
                 },
               ],
@@ -101,7 +101,11 @@ test.describe('MCP Tools Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/mcp-tools-list.png', fullPage: true });
 
     // Click "Run Tool" on the weather tool
-    await page.locator('.card').filter({ hasText: 'get_weather' }).getByRole('button', { name: 'Run Tool' }).click();
+    await page
+      .locator('.card')
+      .filter({ hasText: 'get_weather' })
+      .getByRole('button', { name: 'Run Tool' })
+      .click();
 
     // Wait for modal to be visible and check for form elements
     const runModal = page.locator('.modal-box').filter({ hasText: 'Run Tool: get_weather' });

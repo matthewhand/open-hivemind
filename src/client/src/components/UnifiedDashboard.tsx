@@ -131,24 +131,54 @@ const UnifiedDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreatingBot, setIsCreatingBot] = useState(false);
+  const [isModalDataLoading, setIsModalDataLoading] = useState(false);
 
   const successToast = ToastNotification.useSuccessToast();
   const errorToast = ToastNotification.useErrorToast();
 
+  // ⚡ Bolt Optimization: Lazy load modal data
+  // We defer fetching personas and llmProfiles until the user attempts to open
+  // the 'Create Bot' modal. This prevents unnecessary network requests during
+  // the initial dashboard load, improving perceived performance.
+  const handleOpenCreateModal = useCallback(async () => {
+    setIsModalDataLoading(true);
+    try {
+      // Use || so that we re-fetch whenever either dataset is missing,
+      // not only when both are empty (fixes &&-vs-|| logic error).
+      if (personas.length === 0 || llmProfiles.length === 0) {
+        const [personasData, profilesData] = await Promise.all([
+          apiService.getPersonas(),
+          apiService.getLlmProfiles(),
+        ]);
+        setPersonas(personasData || []);
+        setLlmProfiles(profilesData.profiles?.llm || []);
+        setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
+      }
+      // Only open the modal after data has been successfully loaded.
+      // If the fetch above throws, this line is never reached and the
+      // modal stays closed (the catch block shows an error toast instead).
+      setIsCreateModalOpen(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load modal data';
+      errorToast('Load failed', message);
+      // Do NOT open the modal when data loading fails — the user would see
+      // an empty/broken form. The error toast is sufficient feedback.
+    } finally {
+      setIsModalDataLoading(false);
+    }
+  }, [personas.length, llmProfiles.length, errorToast]);
+
   const fetchData = useCallback(async () => {
     try {
-      const [configData, statusData, personasData, profilesData] = await Promise.all([
+      // ⚡ Bolt Optimization: Removed getPersonas() and getLlmProfiles()
+      // from this critical path to speed up dashboard rendering.
+      const [configData, statusData] = await Promise.all([
         apiService.getConfig(),
         apiService.getStatus(),
-        apiService.getPersonas(),
-        apiService.getLlmProfiles(),
       ]);
 
       setBots(configData.bots || []);
       setStatus(statusData);
-      setPersonas(personasData || []);
-      setLlmProfiles(profilesData.profiles?.llm || []);
-      setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
       setWarnings(configData.warnings || []);
       setEnvironment(configData.environment ?? (configData as any).system?.environment ?? 'development');
       setSystemVersion((configData as any).system?.version ?? '1.0.0');
@@ -525,9 +555,11 @@ const UnifiedDashboard: React.FC = () => {
             <ToastNotification.Notifications />
             <Button
               variant="secondary"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleOpenCreateModal}
               aria-label="Create new bot"
               className="gap-2"
+              loading={isModalDataLoading}
+              loadingText="Loading"
             >
               <PlusCircle className="w-4 h-4" />
               Create Bot
@@ -671,13 +703,16 @@ const UnifiedDashboard: React.FC = () => {
                     Combine intelligence and connectivity to deploy your first autonomous agent.
                   </p>
                   <div className="card-actions justify-end mt-4">
-                    <button
-                      onClick={() => setIsCreateModalOpen(true)}
-                      className="btn btn-primary btn-sm"
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleOpenCreateModal}
+                      loading={isModalDataLoading}
+                      loadingText="Loading"
                     >
                       <PlusCircle className="w-4 h-4 mr-1" />
                       Create Bot
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </Card>
