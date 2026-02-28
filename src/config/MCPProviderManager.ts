@@ -40,6 +40,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
   async addProvider(config: MCPProviderConfig): Promise<void> {
     debug(`Adding MCP provider: ${config.name}`);
 
+    if (!["node", "npm", "npx", "python", "python3"].includes(config.command)) {
+      throw ErrorUtils.createError(
+        `Command "${config.command}" is not allowed. Allowed commands: node, npm, npx, python, python3`,
+        "security",
+        "MCP_PROVIDER_COMMAND_NOT_ALLOWED"
+      );
+    }
+
     const validation = this.validateProviderConfig(config);
     if (!validation.isValid) {
       throw ErrorUtils.createError(
@@ -90,6 +98,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
   async updateProvider(id: string, config: Partial<MCPProviderConfig>): Promise<void> {
     debug(`Updating MCP provider: ${id}`);
+
+    if (config.command && !["node", "npm", "npx", "python", "python3"].includes(config.command)) {
+      throw ErrorUtils.createError(
+        `Command "${config.command}" is not allowed. Allowed commands: node, npm, npx, python, python3`,
+        "security",
+        "MCP_PROVIDER_COMMAND_NOT_ALLOWED"
+      );
+    }
 
     const existingProvider = this.providers.get(id);
     if (!existingProvider) {

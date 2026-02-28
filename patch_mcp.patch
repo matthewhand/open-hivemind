@@ -1,0 +1,44 @@
+--- src/config/MCPProviderManager.ts
++++ src/config/MCPProviderManager.ts
+@@ -29,6 +29,17 @@
+ const debug = Debug('app:MCPProviderManager');
+
+ /**
++ * Allowed commands for MCP Providers to prevent arbitrary command execution.
++ * In a production environment, this list should be strictly controlled.
++ */
++const ALLOWED_COMMANDS = new Set([
++  'node',
++  'npm',
++  'npx',
++  'python',
++  'python3'
++]);
++
++/**
+  * MCP Provider Manager
+  *
+  * Manages lifecycle, configuration, and testing of MCP (Model Context Protocol)
+@@ -48,6 +59,13 @@
+
+     const validation = this.validateProviderConfig(config);
+     if (!validation.isValid) {
+       throw ErrorUtils.createError(
+         `Invalid MCP provider configuration: ${validation.errors.join(', ')}`,
+         'validation',
+         'MCP_PROVIDER_CONFIG_INVALID',
+         undefined,
+         { validationErrors: validation.errors },
+       );
+     }
++
++    if (!ALLOWED_COMMANDS.has(config.command)) {
++      throw ErrorUtils.createError(
++        `Command "${config.command}" is not allowed. Allowed commands: ${Array.from(ALLOWED_COMMANDS).join(', ')}`,
++        'security',
++        'MCP_PROVIDER_COMMAND_NOT_ALLOWED',
++      );
++    }
+
+     // Ensure unique ID
+     const providerId = config.id || uuidv4();

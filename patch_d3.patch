@@ -1,0 +1,19 @@
+--- src/client/src/visualization/D3Analytics.tsx
++++ src/client/src/visualization/D3Analytics.tsx
+@@ -4,6 +4,7 @@
+ import { useAppSelector } from '../store/hooks';
+ import { selectPerformance } from '../store/slices/performanceSlice';
+ import { selectDashboard } from '../store/slices/dashboardSlice';
+ import { AnimatedBox } from '../animations/AnimationComponents';
++import { sanitizeText } from '../utils/xssSanitizer';
+
+ interface D3AnalyticsProps {
+@@ -298,7 +299,7 @@
+     tooltip.style('opacity', 1)
+       .html(`
+         <div style="padding: 8px;">
+-          <strong>${data.category}</strong><br/>
++          <strong>${sanitizeText(data.category)}</strong><br/>
+           Value: ${data.value.toFixed(2)}<br/>
+           Time: ${data.timestamp.toLocaleString()}
+         </div>

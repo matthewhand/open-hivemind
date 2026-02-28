@@ -1,0 +1,139 @@
+--- src/server/routes/health.ts
++++ src/server/routes/health.ts
+@@ -5,7 +5,7 @@
+ import ApiMonitorService from '../../services/ApiMonitorService';
+ import { ErrorLogger } from '../../utils/errorLogger';
+ import { globalRecoveryManager } from '../../utils/errorRecovery';
+-import { optionalAuth } from '../middleware/auth';
++import { optionalAuth, authenticateToken } from '../middleware/auth';
+
+ const router = Router();
+
+@@ -93,7 +93,7 @@
+ });
+
+ // System metrics endpoint
+-router.get('/metrics', (req, res) => {
++router.get('/metrics', authenticateToken, (req, res) => {
+   const uptime = process.uptime();
+   const memoryUsage = process.memoryUsage();
+   const cpuUsage = process.cpuUsage();
+@@ -118,12 +118,12 @@
+ });
+
+ // Alerts endpoint
+-router.get('/alerts', (req, res) => {
++router.get('/alerts', authenticateToken, (req, res) => {
+   const memoryUsage = process.memoryUsage();
+   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+   const uptime = process.uptime();
+
+   const alerts = [];
+@@ -183,7 +183,7 @@
+ });
+
+ // Prometheus metrics endpoint
+-router.get('/metrics/prometheus', (req, res) => {
++router.get('/metrics/prometheus', authenticateToken, (req, res) => {
+   const uptime = process.uptime();
+   const memoryUsage = process.memoryUsage();
+   const cpuUsage = process.cpuUsage();
+@@ -217,7 +217,7 @@
+ });
+
+ // API endpoints monitoring
+-router.get('/api-endpoints', (req, res) => {
++router.get('/api-endpoints', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+   const statuses = apiMonitor.getAllStatuses();
+   const overallHealth = apiMonitor.getOverallHealth();
+@@ -231,7 +231,7 @@
+ });
+
+ // Get specific endpoint status
+-router.get('/api-endpoints/:id', (req, res) => {
++router.get('/api-endpoints/:id', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+   const status = apiMonitor.getEndpointStatus(req.params.id);
+
+@@ -249,7 +249,7 @@
+ });
+
+ // Cleanup endpoint (admin only)
+-router.post('/cleanup', (req, res) => {
++router.post('/cleanup', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+
+   try {
+@@ -289,7 +289,7 @@
+ });
+
+ // Add new endpoint to monitor
+-router.post('/api-endpoints', (req, res) => {
++router.post('/api-endpoints', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+
+   try {
+@@ -329,7 +329,7 @@
+ });
+
+ // Update endpoint configuration
+-router.put('/api-endpoints/:id', (req, res) => {
++router.put('/api-endpoints/:id', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+
+   try {
+@@ -348,7 +348,7 @@
+ });
+
+ // Remove endpoint from monitoring
+-router.delete('/api-endpoints/:id', (req, res) => {
++router.delete('/api-endpoints/:id', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+
+   try {
+@@ -375,7 +375,7 @@
+ });
+
+ // Start monitoring all endpoints
+-router.post('/api-endpoints/start', (req, res) => {
++router.post('/api-endpoints/start', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+   apiMonitor.startAllMonitoring();
+
+@@ -386,7 +386,7 @@
+ });
+
+ // Stop monitoring all endpoints
+-router.post('/api-endpoints/stop', (req, res) => {
++router.post('/api-endpoints/stop', authenticateToken, (req, res) => {
+   const apiMonitor = ApiMonitorService.getInstance();
+   apiMonitor.stopAllMonitoring();
+
+@@ -414,7 +414,7 @@
+ });
+
+ // Error-specific health endpoints
+-router.get('/errors', (req, res) => {
++router.get('/errors', authenticateToken, (req, res) => {
+   const errorLogger = ErrorLogger.getInstance();
+   const errorStats = errorLogger.getErrorStats();
+   const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
+@@ -439,7 +439,7 @@
+ });
+
+ // Recovery system health endpoint
+-router.get('/recovery', (req, res) => {
++router.get('/recovery', authenticateToken, (req, res) => {
+   const recoveryStats = globalRecoveryManager.getAllStats();
+   const errorLogger = ErrorLogger.getInstance();
+
+@@ -464,7 +464,7 @@
+ });
+
+ // Error patterns and anomalies endpoint
+-router.get('/errors/patterns', (req, res) => {
++router.get('/errors/patterns', authenticateToken, (req, res) => {
+   const errorLogger = ErrorLogger.getInstance();
+   const errorStats = errorLogger.getErrorStats();
+   const recentErrors = errorLogger.getRecentErrorCount(60000);
