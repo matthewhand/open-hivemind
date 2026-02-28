@@ -46,33 +46,7 @@ router.use('/guard-profiles', guardProfilesRouter);
 // Define the new route for tool usage guards
 router.get('/tool-usage-guards', (req: Request, res: Response) => {
   try {
-    // Mock data for tool usage guards
-    const guards = [
-      {
-        id: 'guard1',
-        name: 'Owner Only for Summarize',
-        toolName: 'summarize',
-        guardType: 'owner_only',
-        config: { ownerOnly: true },
-        isActive: true,
-      },
-      {
-        id: 'guard2',
-        name: 'Specific Users for Translate',
-        toolName: 'translate',
-        guardType: 'user_list',
-        config: { allowedUsers: ['user1', 'user2'] },
-        isActive: false,
-      },
-      {
-        id: 'guard3',
-        name: 'Role-based for Generate',
-        toolName: 'generate',
-        guardType: 'role_based',
-        config: { allowedRoles: ['admin', 'moderator'] },
-        isActive: true,
-      },
-    ];
+    const guards = webUIStorage.getToolUsageGuards();
 
     return res.json({
       success: true,
@@ -109,7 +83,6 @@ router.post('/tool-usage-guards', configRateLimit, (req: Request, res: Response)
       });
     }
 
-    // In a real implementation, this would save to database
     const newGuard = {
       id: `guard${Date.now()}`,
       name,
@@ -120,6 +93,8 @@ router.post('/tool-usage-guards', configRateLimit, (req: Request, res: Response)
       allowedRoles: allowedRoles || [],
       isActive: isActive !== false,
     };
+
+    webUIStorage.saveToolUsageGuard(newGuard);
 
     return res.json({
       success: true,
@@ -157,7 +132,6 @@ router.put('/tool-usage-guards/:id', configRateLimit, (req: Request, res: Respon
       });
     }
 
-    // In a real implementation, this would update in database
     const updatedGuard = {
       id,
       name,
@@ -168,6 +142,8 @@ router.put('/tool-usage-guards/:id', configRateLimit, (req: Request, res: Respon
       allowedRoles: allowedRoles || [],
       isActive: isActive !== false,
     };
+
+    webUIStorage.saveToolUsageGuard(updatedGuard);
 
     return res.json({
       success: true,
@@ -187,8 +163,16 @@ router.delete('/tool-usage-guards/:id', configRateLimit, (req: Request, res: Res
   try {
     const { id } = req.params;
 
-    // In a real implementation, this would delete from database
-    // For now, just return success
+    const guards = webUIStorage.getToolUsageGuards();
+    const guardExists = guards.some((g: any) => g.id === id);
+    if (!guardExists) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: `Tool usage guard with ID ${id} not found`,
+      });
+    }
+
+    webUIStorage.deleteToolUsageGuard(id);
 
     return res.json({
       success: true,
@@ -208,8 +192,16 @@ router.post('/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res
     const { id } = req.params;
     const { isActive } = req.body;
 
-    // In a real implementation, this would update in database
-    // For now, just return success
+    const guards = webUIStorage.getToolUsageGuards();
+    const guardExists = guards.some((g: any) => g.id === id);
+    if (!guardExists) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: `Tool usage guard with ID ${id} not found`,
+      });
+    }
+
+    webUIStorage.toggleToolUsageGuard(id, isActive);
 
     return res.json({
       success: true,

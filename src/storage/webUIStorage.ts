@@ -13,6 +13,7 @@ interface WebUIConfig {
   messengerProviders: any[];
   personas: any[];
   guards: any[];
+  toolUsageGuards?: any[];
   lastUpdated: string;
 }
 
@@ -63,6 +64,7 @@ export class WebUIStorage {
       messengerProviders: [],
       personas: [],
       guards: [],
+      toolUsageGuards: [],
       lastUpdated: new Date().toISOString(),
     };
 
@@ -371,6 +373,70 @@ export class WebUIStorage {
     const guard = config.guards.find((g: any) => g.id === id);
     if (guard) {
       guard.enabled = enabled;
+      this.saveConfig(config);
+    }
+  }
+
+  /**
+   * Get all tool usage guards
+   */
+  public getToolUsageGuards(): any[] {
+    const config = this.loadConfig();
+
+    // Initialize default tool usage guards if they don't exist
+    if (!config.toolUsageGuards) {
+      config.toolUsageGuards = [];
+      this.saveConfig(config);
+    }
+
+    return config.toolUsageGuards;
+  }
+
+  /**
+   * Save a tool usage guard
+   */
+  public saveToolUsageGuard(guard: any): void {
+    const config = this.loadConfig();
+    if (!config.toolUsageGuards) {
+      config.toolUsageGuards = [];
+    }
+
+    const existingIndex = config.toolUsageGuards.findIndex((g: any) => g.id === guard.id);
+
+    if (existingIndex >= 0) {
+      config.toolUsageGuards[existingIndex] = guard;
+    } else {
+      config.toolUsageGuards.push(guard);
+    }
+
+    this.saveConfig(config);
+  }
+
+  /**
+   * Delete a tool usage guard
+   */
+  public deleteToolUsageGuard(id: string): void {
+    const config = this.loadConfig();
+    if (!config.toolUsageGuards) {
+      return;
+    }
+
+    config.toolUsageGuards = config.toolUsageGuards.filter((g: any) => g.id !== id);
+    this.saveConfig(config);
+  }
+
+  /**
+   * Toggle a tool usage guard active status
+   */
+  public toggleToolUsageGuard(id: string, isActive: boolean): void {
+    const config = this.loadConfig();
+    if (!config.toolUsageGuards) {
+      return;
+    }
+
+    const guard = config.toolUsageGuards.find((g: any) => g.id === id);
+    if (guard) {
+      guard.isActive = isActive;
       this.saveConfig(config);
     }
   }
