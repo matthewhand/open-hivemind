@@ -21,7 +21,7 @@
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
-    "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
+    "build:serverless": "npm run build:frontend && mkdir -p api && cp src/index.ts api/index.js",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash ./scripts/start-runtime.sh",
