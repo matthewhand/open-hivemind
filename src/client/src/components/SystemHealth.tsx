@@ -206,19 +206,19 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="space-y-1 text-sm">
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Platform:</span>
-                <span className="font-mono">{metrics?.system.platform}</span>
+                <span className="font-mono">{metrics?.system?.platform}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Architecture:</span>
-                <span className="font-mono">{metrics?.system.arch}</span>
+                <span className="font-mono">{metrics?.system?.arch}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Release:</span>
-                <span className="font-mono">{metrics?.system.release}</span>
+                <span className="font-mono">{metrics?.system?.release}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Hostname:</span>
-                <span className="font-mono">{metrics?.system.hostname}</span>
+                <span className="font-mono">{metrics?.system?.hostname}</span>
               </div>
             </div>
           </div>
@@ -281,17 +281,17 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Progress
-                    value={metrics?.memory.usage || 0}
+                    value={metrics?.memory?.usage || 0}
                     max={100}
-                    variant={(metrics?.memory.usage || 0) > 90 ? 'error' : (metrics?.memory.usage || 0) > 70 ? 'warning' : 'success'}
+                    variant={(metrics?.memory?.usage || 0) > 90 ? 'error' : (metrics?.memory?.usage || 0) > 70 ? 'warning' : 'success'}
                   />
                 </div>
                 <span className="text-sm font-mono w-12 text-right">
-                  {(metrics?.memory.usage || 0).toFixed(0)}%
+                  {(metrics?.memory?.usage || 0).toFixed(0)}%
                 </span>
               </div>
               <span className="text-xs text-base-content/70 mt-1">
-                {formatBytes((metrics?.memory.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory.total || 0) * 1024 * 1024)}
+                {formatBytes((metrics?.memory?.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory?.total || 0) * 1024 * 1024)}
               </span>
             </div>
           </div>
@@ -304,7 +304,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 <span className="font-medium">Load Average</span>
               </div>
               <div className="flex gap-2 justify-between items-center h-full">
-                {metrics?.system.loadAverage.map((load, index) => (
+                {metrics?.system?.loadAverage || [].map((load, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <span className="text-xs opacity-70">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
                     <Badge
