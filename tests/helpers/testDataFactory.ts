@@ -14,7 +14,7 @@ export const discordConfigData: ConfigTestData = {
     DISCORD_BOT_TOKEN: '',
     DISCORD_CLIENT_ID: '',
     DISCORD_GUILD_ID: '',
-    DISCORD_AUDIO_FILE_PATH: 'audio.wav',
+    DISCORD_AUDIO_DIR: './data/audio',
     DISCORD_WELCOME_MESSAGE: 'Welcome to the server!',
     DISCORD_CHANNEL_ID: '',
     DISCORD_DEFAULT_CHANNEL_ID: '',

@@ -15,7 +15,7 @@ describe('discordConfig', () => {
     expect(freshDiscordConfig.get('DISCORD_BOT_TOKEN')).toBe('');
     expect(freshDiscordConfig.get('DISCORD_CLIENT_ID')).toBe('');
     expect(freshDiscordConfig.get('DISCORD_GUILD_ID')).toBe('');
-    expect(freshDiscordConfig.get('DISCORD_AUDIO_FILE_PATH')).toBe('audio.wav');
+    expect(freshDiscordConfig.get('DISCORD_AUDIO_DIR')).toBe('./data/audio');
     expect(freshDiscordConfig.get('DISCORD_WELCOME_MESSAGE')).toBe('Welcome to the server!');
     expect(freshDiscordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT')).toBe(10);
     expect(freshDiscordConfig.get('DISCORD_CHANNEL_ID')).toBe('');

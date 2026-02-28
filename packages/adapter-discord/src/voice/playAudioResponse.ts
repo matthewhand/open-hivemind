@@ -36,7 +36,7 @@ export async function playAudioResponse(
       throw new Error('User is not in a voice channel.');
     }
 
-    const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string;
+    const audioDirectory = discordConfig.get('DISCORD_AUDIO_DIR') as string;
     const audioFilePath = path.join(audioDirectory, fileName);
     debug(`Playing audio file: ${audioFilePath}`);
 

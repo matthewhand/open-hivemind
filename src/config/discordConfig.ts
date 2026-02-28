@@ -27,7 +27,7 @@ export interface DiscordConfig {
   DISCORD_BOT_TOKEN: string;
   DISCORD_CLIENT_ID: string;
   DISCORD_GUILD_ID: string;
-  DISCORD_AUDIO_FILE_PATH: string;
+  DISCORD_AUDIO_DIR: string;
   DISCORD_WELCOME_MESSAGE: string;
   DISCORD_MESSAGE_HISTORY_LIMIT: number;
   DISCORD_CHANNEL_ID: string;
@@ -114,11 +114,11 @@ const discordConfig = convict<DiscordConfig>({
     default: '',
     env: 'DISCORD_GUILD_ID',
   },
-  DISCORD_AUDIO_FILE_PATH: {
-    doc: 'Path to audio files for Discord commands',
+  DISCORD_AUDIO_DIR: {
+    doc: 'Directory for audio files for Discord commands',
     format: String,
-    default: 'audio.wav',
-    env: 'DISCORD_AUDIO_FILE_PATH',
+    default: './data/audio',
+    env: 'DISCORD_AUDIO_DIR',
   },
   DISCORD_WELCOME_MESSAGE: {
     doc: 'Welcome message for new users',
