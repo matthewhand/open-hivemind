@@ -109,42 +109,6 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
 
-  // === AI & ANALYTICS SECTION ===
-  {
-    id: 'divider-ai',
-    label: 'AI & Analytics',
-    icon: null as unknown as React.ReactNode,
-    divider: true,
-    visible: true,
-  },
-  {
-    id: 'ai-dashboard',
-    label: 'AI Dashboard',
-    icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
-    path: '/admin/ai/dashboard',
-    visible: true,
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
-    path: '/admin/analytics',
-    visible: true,
-  },
-  {
-    id: 'anomaly-detection',
-    label: 'Anomaly Detection',
-    icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
-    path: '/admin/ai/anomalies',
-    visible: true,
-  },
-  {
-    id: 'ai-chat',
-    label: 'AI Assistant',
-    icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
-    path: '/admin/ai/chat',
-    visible: true,
-  },
   // === DEVELOPER SECTION ===
   {
     id: 'divider-dev',

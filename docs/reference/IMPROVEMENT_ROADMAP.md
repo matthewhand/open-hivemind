@@ -352,6 +352,54 @@ Low impact, low urgency - Address within 10-12 weeks
 
 ---
 
+## 🤖 AI Dashboard & Intelligence Features (Future Roadmap)
+
+### Overview
+The following AI-powered features are planned for a future release. They have been removed from the current UI to avoid confusion with mock/placeholder implementations.
+
+### Planned Features
+
+#### Intelligent Dashboard
+- **User behavior pattern analysis** - Track and learn from user interaction patterns
+- **Personalized widget recommendations** - AI-driven dashboard customization
+- **User segment identification** - Automatic user classification for tailored experiences
+- **Learning progress tracking** - Measure AI personalization effectiveness
+
+#### AI Insights Panel
+- **Real-time performance insights** - AI-generated analysis of bot performance
+- **Anomaly explanations** - Natural language descriptions of detected anomalies
+- **Optimization recommendations** - Actionable suggestions for improving bot behavior
+
+#### Predictive Analytics
+- **Message volume forecasting** - Predict future bot activity levels
+- **User engagement prediction** - Forecast user interaction patterns
+- **Capacity planning recommendations** - Proactive scaling suggestions
+
+#### Anomaly Detection
+- **Statistical anomaly detection** - Z-score based detection of unusual patterns
+- **Multi-metric correlation** - Cross-metric anomaly analysis
+- **Automated alerting** - Configurable thresholds with notification integration
+
+#### Natural Language Interface
+- **Voice command support** - Web Speech API integration for voice control
+- **Intent recognition** - Natural language command parsing
+- **Context-aware responses** - Dashboard-aware command interpretation
+- **Multi-language support** - Internationalization for NL commands
+
+#### Bot Training Dashboard
+- **Training data management** - Curate and manage bot training datasets
+- **Performance benchmarking** - Compare bot performance across configurations
+- **Fine-tuning workflows** - Guided bot optimization processes
+
+### Implementation Prerequisites
+Before implementing AI features, the following infrastructure must be in place:
+- [ ] Persistent database (SQLite/PostgreSQL) with user behavior tracking tables
+- [ ] Backend AI/ML service or integration with external AI APIs
+- [ ] Real-time metrics pipeline for pattern analysis
+- [ ] User consent and privacy controls for behavior tracking
+
+---
+
 ## Monitoring & Validation
 
 ### Weekly Checkpoints
