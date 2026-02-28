@@ -82,7 +82,7 @@ export async function executeCommand(command: string): Promise<string> {
     /^(node|npm|npx)\s+--version$/,
   ];
 
-  const isWhitelisted = safePatterns.some(pattern => pattern.test(command.trim()));
+  const isWhitelisted = safePatterns.some((pattern) => pattern.test(command.trim()));
 
   if (!isWhitelisted && containsShellMetacharacters(command)) {
     const error = new Error(
