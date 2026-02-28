@@ -9,6 +9,20 @@ jest.mock('../../src/managers/BotManager');
 // Mock WebSocketService
 jest.mock('../../src/server/services/WebSocketService');
 
+// Mock ActivityLogger
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn().mockReturnValue({
+      getEvents: jest.fn().mockResolvedValue([]),
+    }),
+  },
+}));
+
+// Mock auth middleware
+jest.mock('../../src/auth/middleware', () => ({
+  requireRole: jest.fn().mockImplementation((role) => (req: any, res: any, next: any) => next()),
+}));
+
 // Mock ShutdownCoordinator to prevent process exit during tests
 jest.mock('../../src/server/ShutdownCoordinator', () => ({
   ShutdownCoordinator: {
@@ -74,6 +88,7 @@ describe('Bots Router', () => {
     mockManager = {
       getAllBots: jest.fn(),
       getBotsStatus: jest.fn(),
+      getBot: jest.fn(),
       createBot: jest.fn(),
       updateBot: jest.fn(),
       deleteBot: jest.fn(),
@@ -177,6 +192,7 @@ describe('Bots Router', () => {
   });
 
   it('GET /api/bots/:id/activity should return activity logs', async () => {
+    mockManager.getBot.mockResolvedValue({ id: 'bot1', name: 'bot1' });
     const res = await request(app).get('/api/bots/bot1/activity');
     expect(res.status).toBe(200);
     expect(res.body.data.activity).toEqual([]);

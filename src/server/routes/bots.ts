@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
-import { requireRole } from '../middleware/auth';
+import { requireRole } from '../../auth/middleware';
 
 const router = Router();
 const manager = BotManager.getInstance();
