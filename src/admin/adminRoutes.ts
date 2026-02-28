@@ -249,6 +249,8 @@ adminRouter.post(
     } catch (e) {
       debug('Runtime addBot failed (continue, config was persisted):', e);
     }
+
+    return res.json({ ok: true });
   }
 );
 
