@@ -190,8 +190,7 @@ adminRouter.post(
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
     } catch (e: unknown) {
       debug('Failed to create bot via generic provider addBot', e);
-      // Let it fall through to legacy logic if addBot isn't fully implemented or fails,
-      // or we can handle the error here.
+      // Let it fall through to legacy logic if addBot isn't fully implemented or fails
     }
 
     // Persist to config/providers/messengers.json for demo persistence
