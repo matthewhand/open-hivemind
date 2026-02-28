@@ -2,7 +2,12 @@
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
-  ignore = "test \"$CONTEXT\" != \"production\""
+
+[context.deploy-preview]
+  ignore = "exit 0"
+
+[context.branch-deploy]
+  ignore = "exit 0"
 
 [dev]
   command = "npm run dev"
