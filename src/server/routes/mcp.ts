@@ -180,7 +180,7 @@ router.get('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers - Add new MCP server
-router.post('/servers', async (req, res) => {
+router.post('/servers', requireRole('admin'), async (req, res) => {
   try {
     const { name, url, apiKey } = req.body;
 
@@ -227,7 +227,7 @@ router.post('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/connect - Connect to MCP server
-router.post('/servers/:name/connect', async (req, res) => {
+router.post('/servers/:name/connect', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -286,7 +286,7 @@ router.post('/servers/:name/connect', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/disconnect - Disconnect from MCP server
-router.post('/servers/:name/disconnect', async (req, res) => {
+router.post('/servers/:name/disconnect', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -326,7 +326,7 @@ router.post('/servers/:name/disconnect', async (req, res) => {
 });
 
 // DELETE /api/mcp/servers/:name - Remove MCP server
-router.delete('/servers/:name', async (req, res) => {
+router.delete('/servers/:name', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -403,7 +403,7 @@ router.get('/servers/:name/tools', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/call-tool - Call a tool on MCP server
-router.post('/servers/:name/call-tool', async (req, res) => {
+router.post('/servers/:name/call-tool', requireRole('admin'), async (req, res) => {
   try {
     const { name } = req.params;
     const { toolName, arguments: toolArgs } = req.body;

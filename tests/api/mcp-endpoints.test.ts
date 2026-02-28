@@ -3,11 +3,25 @@ import { join } from 'path';
 import express, { Express } from 'express';
 import request from 'supertest';
 import { authenticate, requireAdmin } from '../../src/auth/middleware';
+import { requireRole } from '../../src/server/middleware/auth';
 import mcpRouter from '../../src/server/routes/mcp';
+
+jest.mock('../../src/server/middleware/auth', () => ({
+  requireRole: jest.fn((role) => (req: any, res: any, next: any) => {
+    if (!req.user) {
+      req.user = { id: 'test-user', username: 'test-user', isAdmin: true, role: 'admin' };
+    }
+    if (req.user?.role === role || req.user?.isAdmin) {
+      next();
+    } else {
+      res.status(403).send('Forbidden');
+    }
+  }),
+}));
 
 jest.mock('../../src/auth/middleware', () => ({
   authenticate: jest.fn((req, res, next) => {
-    req.user = { id: 'test-user', username: 'test-user', isAdmin: true };
+    req.user = { id: 'test-user', username: 'test-user', isAdmin: true, role: 'admin' };
     next();
   }),
   requireAdmin: jest.fn((req, res, next) => {
@@ -67,6 +81,7 @@ describe('MCP API Endpoints', () => {
     // Clear mock function calls after each test
     (authenticate as jest.Mock).mockClear();
     (requireAdmin as jest.Mock).mockClear();
+    (requireRole as jest.Mock).mockClear();
     // Clean up created files
     try {
       await fs.writeFile(MCP_SERVERS_CONFIG_FILE, '[]', 'utf8');
