@@ -738,7 +738,7 @@ const BotsPage: React.FC = () => {
                   messages={chatHistory}
                   botName={previewBot.name}
                   loading={chatLoading}
-                  isTyping={true}
+                  isTyping={previewBot.status === 'generating'}
                 />
               </div>
             </div>
