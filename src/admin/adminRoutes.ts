@@ -185,17 +185,9 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
-      return res.json({ ok: true });
-    } catch (e: unknown) {
-      const message = (e as Error)?.message || String(e);
-      logAdminAction(
-        req,
-        `CREATE_${providerId.toUpperCase()}_BOT`,
-        `${providerId}-bots/${req.body?.name || 'unknown'}`,
-        'failure',
-        `Failed to create ${provider.label} bot: ${message}`
-      );
-      return res.status(500).json({ ok: false, error: message });
+      return res
+        .status(400)
+        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -210,7 +202,7 @@ adminRouter.post(
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (e: unknown) {
+    } catch (e) {
       if ((e as { code?: string }).code === 'ENOENT') {
         // File doesn't exist yet, start with empty config
       } else {
@@ -382,7 +374,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (e: unknown) {
+    } catch (e) {
       if ((e as { code?: string }).code === 'ENOENT') {
         return res.status(400).json({ ok: false, error: 'messengers.json not found' });
       }
@@ -415,8 +407,6 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
-    } catch (e: unknown) {
-      debug('Slack reload error', e);
     }
 
     try {
