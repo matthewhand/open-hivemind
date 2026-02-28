@@ -22,5 +22,6 @@
     "deploymentEnabled": {
       "main": true
     }
-  }
+  },
+  "ignoreCommand": "bash ./scripts/ignore-build.sh"
 }

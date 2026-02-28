@@ -2,6 +2,7 @@
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
+  ignore = "bash ./scripts/ignore-build.sh"
 
 [dev]
   command = "npm run dev"
