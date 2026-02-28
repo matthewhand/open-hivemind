@@ -4,6 +4,11 @@
   themes: dark --default, night, light, dracula, cupcake, emerald, corporate, synthwave, cyberpunk, forest, aqua, business, coffee, dim, nord, sunset;
 }
 
+/* Chat Virtuoso Container styling */
+.virtuoso-chat-container > div > div {
+  padding-bottom: 1rem;
+}
+
 /* ============================================
    Open Hivemind - Modern UI Styles
    ============================================ */

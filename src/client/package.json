@@ -29,6 +29,7 @@
     "react-redux": "^9.2.0",
     "react-responsive": "^10.0.1",
     "react-router-dom": "^7.8.2",
+    "react-virtuoso": "^4.18.1",
     "recharts": "^2.15.4",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1"

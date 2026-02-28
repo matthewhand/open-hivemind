@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 export interface ChatMessage {
   id: string;
@@ -47,15 +48,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   maxHeight = '600px',
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0) {
+      virtuosoRef.current?.scrollToIndex({
+        index: messages.length - 1,
+        behavior: 'smooth',
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -229,38 +238,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
-            <p className="text-base-content/60">Start a conversation with your bot!</p>
-          </div>
-        ) : (
-          <>
-            {messages.map((message, index) => renderMessage(message, index))}
-
-            {/* Typing Indicator */}
-            {showTypingIndicator && typingUsers.length > 0 && (
-              <div className="chat chat-start">
-                <div className="chat-image avatar">
-                  <div className="w-10 rounded-full">
-                    <div className="avatar placeholder">
-                      <div className="bg-secondary text-secondary-content rounded-full w-10">
-                        <span className="text-xs">🤖</span>
+      <div className="flex-1 relative" style={{ minHeight: '300px' }}>
+        <Virtuoso
+          ref={virtuosoRef}
+          style={{ height: '100%', width: '100%' }}
+          className="virtuoso-chat-container px-4 py-2"
+          data={messages}
+          itemContent={(index, message) => renderMessage(message, index)}
+          followOutput="smooth"
+          initialTopMostItemIndex={messages.length > 0 ? messages.length - 1 : 0}
+          alignToBottom
+          overscan={1000}
+          components={{
+            EmptyPlaceholder: () => (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-6xl mb-4">💬</div>
+                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
+                <p className="text-base-content/60">Start a conversation with your bot!</p>
+              </div>
+            ),
+            Footer: () => (
+              <>
+                {showTypingIndicator && typingUsers.length > 0 && (
+                  <div className="chat chat-start">
+                    <div className="chat-image avatar">
+                      <div className="w-10 rounded-full">
+                        <div className="avatar placeholder">
+                          <div className="bg-secondary text-secondary-content rounded-full w-10">
+                            <span className="text-xs">🤖</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                    <div className="chat-bubble chat-bubble-secondary">
+                      <span className="loading loading-dots loading-sm"></span>
+                    </div>
                   </div>
-                </div>
-                <div className="chat-bubble chat-bubble-secondary">
-                  <span className="loading loading-dots loading-sm"></span>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </>
-        )}
+                )}
+              </>
+            ),
+          }}
+        />
       </div>
 
       {/* Input Area */}
