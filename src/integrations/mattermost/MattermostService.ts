@@ -17,7 +17,7 @@ import { ErrorUtils } from '@src/types/errors';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import MattermostClient from './mattermostClient';
+import MattermostClient from '../../../packages/adapter-mattermost/src/mattermostClient';
 
 const debug = Debug('app:MattermostService:verbose');
 
@@ -216,7 +216,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          if ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api') {
             throw hivemindError;
           }
 
@@ -331,7 +331,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const { MattermostMessage } = await import('./MattermostMessage');
+            const { MattermostMessage } = await import('../../../packages/adapter-mattermost/src/MattermostMessage');
             const mattermostMsg = new MattermostMessage(post, username, {
               isBot,
               botUsername,
@@ -357,7 +357,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // Convert error to appropriate Hivemind error type
           const hivemindError = ErrorUtils.toHivemindError(error);
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          if ((hivemindError as any).type === 'network' || (hivemindError as any).type === 'api') {
             throw hivemindError;
           }
 
