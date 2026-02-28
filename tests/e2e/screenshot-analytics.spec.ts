@@ -132,7 +132,7 @@ test.describe('Analytics Dashboard Screenshots', () => {
           contentLength: 1200,
           processingTime: 500,
           status: 'success',
-        }
+        },
       ];
 
       // Generate agent metrics

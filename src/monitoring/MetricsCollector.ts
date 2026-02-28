@@ -180,7 +180,8 @@ export class MetricsCollector extends EventEmitter {
       diskUsage: Math.random() * 100, // placeholder
       networkIO: Math.random() * 1000, // placeholder
       responseTime: avgResponseTime,
-      throughput: this.metrics.messagesProcessed / (Math.max(1, Date.now() - this.metrics.uptime) / 1000),
+      throughput:
+        this.metrics.messagesProcessed / (Math.max(1, Date.now() - this.metrics.uptime) / 1000),
     };
 
     return {

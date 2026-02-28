@@ -11,7 +11,7 @@ test.describe('Bot Create Page (Standalone)', () => {
     });
 
     await page.route('/api/health/detailed', async (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
+      route.fulfill({ status: 200, json: { status: 'ok' } })
     );
 
     await page.route('/api/config/llm-status', async (route) =>

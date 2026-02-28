@@ -46,9 +46,9 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     jest.restoreAllMocks();
   });
 
-  describe('GET /dashboard/api/status - HAPPY PATH TESTS', () => {
+  describe('GET /dashboard/status - HAPPY PATH TESTS', () => {
     it('should return valid bot status with all required fields', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       expect(response.body).toHaveProperty('bots');
       expect(response.body).toHaveProperty('uptime');
@@ -77,7 +77,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return status codes indicating bot health', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       // Validate status values are valid
       response.body.bots.forEach((bot: any) => {
@@ -86,7 +86,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return non-negative message and error counts', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       response.body.bots.forEach((bot: any) => {
         expect(bot.messageCount).toBeGreaterThanOrEqual(0);
@@ -95,20 +95,20 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should return reasonable uptime value', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       expect(response.body.uptime).toBeGreaterThan(0);
       expect(response.body.uptime).toBeLessThan(365 * 24 * 3600); // Less than 1 year
     });
   });
 
-  describe('GET /dashboard/api/status - EDGE CASE TESTS', () => {
+  describe('GET /dashboard/status - EDGE CASE TESTS', () => {
     it('should handle empty bot configuration gracefully', async () => {
       getInstanceSpy = jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
         getAllBots: jest.fn().mockReturnValue([]),
       } as any);
 
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       // The bots array is not empty because the configuration manager loads bots from environment
       // variables. The test should check for the presence of the expected structure instead.
@@ -123,7 +123,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
         }),
       } as any);
 
-      const response = await request(app).get('/dashboard/api/status');
+      const response = await request(app).get('/dashboard/status');
 
       // The status endpoint catches errors and logs them, returning 500
       // If the dashboard router implementation swallows errors and returns 200 with empty list,
@@ -153,7 +153,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
           ]),
       } as any);
 
-      const response = await request(app).get('/dashboard/api/status');
+      const response = await request(app).get('/dashboard/status');
 
       // The filtering logic in `status` endpoint gracefully handles null/undefined
       // by filtering them out, so it returns 200 OK with valid bots only.
@@ -165,7 +165,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle concurrent requests without race conditions', async () => {
       const requests = Array(10)
         .fill(null)
-        .map(() => request(app).get('/dashboard/api/status'));
+        .map(() => request(app).get('/dashboard/status'));
 
       const responses = await Promise.all(requests);
 
@@ -178,7 +178,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
     it('should validate content-type is application/json', async () => {
       const response = await request(app)
-        .get('/dashboard/api/status')
+        .get('/dashboard/status')
         .expect(200)
         .expect('Content-Type', /json/);
     });
@@ -218,7 +218,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     it('should respond to status requests within reasonable time', async () => {
       const start = Date.now();
 
-      await request(app).get('/dashboard/api/status').expect(200);
+      await request(app).get('/dashboard/status').expect(200);
 
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(1000); // Should respond within 1 second
@@ -228,7 +228,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
       const concurrentRequests = 50;
       const requests = Array(concurrentRequests)
         .fill(null)
-        .map(() => request(app).get('/dashboard/api/status'));
+        .map(() => request(app).get('/dashboard/status'));
 
       const start = Date.now();
       const responses = await Promise.all(requests);
@@ -245,7 +245,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('SECURITY TESTS', () => {
     it('should not expose sensitive information in responses', async () => {
-      const response = await request(app).get('/dashboard/api/status').expect(200);
+      const response = await request(app).get('/dashboard/status').expect(200);
 
       const responseString = JSON.stringify(response.body);
 
@@ -268,7 +268,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
       for (const input of maliciousInputs) {
         const response = await request(app).get(
-          `/dashboard/api/status?test=${encodeURIComponent(input)}`
+          `/dashboard/status?test=${encodeURIComponent(input)}`
         );
 
         expect([200, 400, 404]).toContain(response.status);
