@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
@@ -101,7 +101,10 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
-  const filteredBots = bots.filter(bot => {
+
+  // ⚡ Bolt: Memoize filtered bots to prevent unnecessary recalculations on every render.
+  // This reduces CPU load and prevents child components from re-rendering unless the bot list or search query changes.
+  const filteredBots = useMemo(() => bots.filter(bot => {
     const q = searchQuery.toLowerCase();
     return (
       bot.name.toLowerCase().includes(q) ||
@@ -109,7 +112,7 @@ const BotsPage: React.FC = () => {
       ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
       (bot.llmProvider || '').toLowerCase().includes(q)
     );
-  });
+  }), [bots, searchQuery]);
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
