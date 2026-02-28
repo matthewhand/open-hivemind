@@ -23,7 +23,10 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
                         <div className="chat-header mb-1">
                             <div className="skeleton h-4 w-20"></div>
                         </div>
-                        <div className="chat-bubble skeleton h-12 w-48"></div>
+                        <div className="chat-bubble skeleton min-h-[2.75rem] min-w-[3.5rem] w-48 flex flex-col justify-center gap-2 px-4 py-3">
+                            <div className="skeleton h-2 w-full"></div>
+                            {i % 2 !== 0 && <div className="skeleton h-2 w-2/3"></div>}
+                        </div>
                         <div className="chat-footer opacity-50 mt-1">
                             <div className="skeleton h-3 w-12"></div>
                         </div>
@@ -56,7 +59,7 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </time>
                         </div>
-                        <div className={`chat-bubble ${bubbleColor}`}>
+                        <div className={`chat-bubble ${bubbleColor} min-h-[2.75rem] transition-all duration-200`}>
                             {msg.content}
                         </div>
                         {/* <div className="chat-footer opacity-50">

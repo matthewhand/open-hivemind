@@ -141,7 +141,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''} min-h-[2.75rem] transition-all duration-200`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -252,7 +252,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="chat-bubble chat-bubble-secondary">
+                <div className="chat-bubble chat-bubble-secondary min-h-[2.75rem] min-w-[3.5rem] flex items-center justify-center transition-all duration-200">
                   <span className="loading loading-dots loading-sm"></span>
                 </div>
               </div>
