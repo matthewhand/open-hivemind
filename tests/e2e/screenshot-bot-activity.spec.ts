@@ -19,7 +19,7 @@ test.describe('Bot Activity Screenshots', () => {
       messageProvider: 'discord',
       llmProvider: 'openai',
       persona: 'default',
-      status: 'active',
+      status: 'generating', // Set to generating so isTyping will be true
       connected: true,
       messageCount: 42,
       errorCount: 0,
@@ -38,31 +38,17 @@ test.describe('Bot Activity Screenshots', () => {
           channelId: '123',
           userId: 'user1',
         },
-      },
+      }
+    ];
+
+    const mockHistoryLogs = [
       {
-        id: 'log2',
-        timestamp: new Date(Date.now() - 5000).toISOString(),
-        action: 'OUTGOING',
-        details: 'Message length: 120',
-        result: 'success',
-        metadata: {
-          type: 'MESSAGE',
-          channelId: '123',
-          userId: 'bot',
-        },
-      },
-      {
-        id: 'log3',
-        timestamp: new Date(Date.now() - 10000).toISOString(),
-        action: 'ERROR',
-        details: 'Connection timeout',
-        result: 'error',
-        metadata: {
-          type: 'MESSAGE',
-          channelId: '123',
-          userId: 'user1',
-        },
-      },
+        id: 'msg1',
+        content: 'Hi Bot, how are you?',
+        createdAt: new Date(Date.now() - 5000).toISOString(),
+        author: { id: 'user1', username: 'User', bot: false },
+        role: 'user'
+      }
     ];
 
     // Mock API responses
@@ -102,17 +88,16 @@ test.describe('Bot Activity Screenshots', () => {
 
     // Handle Activity Logs GET
     await page.route('**/api/bots/screenshot-bot/activity*', async (route) => {
-      console.log('Intercepted activity request');
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({ success: true, data: { activity: mockActivityLogs } }),
       });
     });
 
-    // Handle History GET (Empty for now)
+    // Handle History GET
     await page.route('**/api/bots/*/history*', async (route) => {
       await route.fulfill({
-        json: { success: true, history: [] },
+        json: { success: true, data: { history: mockHistoryLogs } },
       });
     });
 
@@ -121,9 +106,6 @@ test.describe('Bot Activity Screenshots', () => {
 
     // Wait for content
     await expect(page.getByText('Screenshot Bot')).toBeVisible({ timeout: 10000 });
-
-    // Screenshot Bots Page (Clean)
-    await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
     // Open Settings Modal
     const settingsButton = page.locator('button[title="Bot Settings"]').first();
@@ -140,14 +122,15 @@ test.describe('Bot Activity Screenshots', () => {
     const detailsModal = page.locator('.modal-box', { hasText: 'Recent Activity' });
     await expect(detailsModal).toBeVisible();
 
-    // Wait for logs to render
-    try {
-      await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
-    } catch (e) {
-      console.log('Log not found, taking screenshot for debug');
-      await page.screenshot({ path: 'docs/screenshots/debug-failure.png' });
-      throw e;
-    }
+    // Wait for the chat to render
+    await expect(page.getByText('Chat History')).toBeVisible({ timeout: 5000 });
+
+    // Scroll down to the Chat History section so it's fully visible in the screenshot
+    const chatHistoryHeader = page.getByText('Chat History');
+    await chatHistoryHeader.scrollIntoViewIfNeeded();
+
+    // Look for the typing indicator dot (or the chat bubbles generally)
+    await page.waitForTimeout(1000); // Give a bit of time for modal to fully slide in
 
     // Screenshot Details Modal
     await page.screenshot({ path: 'docs/screenshots/bot-details-modal.png' });

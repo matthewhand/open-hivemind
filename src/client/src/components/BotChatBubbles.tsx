@@ -12,9 +12,10 @@ interface BotChatBubblesProps {
     messages: Message[];
     botName?: string;
     loading?: boolean;
+    isTyping?: boolean;
 }
 
-const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false }) => {
+const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false, isTyping = false }) => {
     if (loading) {
         return (
             <div className="flex flex-col gap-4 p-4">
@@ -65,6 +66,23 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
                     </div>
                 );
             })}
+
+            {isTyping && (
+                <div className="chat chat-start">
+                    <div className="chat-image avatar">
+                        <div className="w-10 rounded-full">
+                            <div className="avatar placeholder">
+                                <div className="bg-secondary text-secondary-content rounded-full w-10">
+                                    <span className="text-xs">🤖</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="chat-bubble chat-bubble-secondary">
+                        <span className="loading loading-dots loading-sm"></span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
