@@ -1,22 +1,21 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ActivityPage from '../../src/client/src/pages/ActivityPage';
 import { apiService } from '../../src/client/src/services/api';
-import { vi } from 'vitest';
 
 // Mock apiService
-vi.mock('../../src/client/src/services/api', () => ({
+jest.mock('../../src/client/src/services/api', () => ({
     apiService: {
-        getActivity: vi.fn(),
+        getActivity: jest.fn(),
     },
 }));
 
 describe('ActivityPage', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     test('renders loading state initially', () => {
-        (apiService.getActivity as vi.Mock).mockResolvedValue({
+        (apiService.getActivity as jest.Mock).mockResolvedValue({
             events: [],
             filters: { agents: [], messageProviders: [], llmProviders: [] },
         });
@@ -43,7 +42,7 @@ describe('ActivityPage', () => {
             filters: { agents: ['TestBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -54,7 +53,7 @@ describe('ActivityPage', () => {
     });
 
     test('handles error state', async () => {
-        (apiService.getActivity as vi.Mock).mockRejectedValue(new Error('Network error'));
+        (apiService.getActivity as jest.Mock).mockRejectedValue(new Error('Network error'));
 
         render(<ActivityPage />);
 
@@ -71,7 +70,7 @@ describe('ActivityPage', () => {
         };
 
         // First call fails, second call succeeds
-        (apiService.getActivity as vi.Mock)
+        (apiService.getActivity as jest.Mock)
             .mockRejectedValueOnce(networkError)
             .mockResolvedValueOnce(successData);
 
@@ -100,7 +99,7 @@ describe('ActivityPage', () => {
         };
 
         // First call fails, second call succeeds
-        (apiService.getActivity as vi.Mock)
+        (apiService.getActivity as jest.Mock)
             .mockRejectedValueOnce(timeoutError)
             .mockResolvedValueOnce(successData);
 
@@ -123,7 +122,7 @@ describe('ActivityPage', () => {
 
     test('does not retry for non-transient errors', async () => {
         const authError = new Error('Authentication failed');
-        (apiService.getActivity as vi.Mock).mockRejectedValue(authError);
+        (apiService.getActivity as jest.Mock).mockRejectedValue(authError);
 
         render(<ActivityPage />);
 
@@ -139,7 +138,7 @@ describe('ActivityPage', () => {
             filters: { agents: [], messageProviders: [], llmProviders: [] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -173,7 +172,7 @@ describe('ActivityPage', () => {
             filters: { agents: ['TestBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -206,7 +205,7 @@ describe('ActivityPage', () => {
             filters: { agents: ['TestBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -238,7 +237,7 @@ describe('ActivityPage', () => {
             filters: { agents: ['TestBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -271,7 +270,7 @@ describe('ActivityPage', () => {
             filters: { agents: ['TestBot'], messageProviders: ['discord'], llmProviders: ['openai'] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -293,7 +292,7 @@ describe('ActivityPage', () => {
             filters: { agents: [], messageProviders: [], llmProviders: [] },
         };
 
-        (apiService.getActivity as vi.Mock).mockResolvedValue(mockData);
+        (apiService.getActivity as jest.Mock).mockResolvedValue(mockData);
 
         render(<ActivityPage />);
 
@@ -305,7 +304,7 @@ describe('ActivityPage', () => {
 
     test('error state with retry button', async () => {
         const networkError = new Error('Network error');
-        (apiService.getActivity as vi.Mock).mockRejectedValue(networkError);
+        (apiService.getActivity as jest.Mock).mockRejectedValue(networkError);
 
         render(<ActivityPage />);
 

@@ -4,42 +4,63 @@ import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
 
+import { vi } from 'vitest';
+
 // Mock apiService
-jest.mock('../../services/api', () => ({
+vi.mock('../../services/api', () => ({
   apiService: {
-    getGlobalConfig: jest.fn(),
-    listSystemBackups: jest.fn(),
-    createSystemBackup: jest.fn(),
-    updateGlobalConfig: jest.fn(),
-    restoreSystemBackup: jest.fn(),
-    deleteSystemBackup: jest.fn(),
-    getApiEndpointsStatus: jest.fn(),
-    getSystemInfo: jest.fn(),
-    getEnvOverrides: jest.fn(),
-    clearCache: jest.fn(),
+    getGlobalConfig: vi.fn(),
+    listSystemBackups: vi.fn(),
+    createSystemBackup: vi.fn(),
+    updateGlobalConfig: vi.fn(),
+    restoreSystemBackup: vi.fn(),
+    deleteSystemBackup: vi.fn(),
+    getApiEndpointsStatus: vi.fn(),
+    getSystemInfo: vi.fn(),
+    getEnvOverrides: vi.fn(),
+    clearCache: vi.fn(),
   },
 }));
 
 // Mock useWebSocket
-jest.mock('../../contexts/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+vi.mock('../../contexts/WebSocketContext', () => ({
+  useWebSocket: vi.fn(),
 }));
 
 // Mock Modal component to avoid JSDOM <dialog> issues
-jest.mock('../../components/DaisyUI/Modal', () => {
-  return ({ isOpen, children, title, actions }: any) => (
-    isOpen ? (
-      <div role="dialog" aria-modal="true">
-        <h3>{title}</h3>
-        {children}
-        <div className="modal-action">
-          {actions?.map((action: any, index: number) => (
-            <button key={index} onClick={action.onClick}>{action.label}</button>
-          ))}
+vi.mock('../../components/DaisyUI/Modal', () => {
+  return {
+    default: ({ isOpen, children, title, actions }: any) => (
+      isOpen ? (
+        <div role="dialog" aria-modal="true">
+          <h3>{title}</h3>
+          {children}
+          <div className="modal-action">
+            {actions?.map((action: any, index: number) => (
+              <button key={index} onClick={action.onClick}>{action.label}</button>
+            ))}
+          </div>
         </div>
-      </div>
-    ) : null
-  );
+      ) : null
+    )
+  };
+});
+
+// Also mock ModalForm
+vi.mock('../../components/DaisyUI/ModalForm', () => {
+  return {
+    default: ({ isOpen, children, title, onSubmit }: any) => (
+      isOpen ? (
+        <div role="dialog" aria-modal="true">
+          <h3>{title}</h3>
+          <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+             {children}
+             <button type="submit">Submit</button>
+          </form>
+        </div>
+      ) : null
+    )
+  };
 });
 
 describe('SystemManagement', () => {
@@ -51,18 +72,19 @@ describe('SystemManagement', () => {
     socket: null,
     messageFlow: [],
     botStats: [],
-    connect: jest.fn(),
-    disconnect: jest.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (WebSocketContext.useWebSocket as any).mockReturnValue(mockWebSocket);
-    (apiService.getGlobalConfig as any).mockResolvedValue({ _userSettings: { values: {} } });
-    (apiService.listSystemBackups as any).mockResolvedValue([]);
-    (apiService.getSystemInfo as any).mockResolvedValue({ systemInfo: { platform: 'linux', arch: 'x64', nodeVersion: 'v20.0.0', uptime: 1000, memory: { rss: 1000000 }, database: { connected: true } } });
-    (apiService.getEnvOverrides as any).mockResolvedValue({ data: { envVars: {} } });
-    (apiService.getApiEndpointsStatus as any).mockResolvedValue({
+    vi.clearAllMocks();
+    // Ensure useWebSocket is mocked using vitest mock methods
+    vi.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue(mockWebSocket);
+    (apiService.getGlobalConfig as import('vitest').Mock).mockResolvedValue({ _userSettings: { values: {} } });
+    (apiService.listSystemBackups as import('vitest').Mock).mockResolvedValue([]);
+    (apiService.getSystemInfo as import('vitest').Mock).mockResolvedValue({ systemInfo: { platform: 'linux', arch: 'x64', nodeVersion: 'v20.0.0', uptime: 1000, memory: { rss: 1000000 }, database: { connected: true } } });
+    (apiService.getEnvOverrides as import('vitest').Mock).mockResolvedValue({ data: { envVars: {} } });
+    (apiService.getApiEndpointsStatus as import('vitest').Mock).mockResolvedValue({
       overall: { status: 'healthy', stats: { total: 1, online: 1, error: 0 } },
       endpoints: [
         { id: '1', name: 'Test API', status: 'online', responseTime: 50, consecutiveFailures: 0, lastChecked: new Date().toISOString() }
@@ -70,8 +92,8 @@ describe('SystemManagement', () => {
     });
 
     // Mock window methods
-    window.alert = jest.fn();
-    window.confirm = jest.fn(() => true);
+    window.alert = vi.fn();
+    window.confirm = vi.fn(() => true);
   });
 
   it('renders system management page', async () => {
@@ -100,7 +122,8 @@ describe('SystemManagement', () => {
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit
-    const submitButton = screen.getByText('Submit'); // From our mocked FormModal
+    // SystemManagement uses Modal, which we mocked to render actions as buttons
+    const submitButton = await screen.findByText('Create Backup');
     fireEvent.click(submitButton);
 
     await waitFor(() => {

@@ -1,12 +1,17 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import ProvidersPage from '../ProvidersPage';
 
 // Mock useNavigate
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
-}));
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 // Mock DaisyUI components to simplify testing
 jest.mock('../../components/DaisyUI', () => ({
@@ -22,7 +27,11 @@ describe('ProvidersPage', () => {
   });
 
   it('renders provider categories correctly', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     // Check for category titles
     expect(screen.getByText('Message Providers')).toBeDefined();
@@ -34,7 +43,11 @@ describe('ProvidersPage', () => {
   });
 
   it('renders all provider types in badges', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     // Message Providers
     expect(screen.getByText('Discord')).toBeDefined();
@@ -50,7 +63,11 @@ describe('ProvidersPage', () => {
   });
 
   it('navigates to message providers config when clicked', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     const configureMessageButton = screen.getByText('Configure Message');
     fireEvent.click(configureMessageButton);
@@ -59,7 +76,11 @@ describe('ProvidersPage', () => {
   });
 
   it('navigates to LLM providers config when clicked', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     const configureLLMButton = screen.getByText('Configure LLM');
     fireEvent.click(configureLLMButton);
@@ -68,7 +89,11 @@ describe('ProvidersPage', () => {
   });
 
   it('renders features list for each category', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     // Message Features
     expect(screen.getByText('Real-time messaging integration')).toBeDefined();
@@ -80,7 +105,11 @@ describe('ProvidersPage', () => {
   });
 
   it('renders Quick Start Guide section', () => {
-    render(<ProvidersPage />);
+    render(
+      <BrowserRouter>
+        <ProvidersPage />
+      </BrowserRouter>
+    );
 
     expect(screen.getByText('Quick Start Guide')).toBeDefined();
     expect(screen.getByText('Configure Providers')).toBeDefined();
