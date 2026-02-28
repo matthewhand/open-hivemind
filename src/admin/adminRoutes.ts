@@ -188,6 +188,9 @@ adminRouter.post(
       return res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+    } catch (e: any) {
+      debug(`Error adding bot to ${providerId}`, e);
+      return res.status(500).json({ ok: false, error: e.message || String(e) });
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -407,6 +410,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e: any) {
+      debug('Error loading Slack instances', e);
     }
 
     try {
