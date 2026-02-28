@@ -179,7 +179,8 @@ function logInternal(level: LogLevel, ...args: unknown[]): void {
     return;
   }
   const consoleMethod = getConsoleMethod(level);
-  consoleMethod(...sanitizeArgs(args));
+  const prefix = `[${new Date().toISOString()}] [${level.toUpperCase()}]`;
+  consoleMethod(prefix, ...sanitizeArgs(args));
 }
 
 export function sanitizeForLogging<T>(value: T, key?: string): unknown {

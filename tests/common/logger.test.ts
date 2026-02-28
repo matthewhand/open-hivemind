@@ -67,7 +67,10 @@ describe('Logger', () => {
       },
     ])('should log $description correctly', ({ args, expected }) => {
       Logger.info(...args);
-      expect(mockConsoleInfo).toHaveBeenCalledWith(...expected);
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]$/),
+        ...expected
+      );
     });
   });
 
@@ -104,7 +107,10 @@ describe('Logger', () => {
       },
     ])('should log $description correctly', ({ args, expected }) => {
       Logger.error(...args);
-      expect(mockConsoleError).toHaveBeenCalledWith(...expected);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
+        ...expected
+      );
     });
 
     it('should sanitize Error objects', () => {
@@ -113,7 +119,9 @@ describe('Logger', () => {
 
       Logger.error(errorMessage, error);
 
-      expect(mockConsoleError).toHaveBeenCalledWith(errorMessage, {
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
+        errorMessage, {
         name: 'Error',
         message: 'Test error',
         stack: expect.stringContaining('Error: Test error'),
@@ -124,7 +132,9 @@ describe('Logger', () => {
 
       Logger.error('Validation error:', complexError);
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Validation error:', {
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
+        'Validation error:', {
         name: 'Error',
         message: 'Validation failed',
         stack: 'Error: Validation failed\n    at validateUser (user.ts:45:15)',
@@ -150,7 +160,10 @@ describe('Logger', () => {
       DefaultLogger.info('Test default export');
 
       expect(mockConsoleInfo).toHaveBeenCalledTimes(1);
-      expect(mockConsoleInfo).toHaveBeenCalledWith('Test default export');
+      expect(mockConsoleInfo).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]$/),
+        'Test default export'
+      );
     });
   });
 
@@ -160,7 +173,10 @@ describe('Logger', () => {
 
       Logger.info('Test binding');
 
-      expect(spy).toHaveBeenCalledWith('Test binding');
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]$/),
+        'Test binding'
+      );
 
       spy.mockRestore();
     });
@@ -170,7 +186,10 @@ describe('Logger', () => {
 
       Logger.error('Test binding');
 
-      expect(spy).toHaveBeenCalledWith('Test binding');
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]$/),
+        'Test binding'
+      );
 
       spy.mockRestore();
     });
