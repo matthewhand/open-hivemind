@@ -2,7 +2,6 @@ import { EventEmitter } from 'events';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
-import { MattermostClient } from '@hivemind/adapter-mattermost';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
@@ -18,6 +17,7 @@ import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import { MattermostClient } from '@hivemind/adapter-mattermost';
 
 const debug = Debug('app:MattermostService:verbose');
 

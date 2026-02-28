@@ -60,7 +60,7 @@ export class MattermostMessage extends IMessage {
   public getUserMentions(): string[] {
     // Basic extraction of @mentions
     const mentions = this._text.match(/@[\w.-]+/g);
-    return mentions ? mentions.map((m) => m.substring(1)) : [];
+    return mentions ? mentions.map(m => m.substring(1)) : [];
   }
 
   public getChannelUsers(): string[] {

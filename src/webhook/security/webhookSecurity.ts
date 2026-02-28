@@ -1,7 +1,7 @@
-import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import webhookConfig from '@config/webhookConfig';
 import Logger from '@common/logger';
+import crypto from 'crypto';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
   // Handle case-insensitive header names; Express normally lowercases, but unit tests pass raw objects
@@ -64,6 +64,7 @@ const isValidIpv4 = (ip: string): boolean => {
 const isValidIpv6 = (ip: string): boolean => {
   // Use the net module for authoritative IPv6 validation
   try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const net = require('net') as typeof import('net');
     return net.isIPv6(ip);
   } catch {
