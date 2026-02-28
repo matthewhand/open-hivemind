@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 interface AvatarProps {
   src?: string;
@@ -54,16 +53,6 @@ const Avatar: React.FC<AvatarProps> = ({
       </div>
     </div>
   );
-};
-
-Avatar.propTypes = {
-  src: PropTypes.string,
-  alt: PropTypes.string,
-  size: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
-  shape: PropTypes.oneOf(['circle', 'square']),
-  online: PropTypes.bool,
-  placeholder: PropTypes.bool,
-  children: PropTypes.node,
 };
 
 export default Avatar;
