@@ -194,6 +194,7 @@ jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
 // The original test mocked `@hivemind/adapter-mattermost` which might not be used by the relative import.
 
 // To fix "getaddrinfo ENOTFOUND", we must ensure that `new MattermostClient(...)` returns our mock.
+}
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
   getInstance: jest.fn(() => ({

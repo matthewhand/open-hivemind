@@ -2,11 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { providerRegistry } from '../registries/ProviderRegistry';
-import { IMessageProvider } from '../types/IProvider';
+import { Discord } from '@hivemind/adapter-discord';
+import { SlackService } from '@hivemind/adapter-slack';
 import { authenticate, requireAdmin } from '../auth/middleware';
+import { providerRegistry } from '../registries/ProviderRegistry';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
+import type { IBotInfo } from '../types/botInfo';
+import { IMessageProvider } from '../types/IProvider';
 import { serializeSchema } from '../utils/schemaSerializer';
 
 const debug = Debug('app:admin');
@@ -143,23 +146,27 @@ adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
   res.json({ ok: true, providers });
 });
 
-adminRouter.get('/providers/:providerId/schema', requireAdmin, async (req: Request, res: Response) => {
-  const { providerId } = req.params;
-  const provider = providerRegistry.get(providerId);
+adminRouter.get(
+  '/providers/:providerId/schema',
+  requireAdmin,
+  async (req: Request, res: Response) => {
+    const { providerId } = req.params;
+    const provider = providerRegistry.get(providerId);
 
-  if (!provider) {
-    return res.status(404).json({ ok: false, error: `Provider '${providerId}' not found` });
-  }
+    if (!provider) {
+      return res.status(404).json({ ok: false, error: `Provider '${providerId}' not found` });
+    }
 
-  try {
-    const schema = provider.getSchema();
-    const serialized = serializeSchema(schema);
-    return res.json({ ok: true, schema: serialized });
-  } catch (e: any) {
-    debug(`Failed to get schema for provider ${providerId}`, e);
-    return res.status(500).json({ ok: false, error: e.message || String(e) });
+    try {
+      const schema = provider.getSchema();
+      const serialized = serializeSchema(schema);
+      return res.json({ ok: true, schema: serialized });
+    } catch (e: any) {
+      debug(`Failed to get schema for provider ${providerId}`, e);
+      return res.status(500).json({ ok: false, error: e.message || String(e) });
+    }
   }
-});
+);
 
 // Generic bot creation endpoint
 adminRouter.post(
@@ -185,11 +192,22 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
-      return res
-        .status(400)
-        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+      return res.json({ ok: true, message: `Created ${provider.label} bot` });
+    } catch (e) {
+      const message = (e as Error)?.message || String(e);
+      logAdminAction(
+        req,
+        `CREATE_${providerId.toUpperCase()}_BOT`,
+        `${providerId}-bots/${req.body?.name || 'unknown'}`,
+        'failure',
+        `Failed to create ${provider.label} bot: ${message}`
+      );
+      return res.status(500).json({ ok: false, error: message });
     }
+  }
+);
 
+/*
     // Persist to config/providers/messengers.json for demo persistence
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const messengersPath = path.join(configDir, 'messengers.json');
@@ -245,8 +263,7 @@ adminRouter.post(
     } catch (e) {
       debug('Runtime addBot failed (continue, config was persisted):', e);
     }
-  }
-);
+*/
 
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('slack') as IMessageProvider;
@@ -407,6 +424,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e) {
+      debug('Slack reload error', e);
     }
 
     try {
