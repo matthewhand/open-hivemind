@@ -1,3 +1,14 @@
+/**
+ * @wip ROADMAP ITEM — NOT ACTIVE
+ *
+ * This component is part of the AI Dashboard & Intelligence Features planned for future implementation.
+ * It has been removed from the active UI navigation and routing.
+ *
+ * See docs/reference/IMPROVEMENT_ROADMAP.md — "🤖 AI Dashboard & Intelligence Features (Future Roadmap)"
+ * for implementation prerequisites and planned scope.
+ *
+ * DO NOT import or route to this component until the backend AI APIs are implemented.
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser, selectToken } from '../store/slices/authSlice';
