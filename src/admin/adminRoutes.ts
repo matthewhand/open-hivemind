@@ -188,9 +188,6 @@ adminRouter.post(
       return res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
-    } catch (e: unknown) {
-      debug(`Failed to create ${providerId} bot`, e);
-      return res.status(500).json({ ok: false, error: (e as Error).message });
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -410,8 +407,6 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
-    } catch (e: unknown) {
-      debug('Slack reload error', e);
     }
 
     try {
