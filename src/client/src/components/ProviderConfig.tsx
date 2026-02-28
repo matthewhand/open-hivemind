@@ -90,13 +90,16 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
           </span>
           {isSensitive && (
             <span className="label-text-alt">
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs"
-                onClick={() => toggleSensitiveData(key)}
-              >
-                {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              <div className="tooltip tooltip-left" data-tip={showData ? 'Hide sensitive data' : 'Show sensitive data'}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => toggleSensitiveData(key)}
+                  aria-label={showData ? 'Hide sensitive data' : 'Show sensitive data'}
+                >
+                  {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </span>
           )}
         </label>
@@ -130,13 +133,16 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
               className={`${isEnvOverride ? 'bg-base-200' : ''} flex-1`}
             />
             {isSensitive && (
-              <button
-                type="button"
-                className="btn btn-square"
-                onClick={() => toggleSensitiveData(key)}
-              >
-                {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              <div className="tooltip tooltip-left" data-tip={showData ? 'Hide sensitive data' : 'Show sensitive data'}>
+                <button
+                  type="button"
+                  className="btn btn-square"
+                  onClick={() => toggleSensitiveData(key)}
+                  aria-label={showData ? 'Hide sensitive data' : 'Show sensitive data'}
+                >
+                  {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             )}
           </div>
         )}
