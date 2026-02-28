@@ -1,4 +1,15 @@
 /**
+ * @wip ROADMAP ITEM — NOT ACTIVE
+ *
+ * This component is part of the Approval Workflow feature planned for future implementation.
+ * It has been removed from the active UI navigation and routing.
+ *
+ * See docs/reference/IMPROVEMENT_ROADMAP.md for implementation prerequisites and planned scope.
+ *
+ * DO NOT import or route to this component until the backend approval APIs are implemented.
+ */
+
+/**
  * Unit tests for approval workflow functionality
  */
 
