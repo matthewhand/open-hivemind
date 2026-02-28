@@ -10,7 +10,7 @@ vi.mock('../../services/api', () => ({
     },
 }));
 
-describe('ActivityPage', () => => {
+describe('ActivityPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

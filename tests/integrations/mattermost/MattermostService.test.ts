@@ -41,7 +41,7 @@ jest.mock('@hivemind/adapter-mattermost', () => {
 
   const { EventEmitter } = require('events');
 
-  class MockMattermostService extends EventEmitter {
+  return class MockMattermostService extends EventEmitter {
     private static instance: MockMattermostService | undefined;
     private clients: Map<string, any> = new Map();
     private channels: Map<string, string> = new Map();
@@ -172,7 +172,8 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     public resolveAgentContext(): any {
       return null;
     }
-  }
+  };
+});
 
 // Mock the dependencies FIRST before importing/using them
 jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {

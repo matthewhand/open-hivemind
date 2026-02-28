@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
@@ -129,8 +130,8 @@ describe('ActivityPage', () => {
         render(<ActivityPage />);
 
         await waitFor(() => {
-            expect(screen.getByText('No activity yet')).toBeInTheDocument();
-            expect(screen.getByText('Events will appear here as your bots process messages')).toBeInTheDocument();
+            expect(screen.getByText("No activity yet")).toBeInTheDocument();
+            expect(screen.getByText("Events will appear here as your bots process messages")).toBeInTheDocument();
         });
     });
 
