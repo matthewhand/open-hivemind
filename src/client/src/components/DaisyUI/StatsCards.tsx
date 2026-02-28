@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
+import React, { useEffect, useRef } from 'react';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
+import { animate } from 'framer-motion';
 
 interface StatItem {
   id: string;
@@ -53,49 +54,73 @@ const iconMap: Record<string, React.ReactNode> = {
   'wifi': <Wifi className="w-8 h-8" />,
 };
 
-const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
-  const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({});
+// Extracted formatting logic
+const formatStatValue = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return Math.round(value).toLocaleString();
+};
 
-  // Animate numbers when they change
+interface AnimatedCounterProps {
+  value: number;
+  className?: string;
+}
+
+const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) => {
+  const nodeRef = useRef<HTMLParagraphElement>(null);
+  const prevValueRef = useRef<number>(value);
+  const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
+
   useEffect(() => {
-    const timers: ReturnType<typeof setInterval>[] = [];
+    const node = nodeRef.current;
+    if (!node) return;
 
-    stats.forEach(stat => {
-      if (typeof stat.value === 'number') {
-        const startValue = animatedValues[stat.id] || 0;
-        const endValue = stat.value;
+    // Stop any existing animation
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+    }
 
-        // Optimization: Don't animate if value hasn't changed
-        if (startValue === endValue) return;
+    const startValue = prevValueRef.current;
+    const endValue = value;
 
-        const duration = 1000;
-        const steps = 60;
-        const increment = (endValue - startValue) / steps;
+    // Skip animation if value hasn't changed
+    if (startValue === endValue) {
+      node.textContent = formatStatValue(endValue);
+      return;
+    }
 
-        let currentStep = 0;
-        const timer = setInterval(() => {
-          currentStep++;
-          const currentValue = startValue + (increment * currentStep);
-
-          setAnimatedValues(prev => ({
-            ...prev,
-            [stat.id]: currentStep >= steps ? endValue : currentValue,
-          }));
-
-          if (currentStep >= steps) {
-            clearInterval(timer);
-          }
-        }, duration / steps);
-
-        timers.push(timer);
-      }
+    // Start new animation from previous value to new value
+    controlsRef.current = animate(startValue, endValue, {
+      duration: 1,
+      onUpdate: (latest) => {
+        if (node) {
+          node.textContent = formatStatValue(latest);
+        }
+      },
+      onComplete: () => {
+        // Only update prevValueRef when animation completes successfully
+        prevValueRef.current = endValue;
+      },
     });
 
     return () => {
-      timers.forEach(timer => clearInterval(timer));
+      if (controlsRef.current) {
+        controlsRef.current.stop();
+      }
     };
-  }, [stats]);
+  }, [value]);
 
+  // Initialize with formatted value to avoid flash
+  const initialValue = formatStatValue(value);
+
+  return <p ref={nodeRef} className={className}>{initialValue}</p>;
+};
+
+
+const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
   const getGradientBg = (color?: string) => {
     switch (color) {
     case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
@@ -160,20 +185,6 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     return icon;
   };
 
-  const formatValue = (value: number | string, statId: string) => {
-    if (typeof value === 'string') {return value;}
-
-    const animatedValue = animatedValues[statId] || value;
-
-    if (animatedValue >= 1000000) {
-      return `${(animatedValue / 1000000).toFixed(1)}M`;
-    } else if (animatedValue >= 1000) {
-      return `${(animatedValue / 1000).toFixed(1)}K`;
-    }
-
-    return Math.round(animatedValue).toLocaleString();
-  };
-
   if (isLoading) {
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
@@ -215,9 +226,17 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
                 <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
                   {stat.title}
                 </p>
-                <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
-                  {formatValue(stat.value, stat.id)}
-                </p>
+
+                {typeof stat.value === 'number' ? (
+                  <AnimatedCounter
+                    value={stat.value}
+                    className={`text-3xl font-bold ${getStatColor(stat.color)}`}
+                  />
+                ) : (
+                  <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
+                    {stat.value}
+                  </p>
+                )}
 
                 {stat.change !== undefined && (
                   <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>
@@ -245,11 +264,11 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
 // Hook for fetching real-time stats
 export const useSystemStats = () => {
-  const [stats, setStats] = useState<StatItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = React.useState<StatItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);

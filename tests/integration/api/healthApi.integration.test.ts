@@ -46,34 +46,15 @@ describe('Health API Integration Tests', () => {
   });
 
   describe('GET /api/health/detailed', () => {
-    it('should return detailed health information', async () => {
+    it('should return sanitized health information for unauthenticated requests', async () => {
       const response = await request(app).get('/api/health/detailed').expect(200);
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('uptime');
-      expect(response.body).toHaveProperty('memory');
-      expect(response.body).toHaveProperty('cpu');
-      expect(response.body).toHaveProperty('system');
-      expect(response.body).toHaveProperty('errors');
-      expect(response.body).toHaveProperty('recovery');
-      expect(response.body).toHaveProperty('performance');
-    });
-
-    it('should include valid system information', async () => {
-      const response = await request(app).get('/api/health/detailed').expect(200);
-
-      expect(response.body.system).toHaveProperty('platform');
-      expect(response.body.system).toHaveProperty('nodeVersion');
-      expect(response.body.system).toHaveProperty('arch');
-    });
-
-    it('should include memory statistics', async () => {
-      const response = await request(app).get('/api/health/detailed').expect(200);
-
-      expect(response.body.memory).toHaveProperty('used');
-      expect(response.body.memory).toHaveProperty('total');
-      expect(response.body.memory).toHaveProperty('percentage');
+      expect(response.body).not.toHaveProperty('memory');
+      expect(response.body).not.toHaveProperty('cpu');
+      expect(response.body).not.toHaveProperty('system');
     });
   });
 

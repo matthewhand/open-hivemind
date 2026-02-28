@@ -53,9 +53,10 @@ const DataTable = <T extends Record<string, any>>({
 
     // Apply search
     if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(row =>
         Object.values(row).some(value =>
-          String(value).toLowerCase().includes(searchTerm.toLowerCase()),
+          String(value).toLowerCase().includes(lowerSearchTerm),
         ),
       );
     }
