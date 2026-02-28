@@ -1,7 +1,7 @@
-import crypto from 'crypto';
-import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcrypt';
 import Debug from 'debug';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
@@ -63,7 +63,7 @@ export class AuthManager {
    * Generate a secure random secret for JWT
    */
   private generateSecureSecret(prefix: string): string {
-    const secret = crypto.randomBytes(64).toString('hex');
+    const secret = randomBytes(64).toString('hex');
 
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
@@ -107,7 +107,7 @@ export class AuthManager {
     let password = process.env.ADMIN_PASSWORD;
 
     if (!password) {
-      password = crypto.randomBytes(16).toString('hex');
+      password = randomBytes(16).toString('hex');
       console.warn('================================================================');
       console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
       console.warn(`Generated temporary admin password: ${password}`);

@@ -60,9 +60,9 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthManager = void 0;
 var crypto_1 = require("crypto");
-var bcrypt_1 = require("bcrypt");
+var bcrypt = require("bcrypt");
 var debug_1 = require("debug");
-var jsonwebtoken_1 = require("jsonwebtoken");
+var jwt = require("jsonwebtoken");
 var errorClasses_1 = require("@src/types/errorClasses");
 var SecureConfigManager_1 = require("@config/SecureConfigManager");
 var debug = (0, debug_1.default)('app:AuthManager');
@@ -112,7 +112,7 @@ var AuthManager = /** @class */ (function () {
      * Generate a secure random secret for JWT
      */
     AuthManager.prototype.generateSecureSecret = function (prefix) {
-        var secret = crypto_1.default.randomBytes(64).toString('hex');
+        var secret = (0, crypto_1.randomBytes)(64).toString('hex');
         // Only store securely using SecureConfigManager if not in test environment
         if (process.env.NODE_ENV !== 'test') {
             var secureConfig = SecureConfigManager_1.SecureConfigManager.getInstance();
@@ -151,7 +151,7 @@ var AuthManager = /** @class */ (function () {
         }
         var password = process.env.ADMIN_PASSWORD;
         if (!password) {
-            password = crypto_1.default.randomBytes(16).toString('hex');
+            password = (0, crypto_1.randomBytes)(16).toString('hex');
             console.warn('================================================================');
             console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
             console.warn("Generated temporary admin password: ".concat(password));
@@ -166,7 +166,7 @@ var AuthManager = /** @class */ (function () {
             isActive: true,
             createdAt: new Date().toISOString(),
             lastLogin: null,
-            passwordHash: bcrypt_1.default.hashSync(password, this.bcryptRounds),
+            passwordHash: bcrypt.hashSync(password, this.bcryptRounds),
         };
         this.users.set('admin', defaultAdmin);
         debug('Default admin user created');
@@ -181,7 +181,7 @@ var AuthManager = /** @class */ (function () {
                     // Skip bcrypt operations in test environment
                     return [2 /*return*/, "test-hash-for-".concat(password)];
                 }
-                return [2 /*return*/, bcrypt_1.default.hash(password, this.bcryptRounds)];
+                return [2 /*return*/, bcrypt.hash(password, this.bcryptRounds)];
             });
         });
     };
@@ -208,7 +208,7 @@ var AuthManager = /** @class */ (function () {
                     }
                     return [2 /*return*/, false];
                 }
-                return [2 /*return*/, bcrypt_1.default.compare(password, hash)];
+                return [2 /*return*/, bcrypt.compare(password, hash)];
             });
         });
     };
@@ -235,7 +235,7 @@ var AuthManager = /** @class */ (function () {
                             throw new errorClasses_1.ValidationError('User already exists', 'USER_ALREADY_EXISTS');
                         }
                         _a = {
-                            id: crypto_1.default.randomUUID(),
+                            id: crypto.randomUUID(),
                             username: data.username,
                             email: data.email,
                             role: data.role || 'user',
@@ -304,7 +304,7 @@ var AuthManager = /** @class */ (function () {
                     throw new Error('Invalid refresh token');
                 }
                 try {
-                    payload = jsonwebtoken_1.default.verify(refreshToken, this.jwtRefreshSecret);
+                    payload = jwt.verify(refreshToken, this.jwtRefreshSecret);
                     user = this.users.get(payload.userId);
                     if (!user || !user.isActive) {
                         throw new Error('User not found or inactive');
@@ -346,7 +346,7 @@ var AuthManager = /** @class */ (function () {
      * Generate JWT access token
      */
     AuthManager.prototype.generateAccessToken = function (user) {
-        return jsonwebtoken_1.default.sign({
+        return jwt.sign({
             userId: user.id,
             username: user.username,
             role: user.role,
@@ -357,14 +357,14 @@ var AuthManager = /** @class */ (function () {
      * Generate JWT refresh token
      */
     AuthManager.prototype.generateRefreshToken = function (user) {
-        return jsonwebtoken_1.default.sign({ userId: user.id }, this.jwtRefreshSecret, { expiresIn: '7d' });
+        return jwt.sign({ userId: user.id }, this.jwtRefreshSecret, { expiresIn: '7d' });
     };
     /**
      * Verify JWT access token
      */
     AuthManager.prototype.verifyAccessToken = function (token) {
         try {
-            return jsonwebtoken_1.default.verify(token, this.jwtSecret);
+            return jwt.verify(token, this.jwtSecret);
         }
         catch (_a) {
             throw new Error('Invalid access token');
