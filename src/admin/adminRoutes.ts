@@ -188,6 +188,10 @@ adminRouter.post(
       return res
         .status(400)
         .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+    } catch (e: unknown) {
+      debug('Failed to create bot via generic provider addBot', e);
+      // Let it fall through to legacy logic if addBot isn't fully implemented or fails,
+      // or we can handle the error here.
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -407,6 +411,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e: unknown) {
+      debug('Slack reload error', e);
     }
 
     try {
