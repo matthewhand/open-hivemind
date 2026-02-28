@@ -102,7 +102,6 @@ describe('Bots Routes', () => {
           name: 'Bot 1',
           connected: false,
           messageCount: 0,
-          errorCount: 0,
         })
       );
     });

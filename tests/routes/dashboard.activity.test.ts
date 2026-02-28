@@ -95,7 +95,7 @@ describe('dashboard activity route', () => {
       AgentB: { messageCount: 9, errors: ['Boom'] },
     });
 
-    const response = await request(app).get('/dashboard/api/activity');
+    const response = await request(app).get('/dashboard/activity');
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(2);
@@ -132,7 +132,7 @@ describe('dashboard activity route', () => {
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 3, errors: [] } });
 
     const response = await request(app)
-      .get('/dashboard/api/activity')
+      .get('/dashboard/activity')
       .query({ bot: 'AgentA', messageProvider: 'slack', llmProvider: 'openai', from: ts, to: ts });
 
     expect(response.status).toBe(200);

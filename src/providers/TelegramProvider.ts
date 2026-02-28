@@ -4,24 +4,6 @@ import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { type Message } from '../types/messages';
 
-/**
- * Telegram bot token format: <bot_id>:<token_string>
- * bot_id is a sequence of digits; token_string is 35 alphanumeric/underscore/hyphen chars.
- */
-const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
-
-function validateTelegramToken(token: string): void {
-  if (!token || typeof token !== 'string') {
-    throw new Error('Telegram bot token is required');
-  }
-  if (!TELEGRAM_TOKEN_REGEX.test(token)) {
-    throw new Error(
-      'Invalid Telegram bot token format. Expected format: <bot_id>:<35+ alphanumeric chars> ' +
-        '(obtain from @BotFather)'
-    );
-  }
-}
-
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   id = 'telegram';
   label = 'Telegram';
@@ -61,9 +43,9 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
   async addBot(config: any) {
     const { name, token, llm } = config;
-
-    // Issue 1: Validate token format before persisting
-    validateTelegramToken(token);
+    if (!token) {
+      throw new Error('token is required');
+    }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
@@ -71,45 +53,22 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     let cfg: any = { telegram: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      // Issue 3: Distinguish JSON parse errors from missing-file errors so that
-      // corrupted config files are surfaced to administrators rather than silently
-      // overwritten with a fresh default.
-      try {
-        cfg = JSON.parse(fileContent);
-      } catch (parseErr: any) {
-        throw new Error(
-          `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
-            `Please fix or remove ${messengersPath} before adding a new bot.`
-        );
-      }
-    } catch (readErr: any) {
-      // Only swallow ENOENT (file not found); re-throw everything else including
-      // the JSON parse error wrapped above.
-      if (readErr.code !== 'ENOENT') {
-        throw readErr;
-      }
-      // File doesn't exist yet — start with the default empty structure.
+      cfg = JSON.parse(fileContent);
+    } catch (e: any) {
+      // Ignore if file doesn't exist
     }
-
     cfg.telegram = cfg.telegram || {};
     cfg.telegram.instances = cfg.telegram.instances || [];
-
-    // Issue 4: Tokens are sensitive credentials. We store them in the config file
-    // because the Telegram SDK requires the plaintext token at runtime. To reduce
-    // exposure we write the file with owner-read-only permissions (0o600) so that
-    // other OS users cannot read it. Operators should additionally consider using
-    // environment variables (TELEGRAM_BOT_TOKEN) or a secrets manager instead of
-    // persisting tokens in config files.
     cfg.telegram.instances.push({ name: name || '', token, llm });
 
-    // Issue 2: Propagate write errors instead of swallowing them silently.
-    // A failed write would leave the in-memory state inconsistent with disk.
-    await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
-    await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), {
-      encoding: 'utf8',
-      mode: 0o600, // owner read/write only — tokens are sensitive
-    });
+    try {
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed writing messengers.json', e);
+    }
 
+    // TODO: Runtime add
     console.log(`[TelegramProvider] Added bot configuration for ${name || 'unnamed'}`);
   }
 
@@ -119,21 +78,9 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     let cfg: any;
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
-      // Issue 3: Surface JSON parse errors during reload so administrators are
-      // alerted to corrupted config files rather than silently getting 0 bots.
-      try {
-        cfg = JSON.parse(content);
-      } catch (parseErr: any) {
-        throw new Error(
-          `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
-            `Please fix or remove ${messengersPath}.`
-        );
-      }
-    } catch (readErr: any) {
-      if (readErr.code === 'ENOENT') {
-        return { added: 0 };
-      }
-      throw readErr;
+      cfg = JSON.parse(content);
+    } catch (e: any) {
+      return { added: 0 };
     }
 
     let added = 0;

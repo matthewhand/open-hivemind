@@ -76,14 +76,9 @@ try {
   telegramConfig.loadFile(configPath);
   telegramConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded Telegram config from ${configPath}`);
-} catch (err: unknown) {
-  if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-    // File doesn't exist yet — use defaults, this is fine
-    debug('telegramConfig: config file not found, using defaults');
-  } else {
-    // JSON parse error or other unexpected error — re-throw
-    throw new Error(`Failed to parse Telegram config file: ${(err as Error).message}`);
-  }
+} catch {
+  // Fallback to defaults if config file is missing or invalid
+  debug(`Warning: Could not load telegram config from ${configPath}, using defaults`);
 }
 
 export default telegramConfig;

@@ -174,8 +174,25 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     }
   }
 
+  return {
+    MattermostService: MockMattermostService,
+  };
+});
+
 // Mock the dependencies FIRST before importing/using them
 jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
+  const mockClient = {
+    connect: jest.fn().mockResolvedValue(undefined),
+    postMessage: jest.fn().mockResolvedValue({ id: 'post123' }),
+    getChannelPosts: jest.fn().mockResolvedValue([]),
+    getUser: jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' }),
+    isConnected: jest.fn().mockReturnValue(true),
+    disconnect: jest.fn(),
+    getCurrentUserId: jest.fn().mockReturnValue('user123'),
+    getCurrentUsername: jest.fn().mockReturnValue('testuser'),
+    getChannelInfo: jest.fn().mockResolvedValue(null),
+    sendTyping: jest.fn().mockResolvedValue(undefined),
+  };
   const MockClient = jest.fn(() => mockClient);
   return {
     MattermostClient: MockClient,
@@ -194,7 +211,6 @@ jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
 // The original test mocked `@hivemind/adapter-mattermost` which might not be used by the relative import.
 
 // To fix "getaddrinfo ENOTFOUND", we must ensure that `new MattermostClient(...)` returns our mock.
-}
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
   getInstance: jest.fn(() => ({
@@ -222,7 +238,8 @@ jest.mock('@src/services/StartupGreetingService', () => ({
 // Mock container to resolve the mocked StartupGreetingService
 jest.mock('tsyringe', () => ({
   container: {
-    resolve: jest.fn().mockImplementation((token) => new token())
+    resolve: jest.fn().mockImplementation((token) => new token()),
+    register: jest.fn(),
   },
   injectable: jest.fn(),
   singleton: jest.fn()
