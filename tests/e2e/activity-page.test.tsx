@@ -1,16 +1,16 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import ActivityPage from '../ActivityPage';
-import { apiService } from '../../services/api';
+import ActivityPage from '../../src/client/src/pages/ActivityPage';
+import { apiService } from '../../src/client/src/services/api';
 import { vi } from 'vitest';
 
 // Mock apiService
-vi.mock('../../services/api', () => ({
+vi.mock('../../src/client/src/services/api', () => ({
     apiService: {
         getActivity: vi.fn(),
     },
 }));
 
-describe('ActivityPage', () => => {
+describe('ActivityPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

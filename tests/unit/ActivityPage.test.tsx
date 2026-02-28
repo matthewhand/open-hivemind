@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import ActivityPage from '../ActivityPage';
-import { apiService } from '../../services/api';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import ActivityPage from '../../src/client/src/pages/ActivityPage';
+import { apiService } from '../../src/client/src/services/api';
 import { vi } from 'vitest';
 
 // Mock apiService
-vi.mock('../../services/api', () => ({
+vi.mock('../../src/client/src/services/api', () => ({
     apiService: {
         getActivity: vi.fn(),
     },
@@ -129,8 +129,8 @@ describe('ActivityPage', () => {
         render(<ActivityPage />);
 
         await waitFor(() => {
-            expect(screen.getByText('No activity yet')).toBeInTheDocument();
-            expect(screen.getByText('Events will appear here as your bots process messages')).toBeInTheDocument();
+            expect(screen.getByText("No activity yet")).toBeInTheDocument();
+            expect(screen.getByText("Events will appear here as your bots process messages")).toBeInTheDocument();
         });
     });
 

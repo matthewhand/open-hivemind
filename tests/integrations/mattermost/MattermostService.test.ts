@@ -174,6 +174,9 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     }
   }
 
+  return { MattermostService: MockMattermostService };
+});
+
 // Mock the dependencies FIRST before importing/using them
 jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
   const MockClient = jest.fn(() => mockClient);
