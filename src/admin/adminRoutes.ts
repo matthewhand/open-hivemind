@@ -185,9 +185,17 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
+    } catch (e: unknown) {
+      logAdminAction(
+        req,
+        `CREATE_${providerId.toUpperCase()}_BOT`,
+        `${providerId}-bots/${req.body?.name || 'unknown'}`,
+        'failure',
+        (e as Error).message || 'Failed to create bot'
+      );
       return res
         .status(400)
-        .json({ ok: false, error: 'name, botToken, and signingSecret are required' });
+        .json({ ok: false, error: (e as Error).message || 'name, botToken, and signingSecret are required' });
     }
 
     // Persist to config/providers/messengers.json for demo persistence
@@ -407,6 +415,8 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
           addedSlack++;
         }
       }
+    } catch (e: unknown) {
+      debug('Slack reload error', e);
     }
 
     try {
