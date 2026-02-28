@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { requireRole } from '../middleware/auth';
 
 const router = Router();
 const manager = BotManager.getInstance();
@@ -57,7 +58,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/bots - Create a new bot
-router.post('/', async (req, res) => {
+router.post('/', requireRole('user'), async (req, res) => {
   try {
     const request = req.body as CreateBotRequest;
     if (!request.name) {
@@ -71,7 +72,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/bots/:id - Update a bot
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole('user'), async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -84,7 +85,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/bots/:id - Delete a bot
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('user'), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.deleteBot(id);
@@ -96,7 +97,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // POST /api/bots/:id/clone - Clone a bot
-router.post('/:id/clone', async (req, res) => {
+router.post('/:id/clone', requireRole('user'), async (req, res) => {
   try {
     const { id } = req.params;
     const { newName } = req.body;
@@ -112,7 +113,7 @@ router.post('/:id/clone', async (req, res) => {
 });
 
 // POST /api/bots/:id/start - Start a bot
-router.post('/:id/start', async (req, res) => {
+router.post('/:id/start', requireRole('user'), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.startBot(id);
@@ -124,7 +125,7 @@ router.post('/:id/start', async (req, res) => {
 });
 
 // POST /api/bots/:id/stop - Stop a bot
-router.post('/:id/stop', async (req, res) => {
+router.post('/:id/stop', requireRole('user'), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.stopBot(id);
