@@ -2,7 +2,7 @@
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
-  ignore = "bash ./scripts/ignore-build.sh"
+  ignore = "test \"$CONTEXT\" != \"production\""
 
 [dev]
   command = "npm run dev"
