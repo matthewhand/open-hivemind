@@ -81,6 +81,13 @@ const buildWhereClause = (filter: ActivityFilter): { clause: string; params: any
 
 // GET /api/activity/messages - Get filtered message activity
 router.get('/messages', async (req, res) => {
+  if (
+    (req.query.startDate && isNaN(Date.parse(req.query.startDate as string))) ||
+    (req.query.endDate && isNaN(Date.parse(req.query.endDate as string)))
+  ) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
   try {
     const filter: ActivityFilter = {
       agentId: req.query.agentId as string,
@@ -88,8 +95,8 @@ router.get('/messages', async (req, res) => {
       llmProvider: req.query.llmProvider as string,
       startDate: req.query.startDate as string,
       endDate: req.query.endDate as string,
-      limit: parseInt(req.query.limit as string) || 100,
-      offset: parseInt(req.query.offset as string) || 0,
+      limit: Math.min(Math.max(parseInt(req.query.limit as string) || 100, 1), 500),
+      offset: Math.max(parseInt(req.query.offset as string) || 0, 0),
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -128,12 +135,19 @@ router.get('/messages', async (req, res) => {
 
 // GET /api/activity/llm-usage - Get LLM usage metrics
 router.get('/llm-usage', async (req, res) => {
+  if (
+    (req.query.startDate && isNaN(Date.parse(req.query.startDate as string))) ||
+    (req.query.endDate && isNaN(Date.parse(req.query.endDate as string)))
+  ) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
   try {
     const filter: ActivityFilter = {
       llmProvider: req.query.llmProvider as string,
       startDate: req.query.startDate as string,
       endDate: req.query.endDate as string,
-      limit: parseInt(req.query.limit as string) || 100,
+      limit: Math.min(Math.max(parseInt(req.query.limit as string) || 100, 1), 500),
     };
 
     const dbManager = DatabaseManager.getInstance();
@@ -153,6 +167,13 @@ router.get('/llm-usage', async (req, res) => {
 
 // GET /api/activity/summary - Get activity summary
 router.get('/summary', async (req, res) => {
+  if (
+    (req.query.startDate && isNaN(Date.parse(req.query.startDate as string))) ||
+    (req.query.endDate && isNaN(Date.parse(req.query.endDate as string)))
+  ) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
   try {
     const filter: ActivityFilter = {
       startDate: req.query.startDate as string,
@@ -188,6 +209,13 @@ router.get('/summary', async (req, res) => {
 
 // GET /api/activity/chart-data - Get time-series data for charts
 router.get('/chart-data', async (req, res) => {
+  if (
+    (req.query.startDate && isNaN(Date.parse(req.query.startDate as string))) ||
+    (req.query.endDate && isNaN(Date.parse(req.query.endDate as string)))
+  ) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
   try {
     const filter: ActivityFilter = {
       messageProvider: req.query.messageProvider as string,
