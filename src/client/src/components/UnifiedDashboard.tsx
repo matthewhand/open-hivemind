@@ -143,7 +143,9 @@ const UnifiedDashboard: React.FC = () => {
   const handleOpenCreateModal = useCallback(async () => {
     setIsModalDataLoading(true);
     try {
-      if (personas.length === 0 && llmProfiles.length === 0) {
+      // Use || so that we re-fetch whenever either dataset is missing,
+      // not only when both are empty (fixes &&-vs-|| logic error).
+      if (personas.length === 0 || llmProfiles.length === 0) {
         const [personasData, profilesData] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
@@ -152,10 +154,15 @@ const UnifiedDashboard: React.FC = () => {
         setLlmProfiles(profilesData.profiles?.llm || []);
         setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
       }
+      // Only open the modal after data has been successfully loaded.
+      // If the fetch above throws, this line is never reached and the
+      // modal stays closed (the catch block shows an error toast instead).
       setIsCreateModalOpen(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load modal data';
       errorToast('Load failed', message);
+      // Do NOT open the modal when data loading fails — the user would see
+      // an empty/broken form. The error toast is sufficient feedback.
     } finally {
       setIsModalDataLoading(false);
     }
