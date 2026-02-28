@@ -1,5 +1,9 @@
 import { EventEmitter } from 'events';
-import { ProviderMetricsCollector, type ProviderType, type ProviderStatus } from './ProviderMetricsCollector';
+import {
+  ProviderMetricsCollector,
+  type ProviderStatus,
+  type ProviderType,
+} from './ProviderMetricsCollector';
 
 /**
  * Integration types
@@ -14,7 +18,7 @@ export type AnomalySeverity = 'low' | 'medium' | 'high' | 'critical';
 /**
  * Anomaly type
  */
-export type AnomalyType = 
+export type AnomalyType =
   | 'response_time_spike'
   | 'error_rate_spike'
   | 'rate_limit_exceeded'
@@ -71,14 +75,70 @@ const DEFAULT_CONFIG: IntegrationAnomalyConfig = {
   enabled: true,
   checkInterval: 30000,
   thresholds: [
-    { type: 'response_time_spike', enabled: true, warningThreshold: 2000, criticalThreshold: 5000, windowSize: 50, minDataPoints: 10 },
-    { type: 'error_rate_spike', enabled: true, warningThreshold: 5, criticalThreshold: 20, windowSize: 50, minDataPoints: 10 },
-    { type: 'rate_limit_exceeded', enabled: true, warningThreshold: 1, criticalThreshold: 5, windowSize: 100, minDataPoints: 5 },
-    { type: 'connection_failure', enabled: true, warningThreshold: 1, criticalThreshold: 3, windowSize: 50, minDataPoints: 5 },
-    { type: 'message_drop', enabled: true, warningThreshold: 5, criticalThreshold: 20, windowSize: 100, minDataPoints: 10 },
-    { type: 'latency_degradation', enabled: true, warningThreshold: 1000, criticalThreshold: 3000, windowSize: 50, minDataPoints: 10 },
-    { type: 'cost_anomaly', enabled: true, warningThreshold: 1.5, criticalThreshold: 3.0, windowSize: 100, minDataPoints: 20 },
-    { type: 'availability_drop', enabled: true, warningThreshold: 95, criticalThreshold: 90, windowSize: 50, minDataPoints: 10 },
+    {
+      type: 'response_time_spike',
+      enabled: true,
+      warningThreshold: 2000,
+      criticalThreshold: 5000,
+      windowSize: 50,
+      minDataPoints: 10,
+    },
+    {
+      type: 'error_rate_spike',
+      enabled: true,
+      warningThreshold: 5,
+      criticalThreshold: 20,
+      windowSize: 50,
+      minDataPoints: 10,
+    },
+    {
+      type: 'rate_limit_exceeded',
+      enabled: true,
+      warningThreshold: 1,
+      criticalThreshold: 5,
+      windowSize: 100,
+      minDataPoints: 5,
+    },
+    {
+      type: 'connection_failure',
+      enabled: true,
+      warningThreshold: 1,
+      criticalThreshold: 3,
+      windowSize: 50,
+      minDataPoints: 5,
+    },
+    {
+      type: 'message_drop',
+      enabled: true,
+      warningThreshold: 5,
+      criticalThreshold: 20,
+      windowSize: 100,
+      minDataPoints: 10,
+    },
+    {
+      type: 'latency_degradation',
+      enabled: true,
+      warningThreshold: 1000,
+      criticalThreshold: 3000,
+      windowSize: 50,
+      minDataPoints: 10,
+    },
+    {
+      type: 'cost_anomaly',
+      enabled: true,
+      warningThreshold: 1.5,
+      criticalThreshold: 3.0,
+      windowSize: 100,
+      minDataPoints: 20,
+    },
+    {
+      type: 'availability_drop',
+      enabled: true,
+      warningThreshold: 95,
+      criticalThreshold: 90,
+      windowSize: 50,
+      minDataPoints: 10,
+    },
   ],
 };
 
@@ -114,7 +174,14 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Initialize data windows for each integration
    */
   private initializeDataWindows(): void {
-    const integrations: IntegrationType[] = ['discord', 'slack', 'mattermost', 'llm', 'mcp', 'database'];
+    const integrations: IntegrationType[] = [
+      'discord',
+      'slack',
+      'mattermost',
+      'llm',
+      'mcp',
+      'database',
+    ];
     const metrics = ['response_time', 'error_rate', 'latency', 'messages', 'cost'];
 
     for (const integration of integrations) {
@@ -153,7 +220,12 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   /**
    * Add data point for an integration
    */
-  addDataPoint(integration: string, integrationType: IntegrationType, metric: string, value: number): void {
+  addDataPoint(
+    integration: string,
+    integrationType: IntegrationType,
+    metric: string,
+    value: number
+  ): void {
     const typeData = this.dataWindows.get(integrationType);
     if (!typeData) return;
 
@@ -163,7 +235,9 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     metricData.push(value);
 
     // Trim window
-    const threshold = this.config.thresholds.find(t => t.type === `${metric}_spike` || t.type === `${metric}_degradation`);
+    const threshold = this.config.thresholds.find(
+      (t) => t.type === `${metric}_spike` || t.type === `${metric}_degradation`
+    );
     const windowSize = threshold?.windowSize || 50;
     if (metricData.length > windowSize) {
       metricData.shift();
@@ -206,13 +280,9 @@ export class IntegrationAnomalyDetector extends EventEmitter {
 
     // Error rate spike
     if (metrics.errorRate > 0) {
-      this.checkThreshold(
-        'mattermost',
-        'mattermost',
-        'error_rate_spike',
-        metrics.errorRate,
-        { error_rate: metrics.errorRate }
-      );
+      this.checkThreshold('mattermost', 'mattermost', 'error_rate_spike', metrics.errorRate, {
+        error_rate: metrics.errorRate,
+      });
     }
 
     // Rate limit exceeded
@@ -228,14 +298,11 @@ export class IntegrationAnomalyDetector extends EventEmitter {
 
     // Availability drop
     if (metrics.status !== 'unknown') {
-      const availability = metrics.status === 'healthy' ? 100 : metrics.status === 'degraded' ? 75 : 0;
-      this.checkThreshold(
-        'mattermost',
-        'mattermost',
-        'availability_drop',
-        100 - availability,
-        { availability }
-      );
+      const availability =
+        metrics.status === 'healthy' ? 100 : metrics.status === 'degraded' ? 75 : 0;
+      this.checkThreshold('mattermost', 'mattermost', 'availability_drop', 100 - availability, {
+        availability,
+      });
     }
   }
 
@@ -257,23 +324,15 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     }
 
     if (metrics.errorRate > 0) {
-      this.checkThreshold(
-        'discord',
-        'discord',
-        'error_rate_spike',
-        metrics.errorRate,
-        { error_rate: metrics.errorRate }
-      );
+      this.checkThreshold('discord', 'discord', 'error_rate_spike', metrics.errorRate, {
+        error_rate: metrics.errorRate,
+      });
     }
 
     if (metrics.rateLimitHits > 0) {
-      this.checkThreshold(
-        'discord',
-        'discord',
-        'rate_limit_exceeded',
-        metrics.rateLimitHits,
-        { rate_limit_hits: metrics.rateLimitHits }
-      );
+      this.checkThreshold('discord', 'discord', 'rate_limit_exceeded', metrics.rateLimitHits, {
+        rate_limit_hits: metrics.rateLimitHits,
+      });
     }
   }
 
@@ -285,33 +344,21 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     if (!metrics) return;
 
     if (metrics.averageResponseTime > 0) {
-      this.checkThreshold(
-        'slack',
-        'slack',
-        'response_time_spike',
-        metrics.averageResponseTime,
-        { response_time: metrics.averageResponseTime }
-      );
+      this.checkThreshold('slack', 'slack', 'response_time_spike', metrics.averageResponseTime, {
+        response_time: metrics.averageResponseTime,
+      });
     }
 
     if (metrics.errorRate > 0) {
-      this.checkThreshold(
-        'slack',
-        'slack',
-        'error_rate_spike',
-        metrics.errorRate,
-        { error_rate: metrics.errorRate }
-      );
+      this.checkThreshold('slack', 'slack', 'error_rate_spike', metrics.errorRate, {
+        error_rate: metrics.errorRate,
+      });
     }
 
     if (metrics.rateLimitHits > 0) {
-      this.checkThreshold(
-        'slack',
-        'slack',
-        'rate_limit_exceeded',
-        metrics.rateLimitHits,
-        { rate_limit_hits: metrics.rateLimitHits }
-      );
+      this.checkThreshold('slack', 'slack', 'rate_limit_exceeded', metrics.rateLimitHits, {
+        rate_limit_hits: metrics.rateLimitHits,
+      });
     }
   }
 
@@ -319,7 +366,15 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for LLM providers
    */
   private detectForLlmProviders(): void {
-    const llmProviders = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+    const llmProviders = [
+      'openai',
+      'flowise',
+      'openwebui',
+      'openswarm',
+      'perplexity',
+      'replicate',
+      'n8n',
+    ];
 
     for (const provider of llmProviders) {
       const metrics = this.providerMetrics.getLlmProviderMetrics(provider as ProviderType);
@@ -327,24 +382,16 @@ export class IntegrationAnomalyDetector extends EventEmitter {
 
       // Latency degradation
       if (metrics.averageLatency > 0) {
-        this.checkThreshold(
-          provider,
-          'llm',
-          'latency_degradation',
-          metrics.averageLatency,
-          { latency: metrics.averageLatency }
-        );
+        this.checkThreshold(provider, 'llm', 'latency_degradation', metrics.averageLatency, {
+          latency: metrics.averageLatency,
+        });
       }
 
       // Error rate spike
       if (metrics.errorRate > 0) {
-        this.checkThreshold(
-          provider,
-          'llm',
-          'error_rate_spike',
-          metrics.errorRate,
-          { error_rate: metrics.errorRate }
-        );
+        this.checkThreshold(provider, 'llm', 'error_rate_spike', metrics.errorRate, {
+          error_rate: metrics.errorRate,
+        });
       }
 
       // Cost anomaly
@@ -354,25 +401,19 @@ export class IntegrationAnomalyDetector extends EventEmitter {
         if (costHistory.length >= 10) {
           const avgCost = costHistory.reduce((a, b) => a + b, 0) / costHistory.length;
           const deviation = metrics.averageCost / avgCost;
-          this.checkThreshold(
-            provider,
-            'llm',
-            'cost_anomaly',
+          this.checkThreshold(provider, 'llm', 'cost_anomaly', deviation, {
+            cost: metrics.averageCost,
+            avgCost,
             deviation,
-            { cost: metrics.averageCost, avgCost, deviation }
-          );
+          });
         }
       }
 
       // Rate limit exceeded
       if (metrics.rateLimitHits > 0) {
-        this.checkThreshold(
-          provider,
-          'llm',
-          'rate_limit_exceeded',
-          metrics.rateLimitHits,
-          { rate_limit_hits: metrics.rateLimitHits }
-        );
+        this.checkThreshold(provider, 'llm', 'rate_limit_exceeded', metrics.rateLimitHits, {
+          rate_limit_hits: metrics.rateLimitHits,
+        });
       }
     }
   }
@@ -404,11 +445,14 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     value: number,
     additionalData: Record<string, number>
   ): void {
-    const threshold = this.config.thresholds.find(t => t.type === type);
+    const threshold = this.config.thresholds.find((t) => t.type === type);
     if (!threshold || !threshold.enabled) return;
 
     // Calculate expected value (simple moving average)
-    const window = this.getDataWindow(integrationType, type.replace('_spike', '').replace('_degradation', ''));
+    const window = this.getDataWindow(
+      integrationType,
+      type.replace('_spike', '').replace('_degradation', '')
+    );
     const expectedValue = window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
 
     let severity: AnomalySeverity = 'low';
@@ -424,7 +468,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
 
     if (triggered) {
       const deviation = expectedValue > 0 ? value / expectedValue : value;
-      
+
       const anomaly: IntegrationAnomaly = {
         id: `anomaly_${integration}_${type}_${Date.now()}`,
         timestamp: Date.now(),
@@ -444,13 +488,22 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     }
 
     // Add to data window
-    this.addToDataWindow(integrationType, type.replace('_spike', '').replace('_degradation', ''), value);
+    this.addToDataWindow(
+      integrationType,
+      type.replace('_spike', '').replace('_degradation', ''),
+      value
+    );
   }
 
   /**
    * Generate human-readable anomaly message
    */
-  private generateAnomalyMessage(type: AnomalyType, integration: string, value: number, expected: number): string {
+  private generateAnomalyMessage(
+    type: AnomalyType,
+    integration: string,
+    value: number,
+    expected: number
+  ): string {
     const formattedValue = value.toFixed(2);
     const formattedExpected = expected.toFixed(2);
 
@@ -510,12 +563,12 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   private addAnomaly(integration: string, anomaly: IntegrationAnomaly): void {
     const existing = this.anomalies.get(integration) || [];
     existing.push(anomaly);
-    
+
     // Keep only recent anomalies (last 100 per integration)
     if (existing.length > 100) {
       existing.shift();
     }
-    
+
     this.anomalies.set(integration, existing);
   }
 
@@ -538,8 +591,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Get recent anomalies
    */
   getRecentAnomalies(minutes: number = 60, integration?: string): IntegrationAnomaly[] {
-    const cutoff = Date.now() - (minutes * 60 * 1000);
-    return this.getActiveAnomalies(integration).filter(a => a.timestamp >= cutoff);
+    const cutoff = Date.now() - minutes * 60 * 1000;
+    return this.getActiveAnomalies(integration).filter((a) => a.timestamp >= cutoff);
   }
 
   /**
@@ -553,7 +606,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     recent: IntegrationAnomaly[];
   } {
     const anomalies = this.getActiveAnomalies();
-    
+
     const bySeverity: Record<AnomalySeverity, number> = { low: 0, medium: 0, high: 0, critical: 0 };
     const byIntegration: Record<string, number> = {};
     const byType: Partial<Record<AnomalyType, number>> = {};
@@ -585,7 +638,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Set threshold for specific anomaly type
    */
   setThreshold(type: AnomalyType, warning: number, critical: number): void {
-    const threshold = this.config.thresholds.find(t => t.type === type);
+    const threshold = this.config.thresholds.find((t) => t.type === type);
     if (threshold) {
       threshold.warningThreshold = warning;
       threshold.criticalThreshold = critical;

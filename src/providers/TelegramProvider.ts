@@ -1,8 +1,8 @@
-import { IMessageProvider } from '../types/IProvider';
-import telegramConfig, { TelegramConfig } from '../config/telegramConfig';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Message } from '../types/messages';
+import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
+import { type IMessageProvider } from '../types/IProvider';
+import { type Message } from '../types/messages';
 
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   id = 'telegram';
@@ -44,7 +44,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   async addBot(config: any) {
     const { name, token, llm } = config;
     if (!token) {
-        throw new Error('token is required');
+      throw new Error('token is required');
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -55,7 +55,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
     } catch (e: any) {
-       // Ignore if file doesn't exist
+      // Ignore if file doesn't exist
     }
     cfg.telegram = cfg.telegram || {};
     cfg.telegram.instances = cfg.telegram.instances || [];
@@ -80,7 +80,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
     } catch (e: any) {
-        return { added: 0 };
+      return { added: 0 };
     }
 
     let added = 0;
@@ -88,8 +88,8 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
     // TODO: Implement actual runtime reload logic once the Service is ready
     for (const inst of instances) {
-        // Mock loading
-        added++;
+      // Mock loading
+      added++;
     }
     return { added };
   }
@@ -102,7 +102,11 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     throw new Error('Method not implemented.');
   }
 
-  async sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string> {
+  async sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string> {
     throw new Error('Method not implemented.');
   }
 

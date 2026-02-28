@@ -37,8 +37,10 @@ import {
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
+import { providerRegistry } from '../../registries/ProviderRegistry';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
+import { type IProvider } from '../../types/IProvider';
 import {
   ConfigBackupSchema,
   ConfigRestoreSchema,
@@ -46,8 +48,6 @@ import {
 } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
-import { providerRegistry } from '../../registries/ProviderRegistry';
-import { IProvider } from '../../types/IProvider';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -145,7 +145,7 @@ const loadDynamicConfigs = () => {
 // Initialize configuration from registry
 export const reloadGlobalConfigs = () => {
   const providers = providerRegistry.getAll();
-  providers.forEach(p => {
+  providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
   });
 
@@ -155,7 +155,10 @@ export const reloadGlobalConfigs = () => {
   // Load dynamic configs
   loadDynamicConfigs();
 
-  debug('Global configs reloaded with providers:', providers.map(p => p.id));
+  debug(
+    'Global configs reloaded with providers:',
+    providers.map((p) => p.id)
+  );
 };
 
 // Apply audit middleware to all config routes (except in test)
@@ -213,7 +216,10 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
   return result;
 }
 
-function redactProviderConfig(config: Record<string, unknown>, provider: IProvider): Record<string, unknown> {
+function redactProviderConfig(
+  config: Record<string, unknown>,
+  provider: IProvider
+): Record<string, unknown> {
   const sensitiveKeys = new Set(provider.getSensitiveKeys());
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(config)) {
@@ -290,28 +296,32 @@ router.get('/bots', async (req, res) => {
 router.get('/sources', async (req, res) => {
   try {
     const envVars = Object.keys(process.env)
-      .filter((key) =>
-        key.startsWith('BOTS_') ||
-        key.includes('DISCORD_') ||
-        key.includes('SLACK_') ||
-        key.includes('OPENAI_') ||
-        key.includes('FLOWISE_') ||
-        key.includes('OPENWEBUI_') ||
-        key.includes('MATTERMOST_') ||
-        key.includes('MESSAGE_') ||
-        key.includes('WEBHOOK_')
+      .filter(
+        (key) =>
+          key.startsWith('BOTS_') ||
+          key.includes('DISCORD_') ||
+          key.includes('SLACK_') ||
+          key.includes('OPENAI_') ||
+          key.includes('FLOWISE_') ||
+          key.includes('OPENWEBUI_') ||
+          key.includes('MATTERMOST_') ||
+          key.includes('MESSAGE_') ||
+          key.includes('WEBHOOK_')
       )
-      .reduce((acc, key) => {
-        acc[key] = {
-          source: 'environment',
-          value: redactSensitiveInfo(key, process.env[key] || ''),
-          sensitive:
-            key.toLowerCase().includes('token') ||
-            key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret'),
-        };
-        return acc;
-      }, {} as Record<string, any>);
+      .reduce(
+        (acc, key) => {
+          acc[key] = {
+            source: 'environment',
+            value: redactSensitiveInfo(key, process.env[key] || ''),
+            sensitive:
+              key.toLowerCase().includes('token') ||
+              key.toLowerCase().includes('key') ||
+              key.toLowerCase().includes('secret'),
+          };
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
     // Detect config files
     const configDir = path.join(process.cwd(), 'config');
@@ -513,7 +523,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     if (configName && !isValidConfigName(configName)) {
       return res.status(400).json({
         error: 'Invalid config name',
-        message: 'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
+        message:
+          'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
       });
     }
 

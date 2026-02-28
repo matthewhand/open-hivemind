@@ -1,5 +1,5 @@
-import { summarizeLogWithLlm } from '../../../../src/message/helpers/logging/LogProseSummarizer';
 import { OpenAI } from 'openai';
+import { summarizeLogWithLlm } from '../../../../src/message/helpers/logging/LogProseSummarizer';
 
 // Mock OpenAI
 jest.mock('openai');
@@ -68,12 +68,14 @@ describe('summarizeLogWithLlm', () => {
     const result = await summarizeLogWithLlm(input);
 
     expect(OpenAI).toHaveBeenCalledWith({ apiKey: 'test-key', baseURL: expect.any(String) });
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
-      model: 'gpt-3.5-turbo',
-      messages: expect.arrayContaining([
-        expect.objectContaining({ role: 'user', content: input })
-      ]),
-    }));
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'gpt-3.5-turbo',
+        messages: expect.arrayContaining([
+          expect.objectContaining({ role: 'user', content: input }),
+        ]),
+      })
+    );
     expect(result).toBe(rewritten);
   });
 

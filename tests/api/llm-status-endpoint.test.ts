@@ -66,16 +66,12 @@ describe('LLM Status API Endpoint', () => {
     it('should return LLM status', async () => {
       const mockStatus = {
         configured: true,
-        providers: [
-          { id: 'openai', name: 'OpenAI', type: 'openai' }
-        ],
-        libraryStatus: {}
+        providers: [{ id: 'openai', name: 'OpenAI', type: 'openai' }],
+        libraryStatus: {},
       };
       mockGetLlmDefaultStatus.mockReturnValue(mockStatus);
 
-      const response = await request(app)
-        .get('/api/config/llm-status')
-        .expect(200);
+      const response = await request(app).get('/api/config/llm-status').expect(200);
 
       expect(response.body).toEqual(mockStatus);
     });
@@ -85,9 +81,7 @@ describe('LLM Status API Endpoint', () => {
         throw new Error('Test Error');
       });
 
-      const response = await request(app)
-        .get('/api/config/llm-status')
-        .expect(500);
+      const response = await request(app).get('/api/config/llm-status').expect(500);
 
       expect(response.body.error).toBe('Test Error');
     });

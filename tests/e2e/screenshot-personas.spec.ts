@@ -13,9 +13,8 @@ test.describe('Personas Page Screenshots', () => {
     await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );
-    await page.route(
-      '/api/config/global',
-      async (route) => route.fulfill({ status: 200, json: { bots: [] } })
+    await page.route('/api/config/global', async (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
     );
     await page.route('/api/config/llm-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
@@ -53,7 +52,8 @@ test.describe('Personas Page Screenshots', () => {
         name: 'Customer Support',
         description: 'Friendly and helpful support agent',
         category: 'customer_service',
-        systemPrompt: 'You are a helpful customer support agent. You answer questions clearly and politely.',
+        systemPrompt:
+          'You are a helpful customer support agent. You answer questions clearly and politely.',
         isBuiltIn: false,
       },
       {
@@ -61,7 +61,8 @@ test.describe('Personas Page Screenshots', () => {
         name: 'Technical Assistant',
         description: 'Expert in code and technical details',
         category: 'technical',
-        systemPrompt: 'You are an expert software engineer. You provide concise and correct code snippets.',
+        systemPrompt:
+          'You are an expert software engineer. You provide concise and correct code snippets.',
         isBuiltIn: true,
       },
       {
@@ -74,16 +75,20 @@ test.describe('Personas Page Screenshots', () => {
       },
     ];
 
-    await page.route('/api/admin/personas', async (route) => // Note: The client uses /api/personas but sometimes redirects or aliases might exist. Let's mock both just in case or verify.
-      // apiService.getPersonas() -> /api/personas
-      // But in the previous block I read apiService.getPersonas() calls /api/personas.
-      // Wait, let me check the route again.
-      // return this.request<Persona[]>('/api/personas');
-      // So I should mock /api/personas.
-      route.fulfill({
-        status: 200,
-        json: personas,
-      })
+    await page.route(
+      '/api/admin/personas',
+      async (
+        route // Note: The client uses /api/personas but sometimes redirects or aliases might exist. Let's mock both just in case or verify.
+      ) =>
+        // apiService.getPersonas() -> /api/personas
+        // But in the previous block I read apiService.getPersonas() calls /api/personas.
+        // Wait, let me check the route again.
+        // return this.request<Persona[]>('/api/personas');
+        // So I should mock /api/personas.
+        route.fulfill({
+          status: 200,
+          json: personas,
+        })
     );
     // Double mock just to be safe if there is a redirect I missed, or I can just mock /api/personas.
     await page.route('/api/personas', async (route) =>
@@ -95,8 +100,8 @@ test.describe('Personas Page Screenshots', () => {
   });
 
   test('capture personas page screenshot', async ({ page }) => {
-    page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
-    page.on('pageerror', err => console.log(`BROWSER ERROR: ${err}`));
+    page.on('console', (msg) => console.log(`BROWSER LOG: ${msg.text()}`));
+    page.on('pageerror', (err) => console.log(`BROWSER ERROR: ${err}`));
 
     await page.setViewportSize({ width: 1280, height: 1200 });
     await page.goto('/admin/personas');

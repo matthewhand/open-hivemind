@@ -62,7 +62,9 @@ export class ActivityLogger {
 
       const bufferSize = options.limit ? options.limit : Infinity;
       const isBufferLimited = bufferSize !== Infinity;
-      const events: MessageFlowEvent[] = isBufferLimited ? new Array<MessageFlowEvent>(bufferSize) : [];
+      const events: MessageFlowEvent[] = isBufferLimited
+        ? new Array<MessageFlowEvent>(bufferSize)
+        : [];
       let count = 0;
 
       const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
@@ -100,7 +102,6 @@ export class ActivityLogger {
             (events as MessageFlowEvent[]).push(event);
           }
           count++;
-
         } catch (e) {
           debug('Failed to parse activity log line: %O', e);
           continue;

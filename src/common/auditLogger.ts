@@ -296,9 +296,7 @@ export class AuditLogger {
   public async getBotActivity(botId: string, limit = 50): Promise<AuditEvent[]> {
     const resourceKey = `bots/${botId}`;
     return this.getAuditEvents(limit, 0, (event) =>
-      Boolean(
-        event.resource === resourceKey || (event.metadata && event.metadata.botId === botId)
-      )
+      Boolean(event.resource === resourceKey || (event.metadata && event.metadata.botId === botId))
     );
   }
 
