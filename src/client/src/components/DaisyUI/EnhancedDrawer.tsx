@@ -74,15 +74,9 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
 
     if (item.divider) {
       return (
-        <div key={item.id} style={{ padding: '16px 16px 8px', marginTop: '8px' }}>
+        <div key={item.id} className="pt-4 px-4 pb-2 mt-2">
           {item.label && (
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: '#64748b',
-            }}>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-base-content/60">
               {item.label}
             </span>
           )}
@@ -105,53 +99,31 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
             }
           }}
           disabled={item.disabled}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            width: '100%',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            background: isActive ? '#3b82f6' : 'transparent',
-            color: isActive ? '#ffffff' : '#e2e8f0',
-            cursor: item.disabled ? 'not-allowed' : 'pointer',
-            opacity: item.disabled ? 0.5 : 1,
-            fontSize: '14px',
-            fontWeight: 500,
-            textAlign: 'left',
-            transition: 'background 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            if (!isActive) {e.currentTarget.style.background = 'rgba(255,255,255,0.1)';}
-          }}
-          onMouseLeave={(e) => {
-            if (!isActive) {e.currentTarget.style.background = 'transparent';}
-          }}
+          className={`flex items-center w-full px-3 py-2.5 rounded-lg border-none cursor-pointer text-sm font-medium text-left transition-colors duration-150 ${
+            isActive
+              ? 'bg-primary text-primary-content'
+              : 'bg-transparent text-base-content hover:bg-base-content/10'
+          } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <span style={{ marginRight: '12px', color: isActive ? '#ffffff' : '#94a3b8' }}>
+          <span className={`mr-3 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}>
             {item.icon}
           </span>
-          <span style={{ flex: 1 }}>{item.label}</span>
+          <span className="flex-1">{item.label}</span>
           {item.badge && (
-            <span style={{
-              background: isActive ? 'rgba(255,255,255,0.2)' : '#3b82f6',
-              color: '#ffffff',
-              fontSize: '11px',
-              padding: '2px 6px',
-              borderRadius: '10px',
-              marginLeft: '8px',
-            }}>
+            <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${
+              isActive ? 'bg-primary-content/20 text-primary-content' : 'bg-primary text-primary-content'
+            }`}>
               {item.badge}
             </span>
           )}
           {hasChildren && (
-            <span style={{ marginLeft: '8px', color: '#94a3b8' }}>
+            <span className={`ml-2 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}>
               {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </span>
           )}
         </button>
         {hasChildren && isExpanded && (
-          <ul style={{ listStyle: 'none', margin: '4px 0 0 0', padding: 0 }}>
+          <ul className="list-none m-0 mt-1 p-0">
             {item.children!.map(child => renderNavItem(child, depth + 1))}
           </ul>
         )}
@@ -160,55 +132,27 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
   };
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#1e293b',
-      color: '#f1f5f9',
-    }}>
+    <div className="h-full flex flex-col bg-base-200 text-base-content">
       {/* Header */}
-      <div style={{
-        padding: '16px',
-        borderBottom: '1px solid #334155',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-      }}>
-        <div style={{
-          width: '36px',
-          height: '36px',
-          background: '#3b82f6',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <Hexagon size={20} color="#ffffff" />
+      <div className="p-4 border-b border-base-300 flex items-center gap-3">
+        <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-primary-content">
+          <Hexagon size={20} />
         </div>
         <div>
-          <div style={{ fontWeight: 600, fontSize: '16px' }}>Hivemind</div>
-          <div style={{ fontSize: '12px', color: '#94a3b8' }}>Admin Dashboard</div>
+          <div className="font-semibold text-base">Hivemind</div>
+          <div className="text-xs text-base-content/60">Admin Dashboard</div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: '8px', overflowY: 'auto' }}>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <nav className="flex-1 p-2 overflow-y-auto">
+        <ul className="list-none m-0 p-0">
           {navItems.map(item => renderNavItem(item))}
         </ul>
       </nav>
 
       {/* Footer */}
-      <div style={{
-        padding: '12px 16px',
-        borderTop: '1px solid #334155',
-        fontSize: '12px',
-        color: '#64748b',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
+      <div className="py-3 px-4 border-t border-base-300 text-xs text-base-content/60 flex items-center justify-between">
         <span>v1.0.0</span>
         
         {/* Theme Toggle */}
@@ -220,39 +164,16 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('hivemind-theme', newTheme);
           }}
-          style={{
-            background: 'rgba(255,255,255,0.1)',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '6px 10px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            color: '#e2e8f0',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          className="bg-base-content/10 hover:bg-base-content/20 border-none rounded-md py-1.5 px-2.5 cursor-pointer flex items-center gap-1 text-base-content transition-colors duration-150"
           title="Toggle theme"
         >
-          <Sun size={14} style={{ display: 'none' }} className="theme-sun" />
+          <Sun size={14} className="hidden theme-sun" />
           <Moon size={14} />
-          <span style={{ fontSize: '11px' }}>Theme</span>
+          <span className="text-[11px]">Theme</span>
         </button>
         
-        <span style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          color: '#22c55e',
-        }}>
-          <span style={{
-            width: '6px',
-            height: '6px',
-            background: '#22c55e',
-            borderRadius: '50%',
-          }}></span>
+        <span className="flex items-center gap-1.5 text-success">
+          <span className="w-1.5 h-1.5 bg-success rounded-full"></span>
           Online
         </span>
       </div>

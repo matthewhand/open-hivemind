@@ -39,35 +39,22 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
       if (this.props.fallback) {return <>{this.props.fallback}</>;}
 
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          padding: '2rem',
-          color: '#fff',
-          background: 'linear-gradient(135deg, #1f2937, #111827)',
-        }}>
-          <h1 style={{ marginBottom: '0.5rem' }}>Something went wrong</h1>
-          <p style={{ opacity: 0.8, marginBottom: '1rem' }}>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 bg-base-300 text-base-content rounded-xl m-4 border border-base-content/10 shadow-lg">
+          <h1 className="text-3xl font-bold mb-2 text-error">Something went wrong</h1>
+          <p className="opacity-80 mb-6 text-lg">
             The UI hit an unexpected error. Try reloading.
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={this.handleReload} style={{
-              background: '#2563eb',
-              color: '#fff',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-            }}>
-              Reload
+          <div className="flex flex-col items-center gap-4 w-full max-w-2xl">
+            <button
+              onClick={this.handleReload}
+              className="btn btn-primary"
+            >
+              Reload Page
             </button>
             {process.env.NODE_ENV !== 'production' && this.state.error && (
-              <details open style={{ marginTop: '1rem', maxWidth: 800 }}>
-                <summary style={{ cursor: 'pointer' }}>Error details</summary>
-                <pre style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}>
+              <details open className="mt-4 w-full bg-base-200 p-4 rounded-lg border border-base-content/20">
+                <summary className="cursor-pointer font-semibold mb-2 text-error">Error details</summary>
+                <pre className="whitespace-pre-wrap text-left text-xs overflow-x-auto bg-base-100 p-3 rounded text-error-content/80 font-mono">
                   {this.state.error?.message}\n{this.state.error?.stack}
                 </pre>
               </details>
