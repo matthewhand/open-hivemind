@@ -20,19 +20,21 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  // Prevent timing attacks using crypto.timingSafeEqual
+  // Prevent timing attacks using crypto.timingSafeEqual.
+  // Pad both buffers to the same length so that length differences do not
+  // leak information about the expected token via timing side-channels.
   const providedBuffer = Buffer.from(providedToken, 'utf8');
   const expectedBuffer = Buffer.from(expectedToken, 'utf8');
 
-  let isEqual = false;
+  const maxLen = Math.max(providedBuffer.length, expectedBuffer.length);
+  const paddedProvided = Buffer.alloc(maxLen);
+  const paddedExpected = Buffer.alloc(maxLen);
+  providedBuffer.copy(paddedProvided);
+  expectedBuffer.copy(paddedExpected);
 
-  if (providedBuffer.length !== expectedBuffer.length) {
-    // If lengths are different, do a constant-time compare of expectedBuffer with itself
-    // to prevent leaking the length of the expected token.
-    crypto.timingSafeEqual(expectedBuffer, expectedBuffer);
-  } else {
-    isEqual = crypto.timingSafeEqual(providedBuffer, expectedBuffer);
-  }
+  const isEqual =
+    providedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(paddedProvided, paddedExpected);
 
   if (!isEqual) {
     res.status(403).send('Forbidden: Invalid token');
@@ -42,8 +44,33 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   next();
 };
 
-// Validate IPv4 format
-const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+/**
+ * Validate that all octets of an IPv4 address are in the range 0-255.
+ */
+const isValidIpv4 = (ip: string): boolean => {
+  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const match = ipv4Regex.exec(ip);
+  if (!match) return false;
+  return [match[1], match[2], match[3], match[4]].every((octet) => {
+    const n = parseInt(octet, 10);
+    return n >= 0 && n <= 255;
+  });
+};
+
+/**
+ * Validate an IPv6 address using Node's built-in net module for full RFC 4291
+ * compliance (handles compressed notation, embedded IPv4, loopback, etc.).
+ */
+const isValidIpv6 = (ip: string): boolean => {
+  // Use the net module for authoritative IPv6 validation
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const net = require('net') as typeof import('net');
+    return net.isIPv6(ip);
+  } catch {
+    return false;
+  }
+};
 
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
   const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST')
@@ -60,12 +87,10 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
     requestIp = ipv4Match[1];
   }
 
-  // Basic IP Validation to prevent spoofed/malformed IPs
-  const isIpv4 = ipv4Regex.test(requestIp);
-  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$|^::1$/;
-  const isIpv6 = ipv6Regex.test(requestIp);
+  // Validate IP format before whitelist evaluation
+  const validIp = isValidIpv4(requestIp) || isValidIpv6(requestIp);
 
-  if (!isIpv4 && !isIpv6) {
+  if (!validIp) {
     res.status(403).send('Forbidden: Malformed IP address');
     return;
   }
