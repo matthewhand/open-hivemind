@@ -31,7 +31,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   const isMobile = !useMediaQuery({ minWidth: 1024 });
 
   return (
-    <div className={`min-h-screen flex bg-base-200 ${className}`}>
+    <div className={`flex flex-col md:flex-row bg-base-200 ${className}`}>
 
       {/* SIDEBAR - Fixed on left */}
       {!isMobile && (
@@ -47,7 +47,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
       {/* MOBILE HEADER */}
       {isMobile && (
-        <header className="fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
+        <header className="sticky top-0 w-full h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
           <span className="font-semibold text-base-content">Hivemind</span>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -72,7 +72,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
       {/* MAIN CONTENT WRAPPER - Offset for sidebar */}
       <div
-        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'}`}
+        className={`flex-1 flex flex-col transition-all duration-300 ${isMobile ? 'ml-0' : 'ml-[240px]'}`}
       >
         {/* Demo Mode Banner - Full width relative to content wrapper */}
         <DemoModeBanner />
