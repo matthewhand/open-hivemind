@@ -324,6 +324,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
           const botUsername = botConfig.username;
           const botUserId = botConfig.userId;
 
+          const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
+
           for (const post of posts.slice(0, limit)) {
             const user = await client.getUser(post.user_id);
             const username = user
@@ -331,7 +333,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
             const mattermostMsg = new MattermostMessage(post, username, {
               isBot,
               botUsername,
