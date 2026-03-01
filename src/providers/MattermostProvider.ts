@@ -8,6 +8,11 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://developers.mattermost.com/integrate/admin-guide/admin-bot-accounts/';
   helpText = 'Create a Mattermost bot account and generate a personal access token for it.';
+  private mattermostService: MattermostService;
+
+  constructor(mattermostService?: MattermostService) {
+    this.mattermostService = mattermostService || MattermostService.getInstance();
+  }
 
   getSchema() {
     return mattermostConfig.getSchema();
@@ -22,20 +27,32 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   }
 
   async getStatus() {
-    // TODO: Implement actual status check
+    const mattermost = this.mattermostService;
+    const botNames = mattermost.getBotNames();
+    const bots = botNames.map((name: string) => {
+      const cfg: any = mattermost.getBotConfig(name) || {};
+      return {
+        provider: 'mattermost',
+        name,
+        serverUrl: cfg.serverUrl || '',
+        channel: cfg.channel || 'town-square',
+        connected: true,
+      };
+    });
     return {
       ok: true,
-      bots: [],
-      count: 0,
+      bots,
+      count: bots.length,
     };
   }
 
   getBotNames() {
-    return [];
+    return this.mattermostService.getBotNames();
   }
 
   async getBots() {
-    return [];
+    const status = await this.getStatus();
+    return status.bots;
   }
 
   async addBot(config: any) {
