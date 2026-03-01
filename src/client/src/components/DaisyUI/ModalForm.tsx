@@ -262,6 +262,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
             disabled={isSubmitting}
+            aria-label="Close modal"
           >
             ✕
           </button>
