@@ -1,12 +1,33 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  Activity,
+  AlertCircle,
+  Bot,
+  Copy,
+  Cpu,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { BotAvatar } from '../components/BotAvatar';
+import BotChatBubbles from '../components/BotChatBubbles';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
+import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
-import EmptyState from '../components/DaisyUI/EmptyState';
+import { PROVIDER_CATEGORIES } from '../config/providers';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+import { apiService } from '../services/api';
 
+/**
+ * Represents the configuration and runtime state of a generic bot instance.
+ */
 interface BotData {
   id: string;
   name: string;
@@ -22,15 +43,6 @@ interface BotData {
   envOverrides?: any;
 }
 
-import { PROVIDER_CATEGORIES } from '../config/providers';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { BotAvatar } from '../components/BotAvatar';
-import BotChatBubbles from '../components/BotChatBubbles';
-import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
-import { BotSettingsModal } from '../components/BotSettingsModal';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
-import { apiService } from '../services/api';
-
 const BotsPage: React.FC = () => {
   // UI State
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -45,28 +57,27 @@ const BotsPage: React.FC = () => {
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newBotName, setNewBotName] = useState('');
-  const [newBotDesc, setNewBotDesc] = useState('');
-  const [newBotMessageProvider, setNewBotMessageProvider] = useState('discord');
-  const [newBotLlmProvider, setNewBotLlmProvider] = useState('');
-  const [newBotPersona, setNewBotPersona] = useState('');
-
-  const canCreateBot = newBotName.trim().length > 0 && newBotMessageProvider;
 
   // Get LLM status to check if system default is configured
   const { status: llmStatus } = useLlmStatus();
   const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
 
   // Delete Modal State
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
+    isOpen: false,
+    bot: null,
+  });
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   // Clone Modal State
-  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({ isOpen: false, bot: null });
+  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
+    isOpen: false,
+    bot: null,
+  });
   const [cloneName, setCloneName] = useState('');
 
   // Define data fetching logic
-  const fetchPageData = useCallback(async (signal: AbortSignal) => {
+  const fetchPageData = useCallback(async (_signal: AbortSignal) => {
     const [configData, globalData, personasData, profilesData] = await Promise.all([
       apiService.getConfig(),
       apiService.getGlobalConfig(),
@@ -79,7 +90,7 @@ const BotsPage: React.FC = () => {
 
     const globalConfig: any = {};
     if (globalData) {
-      Object.keys(globalData).forEach(key => {
+      Object.keys(globalData).forEach((key) => {
         globalConfig[key] = globalData[key].values;
       });
     }
@@ -88,20 +99,25 @@ const BotsPage: React.FC = () => {
       bots: (configData.bots || []) as unknown as BotData[],
       personas,
       llmProfiles,
-      globalConfig
+      globalConfig,
     };
   }, []);
 
   // Use Page Lifecycle Hook
-  const { data, loading, error: lifecycleError, refetch } = usePageLifecycle({
+  const {
+    data,
+    loading,
+    error: lifecycleError,
+    refetch,
+  } = usePageLifecycle({
     title: 'Bot Management',
     fetchData: fetchPageData,
-    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} }
+    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} },
   });
 
   // Derived state
   const bots = data?.bots || [];
-  const filteredBots = bots.filter(bot => {
+  const filteredBots = bots.filter((bot) => {
     const q = searchQuery.toLowerCase();
     return (
       bot.name.toLowerCase().includes(q) ||
@@ -164,53 +180,32 @@ const BotsPage: React.FC = () => {
     const allKeys = Object.keys(globalConfig);
     const validPrefixes = PROVIDER_CATEGORIES[category] || [];
 
-    return allKeys.filter(key => {
+    return allKeys.filter((key) => {
       // Match exact provider name or provider-instance
       // e.g. 'openai' or 'openai-prod'
-      return validPrefixes.some(prefix => key === prefix || key.startsWith(`${prefix}-`));
+      return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
     });
   };
 
-  const handleUpdateConfig = async (bot: BotData, field: 'llmProvider' | 'messageProvider', value: string) => {
+  const handleUpdateConfig = async (
+    bot: BotData,
+    field: 'llmProvider' | 'messageProvider',
+    value: string
+  ) => {
     try {
       setActionLoading(bot.id);
       const updates: any = {};
-      if (field === 'messageProvider') { updates.messageProvider = value; }
-      if (field === 'llmProvider') { updates.llmProvider = value; }
+      if (field === 'messageProvider') {
+        updates.messageProvider = value;
+      }
+      if (field === 'llmProvider') {
+        updates.llmProvider = value;
+      }
 
       await apiService.updateBot(bot.id, updates);
       await refetch();
     } catch (err: any) {
       alert('Error updating bot: ' + err.message);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-
-  const handleCreateBot = async () => {
-    if (!canCreateBot) { return; }
-
-    try {
-      setActionLoading('create');
-      await apiService.post('/api/bots', {
-        name: newBotName,
-        description: newBotDesc,
-        messageProvider: newBotMessageProvider,
-        ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
-        persona: newBotPersona,
-      });
-
-      await refetch();
-      // Reset form
-      setNewBotName('');
-      setNewBotDesc('');
-      setNewBotPersona('default');
-      setNewBotMessageProvider('');
-      setNewBotLlmProvider('');
-      setShowCreateModal(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create bot');
     } finally {
       setActionLoading(null);
     }
@@ -231,8 +226,12 @@ const BotsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteModal.bot) { return; }
-    if (deleteConfirmation !== deleteModal.bot.name) { return; }
+    if (!deleteModal.bot) {
+      return;
+    }
+    if (deleteConfirmation !== deleteModal.bot.name) {
+      return;
+    }
 
     try {
       setActionLoading(deleteModal.bot.id);
@@ -254,7 +253,9 @@ const BotsPage: React.FC = () => {
   };
 
   const handleCloneSubmit = async () => {
-    if (!cloneModal.bot) { return; }
+    if (!cloneModal.bot) {
+      return;
+    }
     try {
       setActionLoading('clone');
       await apiService.cloneBot(cloneModal.bot.id, cloneName);
@@ -286,7 +287,11 @@ const BotsPage: React.FC = () => {
 
   const getStatusBadge = (status: string, connected: boolean) => {
     if (status === 'active' && connected) {
-      return <span className="badge badge-success gap-1 text-xs font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-green-900 animate-pulse" /> Running</span>;
+      return (
+        <span className="badge badge-success gap-1 text-xs font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-900 animate-pulse" /> Running
+        </span>
+      );
     } else if (status === 'active' && !connected) {
       return <span className="badge badge-warning gap-1 text-xs font-semibold">Disconnected</span>;
     } else {
@@ -295,12 +300,16 @@ const BotsPage: React.FC = () => {
   };
 
   const redact = (str: string) => {
-    if (!str) { return ''; }
-    if (str.length <= 4) { return '****'; }
-    return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
+    if (!str) {
+      return '';
+    }
+    if (str.length <= 4) {
+      return '****';
+    }
+    return (
+      str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
+    );
   };
-
-
 
   return (
     <div className="space-y-6">
@@ -309,7 +318,9 @@ const BotsPage: React.FC = () => {
         <div className="alert alert-error">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>Dismiss</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setError(null)}>
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -339,15 +350,21 @@ const BotsPage: React.FC = () => {
         </div>
         <div className="stat">
           <div className="stat-title">Active</div>
-          <div className="stat-value text-green-500">{bots.filter(b => b.status === 'active' && b.connected).length}</div>
+          <div className="stat-value text-green-500">
+            {bots.filter((b) => b.status === 'active' && b.connected).length}
+          </div>
         </div>
         <div className="stat">
           <div className="stat-title">Disconnected</div>
-          <div className="stat-value text-yellow-500">{bots.filter(b => b.status === 'active' && !b.connected).length}</div>
+          <div className="stat-value text-yellow-500">
+            {bots.filter((b) => b.status === 'active' && !b.connected).length}
+          </div>
         </div>
         <div className="stat">
           <div className="stat-title">Errors</div>
-          <div className="stat-value text-red-500">{bots.reduce((sum, b) => sum + (b.errorCount || 0), 0)}</div>
+          <div className="stat-value text-red-500">
+            {bots.reduce((sum, b) => sum + (b.errorCount || 0), 0)}
+          </div>
         </div>
       </div>
 
@@ -390,7 +407,10 @@ const BotsPage: React.FC = () => {
           ) : (
             <div className="flex flex-col gap-2">
               {filteredBots.map((bot) => (
-                <div key={bot.id} className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group">
+                <div
+                  key={bot.id}
+                  className="bg-base-100 border border-base-300 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all group"
+                >
                   <div className="flex items-center gap-4">
                     <BotAvatar bot={bot} />
                     <div className="flex flex-col">
@@ -408,12 +428,16 @@ const BotsPage: React.FC = () => {
                         </span>
                         <span className="flex items-center gap-1 border-l border-base-content/20 pl-4">
                           <Cpu className="w-3 h-3 opacity-70" />
-                          {bot.llmProvider ? (
-                            llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
-                          ) : 'Default LLM'}
+                          {bot.llmProvider
+                            ? llmProfiles.find((p) => p.key === bot.llmProvider)?.name ||
+                            bot.llmProvider
+                            : 'Default LLM'}
                         </span>
                         {bot.messageCount > 0 && (
-                          <span className="flex items-center gap-1 border-l border-base-content/20 pl-4" title="Messages Processed">
+                          <span
+                            className="flex items-center gap-1 border-l border-base-content/20 pl-4"
+                            title="Messages Processed"
+                          >
                             <Activity className="w-3 h-3 opacity-70" /> {bot.messageCount}
                           </span>
                         )}
@@ -474,20 +498,32 @@ const BotsPage: React.FC = () => {
           integrationOptions={{ message: getIntegrationOptions('message') }}
           onUpdateConfig={async (bot: any, key: string, value: any) => {
             await handleUpdateConfig(bot, key as any, value);
-            setSelectedBotForConfig(prev => prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null);
+            setSelectedBotForConfig((prev) =>
+              prev ? { ...prev, [key]: value, config: { ...prev.config, [key]: value } } : null
+            );
           }}
           onUpdatePersona={async (bot: any, pid: string) => {
             await handleUpdatePersona(bot, pid);
-            setSelectedBotForConfig(prev => prev ? { ...prev, persona: pid } : null);
+            setSelectedBotForConfig((prev) => (prev ? { ...prev, persona: pid } : null));
           }}
-          onClone={(b: any) => { handleClone(b); setSelectedBotForConfig(null); }}
-          onDelete={(b: any) => { setDeleteModal({ isOpen: true, bot: b }); setDeleteConfirmation(''); setSelectedBotForConfig(null); }}
-          onViewDetails={(b: any) => { setPreviewBot(b); setSelectedBotForConfig(null); }}
+          onClone={(b: any) => {
+            handleClone(b);
+            setSelectedBotForConfig(null);
+          }}
+          onDelete={(b: any) => {
+            setDeleteModal({ isOpen: true, bot: b });
+            setDeleteConfirmation('');
+            setSelectedBotForConfig(null);
+          }}
+          onViewDetails={(b: any) => {
+            setPreviewBot(b);
+            setSelectedBotForConfig(null);
+          }}
         />
       )}
 
       {/* Create Bot Wizard Modal */}
-      < Modal
+      <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Bot"
@@ -503,17 +539,22 @@ const BotsPage: React.FC = () => {
           llmProfiles={llmProfiles}
           defaultLlmConfigured={defaultLlmConfigured}
         />
-      </Modal >
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      < Modal
+      <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}
+        onClose={() => {
+          setDeleteModal({ isOpen: false, bot: null });
+          setDeleteConfirmation('');
+        }}
         title="Delete Bot"
         size="sm"
       >
         <div className="space-y-4">
-          <p>Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?</p>
+          <p>
+            Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?
+          </p>
           <p className="text-sm text-base-content/60">This action cannot be undone.</p>
 
           <div className="form-control w-full">
@@ -532,22 +573,40 @@ const BotsPage: React.FC = () => {
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => { setDeleteModal({ isOpen: false, bot: null }); setDeleteConfirmation(''); }}>Cancel</button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                setDeleteModal({ isOpen: false, bot: null });
+                setDeleteConfirmation('');
+              }}
+            >
+              Cancel
+            </button>
             <button
               className="btn btn-error"
               onClick={handleDelete}
-              disabled={actionLoading === deleteModal.bot?.id || deleteConfirmation !== deleteModal.bot?.name}
+              disabled={
+                actionLoading === deleteModal.bot?.id ||
+                deleteConfirmation !== deleteModal.bot?.name
+              }
             >
-              {actionLoading === deleteModal.bot?.id ? <span className="loading loading-spinner loading-xs" /> : 'Delete'}
+              {actionLoading === deleteModal.bot?.id ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                'Delete'
+              )}
             </button>
           </div>
         </div>
-      </Modal >
+      </Modal>
 
       {/* Clone Bot Modal */}
       <Modal
         isOpen={cloneModal.isOpen}
-        onClose={() => { setCloneModal({ isOpen: false, bot: null }); setCloneName(''); }}
+        onClose={() => {
+          setCloneModal({ isOpen: false, bot: null });
+          setCloneName('');
+        }}
         title="Clone Bot"
         size="sm"
       >
@@ -567,20 +626,32 @@ const BotsPage: React.FC = () => {
             />
           </div>
           <div className="flex justify-end gap-2 mt-6">
-            <button className="btn btn-ghost" onClick={() => { setCloneModal({ isOpen: false, bot: null }); setCloneName(''); }}>Cancel</button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                setCloneModal({ isOpen: false, bot: null });
+                setCloneName('');
+              }}
+            >
+              Cancel
+            </button>
             <button
               className="btn btn-primary"
               onClick={handleCloneSubmit}
               disabled={actionLoading === 'clone' || !cloneName.trim()}
             >
-              {actionLoading === 'clone' ? <span className="loading loading-spinner loading-xs" /> : 'Clone'}
+              {actionLoading === 'clone' ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                'Clone'
+              )}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* Preview Modal */}
-      < Modal
+      <Modal
         isOpen={!!previewBot}
         onClose={() => setPreviewBot(null)}
         title={previewBot?.name || 'Bot Details'}
@@ -597,7 +668,9 @@ const BotsPage: React.FC = () => {
               <div>
                 <h3 className="text-xl font-bold">{previewBot.name}</h3>
                 <p className="text-base-content/60">ID: {previewBot.id}</p>
-                <div className="mt-2">{getStatusBadge(previewBot.status, previewBot.connected)}</div>
+                <div className="mt-2">
+                  {getStatusBadge(previewBot.status, previewBot.connected)}
+                </div>
               </div>
             </div>
 
@@ -610,13 +683,15 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = '/admin/integrations/message'}
+                      onClick={() => (window.location.href = '/admin/integrations/message')}
                       title="Configure Message Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
                     </button>
                   </div>
-                  <p className="text-lg font-bold mb-1">{previewBot.messageProvider || previewBot.provider || 'None'}</p>
+                  <p className="text-lg font-bold mb-1">
+                    {previewBot.messageProvider || previewBot.provider || 'None'}
+                  </p>
                   {/* Display redacted config details if available */}
                   {previewBot.config && previewBot.config[previewBot.provider] && (
                     <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
@@ -638,7 +713,7 @@ const BotsPage: React.FC = () => {
                     </h4>
                     <button
                       className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => window.location.href = '/admin/integrations/llm'}
+                      onClick={() => (window.location.href = '/admin/integrations/llm')}
                       title="Configure LLM Provider"
                     >
                       <Settings className="w-3 h-3" /> Config
@@ -689,9 +764,11 @@ const BotsPage: React.FC = () => {
                     onChange={(e) => {
                       const limit = e.target.value;
                       if (previewBot) {
-                        apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`).then(json => {
-                          setActivityLogs(json.data?.activity || []);
-                        });
+                        apiService
+                          .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
+                          .then((json) => {
+                            setActivityLogs(json.data?.activity || []);
+                          });
                       }
                     }}
                   >
@@ -703,23 +780,35 @@ const BotsPage: React.FC = () => {
               </div>
               <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
                 {activityLogs.length > 0 ? (
-                  activityLogs.filter(log =>
-                    !logFilter ||
-                    log.action?.toLowerCase().includes(logFilter.toLowerCase()) ||
-                    log.details?.toLowerCase().includes(logFilter.toLowerCase())
-                  ).map((log) => (
-                    <div key={log.id} className="mb-1 border-b border-base-content/5 pb-1 last:border-0">
-                      <span className="opacity-50 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                      <span className={
-                        log.metadata?.type === 'RUNTIME' ? 'text-info' :
-                          log.action?.includes('ERROR') || log.result === 'failure' ? 'text-error' :
-                            'text-base-content'
-                      }>
-                        <span className="font-bold mr-1">[{log.action}]</span>
-                        {log.details}
-                      </span>
-                    </div>
-                  ))
+                  activityLogs
+                    .filter(
+                      (log) =>
+                        !logFilter ||
+                        log.action?.toLowerCase().includes(logFilter.toLowerCase()) ||
+                        log.details?.toLowerCase().includes(logFilter.toLowerCase())
+                    )
+                    .map((log) => (
+                      <div
+                        key={log.id}
+                        className="mb-1 border-b border-base-content/5 pb-1 last:border-0"
+                      >
+                        <span className="opacity-50 mr-2">
+                          [{new Date(log.timestamp).toLocaleTimeString()}]
+                        </span>
+                        <span
+                          className={
+                            log.metadata?.type === 'RUNTIME'
+                              ? 'text-info'
+                              : log.action?.includes('ERROR') || log.result === 'failure'
+                                ? 'text-error'
+                                : 'text-base-content'
+                          }
+                        >
+                          <span className="font-bold mr-1">[{log.action}]</span>
+                          {log.details}
+                        </span>
+                      </div>
+                    ))
                 ) : (
                   <div className="text-center opacity-50 py-12 flex flex-col items-center">
                     <Activity className="w-8 h-8 mb-2 opacity-20" />
@@ -743,16 +832,21 @@ const BotsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => window.location.href = '/admin/integrations/llm'}>
+              <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => (window.location.href = '/admin/integrations/llm')}
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Configure Providers
               </button>
             </div>
           </div>
         )}
-      </Modal >
-    </div >
+      </Modal>
+    </div>
   );
 };
 
