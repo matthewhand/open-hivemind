@@ -190,7 +190,7 @@ const SettingsSecurity: React.FC = () => {
               </label>
             </div>
 
-            <div className="form-control">
+            <div className={`form-control ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
                 <span className="label-text text-sm font-medium">Time Window (seconds)</span>
               </label>
@@ -205,7 +205,7 @@ const SettingsSecurity: React.FC = () => {
               />
             </div>
 
-            <div className="form-control">
+            <div className={`form-control ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
                 <span className="label-text text-sm font-medium">Max Requests per Window</span>
               </label>
