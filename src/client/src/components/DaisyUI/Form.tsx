@@ -442,6 +442,7 @@ export const Form: React.FC<FormProps> = ({
               <button
                 type="button"
                 className="btn btn-ghost btn-sm text-error"
+                aria-label="Remove item"
                 onClick={() => {
                   const newPairs = { ...pairs };
                   delete newPairs[key];
