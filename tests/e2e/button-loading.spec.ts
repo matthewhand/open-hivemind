@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
 import path from 'path';
+import { expect, test } from '@playwright/test';
 
 test('Check button loading UI visually - AFTER', async ({ page }) => {
   const filePath = path.resolve(process.cwd(), 'src/client/button-mockup.html');
