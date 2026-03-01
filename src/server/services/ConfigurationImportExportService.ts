@@ -171,7 +171,6 @@ export class ConfigurationImportExportService {
 
       // Include audit logs if requested
       if (options.includeAuditLogs) {
-<<<<<<< Updated upstream
         const auditLogs: any[] = [];
         const configIdsToFetch = configs.map(c => c.id).filter(Boolean) as number[];
         if (configIdsToFetch.length > 0) {
@@ -183,14 +182,6 @@ export class ConfigurationImportExportService {
             }
           }
         }
-=======
-        const auditPromises = configs
-          .filter(c => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationAudit(config.id as number));
-        const logsNested = await Promise.all(auditPromises);
-        const auditLogs = logsNested.flat();
-
->>>>>>> Stashed changes
         exportData.auditLogs = auditLogs;
       }
 

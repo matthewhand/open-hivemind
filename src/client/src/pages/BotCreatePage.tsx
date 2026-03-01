@@ -255,7 +255,7 @@ const BotCreatePage: React.FC = () => {
                       <span className="label-text font-medium">
                         LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
                       </span>
-                      <a href="/admin/integrations/llm" target="_blank" className="link link-primary text-xs">Manage Providers</a>
+                      <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="link link-primary text-xs">Manage Providers</a>
                     </label>
                     <Select
                       value={formData.llmProvider}

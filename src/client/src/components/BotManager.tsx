@@ -391,7 +391,7 @@ const BotManager: React.FC = () => {
             {!defaultLlmConfigured && (
               <div className="alert alert-warning mt-3">
                 <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
-                <a className="btn btn-xs btn-outline ml-auto" href="/admin/integrations/llm" target="_blank" rel="noreferrer">
+                <a className="btn btn-xs btn-outline ml-auto" href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer">
                   Configure LLM
                 </a>
               </div>

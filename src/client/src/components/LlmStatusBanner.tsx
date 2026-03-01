@@ -30,7 +30,7 @@ const LlmStatusBanner: React.FC = () => {
         className="btn btn-sm btn-outline"
         href="/admin/integrations/llm"
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
       >
         Configure LLM
       </a>
