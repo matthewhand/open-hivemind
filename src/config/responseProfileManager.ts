@@ -68,9 +68,23 @@ export const loadResponseProfiles = (): ResponseProfile[] => {
     const userProfiles = parsed as ResponseProfile[];
     const result: ResponseProfile[] = [];
 
+    const builtInKeys = new Set(BUILT_IN_PROFILES.map(b => b.key));
+
+    const builtInUserVersions: Record<string, ResponseProfile> = {};
+    const otherUserProfiles: ResponseProfile[] = [];
+
+    // Single pass through user profiles to separate customized built-ins and custom profiles
+    for (const profile of userProfiles) {
+      if (builtInKeys.has(profile.key)) {
+        builtInUserVersions[profile.key] = profile;
+      } else {
+        otherUserProfiles.push(profile);
+      }
+    }
+
     // Add built-ins first
     for (const builtIn of BUILT_IN_PROFILES) {
-      const userVersion = userProfiles.find(p => p.key === builtIn.key);
+      const userVersion = builtInUserVersions[builtIn.key];
       if (userVersion) {
         // Allow customization of built-in but mark it
         result.push({ ...userVersion, isBuiltIn: true });
@@ -80,10 +94,8 @@ export const loadResponseProfiles = (): ResponseProfile[] => {
     }
 
     // Add user profiles (non-built-in)
-    for (const profile of userProfiles) {
-      if (!BUILT_IN_PROFILES.some(b => b.key === profile.key)) {
-        result.push({ ...profile, isBuiltIn: false });
-      }
+    for (const profile of otherUserProfiles) {
+      result.push({ ...profile, isBuiltIn: false });
     }
 
     return result;
