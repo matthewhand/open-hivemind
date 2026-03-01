@@ -55,6 +55,9 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     return this.mattermostService.getBotNames();
   }
 
+  /**
+   * Retrieves the current list of bots.
+   */
   async getBots() {
     const status = await this.getStatus();
     return status.bots;
