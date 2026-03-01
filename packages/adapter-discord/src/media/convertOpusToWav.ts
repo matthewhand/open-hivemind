@@ -11,6 +11,12 @@ const execFilePromise = util.promisify(execFile);
 // Check if ffmpeg is available
 let ffmpegAvailable: boolean | null = null;
 
+/**
+ * Checks if the ffmpeg executable is available in the system path.
+ * Caches the result to avoid repeated child process spawning.
+ *
+ * @returns {Promise<boolean>} True if ffmpeg is available, false otherwise.
+ */
 async function checkFfmpegAvailable(): Promise<boolean> {
   if (ffmpegAvailable !== null) {
     return ffmpegAvailable;
@@ -42,7 +48,7 @@ export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): P
     if (!isFfmpegAvailable) {
       throw ErrorUtils.createError(
         'FFmpeg is not available. Voice features require FFmpeg to be installed. ' +
-          'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
+        'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
         'configuration' as any,
         'DISCORD_FFMPEG_UNAVAILABLE',
         503,
