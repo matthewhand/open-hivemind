@@ -72,6 +72,7 @@ export class AnomalyDetectionService extends EventEmitter {
 
     try {
       const dbManager = DatabaseManager.getInstance();
+      const storePromises: Promise<void>[] = [];
 
       for (const [metric, window] of this.dataWindows.entries()) {
         if (window.length < this.config.minDataPoints) {
@@ -88,7 +89,11 @@ export class AnomalyDetectionService extends EventEmitter {
           this.emit('anomalyDetected', anomaly);
 
           // Store in database
-          await dbManager.storeAnomaly(anomaly);
+          storePromises.push(
+            dbManager.storeAnomaly(anomaly).catch((err) => {
+              debug('Failed to store anomaly:', err);
+            })
+          );
 
           // Broadcast via WebSocket
           const wsService = WebSocketService.getInstance();
@@ -116,6 +121,8 @@ export class AnomalyDetectionService extends EventEmitter {
           debug(`Anomaly detected in ${metric}: z-score ${zScore.toFixed(2)}`);
         }
       }
+
+      await Promise.all(storePromises);
     } finally {
       this.isDetecting = false;
     }
