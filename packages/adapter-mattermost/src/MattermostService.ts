@@ -219,7 +219,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
@@ -315,6 +315,13 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
+  /**
+   * Sends a public announcement message to a specific channel via all configured Mattermost bots.
+   *
+   * @param channelId The ID of the channel to send the announcement to.
+   * @param announcement The announcement payload or string message.
+   * @returns A Promise that resolves when the announcement process completes.
+   */
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     const text =
       typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
@@ -446,7 +453,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
