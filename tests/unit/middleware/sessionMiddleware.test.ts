@@ -1,6 +1,9 @@
 import { destroySession } from '../../../src/middleware/sessionMiddleware';
 import { Request } from 'express';
 
+/**
+ * Unit tests for the destroySession utility function.
+ */
 describe('destroySession', () => {
   it('should resolve immediately if req.session does not exist', async () => {
     const req = {} as Request;
