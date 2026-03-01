@@ -12,29 +12,10 @@ interface BotChatBubblesProps {
     messages: Message[];
     botName?: string;
     loading?: boolean;
-    isTyping?: boolean;
 }
 
-const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false, isTyping = false }) => {
-    if (loading) {
-        return (
-            <div className="flex flex-col gap-4 p-4">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className={`chat ${i % 2 === 0 ? 'chat-start' : 'chat-end'}`}>
-                        <div className="chat-header mb-1">
-                            <div className="skeleton h-4 w-20"></div>
-                        </div>
-                        <div className="chat-bubble skeleton h-12 w-48"></div>
-                        <div className="chat-footer opacity-50 mt-1">
-                            <div className="skeleton h-3 w-12"></div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    if (messages.length === 0) {
+const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false }) => {
+    if (messages.length === 0 && !loading) {
         return (
             <div className="text-center p-8 text-neutral-content/50">
                 <p>No chat history available.</p>
@@ -43,7 +24,23 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
     }
 
     return (
-        <div className="flex flex-col gap-2 p-4 max-h-[600px] overflow-y-auto">
+        <div className="flex flex-col gap-2 p-4 max-h-[600px] overflow-y-auto" aria-live="polite">
+            {messages.length === 0 && loading && (
+                <div className="flex flex-col gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={`init-skeleton-${i}`} className={`chat ${i % 2 === 0 ? 'chat-start' : 'chat-end'}`} aria-hidden="true">
+                            <div className="chat-header mb-1">
+                                <div className="skeleton h-4 w-20"></div>
+                            </div>
+                            <div className="chat-bubble skeleton h-12 w-48"></div>
+                            <div className="chat-footer opacity-50 mt-1">
+                                <div className="skeleton h-3 w-12"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {messages.map((msg, index) => {
                 const isBot = msg.role === 'assistant' || msg.sender === botName;
                 const align = isBot ? 'chat-start' : 'chat-end';
@@ -67,19 +64,15 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
                 );
             })}
 
-            {isTyping && (
-                <div className="chat chat-start">
-                    <div className="chat-image avatar">
-                        <div className="w-10 rounded-full">
-                            <div className="avatar placeholder">
-                                <div className="bg-secondary text-secondary-content rounded-full w-10">
-                                    <span className="text-xs">🤖</span>
-                                </div>
-                            </div>
-                        </div>
+            {messages.length > 0 && loading && (
+                <div className="chat chat-start" aria-label="Bot is typing">
+                    <div className="chat-header mb-1">
+                        {botName}
                     </div>
-                    <div className="chat-bubble chat-bubble-secondary">
-                        <span className="loading loading-dots loading-sm"></span>
+                    <div className="chat-bubble chat-bubble-primary skeleton h-12 w-16 opacity-70 flex items-center justify-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
                     </div>
                 </div>
             )}
