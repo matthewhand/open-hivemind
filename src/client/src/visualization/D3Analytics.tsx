@@ -254,7 +254,17 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .range([0, innerHeight])
       .padding(0.05);
 
-    const colorScale = d3.scaleSequential(d3.interpolateInferno)
+    let interpolator = d3.interpolateInferno;
+    switch (colorScheme) {
+      case 'viridis': interpolator = d3.interpolateViridis; break;
+      case 'warm': interpolator = d3.interpolateWarm; break;
+      case 'cool': interpolator = d3.interpolateCool; break;
+      case 'category10':
+      default:
+        interpolator = d3.interpolateInferno; break;
+    }
+
+    const colorScale = d3.scaleSequential(interpolator)
       .domain([0, 100]);
 
     // Add cells
@@ -292,7 +302,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
 
   // Tooltip functions
   const showTooltip = (event: MouseEvent, data: DataPoint) => {
-    if (!tooltipRef.current) {return;}
+    if (!tooltipRef.current) { return; }
 
     const tooltip = d3.select(tooltipRef.current);
     tooltip.style('opacity', 1)
@@ -315,7 +325,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
 
   // Chart rendering
   useEffect(() => {
-    if (!svgRef.current) {return;}
+    if (!svgRef.current) { return; }
 
     const svg = d3.select(svgRef.current);
     svg.attr('width', width).attr('height', height);
@@ -323,20 +333,20 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
     let data: DataPoint[] | null = null;
 
     switch (chartType) {
-    case 'line':
-      data = generateSampleData();
-      if (data) {createLineChart(data, svg);}
-      break;
-    case 'bar':
-      data = generateSampleData();
-      if (data) {createBarChart(data, svg);}
-      break;
-    case 'heatmap':
-      createHeatmap(svg);
-      break;
-    default:
-      data = generateSampleData();
-      if (data) {createLineChart(data, svg);}
+      case 'line':
+        data = generateSampleData();
+        if (data) { createLineChart(data, svg); }
+        break;
+      case 'bar':
+        data = generateSampleData();
+        if (data) { createBarChart(data, svg); }
+        break;
+      case 'heatmap':
+        createHeatmap(svg);
+        break;
+      default:
+        data = generateSampleData();
+        if (data) { createLineChart(data, svg); }
     }
 
     setIsLoading(false);
