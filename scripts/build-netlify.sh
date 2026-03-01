@@ -36,6 +36,9 @@ cat <<EOF > dist/client/_headers
   X-XSS-Protection: 1; mode=block
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+
+/api/*
+  Access-Control-Allow-Origin: *
 EOF
 
 # 5. Compiling Serverless Function
