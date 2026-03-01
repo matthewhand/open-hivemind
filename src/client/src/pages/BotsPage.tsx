@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info, Search } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
@@ -101,15 +101,19 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
-  const filteredBots = bots.filter(bot => {
+
+  // ⚡ Bolt Optimization: Memoize filteredBots to prevent O(N) filtering on every render
+  const filteredBots = useMemo(() => {
+    if (!searchQuery) return bots;
     const q = searchQuery.toLowerCase();
-    return (
+    return bots.filter(bot => (
       bot.name.toLowerCase().includes(q) ||
       (bot.provider || '').toLowerCase().includes(q) ||
       ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
       (bot.llmProvider || '').toLowerCase().includes(q)
-    );
-  });
+    ));
+  }, [bots, searchQuery]);
+
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
