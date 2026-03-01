@@ -65,137 +65,6 @@ textarea {
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-
-  .glass-dark {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .glass-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Gradient text utilities */
-  .text-gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--p)) 0%, hsl(var(--s)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--a)) 0%, hsl(var(--p)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-warm {
-    background: linear-gradient(135deg, hsl(var(--wa)) 0%, hsl(var(--er)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Accent divider with shimmer */
-  .divider-accent {
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        hsl(var(--p) / 0.5) 20%,
-        hsl(var(--s) / 0.8) 50%,
-        hsl(var(--p) / 0.5) 80%,
-        transparent 100%);
-    border: none;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .divider-accent::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: shimmer 3s infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      left: -100%;
-    }
-
-    100% {
-      left: 100%;
-    }
-  }
-
-  /* Glow effects */
-  .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--p) / 0.4), 0 0 40px hsl(var(--p) / 0.2);
-  }
-
-  .glow-accent {
-    box-shadow: 0 0 20px hsl(var(--a) / 0.4), 0 0 40px hsl(var(--a) / 0.2);
-  }
-
-  .glow-success {
-    box-shadow: 0 0 20px hsl(var(--su) / 0.4), 0 0 40px hsl(var(--su) / 0.2);
-  }
-
-  /* Premium border gradient */
-  .border-gradient {
-    position: relative;
-    border: none !important;
-  }
-
-  .border-gradient::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, hsl(var(--p) / 0.5), hsl(var(--s) / 0.3), hsl(var(--a) / 0.2));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  /* Section title with accent */
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .section-title::before {
-    content: '';
-    width: 4px;
-    height: 1.5em;
-    background: linear-gradient(180deg, hsl(var(--p)), hsl(var(--s)));
-    border-radius: 2px;
-  }
-
-  /* Subtle noise texture overlay */
-  .texture-noise::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0.015;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-  }
 }
 
 /* ============================================
@@ -320,41 +189,6 @@ textarea {
 
 .btn:active {
   transform: translateY(0);
-}
-
-/* ============================================
-   Page Animations
-   ============================================ */
-.animate-on-load {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.stagger-1 {
-  animation-delay: 0.1s;
-}
-
-.stagger-2 {
-  animation-delay: 0.2s;
-}
-
-.stagger-3 {
-  animation-delay: 0.3s;
-}
-
-.stagger-4 {
-  animation-delay: 0.4s;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ============================================
@@ -674,13 +508,6 @@ textarea {
   50% {
     opacity: 0.5;
   }
-}
-
-/* ============================================
-   Header Gradient
-   ============================================ */
-.header-gradient {
-  background: linear-gradient(135deg, hsl(var(--p)) 0%, hsl(var(--s)) 100%);
 }
 
 /* ============================================
