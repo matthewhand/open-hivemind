@@ -10,6 +10,8 @@ interface MessagingConfig {
   unsolicitedUnaddressed: boolean;
   baseChance: number;
   graceWindowMs: number;
+  /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
+  addUserHint: boolean;
 }
 
 const SettingsMessaging: React.FC = () => {
@@ -20,6 +22,7 @@ const SettingsMessaging: React.FC = () => {
     unsolicitedUnaddressed: false,
     baseChance: 5,
     graceWindowMs: 300000,
+    addUserHint: false,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -28,16 +31,17 @@ const SettingsMessaging: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/messaging');
+      const response = await fetch('/api/config/global');
       if (!response.ok) {
-        // If endpoint doesn't exist, show env var notice
         setAlert({
           type: 'warning',
           message: 'Messaging config API not available. Settings shown are defaults. Configure via environment variables.',
         });
         return;
       }
-      const data = await response.json();
+      const raw = await response.json();
+      // Global config wraps message settings under message.values
+      const data = raw?.message?.values ?? raw;
 
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
@@ -46,6 +50,7 @@ const SettingsMessaging: React.FC = () => {
         unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
+        addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
       });
     } catch {
       setAlert({
@@ -68,16 +73,19 @@ const SettingsMessaging: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/config/messaging', {
+      const response = await fetch('/api/config/global', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
-          MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
-          MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
-          MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
-          MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
-          MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
+          message: {
+            MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
+            MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+            MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
+            MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
+            MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
+            MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
+            MESSAGE_ADD_USER_HINT: settings.addUserHint,
+          },
         }),
       });
 
@@ -240,6 +248,30 @@ const SettingsMessaging: React.FC = () => {
           </div>
         </div>
 
+        {/* Context & Additions */}
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-info rounded-full"></span>
+            Context &amp; Additions
+          </h6>
+
+          <div className="form-control">
+            <label className="label cursor-pointer py-2">
+              <div>
+                <span className="label-text font-medium">Add User Hint</span>
+                <p className="text-xs text-base-content/60 mt-1">
+                  Inject the original user's identity when the bot is mentioned (MESSAGE_ADD_USER_HINT)
+                </p>
+              </div>
+              <Toggle
+                checked={settings.addUserHint}
+                onChange={(e) => handleChange('addUserHint', e.target.checked)}
+                color="info"
+              />
+            </label>
+          </div>
+        </div>
+
         {/* Probability */}
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
@@ -322,6 +354,11 @@ const SettingsMessaging: React.FC = () => {
                   <td>Grace Window</td>
                   <td>MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS</td>
                   <td>{settings.graceWindowMs}ms</td>
+                </tr>
+                <tr>
+                  <td>Add User Hint</td>
+                  <td>MESSAGE_ADD_USER_HINT</td>
+                  <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
                 </tr>
               </tbody>
             </table>
