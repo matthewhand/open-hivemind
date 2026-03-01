@@ -329,19 +329,22 @@ router.get('/sources', async (req, res) => {
 
     if (fs.existsSync(configDir)) {
       const files = await fs.promises.readdir(configDir);
-      for (const file of files) {
-        if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
+      const statPromises = files
+        .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
+        .map(async (file) => {
           const filePath = path.join(configDir, file);
           const stats = await fs.promises.stat(filePath);
-          configFiles.push({
+          return {
             name: file,
             path: filePath,
             size: stats.size,
             modified: stats.mtime,
             type: path.extname(file).slice(1),
-          });
-        }
-      }
+          };
+        });
+
+      const fileStats = await Promise.all(statPromises);
+      configFiles.push(...fileStats);
     }
 
     return res.json({
