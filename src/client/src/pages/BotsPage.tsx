@@ -11,7 +11,7 @@ import {
   Search,
   Settings,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
@@ -117,7 +117,10 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
-  const filteredBots = bots.filter((bot) => {
+  /**
+   * Memoized list of bots filtered by searchQuery, preventing O(N) re-computation on every render.
+   */
+  const filteredBots = useMemo(() => bots.filter((bot) => {
     const q = searchQuery.toLowerCase();
     return (
       bot.name.toLowerCase().includes(q) ||
@@ -125,7 +128,7 @@ const BotsPage: React.FC = () => {
       ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
       (bot.llmProvider || '').toLowerCase().includes(q)
     );
-  });
+  }), [bots, searchQuery]);
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
