@@ -17,7 +17,7 @@ function validateTelegramToken(token: string): void {
   if (!TELEGRAM_TOKEN_REGEX.test(token)) {
     throw new Error(
       'Invalid Telegram bot token format. Expected format: <bot_id>:<35+ alphanumeric chars> ' +
-        '(obtain from @BotFather)'
+      '(obtain from @BotFather)'
     );
   }
 }
@@ -81,6 +81,10 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     };
   }
 
+  /**
+   * Retrieves the names of configured Telegram bots.
+   * Currently returns an empty array as names are not indexed.
+   */
   getBotNames() {
     return [];
   }
@@ -110,7 +114,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       } catch (parseErr: any) {
         throw new Error(
           `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
-            `Please fix or remove ${messengersPath} before adding a new bot.`
+          `Please fix or remove ${messengersPath} before adding a new bot.`
         );
       }
     } catch (readErr: any) {
@@ -157,7 +161,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       } catch (parseErr: any) {
         throw new Error(
           `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
-            `Please fix or remove ${messengersPath}.`
+          `Please fix or remove ${messengersPath}.`
         );
       }
     } catch (readErr: any) {
