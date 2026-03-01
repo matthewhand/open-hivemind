@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
 
 const debug = Debug('app:mattermost-client');
@@ -48,7 +48,11 @@ export default class MattermostClient {
     return this.me?.username;
   }
 
-  public async postMessage(post: { channel: string; text: string; root_id?: string }): Promise<any> {
+  public async postMessage(post: {
+    channel: string;
+    text: string;
+    root_id?: string;
+  }): Promise<any> {
     const response = await this.axios.post('/posts', {
       channel_id: post.channel,
       message: post.text,
@@ -83,8 +87,6 @@ export default class MattermostClient {
 
   public async sendTyping(channelId: string, parentId?: string): Promise<void> {
     // Fire and forget typing event
-    this.axios
-      .post(`/channels/${channelId}/typing`, { parent_id: parentId })
-      .catch(() => {});
+    this.axios.post(`/channels/${channelId}/typing`, { parent_id: parentId }).catch(() => {});
   }
 }

@@ -9,7 +9,7 @@ import { providerRegistry } from '../registries/ProviderRegistry';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
 import { ipWhitelist } from '../server/middleware/security';
 import type { IBotInfo } from '../types/botInfo';
-import { IMessageProvider } from '../types/IProvider';
+import { type IMessageProvider } from '../types/IProvider';
 import { serializeSchema } from '../utils/schemaSerializer';
 
 const debug = Debug('app:admin');

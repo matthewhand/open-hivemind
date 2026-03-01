@@ -4,6 +4,7 @@ import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
+import OfflineBanner from '../OfflineBanner';
 
 interface NavItem {
   id: string;
@@ -74,6 +75,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       <div
         className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'}`}
       >
+        <OfflineBanner />
         {/* Demo Mode Banner - Full width relative to content wrapper */}
         <DemoModeBanner />
 
