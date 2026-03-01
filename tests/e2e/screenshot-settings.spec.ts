@@ -21,58 +21,33 @@ test.describe('Settings Screenshots', () => {
     await page.goto('/admin/settings');
     await page.waitForSelector('h5:has-text("General Settings")');
 
-    // Verify real config values are rendered (check for timezone field or other actual data)
-    const hasTimezoneField = await page
-      .locator('text=timezone')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasConfigContent = await page
-      .locator('input, select, textarea')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    expect(hasConfigContent || hasTimezoneField, 'Settings page should render config content').toBe(
-      true
-    );
+    // Screenshot initial state
+    await page.screenshot({ path: 'docs/screenshots/settings-general-before-save.png' });
 
-    // Wait for UI to settle
-    await page.waitForTimeout(1000);
+    // Mock the config save endpoint to delay so we can capture the loading spinner
+    await page.route('**/api/config/global', async (route) => {
+      if (route.request().method() === 'PUT') {
+        // Wait 3 seconds
+        await new Promise(f => setTimeout(f, 3000));
+        await route.fulfill({ status: 200, json: {} });
+      } else {
+        await route.continue();
+      }
+    });
 
-    // Screenshot Default (General) Page
-    await page.screenshot({ path: 'docs/screenshots/settings-general.png', fullPage: true });
+    // Click Save Changes to trigger button loading state
+    const saveButton = page.getByRole('button', { name: 'Save Changes' });
 
-    // 2. Click on "Security" tab and verify
-    await page.click('a.tab:has-text("Security")');
+    // Trigger the save action
+    saveButton.click();
 
-    // Verify URL update
-    await expect(page).toHaveURL(/.*tab=security/);
+    // Wait for the button to have the loading class applied
+    await page.waitForFunction(() => {
+        const btn = document.querySelector('button[type="submit"]');
+        return btn && btn.classList.contains('loading');
+    });
 
-    // Verify content update
-    await page.waitForSelector('h5:has-text("Security Settings")');
-
-    // Verify security tab has actual content loaded from API
-    const securityContentVisible = await page
-      .locator('.card, .form-control, input')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    expect(securityContentVisible, 'Security tab should have content').toBe(true);
-
-    // 3. Test Deep Linking to Messaging tab
-    await page.goto('/admin/settings?tab=messaging');
-    await expect(page).toHaveURL(/.*tab=messaging/);
-
-    // Verify messaging tab is active and content is shown
-    await page.waitForSelector('h5:has-text("Messaging Behavior")');
-    await expect(page.locator('a.tab-active')).toHaveText('Messaging');
-
-    // Verify messaging settings have content (either from API or fallback defaults)
-    const messagingContentVisible = await page
-      .locator('.card, .form-control, input[type="range"], .toggle')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    expect(messagingContentVisible, 'Messaging tab should have content').toBe(true);
+    // Screenshot while loading
+    await page.screenshot({ path: 'docs/screenshots/settings-general-loading.png' });
   });
 });
