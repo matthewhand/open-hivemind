@@ -76,6 +76,10 @@ export class DatabaseCommandHandler implements CommandHandler {
     dbLogger.info(chalk.green('✓ Database initialized successfully'));
   }
 
+  /**
+   * Retrieves and displays statistics about the current database state,
+   * including message counts and provider distributions.
+   */
   private async showDatabaseStats(): Promise<void> {
     if (!this.dbManager.isConfigured()) {
       dbLogger.error(chalk.yellow('Database is not configured; statistics are unavailable.'));
@@ -91,13 +95,13 @@ export class DatabaseCommandHandler implements CommandHandler {
       const stats = await this.dbManager.getStats();
 
       dbLogger.info(chalk.blue('Database Statistics:'));
-      dbLogger.info(`  Total messages: ${chalk.green(stats.totalMessages)}`);
-      dbLogger.info(`  Total channels: ${chalk.green(stats.totalChannels)}`);
-      dbLogger.info(`  Total authors: ${chalk.green(stats.totalAuthors)}`);
+      dbLogger.info(`  Total messages: ${chalk.green(stats.totalMessages.toString())}`);
+      dbLogger.info(`  Total channels: ${chalk.green(stats.totalChannels.toString())}`);
+      dbLogger.info(`  Total authors: ${chalk.green(stats.totalAuthors.toString())}`);
 
       dbLogger.info('\n  Messages by provider:');
       Object.entries(stats.providers).forEach(([provider, count]) => {
-        dbLogger.info(`    ${provider}: ${chalk.green(count)}`);
+        dbLogger.info(`    ${provider}: ${chalk.green(count.toString())}`);
       });
     } catch (error) {
       dbLogger.error(chalk.red('Error getting database stats:'), error);
