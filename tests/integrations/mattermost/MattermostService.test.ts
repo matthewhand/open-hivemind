@@ -1,13 +1,21 @@
 import 'reflect-metadata';
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 import { container } from 'tsyringe';
+import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 import { StartupGreetingService } from '@src/services/StartupGreetingService';
+
+jest.mock('tsyringe', () => ({
+  container: {
+    resolve: jest.fn().mockImplementation((token) => new token()),
+    register: jest.fn(),
+  },
+  injectable: jest.fn(),
+  singleton: jest.fn(),
+}));
 
 // Mock StartupGreetingService
 class MockStartupGreetingService {
   emit() {}
 }
-container.register(StartupGreetingService, { useClass: MockStartupGreetingService });
 
 jest.mock('@src/integrations/mattermost/mattermostClient', () => {
   return class MockMattermostClient {
@@ -174,9 +182,24 @@ jest.mock('@hivemind/adapter-mattermost', () => {
     }
   }
 
+  return MockMattermostService;
+});
+
 // Mock the dependencies FIRST before importing/using them
+const mockClient2 = {
+  connect: jest.fn().mockResolvedValue(undefined),
+  postMessage: jest.fn().mockResolvedValue({ id: 'post123' }),
+  getChannelPosts: jest.fn().mockResolvedValue([]),
+  getUser: jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' }),
+  isConnected: jest.fn().mockReturnValue(true),
+  disconnect: jest.fn(),
+  getCurrentUserId: jest.fn().mockReturnValue('user123'),
+  getCurrentUsername: jest.fn().mockReturnValue('testuser'),
+  getChannelInfo: jest.fn().mockResolvedValue(null),
+  sendTyping: jest.fn().mockResolvedValue(undefined),
+};
 jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
-  const MockClient = jest.fn(() => mockClient);
+  const MockClient = jest.fn(() => mockClient2);
   return {
     MattermostClient: MockClient,
     default: MockClient,
@@ -194,7 +217,6 @@ jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
 // The original test mocked `@hivemind/adapter-mattermost` which might not be used by the relative import.
 
 // To fix "getaddrinfo ENOTFOUND", we must ensure that `new MattermostClient(...)` returns our mock.
-}
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
   getInstance: jest.fn(() => ({
@@ -216,16 +238,7 @@ jest.mock('@src/config/BotConfigurationManager', () => ({
 jest.mock('@src/services/StartupGreetingService', () => ({
   StartupGreetingService: class MockStartupGreetingService {
     emit() {}
-  }
-}));
-
-// Mock container to resolve the mocked StartupGreetingService
-jest.mock('tsyringe', () => ({
-  container: {
-    resolve: jest.fn().mockImplementation((token) => new token())
   },
-  injectable: jest.fn(),
-  singleton: jest.fn()
 }));
 
 describe('MattermostService', () => {

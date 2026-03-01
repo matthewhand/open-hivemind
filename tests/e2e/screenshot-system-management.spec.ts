@@ -30,9 +30,9 @@ test.describe('System Management Page Screenshots', () => {
                 disk: 90,
                 responseTime: 500,
               },
-            }
-          }
-        }
+            },
+          },
+        },
       });
     });
 
@@ -54,8 +54,8 @@ test.describe('System Management Page Screenshots', () => {
             description: 'Manual backup before update',
             size: 4194304, // 4MB
             createdAt: new Date('2023-10-24T15:30:00Z').toISOString(),
-          }
-        ]
+          },
+        ],
       });
     });
 
@@ -99,7 +99,7 @@ test.describe('System Management Page Screenshots', () => {
             },
           ],
           timestamp: new Date().toISOString(),
-        }
+        },
       });
     });
 
@@ -121,10 +121,10 @@ test.describe('System Management Page Screenshots', () => {
               connected: true,
               stats: {
                 poolSize: 10,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       });
     });
 
@@ -138,8 +138,8 @@ test.describe('System Management Page Screenshots', () => {
             LOG_LEVEL: 'info',
             API_PORT: '3000',
             DB_HOST: 'postgres-primary',
-          }
-        }
+          },
+        },
       });
     });
 
@@ -157,7 +157,7 @@ test.describe('System Management Page Screenshots', () => {
       route.fulfill({ status: 200, json: { enabled: false } })
     );
     await page.route('**/api/csrf-token', async (route) =>
-        route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
+      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
     // Navigate to System Management page
