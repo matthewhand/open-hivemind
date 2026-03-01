@@ -26,6 +26,11 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     return ['MATTERMOST_TOKEN'];
   }
 
+  /**
+   * Retrieves the status of configured Mattermost bots.
+   * Note: This currently simulates connection status and should be updated
+   * to perform a real API check in the future.
+   */
   async getStatus() {
     const mattermost = this.mattermostService;
     const botNames = mattermost.getBotNames();
