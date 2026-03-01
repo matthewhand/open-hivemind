@@ -117,50 +117,50 @@ export const IntelligentDashboard: React.FC = () => {
   const [confidenceLevel, setConfidenceLevel] = useState(0.75);
 
   const fetchData = useCallback(async () => {
-      if (!token) return;
-      setIsLoading(true);
-      try {
-          const headers = { 'Authorization': `Bearer ${token}` };
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const headers = { 'Authorization': `Bearer ${token}` };
 
-          const [configRes, statsRes, segmentsRes, patternsRes, recsRes] = await Promise.all([
-              fetch('/api/dashboard/api/ai/config', { headers }),
-              fetch('/api/dashboard/api/ai/stats', { headers }),
-              fetch('/api/dashboard/api/ai/segments', { headers }),
-              fetch('/api/dashboard/api/ai/patterns', { headers }),
-              fetch('/api/dashboard/api/ai/recommendations', { headers })
-          ]);
+      const [configRes, statsRes, segmentsRes, patternsRes, recsRes] = await Promise.all([
+        fetch('/api/dashboard/api/ai/config', { headers }),
+        fetch('/api/dashboard/api/ai/stats', { headers }),
+        fetch('/api/dashboard/api/ai/segments', { headers }),
+        fetch('/api/dashboard/api/ai/patterns', { headers }),
+        fetch('/api/dashboard/api/ai/recommendations', { headers })
+      ]);
 
-          if (configRes.ok) setConfig(await configRes.json());
+      if (configRes.ok) setConfig(await configRes.json());
 
-          const stats = statsRes.ok ? await statsRes.json() : {};
-          const segments = segmentsRes.ok ? await segmentsRes.json() : [];
-          const patterns = patternsRes.ok ? await patternsRes.json() : [];
-          const recommendations = recsRes.ok ? await recsRes.json() : [];
+      const stats = statsRes.ok ? await statsRes.json() : {};
+      const segments = segmentsRes.ok ? await segmentsRes.json() : [];
+      const patterns = patternsRes.ok ? await patternsRes.json() : [];
+      const recommendations = recsRes.ok ? await recsRes.json() : [];
 
-          // Determine current segment (simple logic for now, or fetch from backend if endpoint existed)
-          const currentSegment = segments.length > 0 ? segments[0] : null;
+      // Determine current segment (simple logic for now, or fetch from backend if endpoint existed)
+      const currentSegment = segments.length > 0 ? segments[0] : null;
 
-          // Generate personalized widgets based on patterns
-          const personalizedWidgets = patterns
-            .filter((p: BehaviorPattern) => p.confidence > confidenceLevel)
-            .flatMap((p: BehaviorPattern) => p.recommendedWidgets);
+      // Generate personalized widgets based on patterns
+      const personalizedWidgets = patterns
+        .filter((p: BehaviorPattern) => p.confidence > confidenceLevel)
+        .flatMap((p: BehaviorPattern) => p.recommendedWidgets);
 
-          setState(prev => ({
-              ...prev,
-              behaviorPatterns: patterns,
-              recommendations: recommendations,
-              userSegments: segments,
-              currentSegment,
-              personalizedWidgets: [...new Set(personalizedWidgets)] as string[],
-              learningProgress: stats.learningProgress || 0,
-              lastUpdate: new Date()
-          }));
+      setState(prev => ({
+        ...prev,
+        behaviorPatterns: patterns,
+        recommendations: recommendations,
+        userSegments: segments,
+        currentSegment,
+        personalizedWidgets: [...new Set(personalizedWidgets)] as string[],
+        learningProgress: stats.learningProgress || 0,
+        lastUpdate: new Date()
+      }));
 
-      } catch (error) {
-          console.error("Failed to fetch dashboard data", error);
-      } finally {
-          setIsLoading(false);
-      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [token, confidenceLevel]);
 
 
@@ -171,6 +171,10 @@ export const IntelligentDashboard: React.FC = () => {
   }, [config.enabled, token, fetchData]);
 
   const handleRecommendationFeedback = async (recommendationId: string, feedback: 'liked' | 'disliked') => {
+    // Capture previous feedback for rollback
+    const previousFeedback = state.userFeedback[recommendationId];
+
+    // Optimistically update UI immediately
     setState(prev => ({
       ...prev,
       userFeedback: {
@@ -180,28 +184,41 @@ export const IntelligentDashboard: React.FC = () => {
     }));
 
     if (token) {
-        try {
-            await fetch('/api/dashboard/api/ai/feedback', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ recommendationId, feedback })
-            });
-        } catch (e) {
-            console.error("Failed to send feedback", e);
-        }
+      try {
+        await fetch('/api/dashboard/api/ai/feedback', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ recommendationId, feedback })
+        });
+      } catch (e) {
+        console.error("Failed to send feedback, reverting optimistic update", e);
+        // Rollback to previous state on failure
+        setState(prev => ({
+          ...prev,
+          userFeedback: {
+            ...prev.userFeedback,
+            ...(previousFeedback !== undefined
+              ? { [recommendationId]: previousFeedback }
+              : Object.fromEntries(
+                Object.entries(prev.userFeedback).filter(([k]) => k !== recommendationId)
+              )
+            ),
+          },
+        }));
+      }
     }
   };
 
   const applyRecommendation = (recommendation: DashboardRecommendation) => {
     console.log('Applying recommendation:', recommendation);
     // Simulate application or call API
-     setState(prev => ({
-        ...prev,
-        recommendations: prev.recommendations.filter(r => r.id !== recommendation.id),
-      }));
+    setState(prev => ({
+      ...prev,
+      recommendations: prev.recommendations.filter(r => r.id !== recommendation.id),
+    }));
   };
 
   const adjustConfidenceLevel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,14 +230,14 @@ export const IntelligentDashboard: React.FC = () => {
     setConfig(newConfig);
     // Persist config
     if (token) {
-        fetch('/api/dashboard/api/ai/config', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(newConfig)
-        }).catch(console.error);
+      fetch('/api/dashboard/api/ai/config', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newConfig)
+      }).catch(console.error);
     }
   };
 
@@ -250,8 +267,8 @@ export const IntelligentDashboard: React.FC = () => {
       animation="slide-up"
       className="w-full space-y-6"
     >
-       {/* WIP Banner */}
-       <div role="alert" className="alert alert-warning">
+      {/* WIP Banner */}
+      <div role="alert" className="alert alert-warning">
         <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         <span>Warning: This AI Dashboard is currently Work In Progress (WIP). Data shown may be simulated.</span>
       </div>

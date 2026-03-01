@@ -40,7 +40,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   const [favoriteThemes, setFavoriteThemes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
+
   const themeOptions: ThemeOption[] = [
     {
       value: 'light',
@@ -50,7 +50,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       category: 'light',
       colors: {
         primary: '#570df8',
-        secondary: '#f000b8', 
+        secondary: '#f000b8',
         accent: '#37cdbe',
         base100: '#ffffff',
         base200: '#f2f2f2',
@@ -60,13 +60,13 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     {
       value: 'dark',
       label: 'Dark',
-      emoji: '🌙', 
+      emoji: '🌙',
       description: 'Easy on the eyes',
       category: 'dark',
       colors: {
         primary: '#661ae6',
         secondary: '#d926aa',
-        accent: '#1fb2a5',  
+        accent: '#1fb2a5',
         base100: '#2a303c',
         base200: '#242933',
         base300: '#20252e',
@@ -89,7 +89,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     },
     {
       value: 'synthwave',
-      label: 'Synthwave', 
+      label: 'Synthwave',
       emoji: '🌸',
       description: 'Retro 80s aesthetic',
       category: 'colorful',
@@ -110,7 +110,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       category: 'dark',
       colors: {
         primary: '#ff79c6',
-        secondary: '#bd93f9', 
+        secondary: '#bd93f9',
         accent: '#ffb86c',
         base100: '#282a36',
         base200: '#44475a',
@@ -208,7 +208,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     if (savedFavorites) {
       setFavoriteThemes(JSON.parse(savedFavorites));
     }
-    
+
     const savedAutoMode = localStorage.getItem('hivemind-auto-theme');
     if (savedAutoMode === 'true') {
       setIsAutoMode(true);
@@ -223,13 +223,13 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         const newTheme = e.matches ? 'dark' : 'light';
         applyTheme(newTheme);
       };
-      
+
       mediaQuery.addEventListener('change', handleChange);
-      
+
       // Set initial theme
       const initialTheme = mediaQuery.matches ? 'dark' : 'light';
       applyTheme(initialTheme);
-      
+
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
   }, [isAutoMode]);
@@ -261,19 +261,26 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   };
 
   const toggleFavorite = (theme: string) => {
+    const previousFavorites = [...favoriteThemes];
     const newFavorites = favoriteThemes.includes(theme)
       ? favoriteThemes.filter(t => t !== theme)
       : [...favoriteThemes, theme];
-    
+
+    // Optimistically update UI
     setFavoriteThemes(newFavorites);
-    localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
+    try {
+      localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
+    } catch (e) {
+      console.error('Failed to persist favorites, reverting', e);
+      setFavoriteThemes(previousFavorites);
+    }
   };
 
   const toggleAutoMode = () => {
     const newAutoMode = !isAutoMode;
     setIsAutoMode(newAutoMode);
     localStorage.setItem('hivemind-auto-theme', newAutoMode.toString());
-    
+
     if (!newAutoMode) {
       // When disabling auto mode, apply the current theme
       applyTheme(selectedTheme);
@@ -282,9 +289,9 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
 
   const filteredThemes = themeOptions.filter(theme => {
     const matchesSearch = theme.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         theme.description.toLowerCase().includes(searchTerm.toLowerCase());
+      theme.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || theme.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -296,7 +303,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         <button className="btn btn-ghost btn-circle" onClick={() => (document.getElementById('theme-modal') as HTMLDialogElement)?.showModal()}>
           🎨
         </button>
-        
+
         <dialog id="theme-modal" className="modal">
           <div className="modal-box max-w-4xl">
             <h3 className="font-bold text-lg mb-4">🎨 Choose Your Theme</h3>
@@ -327,7 +334,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           {previewTheme && <span className="indicator-item badge badge-xs badge-primary"></span>}
         </div>
       </div>
-      
+
       <div tabIndex={0} className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
         <div className="card-body">
           <ThemeGrid />
@@ -431,11 +438,10 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     return (
       <div className="relative group">
         <div
-          className={`cursor-pointer rounded-lg p-2 border-2 transition-all duration-200 hover:scale-105 ${
-            isSelected
+          className={`cursor-pointer rounded-lg p-2 border-2 transition-all duration-200 hover:scale-105 ${isSelected
               ? 'border-primary shadow-lg scale-105'
               : 'border-base-300 hover:border-primary/50'
-          }`}
+            }`}
           onClick={() => showPreview ? previewThemeChange(theme.value) : confirmThemeChange(theme.value)}
         >
           <div className="text-center">
@@ -446,7 +452,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
                 {theme.description}
               </div>
             )}
-            
+
             {/* Color Palette */}
             <div className="flex justify-center gap-1 mt-1">
               <div
@@ -468,9 +474,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         {/* Favorite Button */}
         {!compact && (
           <button
-            className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${
-              isFav ? 'text-yellow-500' : 'text-base-content/30'
-            } ${isFavorite || 'opacity-0 group-hover:opacity-100'}`}
+            className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-yellow-500' : 'text-base-content/30'
+              } ${isFavorite || 'opacity-0 group-hover:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(theme.value);
