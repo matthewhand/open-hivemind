@@ -68,7 +68,7 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](images/clone-bot-modal.png)
+![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -246,8 +246,8 @@ A reference for developers extending the WebUI.
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
-![System Backups & Export](images/export-page.png)
-![Create Backup Modal](images/create-backup-modal.png)
+![System Backups & Export](screenshots/export-page.png)
+![Create Backup Modal](screenshots/create-backup-modal.png)
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
