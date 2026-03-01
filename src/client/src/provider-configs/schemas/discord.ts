@@ -34,7 +34,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'guildId',
-      label: 'Server ID (Optional)',
+      label: 'Server ID',
       type: 'text',
       required: false,
       description: 'Specific Discord server to connect to (leave empty for all servers)',

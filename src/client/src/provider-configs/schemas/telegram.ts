@@ -22,7 +22,7 @@ export const telegramProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'webhookUrl',
-      label: 'Webhook URL (Optional)',
+      label: 'Webhook URL',
       type: 'url',
       required: false,
       description: 'URL for receiving updates (leave empty for polling)',
