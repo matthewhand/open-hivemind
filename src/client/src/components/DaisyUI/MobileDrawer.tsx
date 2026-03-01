@@ -141,21 +141,21 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
       <div className="drawer-content">
         {/* Hamburger Menu Button */}
-        <div className="navbar bg-base-100 lg:hidden">
+        <div className="navbar bg-base-100 lg:hidden min-w-0">
           <div className="navbar-start">
             <HamburgerMenu
               onClick={toggleDrawer}
               isOpen={isOpen}
-              className="btn-sm"
+              className=""
             />
           </div>
-          <div className="navbar-center">
-            <div className="avatar">
+          <div className="navbar-center truncate flex items-center">
+            <div className="avatar flex-shrink-0">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-primary-content font-bold text-sm">H</span>
               </div>
             </div>
-            <span className="ml-2 text-lg font-bold">Hivemind</span>
+            <span className="ml-2 text-lg font-bold truncate">Hivemind</span>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
             <button
               onClick={closeDrawer}
-              className="btn btn-ghost btn-sm btn-circle"
+              className="btn btn-ghost btn-circle min-h-[44px] min-w-[44px]"
               aria-label="Close navigation"
             >
               ✕
