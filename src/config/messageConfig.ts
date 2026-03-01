@@ -6,6 +6,12 @@ import { RESPONSE_PROFILE_KEY_TYPES, RESPONSE_PROFILE_OVERRIDE_KEYS } from './re
 const debug = Debug('app:messageConfig');
 
 // Utility: safe JSON parse with strict error throwing
+/**
+ * Safely parses a JSON string, throwing a strict error if the result is not a valid JSON object.
+ *
+ * @param input The JSON string to parse.
+ * @returns The parsed JSON object.
+ */
 function strictParseJSON(input: string): Record<string, unknown> {
   try {
     const parsed = JSON.parse(input);
@@ -21,14 +27,14 @@ function strictParseJSON(input: string): Record<string, unknown> {
 
 // Normalization helpers
 function clampBonus(n: number): number {
-  if (Number.isNaN(n)) {return 1.0;}
-  if (n < 0) {return 0.0;}
-  if (n > 2) {return 2.0;}
+  if (Number.isNaN(n)) { return 1.0; }
+  if (n < 0) { return 0.0; }
+  if (n > 2) { return 2.0; }
   return n;
 }
 
 function coercePriority(n: number): number {
-  if (Number.isNaN(n)) {return 0;}
+  if (Number.isNaN(n)) { return 0; }
   const i = Math.trunc(n);
   return i < 0 ? 0 : i;
 }
@@ -48,7 +54,7 @@ function parseCSVMap(input: string): [string, string][] {
 convict.addFormat({
   name: 'channel-bonuses',
   validate: (val: unknown) => {
-    if (val == null) {return;} // allow undefined/null
+    if (val == null) { return; } // allow undefined/null
     if (typeof val === 'string') {
       // If looks like JSON object, validate JSON strictly here to surface errors early
       const s = val.trim();
@@ -80,11 +86,11 @@ convict.addFormat({
     throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
   },
   coerce: (val: unknown) => {
-    if (val == null) {return {};}
+    if (val == null) { return {}; }
     if (typeof val === 'object' && !Array.isArray(val)) {
       const out: Record<string, number> = {};
       for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
-        if (!k) {continue;}
+        if (!k) { continue; }
         out[k] = clampBonus(Number(v));
       }
       return out;
@@ -100,7 +106,7 @@ convict.addFormat({
       }
       const out: Record<string, number> = {};
       for (const [k, vs] of entries) {
-        if (!k) {continue;}
+        if (!k) { continue; }
         const n = clampBonus(Number(vs));
         out[k] = n;
       }
@@ -113,14 +119,14 @@ convict.addFormat({
 convict.addFormat({
   name: 'channel-priorities',
   validate: (val: unknown) => {
-    if (val == null) {return;}
+    if (val == null) { return; }
     if (typeof val === 'string') {
       const s = val.trim();
       if (s.startsWith('{')) {
         const obj = strictParseJSON(s);
         for (const v of Object.values(obj)) {
           const n = Number(v);
-          if (Number.isNaN(n)) {throw new Error('CHANNEL_PRIORITIES values must be numbers');}
+          if (Number.isNaN(n)) { throw new Error('CHANNEL_PRIORITIES values must be numbers'); }
         }
       }
       return; // CSV accepted; detailed checks on coerce
@@ -137,11 +143,11 @@ convict.addFormat({
     throw new Error('CHANNEL_PRIORITIES must be JSON object map or CSV string "chan:priority,..."');
   },
   coerce: (val: unknown) => {
-    if (val == null) {return {};}
+    if (val == null) { return {}; }
     if (typeof val === 'object' && !Array.isArray(val)) {
       const out: Record<string, number> = {};
       for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
-        if (!k) {continue;}
+        if (!k) { continue; }
         out[k] = coercePriority(Number(v));
       }
       return out;
@@ -157,7 +163,7 @@ convict.addFormat({
       }
       const out: Record<string, number> = {};
       for (const [k, vs] of entries) {
-        if (!k) {continue;}
+        if (!k) { continue; }
         const n = coercePriority(Number(vs));
         out[k] = n;
       }
@@ -170,11 +176,11 @@ convict.addFormat({
 const responseProfileKeySet = new Set(RESPONSE_PROFILE_OVERRIDE_KEYS);
 
 function coerceResponseProfileValue(key: string, value: unknown): number | boolean | undefined {
-  if (!responseProfileKeySet.has(key as any)) {return undefined;}
+  if (!responseProfileKeySet.has(key as any)) { return undefined; }
   const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
 
   if (expectedType === 'number') {
-    if (typeof value === 'number') {return value;}
+    if (typeof value === 'number') { return value; }
     if (typeof value === 'string' && value.trim() !== '') {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : undefined;
@@ -183,11 +189,11 @@ function coerceResponseProfileValue(key: string, value: unknown): number | boole
   }
 
   if (expectedType === 'boolean') {
-    if (typeof value === 'boolean') {return value;}
+    if (typeof value === 'boolean') { return value; }
     if (typeof value === 'string') {
       const normalized = value.trim().toLowerCase();
-      if (normalized === 'true') {return true;}
-      if (normalized === 'false') {return false;}
+      if (normalized === 'true') { return true; }
+      if (normalized === 'false') { return false; }
     }
   }
 
@@ -197,8 +203,8 @@ function coerceResponseProfileValue(key: string, value: unknown): number | boole
 convict.addFormat({
   name: 'response-profiles',
   validate: (val: unknown) => {
-    if (val == null) {return;}
-    if (typeof val === 'string' && val.trim() === '') {return;}
+    if (val == null) { return; }
+    if (typeof val === 'string' && val.trim() === '') { return; }
     const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       throw new Error('MESSAGE_RESPONSE_PROFILES must be a JSON object');
@@ -224,8 +230,8 @@ convict.addFormat({
     }
   },
   coerce: (val: unknown) => {
-    if (val == null) {return {};}
-    if (typeof val === 'string' && val.trim() === '') {return {};}
+    if (val == null) { return {}; }
+    if (typeof val === 'string' && val.trim() === '') { return {}; }
     const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return {};
@@ -260,14 +266,14 @@ function normalizeChannelMaps(
 
   // Apply clamps/coercions defensively again (idempotent)
   for (const [k, v] of Object.entries(bonuses || {})) {
-    if (!k) {continue;}
+    if (!k) { continue; }
     outB[k] = clampBonus(Number(v));
     if (knownChannels && knownChannels.length > 0 && !knownChannels.includes(k)) {
       debug('Warning: CHANNEL_BONUSES includes unknown channel id "%s"', k);
     }
   }
   for (const [k, v] of Object.entries(priorities || {})) {
-    if (!k) {continue;}
+    if (!k) { continue; }
     outP[k] = coercePriority(Number(v));
     if (knownChannels && knownChannels.length > 0 && !knownChannels.includes(k)) {
       debug('Warning: CHANNEL_PRIORITIES includes unknown channel id "%s"', k);
@@ -810,7 +816,7 @@ if (typeof process !== 'undefined' && process.env) {
     }
     const out: Record<string, number> = {};
     for (const [k, vs] of entries) {
-      if (!k) {continue;}
+      if (!k) { continue; }
       out[k] = clampBonus(Number(vs));
     }
     (messageConfig as any).set('CHANNEL_BONUSES', out);
@@ -827,7 +833,7 @@ if (typeof process !== 'undefined' && process.env) {
     }
     const out: Record<string, number> = {};
     for (const [k, vs] of entries) {
-      if (!k) {continue;}
+      if (!k) { continue; }
       out[k] = coercePriority(Number(vs));
     }
     (messageConfig as any).set('CHANNEL_PRIORITIES', out);
@@ -838,13 +844,6 @@ if (typeof process !== 'undefined' && process.env) {
 messageConfig.validate({ allowed: 'warn' });
 
 // Second-pass normalization with optional known channel list (none here; providers can supply later)
-// Temporary debug logging; respects ALLOW_CONSOLE in tests
-if (process.env.ALLOW_CONSOLE) {
-  console.log('pre-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  console.log('pre-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
-  const propsPre = (messageConfig as any).getProperties?.();
-  console.log('pre-normalize props keys=', propsPre ? Object.keys(propsPre) : 'no-props');
-}
 const normalized = normalizeChannelMaps(
   (messageConfig as any).get('CHANNEL_BONUSES'),
   (messageConfig as any).get('CHANNEL_PRIORITIES'),
@@ -853,10 +852,6 @@ const normalized = normalizeChannelMaps(
 // Overwrite normalized values back into config
 (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
 (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
-if (process.env.ALLOW_CONSOLE) {
-  console.log('post-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  console.log('post-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
-}
 
 debug('messageConfig loaded, validated, and normalized from %s', configPath);
 
