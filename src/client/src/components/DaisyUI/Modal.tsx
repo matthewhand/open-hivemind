@@ -60,13 +60,28 @@ const Modal: React.FC<ModalProps> = ({
 
     if (isOpen) {
       if (!modal.open) {
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        if (scrollbarWidth > 0) {
+          document.body.style.paddingRight = `${scrollbarWidth}px`;
+          document.body.style.overflow = 'hidden';
+        }
         modal.showModal();
       }
     } else {
       if (modal.open) {
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
         modal.close();
       }
     }
+
+    return () => {
+      // Clean up styles if unmounted while open
+      if (isOpen) {
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
+      }
+    };
   }, [isOpen]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {

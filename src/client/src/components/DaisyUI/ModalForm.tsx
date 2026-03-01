@@ -56,7 +56,24 @@ const ModalForm: React.FC<ModalFormProps> = ({
       setFormData(initialData);
       setErrors({});
       setCurrentStep(0);
+
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.paddingRight = '';
+      document.body.style.overflow = '';
     }
+
+    return () => {
+      // Clean up styles if unmounted while open
+      if (isOpen) {
+        document.body.style.paddingRight = '';
+        document.body.style.overflow = '';
+      }
+    };
   }, [isOpen, initialData]);
 
   const getSizeClass = () => {
