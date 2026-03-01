@@ -40,7 +40,6 @@ export async function initProviders() {
                   typeof instance.getSchema === 'function'
                 ) {
                   providerRegistry.register(instance);
-                  // console.log(`Registered provider: ${instance.id} from ${file}`);
                 }
               } catch (e) {
                 // Ignore instantiation errors (e.g. requires args, or abstract class)
