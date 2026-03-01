@@ -44,25 +44,16 @@ describe('BotConfigService', () => {
 
     (ConfigurationValidator as jest.Mock).mockImplementation(() => mockValidator);
 
+    // Ensure the new ConfigurationValidator() call inside BotConfigService constructor
+    // returns our mock object rather than the default mock function
+    (ConfigurationValidator as jest.Mock).mockReturnValue(mockValidator);
+
+    // We must reset the BotConfigService instance so it rebuilds itself and picks up the latest DatabaseManager and ConfigurationValidator mocks.
+    // @ts-expect-error - accessing private static for testing purposes
+    BotConfigService.instance = undefined;
+
     // Get instance (singleton)
-    // We need to access the private instance to reset it if needed, or just rely on getInstance returning the same mock DB
-    // However, since getInstance is static and stores the instance, we might need to reset the instance if we want a fresh service.
-    // But since the service just holds the DB manager which we are mocking via getInstance, it should be fine.
-    // The constructor calls DatabaseManager.getInstance(), so if we mock that before calling BotConfigService.getInstance(), it should pick up our mock.
-    // But BotConfigService might have been instantiated in other tests or earlier?
-    // Let's assume for now we can just call getInstance().
-    // Actually, since BotConfigService is a singleton, once instantiated, it holds the reference to dbManager.
-    // If dbManager was mocked *after* the first instantiation, the service would hold the old one.
-    // But Jest mocks are usually applied at module load time (hoisted).
-    // So imports should be mocked.
-
-    // To be safe, we can try to reset the singleton instance if we could, but it's private.
-    // For now, let's just get the instance.
     botConfigService = BotConfigService.getInstance();
-
-    // HACK: Force update the dbManager and configValidator on the existing instance if it was already created
-    (botConfigService as any).dbManager = mockDbManager;
-    (botConfigService as any).configValidator = mockValidator;
   });
 
   describe('getInstance', () => {
