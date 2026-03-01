@@ -3,6 +3,7 @@ import { type Command } from 'commander';
 import inquirer from 'inquirer';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type CommandHandler } from './CommandHandler';
+import { Logger } from '../../common/logger';
 
 export class DatabaseCommandHandler implements CommandHandler {
   private dbManager: DatabaseManager;
@@ -22,7 +23,7 @@ export class DatabaseCommandHandler implements CommandHandler {
         try {
           await this.initializeDatabase(options.path);
         } catch (error) {
-          console.error(chalk.red('Error initializing database:'), error);
+          Logger.error(chalk.red('Error initializing database:'), error);
         }
       });
 
@@ -33,7 +34,7 @@ export class DatabaseCommandHandler implements CommandHandler {
         try {
           await this.showDatabaseStats();
         } catch (error) {
-          console.error(chalk.red('Error getting database stats:'), error);
+          Logger.error(chalk.red('Error getting database stats:'), error);
         }
       });
 
@@ -44,7 +45,7 @@ export class DatabaseCommandHandler implements CommandHandler {
         try {
           await this.backupDatabase(path);
         } catch (error) {
-          console.error(chalk.red('Error backing up database:'), error);
+          Logger.error(chalk.red('Error backing up database:'), error);
         }
       });
 
@@ -57,54 +58,54 @@ export class DatabaseCommandHandler implements CommandHandler {
         try {
           await this.cleanupDatabase(parseInt(options.days), options.force);
         } catch (error) {
-          console.error(chalk.red('Error cleaning up database:'), error);
+          Logger.error(chalk.red('Error cleaning up database:'), error);
         }
       });
   }
 
   private async initializeDatabase(path: string): Promise<void> {
-    console.log(chalk.blue(`Initializing database at ${path}...`));
+    Logger.info(chalk.blue(`Initializing database at ${path}...`));
 
     const config = { type: 'sqlite' as const, path };
     const dbManager = DatabaseManager.getInstance(config);
     this.dbManager = dbManager;
 
     await dbManager.connect();
-    console.log(chalk.green('✓ Database initialized successfully'));
+    Logger.info(chalk.green('✓ Database initialized successfully'));
   }
 
   private async showDatabaseStats(): Promise<void> {
     if (!this.dbManager.isConfigured()) {
-      console.error(chalk.yellow('Database is not configured; statistics are unavailable.'));
+      Logger.error(chalk.yellow('Database is not configured; statistics are unavailable.'));
       return;
     }
 
     if (!this.dbManager.isConnected()) {
-      console.error(chalk.red('Database not connected'));
+      Logger.error(chalk.red('Database not connected'));
       return;
     }
 
     try {
       const stats = await this.dbManager.getStats();
 
-      console.log(chalk.blue('Database Statistics:'));
-      console.log(`  Total messages: ${chalk.green(stats.totalMessages)}`);
-      console.log(`  Total channels: ${chalk.green(stats.totalChannels)}`);
-      console.log(`  Total authors: ${chalk.green(stats.totalAuthors)}`);
+      Logger.info(chalk.blue('Database Statistics:'));
+      Logger.info(`  Total messages: ${chalk.green(stats.totalMessages)}`);
+      Logger.info(`  Total channels: ${chalk.green(stats.totalChannels)}`);
+      Logger.info(`  Total authors: ${chalk.green(stats.totalAuthors)}`);
 
-      console.log('\n  Messages by provider:');
+      Logger.info('\n  Messages by provider:');
       Object.entries(stats.providers).forEach(([provider, count]) => {
-        console.log(`    ${provider}: ${chalk.green(count)}`);
+        Logger.info(`    ${provider}: ${chalk.green(count)}`);
       });
     } catch (error) {
-      console.error(chalk.red('Error getting database stats:'), error);
+      Logger.error(chalk.red('Error getting database stats:'), error);
     }
   }
 
   private async backupDatabase(path: string): Promise<void> {
-    console.log(chalk.blue(`Backing up database to ${path}...`));
+    Logger.info(chalk.blue(`Backing up database to ${path}...`));
     // Here you would implement database backup logic
-    console.log(chalk.green('✓ Database backup completed'));
+    Logger.info(chalk.green('✓ Database backup completed'));
   }
 
   private async cleanupDatabase(days: number, force: boolean): Promise<void> {
@@ -119,13 +120,13 @@ export class DatabaseCommandHandler implements CommandHandler {
       ]);
 
       if (!confirm) {
-        console.log(chalk.yellow('Cleanup cancelled'));
+        Logger.info(chalk.yellow('Cleanup cancelled'));
         return;
       }
     }
 
-    console.log(chalk.blue(`Cleaning up messages older than ${days} days...`));
+    Logger.info(chalk.blue(`Cleaning up messages older than ${days} days...`));
     // Here you would implement cleanup logic
-    console.log(chalk.green('✓ Database cleanup completed'));
+    Logger.info(chalk.green('✓ Database cleanup completed'));
   }
 }
