@@ -6,7 +6,8 @@ import { MattermostProvider } from '../../src/providers/MattermostProvider';
 jest.mock('@hivemind/adapter-mattermost', () => ({
   MattermostService: {
     getInstance: jest.fn(() => ({
-      // Stubs
+      getBotNames: jest.fn(() => []),
+      getBotConfig: jest.fn(() => ({})),
     })),
   },
 }));
@@ -36,10 +37,19 @@ describe('MattermostProvider', () => {
     expect(provider.getSensitiveKeys()).toContain('MATTERMOST_TOKEN');
   });
 
-  it('should get status (placeholder)', async () => {
+  it('should get status', async () => {
     const status = await provider.getStatus();
     expect(status.ok).toBe(true);
     expect(status.bots).toEqual([]);
+  });
+
+  it('should return bot names', () => {
+    expect(provider.getBotNames()).toEqual([]);
+  });
+
+  it('should return bots list', async () => {
+    const bots = await provider.getBots();
+    expect(bots).toEqual([]);
   });
 
   it('should throw error for unimplemented addBot', async () => {
