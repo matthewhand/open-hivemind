@@ -2,18 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import messageConfig from './messageConfig';
-import type { ResponseProfileOverrideKey} from './responseProfiles';
+import type { ResponseProfileOverrideKey } from './responseProfiles';
 import { RESPONSE_PROFILE_OVERRIDE_KEYS, RESPONSE_PROFILE_KEY_TYPES } from './responseProfiles';
 
 const debug = Debug('app:responseProfileManager');
 
 export interface ResponseProfile {
-    key: string;
-    name: string;
-    description?: string;
-    enabled?: boolean;
-    isBuiltIn?: boolean;
-    settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>>;
+  key: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  isBuiltIn?: boolean;
+  settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>>;
 }
 
 // Built-in profiles that cannot be deleted
@@ -115,6 +115,12 @@ export const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
   fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
 };
 
+/**
+ * Finds a response profile by key, performing a case-insensitive, trimmed comparison.
+ *
+ * @param key The key to search for.
+ * @returns The matching `ResponseProfile`, or `undefined` if not found.
+ */
 export const getResponseProfileByKey = (key: string): ResponseProfile | undefined => {
   const normalized = key.trim().toLowerCase();
   return loadResponseProfiles().find(profile => profile.key.toLowerCase() === normalized);
