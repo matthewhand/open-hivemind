@@ -33,8 +33,8 @@ const MCPToolsPage: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
-    { label: 'MCP', href: '/uber/mcp' },
-    { label: 'Tools', href: '/uber/mcp/tools', isActive: true },
+    { label: 'MCP', href: '/admin/mcp' },
+    { label: 'Tools', href: '/admin/mcp/tools', isActive: true },
   ];
 
   useEffect(() => {

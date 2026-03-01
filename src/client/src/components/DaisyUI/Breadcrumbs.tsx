@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/solid';
 
 interface BreadcrumbItem {
@@ -13,8 +13,35 @@ interface BreadcrumbsProps {
 }
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
+  const location = useLocation();
+  const canonicalUrl = `${window.location.origin}${location.pathname}`;
+
+  // Build schema.org BreadcrumbList structured data
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: window.location.origin,
+      },
+      ...items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 2,
+        name: item.label,
+        item: item.isActive ? canonicalUrl : `${window.location.origin}${item.href}`,
+      })),
+    ],
+  };
+
   return (
-    <nav className="text-sm breadcrumbs" aria-label="Breadcrumb">
+    <>
+      <script type="application/ld+json">
+        {JSON.stringify(breadcrumbSchema)}
+      </script>
+      <nav className="text-sm breadcrumbs" aria-label="Breadcrumb">
       <ul>
         <li>
           <NavLink to="/" className="inline-flex items-center gap-2">
@@ -39,6 +66,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
         ))}
       </ul>
     </nav>
+    </>
   );
 };
 
