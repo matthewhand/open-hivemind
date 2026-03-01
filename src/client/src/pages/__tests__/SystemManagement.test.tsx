@@ -57,17 +57,19 @@ describe('SystemManagement', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (WebSocketContext.useWebSocket as any).mockReturnValue(mockWebSocket);
-    (apiService.getGlobalConfig as any).mockResolvedValue({ _userSettings: { values: {} } });
-    (apiService.listSystemBackups as any).mockResolvedValue([]);
-    (apiService.getSystemInfo as any).mockResolvedValue({ systemInfo: { platform: 'linux', arch: 'x64', nodeVersion: 'v20.0.0', uptime: 1000, memory: { rss: 1000000 }, database: { connected: true } } });
-    (apiService.getEnvOverrides as any).mockResolvedValue({ data: { envVars: {} } });
-    (apiService.getApiEndpointsStatus as any).mockResolvedValue({
+    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue(mockWebSocket as any);
+    jest.spyOn(apiService, 'getGlobalConfig').mockResolvedValue({ _userSettings: { values: {} } } as any);
+    jest.spyOn(apiService, 'listSystemBackups').mockResolvedValue([] as any);
+    jest.spyOn(apiService, 'getSystemInfo').mockResolvedValue({ systemInfo: { platform: 'linux', arch: 'x64', nodeVersion: 'v20.0.0', uptime: 1000, memory: { rss: 1000000 }, database: { connected: true } } } as any);
+    jest.spyOn(apiService, 'getEnvOverrides').mockResolvedValue({ data: { envVars: {} } } as any);
+    jest.spyOn(apiService, 'getApiEndpointsStatus').mockResolvedValue({
       overall: { status: 'healthy', stats: { total: 1, online: 1, error: 0 } },
       endpoints: [
         { id: '1', name: 'Test API', status: 'online', responseTime: 50, consecutiveFailures: 0, lastChecked: new Date().toISOString() }
       ]
-    });
+    } as any);
+    jest.spyOn(apiService, 'clearCache').mockResolvedValue({ success: true } as any);
+    jest.spyOn(apiService, 'createSystemBackup').mockResolvedValue({ success: true } as any);
 
     // Mock window methods
     window.alert = jest.fn();
@@ -99,9 +101,9 @@ describe('SystemManagement', () => {
     const passwordInput = screen.getByPlaceholderText('Enter a strong password');
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    // Submit
-    const submitButton = screen.getByText('Submit'); // From our mocked FormModal
-    fireEvent.click(submitButton);
+    // There are two "Create Backup" buttons now (one on page, one in modal), get the second one
+    const buttons = screen.getAllByRole('button', { name: /Create/i });
+    fireEvent.click(buttons[buttons.length - 1]);
 
     await waitFor(() => {
       expect(apiService.createSystemBackup).toHaveBeenCalledWith(expect.objectContaining({
