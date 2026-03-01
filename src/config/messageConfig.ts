@@ -838,13 +838,6 @@ if (typeof process !== 'undefined' && process.env) {
 messageConfig.validate({ allowed: 'warn' });
 
 // Second-pass normalization with optional known channel list (none here; providers can supply later)
-// Temporary debug logging; respects ALLOW_CONSOLE in tests
-if (process.env.ALLOW_CONSOLE) {
-  console.log('pre-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  console.log('pre-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
-  const propsPre = (messageConfig as any).getProperties?.();
-  console.log('pre-normalize props keys=', propsPre ? Object.keys(propsPre) : 'no-props');
-}
 const normalized = normalizeChannelMaps(
   (messageConfig as any).get('CHANNEL_BONUSES'),
   (messageConfig as any).get('CHANNEL_PRIORITIES'),
@@ -853,10 +846,6 @@ const normalized = normalizeChannelMaps(
 // Overwrite normalized values back into config
 (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
 (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
-if (process.env.ALLOW_CONSOLE) {
-  console.log('post-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  console.log('post-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
-}
 
 debug('messageConfig loaded, validated, and normalized from %s', configPath);
 
