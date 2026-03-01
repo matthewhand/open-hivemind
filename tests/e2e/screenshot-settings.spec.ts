@@ -28,7 +28,7 @@ test.describe('Settings Screenshots', () => {
     await page.route('**/api/config/global', async (route) => {
       if (route.request().method() === 'PUT') {
         // Wait 3 seconds
-        await new Promise(f => setTimeout(f, 3000));
+        await new Promise((f) => setTimeout(f, 3000));
         await route.fulfill({ status: 200, json: {} });
       } else {
         await route.continue();
@@ -43,8 +43,8 @@ test.describe('Settings Screenshots', () => {
 
     // Wait for the button to have the loading class applied
     await page.waitForFunction(() => {
-        const btn = document.querySelector('button[type="submit"]');
-        return btn && btn.classList.contains('loading');
+      const btn = document.querySelector('button[type="submit"]');
+      return btn && btn.classList.contains('loading');
     });
 
     // Screenshot while loading
