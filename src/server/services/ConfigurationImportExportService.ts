@@ -751,14 +751,14 @@ export class ConfigurationImportExportService {
    * Generate export ID
    */
   private generateExportId(): string {
-    return 'export-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    return 'export-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
   }
 
   /**
    * Generate backup ID
    */
   private generateBackupId(): string {
-    return 'backup-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
   }
 
   /**
