@@ -246,7 +246,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           processingTime: duration,
           status: 'success',
         });
-      } catch {}
+      } catch { }
 
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
@@ -283,12 +283,20 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
   }
 
+  /**
+   * Retrieves recent messages from a specified channel.
+   * Delegates internally to `fetchMessages`.
+   *
+   * @param channelId The target channel to fetch messages from.
+   * @param limit The maximum number of messages to fetch (default: 10).
+   * @returns A promise resolving to an array of messages representing recent history.
+   */
   public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
     return this.fetchMessages(channelId, limit);
   }
@@ -526,7 +534,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   /**
