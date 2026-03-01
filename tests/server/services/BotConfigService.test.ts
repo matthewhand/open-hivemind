@@ -57,7 +57,7 @@ describe('BotConfigService', () => {
   });
 
   describe('getInstance', () => {
-    it('should return the same instance', () => {
+    it('should return the same instance (singleton pattern)', () => {
       const instance1 = BotConfigService.getInstance();
       const instance2 = BotConfigService.getInstance();
       expect(instance1).toBe(instance2);
