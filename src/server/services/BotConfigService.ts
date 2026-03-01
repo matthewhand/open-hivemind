@@ -76,7 +76,7 @@ export interface BotConfigResponse extends BotConfiguration {
 }
 
 export class BotConfigService {
-  private static instance: BotConfigService;
+  private static instance: BotConfigService | null = null;
   private dbManager: DatabaseManager;
   private configValidator: ConfigurationValidator;
 
@@ -96,6 +96,13 @@ export class BotConfigService {
       BotConfigService.instance = new BotConfigService();
     }
     return BotConfigService.instance;
+  }
+
+  /**
+   * Reset the singleton instance (primarily used for testing)
+   */
+  public static resetInstance(): void {
+    BotConfigService.instance = null;
   }
 
   /**
