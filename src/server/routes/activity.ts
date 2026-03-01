@@ -55,30 +55,6 @@ interface ActivitySummary {
   timeRangeEnd: string;
 }
 
-// Helper function to build WHERE clause for filtering
-const buildWhereClause = (filter: ActivityFilter): { clause: string; params: any[] } => {
-  const conditions: string[] = [];
-  const params: any[] = [];
-
-  if (filter.startDate) {
-    conditions.push('timestamp >= ?');
-    params.push(filter.startDate);
-  }
-
-  if (filter.endDate) {
-    conditions.push('timestamp <= ?');
-    params.push(filter.endDate);
-  }
-
-  if (filter.messageProvider) {
-    conditions.push('provider = ?');
-    params.push(filter.messageProvider);
-  }
-
-  const clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  return { clause, params };
-};
-
 // GET /api/activity/messages - Get filtered message activity
 router.get('/messages', async (req, res) => {
   try {
@@ -97,23 +73,9 @@ router.get('/messages', async (req, res) => {
       return res.status(503).json({ error: 'Database not connected' });
     }
 
-    // Build query with filters
-    const { clause, params } = buildWhereClause(filter);
-
     // Mock query - in real implementation, this would query the actual database
     // For now, we'll simulate the response structure
     const messages: MessageActivity[] = [];
-
-    // In a real implementation, this would be something like:
-    // const query = `
-    //   SELECT m.*, a.name as agentName, a.llmProvider
-    //   FROM messages m
-    //   LEFT JOIN agents a ON m.agentId = a.id
-    //   ${clause}
-    //   ORDER BY timestamp DESC
-    //   LIMIT ? OFFSET ?
-    // `;
-    // const messages = await db.all(query, [...params, filter.limit, filter.offset]);
 
     return res.json({
       messages,
