@@ -11,6 +11,9 @@ import {
 
 describe('DI Container', () => {
   // A dummy class to use for registration
+  /**
+   * Dummy service class used for testing dependency injection types and resolution.
+   */
   class DummyService {
     getValue() {
       return 'dummy';
