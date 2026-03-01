@@ -172,11 +172,15 @@ export class ConfigurationImportExportService {
 
       // Include audit logs if requested
       if (options.includeAuditLogs) {
-        const auditLogs = [];
-        for (const config of configs) {
-          if (config.id) {
-            const logs = await this.dbManager.getBotConfigurationAudit(config.id);
-            auditLogs.push(...logs);
+        const auditLogs: any[] = [];
+        const configIdsToFetch = configs.map(c => c.id).filter(Boolean) as number[];
+        if (configIdsToFetch.length > 0) {
+          const auditLogsMap = await this.dbManager.getBotConfigurationAuditBulk(configIdsToFetch);
+          for (const config of configs) {
+            if (config.id) {
+              const logs = auditLogsMap.get(config.id) || [];
+              auditLogs.push(...logs);
+            }
           }
         }
         exportData.auditLogs = auditLogs;
