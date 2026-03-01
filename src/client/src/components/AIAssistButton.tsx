@@ -51,6 +51,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
+        aria-label={label}
       >
         {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
