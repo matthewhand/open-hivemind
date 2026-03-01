@@ -24,7 +24,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'organizationId',
-      label: 'Organization ID (Optional)',
+      label: 'Organization ID',
       type: 'text',
       required: false,
       description: 'Your OpenAI organization ID',
@@ -33,7 +33,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'baseUrl',
-      label: 'Base URL (Optional)',
+      label: 'Base URL',
       type: 'url',
       required: false,
       description: 'Custom API base URL for third-party OpenAI-compatible providers (OPENAI_BASE_URL)',

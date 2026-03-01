@@ -360,10 +360,16 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                     <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
                       <td className="align-top py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-base-content/90">
-                            {field.label}
-                            {field.required && <span className="text-error ml-1">*</span>}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-base-content/90">
+                              {field.label}
+                            </span>
+                            {field.required ? (
+                              <span className="badge badge-error badge-sm text-[10px] h-4">Required</span>
+                            ) : (
+                              <span className="badge badge-ghost badge-sm text-[10px] h-4">Optional</span>
+                            )}
+                          </div>
                           {field.description && (
                             <span className="text-xs text-base-content/60 leading-tight">
                               {field.description}

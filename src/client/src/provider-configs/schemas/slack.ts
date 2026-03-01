@@ -49,7 +49,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'teamId',
-      label: 'Team ID (Optional)',
+      label: 'Team ID',
       type: 'text',
       required: false,
       description: 'Specific Slack workspace to connect to (leave empty for all workspaces)',
@@ -58,7 +58,7 @@ export const slackProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'channelId',
-      label: 'Default Channel (Optional)',
+      label: 'Default Channel',
       type: 'text',
       required: false,
       description: 'Default channel for bot messages',
