@@ -7,6 +7,7 @@ export * from './schemas/anthropic';
 export * from './schemas/ollama';
 export * from './schemas/telegram';
 export * from './schemas/mcp';
+export * from './schemas/flowise';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
@@ -17,6 +18,7 @@ import { anthropicProviderSchema } from './schemas/anthropic';
 import { ollamaProviderSchema } from './schemas/ollama';
 import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
+import { flowiseProviderSchema } from './schemas/flowise';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -28,6 +30,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   openai: openAIProviderSchema,
   anthropic: anthropicProviderSchema,
   ollama: ollamaProviderSchema,
+  flowise: flowiseProviderSchema,
 
   // MCP providers
   mcp: mcpProviderSchema,
