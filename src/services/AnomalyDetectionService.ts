@@ -128,6 +128,12 @@ export class AnomalyDetectionService extends EventEmitter {
     }
   }
 
+  /**
+   * Calculates the mean and standard deviation for a given array of data points.
+   * Uses population standard deviation.
+   * @param data Array of numerical data points
+   * @returns An object containing the mean and standard deviation
+   */
   private calculateStats(data: number[]): { mean: number; stdDev: number } {
     const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
 
