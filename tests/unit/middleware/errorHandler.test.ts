@@ -46,7 +46,7 @@ jest.mock('../../../src/types/errorClasses', () => {
     ErrorFactory: {
       createError: jest.fn().mockReturnValue(mockHivemindError),
     },
-    BaseHivemindError: class {},
+    BaseHivemindError: class { },
   };
 });
 
@@ -189,8 +189,8 @@ describe('errorHandler middleware', () => {
     let mockConsoleError: jest.SpyInstance;
 
     beforeEach(() => {
-      mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
     });
 
     afterEach(() => {
@@ -226,8 +226,8 @@ describe('errorHandler middleware', () => {
     let mockConsoleError: jest.SpyInstance;
 
     beforeEach(() => {
-      mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockExit = jest.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
     });
 
     afterEach(() => {
@@ -242,7 +242,7 @@ describe('errorHandler middleware', () => {
       const promise = Promise.reject(reason);
 
       // Catch unhandled rejection for the test itself to prevent it failing
-      promise.catch(() => {});
+      promise.catch(() => { });
 
       handleUnhandledRejection(reason, promise);
 
@@ -257,7 +257,7 @@ describe('errorHandler middleware', () => {
       const reason = 'Promise rejected';
       const promise = Promise.reject(reason);
 
-      promise.catch(() => {});
+      promise.catch(() => { });
 
       handleUnhandledRejection(reason, promise);
 
@@ -269,7 +269,7 @@ describe('errorHandler middleware', () => {
 
   describe('setupGlobalErrorHandlers', () => {
     it('should register process listeners for exceptions and rejections', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
+      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => { }) as any);
 
       setupGlobalErrorHandlers();
 
@@ -282,7 +282,7 @@ describe('errorHandler middleware', () => {
 
   describe('setupGracefulShutdown', () => {
     it('should register process listeners for SIGTERM and SIGINT', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
+      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => { }) as any);
 
       setupGracefulShutdown();
 
@@ -319,6 +319,10 @@ describe('errorHandler middleware', () => {
   });
 
   describe('rateLimitErrorHandler', () => {
+    /**
+     * Currently a stub test since rateLimitErrorHandler is a passthrough stub.
+     * This test ensures it doesn't break when passing through to next().
+     */
     it('should call next', () => {
       rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();
