@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -6,7 +6,7 @@ import Debug from 'debug';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:convertOpusToWav');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 // Check if ffmpeg is available
 let ffmpegAvailable: boolean | null = null;
@@ -17,7 +17,7 @@ async function checkFfmpegAvailable(): Promise<boolean> {
   }
 
   try {
-    await execPromise('ffmpeg -version');
+    await execFilePromise('ffmpeg', ['-version']);
     ffmpegAvailable = true;
     debug('FFmpeg is available');
     return true;
@@ -61,9 +61,9 @@ export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): P
     debug('Opus file written to:', inputPath);
 
     // Convert Opus to WAV using ffmpeg
-    const ffmpegCmd = `ffmpeg -y -i ${inputPath} ${outputPath}`;
-    debug('Executing ffmpeg command:', ffmpegCmd);
-    await execPromise(ffmpegCmd);
+    const ffmpegArgs = ['-y', '-i', inputPath, outputPath];
+    debug('Executing ffmpeg command: ffmpeg', ffmpegArgs.join(' '));
+    await execFilePromise('ffmpeg', ffmpegArgs);
     debug('Conversion completed:', outputPath);
 
     // Clean up the input Opus file
