@@ -42,11 +42,42 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   }
 
   async getStatus() {
-    // TODO: Implement actual status check with Telegram API
+    // We read directly from messengers.json (as in reload and addBot)
+    // because dynamic bot instances are stored there, rather than in the convict config.
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
+    let instances: any[] = [];
+    try {
+      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      const cfg = JSON.parse(content);
+      instances = cfg.telegram?.instances || [];
+    } catch (e: any) {
+      // Ignore reading or parsing errors, instances will be empty
+    }
+
+    const bots = await Promise.all(
+      instances.map(async (inst: any) => {
+        let connected = false;
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`);
+          const data = await response.json();
+          connected = data.ok === true;
+        } catch (e) {
+          // fetch error
+          connected = false;
+        }
+        return {
+          provider: 'telegram',
+          name: inst.name || 'telegram',
+          connected,
+        };
+      })
+    );
+
     return {
       ok: true,
-      bots: [],
-      count: 0,
+      bots,
+      count: bots.length,
     };
   }
 
