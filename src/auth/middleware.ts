@@ -272,7 +272,11 @@ export const optionalAuth = async (
 };
 
 /**
- * Tenant middleware - ensures tenant context is set and valid
+ * Tenant middleware - ensures tenant context is set and valid.
+ * Currently passes through without validation.
+ * @param req Express Request object
+ * @param res Express Response object
+ * @param next Express NextFunction
  */
 export const requireTenant = (req: Request, res: Response, next: NextFunction): void => {
   // Skip tenant validation for now - just pass through
