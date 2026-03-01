@@ -4,10 +4,10 @@
   publish = "dist/client"
 
 [context.deploy-preview]
-  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
+  ignore = "exit 0"
 
 [context.branch-deploy]
-  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
+  ignore = "exit 0"
 
 [dev]
   command = "npm run dev"
