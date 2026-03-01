@@ -3,5 +3,11 @@
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
+[context.deploy-preview]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo '/* /index.html 200' > dist/client/_redirects"
+
+[context.branch-deploy]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo '/* /index.html 200' > dist/client/_redirects"
+
 [dev]
   command = "npm run dev"

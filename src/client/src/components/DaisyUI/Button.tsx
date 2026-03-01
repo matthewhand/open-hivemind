@@ -57,6 +57,15 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
+  const getSpinnerSizeClass = () => {
+    switch (size) {
+    case 'xs': return 'loading-xs';
+    case 'sm': return 'loading-sm';
+    case 'lg': return 'loading-lg';
+    default: return 'loading-md';
+    }
+  };
+
   const baseClasses = 'btn';
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
@@ -71,9 +80,11 @@ export const Button: React.FC<ButtonProps> = ({
     onClick?.(event);
   };
 
+  const hasTextContent = Boolean(loadingText || (children && React.Children.count(children) > 0));
+
   const buttonContent = (
     <>
-      {loading && !loadingText && <span className="loading loading-spinner loading-sm"></span>}
+      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()}></span>}
       {(icon || startIcon) && !loading && <span className="mr-2">{icon || startIcon}</span>}
       {loading && loadingText ? loadingText : children}
       {(iconRight || endIcon) && !loading && <span className="ml-2">{iconRight || endIcon}</span>}
