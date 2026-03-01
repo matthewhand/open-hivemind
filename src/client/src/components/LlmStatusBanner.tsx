@@ -2,6 +2,9 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 
+/**
+ * Displays a warning banner when bots are missing an LLM provider and no system default is configured.
+ */
 const LlmStatusBanner: React.FC = () => {
   const { status, loading } = useLlmStatus();
 
