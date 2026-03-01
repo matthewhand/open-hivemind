@@ -48,7 +48,6 @@ export class AuthMiddleware {
           origin === 'https://127.0.0.1' ||
           origin.startsWith('https://127.0.0.1:'));
 
-      // console.log('Auth Check:', { clientIP, host, origin, isLocalhostIp, isLocalhostHost, isLocalhostOrigin });
       return isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
     };
 
