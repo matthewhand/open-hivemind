@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
+import { useDropdownPosition } from '../../hooks/useDropdownPosition';
 
 type DropdownProps = {
   trigger: React.ReactNode;
@@ -22,9 +23,17 @@ const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLUListElement>(null);
 
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onToggle ? () => onToggle(!isOpen) : setUncontrolledIsOpen;
+
+  const { autoPosition, autoAlign } = useDropdownPosition({
+    isOpen,
+    dropdownRef,
+    contentRef,
+    defaultPosition: position,
+  });
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -65,13 +74,13 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className={`dropdown ${positionClasses[position]}`} ref={dropdownRef}>
+    <div className={`dropdown ${positionClasses[autoPosition]} ${autoAlign}`} ref={dropdownRef}>
       <div tabIndex={0} role="button" className={`btn ${sizeClasses[size]} ${colorClasses[color]}`} onClick={handleToggle}>
         {trigger}
         <ChevronDownIcon className="h-5 w-5" />
       </div>
       {isOpen && (
-        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52" ref={contentRef}>
           {children}
         </ul>
       )}

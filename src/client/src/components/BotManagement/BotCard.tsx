@@ -27,6 +27,7 @@ import ProviderList from './ProviderList';
 import PersonaChip from './PersonaChip';
 import PersonaSelector from './PersonaSelector';
 import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
+import { useDropdownPosition } from '../../hooks/useDropdownPosition';
 
 interface BotCardProps {
   bot: BotInstance;
@@ -54,6 +55,16 @@ const BotCard: React.FC<BotCardProps> = ({
   onPersonaChange,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const dropdownContentRef = React.useRef<HTMLUListElement>(null);
+
+  const { autoPosition, autoAlign } = useDropdownPosition({
+    isOpen: isDropdownOpen,
+    dropdownRef,
+    contentRef: dropdownContentRef,
+    defaultPosition: 'bottom',
+  });
+
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [providerModalState, setProviderModalState] = useState<ProviderModalState>({
     isOpen: false,
@@ -204,7 +215,7 @@ const BotCard: React.FC<BotCardProps> = ({
           </div>
 
           {/* Dropdown Menu */}
-          <div className="dropdown dropdown-end">
+          <div className={`dropdown dropdown-end ${autoPosition === 'top' ? 'dropdown-top' : ''} ${autoAlign}`} ref={dropdownRef}>
             <button
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -213,7 +224,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <MoreIcon className="w-4 h-4" />
             </button>
             {isDropdownOpen && (
-              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10">
+              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10" ref={dropdownContentRef}>
                 <li>
                   <a onClick={handleConfigureBot} className="flex items-center gap-2">
                     <SettingsIcon className="w-4 h-4" />
