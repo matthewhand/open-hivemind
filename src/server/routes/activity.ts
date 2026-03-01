@@ -5,6 +5,10 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 const debug = Debug('app:webui:activity');
 const router = Router();
 
+/**
+ * Interface representing the filters that can be applied
+ * when querying activity data.
+ */
 interface ActivityFilter {
   agentId?: string;
   messageProvider?: string;
