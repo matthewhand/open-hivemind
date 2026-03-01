@@ -25,6 +25,9 @@ import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { apiService } from '../services/api';
 
+/**
+ * Represents the configuration and runtime state of a generic bot instance.
+ */
 interface BotData {
   id: string;
   name: string;
@@ -427,7 +430,7 @@ const BotsPage: React.FC = () => {
                           <Cpu className="w-3 h-3 opacity-70" />
                           {bot.llmProvider
                             ? llmProfiles.find((p) => p.key === bot.llmProvider)?.name ||
-                              bot.llmProvider
+                            bot.llmProvider
                             : 'Default LLM'}
                         </span>
                         {bot.messageCount > 0 && (
