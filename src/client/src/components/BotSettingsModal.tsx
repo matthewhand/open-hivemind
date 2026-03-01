@@ -108,7 +108,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         ))}
                                         <div className="divider my-1"></div>
                                         <li>
-                                            <a href="/admin/integrations/message" target="_blank" className="flex gap-2 items-center text-primary">
+                                            <a href="/admin/integrations/message" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
                                                 <Plus className="w-4 h-4" /> New Messenger
                                             </a>
                                         </li>
@@ -157,7 +157,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         ))}
                                         <div className="divider my-1"></div>
                                         <li>
-                                            <a href="/admin/integrations/llm" target="_blank" className="flex gap-2 items-center text-primary">
+                                            <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
                                                 <Plus className="w-4 h-4" /> New Profile
                                             </a>
                                         </li>

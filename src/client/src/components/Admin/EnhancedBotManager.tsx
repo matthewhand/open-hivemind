@@ -365,7 +365,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                 className="btn btn-xs btn-outline ml-auto"
                 href="/admin/integrations/llm"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Configure LLM
               </a>
