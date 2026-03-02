@@ -66,19 +66,19 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     try {
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
-        apiService.getStatus(),
-        apiService.getConfig(),
+        apiService.getStatus().catch(() => ({ bots: [] })),
+        apiService.getConfig().catch(() => ({ bots: [] })),
       ]);
 
       setSystemMetrics(systemData);
       // Add mock status data to bots for demonstration if not present in systemData
-      // Ideally systemData.bots should be used, but let's stick to the logic that was there or improve it.
+      // Ideally systemData?.bots should be used, but let's stick to the logic that was there or improve it.
       // The original code was mapping configData.bots and adding mock status.
       // Let's keep the mock generation for now as per instructions to "improve UI" not necessarily "implement full backend logic" if it's missing.
       // But actually, apiService.getStatus() returns bots with status. Let's try to use that if available.
 
       const botsWithStatus = configData.bots.map((bot: Bot) => {
-        const statusBot = systemData.bots.find(b => b.name === bot.name);
+        const statusBot = systemData?.bots?.find(b => b.name === bot.name);
         return {
           ...bot,
           id: bot.name,
