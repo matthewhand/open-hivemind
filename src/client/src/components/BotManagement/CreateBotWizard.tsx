@@ -202,6 +202,18 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     <option disabled>──────────</option>
                                     <option value="___manage___">Add / Manage Providers...</option>
                                 </select>
+                                <label className="label" aria-live="polite" aria-atomic="true">
+                                    {!defaultLlmConfigured && !formData.llmProvider && (
+                                        <span className="label-text-alt text-error">
+                                            System default is not configured. Please select a provider.
+                                        </span>
+                                    )}
+                                    {defaultLlmConfigured && !formData.llmProvider && (
+                                        <span className="label-text-alt text-success flex items-center gap-1">
+                                            <Check className="w-3 h-3" /> Using system default configuration
+                                        </span>
+                                    )}
+                                </label>
                             </div>
                         </div>
                     </div>
