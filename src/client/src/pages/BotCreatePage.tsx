@@ -323,6 +323,10 @@ const BotCreatePage: React.FC = () => {
                               checked={isSelected}
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
+                                if (!serverId) {
+                                  console.warn('Server ID or name is required');
+                                  return;
+                                }
                                 setFormData(prev => ({
                                   ...prev,
                                   mcpServers: e.target.checked
