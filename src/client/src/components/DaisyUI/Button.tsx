@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color' | 'style'> {
   /** The content to display inside the button */
@@ -25,7 +25,10 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   loadingText?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders.
+// Since Button is a primitive UI component used inside lists and forms,
+// this skips reconciliation passes when parent re-renders and props are identical.
+export const Button = memo(({
   children,
   variant = 'primary',
   size = 'md',
@@ -101,6 +104,8 @@ export const Button: React.FC<ButtonProps> = ({
       {buttonContent}
     </button>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;
