@@ -388,6 +388,7 @@ export class DemoModeService {
     botCount: number;
     conversationCount: number;
     messageCount: number;
+    suppressWarning?: boolean;
   } {
     let messageCount = 0;
     this.conversations.forEach((conv) => {
@@ -399,6 +400,7 @@ export class DemoModeService {
       botCount: this.demoBots.length,
       conversationCount: this.conversations.size,
       messageCount,
+      suppressWarning: process.env.SUPPRESS_DEMO_WARNING === 'true',
     };
   }
 

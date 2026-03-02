@@ -750,7 +750,7 @@ const BotsPage: React.FC = () => {
               </div>
               <div className="stat">
                 <div className="stat-title">Errors</div>
-                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>{previewBot.errorCount || 0}</div>
+                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : 'text-base-content/60'}`}>{previewBot.errorCount || 0}</div>
               </div>
             </div>
 
