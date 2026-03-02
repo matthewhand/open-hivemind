@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Button } from './DaisyUI';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -19,9 +19,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  // Separate loading states for each async operation to prevent UI blocking
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -120,7 +118,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     if (!onTestConnection) {return;}
 
-    setIsTestingConnection(true);
+    setIsLoading(true);
     setTestResult(null);
 
     try {
@@ -135,14 +133,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
-      setIsTestingConnection(false);
+      setIsLoading(false);
     }
   };
 
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoadingAvatar(true);
+    setIsLoading(true);
     setAvatarUrl(null);
 
     try {
@@ -154,7 +152,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoadingAvatar(false);
+      setIsLoading(false);
     }
   };
 
@@ -170,21 +168,18 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       switch (field.type) {
       case 'password':
         return (
-          <input
+          <Input
             type="password"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
-            aria-label={field.label}
-            aria-required={field.required}
-            aria-invalid={!!errors[field.name]}
           />
         );
 
       case 'number':
         return (
-          <input
+          <Input
             type="number"
             value={value}
             onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
@@ -198,7 +193,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'url':
         return (
-          <input
+          <Input
             type="url"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -209,54 +204,50 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'select':
         return (
-          <select
+          <Select
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
         );
 
       case 'multiselect':
         return (
-          <select
+          <Select
             multiple
             value={Array.isArray(value) ? value : []}
             onChange={(e) => {
-              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              const target = e.target as HTMLSelectElement;
+              const selectedOptions = Array.from(target.selectedOptions, option => option.value);
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
         );
 
       case 'boolean':
         return (
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-center h-full">
+            <Toggle
+              color="primary"
               checked={Boolean(value)}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
+              label="Enable"
             />
-            <span className="text-sm text-base-content/80">Enable</span>
-          </label>
+          </div>
         );
 
       case 'textarea':
         return (
-          <textarea
+          <Textarea
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
@@ -267,7 +258,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'json':
         return (
-          <textarea
+          <Textarea
             value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
             onChange={(e) => {
               try {
@@ -314,7 +305,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       default:
         return (
-          <input
+          <Input
             type="text"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -371,9 +362,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                               {field.label}
                             </span>
                             {field.required ? (
-                              <span className="badge badge-error badge-sm text-[10px] h-4">Required</span>
+                              <Badge variant="error" size="sm" className="text-[10px] h-4">Required</Badge>
                             ) : (
-                              <span className="badge badge-ghost badge-sm text-[10px] h-4">Optional</span>
+                              <Badge variant="ghost" size="sm" className="text-[10px] h-4">Optional</Badge>
                             )}
                           </div>
                           {field.description && (
@@ -399,13 +390,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
           <Button
-            type="button"
-            onClick={handleTestConnection}
-            disabled={isTestingConnection || isLoadingAvatar}
-            loading={isTestingConnection}
-            loadingText="Testing..."
             variant="primary"
-            aria-label="Test connection to provider"
+            onClick={handleTestConnection}
+            loading={isLoading}
+            disabled={isLoading}
           >
             Test Connection
           </Button>
@@ -413,13 +401,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
           <Button
-            type="button"
-            onClick={handleLoadAvatar}
-            disabled={isTestingConnection || isLoadingAvatar}
-            loading={isLoadingAvatar}
-            loadingText="Loading..."
             variant="secondary"
-            aria-label="Load provider avatar"
+            onClick={handleLoadAvatar}
+            loading={isLoading}
+            disabled={isLoading}
           >
             Load Avatar
           </Button>
@@ -428,11 +413,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       {/* Results */}
       {testResult && (
-        <div className={`p-3 rounded-lg ${testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-          <p className={`text-sm ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
-            {testResult.message}
-          </p>
-        </div>
+        <Alert
+          status={testResult.success ? 'success' : 'error'}
+          message={testResult.message}
+        />
       )}
 
       {avatarUrl && (
