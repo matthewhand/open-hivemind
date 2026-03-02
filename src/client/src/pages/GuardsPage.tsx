@@ -388,13 +388,14 @@ const GuardsPage: React.FC = () => {
                       />
                     </div>
                     <div className="form-control">
-                      <label className="label"><span className="label-text">Window (ms)</span></label>
+                      <label className="label"><span className="label-text">Window (seconds)</span></label>
                       <input
                         type="number"
                         className="input input-bordered"
-                        value={editingProfile.guards.rateLimit?.windowMs || 60000}
-                        onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
+                        value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
+                        onChange={e => updateGuard('rateLimit', { windowMs: (parseFloat(e.target.value) || 0) * 1000 })}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
+                        min={1}
                       />
                     </div>
                   </div>
