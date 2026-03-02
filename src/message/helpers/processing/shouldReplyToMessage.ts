@@ -10,7 +10,7 @@ import { GlobalActivityTracker } from './GlobalActivityTracker';
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { isBotNameInText } from './MentionDetector';
 import { getMessageSetting } from './ResponseProfile';
-import { isOnTopic, getSemanticBonus } from './SemanticRelevanceChecker';
+import { isOnTopic } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -327,9 +327,8 @@ export async function shouldReplyToMessage(
         .join('\n');
       const newMessage = message.getText?.() || '';
       if (await isOnTopic(recentContext, newMessage)) {
-        const semanticBonus = getSemanticBonus();
-        chance *= semanticBonus;
-        mods.push(`×OnTopic(${semanticBonus})`);
+        chance += 0.3;
+        mods.push('+OnTopic(+0.3)');
       } else {
         chance -= 0.1;
         mods.push('-OffTopic(-0.1)');

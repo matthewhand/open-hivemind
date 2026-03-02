@@ -67,17 +67,15 @@ const AnalyticsDashboard: React.FC = () => {
   })) || [];
 
   // Usage Metrics Cards
-  const totalErrors = activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0;
-
   const usageMetricsCards = [
     {
       title: 'Total Messages',
       subtitle: 'In selected range',
-      status: totalErrors > 0 ? 'warning' : 'healthy',
+      status: 'healthy',
       metrics: [
         { label: 'Messages', value: events.length.toLocaleString(), icon: '💬' },
         { label: 'Throughput', value: currentMetric.messageRate.toFixed(1), unit: '/s' },
-        { label: 'Errors', value: totalErrors, icon: '❌', status: totalErrors > 0 ? 'error' : undefined },
+        { label: 'Errors', value: activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0, icon: '❌' },
       ],
     },
     {

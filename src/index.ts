@@ -196,6 +196,12 @@ if (process.env.NODE_ENV !== 'development') {
   app.use(express.static(frontendDistPath));
   // Global assets static for root-relative asset paths
   app.use('/assets', express.static(frontendAssetsPath));
+
+  // Uber UI (unified dashboard)
+  app.use('/uber', express.static(frontendDistPath));
+  app.use('/uber/*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
 } else {
   // Development Mode Handlers - Proxy to Vite
 
@@ -225,6 +231,7 @@ if (process.env.NODE_ENV !== 'development') {
   app.get('/login', serveDevHtml);
   app.get('/dashboard', serveDevHtml);
   app.get('/activity', serveDevHtml);
+  app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
 }
