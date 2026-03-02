@@ -10,6 +10,7 @@ import {
   Input,
   Textarea,
   Select,
+  Checkbox,
 } from '../components/DaisyUI';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
@@ -353,14 +354,15 @@ const BotCreatePage: React.FC = () => {
                       {mcpServers.map((server) => {
                         const isSelected = formData.mcpServers.includes(server.id || server.name);
                         return (
-                          <label
+                          <div
                             key={server.id || server.name}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
+                            className={`flex items-start p-2 rounded-lg border transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
                               }`}
                           >
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-primary checkbox-sm mt-0.5"
+                            <Checkbox
+                              variant="primary"
+                              size="sm"
+                              className="w-full mt-0"
                               checked={isSelected}
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
@@ -377,16 +379,17 @@ const BotCreatePage: React.FC = () => {
                               }}
                               aria-label={`${isSelected ? 'Deselect' : 'Select'} ${server.name}`}
                               aria-describedby={`server-desc-${server.id || server.name}`}
-                            />
-                            <div>
-                              <div className="font-medium text-sm">{server.name}</div>
-                              {server.description && (
-                                <div id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-1 line-clamp-2">
-                                  {server.description}
-                                </div>
-                              )}
-                            </div>
-                          </label>
+                            >
+                              <div className="flex flex-col text-left ml-1">
+                                <span className="font-medium text-sm text-base-content">{server.name}</span>
+                                {server.description && (
+                                  <span id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-0.5 line-clamp-2">
+                                    {server.description}
+                                  </span>
+                                )}
+                              </div>
+                            </Checkbox>
+                          </div>
                         );
                       })}
                     </div>
