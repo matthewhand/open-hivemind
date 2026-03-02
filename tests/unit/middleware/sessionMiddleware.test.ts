@@ -1,5 +1,5 @@
-import { destroySession } from '../../../src/middleware/sessionMiddleware';
 import { Request } from 'express';
+import { destroySession } from '../../../src/middleware/sessionMiddleware';
 
 /**
  * Unit tests for the destroySession utility function.
@@ -15,7 +15,7 @@ describe('destroySession', () => {
     const req = {
       session: {
         destroy: destroyMock,
-      }
+      },
     } as unknown as Request;
 
     await expect(destroySession(req)).resolves.toBeUndefined();
@@ -28,7 +28,7 @@ describe('destroySession', () => {
     const req = {
       session: {
         destroy: destroyMock,
-      }
+      },
     } as unknown as Request;
 
     await expect(destroySession(req)).rejects.toThrow('destruction failed');
