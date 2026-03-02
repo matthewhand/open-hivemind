@@ -8,6 +8,7 @@ export * from './schemas/ollama';
 export * from './schemas/telegram';
 export * from './schemas/mcp';
 export * from './schemas/flowise';
+export * from './schemas/openwebui';
 export * from './schemas/webhook';
 
 // Registry of all available provider schemas
@@ -20,6 +21,7 @@ import { ollamaProviderSchema } from './schemas/ollama';
 import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
+import { openWebUIProviderSchema } from './schemas/openwebui';
 import { webhookProviderSchema } from './schemas/webhook';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
@@ -34,6 +36,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   anthropic: anthropicProviderSchema,
   ollama: ollamaProviderSchema,
   flowise: flowiseProviderSchema,
+  openwebui: openWebUIProviderSchema,
 
   // MCP providers
   mcp: mcpProviderSchema,

@@ -124,7 +124,8 @@ class TestFlakinessDetector {
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
     const durationVariance =
       durations.reduce((acc, val) => acc + Math.pow(val - avgDuration, 2), 0) / durations.length;
-    const durationVariability = Math.sqrt(durationVariance) / avgDuration; // Coefficient of variation
+    // Coefficient of variation - handle zero duration to avoid NaN
+    const durationVariability = avgDuration > 0 ? Math.sqrt(durationVariance) / avgDuration : 0;
 
     // Combine scores with weights
     const combinedScore =

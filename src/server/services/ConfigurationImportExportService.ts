@@ -153,7 +153,7 @@ export class ConfigurationImportExportService {
       // Include versions if requested
       if (options.includeVersions) {
         const versionPromises = configs
-          .filter(c => c.id != null)
+          .filter((c) => c.id != null)
           .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
         const versionsNested = await Promise.all(versionPromises);
         const versions = versionsNested.flat();
@@ -172,7 +172,7 @@ export class ConfigurationImportExportService {
       // Include audit logs if requested
       if (options.includeAuditLogs) {
         const auditLogs: any[] = [];
-        const configIdsToFetch = configs.map(c => c.id).filter(Boolean) as number[];
+        const configIdsToFetch = configs.map((c) => c.id).filter(Boolean) as number[];
         if (configIdsToFetch.length > 0) {
           const auditLogsMap = await this.dbManager.getBotConfigurationAuditBulk(configIdsToFetch);
           for (const config of configs) {

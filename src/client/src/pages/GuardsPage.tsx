@@ -388,14 +388,36 @@ const GuardsPage: React.FC = () => {
                       />
                     </div>
                     <div className="form-control">
-                      <label className="label"><span className="label-text">Window (ms)</span></label>
+                      <label className="label">
+                        <span className="label-text">Window (seconds)</span>
+                        <span className="label-text-alt text-info" title="Time period for counting requests">
+                          Max 1 hour (3600s)
+                        </span>
+                      </label>
                       <input
                         type="number"
                         className="input input-bordered"
-                        value={editingProfile.guards.rateLimit?.windowMs || 60000}
-                        onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
+                        value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
+                        onChange={e => {
+                          const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
+                          updateGuard('rateLimit', { windowMs: seconds * 1000 });
+                        }}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
+                        min={1}
+                        max={3600}
+                        placeholder="60"
                       />
+                      <label className="label">
+                        <span className="label-text-alt opacity-70">
+                          {(() => {
+                            const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
+                            if (seconds < 60) return `${seconds} seconds`;
+                            if (seconds === 60) return '1 minute';
+                            if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
+                            return '1 hour';
+                          })()}
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
