@@ -53,28 +53,27 @@ const Pagination: React.FC<PaginationProps> = ({
       }
     } else {
       pages.push(1);
-      if (currentPage > 4) {
-        pages.push('...');
-      }
-      let startPage = Math.max(2, currentPage - 2);
-      let endPage = Math.min(totalPages - 1, currentPage + 2);
 
       if (currentPage <= 4) {
-        startPage = 2;
-        endPage = 5;
-      }
-      if (currentPage > totalPages - 4) {
-        startPage = totalPages - 4;
-        endPage = totalPages - 1;
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-      if (currentPage < totalPages - 3) {
+        for (let i = 2; i <= 5; i++) {
+          pages.push(i);
+        }
         pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages - 1; i++) {
+          pages.push(i);
+        }
+        pages.push(totalPages);
+      } else {
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
       }
-      pages.push(totalPages);
     }
     return pages;
   }, [totalPages, currentPage]);
