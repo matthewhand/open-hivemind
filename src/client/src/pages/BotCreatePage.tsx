@@ -280,6 +280,11 @@ const BotCreatePage: React.FC = () => {
                         System instruction is very long (max 2000 chars recommended).
                       </div>
                     )}
+                    {formData.systemInstruction && (
+                      <div className={`text-xs mt-1 text-right ${formData.systemInstruction.length > 2000 ? 'text-error' : 'text-base-content/50'}`}>
+                        {formData.systemInstruction.length} / 2000 chars
+                      </div>
+                    )}
                   </div>
 
                   {/* LLM Provider */}
