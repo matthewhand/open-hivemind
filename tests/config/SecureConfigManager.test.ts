@@ -286,13 +286,14 @@ describe('SecureConfigManager', () => {
         data: {}
       };
 
-      await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow(/Path traversal detected/);
+      // Either error message indicates invalid ID - regex validates early, path check is defense-in-depth
+      await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow(/Invalid configuration ID/);
 
       const getConfigPromise = secureConfigManager.getConfig('../../../etc/passwd');
-      await expect(getConfigPromise).rejects.toThrow(/Path traversal detected/);
+      await expect(getConfigPromise).rejects.toThrow(/Invalid configuration ID/);
 
       const deleteConfigPromise = secureConfigManager.deleteConfig('../../../etc/passwd');
-      await expect(deleteConfigPromise).rejects.toThrow(/Path traversal detected/);
+      await expect(deleteConfigPromise).rejects.toThrow(/Invalid configuration ID/);
     });
 
     test('should handle invalid configuration data gracefully', async () => {

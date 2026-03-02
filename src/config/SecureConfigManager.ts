@@ -64,7 +64,21 @@ export class SecureConfigManager {
   /**
    * Helper to safely resolve a file path and prevent directory traversal
    */
+  /**
+   * Helper to safely resolve a file path and prevent directory traversal
+   */
   private getSecureFilePath(id: string): string {
+    // Additional input validation: only allow alphanumeric, hyphens, and underscores
+    // This prevents path traversal characters like ../ and ./ from even being processed
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      throw ErrorUtils.createError(
+        'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
+        'ValidationError' as any,
+        'SECURE_CONFIG_INVALID_ID',
+        400,
+      );
+    }
+
     const targetPath = path.join(this.configDir, `${id}.enc`);
 
     // Resolve both paths to their absolute forms
