@@ -49,6 +49,7 @@ const IGNORED_ERROR_PATTERNS = [
   /Network Error/i,
   /net::ERR_/i,
   /Download the React DevTools/i,
+  /Failed to refresh monitoring data: Error: Request timed out/i,
 ];
 
 /**
