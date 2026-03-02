@@ -365,7 +365,7 @@ const BotsPage: React.FC = () => {
         </div>
         <div className="stat">
           <div className="stat-title">Errors</div>
-          <div className="stat-value text-red-500">
+          <div className={`stat-value ${bots.reduce((sum, b) => sum + (b.errorCount || 0), 0) > 0 ? 'text-error' : ''}`}>
             {bots.reduce((sum, b) => sum + (b.errorCount || 0), 0)}
           </div>
         </div>
@@ -745,7 +745,7 @@ const BotsPage: React.FC = () => {
               </div>
               <div className="stat">
                 <div className="stat-title">Errors</div>
-                <div className="stat-value text-error">{previewBot.errorCount || 0}</div>
+                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>{previewBot.errorCount || 0}</div>
               </div>
             </div>
 
