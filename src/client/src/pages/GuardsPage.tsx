@@ -274,7 +274,7 @@ const GuardsPage: React.FC = () => {
 
       {/* Edit Modal */}
       {editingProfile && (
-        <div className="modal-backdrop fixed inset-0 bg-neutral/80 z-[999] opacity-50" aria-hidden="true" />
+        <div className="modal-backdrop fixed inset-0 bg-neutral/80 z-[999] opacity-50 transition-opacity duration-200" aria-hidden="true" />
       )}
       {editingProfile && (
         <Modal
