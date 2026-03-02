@@ -3,11 +3,5 @@
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[context.deploy-preview]
-  ignore = "exit 0"
-
-[context.branch-deploy]
-  ignore = "exit 0"
-
 [dev]
   command = "npm run dev"

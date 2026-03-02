@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';
+import Logger from '../../common/logger';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type CommandHandler } from './CommandHandler';
-import Logger from '../../common/logger';
 
 const dbLogger = Logger.withContext('DatabaseCommandHandler');
 

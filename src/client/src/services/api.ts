@@ -439,7 +439,7 @@ class ApiService {
   }
 
   async getStatus(): Promise<StatusResponse> {
-    return this.request<StatusResponse>('/api/dashboard/api/status');
+    return this.request<StatusResponse>('/api/dashboard/status');
   }
 
   async getConfigSources(): Promise<ConfigSourcesResponse> {
