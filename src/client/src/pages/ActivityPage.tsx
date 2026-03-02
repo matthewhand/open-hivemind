@@ -151,15 +151,22 @@ const ActivityPage: React.FC = () => {
 
   const events = data?.events || [];
 
-  // Filter events client-side based on search query
-  const filteredEvents = useMemo(() => {
-    if (!searchQuery) return events;
-    const lowerQuery = searchQuery.toLowerCase();
-    return events.filter(e =>
-      e.botName.toLowerCase().includes(lowerQuery) ||
-      e.provider.toLowerCase().includes(lowerQuery) ||
-      e.llmProvider.toLowerCase().includes(lowerQuery) ||
-      e.status.toLowerCase().includes(lowerQuery) ||
+  /**
+   * Filters events client-side based on search query.
+   * Uses useMemo for performance optimization to prevent re-filtering on every render.
+   * Searches across multiple event fields: botName, provider, llmProvider, status, and errorMessage.
+   * @returns Filtered array of events matching the search query
+   */
+  const filteredEvents = useMemo<ActivityEvent[]>(() => {
+    if (!searchQuery || !searchQuery.trim()) {
+      return events;
+    }
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    return events.filter((e: ActivityEvent) =>
+      e.botName?.toLowerCase().includes(lowerQuery) ||
+      e.provider?.toLowerCase().includes(lowerQuery) ||
+      e.llmProvider?.toLowerCase().includes(lowerQuery) ||
+      e.status?.toLowerCase().includes(lowerQuery) ||
       (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
     );
   }, [events, searchQuery]);
