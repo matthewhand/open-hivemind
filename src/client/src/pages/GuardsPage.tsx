@@ -86,6 +86,18 @@ const GuardsPage: React.FC = () => {
       return;
     }
 
+    // Clean up arrays before saving
+    const profileToSave = JSON.parse(JSON.stringify(editingProfile));
+    if (profileToSave.guards.mcpGuard.allowedUsers) {
+      profileToSave.guards.mcpGuard.allowedUsers = profileToSave.guards.mcpGuard.allowedUsers.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.mcpGuard.allowedTools) {
+      profileToSave.guards.mcpGuard.allowedTools = profileToSave.guards.mcpGuard.allowedTools.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.contentFilter?.blockedTerms) {
+      profileToSave.guards.contentFilter.blockedTerms = profileToSave.guards.contentFilter.blockedTerms.map((s: string) => s.trim()).filter(Boolean);
+    }
+
     try {
       setSaving(true);
 
@@ -95,7 +107,7 @@ const GuardsPage: React.FC = () => {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProfile),
+        body: JSON.stringify(profileToSave),
       });
 
       if (!response.ok) {
@@ -340,7 +352,9 @@ const GuardsPage: React.FC = () => {
                         type="text"
                         className="input input-bordered"
                         value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                        onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                        // Note: Using trimStart() allows trailing commas during typing for better UX.
+                        // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                        onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
                         disabled={!editingProfile.guards.mcpGuard.enabled}
                       />
                     </div>
@@ -354,7 +368,9 @@ const GuardsPage: React.FC = () => {
                       className="input input-bordered"
                       placeholder="e.g. calculator, weather"
                       value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                      onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      // Note: Using trimStart() allows trailing commas during typing for better UX.
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                     <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -463,7 +479,9 @@ const GuardsPage: React.FC = () => {
                       className="textarea textarea-bordered h-20"
                       placeholder="e.g. secret, password, confidential"
                       value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                      onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      // Note: Using trimStart() allows trailing commas during typing for better UX.
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
                       disabled={!editingProfile.guards.contentFilter?.enabled}
                     />
                   </div>
