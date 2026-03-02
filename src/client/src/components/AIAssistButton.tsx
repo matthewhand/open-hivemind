@@ -10,6 +10,7 @@ interface AIAssistButtonProps {
   systemPrompt?: string;
   onSuccess: (result: string) => void;
   label?: string;
+  showLabel?: boolean;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   systemPrompt,
   onSuccess,
   label = 'Generate with AI',
+  showLabel = false,
   className = '',
 }) => {
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
     >
       <button
         type="button"
-        className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
+        className={`btn btn-ghost btn-sm text-warning ${showLabel ? 'gap-2' : 'btn-circle'} ${className}`}
         onClick={handleClick}
         disabled={loading}
         aria-label={loading ? 'Generating AI instruction...' : label}
@@ -66,6 +68,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         ) : (
           <Sparkles className="w-4 h-4" />
         )}
+        {showLabel && <span>{label}</span>}
       </button>
     </div>
   );
