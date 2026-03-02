@@ -278,6 +278,23 @@ describe('SecureConfigManager', () => {
   });
 
   describe('Error handling', () => {
+    test('should prevent path traversal attacks in id', async () => {
+      const invalidConfig = {
+        id: '../../../etc/passwd',
+        name: 'Malicious Config',
+        type: 'bot',
+        data: {}
+      };
+
+      await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow(/Path traversal detected/);
+
+      const getConfigPromise = secureConfigManager.getConfig('../../../etc/passwd');
+      await expect(getConfigPromise).rejects.toThrow(/Path traversal detected/);
+
+      const deleteConfigPromise = secureConfigManager.deleteConfig('../../../etc/passwd');
+      await expect(deleteConfigPromise).rejects.toThrow(/Path traversal detected/);
+    });
+
     test('should handle invalid configuration data gracefully', async () => {
       const invalidConfig = {
         id: '', // Invalid: empty id
