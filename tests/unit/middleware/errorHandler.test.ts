@@ -205,7 +205,14 @@ describe('errorHandler middleware', () => {
 
       handleUncaughtException(error);
 
-      expect(errorLogger.logError).toHaveBeenCalled();
+      expect(errorLogger.logError).toHaveBeenCalledWith(
+        expect.any(Object),
+        {
+          correlationId: 'uncaught_exception',
+          path: 'global',
+          method: 'UNCAUGHT_EXCEPTION',
+        }
+      );
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
       expect(mockConsoleError).toHaveBeenCalled();
       expect(mockExit).toHaveBeenCalledWith(1);
@@ -216,6 +223,15 @@ describe('errorHandler middleware', () => {
       const error = new Error('Uncaught');
 
       expect(() => handleUncaughtException(error)).toThrow('Uncaught');
+      expect(errorLogger.logError).toHaveBeenCalledWith(
+        expect.any(Object),
+        {
+          correlationId: 'uncaught_exception',
+          path: 'global',
+          method: 'UNCAUGHT_EXCEPTION',
+        }
+      );
+      expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
       expect(mockExit).not.toHaveBeenCalled();
     });
   });
@@ -246,7 +262,14 @@ describe('errorHandler middleware', () => {
 
       handleUnhandledRejection(reason, promise);
 
-      expect(errorLogger.logError).toHaveBeenCalled();
+      expect(errorLogger.logError).toHaveBeenCalledWith(
+        expect.any(Object),
+        {
+          correlationId: 'unhandled_rejection',
+          path: 'global',
+          method: 'UNHANDLED_REJECTION',
+        }
+      );
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
       expect(mockConsoleError).toHaveBeenCalled();
       expect(mockExit).toHaveBeenCalledWith(1);
@@ -261,7 +284,15 @@ describe('errorHandler middleware', () => {
 
       handleUnhandledRejection(reason, promise);
 
-      expect(errorLogger.logError).toHaveBeenCalled();
+      expect(errorLogger.logError).toHaveBeenCalledWith(
+        expect.any(Object),
+        {
+          correlationId: 'unhandled_rejection',
+          path: 'global',
+          method: 'UNHANDLED_REJECTION',
+        }
+      );
+      expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
       expect(mockConsoleError).toHaveBeenCalled();
       expect(mockExit).not.toHaveBeenCalled();
     });
@@ -290,6 +321,37 @@ describe('errorHandler middleware', () => {
       expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
 
       onSpy.mockRestore();
+    });
+
+    it('should call process.exit after a 5 second timeout when shutdown is triggered', () => {
+      jest.useFakeTimers();
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+      let sigtermHandler: Function | undefined;
+
+      const onSpy = jest.spyOn(process, 'on').mockImplementation(((event: string, listener: Function) => {
+        if (event === 'SIGTERM') {
+          sigtermHandler = listener;
+        }
+        return process;
+      }) as any);
+
+      setupGracefulShutdown();
+
+      expect(sigtermHandler).toBeDefined();
+
+      if (sigtermHandler) {
+        sigtermHandler();
+      }
+
+      expect(mockExit).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(5000);
+
+      expect(mockExit).toHaveBeenCalledWith(0);
+
+      onSpy.mockRestore();
+      mockExit.mockRestore();
+      jest.useRealTimers();
     });
   });
 
