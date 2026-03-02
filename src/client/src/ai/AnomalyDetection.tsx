@@ -547,10 +547,24 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
   };
 
   const toggleFeature = (feature: keyof AnomalyConfig) => {
-    setConfig(prev => ({
-      ...prev,
-      [feature]: !prev[feature],
-    }));
+    setConfig(prev => {
+      if (feature === 'enabled') {
+        return { ...prev, enabled: !prev.enabled };
+      }
+
+      const value = prev[feature];
+      if (typeof value === 'object' && value !== null && 'enabled' in value) {
+        return {
+          ...prev,
+          [feature]: { ...value, enabled: !value.enabled }
+        };
+      }
+
+      return {
+        ...prev,
+        [feature]: typeof value === 'boolean' ? !value : value
+      };
+    });
   };
 
   const updateSensitivity = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -748,8 +762,8 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
               <input
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
-                checked={config.anomalyDetection}
-                onChange={() => toggleFeature('anomalyDetection')}
+                checked={config.enabled}
+                onChange={() => toggleFeature('enabled')}
               />
               <span className="label-text">Anomaly Detection</span>
             </label>
