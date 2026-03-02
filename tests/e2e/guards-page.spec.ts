@@ -93,7 +93,7 @@ test.describe('Guards Page', () => {
     await duplicateBtn.click();
 
     // Check if modal opens with copied data
-    const modal = page.locator('dialog.modal[open]');
+    const modal = page.locator('dialog.modal[open], .modal-open');
     await expect(modal).toBeVisible();
 
     // Check name input
