@@ -19,7 +19,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  const [isLoading, setIsLoading] = useState(false);
+  // Separate loading states for each async operation to prevent UI blocking
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -118,7 +120,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     if (!onTestConnection) {return;}
 
-    setIsLoading(true);
+    setIsTestingConnection(true);
     setTestResult(null);
 
     try {
@@ -133,14 +135,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
-      setIsLoading(false);
+      setIsTestingConnection(false);
     }
   };
 
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoading(true);
+    setIsLoadingAvatar(true);
     setAvatarUrl(null);
 
     try {
@@ -152,7 +154,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAvatar(false);
     }
   };
 
@@ -396,10 +398,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Button
             type="button"
             onClick={handleTestConnection}
-            disabled={isLoading}
-            loading={isLoading}
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isTestingConnection}
             loadingText="Testing..."
             variant="primary"
+            aria-label="Test connection to provider"
           >
             Test Connection
           </Button>
@@ -409,10 +412,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Button
             type="button"
             onClick={handleLoadAvatar}
-            disabled={isLoading}
-            loading={isLoading}
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isLoadingAvatar}
             loadingText="Loading..."
             variant="secondary"
+            aria-label="Load provider avatar"
           >
             Load Avatar
           </Button>
