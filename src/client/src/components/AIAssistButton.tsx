@@ -48,7 +48,10 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div className={`tooltip tooltip-right ${error ? 'tooltip-error' : ''}`} data-tip={error || label}>
+    <div
+      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
+      data-tip={error || (loading ? 'Generating...' : label)}
+    >
       <button
         type="button"
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
