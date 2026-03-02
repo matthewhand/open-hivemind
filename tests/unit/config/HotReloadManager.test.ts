@@ -318,7 +318,8 @@ describe('HotReloadManager', () => {
             }
         }
       };
-      await hotReloadManager.applyConfigurationChange(change);
+      const result = await hotReloadManager.applyConfigurationChange(change);
+      expect(result.success).toBe(true);
     });
 
     it('should handle mcpGuard string allowedUsers logic', async () => {
@@ -333,7 +334,35 @@ describe('HotReloadManager', () => {
             }
         }
       };
-      await hotReloadManager.applyConfigurationChange(change);
+      const result = await hotReloadManager.applyConfigurationChange(change);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle delete type configuration change', async () => {
+      const change = {
+        type: 'delete' as const,
+        botName: 'test-bot',
+        changes: {
+          messageProvider: 'slack'
+        }
+      };
+      const result = await hotReloadManager.applyConfigurationChange(change);
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toContain('test-bot');
+    });
+
+    it('should handle create type configuration change', async () => {
+      const change = {
+        type: 'create' as const,
+        botName: 'test-bot',
+        changes: {
+          messageProvider: 'discord',
+          llmProvider: 'openai'
+        }
+      };
+      const result = await hotReloadManager.applyConfigurationChange(change);
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toContain('test-bot');
     });
   });
 
