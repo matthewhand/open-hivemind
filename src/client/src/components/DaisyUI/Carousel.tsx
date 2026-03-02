@@ -4,8 +4,7 @@ type CarouselItem = {
   image: string;
   title: string;
   description: string;
-  bgGradient?: string; // Optional: CSS background to use when image is empty (allows classes)
-  bgClass?: string; // Optional: Tailwind background classes
+  bgGradient?: string; // CSS gradient to use when image is empty
 };
 
 type CarouselProps = {
@@ -62,13 +61,13 @@ const Carousel: React.FC<CarouselProps> = ({
             style={{ display: index === activeIndex ? 'block' : 'none' }}
           >
             {item.image ? (
-              <img src={item.image} className="w-full h-full object-cover" alt={item.title} />
+              <img src={item.image} className="w-full" alt={item.title} />
             ) : (
               <div
-                className={`w-full h-64 flex items-center justify-center ${item.bgClass || (!item.bgGradient ? 'bg-gradient-to-br from-indigo-500 to-purple-600' : '')}`}
-                style={item.bgGradient ? { background: item.bgGradient } : undefined}
+                className="w-full h-64 flex items-center justify-center"
+                style={{ background: item.bgGradient || 'linear-gradient(135deg, #667eea, #764ba2)' }}
               >
-                <span className="text-4xl font-bold text-white/30 text-center px-4">{item.title}</span>
+                <span className="text-4xl font-bold text-white/30">{item.title}</span>
               </div>
             )}
             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4 text-white">

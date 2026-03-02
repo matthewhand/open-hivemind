@@ -11,7 +11,7 @@ interface HiddenFeatureToggleProps {
 const HiddenFeatureToggle: React.FC<HiddenFeatureToggleProps> = ({
   children,
   fallback = 'hide',
-  redirectTo = '/admin/overview',
+  redirectTo = '/uber/overview',
 }) => {
   const { user } = useAuth();
 

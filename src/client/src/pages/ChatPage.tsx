@@ -89,38 +89,6 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
-  const handleSendMessage = async (content: string) => {
-    if (!selectedBotId) return;
-
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      content,
-      timestamp: new Date().toISOString(),
-      sender: {
-        id: 'current-user',
-        name: 'You',
-        type: 'user',
-      },
-      metadata: {
-        status: 'sending',
-      },
-    };
-
-    setMessages(prev => [...prev, tempMessage]);
-
-    try {
-      await apiService.post(`/api/bots/${selectedBotId}/message`, { content });
-      // Depending on backend, we could fetch history to get actual messages
-      // but for this task, the optimistic rollback is the focus.
-      await fetchHistory(selectedBotId);
-    } catch (err) {
-      console.error('Failed to send message:', err);
-      // Rollback optimistic update on error
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-base-200">
         <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
@@ -180,8 +148,8 @@ const ChatPage: React.FC = () => {
                         )}
                         <ChatInterface
                             messages={messages}
-                            onSendMessage={handleSendMessage}
-                            placeholder="Type a message..."
+                            onSendMessage={() => { /* Disabled */ }}
+                            placeholder="Read-only mode"
                             className="h-full"
                             maxHeight="100%"
                             isLoading={false}
