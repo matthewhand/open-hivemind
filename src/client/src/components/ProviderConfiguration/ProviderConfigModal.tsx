@@ -353,7 +353,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         </div>
 
         {/* Provider Type Tabs */}
-        <div className="tabs tabs-boxed mb-6">
+        <div className="tabs tabs-boxed mb-6 flex-wrap gap-1">
           {providerTypes.map(type => {
             const typeConfig = (configs as any)[type];
             return (
