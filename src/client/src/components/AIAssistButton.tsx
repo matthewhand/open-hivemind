@@ -58,6 +58,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         aria-label={loading ? `${label} - loading in progress` : label}
         aria-busy={loading}
         aria-describedby={error ? 'ai-assist-error' : undefined}
+        title={loading ? 'Generating...' : label}
       >
         {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
