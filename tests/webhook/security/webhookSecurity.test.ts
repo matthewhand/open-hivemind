@@ -76,6 +76,37 @@ describe('WebhookSecurity', () => {
 
       expect(next).toHaveBeenCalled();
     });
+
+    it('should fallback to Authorization Bearer token when x-webhook-token is missing', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { authorization: 'Bearer valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should handle case-insensitive Authorization header and bearer prefix', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { Authorization: 'bearer valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 when Authorization header does not use Bearer scheme', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { authorization: 'Basic valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: Invalid token');
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyIpWhitelist', () => {

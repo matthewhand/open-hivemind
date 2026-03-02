@@ -8,7 +8,19 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   const headerKey = Object.keys(req.headers || {}).find(
     (k) => k.toLowerCase() === 'x-webhook-token'
   );
-  const providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+  let providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+
+  // Fallback to Authorization: Bearer <token>
+  if (!providedToken) {
+    const authHeaderKey = Object.keys(req.headers || {}).find(
+      (k) => k.toLowerCase() === 'authorization'
+    );
+    const authHeaderValue = authHeaderKey ? String((req.headers as any)[authHeaderKey]) : '';
+    if (authHeaderValue.toLowerCase().startsWith('bearer ')) {
+      providedToken = authHeaderValue.slice(7).trim();
+    }
+  }
+
   const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
