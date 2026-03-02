@@ -546,12 +546,35 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     }));
   };
 
-  const toggleFeature = (feature: keyof AnomalyConfig) => {
+
+  const toggleFeature = (feature: 'enabled') => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
     }));
   };
+
+  const toggleLearning = () => {
+    setConfig(prev => ({
+      ...prev,
+      learning: { ...prev.learning, enabled: !prev.learning.enabled }
+    }));
+  };
+
+  const toggleAutoResponse = () => {
+    setConfig(prev => ({
+      ...prev,
+      autoResponse: { ...prev.autoResponse, enabled: !prev.autoResponse.enabled }
+    }));
+  };
+
+  const toggleNotifications = () => {
+    setConfig(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, enabled: !prev.notifications.enabled }
+    }));
+  };
+
 
   const updateSensitivity = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig(prev => ({
@@ -748,8 +771,8 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
               <input
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
-                checked={config.anomalyDetection}
-                onChange={() => toggleFeature('anomalyDetection')}
+                checked={config.enabled}
+                onChange={() => toggleFeature('enabled')}
               />
               <span className="label-text">Anomaly Detection</span>
             </label>
@@ -758,7 +781,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.learning.enabled}
-                onChange={() => toggleFeature('learning')}
+                onChange={toggleLearning}
               />
               <span className="label-text">ML Learning</span>
             </label>
@@ -767,7 +790,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.autoResponse.enabled}
-                onChange={() => toggleFeature('autoResponse')}
+                onChange={toggleAutoResponse}
               />
               <span className="label-text">Auto Response</span>
             </label>
@@ -776,7 +799,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.notifications.enabled}
-                onChange={() => toggleFeature('notifications')}
+                onChange={toggleNotifications}
               />
               <span className="label-text">Notifications</span>
             </label>
