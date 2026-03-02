@@ -102,8 +102,14 @@ class TestFlakinessDetector {
       return 0;
     }
 
+    // A test must have at least one failure to be considered flaky
+    const failCount = history.filter((h) => h.status === 'failed').length;
+    if (failCount === 0) {
+      return 0;
+    }
+
     // Method 1: Simple failure rate
-    const failureRate = history.filter((h) => h.status === 'failed').length / history.length;
+    const failureRate = failCount / history.length;
 
     // Method 2: Alternating pass/fail patterns (high flakiness indicator)
     let alternatingScore = 0;
