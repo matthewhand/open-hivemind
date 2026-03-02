@@ -280,6 +280,7 @@ const ConfigurationWizard: React.FC = () => {
                 <div className="form-control">
                   <label className="label"><span className="label-text">Flowise API Key (Optional)</span></label>
                   <Input type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
+                  <label className="label"><span className="label-text-alt">Optional: Only required if your Flowise instance requires authentication</span></label>
                 </div>
               )}
               {wizardData.llmProvider === 'openwebui' && (
