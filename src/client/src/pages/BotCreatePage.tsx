@@ -150,6 +150,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
                         onSuccess={(result) => handleInputChange('name', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Input
@@ -170,6 +171,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
                         onSuccess={(result) => handleInputChange('description', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -268,6 +270,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
                         onSuccess={(result) => handleInputChange('systemInstruction', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -276,23 +279,23 @@ const BotCreatePage: React.FC = () => {
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
                       className="h-24 textarea-bordered"
                     />
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="flex-1">
+                    <label className="label">
+                      <span className="label-text-alt">
                         {formData.systemInstruction && formData.systemInstruction.length < 10 && (
-                          <div className="text-warning text-xs">
+                          <span className="text-warning">
                             System instruction is very short. Consider providing more detail.
-                          </div>
+                          </span>
                         )}
                         {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
-                          <div className="text-error text-xs">
+                          <span className="text-error">
                             System instruction is very long (max 2000 chars recommended).
-                          </div>
+                          </span>
                         )}
-                      </div>
-                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
+                      </span>
+                      <span className={`label-text-alt ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : 'opacity-50'}`}>
                         {formData.systemInstruction.length}/2000
-                      </div>
-                    </div>
+                      </span>
+                    </label>
                   </div>
 
                   {/* LLM Provider */}
