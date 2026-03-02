@@ -758,23 +758,31 @@ const BotsPage: React.FC = () => {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="tabs tabs-boxed flex-wrap gap-1 mb-4">
+            <div className="tabs tabs-boxed flex-wrap gap-1 mb-4" role="tablist" aria-label="Bot preview sections">
               <button
                 className={`tab flex-1 ${previewTab === 'activity' ? 'tab-active' : ''}`}
                 onClick={() => setPreviewTab('activity')}
+                role="tab"
+                aria-selected={previewTab === 'activity'}
+                aria-controls="activity-panel"
+                id="activity-tab"
               >
                 <Activity className="w-4 h-4 mr-2" /> Recent Activity
               </button>
               <button
                 className={`tab flex-1 ${previewTab === 'chat' ? 'tab-active' : ''}`}
                 onClick={() => setPreviewTab('chat')}
+                role="tab"
+                aria-selected={previewTab === 'chat'}
+                aria-controls="chat-panel"
+                id="chat-tab"
               >
                 <MessageSquare className="w-4 h-4 mr-2" /> Chat History
               </button>
             </div>
 
             {previewTab === 'activity' && (
-              <div>
+              <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
                 <div className="flex items-center justify-end mb-3">
                   <div className="flex gap-2">
                     <input
@@ -845,7 +853,7 @@ const BotsPage: React.FC = () => {
             )}
 
             {previewTab === 'chat' && (
-              <div>
+              <div role="tabpanel" id="chat-panel" aria-labelledby="chat-tab">
                 <div className="bg-base-300 rounded-lg">
                   <BotChatBubbles
                     messages={chatHistory}
