@@ -21,7 +21,7 @@ interface ProviderConfigModalProps {
   onSubmit: (providerData: any) => void;
 }
 
-export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
+const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
   existingProviders,
   onClose,

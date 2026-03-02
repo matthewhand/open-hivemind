@@ -366,9 +366,6 @@ export class ConfigurationValidator {
 
       case 'flowise': {
         const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
-        if (!flowise?.apiKey) {
-          errors.push('Flowise API key is required');
-        }
         if (!flowise?.endpoint) {
           errors.push('Flowise endpoint is required');
         } else {
