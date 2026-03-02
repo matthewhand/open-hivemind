@@ -9,7 +9,7 @@ export * from './schemas/telegram';
 export * from './schemas/mcp';
 export * from './schemas/flowise';
 export * from './schemas/openwebui';
-export * from './schemas/webhook';
+export * from './schemas/mattermost';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
@@ -21,22 +21,22 @@ import { ollamaProviderSchema } from './schemas/ollama';
 import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
-import { openWebUIProviderSchema } from './schemas/openwebui';
-import { webhookProviderSchema } from './schemas/webhook';
+import { mattermostProviderSchema } from './schemas/mattermost';
+import { openWebUiProviderSchema } from './schemas/openwebui';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
   discord: discordProviderSchema,
   slack: slackProviderSchema,
   telegram: telegramProviderSchema,
-  webhook: webhookProviderSchema,
+  mattermost: mattermostProviderSchema,
 
   // LLM providers
   openai: openAIProviderSchema,
   anthropic: anthropicProviderSchema,
   ollama: ollamaProviderSchema,
   flowise: flowiseProviderSchema,
-  openwebui: openWebUIProviderSchema,
+  openwebui: openWebUiProviderSchema,
 
   // MCP providers
   mcp: mcpProviderSchema,
