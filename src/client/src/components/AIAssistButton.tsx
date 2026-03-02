@@ -54,15 +54,22 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
-        aria-label={loading ? 'Loading...' : label}
+        aria-disabled={loading}
+        aria-label={loading ? `${label} - loading in progress` : label}
         aria-busy={loading}
+        aria-describedby={error ? 'ai-assist-error' : undefined}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
         ) : (
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4" aria-hidden="true" />
         )}
       </button>
+      {error && (
+        <span id="ai-assist-error" className="sr-only" role="alert" aria-live="polite">
+          {error}
+        </span>
+      )}
     </div>
   );
 };
