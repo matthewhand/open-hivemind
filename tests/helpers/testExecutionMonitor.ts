@@ -186,8 +186,9 @@ class TestExecutionMonitor {
     }
 
     // Failure analysis
-    const failureRate =
-      (allTests.filter((t) => t.status === 'failed').length / allTests.length) * 100;
+    const failureRate = allTests.length > 0
+      ? (allTests.filter((t) => t.status === 'failed').length / allTests.length) * 100
+      : 0;
     if (failureRate > 5) {
       insights.push(
         `❌ High failure rate (${failureRate.toFixed(1)}%). Investigate test reliability.`
@@ -233,6 +234,8 @@ export const testMonitor = new TestExecutionMonitor();
 /**
  * Jest setup function to integrate monitoring
  */
+let currentTestStartTime = 0;
+
 export function setupTestMonitoring() {
   // Set up Jest hooks to monitor test execution
   beforeAll(() => {
@@ -243,17 +246,23 @@ export function setupTestMonitoring() {
     testMonitor.endSuite();
   });
 
+  beforeEach(() => {
+    currentTestStartTime = Date.now();
+  });
+
   afterEach(() => {
     const testState = expect.getState();
     const testName = testState.currentTestName;
     const status = testState.currentTestResult?.status || 'unknown';
 
-    // Record test result (duration would need to be captured differently in Jest)
-    // This is a simplified version - full implementation would require Jest reporters
+    // Record test result with computed duration
+    const duration = currentTestStartTime > 0 ? Date.now() - currentTestStartTime : 0;
+    currentTestStartTime = 0; // Reset for safety
+
     if (testName) {
       testMonitor.recordTest(
         testName,
-        0, // Duration not easily accessible here
+        duration,
         status as any,
         testState.testPath || 'unknown'
       );
