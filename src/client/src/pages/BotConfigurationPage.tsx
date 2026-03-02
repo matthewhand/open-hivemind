@@ -3,6 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
+import { Input } from '../components/DaisyUI/Input';
+import Toggle from '../components/DaisyUI/Toggle';
+import Select from '../components/DaisyUI/Select';
+import { Badge } from '../components/DaisyUI/Badge';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -120,38 +124,36 @@ const BotConfigurationPage: React.FC = () => {
       <div key={key} className="form-control mb-4">
         <label className="label">
           <span className="label-text font-medium">{key}</span>
-          {isSensitive && <span className="badge badge-warning badge-sm">Sensitive</span>}
+          {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
         </label>
 
         {schema.format === 'boolean' || typeof value === 'boolean' ? (
-          <input
-            type="checkbox"
-            className="toggle toggle-primary"
+          <Toggle
+            color="primary"
             checked={currentValue === true || currentValue === 'true'}
             onChange={(e) => updateConfigValue(configName, key, e.target.checked)}
           />
         ) : schema.enum ? (
-          <select
-            className="select select-bordered w-full max-w-xs"
+          <Select
+            className="w-full max-w-xs"
             value={currentValue ?? ''}
             onChange={(e) => updateConfigValue(configName, key, e.target.value)}
-          >
-            <option value="">Select...</option>
-            {schema.enum.map((opt: string) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+            options={[
+              { label: 'Select...', value: '' },
+              ...schema.enum.map((opt: string) => ({ label: opt, value: opt }))
+            ]}
+          />
         ) : typeof value === 'number' || schema.format === 'int' || schema.format === 'port' ? (
-          <input
+          <Input
             type="number"
-            className="input input-bordered w-full max-w-xs"
+            className="w-full max-w-xs"
             value={currentValue ?? ''}
             onChange={(e) => updateConfigValue(configName, key, parseInt(e.target.value) || 0)}
           />
         ) : (
-          <input
+          <Input
             type={isSensitive ? 'password' : 'text'}
-            className="input input-bordered w-full max-w-md"
+            className="w-full max-w-md"
             value={currentValue ?? ''}
             placeholder={isSensitive ? '••••••••' : ''}
             onChange={(e) => updateConfigValue(configName, key, e.target.value)}
@@ -185,8 +187,8 @@ const BotConfigurationPage: React.FC = () => {
       title: (
         <div className="flex items-center gap-3 w-full">
           <span className="capitalize">{name}</span>
-          <span className="badge badge-ghost badge-sm">{Object.keys(values).length} settings</span>
-          {changed && <span className="badge badge-warning badge-sm">Modified</span>}
+          <Badge variant="neutral" style="outline" size="small">{Object.keys(values).length} settings</Badge>
+          {changed && <Badge variant="warning" size="small">Modified</Badge>}
         </div>
       ) as unknown as string,
       content: (
