@@ -1,0 +1,20 @@
+--- src/client/src/components/ProviderConfiguration/ProviderConfigModal.tsx
++++ src/client/src/components/ProviderConfiguration/ProviderConfigModal.tsx
+@@ -427,6 +427,6 @@
+       </div>
+     </div>
+   );
+-}; => handleFieldChange(field.name, e.target.value)}
+-          />
+-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+-        </div>
+-      );
+-
+-    case 'number':
+-      return (
+-        <div key={field.name}>
+-          <label className="label">
+-            <span className="label-text font-medium">{field.label}</span>
++};
++
++export default ProviderConfigModal;

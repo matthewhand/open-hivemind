@@ -26,7 +26,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     }
   }
 
-  let expectedToken: string;
+  let expectedToken = '';
   try {
     expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
   } catch (error: any) {
@@ -62,9 +62,8 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   providedBuffer.copy(paddedProvided);
   expectedBuffer.copy(paddedExpected);
 
-  const isEqual =
-    providedBuffer.length === expectedBuffer.length &&
-    crypto.timingSafeEqual(paddedProvided, paddedExpected);
+  const contentMatches = crypto.timingSafeEqual(paddedProvided, paddedExpected);
+  const isEqual = providedBuffer.length === expectedBuffer.length && contentMatches;
 
   if (!isEqual) {
     res.status(403).send('Forbidden: Invalid token');
@@ -104,13 +103,12 @@ const isValidIpv6 = (ip: string): boolean => {
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
   let whitelistedIps: string[] = [];
   try {
-    const rawWhitelist = webhookConfig.get('WEBHOOK_IP_WHITELIST');
-    if (rawWhitelist) {
-      whitelistedIps = String(rawWhitelist)
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
+    whitelistedIps = webhookConfig.get('WEBHOOK_IP_WHITELIST')
+      ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST'))
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
   } catch (error: any) {
     Logger.error('Error retrieving WEBHOOK_IP_WHITELIST from configuration', {
       method: req.method,

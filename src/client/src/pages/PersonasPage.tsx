@@ -18,6 +18,7 @@ import {
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
+import AIAssistButton from '../components/AIAssistButton';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -430,7 +431,7 @@ const PersonasPage: React.FC = () => {
                       </Badge>
                     ))}
                     {persona.assignedBotNames.length > 3 && (
-                      <Badge variant="ghost" size="small">
+                      <Badge variant="neutral" size="small">
                         +{persona.assignedBotNames.length - 3} more
                       </Badge>
                     )}
@@ -477,13 +478,21 @@ const PersonasPage: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="form-control">
-            <label className="label">
+            <label className="label flex items-center justify-between">
               <span className="label-text flex items-center gap-2">
                 Persona Name
                 <div className="tooltip tooltip-right" data-tip="A unique name for this persona">
                   <Info className="w-3 h-3 text-base-content/40" />
                 </div>
               </span>
+              {!isViewMode && !(!!editingPersona && editingPersona.isBuiltIn) && (
+                <AIAssistButton
+                  label="Generate Name"
+                  prompt={`Generate a creative name for a persona${personaDescription ? ` that is described as: "${personaDescription}"` : ''}.`}
+                  systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
+                  onSuccess={(result) => setPersonaName(result)}
+                />
+              )}
             </label>
             <Input
               placeholder="e.g. Friendly Helper"
@@ -494,8 +503,16 @@ const PersonasPage: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label className="label">
+            <label className="label flex items-center justify-between">
               <span className="label-text">Description</span>
+              {!isViewMode && (
+                <AIAssistButton
+                  label="Generate Description"
+                  prompt={`Generate a short, engaging description (max 2 sentences) for a persona${personaName ? ` named "${personaName}"` : ''}.`}
+                  systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
+                  onSuccess={(result) => setPersonaDescription(result)}
+                />
+              )}
             </label>
             <Input
               placeholder="Short description of this persona"
