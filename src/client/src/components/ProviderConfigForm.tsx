@@ -160,8 +160,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = errors[field.name];
 
-    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
+    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-base-100';
+    const errorClasses = error ? 'border-error focus:ring-error text-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
@@ -174,6 +174,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
             aria-label={`${field.label} password input`}
           />
         );
@@ -189,6 +190,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             max={field.validation?.max}
             step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
             className={inputClasses}
+            error={!!error}
           />
         );
 
@@ -200,6 +202,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
           />
         );
 
@@ -209,6 +212,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
+            error={!!error}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,
@@ -227,6 +231,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
+            error={!!error}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,
@@ -251,6 +256,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           <Textarea
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            error={!!error}
             placeholder={field.placeholder}
             rows={4}
             className={inputClasses}
@@ -312,6 +318,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
             aria-label={`${field.label} text input`}
           />
         );
@@ -319,10 +326,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     };
 
     return (
-      <div className="space-y-1">
+      <div className="form-control w-full space-y-1">
         {renderInput()}
         {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
+          <label className="label py-1"><span className="label-text-alt text-error">{error}</span></label>
         )}
       </div>
     );
