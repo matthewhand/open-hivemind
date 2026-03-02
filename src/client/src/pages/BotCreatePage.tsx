@@ -317,16 +317,18 @@ const BotCreatePage: React.FC = () => {
                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                       ))}
                     </Select>
-                    {!defaultLlmConfigured && !formData.llmProvider && (
-                      <div className="text-error text-xs mt-1">
-                        System default is not configured. Please select a provider.
-                      </div>
-                    )}
-                    {defaultLlmConfigured && !formData.llmProvider && (
-                      <div className="text-success text-xs mt-1 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Using system default configuration
-                      </div>
-                    )}
+                    <label className="label">
+                      {!defaultLlmConfigured && !formData.llmProvider && (
+                        <span className="label-text-alt text-error">
+                          System default is not configured. Please select a provider.
+                        </span>
+                      )}
+                      {defaultLlmConfigured && !formData.llmProvider && (
+                        <span className="label-text-alt text-success flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Using system default configuration
+                        </span>
+                      )}
+                    </label>
                   </div>
                 </div>
               </div>
