@@ -267,6 +267,7 @@ export function setupTestMonitoring() {
 export class PerformanceRegressionDetector {
   private baselineResults: Map<string, number> = new Map();
   private regressionThreshold = 1.5; // 50% slower than baseline
+  private minimumAbsoluteDegradationMs = 50; // At least 50ms slower to avoid noise on fast tests
 
   /**
    * Set baseline performance data
@@ -304,12 +305,17 @@ export class PerformanceRegressionDetector {
 
     const degradationPercent = ((currentDuration - baselineDuration) / baselineDuration) * 100;
 
-    if (currentDuration > baselineDuration * this.regressionThreshold) {
+    const absoluteDegradation = currentDuration - baselineDuration;
+
+    if (
+      currentDuration > baselineDuration * this.regressionThreshold &&
+      absoluteDegradation >= this.minimumAbsoluteDegradationMs
+    ) {
       return {
         hasRegression: true,
         baselineDuration,
         degradationPercent,
-        message: `${testName} is ${degradationPercent.toFixed(1)}% slower than baseline (${baselineDuration}ms → ${currentDuration}ms)`,
+        message: `${testName} is ${degradationPercent.toFixed(1)}% slower than baseline (${baselineDuration}ms → ${currentDuration}ms, +${absoluteDegradation}ms)`,
       };
     }
 

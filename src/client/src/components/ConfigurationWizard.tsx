@@ -34,8 +34,6 @@ interface WizardData {
   mattermostToken?: string;
   openaiKey?: string;
   flowiseApiKey?: string;
-  flowiseApiUrl?: string;
-  flowiseChatflowId?: string;
   openwebuiApiKey?: string;
   environment: string;
 }
@@ -105,8 +103,6 @@ const ConfigurationWizard: React.FC = () => {
       if (wizardData.messageProvider === 'slack' && !wizardData.slackToken) {errors.push('Slack bot token is required');}
       if (wizardData.messageProvider === 'mattermost' && (!wizardData.mattermostToken || !wizardData.mattermostServerUrl)) {errors.push('Mattermost credentials are required');}
       if (wizardData.llmProvider === 'openai' && !wizardData.openaiKey) {errors.push('OpenAI API key is required');}
-      if (wizardData.llmProvider === 'flowise' && !wizardData.flowiseApiKey) {errors.push('Flowise API key is required');}
-      if (wizardData.llmProvider === 'flowise' && !wizardData.flowiseApiUrl) {errors.push('Flowise API URL is required');}
       if (wizardData.llmProvider === 'openwebui' && !wizardData.openwebuiApiKey) {errors.push('OpenWebUI API key is required');}
       break;
     }
@@ -133,7 +129,6 @@ const ConfigurationWizard: React.FC = () => {
         discord: wizardData.messageProvider === 'discord' ? { token: wizardData.discordToken } : undefined,
         slack: wizardData.messageProvider === 'slack' ? { botToken: wizardData.slackToken } : undefined,
         openai: wizardData.llmProvider === 'openai' ? { apiKey: wizardData.openaiKey } : undefined,
-        flowise: wizardData.llmProvider === 'flowise' ? { apiKey: wizardData.flowiseApiKey, endpoint: wizardData.flowiseApiUrl, chatflowId: wizardData.flowiseChatflowId } : undefined,
       };
 
       const response = await fetch('/api/config/hot-reload', {
@@ -282,19 +277,10 @@ const ConfigurationWizard: React.FC = () => {
                 </div>
               )}
               {wizardData.llmProvider === 'flowise' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">API URL *</span></label>
-                    <Input value={wizardData.flowiseApiUrl || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiUrl: e.target.value }))} placeholder="http://localhost:3000/api/v1" />
-                  </div>
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">API Key *</span></label>
-                    <Input type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
-                  </div>
-                  <div className="form-control md:col-span-2">
-                    <label className="label"><span className="label-text">Chatflow ID</span></label>
-                    <Input value={wizardData.flowiseChatflowId || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseChatflowId: e.target.value }))} placeholder="Specific chatflow ID to use" />
-                  </div>
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Flowise API Key (Optional)</span></label>
+                  <Input type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
+                  <label className="label"><span className="label-text-alt">Optional: Only required if your Flowise instance requires authentication</span></label>
                 </div>
               )}
               {wizardData.llmProvider === 'openwebui' && (

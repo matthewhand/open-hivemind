@@ -93,7 +93,7 @@ test.describe('Guards Page', () => {
     await duplicateBtn.click();
 
     // Check if modal opens with copied data
-    const modal = page.locator('.modal-open');
+    const modal = page.locator('dialog.modal[open], .modal-open');
     await expect(modal).toBeVisible();
 
     // Check name input
@@ -101,7 +101,7 @@ test.describe('Guards Page', () => {
     await expect(nameInput).toHaveValue('Copy of Production Guard');
 
     // Save
-    await modal.getByText('Save Profile').click();
+    await modal.getByText('Create Profile').click();
 
     // Verify POST was called with correct data
     expect(createdProfile).toBeTruthy();

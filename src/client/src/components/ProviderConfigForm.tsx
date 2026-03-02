@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Button } from './DaisyUI';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -19,9 +19,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  // Separate loading states for each async operation to prevent UI blocking
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -67,7 +65,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       if (field.validation.custom) {
         const customError = field.validation.custom(value);
-        if (customError) {return customError;}
+        if (customError) { return customError; }
       }
     }
 
@@ -118,9 +116,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       return;
     }
 
-    if (!onTestConnection) {return;}
+    if (!onTestConnection) { return; }
 
-    setIsTestingConnection(true);
+    setIsLoading(true);
     setTestResult(null);
 
     try {
@@ -135,14 +133,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
-      setIsTestingConnection(false);
+      setIsLoading(false);
     }
   };
 
   const handleLoadAvatar = async () => {
-    if (!onAvatarLoad) {return;}
+    if (!onAvatarLoad) { return; }
 
-    setIsLoadingAvatar(true);
+    setIsLoading(true);
     setAvatarUrl(null);
 
     try {
@@ -154,7 +152,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoadingAvatar(false);
+      setIsLoading(false);
     }
   };
 
@@ -162,173 +160,180 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = errors[field.name];
 
-    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
+    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-base-100';
+    const errorClasses = error ? 'border-error focus:ring-error text-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
       switch (field.type) {
-      case 'password':
-        return (
-          <input
-            type="password"
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            className={inputClasses}
-          />
-        );
-
-      case 'number':
-        return (
-          <input
-            type="number"
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
-            placeholder={field.placeholder}
-            min={field.validation?.min}
-            max={field.validation?.max}
-            step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
-            className={inputClasses}
-          />
-        );
-
-      case 'url':
-        return (
-          <input
-            type="url"
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            className={inputClasses}
-          />
-        );
-
-      case 'select':
-        return (
-          <select
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            className={inputClasses}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-
-      case 'multiselect':
-        return (
-          <select
-            multiple
-            value={Array.isArray(value) ? value : []}
-            onChange={(e) => {
-              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-              handleFieldChange(field.name, selectedOptions);
-            }}
-            className={`${inputClasses} h-24`}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-
-      case 'boolean':
-        return (
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={Boolean(value)}
-              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
-            />
-            <span className="text-sm text-base-content/80">Enable</span>
-          </label>
-        );
-
-      case 'textarea':
-        return (
-          <textarea
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            rows={4}
-            className={inputClasses}
-          />
-        );
-
-      case 'json':
-        return (
-          <textarea
-            value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                handleFieldChange(field.name, parsed);
-              } catch {
-                handleFieldChange(field.name, e.target.value);
-              }
-            }}
-            placeholder={field.placeholder || '{"key": "value"}'}
-            rows={4}
-            className={`${inputClasses} font-mono text-sm`}
-          />
-        );
-
-      case 'model-autocomplete':
-        if (field.component) {
-          const Component = field.component;
+        case 'password':
           return (
-            <Component
+            <Input
+              type="password"
               value={value}
-              onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
-              apiKey={config.apiKey}
-              baseUrl={config.baseUrl || config.endpoint}
-              onValidationError={(error: string) => {
-                // Show validation warnings instead of errors for API keys
-                if (field.name === 'apiKey') {
-                  console.warn(`API Key validation warning: ${error}`);
-                } else {
-                  setErrors(prev => ({ ...prev, [field.name]: error }));
-                }
-              }}
-              onValidationSuccess={() => {
-                setErrors(prev => {
-                  const { [field.name]: removed, ...rest } = prev;
-                  return rest;
-                });
-              }}
-              {...field.componentProps}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.placeholder}
+              className={inputClasses}
+              error={!!error}
+              aria-label={`${field.label} password input`}
             />
           );
-        }
-        break;
 
-      default:
-        return (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            className={inputClasses}
-          />
-        );
+        case 'number':
+          return (
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
+              placeholder={field.placeholder}
+              min={field.validation?.min}
+              max={field.validation?.max}
+              step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
+              className={inputClasses}
+              error={!!error}
+            />
+          );
+
+        case 'url':
+          return (
+            <Input
+              type="url"
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.placeholder}
+              className={inputClasses}
+              error={!!error}
+            />
+          );
+
+        case 'select':
+          return (
+            <Select
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              className={inputClasses}
+              error={!!error}
+              options={field.options?.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })) || []}
+            />
+          );
+
+        case 'multiselect':
+          return (
+            <Select
+              multiple
+              value={Array.isArray(value) ? value : []}
+              onChange={(e) => {
+                const target = e.target as HTMLSelectElement;
+                const selectedOptions = Array.from(target.selectedOptions, option => option.value);
+                handleFieldChange(field.name, selectedOptions);
+              }}
+              className={`${inputClasses} h-24`}
+              error={!!error}
+              options={field.options?.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })) || []}
+            />
+          );
+
+        case 'boolean':
+          return (
+            <div className="flex items-center h-full">
+              <Toggle
+                color="primary"
+                checked={Boolean(value)}
+                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+                label="Enable"
+              />
+            </div>
+          );
+
+        case 'textarea':
+          return (
+            <Textarea
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              error={!!error}
+              placeholder={field.placeholder}
+              rows={4}
+              className={inputClasses}
+            />
+          );
+
+        case 'json':
+          return (
+            <Textarea
+              value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  handleFieldChange(field.name, parsed);
+                } catch {
+                  handleFieldChange(field.name, e.target.value);
+                }
+              }}
+              placeholder={field.placeholder || '{"key": "value"}'}
+              rows={4}
+              className={`${inputClasses} font-mono text-sm`}
+            />
+          );
+
+        case 'model-autocomplete':
+          if (field.component) {
+            const Component = field.component;
+            return (
+              <Component
+                value={value}
+                onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
+                apiKey={config.apiKey}
+                baseUrl={config.baseUrl || config.endpoint}
+                onValidationError={(error: string) => {
+                  // Show validation warnings instead of errors for API keys
+                  if (field.name === 'apiKey') {
+                    console.warn(`API Key validation warning: ${error}`);
+                  } else {
+                    setErrors(prev => ({ ...prev, [field.name]: error }));
+                  }
+                }}
+                onValidationSuccess={() => {
+                  setErrors(prev => {
+                    const { [field.name]: removed, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+                {...field.componentProps}
+              />
+            );
+          }
+          break;
+
+        default:
+          return (
+            <Input
+              type="text"
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.placeholder}
+              className={inputClasses}
+              error={!!error}
+              aria-label={`${field.label} text input`}
+            />
+          );
       }
     };
 
     return (
-      <div className="space-y-1">
+      <label className="form-control w-full space-y-1">
         {renderInput()}
         {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
+          <div className="label py-1">
+            <span className="label-text-alt text-error">{error}</span>
+          </div>
         )}
-      </div>
+      </label>
     );
   };
 
@@ -368,9 +373,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                               {field.label}
                             </span>
                             {field.required ? (
-                              <span className="badge badge-error badge-sm text-[10px] h-4">Required</span>
+                              <Badge variant="error" size="sm" className="text-[10px] h-4">Required</Badge>
                             ) : (
-                              <span className="badge badge-ghost badge-sm text-[10px] h-4">Optional</span>
+                              <Badge variant="ghost" size="sm" className="text-[10px] h-4">Optional</Badge>
                             )}
                           </div>
                           {field.description && (
@@ -396,13 +401,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
           <Button
-            type="button"
-            onClick={handleTestConnection}
-            disabled={isTestingConnection || isLoadingAvatar}
-            loading={isTestingConnection}
-            loadingText="Testing..."
             variant="primary"
-            aria-label="Test connection to provider"
+            onClick={handleTestConnection}
+            loading={isLoading}
+            disabled={isLoading}
           >
             Test Connection
           </Button>
@@ -410,26 +412,25 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
           <Button
-            type="button"
-            onClick={handleLoadAvatar}
-            disabled={isTestingConnection || isLoadingAvatar}
-            loading={isLoadingAvatar}
-            loadingText="Loading..."
             variant="secondary"
-            aria-label="Load provider avatar"
+            onClick={handleLoadAvatar}
+            loading={isLoading}
+            disabled={isLoading}
           >
             Load Avatar
           </Button>
         )}
       </div>
 
-      {/* Results */}
+      {/* Results - aria-live region for screen readers to announce test results */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {testResult && testResult.message}
+      </div>
       {testResult && (
-        <div className={`p-3 rounded-lg ${testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-          <p className={`text-sm ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
-            {testResult.message}
-          </p>
-        </div>
+        <Alert
+          status={testResult.success ? 'success' : 'error'}
+          message={testResult.message}
+        />
       )}
 
       {avatarUrl && (
