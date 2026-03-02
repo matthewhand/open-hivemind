@@ -21,7 +21,7 @@ interface ProviderConfigModalProps {
   onSubmit: (providerData: any) => void;
 }
 
-const const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
+export const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
   existingProviders,
   onClose,
@@ -427,11 +427,7 @@ const const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       </div>
     </div>
   );
-}; => handleFieldChange(field.name, e.target.value)}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
+};
 
     case 'number':
       return (
