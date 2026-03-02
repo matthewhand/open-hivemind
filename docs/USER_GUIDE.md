@@ -174,6 +174,10 @@ General system configuration.
 *   **Health & Monitoring**: Enable and configure periodic health checks for external services.
 *   **Deep Linking**: Settings tabs (General, Messaging, Security) are reflected in the URL for easy sharing.
 
+![Settings Saving](screenshots/settings-general-loading.png)
+
+*   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
+
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.

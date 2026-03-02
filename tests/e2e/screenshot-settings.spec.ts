@@ -22,7 +22,7 @@ test.describe('Settings Screenshots', () => {
     await page.waitForSelector('h5:has-text("General Settings")');
 
     // Screenshot initial state
-    await page.screenshot({ path: 'docs/screenshots/settings-general-before-save.png' });
+    await page.screenshot({ path: 'docs/screenshots/settings-general.png' });
 
     // Mock the config save endpoint to delay so we can capture the loading spinner
     await page.route('**/api/config/global', async (route) => {
@@ -36,14 +36,14 @@ test.describe('Settings Screenshots', () => {
     });
 
     // Click Save Changes to trigger button loading state
-    const saveButton = page.getByRole('button', { name: 'Save Changes' });
+    const saveButton = page.getByRole('button', { name: 'Save Settings' });
 
     // Trigger the save action
     saveButton.click();
 
     // Wait for the button to have the loading class applied
     await page.waitForFunction(() => {
-      const btn = document.querySelector('button[type="submit"]');
+      const btn = document.querySelector('button.btn-primary');
       return btn && btn.classList.contains('loading');
     });
 
