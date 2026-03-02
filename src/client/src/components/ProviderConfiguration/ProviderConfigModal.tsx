@@ -124,6 +124,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
+          // Provide specific error messages for common field types
+          if (field.type === 'url') {
+            return `${field.label} must be a valid HTTPS URL`;
+          }
           return `${field.label} format is invalid`;
         }
       }
@@ -353,7 +357,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         </div>
 
         {/* Provider Type Tabs */}
-        <div className="tabs tabs-boxed mb-6">
+        <div className="tabs tabs-boxed mb-6 flex-wrap gap-1">
           {providerTypes.map(type => {
             const typeConfig = (configs as any)[type];
             return (
