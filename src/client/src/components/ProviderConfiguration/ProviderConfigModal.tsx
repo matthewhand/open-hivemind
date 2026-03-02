@@ -225,12 +225,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </label>
           <input
             type="password"
+            id={`field-${field.name}`}
             className={fieldClasses}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            aria-required={field.required ? 'true' : 'false'}
+            aria-invalid={error ? 'true' : 'false'}
+            aria-describedby={error ? `error-${field.name}` : undefined}
           />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          {error && <label id={`error-${field.name}`} className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
       );
 
@@ -349,10 +353,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
           </h3>
           <button
+            type="button"
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
+            aria-label="Close modal"
           >
-            <XIcon className="w-4 h-4" />
+            <XIcon className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -393,12 +399,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <input
               type="text"
               name="name"
+              id="provider-name"
               className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
               placeholder="Enter a descriptive name for this provider"
               value={formData.name || ''}
               onChange={(e) => handleFieldChange('name', e.target.value)}
+              aria-required="true"
+              aria-invalid={errors.name ? 'true' : 'false'}
+              aria-describedby={errors.name ? 'name-error' : undefined}
             />
-            {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
+            {errors.name && <label id="name-error" className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
           </div>
 
           {/* Provider-specific fields */}
