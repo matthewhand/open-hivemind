@@ -206,19 +206,19 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="space-y-1 text-sm">
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Platform:</span>
-                <span className="font-mono">{metrics?.system.platform}</span>
+                <span className="font-mono">{metrics?.system?.platform ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Architecture:</span>
-                <span className="font-mono">{metrics?.system.arch}</span>
+                <span className="font-mono">{metrics?.system?.arch ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Release:</span>
-                <span className="font-mono">{metrics?.system.release}</span>
+                <span className="font-mono">{metrics?.system?.release ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Hostname:</span>
-                <span className="font-mono">{metrics?.system.hostname}</span>
+                <span className="font-mono">{metrics?.system?.hostname ?? 'Unknown'}</span>
               </div>
             </div>
           </div>
@@ -304,7 +304,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 <span className="font-medium">Load Average</span>
               </div>
               <div className="flex gap-2 justify-between items-center h-full">
-                {metrics?.system.loadAverage.map((load, index) => (
+                {metrics?.system?.loadAverage?.map((load, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <span className="text-xs opacity-70">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
                     <Badge
@@ -314,7 +314,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                       {load.toFixed(2)}
                     </Badge>
                   </div>
-                ))}
+                )) ?? <span className="text-sm opacity-70">N/A</span>}
               </div>
             </div>
           </div>
