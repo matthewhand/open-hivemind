@@ -12,14 +12,16 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   let providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
 
   // Fallback to Authorization Bearer token if x-webhook-token is not provided
+  // RFC 6750 specifies Bearer token format: Bearer <token>
+  const BEARER_PREFIX = 'bearer ';
   if (!providedToken) {
     const authHeaderKey = Object.keys(req.headers || {}).find(
       (k) => k.toLowerCase() === 'authorization'
     );
     if (authHeaderKey) {
       const authHeaderValue = String((req.headers as any)[authHeaderKey]);
-      if (authHeaderValue.toLowerCase().startsWith('bearer ')) {
-        providedToken = authHeaderValue.substring(7).trim();
+      if (authHeaderValue.toLowerCase().startsWith(BEARER_PREFIX)) {
+        providedToken = authHeaderValue.substring(BEARER_PREFIX.length).trim();
       }
     }
   }
