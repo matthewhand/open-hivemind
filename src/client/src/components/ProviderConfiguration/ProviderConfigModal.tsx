@@ -21,7 +21,7 @@ interface ProviderConfigModalProps {
   onSubmit: (providerData: any) => void;
 }
 
-const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
+const const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
   existingProviders,
   onClose,
@@ -229,6 +229,205 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'number':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <input
+            type="number"
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step={field.name === 'temperature' ? '0.1' : '1'}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'select':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <select
+            className={`${fieldClasses} select`}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          >
+            <option value="">Select {field.label.toLowerCase()}</option>
+            {field.options?.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'textarea':
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <textarea
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            rows={4}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    case 'checkbox':
+      return (
+        <div key={field.name} className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text font-medium">{field.label}</span>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={!!value}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+            />
+          </label>
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+
+    default:
+      // text and others
+      return (
+        <div key={field.name}>
+          <label className="label">
+            <span className="label-text font-medium">{field.label}</span>
+            {field.required && <span className="label-text-alt text-error">*</span>}
+          </label>
+          <input
+            type="text"
+            className={fieldClasses}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+        </div>
+      );
+    }
+  };
+
+  if (!modalState.isOpen) {return null;}
+
+  // Get ALL configs to iterate types for tabs
+  const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
+  const providerTypes = Object.keys(configs);
+  // Safe config access: if selectedType mismatch, fallback to first in list
+  const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
+  const allFields = config?.fields || [];
+
+  return (
+    <div className="modal modal-open">
+      <div className="modal-box max-w-2xl">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold">
+            {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
+          </h3>
+          <button
+            className="btn btn-sm btn-circle btn-ghost"
+            onClick={onClose}
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Provider Type Tabs - flex-wrap and gap-1 fix overlapping tabs in modal */}
+        <div
+          className="tabs tabs-boxed mb-6 flex-wrap gap-1"
+          role="tablist"
+          aria-label={`${modalState.providerType === 'message' ? 'Message' : 'LLM'} provider types`}
+        >
+          {providerTypes.map(type => {
+            const typeConfig = (configs as any)[type];
+            const isActive = selectedType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
+                onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
+              >
+                <span>{typeConfig.icon}</span>
+                {typeConfig.displayName || typeConfig.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          {/* Provider Name */}
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text font-medium">Provider Name</span>
+              <span className="label-text-alt text-error">*</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
+              placeholder="Enter a descriptive name for this provider"
+              value={formData.name || ''}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+            />
+            {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
+          </div>
+
+          {/* Provider-specific fields */}
+          <div className="space-y-4 mb-6">
+            {allFields.map(renderField)}
+          </div>
+
+          {/* Actions */}
+          <div className="modal-action">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              onClick={(e: any) => handleSubmit(e)}
+            >
+              {modalState.isEdit ? 'Update' : 'Submit'} Provider
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}; => handleFieldChange(field.name, e.target.value)}
           />
           {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
