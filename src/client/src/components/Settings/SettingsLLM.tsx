@@ -23,11 +23,8 @@ const SettingsLLM: React.FC = () => {
             setLoading(true);
 
             // Fetch global config to get the default LLM
-            const configRes = await fetch('/api/config/global');
-            if (!configRes.ok) {
-                throw new Error('Failed to fetch global config');
-            }
-            const rawConfig = await configRes.json();
+            const configRes = await axios.get('/api/config/global');
+            const rawConfig = configRes.data;
             const llmData = rawConfig?.llm?.values ?? rawConfig;
 
             const currentDefault = llmData.LLM_PROVIDER || '';
@@ -60,19 +57,12 @@ const SettingsLLM: React.FC = () => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const response = await fetch('/api/config/global', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    llm: {
-                        LLM_PROVIDER: settings.defaultLlm,
-                    },
-                }),
+            await axios.put('/api/config/global', {
+                llm: {
+                    LLM_PROVIDER: settings.defaultLlm,
+                },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to save settings');
-            }
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
