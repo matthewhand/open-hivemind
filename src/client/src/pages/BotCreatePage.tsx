@@ -27,6 +27,7 @@ const BotCreatePage: React.FC = () => {
     platform: 'discord',
     persona: 'default',
     llmProvider: '',
+    systemInstruction: '',
     mcpServers: [] as string[],
   });
 
@@ -76,6 +77,7 @@ const BotCreatePage: React.FC = () => {
         messageProvider: formData.platform,
         llmProvider: formData.llmProvider || undefined,
         persona: formData.persona,
+        systemInstruction: formData.systemInstruction || undefined,
         mcpServers: formData.mcpServers,
       } as any);
 
@@ -255,6 +257,44 @@ const BotCreatePage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* System Instruction */}
+                  <div className="form-control w-full md:col-span-2">
+                    <label className="label">
+                      <span className="label-text font-medium">System Instruction</span>
+                      <AIAssistButton
+                        label="Generate Instruction"
+                        prompt={`Generate a system instruction for a chat bot${formData.name ? ` named "${formData.name}"` : ''
+                          }${formData.description ? ` that is described as: "${formData.description}"` : ''
+                          }.`}
+                        systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
+                        onSuccess={(result) => handleInputChange('systemInstruction', result)}
+                      />
+                    </label>
+                    <Textarea
+                      placeholder="e.g., You are a helpful and concise assistant."
+                      value={formData.systemInstruction}
+                      onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
+                      className="h-24 textarea-bordered"
+                    />
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="flex-1">
+                        {formData.systemInstruction && formData.systemInstruction.length < 10 && (
+                          <div className="text-warning text-xs">
+                            System instruction is very short. Consider providing more detail.
+                          </div>
+                        )}
+                        {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
+                          <div className="text-error text-xs">
+                            System instruction is very long (max 2000 chars recommended).
+                          </div>
+                        )}
+                      </div>
+                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
+                        {formData.systemInstruction.length}/2000
+                      </div>
+                    </div>
+                  </div>
+
                   {/* LLM Provider */}
                   <div className="form-control w-full">
                     <label className="label">
@@ -313,9 +353,8 @@ const BotCreatePage: React.FC = () => {
                         return (
                           <label
                             key={server.id || server.name}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                              isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
-                            }`}
+                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
+                              }`}
                           >
                             <input
                               type="checkbox"
