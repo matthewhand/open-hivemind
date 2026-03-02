@@ -48,17 +48,13 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div
-      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
-      data-tip={error || (loading ? 'Generating...' : label)}
-      aria-live="polite"
-    >
+    <div className={`tooltip tooltip-right ${error ? 'tooltip-error' : ''}`} data-tip={error || label}>
       <button
         type="button"
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
-        aria-label={loading ? 'Generating AI instruction...' : label}
+        aria-label={loading ? 'Loading...' : label}
         aria-busy={loading}
       >
         {loading ? (
