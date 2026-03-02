@@ -8,11 +8,22 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   const headerKey = Object.keys(req.headers || {}).find(
     (k) => k.toLowerCase() === 'x-webhook-token'
   );
-  const providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+  let providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+
+  // Standard Authorization: Bearer <token> fallback
+  if (!providedToken && req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    if (authHeader.toLowerCase().startsWith('bearer ')) {
+      providedToken = authHeader.substring(7);
+    }
+  }
+
   const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
-    throw new Error('WEBHOOK_TOKEN is not configured');
+    Logger.error('WEBHOOK_TOKEN is not configured');
+    res.status(500).send('Internal Server Error: Webhook configuration missing');
+    return;
   }
 
   if (!providedToken) {

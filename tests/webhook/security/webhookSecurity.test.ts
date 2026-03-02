@@ -59,13 +59,25 @@ describe('WebhookSecurity', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should throw error when WEBHOOK_TOKEN is not configured', () => {
+    it('should return 500 when WEBHOOK_TOKEN is not configured', () => {
       mockWebhookConfig.get.mockReturnValue('');
       req.headers = { 'x-webhook-token': 'any-token' };
 
-      expect(() => {
-        verifyWebhookToken(req as Request, res as Response, next);
-      }).toThrow('WEBHOOK_TOKEN is not configured');
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith('Internal Server Error: Webhook configuration missing');
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should handle standard Authorization Bearer header', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { 'authorization': 'Bearer valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it('should handle case-insensitive header names', () => {
