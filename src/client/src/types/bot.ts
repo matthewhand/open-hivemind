@@ -416,18 +416,6 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'apiKey', label: 'API Key', type: 'password', required: false },
       { name: 'model', label: 'Model', type: 'text', required: false },
     ],
-  },
-  openswarm: {
-    type: LLMProviderType.OPENSWARM,
-    displayName: 'OpenSwarm',
-    description: 'Connect to OpenSwarm engine',
-    icon: '🐝',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:8000/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'dummy-key' },
-      { name: 'team', label: 'Team', type: 'text', required: true, placeholder: 'default-team' },
-      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: false },
-    ],
   }
 };
 

@@ -150,7 +150,6 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
                         onSuccess={(result) => handleInputChange('name', result)}
-                        showLabel={true}
                       />
                     </label>
                     <Input
@@ -171,7 +170,6 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
                         onSuccess={(result) => handleInputChange('description', result)}
-                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -270,7 +268,6 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
                         onSuccess={(result) => handleInputChange('systemInstruction', result)}
-                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -279,23 +276,23 @@ const BotCreatePage: React.FC = () => {
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
                       className="h-24 textarea-bordered"
                     />
-                    <label className="label">
-                      <span className="label-text-alt">
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="flex-1">
                         {formData.systemInstruction && formData.systemInstruction.length < 10 && (
-                          <span className="text-warning">
+                          <div className="text-warning text-xs">
                             System instruction is very short. Consider providing more detail.
-                          </span>
+                          </div>
                         )}
                         {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
-                          <span className="text-error">
+                          <div className="text-error text-xs">
                             System instruction is very long (max 2000 chars recommended).
-                          </span>
+                          </div>
                         )}
-                      </span>
-                      <span className={`label-text-alt ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : 'opacity-50'}`}>
+                      </div>
+                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
                         {formData.systemInstruction.length}/2000
-                      </span>
-                    </label>
+                      </div>
+                    </div>
                   </div>
 
                   {/* LLM Provider */}
@@ -320,18 +317,16 @@ const BotCreatePage: React.FC = () => {
                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                       ))}
                     </Select>
-                    <label className="label">
-                      {!defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-error">
-                          System default is not configured. Please select a provider.
-                        </span>
-                      )}
-                      {defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-success flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Using system default configuration
-                        </span>
-                      )}
-                    </label>
+                    {!defaultLlmConfigured && !formData.llmProvider && (
+                      <div className="text-error text-xs mt-1">
+                        System default is not configured. Please select a provider.
+                      </div>
+                    )}
+                    {defaultLlmConfigured && !formData.llmProvider && (
+                      <div className="text-success text-xs mt-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Using system default configuration
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
