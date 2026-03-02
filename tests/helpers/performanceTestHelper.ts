@@ -20,6 +20,8 @@ export interface PerformanceTestOptions {
   timeoutMs?: number;
   acceptableAverageMs?: number;
   acceptableMaxMs?: number;
+  /** Optional: Maximum standard deviation as a ratio of average (e.g., 0.5 = 50%). Disabled if not provided. */
+  maxStandardDeviationRatio?: number;
 }
 
 /**
@@ -90,6 +92,11 @@ export async function runPerformanceTest(
   // Assertions
   expect(average).toBeLessThan(acceptableAverageMs);
   expect(max).toBeLessThan(acceptableMaxMs);
+
+  // Optional standard deviation check (user-configurable)
+  if (options.maxStandardDeviationRatio !== undefined) {
+    expect(standardDeviation).toBeLessThan(average * options.maxStandardDeviationRatio);
+  }
 
   return result;
 }
@@ -166,14 +173,20 @@ export async function runMemoryTest(
 /**
  * Concurrency performance testing
  */
+export interface ConcurrencyTestOptions {
+  concurrentUsers?: number;
+  operationsPerUser?: number;
+  timeoutMs?: number;
+  /** Optional: Minimum operations per second threshold. Disabled if not provided. */
+  minOperationsPerSecond?: number;
+  /** Optional: Maximum average latency in milliseconds. Disabled if not provided. */
+  maxAverageLatencyMs?: number;
+}
+
 export async function runConcurrencyTest(
   operationName: string,
   operation: () => void | Promise<void>,
-  options: {
-    concurrentUsers?: number;
-    operationsPerUser?: number;
-    timeoutMs?: number;
-  } = {}
+  options: ConcurrencyTestOptions = {}
 ): Promise<{
   operation: string;
   concurrentUsers: number;
@@ -218,6 +231,14 @@ export async function runConcurrencyTest(
   // Assertions
   expect(totalTime).toBeLessThan(timeoutMs);
 
+  // Optional assertions (user-configurable)
+  if (options.minOperationsPerSecond !== undefined) {
+    expect(operationsPerSecond).toBeGreaterThan(options.minOperationsPerSecond);
+  }
+  if (options.maxAverageLatencyMs !== undefined) {
+    expect(averageLatency).toBeLessThan(options.maxAverageLatencyMs);
+  }
+
   return {
     operation: operationName,
     concurrentUsers,
@@ -231,13 +252,15 @@ export async function runConcurrencyTest(
 /**
  * Helper to create performance test suites
  */
+export interface PerformanceTestSuiteOperation {
+  name: string;
+  operation: () => void | Promise<void>;
+  options?: PerformanceTestOptions;
+}
+
 export function createPerformanceTestSuite(
   testName: string,
-  operations: Array<{
-    name: string;
-    operation: () => void | Promise<void>;
-    options?: PerformanceTestOptions;
-  }>
+  operations: PerformanceTestSuiteOperation[]
 ) {
   describe(`Performance: ${testName}`, () => {
     operations.forEach(({ name, operation, options }) => {
