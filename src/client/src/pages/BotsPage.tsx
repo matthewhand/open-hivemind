@@ -21,7 +21,6 @@ import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { PROVIDER_CATEGORIES } from '../config/providers';
-import { useDebounce } from '../hooks/useDebounce';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { apiService } from '../services/api';
@@ -54,7 +53,6 @@ const BotsPage: React.FC = () => {
   const [selectedBotForConfig, setSelectedBotForConfig] = useState<BotData | null>(null);
   const [uiError, setUiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [logFilter, setLogFilter] = useState('');
   const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
@@ -121,17 +119,17 @@ const BotsPage: React.FC = () => {
   // Derived state
   const bots = data?.bots || [];
   /**
-   * Memoized list of bots filtered by debouncedSearchQuery, preventing O(N) re-computation on every render.
+   * Memoized list of bots filtered by searchQuery, preventing O(N) re-computation on every render.
    */
   const filteredBots = useMemo(() => bots.filter((bot) => {
-    const q = debouncedSearchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return (
       bot.name.toLowerCase().includes(q) ||
       (bot.provider || '').toLowerCase().includes(q) ||
       ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
       (bot.llmProvider || '').toLowerCase().includes(q)
     );
-  }), [bots, debouncedSearchQuery]);
+  }), [bots, searchQuery]);
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -753,7 +751,7 @@ const BotsPage: React.FC = () => {
               </div>
               <div className="stat">
                 <div className="stat-title">Errors</div>
-                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : 'text-base-content/60'}`}>{previewBot.errorCount || 0}</div>
+                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>{previewBot.errorCount || 0}</div>
               </div>
             </div>
 
