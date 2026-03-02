@@ -65,6 +65,13 @@ describe('webhookSecurity edge cases', () => {
       expect(res.text).toContain('Invalid token');
     });
 
+    it('allows when Authorization header uses Bearer token', async () => {
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { authorization: 'Bearer secret-token' },
+      });
+      expect(res.statusCode).toBe(200);
+    });
+
     it('blocks with 403 when token mismatches', async () => {
       const { res } = await runRoute(app, 'post', '/secured', {
         headers: { 'x-webhook-token': 'wrong' },
@@ -73,24 +80,13 @@ describe('webhookSecurity edge cases', () => {
       expect(res.text).toContain('Invalid token');
     });
 
-    it('throws when WEBHOOK_TOKEN is not defined in config', async () => {
+    it('returns 500 when WEBHOOK_TOKEN is not defined in config', async () => {
       setConfig({ WEBHOOK_TOKEN: '' });
-      // Because the middleware throws, mount a route that catches errors
-      const errApp = express();
-      errApp.use(express.json());
-      errApp.post(
-        '/secured',
-        (req: Request, _res: Response, next: NextFunction) => {
-          try {
-            verifyWebhookToken(req, _res, next);
-          } catch (e) {
-            return next(e);
-          }
-        },
-        (_req, _res, next) => next()
-      );
-      // Express default error handler returns 500
-      await expect(runRoute(errApp, 'post', '/secured')).rejects.toBeTruthy();
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'any-token' },
+      });
+      expect(res.statusCode).toBe(500);
+      expect(res.text).toContain('Webhook is misconfigured');
     });
   });
 

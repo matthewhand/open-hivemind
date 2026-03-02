@@ -158,7 +158,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       <div className="navbar-start">
         {/* Mobile Menu */}
         <div className="dropdown lg:hidden">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Open mobile menu">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path>
             </svg>
@@ -253,6 +253,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               <button
                 type="button"
                 className="btn btn-ghost btn-square"
+                aria-label="Clear search"
                 onClick={() => {
                   setSearchQuery('');
                   setShowSuggestions(false);
@@ -264,7 +265,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                 </svg>
               </button>
             )}
-            <button type="submit" className="btn btn-square btn-primary">
+            <button type="submit" className="btn btn-square btn-primary" aria-label="Submit search">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
@@ -355,7 +356,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       <div className="navbar-end gap-2">
         {/* Quick Actions */}
         <div className="tooltip tooltip-bottom" data-tip="Create New Bot">
-          <button className="btn btn-ghost btn-circle btn-sm">
+          <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
             </svg>
@@ -364,7 +365,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" aria-label="System status">
             <div className="indicator">
               <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
               <span className="indicator-item badge badge-xs badge-success"></span>
@@ -381,7 +382,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Notifications */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" onClick={onNotificationClick}>
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
             <div className="indicator">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
@@ -403,7 +404,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Theme Selector */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Choose theme">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd"></path>
             </svg>
@@ -430,7 +431,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* User Menu */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" aria-label="User menu">
             <div className="w-8 rounded-full">
               {userAvatar ? (
                 <img alt="User avatar" src={userAvatar} />

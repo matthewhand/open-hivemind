@@ -363,11 +363,16 @@ const BotsPage: React.FC = () => {
             {bots.filter((b) => b.status === 'active' && !b.connected).length}
           </div>
         </div>
-        <div className="stat">
+        <div className="stat" tabIndex={0} aria-label="Total error count across all bots">
           <div className="stat-title">Errors</div>
-          <div className="stat-value text-red-500">
-            {bots.reduce((sum, b) => sum + (b.errorCount || 0), 0)}
-          </div>
+          {(() => {
+            const totalErrors = bots.reduce((sum, b) => sum + (b.errorCount || 0), 0);
+            return (
+              <div className={`stat-value ${totalErrors > 0 ? 'text-error' : 'text-base-content/60'}`}>
+                {totalErrors}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -745,7 +750,7 @@ const BotsPage: React.FC = () => {
               </div>
               <div className="stat">
                 <div className="stat-title">Errors</div>
-                <div className="stat-value text-error">{previewBot.errorCount || 0}</div>
+                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : 'text-base-content/60'}`}>{previewBot.errorCount || 0}</div>
               </div>
             </div>
 

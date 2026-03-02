@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
 
 const debug = Debug('app:mattermost-client');

@@ -6,26 +6,27 @@ export const webhookProviderSchema: ProviderConfigSchema = {
   displayName: 'Webhook',
   description: 'Generic webhook integration',
   icon: '🔗',
-  color: '#888888',
+  color: '#808080',
   defaultConfig: {},
   fields: [
     {
-      name: 'webhookUrl',
+      name: 'url',
       label: 'Webhook URL',
       type: 'url',
       required: true,
-      description: 'The URL to send webhook requests to',
-      placeholder: 'https://your-domain.com/webhook',
-      group: 'Connection',
+      description: 'Webhook URL for receiving updates (must start with https:// for security)',
+      placeholder: 'https://your-domain.com/api/webhook',
+      validation: {
+        pattern: '^https://[^\\s]+',
+      },
     },
     {
       name: 'secret',
       label: 'Secret',
       type: 'password',
       required: false,
-      description: 'Optional secret for webhook authentication',
-      placeholder: 'your-secret-token',
-      group: 'Authentication',
-    },
+      description: 'Secret for authenticating webhook requests',
+      placeholder: 'Your webhook secret',
+    }
   ],
 };

@@ -350,13 +350,13 @@ export class BotConfigurationDAO {
       );
       const providerRows = await this.db.all(
         'SELECT messageProvider, COUNT(*) as count FROM ' +
-        this.tableName +
-        ' GROUP BY messageProvider'
+          this.tableName +
+          ' GROUP BY messageProvider'
       );
       const tenantRows = await this.db.all(
         'SELECT COALESCE(tenantId, "default") as tenant, COUNT(*) as count FROM ' +
-        this.tableName +
-        ' GROUP BY tenantId'
+          this.tableName +
+          ' GROUP BY tenantId'
       );
 
       return {
