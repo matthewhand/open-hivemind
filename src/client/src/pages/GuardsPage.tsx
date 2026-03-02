@@ -390,6 +390,8 @@ const GuardsPage: React.FC = () => {
                         value={editingProfile.guards.rateLimit?.maxRequests || 100}
                         onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
+                        aria-disabled={!editingProfile.guards.rateLimit?.enabled}
+                        aria-label="Maximum requests per window"
                       />
                     </div>
                     <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -405,6 +407,8 @@ const GuardsPage: React.FC = () => {
                         value={editingProfile.guards.rateLimit?.windowMs || 60000}
                         onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
                         disabled={!editingProfile.guards.rateLimit?.enabled}
+                        aria-disabled={!editingProfile.guards.rateLimit?.enabled}
+                        aria-label="Time window in milliseconds"
                       />
                     </div>
                   </div>
