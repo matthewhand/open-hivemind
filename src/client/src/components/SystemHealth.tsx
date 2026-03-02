@@ -97,7 +97,16 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         setError(null);
       } catch (err: any) {
         console.error('Failed to fetch system health:', err);
-        setError('Failed to fetch system health data');
+        // Provide more specific error messages based on error type
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+          setError('Network error: Unable to connect to server. Please check your connection.');
+        } else if (err.status === 401 || err.status === 403) {
+          setError('Authentication error: Please log in to view system health details.');
+        } else if (err.status >= 500) {
+          setError('Server error: Health check service is temporarily unavailable.');
+        } else {
+          setError('Failed to fetch system health data. Some metrics may be unavailable.');
+        }
       } finally {
         setLoading(false);
       }
@@ -206,19 +215,19 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
             <div className="space-y-1 text-sm">
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Platform:</span>
-                <span className="font-mono">{metrics?.system.platform}</span>
+                <span className="font-mono">{metrics?.system?.platform ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Architecture:</span>
-                <span className="font-mono">{metrics?.system.arch}</span>
+                <span className="font-mono">{metrics?.system?.arch ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Release:</span>
-                <span className="font-mono">{metrics?.system.release}</span>
+                <span className="font-mono">{metrics?.system?.release ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between border-b border-base-200 py-1">
                 <span>Hostname:</span>
-                <span className="font-mono">{metrics?.system.hostname}</span>
+                <span className="font-mono">{metrics?.system?.hostname ?? 'Unknown'}</span>
               </div>
             </div>
           </div>
@@ -281,17 +290,17 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Progress
-                    value={metrics?.memory.usage || 0}
+                    value={metrics?.memory?.usage || 0}
                     max={100}
-                    variant={(metrics?.memory.usage || 0) > 90 ? 'error' : (metrics?.memory.usage || 0) > 70 ? 'warning' : 'success'}
+                    variant={(metrics?.memory?.usage || 0) > 90 ? 'error' : (metrics?.memory?.usage || 0) > 70 ? 'warning' : 'success'}
                   />
                 </div>
                 <span className="text-sm font-mono w-12 text-right">
-                  {(metrics?.memory.usage || 0).toFixed(0)}%
+                  {(metrics?.memory?.usage || 0).toFixed(0)}%
                 </span>
               </div>
               <span className="text-xs text-base-content/70 mt-1">
-                {formatBytes((metrics?.memory.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory.total || 0) * 1024 * 1024)}
+                {formatBytes((metrics?.memory?.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory?.total || 0) * 1024 * 1024)}
               </span>
             </div>
           </div>
@@ -304,7 +313,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 <span className="font-medium">Load Average</span>
               </div>
               <div className="flex gap-2 justify-between items-center h-full">
-                {metrics?.system.loadAverage.map((load, index) => (
+                {(metrics?.system?.loadAverage || []).map((load, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <span className="text-xs opacity-70">{index === 0 ? '1m' : index === 1 ? '5m' : '15m'}</span>
                     <Badge
