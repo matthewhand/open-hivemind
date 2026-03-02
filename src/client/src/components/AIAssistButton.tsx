@@ -58,11 +58,11 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
-        aria-label={loading ? 'Generating AI instruction...' : label}
+        aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
         aria-busy={loading}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="loading loading-spinner loading-xs" aria-hidden="true" />
         ) : (
           <Sparkles className="w-4 h-4" />
         )}
