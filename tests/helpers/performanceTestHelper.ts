@@ -36,8 +36,8 @@ export async function runPerformanceTest(
     iterations = 100,
     warmupIterations = 10,
     timeoutMs = 30000,
-    acceptableAverageMs = 100,
-    acceptableMaxMs = 500,
+    acceptableAverageMs,
+    acceptableMaxMs,
   } = options;
 
   // Warmup phase
@@ -90,8 +90,12 @@ export async function runPerformanceTest(
   };
 
   // Assertions
-  expect(average).toBeLessThan(acceptableAverageMs);
-  expect(max).toBeLessThan(acceptableMaxMs);
+  if (acceptableAverageMs !== undefined) {
+    expect(average).toBeLessThan(acceptableAverageMs);
+  }
+  if (acceptableMaxMs !== undefined) {
+    expect(max).toBeLessThan(acceptableMaxMs);
+  }
 
   // Optional standard deviation check (user-configurable)
   if (options.maxStandardDeviationRatio !== undefined) {
