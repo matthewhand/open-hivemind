@@ -8,18 +8,6 @@ import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhook
 
 const debug = Debug('app:webhookRoutes');
 
-export const webhookSecurityHeaders = (req: Request, res: Response, next: express.NextFunction): void => {
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-  // Disable caching for webhook endpoints
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Pragma', 'no-cache');
-  next();
-};
-
 // Webhook request body schema validation
 function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -81,7 +69,6 @@ export function configureWebhookRoutes(
 ): void {
   app.post(
     '/webhook',
-    webhookSecurityHeaders,
     verifyWebhookToken,
     verifyIpWhitelist,
     async (req: Request, res: Response) => {

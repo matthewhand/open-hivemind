@@ -26,18 +26,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     }
   }
 
-  let expectedToken = '';
-  try {
-    expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
-  } catch (error: any) {
-    Logger.error('Error retrieving WEBHOOK_TOKEN from configuration', {
-      method: req.method,
-      path: req.path,
-      error: error.message,
-    });
-    res.status(500).send('Internal Server Error: Webhook configuration error');
-    return;
-  }
+  const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
     Logger.error('WEBHOOK_TOKEN is not configured', { method: req.method, path: req.path });
@@ -62,8 +51,9 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   providedBuffer.copy(paddedProvided);
   expectedBuffer.copy(paddedExpected);
 
-  const contentMatches = crypto.timingSafeEqual(paddedProvided, paddedExpected);
-  const isEqual = providedBuffer.length === expectedBuffer.length && contentMatches;
+  const isEqual =
+    providedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(paddedProvided, paddedExpected);
 
   if (!isEqual) {
     res.status(403).send('Forbidden: Invalid token');
@@ -101,24 +91,12 @@ const isValidIpv6 = (ip: string): boolean => {
 };
 
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-  let whitelistedIps: string[] = [];
-  try {
-    whitelistedIps = webhookConfig.get('WEBHOOK_IP_WHITELIST')
-      ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST'))
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [];
-  } catch (error: any) {
-    Logger.error('Error retrieving WEBHOOK_IP_WHITELIST from configuration', {
-      method: req.method,
-      path: req.path,
-      error: error.message,
-    });
-    res.status(500).send('Internal Server Error: Webhook configuration error');
-    return;
-  }
-
+  const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST')
+    ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST'))
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
   let requestIp: string = req.ip ?? '';
 
   // Handle IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
