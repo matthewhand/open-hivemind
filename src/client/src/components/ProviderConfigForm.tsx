@@ -411,7 +411,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         )}
       </div>
 
-      {/* Results */}
+      {/* Results - aria-live region for screen readers to announce test results */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {testResult && testResult.message}
+      </div>
       {testResult && (
         <Alert
           status={testResult.success ? 'success' : 'error'}
