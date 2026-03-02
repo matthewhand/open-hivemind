@@ -18,6 +18,7 @@ import {
   Save as SaveIcon,
   Sparkles as SparklesIcon,
 } from 'lucide-react';
+import AIAssistButton from '../AIAssistButton';
 
 interface PersonaConfigModalProps {
   modalState: PersonaModalState;
@@ -277,15 +278,15 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
                 <SparklesIcon className="w-4 h-4" />
                 System Prompt *
               </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={generateSystemPrompt}
-                className="text-xs"
-              >
-                <SparklesIcon className="w-3 h-3 mr-1" />
-                Generate from Traits
-              </Button>
+              <AIAssistButton
+                label="Generate from Traits"
+                prompt={formData.traits.length > 0
+                  ? `Generate a system prompt based on these traits: ${JSON.stringify(formData.traits.map(t => `${t.name}: ${t.value}`))}`
+                  : "Generate a generic helpful AI system prompt."}
+                systemPrompt="You are an expert prompt engineer. Output only the prompt, no explanations."
+                onSuccess={(result) => setFormData(prev => ({ ...prev, systemPrompt: result }))}
+                className="btn btn-ghost btn-sm text-xs border border-base-300 ml-auto flex gap-1 px-3"
+              />
             </div>
 
             <Textarea

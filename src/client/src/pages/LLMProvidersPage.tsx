@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner } from '../components/DaisyUI';
+import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner, Select } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
@@ -237,19 +237,19 @@ const LLMProvidersPage: React.FC = () => {
                 <label className="label">
                   <span className="label-text">AI Assistance Provider</span>
                 </label>
-                <select
-                  className="select select-bordered w-full"
+                <Select
+                  className="w-full"
                   value={webuiIntelligenceProvider}
                   onChange={(e) => handleSaveGlobalSettings(e.target.value)}
                   disabled={loading}
-                >
-                  <option value="">None (Disabled)</option>
-                  {profiles.map((p) => (
-                    <option key={p.key} value={p.key}>
-                      {p.name} ({p.provider})
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { label: 'None (Disabled)', value: '' },
+                    ...profiles.map(p => ({
+                      label: `${p.name} (${p.provider})`,
+                      value: p.key
+                    }))
+                  ]}
+                />
               </div>
             </div>
           </Card>
