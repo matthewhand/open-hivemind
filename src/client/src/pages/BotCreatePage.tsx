@@ -27,10 +27,12 @@ const BotCreatePage: React.FC = () => {
     platform: 'discord',
     persona: 'default',
     llmProvider: '',
+    mcpServers: [] as string[],
   });
 
   const [personas, setPersonas] = useState<any[]>([]);
   const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
+  const [mcpServers, setMcpServers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -38,12 +40,15 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasData, profilesData] = await Promise.all([
+        const [personasData, profilesData, mcpResponse] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
+          fetch('/api/admin/mcp-servers').then(res => res.ok ? res.json() : { data: [] }).catch(() => ({ data: [] })),
         ]);
         setPersonas(personasData || []);
         setLlmProfiles(profilesData?.profiles?.llm || []);
+        const servers = mcpResponse?.data || mcpResponse || [];
+        setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
         console.error('Failed to load data', err);
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
@@ -71,6 +76,7 @@ const BotCreatePage: React.FC = () => {
         messageProvider: formData.platform,
         llmProvider: formData.llmProvider || undefined,
         persona: formData.persona,
+        mcpServers: formData.mcpServers,
       } as any);
 
       setAlert({ type: 'success', message: 'Bot created successfully!' });
@@ -282,6 +288,68 @@ const BotCreatePage: React.FC = () => {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Tools & Capabilities */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Tools & Capabilities</h3>
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text font-medium">MCP Servers</span>
+                    <a href="/admin/mcp/servers" target="_blank" rel="noopener noreferrer" className="link link-primary text-xs">Manage MCP Servers</a>
+                  </label>
+                  <div className="text-sm text-base-content/70 mb-3">
+                    Select the Model Context Protocol (MCP) servers this bot can access to use external tools and data.
+                  </div>
+                  {mcpServers.length === 0 ? (
+                    <div className="p-4 bg-base-200/50 rounded-lg border border-base-200 text-sm text-center">
+                      No MCP servers available.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-2 border border-base-200 rounded-lg bg-base-100">
+                      {mcpServers.map((server) => {
+                        const isSelected = formData.mcpServers.includes(server.id || server.name);
+                        return (
+                          <label
+                            key={server.id || server.name}
+                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-primary checkbox-sm mt-0.5"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const serverId = server.id || server.name;
+                                if (!serverId) {
+                                  console.warn('Server ID or name is required');
+                                  return;
+                                }
+                                setFormData(prev => ({
+                                  ...prev,
+                                  mcpServers: e.target.checked
+                                    ? [...prev.mcpServers, serverId]
+                                    : prev.mcpServers.filter(id => id !== serverId)
+                                }));
+                              }}
+                              aria-label={`${isSelected ? 'Deselect' : 'Select'} ${server.name}`}
+                              aria-describedby={`server-desc-${server.id || server.name}`}
+                            />
+                            <div>
+                              <div className="font-medium text-sm">{server.name}</div>
+                              {server.description && (
+                                <div id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-1 line-clamp-2">
+                                  {server.description}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
