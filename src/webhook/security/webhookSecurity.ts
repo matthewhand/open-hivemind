@@ -64,7 +64,6 @@ const isValidIpv4 = (ip: string): boolean => {
 const isValidIpv6 = (ip: string): boolean => {
   // Use the net module for authoritative IPv6 validation
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const net = require('net') as typeof import('net');
     return net.isIPv6(ip);
   } catch {
