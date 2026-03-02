@@ -14,8 +14,11 @@ export const webhookProviderSchema: ProviderConfigSchema = {
       label: 'Webhook URL',
       type: 'url',
       required: true,
-      description: 'Webhook URL for receiving updates',
+      description: 'Webhook URL for receiving updates (must start with https:// for security)',
       placeholder: 'https://your-domain.com/api/webhook',
+      validation: {
+        pattern: '^https://[^\\s]+',
+      },
     },
     {
       name: 'secret',
