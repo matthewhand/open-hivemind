@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { Button } from './DaisyUI';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 
 interface FieldError {
@@ -18,7 +19,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  const [isLoading, setIsLoading] = useState(false);
+  // Separate loading states for each async operation to prevent UI blocking
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -117,7 +120,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     if (!onTestConnection) {return;}
 
-    setIsLoading(true);
+    setIsTestingConnection(true);
     setTestResult(null);
 
     try {
@@ -132,14 +135,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
-      setIsLoading(false);
+      setIsTestingConnection(false);
     }
   };
 
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoading(true);
+    setIsLoadingAvatar(true);
     setAvatarUrl(null);
 
     try {
@@ -151,7 +154,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAvatar(false);
     }
   };
 
@@ -392,25 +395,31 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
-          <button
+          <Button
             type="button"
             onClick={handleTestConnection}
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isTestingConnection}
+            loadingText="Testing..."
+            variant="primary"
+            aria-label="Test connection to provider"
           >
-            {isLoading ? 'Testing...' : 'Test Connection'}
-          </button>
+            Test Connection
+          </Button>
         )}
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
-          <button
+          <Button
             type="button"
             onClick={handleLoadAvatar}
-            disabled={isLoading}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isLoadingAvatar}
+            loadingText="Loading..."
+            variant="secondary"
+            aria-label="Load provider avatar"
           >
-            {isLoading ? 'Loading...' : 'Load Avatar'}
-          </button>
+            Load Avatar
+          </Button>
         )}
       </div>
 
