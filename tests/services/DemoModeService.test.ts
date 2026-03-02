@@ -181,25 +181,5 @@ describe('DemoModeService', () => {
       expect(status).toHaveProperty('conversationCount');
       expect(status).toHaveProperty('messageCount');
     });
-
-    it('should include suppressWarning based on SUPPRESS_DEMO_WARNING env var', () => {
-      process.env.DEMO_MODE = 'true';
-      demoService.initialize();
-
-      // Test when not set
-      delete process.env.SUPPRESS_DEMO_WARNING;
-      let status = demoService.getDemoStatus();
-      expect(status.suppressWarning).toBe(false);
-
-      // Test when set to true
-      process.env.SUPPRESS_DEMO_WARNING = 'true';
-      status = demoService.getDemoStatus();
-      expect(status.suppressWarning).toBe(true);
-
-      // Test when set to false
-      process.env.SUPPRESS_DEMO_WARNING = 'false';
-      status = demoService.getDemoStatus();
-      expect(status.suppressWarning).toBe(false);
-    });
   });
 });

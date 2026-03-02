@@ -54,8 +54,7 @@ export enum LLMProviderType {
   ANTHROPIC = 'anthropic',
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
-  LOCAL = 'local',
-  FLOWISE = 'flowise'
+  LOCAL = 'local'
 }
 
 export interface Persona {
@@ -358,17 +357,6 @@ export const LLM_PROVIDER_CONFIGS = {
     description: 'Custom local models',
     icon: '🏠',
     fields: [],
-  },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Flowise workflow engine',
-    icon: '🌊',
-    fields: [
-      { name: 'apiUrl', label: 'API Base URL', type: 'text', required: true, placeholder: 'http://localhost:3000/api/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: false },
-    ],
   },
 };
 

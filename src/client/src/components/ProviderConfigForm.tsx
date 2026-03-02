@@ -65,7 +65,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       if (field.validation.custom) {
         const customError = field.validation.custom(value);
-        if (customError) { return customError; }
+        if (customError) {return customError;}
       }
     }
 
@@ -116,7 +116,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       return;
     }
 
-    if (!onTestConnection) { return; }
+    if (!onTestConnection) {return;}
 
     setIsLoading(true);
     setTestResult(null);
@@ -138,7 +138,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   };
 
   const handleLoadAvatar = async () => {
-    if (!onAvatarLoad) { return; }
+    if (!onAvatarLoad) {return;}
 
     setIsLoading(true);
     setAvatarUrl(null);
@@ -160,180 +160,171 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = errors[field.name];
 
-    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-base-100';
-    const errorClasses = error ? 'border-error focus:ring-error text-error' : 'border-base-300 focus:ring-primary';
+    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
+    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
       switch (field.type) {
-        case 'password':
+      case 'password':
+        return (
+          <Input
+            type="password"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+            aria-label={`${field.label} password input`}
+          />
+        );
+
+      case 'number':
+        return (
+          <Input
+            type="number"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
+            placeholder={field.placeholder}
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
+            className={inputClasses}
+          />
+        );
+
+      case 'url':
+        return (
+          <Input
+            type="url"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
+
+      case 'select':
+        return (
+          <Select
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            className={inputClasses}
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
+        );
+
+      case 'multiselect':
+        return (
+          <Select
+            multiple
+            value={Array.isArray(value) ? value : []}
+            onChange={(e) => {
+              const target = e.target as HTMLSelectElement;
+              const selectedOptions = Array.from(target.selectedOptions, option => option.value);
+              handleFieldChange(field.name, selectedOptions);
+            }}
+            className={`${inputClasses} h-24`}
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
+        );
+
+      case 'boolean':
+        return (
+          <div className="flex items-center h-full">
+            <Toggle
+              color="primary"
+              checked={Boolean(value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              label="Enable"
+            />
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <Textarea
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            rows={4}
+            className={inputClasses}
+          />
+        );
+
+      case 'json':
+        return (
+          <Textarea
+            value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+            onChange={(e) => {
+              try {
+                const parsed = JSON.parse(e.target.value);
+                handleFieldChange(field.name, parsed);
+              } catch {
+                handleFieldChange(field.name, e.target.value);
+              }
+            }}
+            placeholder={field.placeholder || '{"key": "value"}'}
+            rows={4}
+            className={`${inputClasses} font-mono text-sm`}
+          />
+        );
+
+      case 'model-autocomplete':
+        if (field.component) {
+          const Component = field.component;
           return (
-            <Input
-              type="password"
+            <Component
               value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
-              error={!!error}
-              aria-label={`${field.label} password input`}
-            />
-          );
-
-        case 'number':
-          return (
-            <Input
-              type="number"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
-              placeholder={field.placeholder}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
-              className={inputClasses}
-              error={!!error}
-            />
-          );
-
-        case 'url':
-          return (
-            <Input
-              type="url"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
-              error={!!error}
-            />
-          );
-
-        case 'select':
-          return (
-            <Select
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              className={inputClasses}
-              error={!!error}
-              options={field.options?.map((option) => ({
-                label: option.label,
-                value: option.value,
-              })) || []}
-            />
-          );
-
-        case 'multiselect':
-          return (
-            <Select
-              multiple
-              value={Array.isArray(value) ? value : []}
-              onChange={(e) => {
-                const target = e.target as HTMLSelectElement;
-                const selectedOptions = Array.from(target.selectedOptions, option => option.value);
-                handleFieldChange(field.name, selectedOptions);
-              }}
-              className={`${inputClasses} h-24`}
-              error={!!error}
-              options={field.options?.map((option) => ({
-                label: option.label,
-                value: option.value,
-              })) || []}
-            />
-          );
-
-        case 'boolean':
-          return (
-            <div className="flex items-center h-full">
-              <Toggle
-                color="primary"
-                checked={Boolean(value)}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-                label="Enable"
-              />
-            </div>
-          );
-
-        case 'textarea':
-          return (
-            <Textarea
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              error={!!error}
-              placeholder={field.placeholder}
-              rows={4}
-              className={inputClasses}
-            />
-          );
-
-        case 'json':
-          return (
-            <Textarea
-              value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  handleFieldChange(field.name, parsed);
-                } catch {
-                  handleFieldChange(field.name, e.target.value);
+              onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
+              apiKey={config.apiKey}
+              baseUrl={config.baseUrl || config.endpoint}
+              onValidationError={(error: string) => {
+                // Show validation warnings instead of errors for API keys
+                if (field.name === 'apiKey') {
+                  console.warn(`API Key validation warning: ${error}`);
+                } else {
+                  setErrors(prev => ({ ...prev, [field.name]: error }));
                 }
               }}
-              placeholder={field.placeholder || '{"key": "value"}'}
-              rows={4}
-              className={`${inputClasses} font-mono text-sm`}
+              onValidationSuccess={() => {
+                setErrors(prev => {
+                  const { [field.name]: removed, ...rest } = prev;
+                  return rest;
+                });
+              }}
+              {...field.componentProps}
             />
           );
+        }
+        break;
 
-        case 'model-autocomplete':
-          if (field.component) {
-            const Component = field.component;
-            return (
-              <Component
-                value={value}
-                onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
-                apiKey={config.apiKey}
-                baseUrl={config.baseUrl || config.endpoint}
-                onValidationError={(error: string) => {
-                  // Show validation warnings instead of errors for API keys
-                  if (field.name === 'apiKey') {
-                    console.warn(`API Key validation warning: ${error}`);
-                  } else {
-                    setErrors(prev => ({ ...prev, [field.name]: error }));
-                  }
-                }}
-                onValidationSuccess={() => {
-                  setErrors(prev => {
-                    const { [field.name]: removed, ...rest } = prev;
-                    return rest;
-                  });
-                }}
-                {...field.componentProps}
-              />
-            );
-          }
-          break;
-
-        default:
-          return (
-            <Input
-              type="text"
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
-              className={inputClasses}
-              error={!!error}
-              aria-label={`${field.label} text input`}
-            />
-          );
+      default:
+        return (
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+            aria-label={`${field.label} text input`}
+          />
+        );
       }
     };
 
     return (
-      <label className="form-control w-full space-y-1">
+      <div className="space-y-1">
         {renderInput()}
         {error && (
-          <div className="label py-1">
-            <span className="label-text-alt text-error">{error}</span>
-          </div>
+          <p className="text-xs text-red-500 mt-1">{error}</p>
         )}
-      </label>
+      </div>
     );
   };
 

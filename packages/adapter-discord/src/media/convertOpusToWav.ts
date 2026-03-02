@@ -48,7 +48,7 @@ export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): P
     if (!isFfmpegAvailable) {
       throw ErrorUtils.createError(
         'FFmpeg is not available. Voice features require FFmpeg to be installed. ' +
-          'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
+        'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
         'configuration' as any,
         'DISCORD_FFMPEG_UNAVAILABLE',
         503,
