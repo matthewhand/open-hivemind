@@ -546,12 +546,35 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     }));
   };
 
-  const toggleFeature = (feature: keyof AnomalyConfig) => {
+
+  const toggleFeature = (feature: 'enabled') => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
     }));
   };
+
+  const toggleLearning = () => {
+    setConfig(prev => ({
+      ...prev,
+      learning: { ...prev.learning, enabled: !prev.learning.enabled }
+    }));
+  };
+
+  const toggleAutoResponse = () => {
+    setConfig(prev => ({
+      ...prev,
+      autoResponse: { ...prev.autoResponse, enabled: !prev.autoResponse.enabled }
+    }));
+  };
+
+  const toggleNotifications = () => {
+    setConfig(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, enabled: !prev.notifications.enabled }
+    }));
+  };
+
 
   const updateSensitivity = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig(prev => ({
@@ -744,39 +767,51 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <label className="label cursor-pointer justify-start gap-3">
+            <label className="label cursor-pointer justify-start gap-3" htmlFor="anomaly-detection-toggle">
               <input
+                id="anomaly-detection-toggle"
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
-                checked={config.anomalyDetection}
-                onChange={() => toggleFeature('anomalyDetection')}
+                checked={config.enabled}
+                onChange={() => toggleFeature('enabled')}
+                aria-label="Toggle anomaly detection"
+                aria-pressed={config.enabled}
               />
               <span className="label-text">Anomaly Detection</span>
             </label>
-            <label className="label cursor-pointer justify-start gap-3">
+            <label className="label cursor-pointer justify-start gap-3" htmlFor="ml-learning-toggle">
               <input
+                id="ml-learning-toggle"
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.learning.enabled}
-                onChange={() => toggleFeature('learning')}
+                onChange={toggleLearning}
+                aria-label="Toggle ML learning"
+                aria-pressed={config.learning.enabled}
               />
               <span className="label-text">ML Learning</span>
             </label>
-            <label className="label cursor-pointer justify-start gap-3">
+            <label className="label cursor-pointer justify-start gap-3" htmlFor="auto-response-toggle">
               <input
+                id="auto-response-toggle"
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.autoResponse.enabled}
-                onChange={() => toggleFeature('autoResponse')}
+                onChange={toggleAutoResponse}
+                aria-label="Toggle auto response"
+                aria-pressed={config.autoResponse.enabled}
               />
               <span className="label-text">Auto Response</span>
             </label>
-            <label className="label cursor-pointer justify-start gap-3">
+            <label className="label cursor-pointer justify-start gap-3" htmlFor="notifications-toggle">
               <input
+                id="notifications-toggle"
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.notifications.enabled}
-                onChange={() => toggleFeature('notifications')}
+                onChange={toggleNotifications}
+                aria-label="Toggle notifications"
+                aria-pressed={config.notifications.enabled}
               />
               <span className="label-text">Notifications</span>
             </label>
