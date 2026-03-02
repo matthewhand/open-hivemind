@@ -10,6 +10,7 @@ interface DemoStatus {
     conversationCount: number;
     messageCount: number;
     message?: string;
+    suppressWarning?: boolean;
 }
 
 const DemoModeBanner: React.FC = () => {
@@ -39,7 +40,7 @@ const DemoModeBanner: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    if (isLoading || !demoStatus || !demoStatus.isDemoMode || isDismissed) {
+    if (isLoading || !demoStatus || !demoStatus.isDemoMode || demoStatus.suppressWarning || isDismissed) {
         return null;
     }
 
