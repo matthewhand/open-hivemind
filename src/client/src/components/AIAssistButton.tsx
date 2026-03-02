@@ -59,7 +59,12 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Sparkles className="w-4 h-4" />
+          <>
+            <Sparkles className="w-4 h-4" />
+            {className && className.includes('flex gap-1') && (
+              <span>{label}</span>
+            )}
+          </>
         )}
       </button>
     </div>
