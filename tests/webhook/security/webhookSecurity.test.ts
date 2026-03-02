@@ -76,6 +76,25 @@ describe('WebhookSecurity', () => {
 
       expect(next).toHaveBeenCalled();
     });
+
+    it('should allow Authorization Bearer token as fallback', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { 'authorization': 'Bearer valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    it('should allow case-insensitive Authorization header', () => {
+      mockWebhookConfig.get.mockReturnValue('valid-token');
+      req.headers = { 'Authorization': 'bearer valid-token' };
+
+      verifyWebhookToken(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+    });
   });
 
   describe('verifyIpWhitelist', () => {
