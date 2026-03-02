@@ -26,7 +26,18 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     }
   }
 
-  const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
+  let expectedToken: string;
+  try {
+    expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
+  } catch (error: any) {
+    Logger.error('Error retrieving WEBHOOK_TOKEN from configuration', {
+      method: req.method,
+      path: req.path,
+      error: error.message,
+    });
+    res.status(500).send('Internal Server Error: Webhook configuration error');
+    return;
+  }
 
   if (!expectedToken) {
     Logger.error('WEBHOOK_TOKEN is not configured', { method: req.method, path: req.path });
@@ -91,12 +102,25 @@ const isValidIpv6 = (ip: string): boolean => {
 };
 
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-  const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST')
-    ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST'))
+  let whitelistedIps: string[] = [];
+  try {
+    const rawWhitelist = webhookConfig.get('WEBHOOK_IP_WHITELIST');
+    if (rawWhitelist) {
+      whitelistedIps = String(rawWhitelist)
         .split(',')
         .map((s) => s.trim())
-        .filter(Boolean)
-    : [];
+        .filter(Boolean);
+    }
+  } catch (error: any) {
+    Logger.error('Error retrieving WEBHOOK_IP_WHITELIST from configuration', {
+      method: req.method,
+      path: req.path,
+      error: error.message,
+    });
+    res.status(500).send('Internal Server Error: Webhook configuration error');
+    return;
+  }
+
   let requestIp: string = req.ip ?? '';
 
   // Handle IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
