@@ -377,8 +377,13 @@ const GuardsPage: React.FC = () => {
                 </div>
                 <div className="collapse-content bg-base-100 pt-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Max Requests</span></label>
+                    <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className="label">
+                        <span className="label-text">Max Requests</span>
+                        {!editingProfile.guards.rateLimit?.enabled && (
+                          <span className="badge badge-sm badge-ghost">Disabled</span>
+                        )}
+                      </label>
                       <input
                         type="number"
                         className="input input-bordered"
@@ -387,8 +392,13 @@ const GuardsPage: React.FC = () => {
                         disabled={!editingProfile.guards.rateLimit?.enabled}
                       />
                     </div>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Window (ms)</span></label>
+                    <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className="label">
+                        <span className="label-text">Window (ms)</span>
+                        {!editingProfile.guards.rateLimit?.enabled && (
+                          <span className="badge badge-sm badge-ghost">Disabled</span>
+                        )}
+                      </label>
                       <input
                         type="number"
                         className="input input-bordered"
