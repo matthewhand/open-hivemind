@@ -174,6 +174,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            aria-label={`${field.label} password input`}
           />
         );
 
@@ -311,6 +312,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            aria-label={`${field.label} text input`}
           />
         );
       }
