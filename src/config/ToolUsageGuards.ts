@@ -11,18 +11,12 @@ export class ToolUsageGuards {
    */
   public static async isUserAllowed(userId: string, toolName: string): Promise<boolean> {
     // Placeholder: Implement actual permission logic here.
-    // For now, default to allowing the speckit.specify command for all users.
     // This should be configurable via admin UI or config file.
-    if (toolName === 'speckit.specify') {
-      // Example: Check if user is in a specific allowed list or has a specific role
-      const allowedUsers = process.env.SPECKIT_ALLOWED_USERS?.split(',') || [];
-      const allowAll = process.env.SPECKIT_ALLOW_ALL_USERS === 'true';
+    // Example: Check if user is in a specific allowed list or has a specific role
+    const allowedUsers = process.env.ALLOWED_TOOL_USERS?.split(',') || [];
+    const allowAll = process.env.ALLOW_ALL_TOOL_USERS === 'true';
 
-      return allowAll || allowedUsers.includes(userId);
-    }
-
-    // Default to false for other tools if not explicitly allowed
-    return false;
+    return allowAll || allowedUsers.includes(userId);
   }
 
   /**

@@ -139,7 +139,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
                 <span className="text-sm text-neutral-content/80">{metric.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`font-semibold ${compact ? 'text-base' : 'text-lg'}`}>
+                <span className={`font-semibold ${compact ? 'text-base' : 'text-lg'} ${metric.status ? getStatusColor(metric.status) : ''}`}>
                   {metric.value}
                 </span>
                 {metric.unit && (
