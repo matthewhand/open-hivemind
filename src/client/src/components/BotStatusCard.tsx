@@ -59,7 +59,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     }
   };
 
-  const getStatusVariant = (status: string): 'success' | 'error' | 'warning' | 'ghost' => {
+  const getStatusVariant = (status: string): 'success' | 'error' | 'warning' | 'neutral' => {
     switch (status?.toLowerCase()) {
     case 'active':
     case 'connected':
@@ -72,7 +72,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     case 'connecting':
       return 'warning';
     default:
-      return 'ghost';
+      return 'neutral';
     }
   };
 
