@@ -59,22 +59,16 @@ test.describe('Flowise Provider UX Check', () => {
   });
 
   test('check if Flowise is available in LLM Providers modal', async ({ page }) => {
-    // Set viewport for consistent screenshots
     await page.setViewportSize({ width: 1280, height: 800 });
-
-    // Navigate to LLM Providers page
     await page.goto('/admin/providers/llm');
-
-    // Wait for the page to load
     await expect(page.locator('.card').first()).toBeVisible();
-
-    // Click "Create Profile" button
     await page.getByRole('button', { name: 'Create Profile' }).first().click();
-
-    // Wait for modal to be visible
     await expect(page.locator('.modal-box')).toBeVisible();
-
-    // Take screenshot of the modal to verify if Flowise tab is there or if it overflows
     await page.screenshot({ path: 'test-results/flowise-add-profile-modal-check.png' });
+
+    // Click Flowise tab
+    await page.getByRole('tab', { name: /Flowise/i }).click();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: 'test-results/flowise-form.png' });
   });
 });
