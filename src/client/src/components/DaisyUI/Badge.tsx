@@ -3,7 +3,11 @@ import React from 'react';
 export interface BadgeProps {
   /** The content to display inside the badge */
   children: React.ReactNode;
-  /** Color variant of the badge */
+  /**
+   * Color variant of the badge
+   * @default 'neutral'
+   * @example 'ghost' - Used for subtle, low-priority status indicators
+   */
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'neutral' | 'ghost';
   /** Size of the badge */
   size?: 'small' | 'normal' | 'large';
