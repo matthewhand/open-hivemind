@@ -10,6 +10,7 @@ import {
   Input,
   Textarea,
   Select,
+  Checkbox,
 } from '../components/DaisyUI';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
@@ -150,6 +151,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
                         onSuccess={(result) => handleInputChange('name', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Input
@@ -170,6 +172,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
                         onSuccess={(result) => handleInputChange('description', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -268,6 +271,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
                         onSuccess={(result) => handleInputChange('systemInstruction', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -276,23 +280,23 @@ const BotCreatePage: React.FC = () => {
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
                       className="h-24 textarea-bordered"
                     />
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="flex-1">
+                    <label className="label">
+                      <span className="label-text-alt">
                         {formData.systemInstruction && formData.systemInstruction.length < 10 && (
-                          <div className="text-warning text-xs">
+                          <span className="text-warning">
                             System instruction is very short. Consider providing more detail.
-                          </div>
+                          </span>
                         )}
                         {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
-                          <div className="text-error text-xs">
+                          <span className="text-error">
                             System instruction is very long (max 2000 chars recommended).
-                          </div>
+                          </span>
                         )}
-                      </div>
-                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
+                      </span>
+                      <span className={`label-text-alt ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : 'opacity-50'}`}>
                         {formData.systemInstruction.length}/2000
-                      </div>
-                    </div>
+                      </span>
+                    </label>
                   </div>
 
                   {/* LLM Provider */}
@@ -317,16 +321,18 @@ const BotCreatePage: React.FC = () => {
                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                       ))}
                     </Select>
-                    {!defaultLlmConfigured && !formData.llmProvider && (
-                      <div className="text-error text-xs mt-1">
-                        System default is not configured. Please select a provider.
-                      </div>
-                    )}
-                    {defaultLlmConfigured && !formData.llmProvider && (
-                      <div className="text-success text-xs mt-1 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Using system default configuration
-                      </div>
-                    )}
+                    <label className="label">
+                      {!defaultLlmConfigured && !formData.llmProvider && (
+                        <span className="label-text-alt text-error">
+                          System default is not configured. Please select a provider.
+                        </span>
+                      )}
+                      {defaultLlmConfigured && !formData.llmProvider && (
+                        <span className="label-text-alt text-success flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Using system default configuration
+                        </span>
+                      )}
+                    </label>
                   </div>
                 </div>
               </div>
@@ -351,14 +357,15 @@ const BotCreatePage: React.FC = () => {
                       {mcpServers.map((server) => {
                         const isSelected = formData.mcpServers.includes(server.id || server.name);
                         return (
-                          <label
+                          <div
                             key={server.id || server.name}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
+                            className={`flex items-start p-2 rounded-lg border transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
                               }`}
                           >
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-primary checkbox-sm mt-0.5"
+                            <Checkbox
+                              variant="primary"
+                              size="sm"
+                              className="w-full mt-0"
                               checked={isSelected}
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
@@ -375,16 +382,17 @@ const BotCreatePage: React.FC = () => {
                               }}
                               aria-label={`${isSelected ? 'Deselect' : 'Select'} ${server.name}`}
                               aria-describedby={`server-desc-${server.id || server.name}`}
-                            />
-                            <div>
-                              <div className="font-medium text-sm">{server.name}</div>
-                              {server.description && (
-                                <div id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-1 line-clamp-2">
-                                  {server.description}
-                                </div>
-                              )}
-                            </div>
-                          </label>
+                            >
+                              <div className="flex flex-col text-left ml-1">
+                                <span className="font-medium text-sm text-base-content">{server.name}</span>
+                                {server.description && (
+                                  <span id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-0.5 line-clamp-2">
+                                    {server.description}
+                                  </span>
+                                )}
+                              </div>
+                            </Checkbox>
+                          </div>
                         );
                       })}
                     </div>
