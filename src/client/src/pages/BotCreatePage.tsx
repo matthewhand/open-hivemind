@@ -276,23 +276,23 @@ const BotCreatePage: React.FC = () => {
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
                       className="h-24 textarea-bordered"
                     />
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="flex-1">
+                    <label className="label">
+                      <span className="label-text-alt">
                         {formData.systemInstruction && formData.systemInstruction.length < 10 && (
-                          <div className="text-warning text-xs">
+                          <span className="text-warning">
                             System instruction is very short. Consider providing more detail.
-                          </div>
+                          </span>
                         )}
                         {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
-                          <div className="text-error text-xs">
+                          <span className="text-error">
                             System instruction is very long (max 2000 chars recommended).
-                          </div>
+                          </span>
                         )}
-                      </div>
-                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
+                      </span>
+                      <span className={`label-text-alt ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : 'opacity-50'}`}>
                         {formData.systemInstruction.length}/2000
-                      </div>
-                    </div>
+                      </span>
+                    </label>
                   </div>
 
                   {/* LLM Provider */}
