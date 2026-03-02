@@ -62,15 +62,15 @@ test.describe('Bot Create Page (Standalone)', () => {
     // Check if Discord card has selected styling (border-primary)
     // We can check class
     const discordParent = discordCard.locator('..');
-    await expect(discordParent).toHaveClass(/border-primary/);
+    await expect(discordParent).toHaveClass(/bg-primary\/5/);
 
     // Click Slack
     await slackCard.click();
 
     // Verify Slack is selected
     const slackParent = slackCard.locator('..');
-    await expect(slackParent).toHaveClass(/border-primary/);
-    await expect(discordParent).not.toHaveClass(/border-primary/);
+    await expect(slackParent).toHaveClass(/bg-primary\/5/);
+    await expect(discordParent).not.toHaveClass(/bg-primary\/5/);
 
     // 2. Verify Persona Preview
     const personaSelect = page.getByRole('combobox').nth(0); // First select is Persona?
@@ -87,8 +87,8 @@ test.describe('Bot Create Page (Standalone)', () => {
 
     // 3. Verify LLM Default Info
     // Default is "Use System Default"
-    // Should see "Using system default: System Default GPT"
-    await expect(page.getByText('Using system default: System Default GPT')).toBeVisible();
+    // Should see "Using system default configuration"
+    await expect(page.getByText('Using system default configuration')).toBeVisible();
 
     // 4. Verify Form Submission enablement
     // Name is empty, button should be disabled

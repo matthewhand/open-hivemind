@@ -27,6 +27,7 @@ const BotCreatePage: React.FC = () => {
     platform: 'discord',
     persona: 'default',
     llmProvider: '',
+    systemInstruction: '',
   });
 
   const [personas, setPersonas] = useState<any[]>([]);
@@ -71,6 +72,7 @@ const BotCreatePage: React.FC = () => {
         messageProvider: formData.platform,
         llmProvider: formData.llmProvider || undefined,
         persona: formData.persona,
+        systemInstruction: formData.systemInstruction || undefined,
       } as any);
 
       setAlert({ type: 'success', message: 'Bot created successfully!' });
@@ -247,6 +249,37 @@ const BotCreatePage: React.FC = () => {
                           : selectedPersona?.description || "No description available."}
                       </div>
                     </div>
+                  </div>
+
+                  {/* System Instruction */}
+                  <div className="form-control w-full md:col-span-2">
+                    <label className="label">
+                      <span className="label-text font-medium">System Instruction</span>
+                      <AIAssistButton
+                        label="Generate Instruction"
+                        prompt={`Generate a system instruction for a chat bot${formData.name ? ` named "${formData.name}"` : ''
+                          }${formData.description ? ` that is described as: "${formData.description}"` : ''
+                          }.`}
+                        systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
+                        onSuccess={(result) => handleInputChange('systemInstruction', result)}
+                      />
+                    </label>
+                    <Textarea
+                      placeholder="e.g., You are a helpful and concise assistant."
+                      value={formData.systemInstruction}
+                      onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
+                      className="h-24 textarea-bordered"
+                    />
+                    {formData.systemInstruction && formData.systemInstruction.length < 10 && (
+                      <div className="text-warning text-xs mt-1">
+                        System instruction is very short. Consider providing more detail.
+                      </div>
+                    )}
+                    {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
+                      <div className="text-error text-xs mt-1">
+                        System instruction is very long (max 2000 chars recommended).
+                      </div>
+                    )}
                   </div>
 
                   {/* LLM Provider */}
