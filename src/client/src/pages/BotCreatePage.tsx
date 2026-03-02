@@ -150,6 +150,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative naming assistant. Output only the name, nothing else. Do not use quotes."
                         onSuccess={(result) => handleInputChange('name', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Input
@@ -170,6 +171,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a creative writing assistant. Output only the description, nothing else."
                         onSuccess={(result) => handleInputChange('description', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
@@ -268,6 +270,7 @@ const BotCreatePage: React.FC = () => {
                           }.`}
                         systemPrompt="You are a system instruction generation assistant. Output only the prompt, nothing else."
                         onSuccess={(result) => handleInputChange('systemInstruction', result)}
+                        showLabel={true}
                       />
                     </label>
                     <Textarea
