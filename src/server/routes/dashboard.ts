@@ -306,6 +306,7 @@ router.get('/activity', authenticateToken, async (req, res) => {
 
     const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
 
+    // Performance optimization: Convert filter arrays to Sets for O(1) lookup
     const botFilterSet = new Set(botFilter);
     const providerFilterSet = new Set(providerFilter);
     const llmFilterSet = new Set(llmFilter);
