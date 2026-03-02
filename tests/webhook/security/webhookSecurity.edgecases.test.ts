@@ -65,6 +65,13 @@ describe('webhookSecurity edge cases', () => {
       expect(res.text).toContain('Invalid token');
     });
 
+    it('allows when Authorization header uses Bearer token', async () => {
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'authorization': 'Bearer secret-token' },
+      });
+      expect(res.statusCode).toBe(200);
+    });
+
     it('blocks with 403 when token mismatches', async () => {
       const { res } = await runRoute(app, 'post', '/secured', {
         headers: { 'x-webhook-token': 'wrong' },

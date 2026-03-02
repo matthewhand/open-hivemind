@@ -8,7 +8,24 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   const headerKey = Object.keys(req.headers || {}).find(
     (k) => k.toLowerCase() === 'x-webhook-token'
   );
-  const providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+
+  let providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
+
+  // Fallback to Authorization Bearer token if x-webhook-token is not provided
+  // RFC 6750 specifies Bearer token format: Bearer <token>
+  const BEARER_PREFIX = 'bearer ';
+  if (!providedToken) {
+    const authHeaderKey = Object.keys(req.headers || {}).find(
+      (k) => k.toLowerCase() === 'authorization'
+    );
+    if (authHeaderKey) {
+      const authHeaderValue = String((req.headers as any)[authHeaderKey]);
+      if (authHeaderValue.toLowerCase().startsWith(BEARER_PREFIX)) {
+        providedToken = authHeaderValue.substring(BEARER_PREFIX.length).trim();
+      }
+    }
+  }
+
   const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
@@ -66,7 +83,6 @@ const isValidIpv4 = (ip: string): boolean => {
 const isValidIpv6 = (ip: string): boolean => {
   // Use the net module for authoritative IPv6 validation
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const net = require('net') as typeof import('net');
     return net.isIPv6(ip);
   } catch {
