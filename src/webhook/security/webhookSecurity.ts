@@ -62,9 +62,8 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   providedBuffer.copy(paddedProvided);
   expectedBuffer.copy(paddedExpected);
 
-  const isEqual =
-    providedBuffer.length === expectedBuffer.length &&
-    crypto.timingSafeEqual(paddedProvided, paddedExpected);
+  const contentMatches = crypto.timingSafeEqual(paddedProvided, paddedExpected);
+  const isEqual = providedBuffer.length === expectedBuffer.length && contentMatches;
 
   if (!isEqual) {
     res.status(403).send('Forbidden: Invalid token');
