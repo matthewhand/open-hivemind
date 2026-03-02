@@ -330,11 +330,13 @@ const BotCreatePage: React.FC = () => {
                                     : prev.mcpServers.filter(id => id !== serverId)
                                 }));
                               }}
+                              aria-label={`${isSelected ? 'Deselect' : 'Select'} ${server.name}`}
+                              aria-describedby={`server-desc-${server.id || server.name}`}
                             />
                             <div>
                               <div className="font-medium text-sm">{server.name}</div>
                               {server.description && (
-                                <div className="text-xs text-base-content/70 mt-1 line-clamp-2">
+                                <div id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-1 line-clamp-2">
                                   {server.description}
                                 </div>
                               )}
