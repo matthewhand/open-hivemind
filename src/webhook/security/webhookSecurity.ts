@@ -12,7 +12,9 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   const expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
   if (!expectedToken) {
-    throw new Error('WEBHOOK_TOKEN is not configured');
+    Logger.error('WEBHOOK_TOKEN is not configured', { method: req.method, path: req.path });
+    res.status(500).send('Internal Server Error: Webhook is misconfigured');
+    return;
   }
 
   if (!providedToken) {
