@@ -44,79 +44,79 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';
     switch (status?.toLowerCase()) {
-      case 'active':
-      case 'connected':
-      case 'healthy':
-        return <CheckCircle className={`${className} text-success`} />;
-      case 'error':
-      case 'disconnected':
-        return <AlertCircle className={`${className} text-error`} />;
-      case 'warning':
-      case 'connecting':
-        return <AlertTriangle className={`${className} text-warning`} />;
-      default:
-        return <Info className={`${className} text-base-content/50`} />;
+    case 'active':
+    case 'connected':
+    case 'healthy':
+      return <CheckCircle className={`${className} text-success`} />;
+    case 'error':
+    case 'disconnected':
+      return <AlertCircle className={`${className} text-error`} />;
+    case 'warning':
+    case 'connecting':
+      return <AlertTriangle className={`${className} text-warning`} />;
+    default:
+      return <Info className={`${className} text-base-content/50`} />;
     }
   };
 
   const getStatusVariant = (status: string): 'success' | 'error' | 'warning' | 'neutral' => {
     switch (status?.toLowerCase()) {
-      case 'active':
-      case 'connected':
-      case 'healthy':
-        return 'success';
-      case 'error':
-      case 'disconnected':
-        return 'error';
-      case 'warning':
-      case 'connecting':
-        return 'warning';
-      default:
-        return 'neutral';
+    case 'active':
+    case 'connected':
+    case 'healthy':
+      return 'success';
+    case 'error':
+    case 'disconnected':
+      return 'error';
+    case 'warning':
+    case 'connecting':
+      return 'warning';
+    default:
+      return 'neutral';
     }
   };
 
   const getProviderIcon = (provider: string) => {
     switch (provider?.toLowerCase()) {
-      case 'discord':
-        return <Bot className="w-5 h-5" />;
-      case 'slack':
-        return <MessageCircle className="w-5 h-5" />;
-      case 'mattermost':
-        return <Smartphone className="w-5 h-5" />;
-      default:
-        return <Wrench className="w-5 h-5" />;
+    case 'discord':
+      return <Bot className="w-5 h-5" />;
+    case 'slack':
+      return <MessageCircle className="w-5 h-5" />;
+    case 'mattermost':
+      return <Smartphone className="w-5 h-5" />;
+    default:
+      return <Wrench className="w-5 h-5" />;
     }
   };
 
   const formatUptime = (seconds: number) => {
-    if (!seconds) { return 'N/A'; }
+    if (!seconds) {return 'N/A';}
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
   };
 
   const formatResponseTime = (ms: number) => {
-    if (!ms) { return 'N/A'; }
-    if (ms < 1000) { return `${ms}ms`; }
+    if (!ms) {return 'N/A';}
+    if (ms < 1000) {return `${ms}ms`;}
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
   const getHealthScore = () => {
-    if (!statusData) { return 0; }
+    if (!statusData) {return 0;}
 
     let score = 100;
-    if (statusData.status !== 'active' && statusData.status !== 'healthy') { score -= 30; }
-    if (statusData.errorCount && statusData.errorCount > 0) { score -= 20; }
-    if (statusData.responseTime && statusData.responseTime > 2000) { score -= 15; }
-    if (!statusData.connected) { score -= 25; }
+    if (statusData.status !== 'active' && statusData.status !== 'healthy') {score -= 30;}
+    if (statusData.errorCount && statusData.errorCount > 0) {score -= 20;}
+    if (statusData.responseTime && statusData.responseTime > 2000) {score -= 15;}
+    if (!statusData.connected) {score -= 25;}
 
     return Math.max(0, score);
   };
 
   const getHealthVariant = (score: number): 'success' | 'warning' | 'error' => {
-    if (score >= 80) { return 'success'; }
-    if (score >= 60) { return 'warning'; }
+    if (score >= 80) {return 'success';}
+    if (score >= 60) {return 'warning';}
     return 'error';
   };
 
@@ -127,7 +127,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      if (onRefresh) { onRefresh(); }
+      if (onRefresh) {onRefresh();}
     }, 1000);
   };
 
@@ -270,9 +270,9 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               <span className="text-xl">{getProviderIcon(bot.messageProvider)}</span>
               <h3 className="text-lg font-bold">{bot.name}</h3>
             </div>
-            <div className="flex items-center gap-2" title={`Current Status: ${statusData?.status || 'unknown'}`}>
+            <div className="flex items-center gap-2">
               {getStatusIcon(statusData?.status || 'unknown')}
-              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="small">
+              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
                 {statusData?.status || 'unknown'}
               </Badge>
             </div>
@@ -280,14 +280,14 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
 
           {/* Provider and LLM Info */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <Badge variant="primary" size="small">
+            <Badge variant="primary" size="sm">
               Provider: {bot.messageProvider}
             </Badge>
-            <Badge variant="secondary" size="small">
+            <Badge variant="secondary" size="sm">
               LLM: {bot.llmProvider}
             </Badge>
             {bot.persona && (
-              <Badge variant="primary" size="small">
+              <Badge variant="accent" size="sm">
                 Persona: {bot.persona}
               </Badge>
             )}
