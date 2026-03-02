@@ -321,14 +321,10 @@ router.get('/activity', authenticateToken, async (req, res) => {
     const messageProviders = new Set<string>();
     const llmProviders = new Set<string>();
 
-    const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
-
     const filteredEvents = allEvents.filter((event) => {
       agents.add(event.botName);
       messageProviders.add(event.provider);
       llmProviders.add(event.llmProvider);
-
-      if (!hasAnyFilter) return true;
 
       if (hasBotFilter && !botFilterSet.has(event.botName)) {
         return false;
