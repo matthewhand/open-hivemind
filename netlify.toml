@@ -1,4 +1,5 @@
 [build]
+  ignore = "test \"$BRANCH\" != \"main\""
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
