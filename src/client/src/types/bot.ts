@@ -54,10 +54,7 @@ export enum LLMProviderType {
   ANTHROPIC = 'anthropic',
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
-  LOCAL = 'local',
-  FLOWISE = 'flowise',
-  OPENWEBUI = 'openwebui',
-  OPENSWARM = 'openswarm'
+  LOCAL = 'local'
 }
 
 export interface Persona {
@@ -317,40 +314,6 @@ export const MESSAGE_PROVIDER_CONFIGS = {
       { name: 'teamId', label: 'Team ID', type: 'text', required: false },
     ],
   },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Connect to Flowise workflow engine',
-    icon: '🔀',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:3000/api/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'your-flowise-api-key' },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true, placeholder: 'chatflow-id-uuid' },
-    ],
-  },
-  openwebui: {
-    type: LLMProviderType.OPENWEBUI,
-    displayName: 'OpenWebUI',
-    description: 'Connect to OpenWebUI',
-    icon: '🌐',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:3000/api' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
-  },
-  openswarm: {
-    type: LLMProviderType.OPENSWARM,
-    displayName: 'OpenSwarm',
-    description: 'Connect to OpenSwarm engine',
-    icon: '🐝',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:8000/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'dummy-key' },
-      { name: 'team', label: 'Team', type: 'text', required: true, placeholder: 'default-team' },
-      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: false },
-    ],
-  }
 };
 
 export const LLM_PROVIDER_CONFIGS = {
@@ -395,40 +358,6 @@ export const LLM_PROVIDER_CONFIGS = {
     icon: '🏠',
     fields: [],
   },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Connect to Flowise workflow engine',
-    icon: '🔀',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:3000/api/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'your-flowise-api-key' },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true, placeholder: 'chatflow-id-uuid' },
-    ],
-  },
-  openwebui: {
-    type: LLMProviderType.OPENWEBUI,
-    displayName: 'OpenWebUI',
-    description: 'Connect to OpenWebUI',
-    icon: '🌐',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:3000/api' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
-  },
-  openswarm: {
-    type: LLMProviderType.OPENSWARM,
-    displayName: 'OpenSwarm',
-    description: 'Connect to OpenSwarm engine',
-    icon: '🐝',
-    fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'url', required: true, placeholder: 'http://localhost:8000/v1' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'dummy-key' },
-      { name: 'team', label: 'Team', type: 'text', required: true, placeholder: 'default-team' },
-      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: false },
-    ],
-  }
 };
 
 export const DEFAULT_PERSONA: Persona = {

@@ -111,7 +111,6 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['html', 'text', 'lcov'],
-  globalTeardown: '<rootDir>/tests/jest.teardown.ts',
 
   projects,
 };

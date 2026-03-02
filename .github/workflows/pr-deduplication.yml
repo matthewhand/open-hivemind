@@ -7,7 +7,6 @@ on:
 jobs:
   check-duplicates:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       pull-requests: write
       issues: read
