@@ -188,7 +188,7 @@ export const commandParserTestData = {
 };
 
 /**
- * Factory function to create test data for different scenarios
+ * Generates strongly-typed test data for different platform and command scenarios
  */
 export type CommandParserTestData = typeof commandParserTestData;
 
