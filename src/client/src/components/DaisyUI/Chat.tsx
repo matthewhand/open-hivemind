@@ -109,18 +109,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
-            {message.sender.avatar ? (
-              <div className="w-10 rounded-full">
+          <div className="chat-image avatar">
+            <div className="w-10 rounded-full">
+              {message.sender.avatar ? (
                 <img alt={message.sender.name} src={message.sender.avatar} />
-              </div>
-            ) : (
-              <div className={`w-10 rounded-full bg-${isBot ? 'secondary' : 'base-300'} text-${isBot ? 'secondary-content' : 'base-content'}`}>
-                <span className="text-sm font-medium">
-                  {isBot ? '🤖' : (message.sender.name || '?').substring(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
+              ) : (
+                <div className={'avatar placeholder'}>
+                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                    <span className="text-xs">
+                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -216,7 +218,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" aria-label="Chat options" className="btn btn-ghost btn-sm btn-circle">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
@@ -245,9 +247,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar placeholder">
-                  <div className="w-10 rounded-full bg-secondary text-secondary-content">
-                    <span className="text-sm font-medium">🤖</span>
+                <div className="chat-image avatar">
+                  <div className="w-10 rounded-full">
+                    <div className="avatar placeholder">
+                      <div className="bg-secondary text-secondary-content rounded-full w-10">
+                        <span className="text-xs">🤖</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
@@ -288,7 +294,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={!inputValue.trim() || isLoading}
-              aria-label="Send message"
             >
               {isLoading ? '' : '➤'}
             </button>
