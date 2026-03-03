@@ -45,6 +45,7 @@ export interface ProviderConfigFormProps {
   onConfigChange: (config: Record<string, any>) => void;
   onTestConnection?: (config: Record<string, any>) => Promise<boolean>;
   onAvatarLoad?: (config: Record<string, any>) => Promise<string | null>;
+  externalErrors?: Record<string, string>;
 }
 
 export interface ProviderConfigModalProps {
