@@ -98,10 +98,36 @@ export function configureWebhookRoutes(
       debug('Processing webhook:', { predictionId, predictionStatus, hasImageUrl: !!imageUrl });
 
       // Use the message service to send platform-agnostic messages
+      let statusEmoji = 'ℹ️';
+      let statusText = 'Task Status Update';
+
+      switch (predictionStatus.toLowerCase()) {
+        case 'succeeded':
+          statusEmoji = '✅';
+          statusText = 'Task Succeeded';
+          break;
+        case 'failed':
+          statusEmoji = '❌';
+          statusText = 'Task Failed';
+          break;
+        case 'processing':
+          statusEmoji = '⏳';
+          statusText = 'Task Processing';
+          break;
+        case 'canceled':
+          statusEmoji = '🚫';
+          statusText = 'Task Canceled';
+          break;
+        case 'starting':
+          statusEmoji = '🚀';
+          statusText = 'Task Starting';
+          break;
+      }
+
       const resultMessage =
-        predictionStatus === 'succeeded'
-          ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
-          : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+        predictionStatus.toLowerCase() === 'succeeded'
+          ? `${statusEmoji} **${statusText}**\n\n**Output:** ${(resultArray || []).join(' ')}\n**Image URL:** ${imageUrl || 'N/A'}`
+          : `${statusEmoji} **${statusText}**\n\n**Prediction ID:** \`${predictionId}\`\n**Status:** \`${predictionStatus}\``;
 
       try {
         const channelId = targetChannel || messageService.getDefaultChannel?.() || '';

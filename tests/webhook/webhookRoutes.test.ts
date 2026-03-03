@@ -44,7 +44,7 @@ describe('webhookRoutes', () => {
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [channel, message] = messageService.sendPublicAnnouncement.mock.calls[0];
     expect(channel).toBe(''); // empty per current implementation
-    expect(message).toBe('Answer is 42\nImage URL: N/A');
+    expect(message).toBe('✅ **Task Succeeded**\n\n**Output:** Answer is 42\n**Image URL:** N/A');
     // Image URL may be undefined if not pre-populated; ensure message contains format when present
   });
 
@@ -60,7 +60,7 @@ describe('webhookRoutes', () => {
 
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [, message] = messageService.sendPublicAnnouncement.mock.calls[0];
-    expect(message).toBe('Prediction ID: pred-2\nStatus: processing');
+    expect(message).toBe('⏳ **Task Processing**\n\n**Prediction ID:** `pred-2`\n**Status:** `processing`');
   });
 
   it('returns 400 when predictionId or status is missing', async () => {
