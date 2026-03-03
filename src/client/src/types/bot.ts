@@ -54,7 +54,8 @@ export enum LLMProviderType {
   ANTHROPIC = 'anthropic',
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
-  LOCAL = 'local'
+  LOCAL = 'local',
+  OPENWEBUI = 'openwebui'
 }
 
 export interface Persona {
@@ -357,6 +358,17 @@ export const LLM_PROVIDER_CONFIGS = {
     description: 'Custom local models',
     icon: '🏠',
     fields: [],
+  },
+  openwebui: {
+    type: LLMProviderType.OPENWEBUI,
+    displayName: 'OpenWebUI',
+    description: 'Connect to an OpenWebUI instance',
+    icon: '🌐',
+    fields: [
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true, placeholder: 'http://localhost:3000/api/' },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'sk-...' },
+      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'llama3:latest' },
+    ],
   },
 };
 
