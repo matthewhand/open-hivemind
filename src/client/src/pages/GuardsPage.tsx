@@ -7,6 +7,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { Input } from '../components/DaisyUI/Input';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -542,15 +543,16 @@ const GuardsPage: React.FC = () => {
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Max Requests</span>
-                      {!editingProfile.guards.rateLimit?.enabled && (
-                        <span className="badge badge-sm border-base-300">Disabled</span>
-                      )}
-                    </label>
-                    <input
+                    <Input
                       type="number"
-                      className="input input-bordered w-full"
+                      label={
+                        <div className="flex items-center justify-between w-full">
+                          <span>Max Requests</span>
+                          {!editingProfile.guards.rateLimit?.enabled && (
+                            <span className="badge badge-sm border-base-300">Disabled</span>
+                          )}
+                        </div>
+                      }
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
@@ -558,20 +560,21 @@ const GuardsPage: React.FC = () => {
                     />
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Window (seconds)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="label-text-alt text-info" title="Time period for counting requests">
-                          Max 1 hour (3600s)
-                        </span>
-                        {!editingProfile.guards.rateLimit?.enabled && (
-                          <span className="badge badge-sm border-base-300">Disabled</span>
-                        )}
-                      </div>
-                    </label>
-                    <input
+                    <Input
                       type="number"
-                      className="input input-bordered"
+                      label={
+                        <div className="flex items-center justify-between w-full">
+                          <span>Window (seconds)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="label-text-alt text-info" title="Time period for counting requests">
+                              Max 1 hour (3600s)
+                            </span>
+                            {!editingProfile.guards.rateLimit?.enabled && (
+                              <span className="badge badge-sm border-base-300">Disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      }
                       value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
                       onChange={e => {
                         const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
@@ -581,18 +584,16 @@ const GuardsPage: React.FC = () => {
                       min={1}
                       max={3600}
                       placeholder="60"
-                    />
-                    <label className="label">
-                      <span className="label-text-alt opacity-70">
-                        {(() => {
+                      helperText={
+                        (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
                           if (seconds < 60) return `${seconds} seconds`;
                           if (seconds === 60) return '1 minute';
                           if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
                           return '1 hour';
-                        })()}
-                      </span>
-                    </label>
+                        })()
+                      }
+                    />
                   </div>
                 </div>
               </div>
