@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+const AVATAR_INITIALS_MAX_LENGTH = 2;
+
 export interface ChatMessage {
   id: string;
   content: string;
@@ -116,8 +118,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ) : (
                 <div className={'avatar placeholder'}>
                   <div className={isBot ? 'bg-secondary text-secondary-content rounded-full w-10' : 'bg-base-100 text-base-content rounded-full w-10'}>
-                    <span className="text-xs">
-                      {isBot ? '🤖' : (message.sender.name ? message.sender.name.substring(0, 2).toUpperCase() : '?')}
+                    <span className="text-xs" aria-label={isBot ? "Bot avatar" : "User avatar"}>
+                      {isBot ? '🤖' : (message.sender?.name?.substring(0, AVATAR_INITIALS_MAX_LENGTH).toUpperCase() || '?')}
                     </span>
                   </div>
                 </div>
