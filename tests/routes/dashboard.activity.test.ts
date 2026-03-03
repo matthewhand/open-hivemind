@@ -69,8 +69,8 @@ describe('dashboard activity route', () => {
         id: '1',
         botName: 'AgentA',
         provider: 'slack',
-        channelId: 'C1',
-        userId: 'U1',
+        channelId: 'channel-C123',
+        userId: 'user-U1234',
         messageType: 'incoming',
         contentLength: 20,
         status: 'success',
@@ -80,8 +80,8 @@ describe('dashboard activity route', () => {
         id: '2',
         botName: 'AgentB',
         provider: 'discord',
-        channelId: 'C2',
-        userId: 'U2',
+        channelId: 'channel-C999',
+        userId: 'user-U9999',
         messageType: 'outgoing',
         contentLength: 35,
         status: 'error',
@@ -95,10 +95,12 @@ describe('dashboard activity route', () => {
       AgentB: { messageCount: 9, errors: ['Boom'] },
     });
 
-    const response = await request(app).get('/dashboard/api/activity');
+    const response = await request(app).get('/dashboard/activity');
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(2);
+    expect(response.body.events[0].userId).toBe('******1234');
+    expect(response.body.events[0].channelId).toBe('********C123');
     expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
     expect(response.body.timeline.length).toBeGreaterThan(0);
     expect(response.body.agentMetrics).toEqual(
@@ -120,8 +122,8 @@ describe('dashboard activity route', () => {
         id: '1',
         botName: 'AgentA',
         provider: 'slack',
-        channelId: 'C1',
-        userId: 'U1',
+        channelId: 'channel-secret',
+        userId: 'user-secret',
         messageType: 'incoming',
         contentLength: 20,
         status: 'success',
@@ -132,11 +134,12 @@ describe('dashboard activity route', () => {
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 3, errors: [] } });
 
     const response = await request(app)
-      .get('/dashboard/api/activity')
+      .get('/dashboard/activity')
       .query({ bot: 'AgentA', messageProvider: 'slack', llmProvider: 'openai', from: ts, to: ts });
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(1);
+    expect(response.body.events[0].userId).toBe('*******cret');
 
     // Also verify getEvents was called with correct filter
     expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(

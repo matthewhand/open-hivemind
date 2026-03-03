@@ -998,16 +998,28 @@ export class DatabaseManager {
   async updateBotMetrics(metrics: BotMetrics): Promise<void> {
     this.ensureConnected();
 
-    if (metrics.messagesSent !== undefined && (metrics.messagesSent < 0 || isNaN(metrics.messagesSent))) {
+    if (
+      metrics.messagesSent !== undefined &&
+      (metrics.messagesSent < 0 || isNaN(metrics.messagesSent))
+    ) {
       throw new RangeError('messagesSent cannot be negative or NaN');
     }
-    if (metrics.messagesReceived !== undefined && (metrics.messagesReceived < 0 || isNaN(metrics.messagesReceived))) {
+    if (
+      metrics.messagesReceived !== undefined &&
+      (metrics.messagesReceived < 0 || isNaN(metrics.messagesReceived))
+    ) {
       throw new RangeError('messagesReceived cannot be negative or NaN');
     }
-    if (metrics.conversationsHandled !== undefined && (metrics.conversationsHandled < 0 || isNaN(metrics.conversationsHandled))) {
+    if (
+      metrics.conversationsHandled !== undefined &&
+      (metrics.conversationsHandled < 0 || isNaN(metrics.conversationsHandled))
+    ) {
       throw new RangeError('conversationsHandled cannot be negative or NaN');
     }
-    if (metrics.averageResponseTime !== undefined && (metrics.averageResponseTime < 0 || isNaN(metrics.averageResponseTime))) {
+    if (
+      metrics.averageResponseTime !== undefined &&
+      (metrics.averageResponseTime < 0 || isNaN(metrics.averageResponseTime))
+    ) {
       throw new RangeError('averageResponseTime cannot be negative or NaN');
     }
 

@@ -425,7 +425,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       (AuditLogger as any).instance = null;
       auditLogger = AuditLogger.getInstance();
       // Clear any existing events
-      (await auditLogger.getAuditEvents()).forEach(() => { });
+      (await auditLogger.getAuditEvents()).forEach(() => {});
     });
 
     test('should create audit log with basic event data', async () => {

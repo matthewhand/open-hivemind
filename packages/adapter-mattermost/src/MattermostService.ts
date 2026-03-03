@@ -219,7 +219,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       throw error;
     }
@@ -260,21 +260,22 @@ export class MattermostService extends EventEmitter implements IMessengerService
           const botUsername = botConfig.username;
           const botUserId = botConfig.userId;
 
-          for (const post of posts.slice(0, limit)) {
+          const { MattermostMessage } = await import('./MattermostMessage');
+          const messagePromises = posts.slice(0, limit).map(async (post) => {
             const user = await client.getUser(post.user_id);
             const username = user
               ? `${user.first_name} ${user.last_name}`.trim() || user.username
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const { MattermostMessage } = await import('./MattermostMessage');
-            const mattermostMsg = new MattermostMessage(post, username, {
+            return new MattermostMessage(post, username, {
               isBot,
               botUsername,
               botUserId,
             });
-            messages.push(mattermostMsg);
-          }
+          });
+
+          messages.push(...(await Promise.all(messagePromises)));
 
           return messages.reverse();
         } catch (error: any) {
@@ -314,6 +315,13 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
+  /**
+   * Sends a public announcement message to a specific channel via all configured Mattermost bots.
+   *
+   * @param channelId The ID of the channel to send the announcement to.
+   * @param announcement The announcement payload or string message.
+   * @returns A Promise that resolves when the announcement process completes.
+   */
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     const text =
       typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
@@ -445,7 +453,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {

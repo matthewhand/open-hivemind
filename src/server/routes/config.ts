@@ -37,8 +37,10 @@ import {
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
+import { providerRegistry } from '../../registries/ProviderRegistry';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils, HivemindError } from '../../types/errors';
+import { type IProvider } from '../../types/IProvider';
 import {
   ConfigBackupSchema,
   ConfigRestoreSchema,
@@ -46,8 +48,6 @@ import {
 } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
-import { providerRegistry } from '../../registries/ProviderRegistry';
-import { IProvider } from '../../types/IProvider';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -145,7 +145,7 @@ const loadDynamicConfigs = () => {
 // Initialize configuration from registry
 export const reloadGlobalConfigs = () => {
   const providers = providerRegistry.getAll();
-  providers.forEach(p => {
+  providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
   });
 
@@ -155,7 +155,10 @@ export const reloadGlobalConfigs = () => {
   // Load dynamic configs
   loadDynamicConfigs();
 
-  debug('Global configs reloaded with providers:', providers.map(p => p.id));
+  debug(
+    'Global configs reloaded with providers:',
+    providers.map((p) => p.id)
+  );
 };
 
 // Apply audit middleware to all config routes (except in test)
@@ -213,7 +216,10 @@ function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<stri
   return result;
 }
 
-function redactProviderConfig(config: Record<string, unknown>, provider: IProvider): Record<string, unknown> {
+function redactProviderConfig(
+  config: Record<string, unknown>,
+  provider: IProvider
+): Record<string, unknown> {
   const sensitiveKeys = new Set(provider.getSensitiveKeys());
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(config)) {
@@ -286,32 +292,250 @@ router.get('/bots', async (req, res) => {
   }
 });
 
+const ERROR_CODES = {
+  MESSAGE_PROFILES_GET_ERROR: 'MESSAGE_PROFILES_GET_ERROR',
+  MESSAGE_PROFILE_CREATE_ERROR: 'MESSAGE_PROFILE_CREATE_ERROR',
+  MESSAGE_PROFILE_UPDATE_ERROR: 'MESSAGE_PROFILE_UPDATE_ERROR',
+  MESSAGE_PROFILE_DELETE_ERROR: 'MESSAGE_PROFILE_DELETE_ERROR',
+};
+
+const ALLOWED_PROVIDERS = ['slack', 'discord', 'telegram', 'webhook', 'mattermost'];
+const KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+const MAX_KEY_LENGTH = 50;
+
+/**
+ * GET /api/config/message-profiles
+ * Retrieves all configured message profiles.
+ *
+ * Response:
+ * - 200: { profiles: MessageProfiles }
+ * - 500: { error: string, code: string }
+ */
+router.get('/message-profiles', (req, res) => {
+  try {
+    const profiles = getMessageProfiles();
+    return res.json({ profiles });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILES_GET_ERROR,
+    });
+  }
+});
+
+/**
+ * POST /api/config/message-profiles
+ * Creates a new message profile.
+ *
+ * Request Body:
+ * - key: string (alphanumeric, -, _, max 50 chars)
+ * - name: string (non-empty)
+ * - provider: string (from ALLOWED_PROVIDERS)
+ * - config: object
+ *
+ * Response:
+ * - 200: { success: true, profile: MessageProfile }
+ * - 400: { error: string } - Validation error
+ * - 409: { error: string } - Duplicate key
+ * - 500: { error: string, code: string }
+ */
+router.post('/message-profiles', (req, res) => {
+  try {
+    const { key, name, provider, config } = req.body;
+
+    // Validation
+    if (!key || key.trim() === '') {
+      return res.status(400).json({ error: 'Message profile key is required' });
+    }
+    if (key.length > MAX_KEY_LENGTH) {
+      return res.status(400).json({ error: `Message profile key cannot exceed ${MAX_KEY_LENGTH} characters` });
+    }
+    if (!KEY_REGEX.test(key)) {
+      return res.status(400).json({ error: 'Message profile key can only contain alphanumeric characters, hyphens, and underscores' });
+    }
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Message profile name is required' });
+    }
+
+    if (!provider || provider.trim() === '') {
+      return res.status(400).json({ error: 'Message profile provider is required' });
+    }
+    if (!ALLOWED_PROVIDERS.includes(provider.toLowerCase())) {
+      return res.status(400).json({ error: `Invalid provider. Must be one of: ${ALLOWED_PROVIDERS.join(', ')}` });
+    }
+
+    const profiles = getMessageProfiles();
+
+    // Check for duplicate key
+    const normalizedKey = key.toLowerCase();
+    if (profiles.message.some((p) => p.key.toLowerCase() === normalizedKey)) {
+      return res.status(409).json({ error: `Message profile with key '${key}' already exists` });
+    }
+
+    const newProfile = {
+      key,
+      name,
+      provider: provider.toLowerCase(),
+      config: config || {},
+    };
+
+    profiles.message.push(newProfile);
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: newProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_CREATE_ERROR,
+    });
+  }
+});
+
+/**
+ * PUT /api/config/message-profiles/:key
+ * Updates an existing message profile.
+ *
+ * Request Parameters:
+ * - key: string
+ *
+ * Request Body:
+ * - name: string (optional)
+ * - provider: string (optional, from ALLOWED_PROVIDERS)
+ * - config: object (optional)
+ *
+ * Response:
+ * - 200: { success: true, profile: MessageProfile }
+ * - 400: { error: string } - Validation error
+ * - 404: { error: string } - Profile not found
+ * - 500: { error: string, code: string }
+ */
+router.put('/message-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const { name, provider, config } = req.body;
+
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+
+    const profileIndex = profiles.message.findIndex((p) => p.key.toLowerCase() === normalizedKey);
+
+    if (profileIndex === -1) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    // Validation (only validate provided fields)
+    if (name !== undefined && name.trim() === '') {
+      return res.status(400).json({ error: 'Message profile name cannot be empty' });
+    }
+
+    if (provider !== undefined) {
+      if (provider.trim() === '') {
+        return res.status(400).json({ error: 'Message profile provider cannot be empty' });
+      }
+      if (!ALLOWED_PROVIDERS.includes(provider.toLowerCase())) {
+        return res.status(400).json({ error: `Invalid provider. Must be one of: ${ALLOWED_PROVIDERS.join(', ')}` });
+      }
+    }
+
+    const updatedProfile = {
+      ...profiles.message[profileIndex],
+      ...(name !== undefined && { name }),
+      ...(provider !== undefined && { provider: provider.toLowerCase() }),
+      ...(config !== undefined && { config }),
+    };
+
+    profiles.message[profileIndex] = updatedProfile;
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: updatedProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_UPDATE_ERROR,
+    });
+  }
+});
+
+/**
+ * DELETE /api/config/message-profiles/:key
+ * Deletes an existing message profile.
+ *
+ * Request Parameters:
+ * - key: string
+ *
+ * Response:
+ * - 200: { success: true, message: string }
+ * - 404: { error: string } - Profile not found
+ * - 500: { error: string, code: string }
+ */
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+
+    const initialLength = profiles.message.length;
+    profiles.message = profiles.message.filter((p) => p.key.toLowerCase() !== normalizedKey);
+
+    if (profiles.message.length === initialLength) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      message: `Message profile '${key}' deleted successfully`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_DELETE_ERROR,
+    });
+  }
+});
+
 // GET /api/config/sources - List all configuration sources
 router.get('/sources', async (req, res) => {
   try {
     const envVars = Object.keys(process.env)
-      .filter((key) =>
-        key.startsWith('BOTS_') ||
-        key.includes('DISCORD_') ||
-        key.includes('SLACK_') ||
-        key.includes('OPENAI_') ||
-        key.includes('FLOWISE_') ||
-        key.includes('OPENWEBUI_') ||
-        key.includes('MATTERMOST_') ||
-        key.includes('MESSAGE_') ||
-        key.includes('WEBHOOK_')
+      .filter(
+        (key) =>
+          key.startsWith('BOTS_') ||
+          key.includes('DISCORD_') ||
+          key.includes('SLACK_') ||
+          key.includes('OPENAI_') ||
+          key.includes('FLOWISE_') ||
+          key.includes('OPENWEBUI_') ||
+          key.includes('MATTERMOST_') ||
+          key.includes('MESSAGE_') ||
+          key.includes('WEBHOOK_')
       )
-      .reduce((acc, key) => {
-        acc[key] = {
-          source: 'environment',
-          value: redactSensitiveInfo(key, process.env[key] || ''),
-          sensitive:
-            key.toLowerCase().includes('token') ||
-            key.toLowerCase().includes('key') ||
-            key.toLowerCase().includes('secret'),
-        };
-        return acc;
-      }, {} as Record<string, any>);
+      .reduce(
+        (acc, key) => {
+          acc[key] = {
+            source: 'environment',
+            value: redactSensitiveInfo(key, process.env[key] || ''),
+            sensitive:
+              key.toLowerCase().includes('token') ||
+              key.toLowerCase().includes('key') ||
+              key.toLowerCase().includes('secret'),
+          };
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
     // Detect config files
     const configDir = path.join(process.cwd(), 'config');
@@ -319,19 +543,22 @@ router.get('/sources', async (req, res) => {
 
     if (fs.existsSync(configDir)) {
       const files = await fs.promises.readdir(configDir);
-      for (const file of files) {
-        if (file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts')) {
+      const statPromises = files
+        .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
+        .map(async (file) => {
           const filePath = path.join(configDir, file);
           const stats = await fs.promises.stat(filePath);
-          configFiles.push({
+          return {
             name: file,
             path: filePath,
             size: stats.size,
             modified: stats.mtime,
             type: path.extname(file).slice(1),
-          });
-        }
-      }
+          };
+        });
+
+      const fileStats = await Promise.all(statPromises);
+      configFiles.push(...fileStats);
     }
 
     return res.json({
@@ -513,7 +740,8 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     if (configName && !isValidConfigName(configName)) {
       return res.status(400).json({
         error: 'Invalid config name',
-        message: 'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
+        message:
+          'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
       });
     }
 
@@ -621,5 +849,61 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 });
 
 // ... (Rest of file)
+
+router.get('/message-profiles', (req, res) => {
+  try {
+    const profiles = getMessageProfiles();
+    return res.json(profiles);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILES_GET_ERROR',
+    });
+  }
+});
+
+router.post('/message-profiles', (req, res) => {
+  try {
+    const newProfile = req.body;
+
+    if (!newProfile.key || newProfile.key.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile key is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.name || newProfile.name.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile name is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.provider || newProfile.provider.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile provider is required', code: 'INVALID_REQUEST' });
+    }
+
+    const profiles = getMessageProfiles();
+
+    // Check if key already exists
+    if (profiles.message.find((p) => p.key === newProfile.key)) {
+      return res.status(409).json({
+        error: `Message profile with key '${newProfile.key}' already exists`,
+        code: 'CONFLICT',
+      });
+    }
+
+    profiles.message.push(newProfile);
+    saveMessageProfiles(profiles);
+
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILES_CREATE_ERROR',
+    });
+  }
+});
 
 export default router;

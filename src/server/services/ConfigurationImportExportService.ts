@@ -152,13 +152,12 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versions = [];
-        for (const config of configs) {
-          if (config.id) {
-            const configVersions = await this.dbManager.getBotConfigurationVersions(config.id);
-            versions.push(...configVersions);
-          }
-        }
+        const versionPromises = configs
+          .filter((c) => c.id != null)
+          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
+        const versionsNested = await Promise.all(versionPromises);
+        const versions = versionsNested.flat();
+
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
       }
@@ -172,11 +171,15 @@ export class ConfigurationImportExportService {
 
       // Include audit logs if requested
       if (options.includeAuditLogs) {
-        const auditLogs = [];
-        for (const config of configs) {
-          if (config.id) {
-            const logs = await this.dbManager.getBotConfigurationAudit(config.id);
-            auditLogs.push(...logs);
+        const auditLogs: any[] = [];
+        const configIdsToFetch = configs.map((c) => c.id).filter(Boolean) as number[];
+        if (configIdsToFetch.length > 0) {
+          const auditLogsMap = await this.dbManager.getBotConfigurationAuditBulk(configIdsToFetch);
+          for (const config of configs) {
+            if (config.id) {
+              const logs = auditLogsMap.get(config.id) || [];
+              auditLogs.push(...logs);
+            }
           }
         }
         exportData.auditLogs = auditLogs;
@@ -751,14 +754,14 @@ export class ConfigurationImportExportService {
    * Generate export ID
    */
   private generateExportId(): string {
-    return 'export-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    return 'export-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
   }
 
   /**
    * Generate backup ID
    */
   private generateBackupId(): string {
-    return 'backup-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
   }
 
   /**

@@ -1,5 +1,5 @@
-import { ILLMProvider } from '../types/IProvider';
 import ollamaConfig from '../config/ollamaConfig';
+import { type ILLMProvider } from '../types/IProvider';
 
 export class OllamaProvider implements ILLMProvider {
   id = 'ollama';

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -167,18 +168,19 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       switch (field.type) {
       case 'password':
         return (
-          <input
+          <Input
             type="password"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            aria-label={`${field.label} password input`}
           />
         );
 
       case 'number':
         return (
-          <input
+          <Input
             type="number"
             value={value}
             onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
@@ -192,7 +194,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'url':
         return (
-          <input
+          <Input
             type="url"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -203,54 +205,50 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'select':
         return (
-          <select
+          <Select
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
         );
 
       case 'multiselect':
         return (
-          <select
+          <Select
             multiple
             value={Array.isArray(value) ? value : []}
             onChange={(e) => {
-              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              const target = e.target as HTMLSelectElement;
+              const selectedOptions = Array.from(target.selectedOptions, option => option.value);
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
-          >
-            {field.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) || []}
+          />
         );
 
       case 'boolean':
         return (
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-center h-full">
+            <Toggle
+              color="primary"
               checked={Boolean(value)}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
+              label="Enable"
             />
-            <span className="text-sm text-base-content/80">Enable</span>
-          </label>
+          </div>
         );
 
       case 'textarea':
         return (
-          <textarea
+          <Textarea
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
@@ -261,7 +259,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'json':
         return (
-          <textarea
+          <Textarea
             value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
             onChange={(e) => {
               try {
@@ -308,12 +306,13 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       default:
         return (
-          <input
+          <Input
             type="text"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            aria-label={`${field.label} text input`}
           />
         );
       }
@@ -360,10 +359,16 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                     <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
                       <td className="align-top py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-base-content/90">
-                            {field.label}
-                            {field.required && <span className="text-error ml-1">*</span>}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-base-content/90">
+                              {field.label}
+                            </span>
+                            {field.required ? (
+                              <Badge variant="error" size="sm" className="text-[10px] h-4">Required</Badge>
+                            ) : (
+                              <Badge variant="ghost" size="sm" className="text-[10px] h-4">Optional</Badge>
+                            )}
+                          </div>
                           {field.description && (
                             <span className="text-xs text-base-content/60 leading-tight">
                               {field.description}
@@ -386,35 +391,37 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={handleTestConnection}
+            loading={isLoading}
             disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? 'Testing...' : 'Test Connection'}
-          </button>
+            Test Connection
+          </Button>
         )}
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={handleLoadAvatar}
+            loading={isLoading}
             disabled={isLoading}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? 'Loading...' : 'Load Avatar'}
-          </button>
+            Load Avatar
+          </Button>
         )}
       </div>
 
-      {/* Results */}
+      {/* Results - aria-live region for screen readers to announce test results */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {testResult && testResult.message}
+      </div>
       {testResult && (
-        <div className={`p-3 rounded-lg ${testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-          <p className={`text-sm ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
-            {testResult.message}
-          </p>
-        </div>
+        <Alert
+          status={testResult.success ? 'success' : 'error'}
+          message={testResult.message}
+        />
       )}
 
       {avatarUrl && (

@@ -43,6 +43,10 @@ function resolveLogLevel(level: string | LogLevel): LogLevel {
   return level;
 }
 
+/**
+ * Determines whether a log of straight level should be printed
+ * based on the active log level priority.
+ */
 function shouldLog(level: LogLevel): boolean {
   return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[activeLevel];
 }

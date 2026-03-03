@@ -102,6 +102,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                   metadata={metadata.llmProfile}
                   disabled={pending}
                   allowEmpty
+                  emptyLabel="System Default"
                   helperContent={(
                     <label className="label">
                       <span className="label-text-alt">Optional template for LLM settings.</span>
@@ -327,6 +328,7 @@ interface FieldSelectProps {
   metadata?: FieldMetadata;
   disabled?: boolean;
   allowEmpty?: boolean;
+  emptyLabel?: string;
   onChange: (value: string) => void;
   helperContent?: React.ReactNode;
 }
@@ -338,6 +340,7 @@ const FieldSelect: React.FC<FieldSelectProps> = ({
   metadata,
   disabled,
   allowEmpty,
+  emptyLabel = '(None)',
   onChange,
   helperContent,
 }) => (
@@ -350,8 +353,9 @@ const FieldSelect: React.FC<FieldSelectProps> = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled || metadata?.locked}
+      aria-label={label}
     >
-      {allowEmpty && <option value="">(None)</option>}
+      {allowEmpty && <option value="">{emptyLabel}</option>}
       {options.map(option => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -430,7 +434,7 @@ const connectionStatusLabel = (
 };
 
 const renderProviderHelper = (info?: ProviderInfo) => {
-  if (!info) {return null;}
+  if (!info) { return null; }
 
   if (!info.docsUrl && !info.helpText) {
     return null;

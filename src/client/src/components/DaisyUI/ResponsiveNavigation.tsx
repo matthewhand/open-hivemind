@@ -48,10 +48,12 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       {/* MOBILE HEADER */}
       {isMobile && (
         <header className="fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
-          <span className="font-semibold text-base-content">Hivemind</span>
+          <span className="font-semibold text-base-content truncate min-w-0">Hivemind</span>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="btn btn-ghost btn-sm btn-square"
+            className="btn btn-ghost btn-square min-h-[44px] min-w-[44px]"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X size={24} /> : <MenuIcon size={24} />}
           </button>

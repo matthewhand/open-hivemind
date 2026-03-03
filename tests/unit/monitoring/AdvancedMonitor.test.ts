@@ -1,6 +1,6 @@
-import { AdvancedMonitor } from '../../../src/monitoring/AdvancedMonitor';
 import * as fs from 'fs';
 import * as os from 'os';
+import { AdvancedMonitor } from '../../../src/monitoring/AdvancedMonitor';
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -86,11 +86,14 @@ describe('AdvancedMonitor', () => {
       // Advance time by collection interval (10s)
       jest.advanceTimersByTime(10000);
 
-      expect(emitSpy).toHaveBeenCalledWith('system-metrics', expect.objectContaining({
-        timestamp: expect.any(Number),
-        cpu: expect.any(Object),
-        memory: expect.any(Object),
-      }));
+      expect(emitSpy).toHaveBeenCalledWith(
+        'system-metrics',
+        expect.objectContaining({
+          timestamp: expect.any(Number),
+          cpu: expect.any(Object),
+          memory: expect.any(Object),
+        })
+      );
 
       const metrics = monitor.getSystemMetrics();
       expect(metrics.length).toBeGreaterThan(0);
@@ -104,10 +107,13 @@ describe('AdvancedMonitor', () => {
       // Advance time by collection interval (10s)
       jest.advanceTimersByTime(10000);
 
-      expect(emitSpy).toHaveBeenCalledWith('application-metrics', expect.objectContaining({
-        timestamp: expect.any(Number),
-        activeConnections: expect.any(Number),
-      }));
+      expect(emitSpy).toHaveBeenCalledWith(
+        'application-metrics',
+        expect.objectContaining({
+          timestamp: expect.any(Number),
+          activeConnections: expect.any(Number),
+        })
+      );
 
       const metrics = monitor.getApplicationMetrics();
       expect(metrics.length).toBeGreaterThan(0);
@@ -131,11 +137,13 @@ describe('AdvancedMonitor', () => {
       // Advance time to trigger metrics collection then health check
       jest.advanceTimersByTime(30000);
 
-      const alertCalls = alertSpy.mock.calls.filter(call => call[0] === 'alert');
+      const alertCalls = alertSpy.mock.calls.filter((call) => call[0] === 'alert');
       expect(alertCalls.length).toBeGreaterThan(0);
-      expect(alertCalls[0][1]).toEqual(expect.objectContaining({
-        severity: 'critical', // > 95% usage
-      }));
+      expect(alertCalls[0][1]).toEqual(
+        expect.objectContaining({
+          severity: 'critical', // > 95% usage
+        })
+      );
     });
 
     it('should update health status based on metrics', () => {
@@ -158,7 +166,7 @@ describe('AdvancedMonitor', () => {
         severity: 'high',
         message: 'Test Alert',
         timestamp: Date.now(),
-        resolved: false
+        resolved: false,
       });
 
       const alerts = monitor.getAlerts();
@@ -180,20 +188,20 @@ describe('AdvancedMonitor', () => {
   describe('Cleanup', () => {
     it('should clean up old metrics and alerts', () => {
       const now = Date.now();
-      const oldTime = now - (25 * 60 * 60 * 1000); // 25 hours ago
+      const oldTime = now - 25 * 60 * 60 * 1000; // 25 hours ago
 
       // Inject old data
       (monitor as any).systemMetrics.push({
         timestamp: oldTime,
         memory: { usagePercent: 50 },
-        cpu: { usage: 10 }
+        cpu: { usage: 10 },
       });
 
       (monitor as any).alerts.push({
         id: 'old-alert',
         timestamp: oldTime,
         resolved: true,
-        resolvedAt: oldTime
+        resolvedAt: oldTime,
       });
 
       monitor.cleanup();

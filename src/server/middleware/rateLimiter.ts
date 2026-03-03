@@ -6,11 +6,11 @@ import rateLimit from 'express-rate-limit';
  * Applied to: login, register, refresh token endpoints
  */
 export const authLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 5, // 5 requests per minute
-    message: { error: 'Too many authentication attempts, please try again later' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // 5 requests per minute
+  message: { error: 'Too many authentication attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /**
@@ -19,11 +19,11 @@ export const authLimiter = rateLimit({
  * Applied to: GET endpoints
  */
 export const readLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 100, // 100 requests per minute
-    message: { error: 'Too many requests, please slow down' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: { error: 'Too many requests, please slow down' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /**
@@ -32,9 +32,9 @@ export const readLimiter = rateLimit({
  * Applied to: POST, PUT, DELETE endpoints
  */
 export const writeLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // 30 requests per minute
-    message: { error: 'Too many write requests, please slow down' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requests per minute
+  message: { error: 'Too many write requests, please slow down' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });

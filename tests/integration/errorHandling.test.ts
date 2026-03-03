@@ -1,4 +1,8 @@
+import express from 'express';
+import request from 'supertest';
 import { jest } from '@jest/globals';
+import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
+import errorsRouter from '../../src/server/routes/errors';
 
 // Mock auth middleware to allow all requests
 jest.mock('../../src/server/middleware/auth', () => ({
@@ -8,11 +12,6 @@ jest.mock('../../src/server/middleware/auth', () => ({
   },
   optionalAuth: (req: any, res: any, next: any) => next(),
 }));
-
-import express from 'express';
-import request from 'supertest';
-import { globalErrorHandler as errorHandler } from '../../src/middleware/errorHandler';
-import errorsRouter from '../../src/server/routes/errors';
 
 // Create a test express app
 const createTestApp = (addTestRoutes?: (app: express.Application) => void) => {

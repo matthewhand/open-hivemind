@@ -6,8 +6,10 @@ test.describe('Bot Activity Screenshots', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
-    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-    page.on('requestfailed', request => console.log('REQUEST FAILED:', request.url(), request.failure()?.errorText));
+    page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
+    page.on('requestfailed', (request) =>
+      console.log('REQUEST FAILED:', request.url(), request.failure()?.errorText)
+    );
 
     // Mock Data
     const mockBot = {
@@ -21,7 +23,7 @@ test.describe('Bot Activity Screenshots', () => {
       connected: true,
       messageCount: 42,
       errorCount: 0,
-      config: { discord: { token: '***' }, openai: { apiKey: '***' } }
+      config: { discord: { token: '***' }, openai: { apiKey: '***' } },
     };
 
     const mockActivityLogs = [
@@ -124,9 +126,7 @@ test.describe('Bot Activity Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
     // Open Settings Modal
-    const settingsButton = page
-      .locator('button[title="Bot Settings"]')
-      .first();
+    const settingsButton = page.locator('button[title="Bot Settings"]').first();
     await settingsButton.click();
 
     // Wait for Settings Modal
@@ -142,11 +142,11 @@ test.describe('Bot Activity Screenshots', () => {
 
     // Wait for logs to render
     try {
-        await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
     } catch (e) {
-        console.log('Log not found, taking screenshot for debug');
-        await page.screenshot({ path: 'docs/screenshots/debug-failure.png' });
-        throw e;
+      console.log('Log not found, taking screenshot for debug');
+      await page.screenshot({ path: 'docs/screenshots/debug-failure.png' });
+      throw e;
     }
 
     // Screenshot Details Modal

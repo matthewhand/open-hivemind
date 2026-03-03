@@ -8,6 +8,22 @@ import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhook
 
 const debug = Debug('app:webhookRoutes');
 
+type PredictionStatus = 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
+
+const VALID_STATUSES: PredictionStatus[] = [
+  'starting',
+  'processing',
+  'succeeded',
+  'failed',
+  'canceled',
+];
+
+const WEBHOOK_SUCCESS_TEMPLATE = (output: string, imageUrl: string) =>
+  `✅ **Task Succeeded**\n**Output:** ${output}\n**Image URL:** ${imageUrl}`;
+
+const WEBHOOK_UPDATE_TEMPLATE = (predictionId: string, status: string) =>
+  `ℹ️ **Task Update**\n**Prediction ID:** ${predictionId}\n**Status:** ${status}`;
+
 // Webhook request body schema validation
 function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -28,9 +44,8 @@ function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
   if (!body.status || typeof body.status !== 'string') {
     errors.push('Missing or invalid "status" field (must be string)');
   } else {
-    const validStatuses = ['starting', 'processing', 'succeeded', 'failed', 'canceled'];
-    if (!validStatuses.includes(body.status.toLowerCase())) {
-      errors.push(`Invalid status "${body.status}". Must be one of: ${validStatuses.join(', ')}`);
+    if (!VALID_STATUSES.includes(body.status.toLowerCase() as PredictionStatus)) {
+      errors.push(`Invalid status "${body.status}". Must be one of: ${VALID_STATUSES.join(', ')}`);
     }
   }
 
@@ -92,7 +107,9 @@ export function configureWebhookRoutes(
         });
       }
 
-      const { id: predictionId, status: predictionStatus, output: resultArray } = req.body;
+      const predictionId = req.body.id as string;
+      const predictionStatus = req.body.status.toLowerCase() as PredictionStatus;
+      const resultArray = req.body.output;
       const imageUrl = predictionImageMap.get(predictionId);
 
       debug('Processing webhook:', { predictionId, predictionStatus, hasImageUrl: !!imageUrl });
@@ -100,8 +117,8 @@ export function configureWebhookRoutes(
       // Use the message service to send platform-agnostic messages
       const resultMessage =
         predictionStatus === 'succeeded'
-          ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
-          : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+          ? WEBHOOK_SUCCESS_TEMPLATE((resultArray || []).join(' '), imageUrl || 'N/A')
+          : WEBHOOK_UPDATE_TEMPLATE(predictionId, predictionStatus);
 
       try {
         const channelId = targetChannel || messageService.getDefaultChannel?.() || '';

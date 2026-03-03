@@ -1197,7 +1197,9 @@ export async function handleMessage(
         console.info(
           `❌ INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
-        console.error(`Error processing message: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(
+          `Error processing message: ${error instanceof Error ? error.message : String(error)}`
+        );
         return null;
       } finally {
         stopTyping = true;

@@ -1,5 +1,5 @@
-import { IProvider, IMessageProvider, ILLMProvider } from '../types/IProvider';
-import { IToolInstaller } from '../types/IToolInstaller';
+import { type ILLMProvider, type IMessageProvider, type IProvider } from '../types/IProvider';
+import { type IToolInstaller } from '../types/IToolInstaller';
 
 export class ProviderRegistry {
   private static instance: ProviderRegistry;
@@ -31,11 +31,11 @@ export class ProviderRegistry {
   }
 
   public getMessageProviders(): IMessageProvider[] {
-    return this.getAll().filter(p => p.type === 'messenger') as IMessageProvider[];
+    return this.getAll().filter((p) => p.type === 'messenger') as IMessageProvider[];
   }
 
   public getLLMProviders(): ILLMProvider[] {
-    return this.getAll().filter(p => p.type === 'llm') as ILLMProvider[];
+    return this.getAll().filter((p) => p.type === 'llm') as ILLMProvider[];
   }
 
   public registerInstaller(installer: IToolInstaller): void {

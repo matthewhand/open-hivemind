@@ -1,9 +1,9 @@
 import { KnownBlock } from '@slack/web-api';
 import messageConfig from '@src/config/messageConfig';
 import slackConfig from '@src/config/slackConfig';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { SlackBotManager } from '../../../packages/adapter-slack/src/SlackBotManager';
 import { SlackWelcomeHandler } from '../../../packages/adapter-slack/src/SlackWelcomeHandler';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
 
 // Mock dependencies
 jest.mock('@src/config/slackConfig');

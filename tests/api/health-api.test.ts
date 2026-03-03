@@ -10,6 +10,7 @@
 
 import express from 'express';
 import request from 'supertest';
+import healthRouter from '../../src/server/routes/health';
 
 // Mock auth middleware so the detail endpoint returns full system stats for these tests
 jest.mock('../../src/server/middleware/auth', () => ({
@@ -18,8 +19,6 @@ jest.mock('../../src/server/middleware/auth', () => ({
     next();
   },
 }));
-
-import healthRouter from '../../src/server/routes/health';
 
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;

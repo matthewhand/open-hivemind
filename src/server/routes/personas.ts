@@ -33,12 +33,7 @@ const CreatePersonaSchema = z.object({
   }),
 });
 
-const PersonaIdParamSchema = z.object({
-  params: z.object({ id: z.string().min(1).max(100) }),
-});
-
 const UpdatePersonaSchema = z.object({
-  params: PersonaIdParamSchema.shape.params,
   body: CreatePersonaSchema.shape.body.partial(),
 });
 
@@ -90,7 +85,7 @@ router.post('/:id/clone', (req, res) => {
 });
 
 // PUT /api/personas/:id
-router.put('/:id', validateRequest(UpdatePersonaSchema), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
     return res.json(updatedPersona);
@@ -100,7 +95,7 @@ router.put('/:id', validateRequest(UpdatePersonaSchema), async (req, res) => {
 });
 
 // DELETE /api/personas/:id
-router.delete('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
+router.delete('/:id', (req, res) => {
   try {
     const success = manager.deletePersona(req.params.id);
     if (!success) {

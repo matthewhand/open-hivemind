@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import personasRouter from '../../src/server/routes/personas';
 
 // Mock the PersonaManager to avoid real DB calls
@@ -28,12 +28,10 @@ describe('Security: Persona Validation', () => {
       description: 'Valid description',
       category: 'general',
       traits: [],
-      systemPrompt: 'You are a bot.'
+      systemPrompt: 'You are a bot.',
     };
 
-    const response = await request(app)
-      .post('/api/personas')
-      .send(payload);
+    const response = await request(app).post('/api/personas').send(payload);
 
     // Currently this will likely pass (201) because validation is missing
     // We want it to be 400 Bad Request

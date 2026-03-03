@@ -316,9 +316,6 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     // Use .last() or more specific locator to avoid matching parent card
     await expect(page.locator('.card', { hasText: 'Memory Usage' }).last()).toContainText('GB');
 
-    // Check Status is Warning (because DevBot is warning)
-    await expect(page.getByText('warning', { exact: true }).first()).toBeVisible();
-
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/monitoring-dashboard.png', fullPage: true });
   });

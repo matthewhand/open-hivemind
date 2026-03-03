@@ -3,7 +3,13 @@ import { EventEmitter } from 'events';
 /**
  * KPI categories
  */
-export type KpiCategory = 'engagement' | 'performance' | 'revenue' | 'growth' | 'retention' | 'custom';
+export type KpiCategory =
+  | 'engagement'
+  | 'performance'
+  | 'revenue'
+  | 'growth'
+  | 'retention'
+  | 'custom';
 
 /**
  * KPI data point
@@ -192,7 +198,15 @@ export class BusinessKpiCollector extends EventEmitter {
   /**
    * Register a new KPI
    */
-  registerKpi(kpi: Partial<KpiDefinition> & { id: string; name: string; category: KpiCategory; unit: string; aggregationType: KpiDefinition['aggregationType'] }): void {
+  registerKpi(
+    kpi: Partial<KpiDefinition> & {
+      id: string;
+      name: string;
+      category: KpiCategory;
+      unit: string;
+      aggregationType: KpiDefinition['aggregationType'];
+    }
+  ): void {
     this.kpis.set(kpi.id, {
       id: kpi.id,
       name: kpi.name,
@@ -212,7 +226,11 @@ export class BusinessKpiCollector extends EventEmitter {
   /**
    * Record a KPI value
    */
-  recordKpiValue(kpiId: string, value: number, metadata?: Record<string, string | number | boolean>): void {
+  recordKpiValue(
+    kpiId: string,
+    value: number,
+    metadata?: Record<string, string | number | boolean>
+  ): void {
     const kpi = this.kpis.get(kpiId);
     if (!kpi) return;
 
@@ -228,7 +246,7 @@ export class BusinessKpiCollector extends EventEmitter {
 
     // Clean old data points
     const cutoff = Date.now() - this.dataRetentionMs;
-    kpi.dataPoints = kpi.dataPoints.filter(dp => dp.timestamp > cutoff);
+    kpi.dataPoints = kpi.dataPoints.filter((dp) => dp.timestamp > cutoff);
 
     this.emit('kpiValueRecorded', { kpiId, value, dataPoint });
   }
@@ -261,7 +279,7 @@ export class BusinessKpiCollector extends EventEmitter {
    * Get KPIs by category
    */
   getKpisByCategory(category: KpiCategory): KpiDefinition[] {
-    return Array.from(this.kpis.values()).filter(kpi => kpi.category === category);
+    return Array.from(this.kpis.values()).filter((kpi) => kpi.category === category);
   }
 
   /**
@@ -337,7 +355,7 @@ export class BusinessKpiCollector extends EventEmitter {
     if (!kpi) return 0;
 
     const relevantPoints = kpi.dataPoints.filter(
-      dp => dp.timestamp >= startTime && dp.timestamp <= endTime
+      (dp) => dp.timestamp >= startTime && dp.timestamp <= endTime
     );
 
     if (relevantPoints.length === 0) return 0;
@@ -348,9 +366,9 @@ export class BusinessKpiCollector extends EventEmitter {
       case 'avg':
         return relevantPoints.reduce((sum, dp) => sum + dp.value, 0) / relevantPoints.length;
       case 'min':
-        return Math.min(...relevantPoints.map(dp => dp.value));
+        return Math.min(...relevantPoints.map((dp) => dp.value));
       case 'max':
-        return Math.max(...relevantPoints.map(dp => dp.value));
+        return Math.max(...relevantPoints.map((dp) => dp.value));
       case 'count':
         return relevantPoints.length;
       case 'percentile':

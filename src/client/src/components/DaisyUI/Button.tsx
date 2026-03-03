@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color' | 'style'> {
   /** The content to display inside the button */
@@ -25,7 +25,10 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   loadingText?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders.
+// Since Button is a primitive UI component used inside lists and forms,
+// this skips reconciliation passes when parent re-renders and props are identical.
+export const Button = memo(({
   children,
   variant = 'primary',
   size = 'md',
@@ -40,7 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
   loadingText,
   onClick,
   ...props
-}) => {
+}: ButtonProps) => {
   const getVariantClass = () => {
     if (buttonStyle === 'outline') {
       return `btn-outline btn-${variant}`;
@@ -50,10 +53,19 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-    case 'xs': return 'btn-xs';
-    case 'sm': return 'btn-sm';
-    case 'lg': return 'btn-lg';
-    default: return '';
+      case 'xs': return 'btn-xs';
+      case 'sm': return 'btn-sm';
+      case 'lg': return 'btn-lg';
+      default: return '';
+    }
+  };
+
+  const getSpinnerSizeClass = () => {
+    switch (size) {
+      case 'xs': return 'loading-xs';
+      case 'sm': return 'loading-sm';
+      case 'lg': return 'loading-lg';
+      default: return 'loading-md';
     }
   };
 
@@ -71,9 +83,11 @@ export const Button: React.FC<ButtonProps> = ({
     onClick?.(event);
   };
 
+  const hasTextContent = Boolean(loadingText || (children && React.Children.count(children) > 0));
+
   const buttonContent = (
     <>
-      {loading && !loadingText && <span className="loading loading-spinner loading-sm"></span>}
+      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()}></span>}
       {(icon || startIcon) && !loading && <span className="mr-2">{icon || startIcon}</span>}
       {loading && loadingText ? loadingText : children}
       {(iconRight || endIcon) && !loading && <span className="ml-2">{iconRight || endIcon}</span>}
@@ -90,6 +104,8 @@ export const Button: React.FC<ButtonProps> = ({
       {buttonContent}
     </button>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;

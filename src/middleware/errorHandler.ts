@@ -5,6 +5,7 @@
  * using the new error types, with proper logging and correlation tracking.
  */
 
+import crypto from 'crypto';
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
@@ -84,7 +85,7 @@ export function correlationMiddleware(req: Request, res: Response, next: NextFun
  * Generate a unique correlation ID
  */
 function generateCorrelationId(): string {
-  return `corr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `corr_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
 }
 
 /**

@@ -7,6 +7,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { Input } from '../components/DaisyUI/Input';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -86,6 +87,18 @@ const GuardsPage: React.FC = () => {
       return;
     }
 
+    // Clean up arrays before saving
+    const profileToSave = JSON.parse(JSON.stringify(editingProfile));
+    if (profileToSave.guards.mcpGuard.allowedUsers) {
+      profileToSave.guards.mcpGuard.allowedUsers = profileToSave.guards.mcpGuard.allowedUsers.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.mcpGuard.allowedTools) {
+      profileToSave.guards.mcpGuard.allowedTools = profileToSave.guards.mcpGuard.allowedTools.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.contentFilter?.blockedTerms) {
+      profileToSave.guards.contentFilter.blockedTerms = profileToSave.guards.contentFilter.blockedTerms.map((s: string) => s.trim()).filter(Boolean);
+    }
+
     try {
       setSaving(true);
 
@@ -95,7 +108,7 @@ const GuardsPage: React.FC = () => {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProfile),
+        body: JSON.stringify(profileToSave),
       });
 
       if (!response.ok) {
@@ -282,172 +295,211 @@ const GuardsPage: React.FC = () => {
             },
           ]}
         >
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Profile Name</span></label>
-              <input
-                type="text"
-                className="input input-bordered"
-                value={editingProfile.name}
-                onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
-                placeholder="e.g. Strict Production"
-              />
-            </div>
+          <div className="form-control mb-4">
+            <label className="label"><span className="label-text">Profile Name</span></label>
+            <input
+              type="text"
+              className="input input-bordered"
+              value={editingProfile.name}
+              onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
+              placeholder="e.g. Strict Production"
+            />
+          </div>
 
-            <div className="form-control mb-6">
-              <label className="label"><span className="label-text">Description</span></label>
-              <textarea
-                className="textarea textarea-bordered h-20"
-                value={editingProfile.description}
-                onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
-                placeholder="Describe what this profile enforces..."
-              />
-            </div>
+          <div className="form-control mb-6">
+            <label className="label"><span className="label-text">Description</span></label>
+            <textarea
+              className="textarea textarea-bordered h-20"
+              value={editingProfile.description}
+              onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
+              placeholder="Describe what this profile enforces..."
+            />
+          </div>
 
-            <div className="divider">Guardrails</div>
+          <div className="divider">Guardrails</div>
 
-            <div className="grid grid-cols-1 gap-6">
-              {/* Access Control */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" defaultChecked />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                  <Shield className="w-5 h-5" /> Access Control
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-primary ml-auto z-10"
-                    checked={editingProfile.guards.mcpGuard.enabled}
-                    onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                    onClick={e => e.stopPropagation()}
-                  />
+          <div className="grid grid-cols-1 gap-6">
+            {/* Access Control */}
+            <div className="collapse collapse-arrow bg-base-200">
+              <input type="checkbox" defaultChecked />
+              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                <Shield className="w-5 h-5" /> Access Control
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary ml-auto z-10"
+                  checked={editingProfile.guards.mcpGuard.enabled}
+                  onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
+                  onClick={e => e.stopPropagation()}
+                />
+              </div>
+              <div className="collapse-content bg-base-100 pt-4">
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Type</span></label>
+                  <select
+                    className="select select-bordered"
+                    value={editingProfile.guards.mcpGuard.type}
+                    onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
+                    disabled={!editingProfile.guards.mcpGuard.enabled}
+                  >
+                    <option value="owner">Owner Only</option>
+                    <option value="custom">Custom Allowed Users</option>
+                  </select>
                 </div>
-                <div className="collapse-content bg-base-100 pt-4">
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">Type</span></label>
-                    <select
-                      className="select select-bordered"
-                      value={editingProfile.guards.mcpGuard.type}
-                      onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
-                      disabled={!editingProfile.guards.mcpGuard.enabled}
-                    >
-                      <option value="owner">Owner Only</option>
-                      <option value="custom">Custom Allowed Users</option>
-                    </select>
-                  </div>
-                  {editingProfile.guards.mcpGuard.type === 'custom' && (
-                    <div className="form-control mt-4">
-                      <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                      <input
-                        id="allowed-users"
-                        type="text"
-                        className="input input-bordered"
-                        value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                        onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                        disabled={!editingProfile.guards.mcpGuard.enabled}
-                      />
-                    </div>
-                  )}
-
+                {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
                     <input
-                      id="allowed-tools"
+                      id="allowed-users"
                       type="text"
                       className="input input-bordered"
-                      placeholder="e.g. calculator, weather"
-                      value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                      onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
+                      // Note: Using trimStart() allows trailing commas during typing for better UX.
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
-                    <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                   </div>
+                )}
+
+                <div className="form-control mt-4">
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                  <input
+                    id="allowed-tools"
+                    type="text"
+                    className="input input-bordered"
+                    placeholder="e.g. calculator, weather"
+                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
+                    disabled={!editingProfile.guards.mcpGuard.enabled}
+                  />
+                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
               </div>
+            </div>
 
-              {/* Rate Limit */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5" /> Rate Limiter
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-warning ml-auto z-10"
-                    checked={editingProfile.guards.rateLimit?.enabled || false}
-                    onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                    onClick={e => e.stopPropagation()}
-                  />
-                </div>
-                <div className="collapse-content bg-base-100 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Max Requests</span></label>
-                      <input
-                        type="number"
-                        className="input input-bordered"
-                        value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                        onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
-                        disabled={!editingProfile.guards.rateLimit?.enabled}
-                      />
-                    </div>
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Window (ms)</span></label>
-                      <input
-                        type="number"
-                        className="input input-bordered"
-                        value={editingProfile.guards.rateLimit?.windowMs || 60000}
-                        onChange={e => updateGuard('rateLimit', { windowMs: parseInt(e.target.value) })}
-                        disabled={!editingProfile.guards.rateLimit?.enabled}
-                      />
-                    </div>
-                  </div>
-                </div>
+            {/* Rate Limit */}
+            <div className="collapse collapse-arrow bg-base-200">
+              <input type="checkbox" />
+              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                <RefreshCw className="w-5 h-5" /> Rate Limiter
+                <input
+                  type="checkbox"
+                  className="toggle toggle-warning ml-auto z-10"
+                  checked={editingProfile.guards.rateLimit?.enabled || false}
+                  onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
+                  onClick={e => e.stopPropagation()}
+                />
               </div>
-
-              {/* Content Filter */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Content Filter
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-error ml-auto z-10"
-                    checked={editingProfile.guards.contentFilter?.enabled || false}
-                    onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                    onClick={e => e.stopPropagation()}
-                  />
-                </div>
-                <div className="collapse-content bg-base-100 pt-4">
-                  <div className="form-control">
-                    <label className="label"><span className="label-text">Strictness</span></label>
-                    <div className="flex gap-4">
-                      {['low', 'medium', 'high'].map(level => (
-                        <label key={level} className="label cursor-pointer gap-2">
-                          <input
-                            type="radio"
-                            name="strictness"
-                            className="radio radio-error"
-                            checked={editingProfile.guards.contentFilter?.strictness === level}
-                            onChange={() => updateGuard('contentFilter', { strictness: level })}
-                            disabled={!editingProfile.guards.contentFilter?.enabled}
-                          />
-                          <span className="label-text capitalize">{level}</span>
-                        </label>
-                      ))}
-                    </div>
+              <div className="collapse-content bg-base-100 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
+                    <Input
+                      type="number"
+                      label={
+                        <div className="flex items-center justify-between w-full">
+                          <span>Max Requests</span>
+                          {!editingProfile.guards.rateLimit?.enabled && (
+                            <span className="badge badge-sm border-base-300">Disabled</span>
+                          )}
+                        </div>
+                      }
+                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                      onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
+                      disabled={!editingProfile.guards.rateLimit?.enabled}
+                      aria-label="Max Requests"
+                    />
                   </div>
-
-                  <div className="form-control mt-4">
-                    <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                    <textarea
-                      id="blocked-terms"
-                      className="textarea textarea-bordered h-20"
-                      placeholder="e.g. secret, password, confidential"
-                      value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                      onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                      disabled={!editingProfile.guards.contentFilter?.enabled}
+                  <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
+                    <Input
+                      type="number"
+                      label={
+                        <div className="flex items-center justify-between w-full">
+                          <span>Window (seconds)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="label-text-alt text-info" title="Time period for counting requests">
+                              Max 1 hour (3600s)
+                            </span>
+                            {!editingProfile.guards.rateLimit?.enabled && (
+                              <span className="badge badge-sm border-base-300">Disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      }
+                      value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
+                      onChange={e => {
+                        const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
+                        updateGuard('rateLimit', { windowMs: seconds * 1000 });
+                      }}
+                      disabled={!editingProfile.guards.rateLimit?.enabled}
+                      min={1}
+                      max={3600}
+                      placeholder="60"
+                      helperText={
+                        (() => {
+                          const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
+                          if (seconds < 60) return `${seconds} seconds`;
+                          if (seconds === 60) return '1 minute';
+                          if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
+                          return '1 hour';
+                        })()
+                      }
                     />
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Content Filter */}
+            <div className="collapse collapse-arrow bg-base-200">
+              <input type="checkbox" />
+              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" /> Content Filter
+                <input
+                  type="checkbox"
+                  className="toggle toggle-error ml-auto z-10"
+                  checked={editingProfile.guards.contentFilter?.enabled || false}
+                  onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
+                  onClick={e => e.stopPropagation()}
+                />
+              </div>
+              <div className="collapse-content bg-base-100 pt-4">
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Strictness</span></label>
+                  <div className="flex gap-4">
+                    {['low', 'medium', 'high'].map(level => (
+                      <label key={level} className="label cursor-pointer gap-2">
+                        <input
+                          type="radio"
+                          name="strictness"
+                          className="radio radio-error"
+                          checked={editingProfile.guards.contentFilter?.strictness === level}
+                          onChange={() => updateGuard('contentFilter', { strictness: level })}
+                          disabled={!editingProfile.guards.contentFilter?.enabled}
+                        />
+                        <span className="label-text capitalize">{level}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-control mt-4">
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
+                  <textarea
+                    id="blocked-terms"
+                    className="textarea textarea-bordered h-20"
+                    placeholder="e.g. secret, password, confidential"
+                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
+                    disabled={!editingProfile.guards.contentFilter?.enabled}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
 

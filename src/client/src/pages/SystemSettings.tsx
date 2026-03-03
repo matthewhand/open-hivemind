@@ -4,6 +4,7 @@ import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
+import SettingsLLM from '../components/Settings/SettingsLLM';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { Cog } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const SystemSettings: React.FC = () => {
   const tabs = [
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
+    { id: 'llm', label: 'LLM', component: <SettingsLLM /> },
     { id: 'security', label: 'Security', component: <SettingsSecurity /> },
   ];
 

@@ -83,6 +83,20 @@ test.describe('Bot Create Page Screenshots', () => {
     await page.route('/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
+
+    await page.route('/api/admin/mcp-servers', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: [
+            { id: 'github-tools', name: 'GitHub Integration Server', description: 'Provides actions to search repos, open PRs, and review code.' },
+            { id: 'fs-reader', name: 'File System Server', description: 'Read-only access to specific local directories.' },
+            { id: 'db-query', name: 'Database Query Server', description: 'Allows safe, read-only SQL queries to the analytics database.' }
+          ]
+        }),
+      });
+    });
   });
 
   test('capture Bot Create page screenshot', async ({ page }) => {
@@ -94,7 +108,9 @@ test.describe('Bot Create Page Screenshots', () => {
 
     // Wait for the page to load and specific elements to be visible
     await expect(page.getByText('Create New Bot')).toBeVisible();
-    await expect(page.getByText('Message Platform')).toBeVisible();
+
+    // Use filter to be specific about which 'Message Platform' text we want (the heading)
+    await expect(page.locator('h3').filter({ hasText: 'Message Platform' })).toBeVisible();
 
     // Verify Platform Buttons are visible
     await expect(page.getByText('Discord', { exact: true })).toBeVisible();

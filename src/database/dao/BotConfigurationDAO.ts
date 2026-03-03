@@ -102,6 +102,9 @@ export interface N8nConfig {
   workflowId?: string;
 }
 
+/**
+ * Data Access Object for managing bot configurations in the SQLite database.
+ */
 export class BotConfigurationDAO {
   private db: Database;
   private readonly tableName = 'bot_configurations';
@@ -223,8 +226,36 @@ export class BotConfigurationDAO {
     const updates: string[] = [];
     const params: any[] = [];
 
+    const allowedKeys = new Set([
+      'name',
+      'messageProvider',
+      'llmProvider',
+      'llmProfile',
+      'responseProfile',
+      'persona',
+      'systemInstruction',
+      'mcpServers',
+      'mcpGuard',
+      'discord',
+      'slack',
+      'mattermost',
+      'openai',
+      'flowise',
+      'openwebui',
+      'openswarm',
+      'perplexity',
+      'replicate',
+      'n8n',
+      'tenantId',
+      'isActive',
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'updatedBy',
+    ]);
+
     Object.entries(config).forEach(([key, value]) => {
-      if (value !== undefined && key !== 'id') {
+      if (allowedKeys.has(key) && value !== undefined && key !== 'id') {
         if (
           key === 'mcpServers' ||
           key === 'mcpGuard' ||

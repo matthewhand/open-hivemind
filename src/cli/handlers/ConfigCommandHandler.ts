@@ -1,9 +1,9 @@
 import { promises as fs } from 'fs';
 import chalk from 'chalk';
-import { Command } from 'commander';
+import { type Command } from 'commander';
 import inquirer from 'inquirer';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { CommandHandler } from './CommandHandler';
+import { type CommandHandler } from './CommandHandler';
 
 export class ConfigCommandHandler implements CommandHandler {
   private configManager: BotConfigurationManager;

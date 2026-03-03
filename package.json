@@ -82,7 +82,7 @@
     "@discordjs/rest": "^2.0.0",
     "@discordjs/voice": "^0.17.0",
     "@heroicons/react": "^2.2.0",
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "1.0.1",
     "@reduxjs/toolkit": "^2.9.0",
     "@slack/rtm-api": "^7.0.2",
     "@slack/socket-mode": "^2.0.3",
@@ -111,7 +111,7 @@
     "discord-api-types": "^0.37.67",
     "discord.js": "^14.14.1",
     "dompurify": "^3.3.1",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.3",
     "express-rate-limit": "^7.4.0",
@@ -122,8 +122,6 @@
     "flowise-sdk": "^1.0.8",
     "form-data": "^4.0.4",
     "framer-motion": "12.34.3",
-    "motion-dom": "12.34.3",
-    "motion-utils": "12.29.2",
     "gpt-tokenizer": "^2.1.2",
     "hono": "^4.12.2",
     "html-entities": "^2.5.2",
@@ -135,10 +133,13 @@
     "lucide-react": "^0.460.0",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
+    "motion-dom": "12.34.3",
+    "motion-utils": "12.29.2",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "openai": "^4.82.0",
     "pino-pretty": "^11.2.2",
+    "prop-types": "^15.8.1",
     "puppeteer": "^24.23.0",
     "ra-core": "^5.3.0",
     "ra-data-fakerest": "^5.3.0",
@@ -168,7 +169,9 @@
     "typeforce": "^1.18.0",
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "zod": "3.24.2",
+    "zod-to-json-schema": "3.25.1"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -255,7 +258,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
-    "wrangler": "^4.34.0"
+    "wrangler": "^4.34.0",
+    "zod": "^3.25.1"
   },
   "overrides": {
     "undici": "7.22.0",

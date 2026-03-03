@@ -13,7 +13,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
 }) => {
   return (
     <button
-      className={`btn btn-ghost btn-circle lg:hidden ${className}`}
+      className={`btn btn-ghost btn-circle lg:hidden min-h-[44px] min-w-[44px] ${className}`}
       onClick={onClick}
       aria-label={isOpen ? 'Close menu' : 'Open menu'}
       aria-expanded={isOpen}

@@ -103,7 +103,6 @@ const ConfigurationWizard: React.FC = () => {
       if (wizardData.messageProvider === 'slack' && !wizardData.slackToken) {errors.push('Slack bot token is required');}
       if (wizardData.messageProvider === 'mattermost' && (!wizardData.mattermostToken || !wizardData.mattermostServerUrl)) {errors.push('Mattermost credentials are required');}
       if (wizardData.llmProvider === 'openai' && !wizardData.openaiKey) {errors.push('OpenAI API key is required');}
-      if (wizardData.llmProvider === 'flowise' && !wizardData.flowiseApiKey) {errors.push('Flowise API key is required');}
       if (wizardData.llmProvider === 'openwebui' && !wizardData.openwebuiApiKey) {errors.push('OpenWebUI API key is required');}
       break;
     }
@@ -279,8 +278,9 @@ const ConfigurationWizard: React.FC = () => {
               )}
               {wizardData.llmProvider === 'flowise' && (
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Flowise API Key *</span></label>
+                  <label className="label"><span className="label-text">Flowise API Key (Optional)</span></label>
                   <Input type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
+                  <label className="label"><span className="label-text-alt">Optional: Only required if your Flowise instance requires authentication</span></label>
                 </div>
               )}
               {wizardData.llmProvider === 'openwebui' && (

@@ -205,6 +205,7 @@ const Settings: React.FC = () => {
           className="btn btn-primary"
           onClick={handleSaveSettings}
           disabled={saveStatus === 'saving'}
+          aria-label="Save Settings"
         >
           {saveStatus === 'saving' ? <span className="loading loading-spinner"></span> : null}
           {saveStatus === 'saving' ? 'Saving...' : 'Save Settings'}
@@ -212,6 +213,7 @@ const Settings: React.FC = () => {
         <button
           className="btn btn-outline"
           onClick={() => window.location.reload()}
+          aria-label="Reset to Defaults"
         >
           Reset to Defaults
         </button>

@@ -12,6 +12,10 @@ export interface SystemStatus {
   timestamp?: Date;
 }
 
+/**
+ * Retrieves the current system status, including memory usage and uptime.
+ * @returns {SystemStatus} An object containing operational status, uptime, memory stats, etc.
+ */
 export function getSystemStatus(): SystemStatus {
   const memInfo = process.memoryUsage();
   const totalMem = os.totalmem();

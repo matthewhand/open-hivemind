@@ -1,5 +1,9 @@
-import { BotConfigService, CreateBotConfigRequest, UpdateBotConfigRequest } from '../../../src/server/services/BotConfigService';
-import { DatabaseManager, BotConfiguration } from '../../../src/database/DatabaseManager';
+import { BotConfiguration, DatabaseManager } from '../../../src/database/DatabaseManager';
+import {
+  BotConfigService,
+  CreateBotConfigRequest,
+  UpdateBotConfigRequest,
+} from '../../../src/server/services/BotConfigService';
 import { ConfigurationValidator } from '../../../src/server/services/ConfigurationValidator';
 
 // Mock dependencies
@@ -40,29 +44,20 @@ describe('BotConfigService', () => {
 
     (ConfigurationValidator as jest.Mock).mockImplementation(() => mockValidator);
 
+    // Ensure the new ConfigurationValidator() call inside BotConfigService constructor
+    // returns our mock object rather than the default mock function
+    (ConfigurationValidator as jest.Mock).mockReturnValue(mockValidator);
+
+    // We must reset the BotConfigService instance so it rebuilds itself and picks up the latest DatabaseManager and ConfigurationValidator mocks.
+    // @ts-expect-error - accessing private static for testing purposes
+    BotConfigService.instance = undefined;
+
     // Get instance (singleton)
-    // We need to access the private instance to reset it if needed, or just rely on getInstance returning the same mock DB
-    // However, since getInstance is static and stores the instance, we might need to reset the instance if we want a fresh service.
-    // But since the service just holds the DB manager which we are mocking via getInstance, it should be fine.
-    // The constructor calls DatabaseManager.getInstance(), so if we mock that before calling BotConfigService.getInstance(), it should pick up our mock.
-    // But BotConfigService might have been instantiated in other tests or earlier?
-    // Let's assume for now we can just call getInstance().
-    // Actually, since BotConfigService is a singleton, once instantiated, it holds the reference to dbManager.
-    // If dbManager was mocked *after* the first instantiation, the service would hold the old one.
-    // But Jest mocks are usually applied at module load time (hoisted).
-    // So imports should be mocked.
-
-    // To be safe, we can try to reset the singleton instance if we could, but it's private.
-    // For now, let's just get the instance.
     botConfigService = BotConfigService.getInstance();
-
-    // HACK: Force update the dbManager and configValidator on the existing instance if it was already created
-    (botConfigService as any).dbManager = mockDbManager;
-    (botConfigService as any).configValidator = mockValidator;
   });
 
   describe('getInstance', () => {
-    it('should return the same instance', () => {
+    it('should return the same instance (singleton pattern)', () => {
       const instance1 = BotConfigService.getInstance();
       const instance2 = BotConfigService.getInstance();
       expect(instance1).toBe(instance2);
@@ -87,30 +82,41 @@ describe('BotConfigService', () => {
       expect(mockValidator.validateBotConfig).toHaveBeenCalledWith(validConfig);
       expect(mockDbManager.getBotConfigurationByName).toHaveBeenCalledWith('TestBot');
       expect(mockDbManager.createBotConfiguration).toHaveBeenCalled();
-      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        action: 'CREATE',
-        performedBy: 'user',
-      }));
+      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          action: 'CREATE',
+          performedBy: 'user',
+        })
+      );
       expect(result).toEqual(expect.objectContaining({ id: 1, name: 'TestBot' }));
     });
 
     it('should throw error if database is not configured', async () => {
       mockDbManager.isConfigured.mockReturnValue(false);
 
-      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow('Database is not configured');
+      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow(
+        'Database is not configured'
+      );
     });
 
     it('should throw error if validation fails', async () => {
-      mockValidator.validateBotConfig.mockReturnValue({ isValid: false, errors: ['Invalid config'] });
+      mockValidator.validateBotConfig.mockReturnValue({
+        isValid: false,
+        errors: ['Invalid config'],
+      });
 
-      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow('Configuration validation failed');
+      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow(
+        'Configuration validation failed'
+      );
     });
 
     it('should throw error if bot name already exists', async () => {
       mockDbManager.getBotConfigurationByName.mockResolvedValue({ id: 1, name: 'TestBot' });
 
-      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow("Bot configuration with name 'TestBot' already exists");
+      await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow(
+        "Bot configuration with name 'TestBot' already exists"
+      );
     });
   });
 
@@ -218,29 +224,43 @@ describe('BotConfigService', () => {
   describe('updateBotConfig', () => {
     const updateReq: UpdateBotConfigRequest = { name: 'UpdatedBot' };
     const existingConfig: BotConfiguration = {
-      id: 1, name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai', isActive: true, createdAt: new Date(), updatedAt: new Date(),
+      id: 1,
+      name: 'TestBot',
+      messageProvider: 'discord',
+      llmProvider: 'openai',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       // Add other required fields with defaults/mocks
     } as any;
 
     it('should update bot config successfully', async () => {
-      mockDbManager.getBotConfiguration.mockResolvedValueOnce(existingConfig) // for checking existence
+      mockDbManager.getBotConfiguration
+        .mockResolvedValueOnce(existingConfig) // for checking existence
         .mockResolvedValueOnce({ ...existingConfig, ...updateReq }); // for returning updated
 
       const result = await botConfigService.updateBotConfig(1, updateReq, 'user');
 
-      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(1, expect.objectContaining({ updatedBy: 'user' }));
-      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        action: 'UPDATE',
-        performedBy: 'user',
-      }));
+      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ updatedBy: 'user' })
+      );
+      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          action: 'UPDATE',
+          performedBy: 'user',
+        })
+      );
       expect(result.name).toBe('UpdatedBot');
     });
 
     it('should throw error if config not found', async () => {
       mockDbManager.getBotConfiguration.mockResolvedValue(null);
 
-      await expect(botConfigService.updateBotConfig(1, updateReq)).rejects.toThrow('Bot configuration with ID 1 not found');
+      await expect(botConfigService.updateBotConfig(1, updateReq)).rejects.toThrow(
+        'Bot configuration with ID 1 not found'
+      );
     });
   });
 
@@ -251,11 +271,13 @@ describe('BotConfigService', () => {
 
       const result = await botConfigService.deleteBotConfig(1, 'user');
 
-      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        action: 'DELETE',
-        performedBy: 'user',
-      }));
+      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          action: 'DELETE',
+          performedBy: 'user',
+        })
+      );
       expect(mockDbManager.deleteBotConfiguration).toHaveBeenCalledWith(1);
       expect(result).toBe(true);
     });
@@ -263,7 +285,9 @@ describe('BotConfigService', () => {
     it('should throw error if config not found', async () => {
       mockDbManager.getBotConfiguration.mockResolvedValue(null);
 
-      await expect(botConfigService.deleteBotConfig(1)).rejects.toThrow('Bot configuration with ID 1 not found');
+      await expect(botConfigService.deleteBotConfig(1)).rejects.toThrow(
+        'Bot configuration with ID 1 not found'
+      );
     });
   });
 
@@ -273,12 +297,17 @@ describe('BotConfigService', () => {
 
       await botConfigService.activateBotConfig(1, 'user');
 
-      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(1, expect.objectContaining({ isActive: true, updatedBy: 'user' }));
-      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        action: 'ACTIVATE',
-        performedBy: 'user',
-      }));
+      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ isActive: true, updatedBy: 'user' })
+      );
+      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          action: 'ACTIVATE',
+          performedBy: 'user',
+        })
+      );
     });
   });
 
@@ -288,30 +317,42 @@ describe('BotConfigService', () => {
 
       await botConfigService.deactivateBotConfig(1, 'user');
 
-      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(1, expect.objectContaining({ isActive: false, updatedBy: 'user' }));
-      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        action: 'DEACTIVATE',
-        performedBy: 'user',
-      }));
+      expect(mockDbManager.updateBotConfiguration).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ isActive: false, updatedBy: 'user' })
+      );
+      expect(mockDbManager.createBotConfigurationAudit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          action: 'DEACTIVATE',
+          performedBy: 'user',
+        })
+      );
     });
   });
 
   describe('createBotConfigVersion', () => {
     it('should create a new version', async () => {
-      const currentConfig = { id: 1, name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai' };
+      const currentConfig = {
+        id: 1,
+        name: 'TestBot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+      };
       mockDbManager.getBotConfiguration.mockResolvedValue(currentConfig);
       mockDbManager.getBotConfigurationVersions.mockResolvedValue([{ version: '1' }]);
       mockDbManager.createBotConfigurationVersion.mockResolvedValue(2);
 
       const result = await botConfigService.createBotConfigVersion(1, 'change log', 'user');
 
-      expect(mockDbManager.createBotConfigurationVersion).toHaveBeenCalledWith(expect.objectContaining({
-        botConfigurationId: 1,
-        version: '2',
-        name: 'TestBot',
-        createdBy: 'user',
-      }));
+      expect(mockDbManager.createBotConfigurationVersion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          botConfigurationId: 1,
+          version: '2',
+          name: 'TestBot',
+          createdBy: 'user',
+        })
+      );
       expect(result.id).toBe(2);
       expect(result.version).toBe('2');
     });

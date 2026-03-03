@@ -47,14 +47,6 @@ const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 
-// AI Features
-const IntelligentDashboard = lazy(() => import('../ai/IntelligentDashboard'));
-const AIInsightsPanel = lazy(() => import('../ai/AIInsightsPanel'));
-const PredictiveAnalytics = lazy(() => import('../ai/PredictiveAnalytics'));
-const AnomalyDetection = lazy(() => import('../ai/AnomalyDetection'));
-const NaturalLanguageInterface = lazy(() => import('../ai/NaturalLanguageInterface'));
-const BotTrainingDashboard = lazy(() => import('../ai/BotTrainingDashboard'));
-
 interface LoadingFallbackProps {
   message?: string;
 }
@@ -201,13 +193,6 @@ const AppRouter: React.FC = () => {
           <Route path="specs" element={<SpecsPage />} />
           <Route path="specs/:id" element={<SpecDetailPage />} />
 
-          {/* AI Features Routes */}
-          <Route path="ai/dashboard" element={<IntelligentDashboard />} />
-          <Route path="ai/insights" element={<AIInsightsPanel />} />
-          <Route path="ai/analytics" element={<PredictiveAnalytics />} />
-          <Route path="ai/anomalies" element={<AnomalyDetection />} />
-          <Route path="ai/chat" element={<NaturalLanguageInterface />} />
-          <Route path="ai/training" element={<BotTrainingDashboard />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

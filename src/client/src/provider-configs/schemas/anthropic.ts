@@ -24,7 +24,7 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'baseUrl',
-      label: 'Base URL (Optional)',
+      label: 'Base URL',
       type: 'url',
       required: false,
       description: 'Custom API base URL for third-party Anthropic-compatible providers (ANTHROPIC_BASE_URL)',

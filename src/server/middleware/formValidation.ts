@@ -164,10 +164,7 @@ export const validateBotConfigCreation = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .if(body('flowise').exists())
-    .notEmpty()
-    .withMessage('Flowise API key is required when flowise configuration is provided'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
@@ -366,11 +363,7 @@ export const validateBotConfigUpdate = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .optional()
-    .if(body('flowise').exists())
-    .notEmpty()
-    .withMessage('Flowise API key cannot be empty'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()

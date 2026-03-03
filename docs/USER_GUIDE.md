@@ -68,7 +68,7 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](images/clone-bot-modal.png)
+![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -174,6 +174,10 @@ General system configuration.
 *   **Health & Monitoring**: Enable and configure periodic health checks for external services.
 *   **Deep Linking**: Settings tabs (General, Messaging, Security) are reflected in the URL for easy sharing.
 
+![Settings Saving](screenshots/settings-general-loading.png)
+
+*   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
+
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
@@ -188,6 +192,16 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Ecosystem Status**: Overall health of the bot ecosystem and performance metrics.
 *   **Infrastructure Health**: Real-time metrics for CPU, Memory, and API endpoint status.
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
+
+### [System Management](/admin/system-management)
+Manage configuration, alerts, and system health.
+
+![System Management](screenshots/system-management-page.png)
+
+*   **Alert Management**: Monitor and acknowledge system alerts.
+*   **System Configuration**: Fine-tune settings like refresh intervals, log levels, and resource thresholds.
+*   **Backup History**: Create and restore manual backups, and view automatic backup logs.
+*   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
 
 ### [Global Defaults](/admin/configuration)
 Set default behaviors for new bots.
@@ -231,13 +245,22 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
+
+![UI Components](screenshots/showcase-page.png)
+
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+
+**Workflow:**
+1. Navigate to Developer & Tools > UI Components in the sidebar.
+2. Select a component category (e.g., button, badge, modal) from the top navigation tabs.
+3. View the rendered DaisyUI components along with their various states and styles.
+4. Developers can reference these live components to ensure consistent design and behavior when building new features.
 
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
-![System Backups & Export](images/export-page.png)
-![Create Backup Modal](images/create-backup-modal.png)
+![System Backups & Export](screenshots/export-page.png)
+![Create Backup Modal](screenshots/create-backup-modal.png)
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.

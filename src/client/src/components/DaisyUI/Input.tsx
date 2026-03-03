@@ -1,4 +1,4 @@
-import React, { forwardRef, useId, useState } from 'react';
+import React, { forwardRef, useId, useState, memo } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -16,7 +16,10 @@ export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size
   helperText?: React.ReactNode;
 };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
+// Input components are heavily used in forms and dashboards that frequently re-render.
+// Wrapping it in memo avoids large DOM recalculation trees for unchanged inputs.
+export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
   (
     {
       variant,
@@ -154,7 +157,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return inputContent;
   },
-);
+));
 
 Input.displayName = 'Input';
 

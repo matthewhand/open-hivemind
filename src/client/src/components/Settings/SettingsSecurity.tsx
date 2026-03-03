@@ -142,9 +142,12 @@ const SettingsSecurity: React.FC = () => {
               </label>
             </div>
 
-            <div className="form-control">
+            <div className={`form-control transition-all duration-200 ${!settings.enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
                 <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
+                {!settings.enableAuthentication && (
+                  <span className="badge badge-sm badge-ghost">Disabled</span>
+                )}
               </label>
               <Input
                 type="number"
@@ -154,10 +157,11 @@ const SettingsSecurity: React.FC = () => {
                 min={300}
                 max={86400}
                 size="sm"
+                aria-label="Session timeout in seconds"
               />
             </div>
 
-            <div className="form-control">
+            <div className={`form-control transition-all duration-200 ${!settings.enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label cursor-pointer py-1">
                 <span className="label-text text-sm">Two-factor authentication</span>
                 <Toggle
@@ -165,6 +169,7 @@ const SettingsSecurity: React.FC = () => {
                   onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
                   disabled={!settings.enableAuthentication}
                   size="sm"
+                  aria-label="Enable two-factor authentication"
                 />
               </label>
             </div>
@@ -190,9 +195,12 @@ const SettingsSecurity: React.FC = () => {
               </label>
             </div>
 
-            <div className="form-control">
+            <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
                 <span className="label-text text-sm font-medium">Time Window (seconds)</span>
+                {!settings.enableRateLimit && (
+                  <span className="badge badge-sm badge-ghost">Disabled</span>
+                )}
               </label>
               <Input
                 type="number"
@@ -202,12 +210,16 @@ const SettingsSecurity: React.FC = () => {
                 min={10}
                 max={3600}
                 size="sm"
+                aria-label="Rate limit time window in seconds"
               />
             </div>
 
-            <div className="form-control">
+            <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
                 <span className="label-text text-sm font-medium">Max Requests per Window</span>
+                {!settings.enableRateLimit && (
+                  <span className="badge badge-sm badge-ghost">Disabled</span>
+                )}
               </label>
               <Input
                 type="number"
@@ -217,6 +229,7 @@ const SettingsSecurity: React.FC = () => {
                 min={10}
                 max={10000}
                 size="sm"
+                aria-label="Maximum requests per time window"
               />
             </div>
           </div>

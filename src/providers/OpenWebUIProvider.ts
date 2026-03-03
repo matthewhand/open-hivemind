@@ -1,5 +1,5 @@
-import { ILLMProvider } from '../types/IProvider';
 import openWebUIConfig from '../config/openWebUIConfig';
+import { type ILLMProvider } from '../types/IProvider';
 
 export class OpenWebUIProvider implements ILLMProvider {
   id = 'openwebui';

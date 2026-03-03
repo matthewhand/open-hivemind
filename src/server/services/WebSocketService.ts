@@ -530,7 +530,7 @@ export class WebSocketService {
         bots: status,
         timestamp: new Date().toISOString(),
         total: bots.length,
-        active: status.filter(s => s.status === 'active').length,
+        active: status.filter((s) => s.status === 'active').length,
       });
     } catch (error) {
       debug('Error sending bot status:', error);
