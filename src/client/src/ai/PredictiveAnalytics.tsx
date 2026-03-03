@@ -9,7 +9,7 @@
  *
  * DO NOT import or route to this component until the backend AI APIs are implemented.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -22,6 +22,18 @@ import {
   ArrowPathIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
+import {
+  ComposedChart,
+  Line,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ReferenceLine
+} from 'recharts';
 
 export interface TimeSeriesData {
   timestamp: Date;
@@ -341,6 +353,89 @@ export const PredictiveAnalytics: React.FC = () => {
   const [forecastDays, setForecastDays] = useState(7);
   const [showConfidenceBands, setShowConfidenceBands] = useState(true);
 
+  // Memoize chart data based on historical data and forecast, filtered by forecastDays
+  const chartData = useMemo(() => {
+    if (state.historicalData.length === 0 && state.forecast.length === 0) {
+      return [];
+    }
+
+    // Convert historical data for chart
+    const historicalPoints = state.historicalData.map(d => ({
+      timestamp: d.timestamp.toLocaleString(),
+      value: d.value,
+      isHistorical: true
+    }));
+
+    // Calculate how many forecast hours to show based on forecastDays
+    const forecastHours = forecastDays * 24;
+    const forecastPointsToUse = state.forecast.slice(0, forecastHours);
+
+    // Convert forecast data for chart
+    const forecastPoints = forecastPointsToUse.map(f => ({
+      timestamp: f.timestamp.toLocaleString(),
+      predicted: f.predicted,
+      lowerBound: f.lowerBound,
+      upperBound: f.upperBound,
+      isHistorical: false
+    }));
+
+    // To connect the lines, we can add the last historical point to the forecast data (or vice versa)
+    // Actually, recharts handles nulls well if we just combine them linearly
+
+    // Find the last historical point
+    const lastHistorical = historicalPoints.length > 0 ? historicalPoints[historicalPoints.length - 1] : null;
+
+    // Format combined data points
+    const combinedData = [];
+
+    // Add all historical points. Set predicted to null so the forecast line doesn't draw here
+    historicalPoints.forEach(p => {
+      combinedData.push({
+        name: new Date(p.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        rawTimestamp: new Date(p.timestamp).getTime(),
+        historical: p.value,
+        predicted: null,
+        lowerBound: null,
+        upperBound: null,
+        band: null
+      });
+    });
+
+    // If we have both, bridge the gap to make the lines continuous
+    if (lastHistorical && forecastPoints.length > 0) {
+      const firstForecast = forecastPoints[0];
+      // Create a bridge point at the same time as last historical point but with predicted value
+      combinedData[combinedData.length - 1].predicted = lastHistorical.value;
+
+      // For bands, start them at the last historical value too (0 width band)
+      combinedData[combinedData.length - 1].lowerBound = lastHistorical.value;
+      combinedData[combinedData.length - 1].upperBound = lastHistorical.value;
+      combinedData[combinedData.length - 1].band = [lastHistorical.value, lastHistorical.value];
+    }
+
+    // Add forecast points. Set historical to null
+    forecastPoints.forEach(p => {
+      combinedData.push({
+        name: new Date(p.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        rawTimestamp: new Date(p.timestamp).getTime(),
+        historical: null,
+        predicted: p.predicted,
+        lowerBound: p.lowerBound,
+        upperBound: p.upperBound,
+        // Band array for area chart [bottom, top]
+        band: [p.lowerBound, p.upperBound]
+      });
+    });
+
+    return combinedData;
+  }, [state.historicalData, state.forecast, forecastDays]);
+
+  // Find the timestamp where historical ends and forecast begins for the reference line
+  const forecastStartIndex = useMemo(() => {
+    const idx = chartData.findIndex(d => d.predicted !== null && d.historical === null);
+    return idx > 0 ? idx : -1;
+  }, [chartData]);
+
   // Initialize data on mount
   useEffect(() => {
     if (config.enabled) {
@@ -556,6 +651,98 @@ export const PredictiveAnalytics: React.FC = () => {
                 Export
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Prediction Visualization */}
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Forecast Visualization</h3>
+
+          <div className="h-96 w-full relative">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-base-100/50 z-10">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+              </div>
+            ) : chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    minTickGap={50}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={['auto', 'auto']}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--b1))',
+                      borderColor: 'hsl(var(--b3))',
+                      color: 'hsl(var(--bc))'
+                    }}
+                    labelStyle={{ color: 'hsl(var(--bc))', fontWeight: 'bold' }}
+                  />
+                  <Legend verticalAlign="top" height={36} />
+
+                  {forecastStartIndex > 0 && (
+                    <ReferenceLine
+                      x={chartData[forecastStartIndex - 1].name}
+                      stroke="hsl(var(--bc))"
+                      strokeDasharray="3 3"
+                      opacity={0.5}
+                      label={{ position: 'top', value: 'Now', fill: 'hsl(var(--bc))', fontSize: 12 }}
+                    />
+                  )}
+
+                  {/* Confidence Band Area */}
+                  {showConfidenceBands && (
+                    <Area
+                      type="monotone"
+                      dataKey="band"
+                      stroke="none"
+                      fill="hsl(var(--p))"
+                      fillOpacity={0.15}
+                      name="Confidence Band"
+                      isAnimationActive={false}
+                    />
+                  )}
+
+                  {/* Historical Data Line */}
+                  <Line
+                    type="monotone"
+                    dataKey="historical"
+                    stroke="hsl(var(--bc))"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Historical"
+                    isAnimationActive={false}
+                  />
+
+                  {/* Predicted Data Line */}
+                  <Line
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke="hsl(var(--p))"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                    name="Forecast"
+                    isAnimationActive={false}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-base-content/50">No data available to display</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

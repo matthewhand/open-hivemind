@@ -40,6 +40,7 @@ const ConfigPage = lazy(() => import('../pages/ConfigPage'));
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
+const PredictiveAnalyticsPage = lazy(() => import('../ai/PredictiveAnalytics'));
 const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
 const ProvidersPage = lazy(() => import('../pages/ProvidersPage'));
 const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'));
@@ -190,6 +191,7 @@ const AppRouter: React.FC = () => {
           <Route path="static" element={<StaticPagesPage />} />
           <Route path="sitemap" element={<SitemapPage />} />
           <Route path="showcase" element={<DaisyUIShowcase />} />
+          <Route path="predictive-analytics" element={<PredictiveAnalyticsPage />} />
           <Route path="specs" element={<SpecsPage />} />
           <Route path="specs/:id" element={<SpecDetailPage />} />
 
