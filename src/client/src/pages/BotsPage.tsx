@@ -307,12 +307,10 @@ const BotsPage: React.FC = () => {
     if (!str) {
       return '';
     }
-    if (str.length <= 4) {
-      return '****';
+    if (str.length <= 3) {
+      return '***';
     }
-    return (
-      str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
-    );
+    return str.substring(0, 1) + '***' + str.substring(str.length - 1);
   };
 
   return (

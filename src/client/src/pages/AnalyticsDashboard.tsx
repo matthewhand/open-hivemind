@@ -231,7 +231,7 @@ const AnalyticsDashboard: React.FC = () => {
                     </p>
                     <div className="flex justify-between">
                       <span className="text-xs opacity-70">
-                        {event.messageType === 'incoming' ? `User: ${event.userId}` : 'Response sent'}
+                        {event.messageType === 'incoming' ? `User: ${event.userId ? (event.userId.length <= 3 ? '***' : event.userId.substring(0, 1) + '***' + event.userId.substring(event.userId.length - 1)) : ''}` : 'Response sent'}
                       </span>
                       <span className="text-xs text-neutral-content/60">
                         {new Date(event.timestamp).toLocaleTimeString()}
