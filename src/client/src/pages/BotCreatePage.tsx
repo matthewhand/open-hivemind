@@ -354,9 +354,9 @@ const BotCreatePage: React.FC = () => {
                       {mcpServers.map((server) => {
                         const isSelected = formData.mcpServers.includes(server.id || server.name);
                         return (
-                          <label
+                          <div
                             key={server.id || server.name}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
+                            className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
                               }`}
                           >
                             <Checkbox
@@ -377,18 +377,15 @@ const BotCreatePage: React.FC = () => {
                                     : prev.mcpServers.filter(id => id !== serverId)
                                 }));
                               }}
-                              aria-label={`${isSelected ? 'Deselect' : 'Select'} ${server.name}`}
-                              aria-describedby={`server-desc-${server.id || server.name}`}
-                            />
-                            <div>
+                            >
                               <div className="font-medium text-sm">{server.name}</div>
                               {server.description && (
                                 <div id={`server-desc-${server.id || server.name}`} className="text-xs text-base-content/70 mt-1 line-clamp-2">
                                   {server.description}
                                 </div>
                               )}
-                            </div>
-                          </label>
+                            </Checkbox>
+                          </div>
                         );
                       })}
                     </div>
