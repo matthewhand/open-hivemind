@@ -4,8 +4,6 @@
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmitOnError": false,
   },
   "include": [
     "src/**/*"
