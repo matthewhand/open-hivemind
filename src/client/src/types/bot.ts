@@ -343,7 +343,10 @@ export const LLM_PROVIDER_CONFIGS = {
     displayName: 'Ollama',
     description: 'Local models via Ollama',
     icon: '🦙',
-    fields: [],
+    fields: [
+      { name: 'baseUrl', label: 'Base URL', type: 'text', required: true, placeholder: 'http://localhost:11434' },
+      { name: 'model', label: 'Model', type: 'text', required: true, placeholder: 'mistral:latest' },
+    ],
   },
   huggingface: {
     type: LLMProviderType.HUGGINGFACE,
