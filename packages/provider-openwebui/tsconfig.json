@@ -1,5 +1,4 @@
 {
-  // TypeScript config for OpenWebUI provider with proper module resolution
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
@@ -15,7 +14,7 @@
       "@types/*": ["../../src/types/*"],
       "@server/*": ["../../src/server/*"],
       "@services/*": ["../../src/services/*"],
-      "@llm/*": ["../../src/llm/*"],
+      "@llm/*": ["../../src/llm/*"]
     }
   },
   "include": ["src/**/*", "../../src/message/interfaces/IMessage.ts", "../../src/llm/interfaces/ILlmProvider.ts"],
