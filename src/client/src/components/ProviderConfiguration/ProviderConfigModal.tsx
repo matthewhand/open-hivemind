@@ -21,6 +21,15 @@ interface ProviderConfigModalProps {
   onSubmit: (providerData: any) => void;
 }
 
+/**
+ * Modal component for configuring an AI or Message Provider.
+ * Allows users to add a new provider or edit an existing one based on the predefined schema fields.
+ *
+ * @param modalState - Controls visibility, type ('llm' | 'message'), and edit mode.
+ * @param existingProviders - Array of already configured providers to prevent duplicates.
+ * @param onClose - Callback to close the modal.
+ * @param onSubmit - Callback fired with the valid form data upon submission.
+ */
 const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   modalState,
   existingProviders,
@@ -249,7 +258,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             min={field.validation?.min}
             max={field.validation?.max}
-            step={field.name === 'temperature' ? '0.1' : '1'}
+            step={field.name === 'temperature' ? TEMPERATURE_STEP : DEFAULT_NUMBER_STEP}
           />
           {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
