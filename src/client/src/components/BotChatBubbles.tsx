@@ -50,6 +50,17 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
 
                 return (
                     <div key={msg.id || index} className={`chat ${align}`}>
+                        <div className="chat-image avatar placeholder">
+                            <div className={`w-10 rounded-full ${isBot ? 'bg-secondary text-secondary-content' : 'bg-base-300 text-base-content'}`}>
+                                {isBot ? (
+                                    <span className="text-lg">🤖</span>
+                                ) : (
+                                    <span className="text-sm">
+                                        {(msg.sender || 'User').substring(0, 2).toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                         <div className="chat-header">
                             {msg.sender || (isBot ? botName : 'User')}
                             <time className="text-xs opacity-50 ml-2">
