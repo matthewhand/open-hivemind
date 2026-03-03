@@ -13,6 +13,8 @@ import {
 } from '../../types/bot';
 import { Button, Input, Select, Toggle, Textarea } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
+import { ProviderConfigForm } from '../ProviderConfigForm';
+import { getProviderSchema } from '../../provider-configs';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -103,12 +105,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return (configs as any)[selectedType];
   };
 
-  const validateField = (field: FieldConfig, value: any): string | null => {
+  const validateField = (field: FieldConfig | any, value: any): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return `${field.label} is required`;
     }
 
-    if (field.validation && value) {
+    if (field.validation && value !== undefined && value !== null && value !== '') {
       const { min, max, pattern } = field.validation;
 
       if (field.type === 'number') {
@@ -121,15 +123,34 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         }
       }
 
+      if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
+        const strValue = String(value);
+        if (min !== undefined && strValue.length < min) {
+          return `${field.label} must be at least ${min} characters`;
+        }
+        if (max !== undefined && strValue.length > max) {
+          return `${field.label} must be at most ${max} characters`;
+        }
+      }
+
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
-          // Provide specific error messages for common field types
-          if (field.type === 'url') {
-            return `${field.label} must be a valid HTTPS URL`;
+          // For API keys, don't fail validation in UI, just warn (ProviderConfigForm does this)
+          if (field.name === 'apiKey' || field.type === 'password') {
+             // Just pass for API Keys
+          } else {
+            if (field.type === 'url') {
+              return `${field.label} must be a valid HTTPS URL`;
+            }
+            return `${field.label} format is invalid`;
           }
-          return `${field.label} format is invalid`;
         }
+      }
+
+      if (field.validation.custom) {
+        const customError = field.validation.custom(value);
+        if (customError) {return customError;}
       }
     }
 
@@ -147,9 +168,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       isValid = false;
     }
 
+    const schema = getProviderSchema(selectedType);
+    const allFields = schema ? schema.fields : (config.fields || []);
+
     // Validate required fields
-    const allFields = config.fields || [];
-    allFields.forEach(field => {
+    allFields.forEach((field: any) => {
       const error = validateField(field, formData[field.name]);
       if (error) {
         newErrors[field.name] = error;
@@ -170,11 +193,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const config = getCurrentConfig();
-    const allFields = config.fields || [];
+    const schema = getProviderSchema(selectedType);
+    const allFields = schema ? schema.fields : (config.fields || []);
+
     const providerConfig: Record<string, any> = {};
 
-    // Only include fields that have values
-    allFields.forEach(field => {
+    // Only include fields that have values, and perform casting
+    allFields.forEach((field: any) => {
       const value = formData[field.name];
       if (value !== undefined && value !== '') {
         providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
@@ -189,6 +214,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     };
 
     onSubmit(providerData);
+  };
+
+  const handleProviderConfigChange = (newConfig: Record<string, any>) => {
+    setFormData(prev => ({
+      ...prev,
+      ...newConfig,
+    }));
   };
 
   const handleFieldChange = (key: string, value: any) => {
@@ -409,7 +441,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {allFields.map(renderField)}
+            {getProviderSchema(selectedType) ? (
+              <ProviderConfigForm
+                providerType={selectedType}
+                schema={getProviderSchema(selectedType)!}
+                initialConfig={formData}
+                onConfigChange={handleProviderConfigChange}
+                externalErrors={errors}
+              />
+            ) : (
+              allFields.map(renderField)
+            )}
           </div>
 
           {/* Actions */}
