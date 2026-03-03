@@ -105,6 +105,14 @@ test.describe('Bot Creation Form Validation', () => {
   });
 
   test('Submit button disabled without LLM provider', async ({ page }) => {
+    // Force system default to be false so LLM provider is required
+    await page.route('/api/config/llm-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { defaultConfigured: false, defaultProviders: [] },
+      });
+    });
+
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
@@ -113,16 +121,18 @@ test.describe('Bot Creation Form Validation', () => {
     // Fill name
     await modal.locator('input').first().fill('Test Bot');
 
-    // Select only message provider (second select after persona)
+    // Select message provider (first select)
     const selects = modal.locator('select');
-    const selectCount = await selects.count();
-    if (selectCount >= 2) {
-      await selects.nth(1).selectOption('discord');
-    }
+    await selects.nth(0).selectOption('discord');
     await page.waitForTimeout(300);
 
-    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
-    await expect(submitButton).toBeDisabled();
+    // Ensure LLM provider is unselected
+    await selects.nth(1).selectOption('');
+    await page.waitForTimeout(300);
+
+    // The button we want to check is the 'Next' button on Step 1
+    const nextButton = modal.locator('button').filter({ hasText: /^Next/i });
+    await expect(nextButton).toBeDisabled();
 
     await page.screenshot({ path: 'test-results/create-bot-05-no-llm.png', fullPage: true });
     await assertNoErrors(errors, 'Submit without LLM provider');

@@ -114,7 +114,12 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     };
 
     const isStepValid = () => {
-        if (step === 1) return formData.name.trim().length > 0 && formData.messageProvider;
+        if (step === 1) {
+            const isNameValid = formData.name.trim().length > 0;
+            const isMessageProviderValid = !!formData.messageProvider;
+            const isLlmValid = defaultLlmConfigured || !!formData.llmProvider;
+            return isNameValid && isMessageProviderValid && isLlmValid;
+        }
         return true;
     };
 
