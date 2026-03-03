@@ -667,8 +667,8 @@ const BotsPage: React.FC = () => {
         size="lg"
       >
         {previewBot && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-6 max-h-[70vh]">
+            <div className="flex items-center gap-4 shrink-0">
               <div className="avatar placeholder">
                 <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
                   <Bot className="w-8 h-8" />
@@ -683,7 +683,7 @@ const BotsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 shrink-0">
               <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <div className="flex justify-between items-center mb-2">
@@ -744,7 +744,7 @@ const BotsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="stats bg-base-200 w-full shadow-sm">
+            <div className="stats bg-base-200 w-full shadow-sm shrink-0">
               <div className="stat">
                 <div className="stat-title">Messages</div>
                 <div className="stat-value text-primary">{previewBot.messageCount || 0}</div>
@@ -755,9 +755,10 @@ const BotsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Tabs Navigation */}
-            <div className="tabs tabs-boxed flex-wrap gap-1 mb-4" role="tablist" aria-label="Bot preview sections">
-              <button
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+              {/* Tabs Navigation */}
+              <div className="tabs tabs-boxed flex-wrap gap-1 mb-4 shrink-0" role="tablist" aria-label="Bot preview sections">
+                <button
                 className={`tab flex-1 ${previewTab === 'activity' ? 'tab-active' : ''}`}
                 onClick={() => setPreviewTab('activity')}
                 role="tab"
@@ -779,15 +780,15 @@ const BotsPage: React.FC = () => {
               </button>
             </div>
 
-            {previewTab === 'activity' && (
-              <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
-                <div className="flex items-center justify-end mb-3">
-                  <div className="form-control w-full flex flex-col items-end">
+              {previewTab === 'activity' && (
+                <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                  <div className="flex items-center justify-end mb-3 shrink-0">
+                  <div className="form-control w-full flex items-end">
                     <div className="join">
                       <input
                         type="text"
                         placeholder="Filter logs..."
-                        className="input input-xs input-bordered w-32 join-item"
+                        className="input input-xs input-bordered join-item w-32"
                         value={logFilter}
                         onChange={(e) => setLogFilter(e.target.value)}
                       />
@@ -811,9 +812,9 @@ const BotsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
-                  {activityLogs.length > 0 ? (
-                    activityLogs
+                  <div className="bg-base-300 rounded-lg p-4 flex-1 overflow-y-auto font-mono text-xs">
+                    {activityLogs.length > 0 ? (
+                      activityLogs
                       .filter(
                         (log) =>
                           !logFilter ||
@@ -847,24 +848,25 @@ const BotsPage: React.FC = () => {
                       <Activity className="w-8 h-8 mb-2 opacity-20" />
                       <span>No recent activity found</span>
                     </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {previewTab === 'chat' && (
-              <div role="tabpanel" id="chat-panel" aria-labelledby="chat-tab">
-                <div className="bg-base-300 rounded-lg">
-                  <BotChatBubbles
-                    messages={chatHistory}
-                    botName={previewBot.name}
-                    loading={chatLoading}
-                  />
+              {previewTab === 'chat' && (
+                <div role="tabpanel" id="chat-panel" aria-labelledby="chat-tab" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                  <div className="bg-base-300 rounded-lg flex-1 overflow-y-auto">
+                    <BotChatBubbles
+                      messages={chatHistory}
+                      botName={previewBot.name}
+                      loading={chatLoading}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="modal-action shrink-0 mt-0">
               <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>
                 Close
               </button>
