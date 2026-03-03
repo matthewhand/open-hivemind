@@ -9,30 +9,31 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
+import { getProviderBadgeColor, getProviderDisplayName } from '../ProviderConfiguration/ProviderUtils';
 
 interface RedactedValue {
-    isRedacted: boolean;
-    redactedValue: string;
-    hasValue: boolean;
+  isRedacted: boolean;
+  redactedValue: string;
+  hasValue: boolean;
 }
 
 interface BotConfig {
-    name: string;
-    messageProvider: string;
-    llmProvider: string;
-    llmProfile?: string;
-    persona?: string;
-    isActive: boolean;
-    source: string;
-    discord?: Record<string, unknown | RedactedValue>;
-    slack?: Record<string, unknown | RedactedValue>;
-    [key: string]: unknown;
+  name: string;
+  messageProvider: string;
+  llmProvider: string;
+  llmProfile?: string;
+  persona?: string;
+  isActive: boolean;
+  source: string;
+  discord?: Record<string, unknown | RedactedValue>;
+  slack?: Record<string, unknown | RedactedValue>;
+  [key: string]: unknown;
 }
 
 interface BotListResponse {
-    bots: BotConfig[];
-    count: number;
-    warnings: string[];
+  bots: BotConfig[];
+  count: number;
+  warnings: string[];
 }
 
 const BotListManager: React.FC = () => {
@@ -71,17 +72,10 @@ const BotListManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const getProviderBadgeColor = (provider: string): string => {
-    switch (provider) {
-    case 'discord': return 'badge-primary';
-    case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-info';
-    default: return 'badge-ghost';
-    }
-  };
+  // getProviderBadgeColor is now imported from ProviderUtils for consistency across the app
 
   const renderConfigValue = (key: string, value: unknown): React.ReactNode => {
-    if (!value) {return <span className="text-base-content/40">—</span>;}
+    if (!value) { return <span className="text-base-content/40">—</span>; }
 
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
@@ -99,7 +93,7 @@ const BotListManager: React.FC = () => {
     return <span>{String(value)}</span>;
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;}
+  if (loading) { return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>; }
 
   return (
     <div className="p-6">
@@ -107,12 +101,12 @@ const BotListManager: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold">Configured Bots</h2>
           <p className="text-base-content/60">
-                        View and manage all bots configured via environment variables or JSON files.
+            View and manage all bots configured via environment variables or JSON files.
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={fetchBots} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
-                        Refresh
+            Refresh
           </Button>
         </div>
       </div>
@@ -136,8 +130,8 @@ const BotListManager: React.FC = () => {
           <CpuChipIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
           <h3 className="text-lg font-semibold text-base-content/70">No Bots Found</h3>
           <p className="text-base-content/50 mb-4">
-                        Configure bots using <code>BOTS=bot1,bot2</code> and <code>BOTS_BOT1_*</code> environment variables,
-                        or create JSON files in <code>config/bots/</code>.
+            Configure bots using <code>BOTS=bot1,bot2</code> and <code>BOTS_BOT1_*</code> environment variables,
+            or create JSON files in <code>config/bots/</code>.
           </p>
         </div>
       ) : (
@@ -188,7 +182,7 @@ const BotListManager: React.FC = () => {
                       onClick={() => handleViewBot(bot)}
                       startIcon={<PencilIcon className="w-4 h-4" />}
                     >
-                                            View
+                      View
                     </Button>
                   </td>
                 </tr>
