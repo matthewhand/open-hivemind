@@ -802,7 +802,7 @@ class ApiService {
       loadAverage: number[];
     };
   }> {
-    return this.request('/api/health/detailed');
+    return this.request('/health/detailed');
   }
   async getGlobalConfig(): Promise<Record<string, any>> {
     return this.request('/api/config/global');
