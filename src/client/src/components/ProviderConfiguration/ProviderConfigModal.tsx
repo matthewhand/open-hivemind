@@ -11,7 +11,7 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button, Input, Select, Toggle, Textarea } from '../DaisyUI';
+import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import { getProviderSchema } from '../../provider-configs';
@@ -240,127 +240,124 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const error = errors[field.name];
     const value = formData[field.name] || '';
 
-    const getLabelNode = (fieldLabel: string, required?: boolean) => (
-      <span className="label-text font-medium text-base-content">
-        {fieldLabel}
-        {required && <span className="text-error ml-1">*</span>}
-      </span>
-    );
+    const fieldClasses = `
+      w-full
+      ${error ? 'input-error' : ''}
+      ${field.type === 'textarea' ? 'textarea' : 'input'}
+      input-bordered
+    `;
 
     switch (field.type) {
       case 'password':
         return (
-          <div key={field.name} className="mb-4">
-            <Input
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <input
               type="password"
-              label={getLabelNode(field.label, field.required)}
+              className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              error={error}
-              bordered
-              className="w-full"
             />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
       case 'number':
         return (
-          <div key={field.name} className="mb-4">
-            <Input
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <input
               type="number"
-              label={getLabelNode(field.label, field.required)}
+              className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               min={field.validation?.min}
               max={field.validation?.max}
               step={field.name === 'temperature' ? '0.1' : '1'}
-              error={error}
-              bordered
-              className="w-full"
             />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
       case 'select':
         return (
-          <div key={field.name} className="mb-4 form-control w-full">
-            <label className="label pb-1">
-              {getLabelNode(field.label, field.required)}
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
             </label>
-            <Select
+            <select
+              className={`${fieldClasses} select`}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              error={!!error}
-              className="w-full"
             >
               <option value="">Select {field.label.toLowerCase()}</option>
               {field.options?.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-            </Select>
-            {error && (
-              <label className="label pt-1 pb-0">
-                <span className="label-text-alt text-error">{error}</span>
-              </label>
-            )}
+            </select>
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
       case 'textarea':
         return (
-          <div key={field.name} className="mb-4 form-control w-full">
-            <label className="label pb-1">
-              {getLabelNode(field.label, field.required)}
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
             </label>
-            <Textarea
+            <textarea
+              className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               rows={4}
-              className={`w-full ${error ? 'textarea-error' : ''}`}
-              bordered
             />
-            {error && (
-              <label className="label pt-1 pb-0">
-                <span className="label-text-alt text-error">{error}</span>
-              </label>
-            )}
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
       case 'checkbox':
         return (
-          <div key={field.name} className="mb-4 form-control w-full">
-            <Toggle
-              label={field.label}
-              checked={!!value}
-              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              color="primary"
-            />
-            {error && (
-              <label className="label pt-1 pb-0">
-                <span className="label-text-alt text-error">{error}</span>
-              </label>
-            )}
+          <div key={field.name} className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text font-medium">{field.label}</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={!!value}
+                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              />
+            </label>
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
       default:
         // text and others
         return (
-          <div key={field.name} className="mb-4">
-            <Input
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <input
               type="text"
-              label={getLabelNode(field.label, field.required)}
+              className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              error={error}
-              bordered
-              className="w-full"
             />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
     }
@@ -420,23 +417,20 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit}>
           {/* Provider Name */}
-          <div className="mb-4">
-            <Input
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text font-medium">Provider Name</span>
+              <span className="label-text-alt text-error">*</span>
+            </label>
+            <input
               type="text"
               name="name"
-              label={
-                <span className="label-text font-medium text-base-content">
-                  Provider Name
-                  <span className="text-error ml-1">*</span>
-                </span>
-              }
+              className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
               placeholder="Enter a descriptive name for this provider"
               value={formData.name || ''}
               onChange={(e) => handleFieldChange('name', e.target.value)}
-              error={errors.name}
-              bordered
-              className="w-full"
             />
+            {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
           </div>
 
           {/* Provider-specific fields */}
