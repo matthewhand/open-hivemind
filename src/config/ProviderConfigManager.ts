@@ -64,8 +64,10 @@ class ProviderConfigManager {
     }
     if (typeof obj === 'object' && obj !== null) {
       const result: any = {};
-      for (const key of Object.keys(obj)) {
-        result[key] = this.interpolateEnvVars(obj[key]);
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          result[key] = this.interpolateEnvVars(obj[key]);
+        }
       }
       return result;
     }
