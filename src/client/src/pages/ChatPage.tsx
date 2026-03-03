@@ -159,7 +159,7 @@ const ChatPage: React.FC = () => {
                                         </div>
                                         <div className="flex flex-col items-start min-w-0">
                                             <span className="font-semibold truncate w-full text-left">{bot.name}</span>
-                                            <span className="text-xs opacity-50 truncate w-full text-left capitalize">{bot.messageProvider}</span>
+                                            <span className="text-xs opacity-50 truncate w-full text-left capitalize">{bot.messageProvider} • {bot.llmProvider}</span>
                                         </div>
                                     </button>
                                 </li>
