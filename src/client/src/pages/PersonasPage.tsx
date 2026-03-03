@@ -40,6 +40,7 @@ const PersonasPage: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // Bot type from API
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const successToast = ToastNotification.useSuccessToast();
@@ -132,7 +133,8 @@ const PersonasPage: React.FC = () => {
   const handleSavePersona = async () => {
     if (!personaName.trim()) { return; }
 
-    setLoading(true);
+    setIsSaving(true);
+    const startTime = Date.now();
     try {
       let savedPersona: ApiPersona;
 
@@ -189,6 +191,9 @@ const PersonasPage: React.FC = () => {
       await Promise.all(updates);
       await fetchData();
 
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 500) { await new Promise(r => setTimeout(r, 500 - elapsed)); }
+
       setShowCreateModal(false);
       setShowEditModal(false);
       setEditingPersona(null);
@@ -197,7 +202,7 @@ const PersonasPage: React.FC = () => {
       console.error(err);
       setError('Failed to save persona changes');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -595,8 +600,8 @@ const PersonasPage: React.FC = () => {
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
             {!isViewMode && (
-              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
-                {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+              <Button variant="primary" onClick={handleSavePersona} disabled={isSaving}>
+                {isSaving ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
               </Button>
             )}
           </div>
