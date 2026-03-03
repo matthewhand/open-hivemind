@@ -73,6 +73,7 @@ const BotListManager: React.FC = () => {
   };
 
   // getProviderBadgeColor is now imported from ProviderUtils for consistency across the app
+  // Using the fix: mattermost now returns 'badge-info' for visual consistency
 
   const renderConfigValue = (key: string, value: unknown): React.ReactNode => {
     if (!value) { return <span className="text-base-content/40">—</span>; }
