@@ -134,7 +134,6 @@ const PersonasPage: React.FC = () => {
     if (!personaName.trim()) { return; }
 
     setIsSaving(true);
-    const startTime = Date.now();
     try {
       let savedPersona: ApiPersona;
 
@@ -191,8 +190,11 @@ const PersonasPage: React.FC = () => {
       await Promise.all(updates);
       await fetchData();
 
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 500) { await new Promise(r => setTimeout(r, 500 - elapsed)); }
+      // Show success toast before closing modal for better UX
+      successToast(
+        editingPersona ? 'Persona updated!' : (cloningPersonaId ? 'Persona cloned!' : 'Persona created!'),
+        `${personaName} has been saved successfully.`
+      );
 
       setShowCreateModal(false);
       setShowEditModal(false);
