@@ -31,8 +31,13 @@ export class MCPGuard {
     forumOwnerId: string,
     guardConfig?: MCPGuardConfig | null
   ): boolean {
-    // If configuration is missing or guards are disabled, allow all users
-    if (!guardConfig || !guardConfig.enabled) {
+    // If configuration is missing, fail closed for security
+    if (!guardConfig) {
+      return false;
+    }
+
+    // If guards are disabled, allow all users
+    if (!guardConfig.enabled) {
       return true;
     }
 

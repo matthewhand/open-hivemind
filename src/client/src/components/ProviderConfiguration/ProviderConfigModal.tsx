@@ -12,7 +12,11 @@ import {
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
-import { X as XIcon } from 'lucide-react';
+import { X as XIcon, Eye as EyeIcon, EyeOff as EyeOffIcon } from 'lucide-react';
+
+const STEP_TEMPERATURE = '0.1';
+const STEP_DEFAULT = '1';
+const TEXTAREA_ROWS = 4;
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -32,6 +36,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
@@ -210,9 +215,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
   };
 
-  const renderField = (field: FieldConfig) => {
-    const error = errors[field.name];
-    const value = formData[field.name] || '';
+  const togglePasswordVisibility = (fieldName: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }));
+  };
+
+  const renderField = (field: FieldConfig, formValues: Record<string, any>, formErrors: Record<string, string>, passwordVisibility: Record<string, boolean>) => {
+    const error = formErrors[field.name];
+    const value = formValues[field.name] || '';
 
     const fieldClasses = `
       w-full
@@ -223,26 +235,36 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     switch (field.type) {
     case 'password':
+      const isVisible = passwordVisibility[field.name] || false;
       return (
         <div key={field.name}>
           <label className="label">
             <span className="label-text font-medium">{field.label}</span>
             {field.required && <span className="label-text-alt text-error">*</span>}
           </label>
-          <input
-            type="password"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          />
+          <div className="relative">
+            <input
+              type={isVisible ? "text" : "password"}
+              className={`${fieldClasses} pr-10`}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 px-3 flex items-center bg-transparent border-none text-base-content/50 hover:text-base-content"
+              onClick={() => togglePasswordVisibility(field.name)}
+              tabIndex={-1}
+              aria-label={isVisible ? "Hide password" : "Show password"}
+            >
+              {isVisible ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            </button>
+          </div>
           {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
       );
 
     case 'number':
-      const STEP_TEMPERATURE = '0.1';
-      const STEP_DEFAULT = '1';
       return (
         <div key={field.name}>
           <label className="label">
@@ -285,7 +307,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       );
 
     case 'textarea':
-      const TEXTAREA_ROWS = 4;
       return (
         <div key={field.name}>
           <label className="label">
@@ -349,7 +370,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
   const allFields = config?.fields || [];
 
-  const renderedFields = useMemo(() => allFields.map(renderField), [allFields, formData, errors]);
+  const renderedFields = useMemo(
+    () => allFields.map((field: FieldConfig) => renderField(field, formData, errors, showPasswords)),
+    [allFields, formData, errors, showPasswords]
+  );
 
   return (
     <div className="modal modal-open">
