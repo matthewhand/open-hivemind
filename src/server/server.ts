@@ -176,8 +176,9 @@ export class WebUIServer {
      * Proxies requests from /metrics to /metrics/prometheus
      * Maintains compatibility with Prometheus scraping conventions
      */
-    this.app.get('/metrics', (req, res, next) => {
-      // Ensure the /metrics route correctly calls the prometheus endpoint logic.
+    this.app.use('/metrics', (req, res, next) => {
+      // Create a shared handler to avoid manually re-routing internal variables
+      // Since it's exactly one sub-route, we can just proxy the request properly.
       req.url = PROMETHEUS_METRICS_PATH;
       healthRouter(req, res, next);
     });
