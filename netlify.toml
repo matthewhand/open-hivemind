@@ -3,7 +3,6 @@
   ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
-  ignore = "test \"$BRANCH\" != \"main\""
 
 [dev]
   command = "npm run dev"
