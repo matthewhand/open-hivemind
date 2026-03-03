@@ -1,6 +1,9 @@
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
+/** Default aspect ratio for the diff viewer (16:9 widescreen) */
+const DEFAULT_ASPECT_RATIO = 'aspect-[16/9]';
+
 export interface DiffProps {
   /** The first item to compare (left side) */
   item1: React.ReactNode;
@@ -31,7 +34,7 @@ const Diff: React.FC<DiffProps> = ({
   item2,
   className = '',
   resizerClassName = '',
-  aspectRatio = 'aspect-[16/9]'
+  aspectRatio = DEFAULT_ASPECT_RATIO
 }) => {
   return (
     <div className={twMerge('diff', aspectRatio, className)}>
