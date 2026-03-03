@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type {
   ProviderModalState,
   ProviderTypeConfig,
@@ -11,14 +11,14 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button, Input } from '../DaisyUI';
-import { X as XIcon } from 'lucide-react';
+import { Button, Input, Select } from '../DaisyUI';
+import { X as XIcon, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import { getProviderSchema } from '../../provider-configs';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
-  existingProviders?: { name: string }[];
+  existingProviders?: { name: string; type: string; config?: Record<string, any> }[];
   onClose: () => void;
   onSubmit: (providerData: any) => void;
 }
@@ -36,6 +36,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const [nameError, setNameError] = useState<string | null>(null);
   const [providerConfig, setProviderConfig] = useState<Record<string, any>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [cloneFromId, setCloneFromId] = useState<string>('');
+  const [showCloneSuccess, setShowCloneSuccess] = useState(false);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
@@ -69,6 +74,81 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       }
     }
   }, [modalState.isOpen, modalState.provider, modalState.isEdit, selectedType, modalState.providerType, existingProviders]);
+
+  // Keyboard navigation for tabs
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!tabsRef.current) return;
+
+    const tabs = Array.from(tabsRef.current.querySelectorAll('[role="tab"]')) as HTMLElement[];
+    const currentIndex = tabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true');
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+      tabs[newIndex]?.click();
+      tabs[newIndex]?.focus();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+      tabs[newIndex]?.click();
+      tabs[newIndex]?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      tabs[0]?.click();
+      tabs[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      tabs[tabs.length - 1]?.click();
+      tabs[tabs.length - 1]?.focus();
+    }
+  }, []);
+
+  // Focus trap within modal
+  useEffect(() => {
+    if (modalState.isOpen && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          } else if (!e.shiftKey && document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        } else if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+
+      modalRef.current.addEventListener('keydown', handleTabKey);
+      firstElement?.focus();
+
+      return () => {
+        modalRef.current?.removeEventListener('keydown', handleTabKey);
+      };
+    }
+  }, [modalState.isOpen, onClose]);
+
+  // Get providers of same type for cloning (only in add mode)
+  const sameTypeProviders = existingProviders?.filter(
+    p => p.type === selectedType && (!modalState.isEdit || p.name !== modalState.provider?.name)
+  ) || [];
+
+  const handleCloneFrom = (providerId: string) => {
+    const providerToClone = existingProviders?.find(p => p.name === providerId || (p as any).id === providerId);
+    if (providerToClone && providerToClone.config) {
+      setProviderConfig({ ...providerToClone.config });
+      setShowCloneSuccess(true);
+      setTimeout(() => setShowCloneSuccess(false), 3000);
+    }
+    setCloneFromId(providerId);
+  };
 
   const getDefaultName = (
     type: string,
@@ -161,16 +241,24 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const richSchema = getProviderSchema(selectedType);
 
   return (
-    <div className="modal modal-open" style={{ zIndex: 9999 }}>
+    <div
+      ref={modalRef}
+      className="modal modal-open"
+      style={{ zIndex: 9999 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="modal-box max-w-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold">
+          <h3 id="modal-title" className="text-xl font-bold">
             {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
+            aria-label="Close modal"
           >
             <XIcon className="w-4 h-4" />
           </button>
@@ -178,9 +266,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
         {/* Provider Type Tabs - flex-wrap and gap-1 fix overlapping tabs in modal */}
         <div
+          ref={tabsRef}
           className="tabs tabs-boxed mb-6 flex-wrap gap-1"
           role="tablist"
           aria-label={`${modalState.providerType === 'message' ? 'Message' : 'LLM'} provider types`}
+          onKeyDown={handleKeyDown}
         >
           {providerTypes.map(type => {
             const typeConfig = (configs as any)[type];
@@ -235,6 +325,33 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className="w-full"
             />
           </div>
+
+          {/* Clone from existing provider (only in add mode) */}
+          {!modalState.isEdit && sameTypeProviders.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Copy className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-base-content">Clone configuration from existing provider</span>
+              </div>
+              <Select
+                value={cloneFromId}
+                onChange={(e) => handleCloneFrom(e.target.value)}
+                className="w-full"
+                options={[
+                  { label: 'Start fresh (no cloning)', value: '' },
+                  ...sameTypeProviders.map(p => ({ label: p.name, value: p.name }))
+                ]}
+              />
+              {showCloneSuccess && (
+                <div className="mt-2 text-sm text-success flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Configuration copied successfully!
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Provider-specific fields */}
           {richSchema ? (
