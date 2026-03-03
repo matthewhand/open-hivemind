@@ -15,6 +15,7 @@ export interface DatabaseConfig {
   database?: string;
   username?: string;
   password?: string;
+  poolSize?: number;
 }
 
 export interface MessageRecord {
@@ -380,6 +381,11 @@ export class DatabaseManager {
           filename: dbPath,
           driver: sqlite3.Database,
         });
+
+        // Apply connection pool settings via PRAGMA if configured
+        if (this.config.poolSize && this.config.poolSize > 0) {
+           await this.db.run(`PRAGMA threads = ${this.config.poolSize}`);
+        }
 
         await this.createTables();
         await this.createIndexes();
@@ -1086,6 +1092,7 @@ export class DatabaseManager {
     totalChannels: number;
     totalAuthors: number;
     providers: Record<string, number>;
+    poolSize: number;
   }> {
     this.ensureConnected();
 
@@ -1107,6 +1114,7 @@ export class DatabaseManager {
         totalChannels: totalChannels.count,
         totalAuthors: totalAuthors.count,
         providers,
+        poolSize: this.config.poolSize || 1,
       };
     } catch (error) {
       debug('Error getting stats:', error);
