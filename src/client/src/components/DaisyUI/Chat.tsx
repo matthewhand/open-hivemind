@@ -109,20 +109,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className="chat-image avatar">
-            <div className="w-10 rounded-full">
-              {message.sender.avatar ? (
+          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
+            {message.sender.avatar ? (
+              <div className="w-10 rounded-full">
                 <img alt={message.sender.name} src={message.sender.avatar} />
-              ) : (
-                <div className={'avatar placeholder'}>
-                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                    <span className="text-xs">
-                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                <span className="text-xl">
+                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -247,13 +245,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar">
-                  <div className="w-10 rounded-full">
-                    <div className="avatar placeholder">
-                      <div className="bg-secondary text-secondary-content rounded-full w-10">
-                        <span className="text-xs">🤖</span>
-                      </div>
-                    </div>
+                <div className="chat-image avatar placeholder">
+                  <div className="bg-secondary text-secondary-content rounded-full w-10">
+                    <span className="text-xl">🤖</span>
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
