@@ -168,10 +168,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = externalErrors[field.name] || errors[field.name];
 
-    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
-    const inputClasses = `${baseInputClasses} ${errorClasses}`;
-
     const renderInput = () => {
       switch (field.type) {
       case 'password':
@@ -181,7 +177,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
-            className={inputClasses}
+            error={error}
+            bordered
             aria-label={`${field.label} password input`}
           />
         );
@@ -196,7 +193,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             min={field.validation?.min}
             max={field.validation?.max}
             step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
-            className={inputClasses}
+            error={error}
+            bordered
           />
         );
 
@@ -207,39 +205,55 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
-            className={inputClasses}
+            error={error}
+            bordered
           />
         );
 
       case 'select':
         return (
-          <Select
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            className={inputClasses}
-            options={field.options?.map((option) => ({
-              label: option.label,
-              value: option.value,
-            })) || []}
-          />
+          <div className="form-control w-full">
+            <Select
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              error={!!error}
+              options={field.options?.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })) || []}
+            />
+            {error && (
+              <label className="label">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
         );
 
       case 'multiselect':
         return (
-          <Select
-            multiple
-            value={Array.isArray(value) ? value : []}
-            onChange={(e) => {
-              const target = e.target as HTMLSelectElement;
-              const selectedOptions = Array.from(target.selectedOptions, option => option.value);
-              handleFieldChange(field.name, selectedOptions);
-            }}
-            className={`${inputClasses} h-24`}
-            options={field.options?.map((option) => ({
-              label: option.label,
-              value: option.value,
-            })) || []}
-          />
+          <div className="form-control w-full">
+            <Select
+              multiple
+              value={Array.isArray(value) ? value : []}
+              onChange={(e) => {
+                const target = e.target as HTMLSelectElement;
+                const selectedOptions = Array.from(target.selectedOptions, option => option.value);
+                handleFieldChange(field.name, selectedOptions);
+              }}
+              error={!!error}
+              className="h-24"
+              options={field.options?.map((option) => ({
+                label: option.label,
+                value: option.value,
+              })) || []}
+            />
+            {error && (
+              <label className="label">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
         );
 
       case 'boolean':
@@ -319,31 +333,48 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'textarea':
         return (
-          <Textarea
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            rows={4}
-            className={inputClasses}
-          />
+          <div className="form-control w-full">
+            <Textarea
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.placeholder}
+              rows={4}
+              variant={error ? 'error' : 'primary'}
+              bordered
+            />
+            {error && (
+              <label className="label">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
         );
 
       case 'json':
         return (
-          <Textarea
-            value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                handleFieldChange(field.name, parsed);
-              } catch {
-                handleFieldChange(field.name, e.target.value);
-              }
-            }}
-            placeholder={field.placeholder || '{"key": "value"}'}
-            rows={4}
-            className={`${inputClasses} font-mono text-sm`}
-          />
+          <div className="form-control w-full">
+            <Textarea
+              value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  handleFieldChange(field.name, parsed);
+                } catch {
+                  handleFieldChange(field.name, e.target.value);
+                }
+              }}
+              placeholder={field.placeholder || '{"key": "value"}'}
+              rows={4}
+              variant={error ? 'error' : 'primary'}
+              bordered
+              className="font-mono text-sm"
+            />
+            {error && (
+              <label className="label">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
         );
 
       case 'model-autocomplete':
@@ -382,21 +413,15 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
-            className={inputClasses}
+            error={error}
+            bordered
             aria-label={`${field.label} text input`}
           />
         );
       }
     };
 
-    return (
-      <div className="space-y-1">
-        {renderInput()}
-        {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
-        )}
-      </div>
-    );
+    return renderInput();
   };
 
   return (
