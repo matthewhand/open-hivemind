@@ -48,28 +48,9 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDialogElement>(null);
 
-  useEffect(() => {
-    const modal = modalRef.current;
-    if (!modal) {return;}
-
-    // Check if showModal is defined (it might not be in JSDOM or some environments without polyfill)
-    if (typeof modal.showModal !== 'function' || typeof modal.close !== 'function') {
-        // Fallback for environments where HTMLDialogElement is not fully supported
-        return;
-    }
-
-    if (isOpen) {
-      if (!modal.open) {
-        modal.showModal();
-      }
-    } else {
-      if (modal.open) {
-        modal.close();
-      }
-    }
-  }, [isOpen]);
-
   const handleBackdropClick = (e: React.MouseEvent) => {
+    // When using modal-open, the backdrop is often implemented via the dialog itself
+    // or we can just rely on the standard daisyUI structure where clicking outside works.
     if (e.target === modalRef.current && closable) {
       onClose();
     }
@@ -109,12 +90,12 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <dialog 
       ref={modalRef} 
-      className={`modal ${getPositionClass()} ${className}`}
+      className={`modal ${isOpen ? "modal-open" : ""} ${getPositionClass()} ${className}`}
       onClick={handleBackdropClick}
       // If isOpen is true and showModal is not supported/called, ensure it's visible via CSS class or open attribute if needed
       // DaisyUI uses 'modal-open' class usually or just <dialog open>
       // But for native dialog with DaisyUI, showModal() adds 'open' attribute and backdrop
-      open={isOpen} // Fallback/Sync for React
+
     >
       <div className={getSizeClass()}>
         {/* Header */}
