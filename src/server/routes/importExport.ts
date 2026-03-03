@@ -11,6 +11,21 @@ const multer = require('multer');
 const router = Router();
 const importExportService = ConfigurationImportExportService.getInstance();
 
+const INVALID_BACKUP_PATH_MSG = 'Invalid backup path';
+
+/**
+ * Validates that a resolved target path strictly resides within the allowed backups directory.
+ * Prevents path traversal vulnerabilities.
+ * @param targetPath The file path to validate.
+ * @param backupsDir The allowed base backups directory.
+ * @returns true if the path is valid and safe; false otherwise.
+ */
+function isPathWithinBackupsDir(targetPath: string, backupsDir: string): boolean {
+  const resolvedTarget = path.resolve(targetPath);
+  const resolvedBase = path.resolve(backupsDir);
+  return resolvedTarget.startsWith(resolvedBase + path.sep);
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: 'config/uploads/',
@@ -417,12 +432,10 @@ router.post(
       const backupPath = path.join(backupsDir, backupFileName);
 
       // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(backupsDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
+      if (!isPathWithinBackupsDir(backupPath, backupsDir)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid backup path',
+          message: INVALID_BACKUP_PATH_MSG,
         });
       }
 
@@ -516,12 +529,10 @@ router.get(
       const backupPath = path.join(backupsDir, backupFileName);
 
       // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(backupsDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
+      if (!isPathWithinBackupsDir(backupPath, backupsDir)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid backup path',
+          message: INVALID_BACKUP_PATH_MSG,
         });
       }
 
