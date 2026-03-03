@@ -115,9 +115,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <img alt={message.sender.name} src={message.sender.avatar} />
               ) : (
                 <div className={'avatar placeholder'}>
-                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                  <div className={isBot ? 'bg-secondary text-secondary-content rounded-full w-10' : 'bg-base-100 text-base-content rounded-full w-10'}>
                     <span className="text-xs">
-                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                      {isBot ? '🤖' : (message.sender.name ? message.sender.name.substring(0, 2).toUpperCase() : '?')}
                     </span>
                   </div>
                 </div>
