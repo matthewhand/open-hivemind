@@ -668,6 +668,450 @@ textarea {
 }
 
 /* ============================================
+   Robot UI Global Settings
+   ============================================ */
+
+/* Body class when robot UI is enabled */
+body.robot-ui-enabled {
+  /* Add subtle robot aesthetic to the whole page */
+}
+
+/* ============================================
+   Robot Hamburger Menu - Custom DaisyUI Style
+   Animated hamburger with robot aesthetics
+   ============================================ */
+
+.robot-hamburger {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: visible;
+  background: linear-gradient(180deg,
+      hsl(var(--bc) / 0.15) 0%,
+      hsl(var(--bc) / 0.08) 50%,
+      hsl(var(--bc) / 0.12) 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Circuit pattern overlay */
+  background-image:
+    linear-gradient(180deg,
+      hsl(var(--bc) / 0.15) 0%,
+      hsl(var(--bc) / 0.08) 50%,
+      hsl(var(--bc) / 0.12) 100%),
+    repeating-linear-gradient(45deg,
+      transparent,
+      transparent 4px,
+      hsl(var(--bc) / 0.03) 4px,
+      hsl(var(--bc) / 0.03) 5px),
+    repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 4px,
+      hsl(var(--bc) / 0.03) 4px,
+      hsl(var(--bc) / 0.03) 5px);
+}
+
+/* Circuit-style border */
+.robot-hamburger::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg,
+      hsl(var(--bc) / 0.4) 0%,
+      hsl(var(--bc) / 0.1) 50%,
+      hsl(var(--bc) / 0.4) 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Antennae */
+.robot-hamburger-antenna {
+  position: absolute;
+  top: -0.5rem;
+  width: 2px;
+  height: 0.625rem;
+  background: hsl(var(--bc) / 0.4);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.robot-hamburger-antenna-left {
+  left: 0.875rem;
+}
+
+.robot-hamburger-antenna-right {
+  right: 0.875rem;
+}
+
+/* Antenna tips */
+.robot-hamburger-antenna-tip {
+  position: absolute;
+  top: -0.75rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: transparent;
+  border: 2px solid hsl(var(--bc) / 0.4);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.robot-hamburger-antenna-tip-left {
+  left: 0.625rem;
+}
+
+.robot-hamburger-antenna-tip-right {
+  right: 0.625rem;
+}
+
+/* Hamburger lines container */
+.robot-hamburger-lines {
+  position: relative;
+  width: 1.25rem;
+  height: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease;
+}
+
+/* Individual lines */
+.robot-hamburger-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: hsl(var(--bc) / 0.8);
+  border-radius: 1px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+/* LED indicator */
+.robot-hamburger-led {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  background: hsl(var(--bc) / 0.3);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover state */
+.robot-hamburger:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 15px hsl(var(--bc) / 0.15),
+    0 0 30px hsl(var(--bc) / 0.1);
+}
+
+.robot-hamburger:hover .robot-hamburger-antenna {
+  background: hsl(var(--bc) / 0.6);
+}
+
+.robot-hamburger:hover .robot-hamburger-antenna-tip {
+  border-color: hsl(var(--bc) / 0.6);
+}
+
+.robot-hamburger:hover .robot-hamburger-line {
+  background: hsl(var(--bc));
+}
+
+/* Open state - X transformation */
+.robot-hamburger-open {
+  box-shadow:
+    0 4px 20px hsl(var(--p) / 0.3),
+    0 0 40px hsl(var(--p) / 0.2);
+}
+
+.robot-hamburger-open .robot-hamburger-line-top {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.robot-hamburger-open .robot-hamburger-line-middle {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.robot-hamburger-open .robot-hamburger-line-bottom {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.robot-hamburger-open .robot-hamburger-lines {
+  transform: rotate(180deg);
+}
+
+/* LED lights up when open */
+.robot-hamburger-open .robot-hamburger-led {
+  background: hsl(var(--p));
+  box-shadow:
+    0 0 8px hsl(var(--p)),
+    0 0 16px hsl(var(--p) / 0.6);
+}
+
+/* Focus state */
+.robot-hamburger:focus-visible {
+  outline: 2px solid hsl(var(--p));
+  outline-offset: 3px;
+}
+
+/* Active state */
+.robot-hamburger:active {
+  transform: translateY(1px) scale(0.95);
+}
+
+/* Size variants */
+.robot-hamburger-sm {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-lines {
+  width: 1rem;
+  height: 0.75rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-line {
+  height: 1.5px;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna {
+  top: -0.375rem;
+  height: 0.5rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna-left {
+  left: 0.75rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna-right {
+  right: 0.75rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna-tip {
+  top: -0.625rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-width: 1.5px;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna-tip-left {
+  left: 0.5625rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-antenna-tip-right {
+  right: 0.5625rem;
+}
+
+.robot-hamburger-sm .robot-hamburger-led {
+  width: 0.25rem;
+  height: 0.25rem;
+  top: 0.375rem;
+  right: 0.375rem;
+}
+
+.robot-hamburger-sm.robot-hamburger-open .robot-hamburger-line-top {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.robot-hamburger-sm.robot-hamburger-open .robot-hamburger-line-bottom {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+.robot-hamburger-lg {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-lines {
+  width: 1.5rem;
+  height: 1.125rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-line {
+  height: 2.5px;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna {
+  top: -0.625rem;
+  height: 0.75rem;
+  width: 3px;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna-left {
+  left: 1rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna-right {
+  right: 1rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna-tip {
+  top: -0.875rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-width: 2.5px;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna-tip-left {
+  left: 0.8125rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-antenna-tip-right {
+  right: 0.8125rem;
+}
+
+.robot-hamburger-lg .robot-hamburger-led {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.robot-hamburger-lg.robot-hamburger-open .robot-hamburger-line-top {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.robot-hamburger-lg.robot-hamburger-open .robot-hamburger-line-bottom {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Color variants */
+.robot-hamburger-primary.robot-hamburger-open {
+  box-shadow:
+    0 4px 20px hsl(var(--p) / 0.4),
+    0 0 40px hsl(var(--p) / 0.2);
+}
+
+.robot-hamburger-primary.robot-hamburger-open .robot-hamburger-antenna {
+  background: hsl(var(--p));
+  box-shadow: 0 0 6px hsl(var(--p) / 0.8);
+}
+
+.robot-hamburger-primary.robot-hamburger-open .robot-hamburger-antenna-tip {
+  background: hsl(var(--p));
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 8px hsl(var(--p) / 0.8);
+}
+
+.robot-hamburger-primary.robot-hamburger-open .robot-hamburger-line {
+  background: hsl(var(--p));
+}
+
+.robot-hamburger-primary.robot-hamburger-open .robot-hamburger-led {
+  background: hsl(var(--p));
+  box-shadow:
+    0 0 10px hsl(var(--p)),
+    0 0 20px hsl(var(--p) / 0.8);
+}
+
+.robot-hamburger-secondary.robot-hamburger-open {
+  box-shadow:
+    0 4px 20px hsl(var(--s) / 0.4),
+    0 0 40px hsl(var(--s) / 0.2);
+}
+
+.robot-hamburger-secondary.robot-hamburger-open .robot-hamburger-antenna {
+  background: hsl(var(--s));
+  box-shadow: 0 0 6px hsl(var(--s) / 0.8);
+}
+
+.robot-hamburger-secondary.robot-hamburger-open .robot-hamburger-antenna-tip {
+  background: hsl(var(--s));
+  border-color: hsl(var(--s));
+  box-shadow: 0 0 8px hsl(var(--s) / 0.8);
+}
+
+.robot-hamburger-secondary.robot-hamburger-open .robot-hamburger-line {
+  background: hsl(var(--s));
+}
+
+.robot-hamburger-secondary.robot-hamburger-open .robot-hamburger-led {
+  background: hsl(var(--s));
+  box-shadow:
+    0 0 10px hsl(var(--s)),
+    0 0 20px hsl(var(--s) / 0.8);
+}
+
+.robot-hamburger-accent.robot-hamburger-open {
+  box-shadow:
+    0 4px 20px hsl(var(--a) / 0.4),
+    0 0 40px hsl(var(--a) / 0.2);
+}
+
+.robot-hamburger-accent.robot-hamburger-open .robot-hamburger-antenna {
+  background: hsl(var(--a));
+  box-shadow: 0 0 6px hsl(var(--a) / 0.8);
+}
+
+.robot-hamburger-accent.robot-hamburger-open .robot-hamburger-antenna-tip {
+  background: hsl(var(--a));
+  border-color: hsl(var(--a));
+  box-shadow: 0 0 8px hsl(var(--a) / 0.8);
+}
+
+.robot-hamburger-accent.robot-hamburger-open .robot-hamburger-line {
+  background: hsl(var(--a));
+}
+
+.robot-hamburger-accent.robot-hamburger-open .robot-hamburger-led {
+  background: hsl(var(--a));
+  box-shadow:
+    0 0 10px hsl(var(--a)),
+    0 0 20px hsl(var(--a) / 0.8);
+}
+
+.robot-hamburger-neutral.robot-hamburger-open {
+  box-shadow:
+    0 4px 20px hsl(var(--bc) / 0.3),
+    0 0 40px hsl(var(--bc) / 0.15);
+}
+
+.robot-hamburger-neutral.robot-hamburger-open .robot-hamburger-antenna {
+  background: hsl(var(--bc) / 0.8);
+  box-shadow: 0 0 6px hsl(var(--bc) / 0.6);
+}
+
+.robot-hamburger-neutral.robot-hamburger-open .robot-hamburger-antenna-tip {
+  background: hsl(var(--bc));
+  border-color: hsl(var(--bc));
+  box-shadow: 0 0 8px hsl(var(--bc) / 0.6);
+}
+
+.robot-hamburger-neutral.robot-hamburger-open .robot-hamburger-led {
+  background: hsl(var(--bc));
+  box-shadow:
+    0 0 10px hsl(var(--bc)),
+    0 0 20px hsl(var(--bc) / 0.6);
+}
+
+/* ============================================
+   Robot UI Global - Smart Component Overrides
+   ============================================ */
+
+/* When robot-ui-enabled class is on body, apply robot styles to standard components */
+body.robot-ui-enabled .btn-primary,
+body.robot-ui-enabled .btn-secondary,
+body.robot-ui-enabled .btn-accent {
+  /* Smooth transition when switching themes */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
    Accessibility Enhancements
    ============================================ */
 
