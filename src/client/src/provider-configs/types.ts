@@ -39,7 +39,7 @@ export interface ProviderConfigField {
 }
 
 export interface ProviderConfigFormProps {
-  providerType?: string;
+  providerType: string;
   schema: ProviderConfigSchema;
   initialConfig?: Record<string, any>;
   onConfigChange: (config: Record<string, any>) => void;
