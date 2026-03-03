@@ -42,8 +42,12 @@ export async function executeCommandSafe(
     }
     debug('Command stdout: ' + stdout);
     return stdout;
-  } catch (err: any) {
-    debug('Command execution error: ' + err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      debug('Command execution error: ' + err.message);
+    } else {
+      debug('Command execution error: ' + String(err));
+    }
     throw err;
   }
 }
@@ -108,7 +112,7 @@ export async function executeCommand(command: string): Promise<string> {
     }
     debug('Command output: ' + stdout);
     return stdout;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Fallback for restricted CI sandboxes; simulate echo during tests
     if (process.env.NODE_ENV === 'test') {
       // Handle echo commands with better simulation

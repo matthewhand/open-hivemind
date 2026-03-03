@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { Button } from './DaisyUI';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
-import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -13,14 +13,15 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   onConfigChange,
   onTestConnection,
   onAvatarLoad,
-  externalErrors = {},
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
-  const [isLoading, setIsLoading] = useState(false);
+  // Separate loading states for each async operation to prevent UI blocking
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -37,13 +38,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const validateField = (field: ProviderConfigField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
       return `${field.label} is required`;
-    }
-
-    if (field.type === 'url' && value && typeof value === 'string') {
-      const validateUrlRegex = /^(https?:\/\/)?(localhost|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/i;
-      if (!validateUrlRegex.test(value)) {
-        return `${field.label} must be a valid URL`;
-      }
     }
 
     if (field.validation && value !== undefined && value !== null && value !== '') {
@@ -126,7 +120,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     if (!onTestConnection) {return;}
 
-    setIsLoading(true);
+    setIsTestingConnection(true);
     setTestResult(null);
 
     try {
@@ -141,14 +135,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Connection test failed',
       });
     } finally {
-      setIsLoading(false);
+      setIsTestingConnection(false);
     }
   };
 
   const handleLoadAvatar = async () => {
     if (!onAvatarLoad) {return;}
 
-    setIsLoading(true);
+    setIsLoadingAvatar(true);
     setAvatarUrl(null);
 
     try {
@@ -160,13 +154,13 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         message: error instanceof Error ? error.message : 'Failed to load avatar',
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAvatar(false);
     }
   };
 
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
-    const error = externalErrors[field.name] || errors[field.name];
+    const error = errors[field.name];
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
@@ -176,19 +170,18 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       switch (field.type) {
       case 'password':
         return (
-          <Input
+          <input
             type="password"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
-            aria-label={`${field.label} password input`}
           />
         );
 
       case 'number':
         return (
-          <Input
+          <input
             type="number"
             value={value}
             onChange={(e) => handleFieldChange(field.name, Number(e.target.value))}
@@ -202,7 +195,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'url':
         return (
-          <Input
+          <input
             type="url"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -213,113 +206,54 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'select':
         return (
-          <Select
+          <select
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
-            options={field.options?.map((option) => ({
-              label: option.label,
-              value: option.value,
-            })) || []}
-          />
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         );
 
       case 'multiselect':
         return (
-          <Select
+          <select
             multiple
             value={Array.isArray(value) ? value : []}
             onChange={(e) => {
-              const target = e.target as HTMLSelectElement;
-              const selectedOptions = Array.from(target.selectedOptions, option => option.value);
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
-            options={field.options?.map((option) => ({
-              label: option.label,
-              value: option.value,
-            })) || []}
-          />
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         );
 
       case 'boolean':
-      case 'checkbox':
         return (
-          <div className="flex items-center h-full">
-            <Toggle
-              color="primary"
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
               checked={Boolean(value)}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              label="Enable"
+              className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary"
             />
-          </div>
+            <span className="text-sm text-base-content/80">Enable</span>
+          </label>
         );
-
-      case 'keyvalue': {
-        const pairs = (value as Record<string, string>) || {};
-        const entries = Object.entries(pairs);
-
-        return (
-          <div className="space-y-2">
-            {entries.map(([key, val], index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Key"
-                  className="input input-bordered input-sm flex-1"
-                  value={key}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    newPairs[e.target.value] = val;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Value"
-                  className="input input-bordered input-sm flex-1"
-                  value={val}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    newPairs[key] = e.target.value;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm text-error"
-                  aria-label="Remove item"
-                  onClick={() => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
-              onClick={() => {
-                const newPairs = { ...pairs };
-                let i = 0;
-                while (newPairs[`NEW_KEY_${i}`] !== undefined) {i++;}
-                newPairs[`NEW_KEY_${i}`] = '';
-                handleFieldChange(field.name, newPairs);
-              }}
-            >
-              + Add Item
-            </button>
-          </div>
-        );
-      }
 
       case 'textarea':
         return (
-          <Textarea
+          <textarea
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
@@ -330,7 +264,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'json':
         return (
-          <Textarea
+          <textarea
             value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
             onChange={(e) => {
               try {
@@ -377,13 +311,12 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       default:
         return (
-          <Input
+          <input
             type="text"
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
-            aria-label={`${field.label} text input`}
           />
         );
       }
@@ -435,9 +368,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                               {field.label}
                             </span>
                             {field.required ? (
-                              <Badge variant="error" size="sm" className="text-[10px] h-4">Required</Badge>
+                              <span className="badge badge-error badge-sm text-[10px] h-4">Required</span>
                             ) : (
-                              <Badge variant="ghost" size="sm" className="text-[10px] h-4">Optional</Badge>
+                              <span className="badge badge-ghost badge-sm text-[10px] h-4">Optional</span>
                             )}
                           </div>
                           {field.description && (
@@ -463,10 +396,13 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
           <Button
-            variant="primary"
+            type="button"
             onClick={handleTestConnection}
-            loading={isLoading}
-            disabled={isLoading}
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isTestingConnection}
+            loadingText="Testing..."
+            variant="primary"
+            aria-label="Test connection to provider"
           >
             Test Connection
           </Button>
@@ -474,25 +410,26 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
           <Button
-            variant="secondary"
+            type="button"
             onClick={handleLoadAvatar}
-            loading={isLoading}
-            disabled={isLoading}
+            disabled={isTestingConnection || isLoadingAvatar}
+            loading={isLoadingAvatar}
+            loadingText="Loading..."
+            variant="secondary"
+            aria-label="Load provider avatar"
           >
             Load Avatar
           </Button>
         )}
       </div>
 
-      {/* Results - aria-live region for screen readers to announce test results */}
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {testResult && testResult.message}
-      </div>
+      {/* Results */}
       {testResult && (
-        <Alert
-          status={testResult.success ? 'success' : 'error'}
-          message={testResult.message}
-        />
+        <div className={`p-3 rounded-lg ${testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+          <p className={`text-sm ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
+            {testResult.message}
+          </p>
+        </div>
       )}
 
       {avatarUrl && (
