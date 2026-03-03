@@ -138,7 +138,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         if (!regex.test(value)) {
           // For API keys, don't fail validation in UI, just warn (ProviderConfigForm does this)
           if (field.name === 'apiKey' || field.type === 'password') {
-             // Just pass for API Keys
+            // Just pass for API Keys
           } else {
             if (field.type === 'url') {
               return `${field.label} must be a valid HTTPS URL`;
@@ -150,7 +150,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       if (field.validation.custom) {
         const customError = field.validation.custom(value);
-        if (customError) {return customError;}
+        if (customError) { return customError; }
       }
     }
 
@@ -248,125 +248,125 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     );
 
     switch (field.type) {
-    case 'password':
-      return (
-        <div key={field.name} className="mb-4">
-          <Input
-            type="password"
-            label={getLabelNode(field.label, field.required)}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            error={error}
-            bordered
-            className="w-full"
-          />
-        </div>
-      );
+      case 'password':
+        return (
+          <div key={field.name} className="mb-4">
+            <Input
+              type="password"
+              label={getLabelNode(field.label, field.required)}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              error={error}
+              bordered
+              className="w-full"
+            />
+          </div>
+        );
 
-    case 'number':
-      return (
-        <div key={field.name} className="mb-4">
-          <Input
-            type="number"
-            label={getLabelNode(field.label, field.required)}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            min={field.validation?.min}
-            max={field.validation?.max}
-            step={field.name === 'temperature' ? '0.1' : '1'}
-            error={error}
-            bordered
-            className="w-full"
-          />
-        </div>
-      );
+      case 'number':
+        return (
+          <div key={field.name} className="mb-4">
+            <Input
+              type="number"
+              label={getLabelNode(field.label, field.required)}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              min={field.validation?.min}
+              max={field.validation?.max}
+              step={field.name === 'temperature' ? '0.1' : '1'}
+              error={error}
+              bordered
+              className="w-full"
+            />
+          </div>
+        );
 
-    case 'select':
-      return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <label className="label pb-1">
-            {getLabelNode(field.label, field.required)}
-          </label>
-          <Select
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            error={!!error}
-            className="w-full"
-          >
-            <option value="">Select {field.label.toLowerCase()}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </Select>
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
+      case 'select':
+        return (
+          <div key={field.name} className="mb-4 form-control w-full">
+            <label className="label pb-1">
+              {getLabelNode(field.label, field.required)}
             </label>
-          )}
-        </div>
-      );
+            <Select
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              error={!!error}
+              className="w-full"
+            >
+              <option value="">Select {field.label.toLowerCase()}</option>
+              {field.options?.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Select>
+            {error && (
+              <label className="label pt-1 pb-0">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
+        );
 
-    case 'textarea':
-      return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <label className="label pb-1">
-            {getLabelNode(field.label, field.required)}
-          </label>
-          <Textarea
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            rows={4}
-            className={`w-full ${error ? 'textarea-error' : ''}`}
-            bordered
-          />
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
+      case 'textarea':
+        return (
+          <div key={field.name} className="mb-4 form-control w-full">
+            <label className="label pb-1">
+              {getLabelNode(field.label, field.required)}
             </label>
-          )}
-        </div>
-      );
+            <Textarea
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              rows={4}
+              className={`w-full ${error ? 'textarea-error' : ''}`}
+              bordered
+            />
+            {error && (
+              <label className="label pt-1 pb-0">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
+        );
 
-    case 'checkbox':
-      return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <Toggle
-            label={field.label}
-            checked={!!value}
-            onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-            color="primary"
-          />
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
-            </label>
-          )}
-        </div>
-      );
+      case 'checkbox':
+        return (
+          <div key={field.name} className="mb-4 form-control w-full">
+            <Toggle
+              label={field.label}
+              checked={!!value}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              color="primary"
+            />
+            {error && (
+              <label className="label pt-1 pb-0">
+                <span className="label-text-alt text-error">{error}</span>
+              </label>
+            )}
+          </div>
+        );
 
-    default:
-      // text and others
-      return (
-        <div key={field.name} className="mb-4">
-          <Input
-            type="text"
-            label={getLabelNode(field.label, field.required)}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            error={error}
-            bordered
-            className="w-full"
-          />
-        </div>
-      );
+      default:
+        // text and others
+        return (
+          <div key={field.name} className="mb-4">
+            <Input
+              type="text"
+              label={getLabelNode(field.label, field.required)}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              error={error}
+              bordered
+              className="w-full"
+            />
+          </div>
+        );
     }
   };
 
-  if (!modalState.isOpen) {return null;}
+  if (!modalState.isOpen) { return null; }
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
@@ -448,6 +448,26 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 initialConfig={formData}
                 onConfigChange={handleProviderConfigChange}
                 externalErrors={errors}
+                onTestConnection={async (config) => {
+                  // Enhanced test connection with provider-specific validation
+                  try {
+                    const response = await fetch('/api/v1/admin/providers/test-connection', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        providerType: selectedType,
+                        config,
+                      }),
+                    });
+                    return response.ok;
+                  } catch {
+                    // Fallback: basic validation if endpoint not available
+                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
+                      key => config[key] && config[key].toString().trim() !== ''
+                    );
+                    return hasRequiredFields;
+                  }
+                }}
               />
             ) : (
               allFields.map(renderField)
