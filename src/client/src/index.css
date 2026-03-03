@@ -463,8 +463,9 @@ textarea {
 [data-theme='dark'] .text-error,
 [data-theme='night'] .text-error,
 [data-theme='dracula'] .text-error {
-  color: hsl(0, 100%, 75%); /* Brighter red for dark backgrounds */
-  text-shadow: 0 0 1px rgba(0,0,0,0.5);
+  color: hsl(0, 100%, 75%);
+  /* Brighter red for dark backgrounds */
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
 /* Alert icon glow */
@@ -664,4 +665,61 @@ textarea {
 
 .tooltip-error::before {
   border-color: hsl(var(--er) / 0.4);
+}
+
+/* ============================================
+   Accessibility Enhancements
+   ============================================ */
+
+/* Screen reader only content - visually hidden but accessible to assistive technologies */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid hsl(var(--p));
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .chat-bubble {
+    border: 2px solid currentColor;
+  }
+
+  .btn {
+    border: 2px solid currentColor;
+  }
+
+  .input,
+  .textarea,
+  .select {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-pulse,
+  .animate-spin,
+  .loading {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
