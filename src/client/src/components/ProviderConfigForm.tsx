@@ -13,13 +13,19 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   onConfigChange,
   onTestConnection,
   onAvatarLoad,
-  externalErrors = {},
+  externalErrors,
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
     ...initialConfig,
   }));
   const [errors, setErrors] = useState<FieldError>({});
+
+  useEffect(() => {
+    if (externalErrors) {
+      setErrors(prev => ({ ...prev, ...externalErrors }));
+    }
+  }, [externalErrors]);
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -37,13 +43,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const validateField = (field: ProviderConfigField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
       return `${field.label} is required`;
-    }
-
-    if (field.type === 'url' && value && typeof value === 'string') {
-      const validateUrlRegex = /^(https?:\/\/)?(localhost|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/i;
-      if (!validateUrlRegex.test(value)) {
-        return `${field.label} must be a valid URL`;
-      }
     }
 
     if (field.validation && value !== undefined && value !== null && value !== '') {
@@ -166,7 +165,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
-    const error = externalErrors[field.name] || errors[field.name];
+    const error = errors[field.name] || (externalErrors && externalErrors[field.name]);
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
@@ -243,7 +242,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         );
 
       case 'boolean':
-      case 'checkbox':
         return (
           <div className="flex items-center h-full">
             <Toggle
@@ -254,68 +252,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             />
           </div>
         );
-
-      case 'keyvalue': {
-        const pairs = (value as Record<string, string>) || {};
-        const entries = Object.entries(pairs);
-
-        return (
-          <div className="space-y-2">
-            {entries.map(([key, val], index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Key"
-                  className="input input-bordered input-sm flex-1"
-                  value={key}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    newPairs[e.target.value] = val;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Value"
-                  className="input input-bordered input-sm flex-1"
-                  value={val}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    newPairs[key] = e.target.value;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm text-error"
-                  aria-label="Remove item"
-                  onClick={() => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
-              onClick={() => {
-                const newPairs = { ...pairs };
-                let i = 0;
-                while (newPairs[`NEW_KEY_${i}`] !== undefined) {i++;}
-                newPairs[`NEW_KEY_${i}`] = '';
-                handleFieldChange(field.name, newPairs);
-              }}
-            >
-              + Add Item
-            </button>
-          </div>
-        );
-      }
 
       case 'textarea':
         return (
