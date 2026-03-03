@@ -100,8 +100,8 @@ export function configureWebhookRoutes(
       // Use the message service to send platform-agnostic messages
       const resultMessage =
         predictionStatus === 'succeeded'
-          ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
-          : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+          ? `✅ **Task Succeeded**\n**Output:** ${(resultArray || []).join(' ')}\n**Image URL:** ${imageUrl || 'N/A'}`
+          : `ℹ️ **Task Update**\n**Prediction ID:** ${predictionId}\n**Status:** ${predictionStatus}`;
 
       try {
         const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
