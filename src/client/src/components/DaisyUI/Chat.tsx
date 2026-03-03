@@ -143,7 +143,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -329,6 +329,122 @@ export const ChatQuickActions: React.FC<QuickActionsProps> = ({
           {action.label}
         </button>
       ))}
+    </div>
+  );
+};
+
+// Bot Swarm Coordination Status
+interface BotSwarmStatus {
+  botId: string;
+  name: string;
+  avatar?: string;
+  status: 'active' | 'idle' | 'busy' | 'offline';
+  currentTask?: string;
+  lastSeen: Date;
+  messagesHandled: number;
+}
+
+interface BotSwarmCoordinationProps {
+  bots: BotSwarmStatus[];
+  onBotClick?: (botId: string) => void;
+  className?: string;
+}
+
+export const BotSwarmCoordination: React.FC<BotSwarmCoordinationProps> = ({
+  bots,
+  onBotClick,
+  className = '',
+}) => {
+  const getStatusColor = (status: BotSwarmStatus['status']) => {
+    switch (status) {
+      case 'active': return 'bg-success';
+      case 'busy': return 'bg-warning';
+      case 'idle': return 'bg-info';
+      case 'offline': return 'bg-error';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getStatusText = (status: BotSwarmStatus['status']) => {
+    switch (status) {
+      case 'active': return 'Active';
+      case 'busy': return 'Busy';
+      case 'idle': return 'Idle';
+      case 'offline': return 'Offline';
+      default: return 'Unknown';
+    }
+  };
+
+  const activeBots = bots.filter(b => b.status === 'active').length;
+  const busyBots = bots.filter(b => b.status === 'busy').length;
+  const totalMessages = bots.reduce((sum, b) => sum + b.messagesHandled, 0);
+
+  return (
+    <div className={`bg-base-200 rounded-box p-4 ${className}`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🐝</span>
+          <div>
+            <h4 className="font-semibold">Bot Swarm Coordination</h4>
+            <p className="text-xs text-base-content/60">
+              {activeBots} active • {busyBots} busy • {totalMessages.toLocaleString()} messages
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <div className="badge badge-success badge-sm">{activeBots} Online</div>
+          {busyBots > 0 && <div className="badge badge-warning badge-sm">{busyBots} Busy</div>}
+        </div>
+      </div>
+
+      <div className="space-y-2 max-h-48 overflow-y-auto">
+        {bots.map((bot) => (
+          <div
+            key={bot.botId}
+            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-base-300 ${bot.status === 'active' ? 'bg-base-100 shadow-sm' : ''
+              }`}
+            onClick={() => onBotClick?.(bot.botId)}
+          >
+            <div className="relative">
+              <div className={`chat-image avatar ${!bot.avatar ? 'placeholder' : ''} w-8`}>
+                {bot.avatar ? (
+                  <div className="w-8 rounded-full">
+                    <img alt={bot.name} src={bot.avatar} />
+                  </div>
+                ) : (
+                  <div className="bg-secondary text-secondary-content rounded-full w-8">
+                    <span className="text-sm">🤖</span>
+                  </div>
+                )}
+              </div>
+              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-base-200 ${getStatusColor(bot.status)}`} />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm truncate">{bot.name}</span>
+                <span className={`badge badge-xs ${bot.status === 'active' ? 'badge-success' : bot.status === 'busy' ? 'badge-warning' : 'badge-ghost'}`}>
+                  {getStatusText(bot.status)}
+                </span>
+              </div>
+              {bot.currentTask && (
+                <p className="text-xs text-base-content/60 truncate">{bot.currentTask}</p>
+              )}
+            </div>
+
+            <div className="text-right">
+              <p className="text-xs text-base-content/40">{bot.messagesHandled}</p>
+              <p className="text-[10px] text-base-content/30">msgs</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {bots.length === 0 && (
+        <div className="text-center py-4 text-base-content/40">
+          <p className="text-sm">No bots in swarm</p>
+        </div>
+      )}
     </div>
   );
 };
