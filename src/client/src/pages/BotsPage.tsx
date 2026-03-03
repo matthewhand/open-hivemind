@@ -780,31 +780,33 @@ const BotsPage: React.FC = () => {
             {previewTab === 'activity' && (
               <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
                 <div className="flex items-center justify-end mb-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Filter logs..."
-                      className="input input-xs input-bordered w-32"
-                      value={logFilter}
-                      onChange={(e) => setLogFilter(e.target.value)}
-                    />
-                    <select
-                      className="select select-xs select-bordered"
-                      onChange={(e) => {
-                        const limit = e.target.value;
-                        if (previewBot) {
-                          apiService
-                            .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
-                            .then((json) => {
-                              setActivityLogs(json.data?.activity || []);
-                            });
-                        }
-                      }}
-                    >
-                      <option value="20">Last 20</option>
-                      <option value="50">Last 50</option>
-                      <option value="100">Last 100</option>
-                    </select>
+                  <div className="form-control w-full flex items-end">
+                    <div className="join">
+                      <input
+                        type="text"
+                        placeholder="Filter logs..."
+                        className="input input-xs input-bordered join-item w-32"
+                        value={logFilter}
+                        onChange={(e) => setLogFilter(e.target.value)}
+                      />
+                      <select
+                        className="select select-xs select-bordered join-item"
+                        onChange={(e) => {
+                          const limit = e.target.value;
+                          if (previewBot) {
+                            apiService
+                              .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
+                              .then((json) => {
+                                setActivityLogs(json.data?.activity || []);
+                              });
+                          }
+                        }}
+                      >
+                        <option value="20">Last 20</option>
+                        <option value="50">Last 50</option>
+                        <option value="100">Last 100</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
