@@ -10,6 +10,7 @@ import {
   Input,
   Textarea,
   Select,
+  Checkbox,
 } from '../components/DaisyUI';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
@@ -358,9 +359,10 @@ const BotCreatePage: React.FC = () => {
                             className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
                               }`}
                           >
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-primary checkbox-sm mt-0.5"
+                            <Checkbox
+                              variant="primary"
+                              size="sm"
+                              className="mt-0.5"
                               checked={isSelected}
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
