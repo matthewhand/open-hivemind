@@ -7,7 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, Input, Toggle } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;
@@ -230,46 +230,61 @@ const MCPToolsPage: React.FC = () => {
 
           return (
             <div key={key} className="form-control">
-              <label className="label">
-                <span className="label-text font-medium flex gap-1">
-                  {key}
-                  {isRequired && <span className="text-error">*</span>}
-                </span>
-                <span className="label-text-alt opacity-70">{type}</span>
-              </label>
-
               {type === 'boolean' ? (
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={formArgs[key] || false}
-                  onChange={(e) => updateFormArg(key, e.target.checked)}
-                  disabled={isRunning}
-                />
+                <div className="flex flex-col gap-2">
+                  <label className="label cursor-pointer justify-between gap-4 py-0 items-center">
+                    <span className="label-text font-medium flex gap-1 items-center">
+                      {key}
+                      {isRequired && <span className="text-error">*</span>}
+                      <span className="label-text-alt opacity-70 ml-2">{type}</span>
+                    </span>
+                    <Toggle
+                      color="primary"
+                      checked={formArgs[key] || false}
+                      onChange={(e) => updateFormArg(key, e.target.checked)}
+                      disabled={isRunning}
+                    />
+                  </label>
+                  {schema.description && (
+                    <span className="label-text-alt text-base-content/60 px-1">{schema.description}</span>
+                  )}
+                </div>
               ) : type === 'integer' || type === 'number' ? (
-                <input
+                <Input
                   type="number"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] !== undefined && formArgs[key] !== null ? formArgs[key] : ''}
                   onChange={(e) => updateFormArg(key, e.target.value === '' ? undefined : Number(e.target.value))}
                   disabled={isRunning}
+                  label={
+                    <>
+                      <span className="label-text font-medium flex gap-1">
+                        {key}
+                        {isRequired && <span className="text-error">*</span>}
+                      </span>
+                      <span className="label-text-alt opacity-70">{type}</span>
+                    </>
+                  }
+                  helperText={schema.description}
                 />
               ) : (
-                <input
+                <Input
                   type="text"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] || ''}
                   onChange={(e) => updateFormArg(key, e.target.value)}
                   disabled={isRunning}
+                  label={
+                    <>
+                      <span className="label-text font-medium flex gap-1">
+                        {key}
+                        {isRequired && <span className="text-error">*</span>}
+                      </span>
+                      <span className="label-text-alt opacity-70">{type}</span>
+                    </>
+                  }
+                  helperText={schema.description}
                 />
-              )}
-
-              {schema.description && (
-                <label className="label">
-                  <span className="label-text-alt text-base-content/60">{schema.description}</span>
-                </label>
               )}
             </div>
           );
