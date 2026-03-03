@@ -46,7 +46,8 @@ export enum MessageProviderType {
   DISCORD = 'discord',
   TELEGRAM = 'telegram',
   WEBHOOK = 'webhook',
-  MATTERMOST = 'mattermost'
+  MATTERMOST = 'mattermost',
+  // Add new providers here
 }
 
 export enum LLMProviderType {
