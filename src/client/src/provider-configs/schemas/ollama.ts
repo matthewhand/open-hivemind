@@ -37,8 +37,6 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       component: ModelAutocomplete,
       componentProps: {
         providerType: 'ollama',
-        // Ollama doesn't require an API key, so we pass a dummy value
-        apiKey: 'ollama-no-auth-required',
       },
     },
     {
