@@ -1,0 +1,112 @@
+--- src/client/src/components/Settings/SettingsMessaging.tsx
++++ src/client/src/components/Settings/SettingsMessaging.tsx
+@@ -12,6 +12,8 @@
+   graceWindowMs: number;
+   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
+   addUserHint: boolean;
++  semanticRelevanceEnabled: boolean;
++  semanticRelevanceBonus: number;
+ }
+
+ const SettingsMessaging: React.FC = () => {
+@@ -23,6 +25,8 @@
+     baseChance: 5,
+     graceWindowMs: 300000,
+     addUserHint: false,
++    semanticRelevanceEnabled: true,
++    semanticRelevanceBonus: 10,
+   });
+   const [loading, setLoading] = useState(true);
+   const [isSaving, setIsSaving] = useState(false);
+@@ -55,6 +59,8 @@
+         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
+         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
+         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
++        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? true,
++        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 10,
+       });
+     } catch {
+       setAlert({
+@@ -91,6 +97,8 @@
+             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
+             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
+             MESSAGE_ADD_USER_HINT: settings.addUserHint,
++            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
++            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
+           },
+         }),
+       });
+@@ -263,7 +271,7 @@
+             Context &amp; Additions
+           </h6>
+
+-          <div className="form-control">
++          <div className="form-control mb-3">
+             <label className="label cursor-pointer py-2">
+               <div>
+                 <span className="label-text font-medium">Add User Hint</span>
+@@ -278,6 +286,47 @@
+               />
+             </label>
+           </div>
++
++          <div className="form-control mb-3">
++            <label className="label cursor-pointer py-2">
++              <div>
++                <span className="label-text font-medium">Semantic Search Relevance</span>
++                <p className="text-xs text-base-content/60 mt-1">
++                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
++                </p>
++              </div>
++              <Toggle
++                checked={settings.semanticRelevanceEnabled}
++                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
++                color="info"
++              />
++            </label>
++          </div>
++
++          <div className="form-control">
++            <label className="label py-1">
++              <span className="label-text text-sm font-medium">Semantic Relevance Threshold Tuning</span>
++              <span className="badge badge-info font-mono text-xs">{settings.semanticRelevanceBonus}x</span>
++            </label>
++            <input
++              type="range"
++              min="1"
++              max="50"
++              step="1"
++              value={settings.semanticRelevanceBonus}
++              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
++              className="range range-sm range-info"
++              disabled={!settings.semanticRelevanceEnabled}
++            />
++            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
++              <span>1x</span>
++              <span>25x</span>
++              <span>50x</span>
++            </div>
++            <p className="text-xs text-base-content/60 mt-2">
++              Multiplier to apply when a message is semantically relevant and the bot has posted recently
++            </p>
++          </div>
+         </div>
+
+         {/* Probability */}
+@@ -409,6 +458,16 @@
+                   <td>MESSAGE_ADD_USER_HINT</td>
+                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                 </tr>
++                <tr>
++                  <td>Semantic Relevance</td>
++                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
++                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
++                </tr>
++                <tr>
++                  <td>Semantic Relevance Bonus</td>
++                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
++                  <td>{settings.semanticRelevanceBonus}</td>
++                </tr>
+               </tbody>
+             </table>
+           </div>
