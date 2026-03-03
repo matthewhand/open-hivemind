@@ -235,6 +235,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         );
 
       case 'boolean':
+      case 'checkbox':
         return (
           <div className="flex items-center h-full">
             <Toggle
@@ -245,6 +246,68 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             />
           </div>
         );
+
+      case 'keyvalue': {
+        const pairs = (value as Record<string, string>) || {};
+        const entries = Object.entries(pairs);
+
+        return (
+          <div className="space-y-2">
+            {entries.map(([key, val], index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Key"
+                  className="input input-bordered input-sm flex-1"
+                  value={key}
+                  onChange={(e) => {
+                    const newPairs = { ...pairs };
+                    delete newPairs[key];
+                    newPairs[e.target.value] = val;
+                    handleFieldChange(field.name, newPairs);
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Value"
+                  className="input input-bordered input-sm flex-1"
+                  value={val}
+                  onChange={(e) => {
+                    const newPairs = { ...pairs };
+                    newPairs[key] = e.target.value;
+                    handleFieldChange(field.name, newPairs);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm text-error"
+                  aria-label="Remove item"
+                  onClick={() => {
+                    const newPairs = { ...pairs };
+                    delete newPairs[key];
+                    handleFieldChange(field.name, newPairs);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
+              onClick={() => {
+                const newPairs = { ...pairs };
+                let i = 0;
+                while (newPairs[`NEW_KEY_${i}`] !== undefined) {i++;}
+                newPairs[`NEW_KEY_${i}`] = '';
+                handleFieldChange(field.name, newPairs);
+              }}
+            >
+              + Add Item
+            </button>
+          </div>
+        );
+      }
 
       case 'textarea':
         return (
