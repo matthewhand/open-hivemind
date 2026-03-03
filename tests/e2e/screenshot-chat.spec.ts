@@ -142,6 +142,16 @@ test.describe('Chat Monitor Screenshots', () => {
                 content: 'Great! Is there anything else I can help you with?',
                 createdAt: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
                 author: { id: 'bot-1', username: 'Support Bot', bot: true },
+                tool_calls: [
+                  {
+                    id: 'call_abc123',
+                    type: 'function',
+                    function: {
+                      name: 'get_weather',
+                      arguments: '{"location":"San Francisco, CA","unit":"celsius"}'
+                    }
+                  }
+                ]
               },
               {
                 id: 'msg-8',

@@ -124,6 +124,7 @@ const ChatPage: React.FC = () => {
         },
         metadata: {
           platform: 'discord', // Or infer from bot provider?
+          toolCalls: msg.tool_calls || undefined,
         }
       }));
 

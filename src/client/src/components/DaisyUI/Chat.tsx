@@ -18,6 +18,7 @@ export interface ChatMessage {
     reactions?: { emoji: string; count: number; users: string[] }[];
     edited?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
+    toolCalls?: any[];
   };
 }
 
@@ -222,6 +223,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           )}
         </div>
+
+        {/* Tool Calls */}
+        {message.metadata?.toolCalls && message.metadata.toolCalls.length > 0 && (
+          <div className="mt-2 w-full max-w-sm">
+            {message.metadata.toolCalls.map((tc, tcIndex) => (
+              <div key={tc.id || tcIndex} className="bg-base-200 border border-base-300 rounded-md p-2 mb-2 text-sm shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">Tool Call</span>
+                  <span className="text-xs font-mono bg-base-300 px-1 rounded truncate">{tc.function?.name || 'unknown'}</span>
+                </div>
+                {tc.function?.arguments && (
+                  <div className="mockup-code bg-base-300 text-base-content before:hidden p-2 text-xs">
+                    <pre><code>{tc.function.arguments}</code></pre>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Reactions */}
         {message.metadata?.reactions && message.metadata.reactions.length > 0 && (
