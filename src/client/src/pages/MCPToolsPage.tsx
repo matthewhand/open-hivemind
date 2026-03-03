@@ -7,7 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, Input, Toggle } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;
@@ -228,48 +228,55 @@ const MCPToolsPage: React.FC = () => {
           const isRequired = selectedTool.inputSchema.required?.includes(key);
           const type = schema.type;
 
-          return (
-            <div key={key} className="form-control">
-              <label className="label">
-                <span className="label-text font-medium flex gap-1">
-                  {key}
-                  {isRequired && <span className="text-error">*</span>}
-                </span>
-                <span className="label-text-alt opacity-70">{type}</span>
-              </label>
+          const labelContent = (
+            <div className="flex justify-between w-full">
+              <span className="font-medium flex gap-1">
+                {key}
+                {isRequired && <span className="text-error">*</span>}
+              </span>
+              <span className="text-xs opacity-70 ml-2 font-normal">{type}</span>
+            </div>
+          );
 
+          return (
+            <div key={key} className="w-full">
               {type === 'boolean' ? (
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={formArgs[key] || false}
-                  onChange={(e) => updateFormArg(key, e.target.checked)}
-                  disabled={isRunning}
-                />
+                <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4">
+                    <Toggle
+                      color="primary"
+                      checked={formArgs[key] || false}
+                      onChange={(e) => updateFormArg(key, e.target.checked)}
+                      disabled={isRunning}
+                    />
+                    <span className="label-text flex-1">{labelContent}</span>
+                  </label>
+                  {schema.description && (
+                    <label className="label pt-0">
+                      <span className="label-text-alt text-base-content/60">{schema.description}</span>
+                    </label>
+                  )}
+                </div>
               ) : type === 'integer' || type === 'number' ? (
-                <input
+                <Input
                   type="number"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] !== undefined && formArgs[key] !== null ? formArgs[key] : ''}
                   onChange={(e) => updateFormArg(key, e.target.value === '' ? undefined : Number(e.target.value))}
                   disabled={isRunning}
+                  label={labelContent}
+                  helperText={schema.description}
                 />
               ) : (
-                <input
+                <Input
                   type="text"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] || ''}
                   onChange={(e) => updateFormArg(key, e.target.value)}
                   disabled={isRunning}
+                  label={labelContent}
+                  helperText={schema.description}
                 />
-              )}
-
-              {schema.description && (
-                <label className="label">
-                  <span className="label-text-alt text-base-content/60">{schema.description}</span>
-                </label>
               )}
             </div>
           );
