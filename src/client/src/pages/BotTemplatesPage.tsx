@@ -2,9 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
-import { Copy, Check, Search, History } from 'lucide-react';
+import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { Diff, Modal } from '../components/DaisyUI';
 
 interface BotTemplate {
   id: string;
@@ -28,8 +27,6 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
-  const [diffModalOpen, setDiffModalOpen] = useState(false);
-  const [diffTemplate, setDiffTemplate] = useState<BotTemplate | null>(null);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/admin/bots' },
@@ -157,11 +154,6 @@ const BotTemplatesPage: React.FC = () => {
     setSearchTerm('');
   };
 
-  const handleOpenDiff = (template: BotTemplate) => {
-    setDiffTemplate(template);
-    setDiffModalOpen(true);
-  };
-
   if (loading) {
     return (
       <div className="p-6 text-center">
@@ -263,19 +255,12 @@ const BotTemplatesPage: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="card-actions mt-auto pt-4 flex gap-2">
+                <div className="card-actions mt-auto">
                   <button
                     className="btn btn-primary flex-1"
                     onClick={() => handleUseTemplate(template)}
                   >
                     Use Template
-                  </button>
-                  <button
-                    className="btn btn-outline btn-square"
-                    onClick={() => handleOpenDiff(template)}
-                    title="Compare Versions"
-                  >
-                    <History className="w-4 h-4" />
                   </button>
                   <button
                     className="btn btn-ghost btn-square"
@@ -301,55 +286,6 @@ const BotTemplatesPage: React.FC = () => {
             </div>
         )}
       </div>
-
-      <Modal
-        isOpen={diffModalOpen}
-        onClose={() => setDiffModalOpen(false)}
-        title={`Template Version Diff: ${diffTemplate?.name}`}
-        size="lg"
-      >
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-base-content/70">
-            Compare the current template configuration (v1.1.0) with the previous version (v1.0.0). Slide to view changes.
-          </p>
-          <div className="bg-base-200 rounded-lg p-2 overflow-hidden shadow-inner border border-base-300">
-            <Diff
-              aspectRatio="aspect-[16/9] md:aspect-[21/9]"
-              item1={
-                <div className="bg-base-100 text-base-content w-full h-full p-6 flex flex-col items-center justify-center border-2 border-dashed border-error/30 text-center">
-                  <div className="text-xl font-bold mb-2 text-error">v1.0.0 (Old)</div>
-                  <pre className="text-xs text-left bg-base-200 p-4 rounded-md w-full max-w-sm overflow-auto text-base-content/80 shadow-inner">
-{`{
-  "name": "${diffTemplate?.name}",
-  "llmProvider": "openai",
-  "persona": "Helpful",
-  "temperature": 0.7
-}`}
-                  </pre>
-                </div>
-              }
-              item2={
-                <div className="bg-base-100 text-base-content w-full h-full p-6 flex flex-col items-center justify-center border-2 border-success/30 border-solid text-center">
-                  <div className="text-xl font-bold mb-2 text-success">v1.1.0 (Current)</div>
-                  <pre className="text-xs text-left bg-base-300 p-4 rounded-md w-full max-w-sm overflow-auto text-base-content shadow-inner border border-success/20">
-{`{
-  "name": "${diffTemplate?.name}",
-  "llmProvider": "${diffTemplate?.llmProvider}",
-  "persona": "${diffTemplate?.persona}",
-  "temperature": 0.2,
-  "tags": ${JSON.stringify(diffTemplate?.tags || [])}
-}`}
-                  </pre>
-                </div>
-              }
-            />
-          </div>
-          <div className="flex justify-between items-center text-xs text-base-content/60 mt-2 px-2">
-            <span>&larr; Drag to compare</span>
-            <span>Slide right for current version</span>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

@@ -75,7 +75,7 @@ const BotListManager: React.FC = () => {
     switch (provider) {
     case 'discord': return 'badge-primary';
     case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-accent';
+    case 'mattermost': return 'badge-info';
     default: return 'badge-ghost';
     }
   };
