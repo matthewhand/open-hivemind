@@ -405,7 +405,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           <div className="space-y-4 mb-6">
             {allFields.map(renderField)}
           </div>
-          {/* Actions */}
+
           {/* Actions */}
           <div className="modal-action">
             <Button
