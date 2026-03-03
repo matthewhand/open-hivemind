@@ -207,10 +207,19 @@ router.get('/live', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/metrics/prometheus', (req, res) => {
+export const PROMETHEUS_METRICS_PATH = '/metrics/prometheus';
+
+router.get(PROMETHEUS_METRICS_PATH, (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+
+  let customMetrics = '';
+  try {
+    customMetrics = MetricsCollector.getInstance().getPrometheusFormat();
+  } catch (error) {
+    console.warn('Failed to get custom metrics:', error);
+  }
 
   const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
@@ -243,9 +252,11 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
 nodejs_version_info{version="${process.version}"} 1
+
+${customMetrics}
 `;
 
-  res.set('Content-Type', 'text/plain');
+  res.set('Content-Type', 'text/plain; charset=utf-8');
   return res.send(metrics);
 });
 
