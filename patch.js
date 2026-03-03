@@ -1,26 +1,32 @@
 const fs = require('fs');
-const file = 'src/client/src/components/DaisyUI/Chat.tsx';
-let content = fs.readFileSync(file, 'utf8');
+const path = 'src/client/src/components/DaisyUI/Carousel.tsx';
+let content = fs.readFileSync(path, 'utf8');
 
 content = content.replace(
-  /        \{\/\* Reactions \*\/\}\n        \{message\.metadata\?\.reactions && message\.metadata\.reactions\.length > 0 && \(\n          <div className="chat-footer">\n            <div className="flex gap-1 mt-1">\n              \{message\.metadata\.reactions\.map\(\(reaction, idx\) => \(\n                <div key=\{idx\} className="badge badge-sm badge-ghost">\n                  \{reaction\.emoji\} \{reaction\.count\}\n                <\/div>\n              \)\)\}\n            <\/div>\n          <\/div>\n        \)\}\n      <\/div>\n    \);\n  \};/,
-  `        {/* Reactions */}
-        {message.metadata?.reactions && message.metadata.reactions.length > 0 && (
-          <div className="chat-footer">
-            <div className="flex gap-1 mt-1">
-              {message.metadata.reactions.map((reaction, idx) => (
-                <div key={idx} className="badge badge-sm badge-ghost">
-                  {reaction.emoji} {reaction.count}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </React.Fragment>
-  );
-};`
+    /<a href={`#slide\${[^}]+}`} className="btn btn-circle" onClick={handlePrev}>[\s\n]*❮[\s\n]*<\/a>/,
+    `<button type="button" className="btn btn-circle" onClick={(e) => { e.preventDefault(); handlePrev(); }}>
+                ❮
+              </button>`
 );
 
-fs.writeFileSync(file, content);
-console.log('Patch applied.');
+content = content.replace(
+    /<a href={`#slide\${[^}]+}`} className="btn btn-circle" onClick={handleNext}>[\s\n]*❯[\s\n]*<\/a>/,
+    `<button type="button" className="btn btn-circle" onClick={(e) => { e.preventDefault(); handleNext(); }}>
+                ❯
+              </button>`
+);
+
+content = content.replace(
+    /<a\s*key={index}\s*href={`#slide\${index}`}\s*className={`btn btn-xs \${index === activeIndex \? 'btn-active' : ''}`}\s*onClick={\(\) => handleSelect\(index\)}\s*>\s*{index \+ 1}\s*<\/a>/,
+    `<button
+            type="button"
+            key={index}
+            className={\`btn btn-xs \${index === activeIndex ? 'btn-active' : ''}\`}
+            onClick={(e) => { e.preventDefault(); handleSelect(index); }}
+          >
+            {index + 1}
+          </button>`
+);
+
+fs.writeFileSync(path, content);
+console.log("Patched successfully");

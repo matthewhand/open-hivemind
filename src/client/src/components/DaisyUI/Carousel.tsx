@@ -75,26 +75,26 @@ const Carousel: React.FC<CarouselProps> = ({
               <p>{item.description}</p>
             </div>
             <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-              <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev} aria-label="Previous slide">
+              <button type="button" className="btn btn-circle" onClick={(e) => { e.preventDefault(); handlePrev(); }}>
                 ❮
-              </a>
-              <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext} aria-label="Next slide">
+              </button>
+              <button type="button" className="btn btn-circle" onClick={(e) => { e.preventDefault(); handleNext(); }}>
                 ❯
-              </a>
+              </button>
             </div>
           </div>
         ))}
       </div>
       <div className="flex w-full justify-center gap-2 py-2">
         {items.map((_, index) => (
-          <a
+          <button
+            type="button"
             key={index}
-            href={`#slide${index}`}
             className={`btn btn-xs ${index === activeIndex ? 'btn-active' : ''}`}
-            onClick={() => handleSelect(index)}
+            onClick={(e) => { e.preventDefault(); handleSelect(index); }}
           >
             {index + 1}
-          </a>
+          </button>
         ))}
       </div>
     </div>
