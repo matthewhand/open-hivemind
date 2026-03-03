@@ -19,6 +19,7 @@ export interface MetricChartProps {
   showGrid?: boolean;
   showLegend?: boolean;
   showTooltip?: boolean;
+  inverseTrendColor?: boolean;
   refreshInterval?: number;
   onRefresh?: () => void;
   className?: string;
@@ -34,6 +35,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
   showGrid = true,
   showLegend = true,
   showTooltip = true,
+  inverseTrendColor = false,
   refreshInterval,
   onRefresh,
   className = '',
@@ -156,7 +158,12 @@ const MetricChart: React.FC<MetricChartProps> = ({
   };
 
   const trend = getTrend();
-  const trendColor = trend === 'up' ? 'text-success' : trend === 'down' ? 'text-error' : 'text-neutral';
+  let trendColor = 'text-neutral';
+  if (trend === 'up') {
+    trendColor = inverseTrendColor ? 'text-error' : 'text-success';
+  } else if (trend === 'down') {
+    trendColor = inverseTrendColor ? 'text-success' : 'text-error';
+  }
 
   return (
     <div className={`card bg-base-100 shadow-xl ${className}`}>

@@ -190,6 +190,37 @@ test.describe('Analytics Dashboard Screenshots', () => {
     // Set viewport
     await page.setViewportSize({ width: 1280, height: 1000 });
 
+    // Mock WebSocket for performance metrics
+    await page.routeWebSocket(/.*/, ws => {
+      // Mock the engine.io and socket.io handshake
+      ws.onMessage(msg => {
+        if (msg === '2probe') ws.send('3probe');
+        if (msg === '5') ws.send('6');
+      });
+
+      ws.send('0{"sid":"mock-session-id","upgrades":[],"pingInterval":25000,"pingTimeout":20000,"maxPayload":1000000}');
+      ws.send('40'); // socket.io connected
+
+      const now = Date.now();
+      const mockMetrics = [];
+      for (let i = 20; i >= 0; i--) {
+        mockMetrics.push({
+          timestamp: new Date(now - i * 5000).toISOString(),
+          cpuUsage: 15 + Math.random() * 5,
+          memoryUsage: 40 + Math.random() * 2,
+          activeConnections: 10 + Math.floor(Math.random() * 5),
+          messageRate: 5 + Math.random(),
+          errorRate: 0.1,
+          responseTime: 120 + i * 5 + Math.random() * 10
+        });
+      }
+
+      // Emit the event socket.io style: 42["event", data]
+      setTimeout(() => {
+        ws.send(`42["performance_metrics_update",${JSON.stringify(mockMetrics)}]`);
+      }, 500);
+    });
+
     // Navigate to Analytics page
     await page.goto('/admin/analytics');
 

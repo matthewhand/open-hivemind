@@ -169,6 +169,7 @@ const MonitoringDashboard: React.FC = () => {
           color="#f59e0b"
           unit="%"
           refreshInterval={refreshInterval}
+          inverseTrendColor={true}
         />
       </div>
 

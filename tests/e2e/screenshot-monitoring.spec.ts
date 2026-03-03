@@ -6,6 +6,35 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     // Setup authentication
     await setupAuth(page);
 
+    // Mock WebSocket for performance metrics
+    await page.routeWebSocket(/.*/, ws => {
+      ws.onMessage(msg => {
+        if (msg === '2probe') ws.send('3probe');
+        if (msg === '5') ws.send('6');
+      });
+
+      ws.send('0{"sid":"mock-session-id","upgrades":[],"pingInterval":25000,"pingTimeout":20000,"maxPayload":1000000}');
+      ws.send('40');
+
+      const now = Date.now();
+      const mockMetrics = [];
+      for (let i = 20; i >= 0; i--) {
+        mockMetrics.push({
+          timestamp: new Date(now - i * 5000).toISOString(),
+          cpuUsage: 15 + Math.random() * 5,
+          memoryUsage: 40 + Math.random() * 2,
+          activeConnections: 10 + Math.floor(Math.random() * 5),
+          messageRate: 5 + Math.random(),
+          errorRate: 2 + (i/2) + Math.random(), // error rate starts high, goes down to 2
+          responseTime: 120 + Math.random() * 10
+        });
+      }
+
+      setTimeout(() => {
+        ws.send(`42["performance_metrics_update",${JSON.stringify(mockMetrics)}]`);
+      }, 500);
+    });
+
     // Mock API endpoints
     await page.route('**/api/auth/check', async (route) => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
