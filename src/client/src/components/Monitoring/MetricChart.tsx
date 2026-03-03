@@ -9,6 +9,14 @@ export interface MetricData {
   category?: string;
 }
 
+type TrendDirection = 'up' | 'down' | 'stable';
+
+const TREND_COLORS = {
+  success: 'text-success',
+  error: 'text-error',
+  neutral: 'text-neutral',
+} as const;
+
 export interface MetricChartProps {
   title: string;
   data: MetricData[];
@@ -22,6 +30,10 @@ export interface MetricChartProps {
   refreshInterval?: number;
   onRefresh?: () => void;
   className?: string;
+  /**
+   * If true, an upward trend will be colored red (error) and a downward trend green (success).
+   * Useful for metrics where lower is better, such as error rates or latency.
+   */
   inverseTrendColor?: boolean;
 }
 
@@ -140,7 +152,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
     return `${Math.round(sum / chartData.length)}${unit}`;
   };
 
-  const getTrend = () => {
+  const getTrend = (): TrendDirection => {
     if (chartData.length < 2) {return 'stable';}
     const recent = chartData.slice(-5);
     const older = chartData.slice(-10, -5);
@@ -158,12 +170,9 @@ const MetricChart: React.FC<MetricChartProps> = ({
   };
 
   const trend = getTrend();
-  let trendColor = 'text-neutral';
-  if (trend === 'up') {
-    trendColor = inverseTrendColor ? 'text-error' : 'text-success';
-  } else if (trend === 'down') {
-    trendColor = inverseTrendColor ? 'text-success' : 'text-error';
-  }
+  const trendColor = trend === 'stable' ? TREND_COLORS.neutral :
+    trend === 'up' ? (inverseTrendColor ? TREND_COLORS.error : TREND_COLORS.success) :
+      (inverseTrendColor ? TREND_COLORS.success : TREND_COLORS.error);
 
   return (
     <div className={`card bg-base-100 shadow-xl ${className}`}>
