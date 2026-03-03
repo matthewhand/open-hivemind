@@ -55,7 +55,8 @@ export enum LLMProviderType {
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
   LOCAL = 'local',
-  OPENWEBUI = 'openwebui'
+  OPENWEBUI = 'openwebui',
+  FLOWISE = 'flowise'
 }
 
 export interface Persona {
@@ -376,6 +377,48 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'llama3:latest' },
     ],
   },
+  flowise: {
+    type: LLMProviderType.FLOWISE,
+    displayName: 'Flowise',
+    description: 'Connect to Flowise workflow engine for LLM capabilities',
+    icon: '🔀',
+    fields: [
+      {
+        name: 'apiEndpoint',
+        label: 'API Endpoint',
+        type: 'text',
+        required: true,
+        placeholder: 'http://localhost:3000',
+      },
+      {
+        name: 'apiKey',
+        label: 'API Key (Optional)',
+        type: 'password',
+        required: false,
+        placeholder: 'your-flowise-api-key',
+      },
+      {
+        name: 'conversationChatflowId',
+        label: 'Conversation Chatflow ID',
+        type: 'text',
+        required: true,
+        placeholder: 'chatflow-id-uuid',
+      },
+      {
+        name: 'completionChatflowId',
+        label: 'Completion Chatflow ID (Optional)',
+        type: 'text',
+        required: false,
+        placeholder: 'completion-chatflow-id-uuid',
+      },
+      {
+        name: 'useRest',
+        label: 'Use REST API',
+        type: 'checkbox',
+        required: false,
+      },
+    ],
+  }
 };
 
 export const DEFAULT_PERSONA: Persona = {
