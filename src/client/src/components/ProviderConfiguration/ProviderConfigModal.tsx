@@ -94,6 +94,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
   const validateForm = (): boolean => {
     let isValid = true;
+    const missingFields: string[] = [];
 
     // Validate name
     if (!providerName || providerName.trim() === '') {
@@ -104,7 +105,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const schema = getProviderSchema(selectedType);
-    if (!schema) return false;
+    if (!schema) {
+      setFormError(`Configuration schema not found for provider type "${selectedType}". Please contact support.`);
+      return false;
+    }
 
     // Further validation is implicitly handled by ProviderConfigForm internally,
     // but we can check required fields here too before submission.
@@ -148,7 +152,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     onSubmit(providerData);
   };
 
-  if (!modalState.isOpen) {return null;}
+  if (!modalState.isOpen) { return null; }
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;

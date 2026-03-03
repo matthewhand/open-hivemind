@@ -22,5 +22,5 @@ test('capture LLM modal', async ({ page }) => {
   // Wait for rendering
   await page.waitForTimeout(1000);
 
-  await page.screenshot({ path: '/home/jules/verification/llm-modal.png' });
+  await page.screenshot({ path: './test-results/llm-modal.png' });
 });
