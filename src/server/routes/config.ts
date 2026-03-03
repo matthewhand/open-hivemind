@@ -292,6 +292,67 @@ router.get('/bots', async (req, res) => {
   }
 });
 
+// GET /api/config/message-profiles - List all message profiles
+router.get('/message-profiles', (req, res) => {
+  try {
+    const profiles = getMessageProfiles();
+    return res.json({ profiles });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILES_GET_ERROR',
+    });
+  }
+});
+
+// POST /api/config/message-profiles - Create a new message profile
+router.post('/message-profiles', (req, res) => {
+  try {
+    const { key, name, provider, config } = req.body;
+
+    // Validation
+    if (!key || key.trim() === '') {
+      return res.status(400).json({ error: 'Message profile key is required' });
+    }
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Message profile name is required' });
+    }
+    if (!provider || provider.trim() === '') {
+      return res.status(400).json({ error: 'Message profile provider is required' });
+    }
+
+    const profiles = getMessageProfiles();
+
+    // Check for duplicate key
+    const normalizedKey = key.toLowerCase();
+    if (profiles.message.some((p) => p.key.toLowerCase() === normalizedKey)) {
+      return res.status(409).json({ error: `Message profile with key '${key}' already exists` });
+    }
+
+    const newProfile = {
+      key,
+      name,
+      provider,
+      config: config || {},
+    };
+
+    profiles.message.push(newProfile);
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: newProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_CREATE_ERROR',
+    });
+  }
+});
+
 // GET /api/config/sources - List all configuration sources
 router.get('/sources', async (req, res) => {
   try {
