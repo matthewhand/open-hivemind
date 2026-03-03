@@ -1,0 +1,3 @@
+## 2024-03-03 - [DaisyUI Avatar Placeholder Fallback Issue]
+**Learning:** Nesting a `.avatar` wrapper inside a `.avatar.placeholder` wrapper breaks the visual fallback state. The text color is ignored when it is placed inside an img fallback condition because DaisyUI expects the `.placeholder` to be on the outermost container to inherit background styles correctly.
+**Action:** When implementing avatar fallbacks in DaisyUI, avoid nesting structural classes. Apply `.placeholder` dynamically to the outermost `.avatar` div and ensure the inner background (`.bg-secondary`) is directly applied to the rounded element rather than nesting multiple `.avatar` divs.
