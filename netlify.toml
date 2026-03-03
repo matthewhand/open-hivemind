@@ -1,5 +1,7 @@
 [build]
   command = "npm run build:netlify"
+  # Only trigger Netlify builds for the main branch to save build minutes
+  ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
