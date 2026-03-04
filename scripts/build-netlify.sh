@@ -22,14 +22,6 @@ else
   exit 1
 fi
 
-# 4. Generate _redirects
-echo "🔹 Generating _redirects..."
-# Note: 200! means force=true
-cat <<EOF > dist/client/_redirects
-/api/*  /.netlify/functions/server  200!
-/*      /index.html                 200
-EOF
-
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
