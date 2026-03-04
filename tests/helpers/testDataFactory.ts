@@ -188,7 +188,7 @@ export const commandParserTestData = {
 };
 
 /**
- * Generates strongly-typed test data for different platform and command scenarios
+ * Factory function to create test data for different scenarios
  */
 export type CommandParserTestData = typeof commandParserTestData;
 
@@ -196,9 +196,7 @@ export function createTestData(type: 'discord'): ConfigTestData;
 export function createTestData(type: 'message'): ConfigTestData;
 export function createTestData(type: 'slack'): ConfigTestData;
 export function createTestData(type: 'command'): CommandParserTestData;
-export function createTestData(
-  type: 'discord' | 'message' | 'slack' | 'command'
-): ConfigTestData | CommandParserTestData {
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
   switch (type) {
     case 'discord':
       return discordConfigData;

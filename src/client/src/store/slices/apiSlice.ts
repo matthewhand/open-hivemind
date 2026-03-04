@@ -56,7 +56,7 @@ export const apiSlice = createApi({
     }),
     
     getStatus: builder.query<StatusResponse, void>({
-      query: () => '/api/dashboard/status',
+      query: () => '/api/dashboard/api/status',
       providesTags: ['Status'],
       // Polling will be handled by a custom hook
     }),

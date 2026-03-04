@@ -1,47 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test('verify MCP Guard UX', async ({ page }) => {
   await setupAuth(page);
   // Mock background polling endpoints
-  await page.route('/api/health/detailed', async (route) =>
-    route.fulfill({ status: 200, json: { status: 'ok' } })
-  );
-  await page.route('/api/config/llm-status', async (route) =>
-    route.fulfill({
-      status: 200,
-      json: {
-        defaultConfigured: true,
-        defaultProviders: [],
-        botsMissingLlmProvider: [],
-        hasMissing: false,
-      },
-    })
-  );
+  await page.route('/api/health/detailed', async (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+  await page.route('/api/config/llm-status', async (route) => route.fulfill({ status: 200, json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } }));
   await page.route('/api/config/global', async (route) => route.fulfill({ status: 200, json: {} }));
-  await page.route('/api/config/llm-profiles', async (route) =>
-    route.fulfill({ status: 200, json: [] })
-  );
-  await page.route('/api/demo/status', async (route) =>
-    route.fulfill({ status: 200, json: { enabled: false } })
-  );
-  await page.route('/api/csrf-token', async (route) =>
-    route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
-  );
-  await page.route('/api/admin/mcp-servers', async (route) =>
-    route.fulfill({
-      status: 200,
-      json: { success: true, data: { servers: [], configurations: [] } },
-    })
-  );
+  await page.route('/api/config/llm-profiles', async (route) => route.fulfill({ status: 200, json: [] }));
+  await page.route('/api/demo/status', async (route) => route.fulfill({ status: 200, json: { enabled: false } }));
+  await page.route('/api/csrf-token', async (route) => route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } }));
+  await page.route('/api/admin/mcp-servers', async (route) => route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } }));
 
   // Mock Guard Profiles
   await page.route('/api/admin/guard-profiles', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: [] }),
-    });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
   });
 
   await page.goto('/admin/guards');
@@ -75,5 +48,5 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1,user2');
+  expect(value).toBe('user1, user2');
 });

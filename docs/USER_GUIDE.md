@@ -245,7 +245,16 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
+
+![UI Components](screenshots/showcase-page.png)
+
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+
+**Workflow:**
+1. Navigate to Developer & Tools > UI Components in the sidebar.
+2. Select a component category (e.g., button, badge, modal) from the top navigation tabs.
+3. View the rendered DaisyUI components along with their various states and styles.
+4. Developers can reference these live components to ensure consistent design and behavior when building new features.
 
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
@@ -273,12 +282,6 @@ Browse and manage persisted specifications and design documents.
 
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
-
-![Static Pages](screenshots/static-pages.png)
-
-*   **Catalog View**: Browse through all available static pages in a card-based layout.
-*   **Descriptions**: Read a brief description of what each static page is meant to showcase or test.
-*   **Direct Access**: Click on any card to immediately navigate to that static page.
 
 ---
 

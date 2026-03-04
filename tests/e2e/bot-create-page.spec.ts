@@ -51,8 +51,8 @@ test.describe('Bot Create Page (Standalone)', () => {
         body: JSON.stringify({
           data: [
             { id: 'server-1', name: 'File System Server', description: 'Reads local files' },
-            { id: 'server-2', name: 'GitHub Server', description: 'Interacts with GitHub API' },
-          ],
+            { id: 'server-2', name: 'GitHub Server', description: 'Interacts with GitHub API' }
+          ]
         }),
       });
     });
