@@ -260,7 +260,6 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     },
   ];
 
-  // ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders when parent components re-render.
   return (
     <>
       <Card className="min-w-[350px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
@@ -397,4 +396,4 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
   );
 };
 
-export default React.memo(BotStatusCard);
+export default BotStatusCard;

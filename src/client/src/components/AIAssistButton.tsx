@@ -47,7 +47,6 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
     }
   };
 
-  // ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders when parent components re-render.
   return (
     <div
       className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
@@ -72,4 +71,4 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   );
 };
 
-export default React.memo(AIAssistButton);
+export default AIAssistButton;
