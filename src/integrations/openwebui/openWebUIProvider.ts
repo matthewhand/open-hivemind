@@ -22,9 +22,9 @@ export class OpenWebUIProvider implements ILlmProvider {
     // Or we expect the user to configure API keys per profile.
     let apiKey = this.config.apiKey || 'ollama';
     try {
-        apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
+      apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
     } catch {
-        // Ignore if apiKey is not in openWebUIConfig schema
+      // Ignore if apiKey is not in openWebUIConfig schema
     }
 
     this.client = axios.create({
