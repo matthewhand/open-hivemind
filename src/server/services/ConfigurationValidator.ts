@@ -463,7 +463,7 @@ export class ConfigurationValidator {
     const suggestions: string[] = [];
 
     // Check for environment variable overrides
-    const envPrefix = `BOTS_${config.name.toUpperCase().replace(/[^A_Z0-9]/g, '_')}_`;
+    const envPrefix = `BOTS_${config.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_`;
 
     const envMappings = {
       MESSAGE_PROVIDER: 'messageProvider',
