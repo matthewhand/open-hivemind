@@ -1,11 +1,13 @@
 import cors from 'cors';
 import express from 'express';
 import serverless from 'serverless-http';
+import { securityHeaders } from '@src/server/middleware/security';
 
 // Create Express app
 const app = express();
 
 // Set up middleware
+app.use(securityHeaders);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(
