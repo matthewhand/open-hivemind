@@ -44,7 +44,13 @@ const Diff: React.FC<DiffProps> = ({
       <div className="diff-item-2">
         {item2}
       </div>
-      <div className={twMerge('diff-resizer', resizerClassName)}></div>
+      <div
+        className={twMerge('diff-resizer', resizerClassName)}
+        tabIndex={0}
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize difference viewer"
+      ></div>
     </div>
   );
 };

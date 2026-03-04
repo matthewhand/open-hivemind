@@ -292,7 +292,6 @@ export const NotificationCenter: React.FC = () => {
         role="button" 
         className="btn btn-ghost btn-circle"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle notifications menu"
       >
         <div className="indicator">
           <span className="text-xl">🔔</span>

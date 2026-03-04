@@ -1,5 +1,4 @@
 import type { ProviderConfigSchema } from '../types';
-import ModelAutocomplete from '../../components/DaisyUI/ModelAutocomplete';
 
 export const anthropicProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -41,10 +40,6 @@ export const anthropicProviderSchema: ProviderConfigSchema = {
       placeholder: 'claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307...',
       defaultValue: 'claude-3-sonnet-20240229',
       group: 'Model Configuration',
-      component: ModelAutocomplete,
-      componentProps: {
-        providerType: 'anthropic',
-      },
     },
     {
       name: 'maxTokens',

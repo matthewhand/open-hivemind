@@ -782,12 +782,12 @@ const BotsPage: React.FC = () => {
             {previewTab === 'activity' && (
               <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
                 <div className="flex items-center justify-end mb-3">
-                  <div className="form-control w-full flex flex-col items-end">
+                  <div className="form-control w-full flex items-end">
                     <div className="join">
                       <input
                         type="text"
                         placeholder="Filter logs..."
-                        className="input input-xs input-bordered w-32 join-item"
+                        className="input input-xs input-bordered join-item w-32"
                         value={logFilter}
                         onChange={(e) => setLogFilter(e.target.value)}
                       />
