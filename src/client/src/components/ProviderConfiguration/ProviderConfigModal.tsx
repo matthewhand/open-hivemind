@@ -368,8 +368,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const allFields = config?.fields || [];
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
+    <dialog className="modal modal-open">
+      <div className="modal-box max-w-2xl bg-base-100">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold">
@@ -482,7 +482,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
+    </dialog>
   );
 };
 
