@@ -49,7 +49,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
-
+  const [unreadStartIndex, setUnreadStartIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +61,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (force) {
           setIsAutoScroll(true);
           setHasNewMessages(false);
+          setUnreadStartIndex(null);
         }
       }, 0);
     } else if (!isAutoScroll) {
@@ -77,14 +78,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (isAtBottom) {
       setIsAutoScroll(true);
       setHasNewMessages(false);
+      setUnreadStartIndex(null);
     } else {
       setIsAutoScroll(false);
     }
   };
 
   useEffect(() => {
+    if (!isAutoScroll && messages.length > 0) {
+      if (unreadStartIndex === null) {
+        setUnreadStartIndex(messages.length - 1);
+      }
+    } else if (isAutoScroll) {
+       setUnreadStartIndex(null);
+    }
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isAutoScroll]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +119,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const renderMessage = (message: ChatMessage, index: number) => {
+    const showUnreadDivider = unreadStartIndex === index;
     const isCurrentUser = message.sender.id === currentUserId;
     const isBot = message.sender.type === 'bot';
     const isSystem = message.sender.type === 'system';
@@ -122,16 +132,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     if (isSystem) {
       return (
-        <div key={message.id} className="flex justify-center my-4">
-          <div className="badge badge-neutral badge-outline">
-            {message.content}
+        <React.Fragment key={message.id}>
+          {showUnreadDivider && (
+            <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
+          )}
+          <div className="flex justify-center my-4">
+            <div className="badge badge-neutral badge-outline">
+              {message.content}
+            </div>
           </div>
-        </div>
+        </React.Fragment>
       );
     }
 
     return (
-      <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
+      <React.Fragment key={message.id}>
+        {showUnreadDivider && (
+          <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
+        )}
+        <div className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
           <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
             {message.sender.avatar ? (
@@ -217,8 +236,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         )}
       </div>
-    );
-  };
+    </React.Fragment>
+  );
+};
 
   return (
     <div className={`flex flex-col bg-base-100 ${className}`} style={{ height: maxHeight }}>
@@ -255,11 +275,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Messages Container */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-1 relative"
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="text-6xl mb-4">💬</div>
