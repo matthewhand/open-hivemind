@@ -57,7 +57,6 @@ const MCPServersPage: React.FC = () => {
   const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // Search and Filter State
@@ -301,7 +300,6 @@ const MCPServersPage: React.FC = () => {
     }
 
     try {
-      setIsSaving(true);
       if (isEditing) {
         // For editing, we disconnect and reconnect
         await fetch('/api/admin/mcp-servers/disconnect', {
@@ -332,8 +330,6 @@ const MCPServersPage: React.FC = () => {
       await fetchServers();
     } catch (err) {
       setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save server' });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -673,16 +669,15 @@ const MCPServersPage: React.FC = () => {
           <button
             className="btn btn-ghost mr-auto"
             onClick={handleTestConnection}
-            disabled={isTesting || isSaving}
+            disabled={isTesting}
           >
             {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
             Test Connection
           </button>
-          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)} disabled={isTesting || isSaving}>
+          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={handleSaveServer} disabled={isTesting || isSaving}>
-            {isSaving ? <span className="loading loading-spinner loading-xs mr-2"></span> : null}
+          <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
           </button>
         </div>
