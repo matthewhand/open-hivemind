@@ -15,6 +15,7 @@ interface BotChatBubblesProps {
 }
 
 const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false }) => {
+    // ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of the chat history.
     if (loading) {
         return (
             <div className="flex flex-col gap-4 p-4">
@@ -69,4 +70,4 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
     );
 };
 
-export default BotChatBubbles;
+export default React.memo(BotChatBubbles);
