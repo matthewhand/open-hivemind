@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Input from './Input';
 
 interface FormField {
@@ -50,22 +50,47 @@ const ModalForm: React.FC<ModalFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useRef<HTMLDialogElement>(null);
 
+  // Open / close the native dialog to get proper backdrop + focus trap
   useEffect(() => {
+    const dialog = modalRef.current;
+    if (!dialog) return;
     if (isOpen) {
       setFormData(initialData);
       setErrors({});
       setCurrentStep(0);
+      if (!dialog.open) dialog.showModal();
+    } else {
+      if (dialog.open) dialog.close();
     }
   }, [isOpen, initialData]);
 
+  // Close on Escape key (native dialog already does this, but we also call onClose)
+  const handleCancel = useCallback((e: Event) => {
+    e.preventDefault(); // prevent the dialog from closing itself before onClose
+    if (!isSubmitting) onClose();
+  }, [isSubmitting, onClose]);
+
+  useEffect(() => {
+    const dialog = modalRef.current;
+    if (!dialog) return;
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
+  }, [handleCancel]);
+
+  // Backdrop click → close (click on the <dialog> element itself, outside the box)
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === modalRef.current && !isSubmitting) onClose();
+  }, [isSubmitting, onClose]);
+
   const getSizeClass = () => {
     switch (size) {
-    case 'sm': return 'w-11/12 max-w-md';
-    case 'md': return 'w-11/12 max-w-2xl';
-    case 'lg': return 'w-11/12 max-w-4xl';
-    case 'xl': return 'w-11/12 max-w-6xl';
-    default: return 'w-11/12 max-w-2xl';
+      case 'sm': return 'w-11/12 max-w-md';
+      case 'md': return 'w-11/12 max-w-2xl';
+      case 'lg': return 'w-11/12 max-w-4xl';
+      case 'xl': return 'w-11/12 max-w-6xl';
+      default: return 'w-11/12 max-w-2xl';
     }
   };
 
@@ -73,17 +98,17 @@ const ModalForm: React.FC<ModalFormProps> = ({
     if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
       return `${field.label} is required`;
     }
-    
+
     if (field.validation) {
       return field.validation(value);
     }
-    
+
     return null;
   };
 
   const validateStep = (stepIndex: number): boolean => {
-    if (!steps) {return true;}
-    
+    if (!steps) { return true; }
+
     const stepFields = steps[stepIndex].fields;
     const stepErrors: Record<string, string> = {};
     let isValid = true;
@@ -105,7 +130,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleInputChange = (fieldName: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[fieldName]) {
       setErrors(prev => ({ ...prev, [fieldName]: '' }));
@@ -124,7 +149,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all fields
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
@@ -152,113 +177,117 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const renderField = (field: FormField) => {
     const hasError = !!errors[field.name];
-    
+
     switch (field.type) {
-    case 'textarea':
-      return (
-        <textarea
-          className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''}`}
-          placeholder={field.placeholder}
-          value={formData[field.name] || ''}
-          onChange={(e) => handleInputChange(field.name, e.target.value)}
-          disabled={field.disabled || loading}
-          rows={4}
-        />
-      );
-        
-    case 'select':
-      return (
-        <select
-          className={`select select-bordered w-full ${hasError ? 'select-error' : ''}`}
-          value={formData[field.name] || ''}
-          onChange={(e) => handleInputChange(field.name, e.target.value)}
-          disabled={field.disabled || loading}
-          multiple={field.multiple}
-        >
-          <option value="">{field.placeholder || 'Select an option'}</option>
-          {field.options?.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      );
-        
-    case 'checkbox':
-      return (
-        <div className="form-control">
-          <label className="label cursor-pointer justify-start gap-2">
-            <input
-              type="checkbox"
-              className="checkbox"
-              checked={formData[field.name] || false}
-              onChange={(e) => handleInputChange(field.name, e.target.checked)}
-              disabled={field.disabled || loading}
-            />
-            <span className="label-text">{field.label}</span>
-          </label>
-        </div>
-      );
-        
-    case 'radio':
-      return (
-        <div className="form-control">
-          {field.options?.map(option => (
-            <label key={option.value} className="label cursor-pointer justify-start gap-2">
+      case 'textarea':
+        return (
+          <textarea
+            className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''}`}
+            placeholder={field.placeholder}
+            value={formData[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            disabled={field.disabled || loading}
+            rows={4}
+          />
+        );
+
+      case 'select':
+        return (
+          <select
+            className={`select select-bordered w-full ${hasError ? 'select-error' : ''}`}
+            value={formData[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            disabled={field.disabled || loading}
+            multiple={field.multiple}
+          >
+            <option value="">{field.placeholder || 'Select an option'}</option>
+            {field.options?.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'checkbox':
+        return (
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-2">
               <input
-                type="radio"
-                name={field.name}
-                className="radio"
-                value={option.value}
-                checked={formData[field.name] === option.value}
-                onChange={(e) => handleInputChange(field.name, e.target.value)}
+                type="checkbox"
+                className="checkbox"
+                checked={formData[field.name] || false}
+                onChange={(e) => handleInputChange(field.name, e.target.checked)}
                 disabled={field.disabled || loading}
               />
-              <span className="label-text">{option.label}</span>
+              <span className="label-text">{field.label}</span>
             </label>
-          ))}
-        </div>
-      );
-        
-    case 'file':
-      return (
-        <input
-          type="file"
-          className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''}`}
-          onChange={(e) => handleInputChange(field.name, e.target.files?.[0])}
-          disabled={field.disabled || loading}
-          multiple={field.multiple}
-        />
-      );
-        
-    default:
-      return (
-        <Input
-          type={field.type}
-          variant={hasError ? 'error' : undefined}
-          placeholder={field.placeholder}
-          value={formData[field.name] || ''}
-          onChange={(e) => handleInputChange(field.name, e.target.value)}
-          disabled={field.disabled || loading}
-        />
-      );
+          </div>
+        );
+
+      case 'radio':
+        return (
+          <div className="form-control">
+            {field.options?.map(option => (
+              <label key={option.value} className="label cursor-pointer justify-start gap-2">
+                <input
+                  type="radio"
+                  name={field.name}
+                  className="radio"
+                  value={option.value}
+                  checked={formData[field.name] === option.value}
+                  onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  disabled={field.disabled || loading}
+                />
+                <span className="label-text">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        );
+
+      case 'file':
+        return (
+          <input
+            type="file"
+            className={`file-input file-input-bordered w-full ${hasError ? 'file-input-error' : ''}`}
+            onChange={(e) => handleInputChange(field.name, e.target.files?.[0])}
+            disabled={field.disabled || loading}
+            multiple={field.multiple}
+          />
+        );
+
+      default:
+        return (
+          <Input
+            type={field.type}
+            variant={hasError ? 'error' : undefined}
+            placeholder={field.placeholder}
+            value={formData[field.name] || ''}
+            onChange={(e) => handleInputChange(field.name, e.target.value)}
+            disabled={field.disabled || loading}
+          />
+        );
     }
   };
 
   const getCurrentStepFields = () => {
-    if (!steps) {return fields;}
+    if (!steps) { return fields; }
     return fields.filter(field => steps[currentStep].fields.includes(field.name));
   };
 
-  if (!isOpen) {return null;}
-
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={modalRef}
+      className="modal"
+      onClick={handleBackdropClick}
+      aria-labelledby="modal-form-title"
+      aria-modal="true"
+    >
       <div className={`modal-box ${getSizeClass()}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg">{title}</h3>
-          <button 
+          <h3 id="modal-form-title" className="font-bold text-lg">{title}</h3>
+          <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
             disabled={isSubmitting}
@@ -273,7 +302,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           <div className="mb-6">
             <ul className="steps steps-horizontal w-full">
               {steps.map((step, index) => (
-                <li 
+                <li
                   key={index}
                   className={`step ${index <= currentStep ? 'step-primary' : ''}`}
                 >
@@ -281,7 +310,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 </li>
               ))}
             </ul>
-            
+
             {steps[currentStep].description && (
               <div className="mt-2 text-sm text-base-content/60 text-center">
                 {steps[currentStep].description}
@@ -303,15 +332,15 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     </span>
                   </label>
                 )}
-                
+
                 {renderField(field)}
-                
+
                 {errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-error">{errors[field.name]}</span>
                   </label>
                 )}
-                
+
                 {field.helperText && !errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-base-content/60">{field.helperText}</span>
@@ -333,7 +362,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 >
                   Previous
                 </button>
-                
+
                 {currentStep < steps.length - 1 ? (
                   <button
                     type="button"
@@ -377,7 +406,11 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      {/* Backdrop form — clicking it closes the dialog (DaisyUI pattern) */}
+      <form method="dialog" className="modal-backdrop">
+        <button type="submit" aria-label="Close modal" onClick={() => !isSubmitting && onClose()}>close</button>
+      </form>
+    </dialog>
   );
 };
 
