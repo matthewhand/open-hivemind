@@ -39,6 +39,13 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       return `${field.label} is required`;
     }
 
+    if (field.type === 'url' && value && typeof value === 'string') {
+      const validateUrlRegex = /^(https?:\/\/)?(localhost|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/i;
+      if (!validateUrlRegex.test(value)) {
+        return `${field.label} must be a valid URL`;
+      }
+    }
+
     if (field.validation && value !== undefined && value !== null && value !== '') {
       const { min, max, pattern } = field.validation;
 
