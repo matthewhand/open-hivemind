@@ -6,6 +6,7 @@ import { MessageSquare, Bot, Users, Zap, BarChart3 } from 'lucide-react';
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
   allowBotToBot: boolean;
+  botResponseModifier: number;
   unsolicitedAddressed: boolean;
   unsolicitedUnaddressed: boolean;
   baseChance: number;
@@ -91,6 +92,7 @@ const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
     onlyWhenSpokenTo: true,
     allowBotToBot: false,
+    botResponseModifier: -0.1,
     unsolicitedAddressed: true,
     unsolicitedUnaddressed: false,
     baseChance: 5,
@@ -121,6 +123,7 @@ const SettingsMessaging: React.FC = () => {
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
         allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
+        botResponseModifier: data.MESSAGE_BOT_RESPONSE_MODIFIER ?? -0.1,
         unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
         unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
@@ -157,6 +160,7 @@ const SettingsMessaging: React.FC = () => {
           message: {
             MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
             MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+            MESSAGE_BOT_RESPONSE_MODIFIER: settings.botResponseModifier,
             MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
             MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
@@ -285,6 +289,33 @@ const SettingsMessaging: React.FC = () => {
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
             </div>
           )}
+
+
+          <div className="form-control mt-4">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Bot Response Modifier</span>
+              <span className="badge badge-secondary font-mono">{settings.botResponseModifier.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="-1.0"
+              max="1.0"
+              step="0.05"
+              value={settings.botResponseModifier}
+              onChange={(e) => handleChange('botResponseModifier', parseFloat(e.target.value))}
+              className="range range-sm range-secondary"
+              disabled={!settings.allowBotToBot}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>-1.0 (Strong Penalty)</span>
+              <span>0.0</span>
+              <span>+1.0 (Strong Bonus)</span>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Modifies the base chance to respond when the message is from another bot.
+            </p>
+          </div>
+
         </div>
 
         {/* Unsolicited Replies */}
@@ -465,6 +496,11 @@ const SettingsMessaging: React.FC = () => {
                   <td>Allow Bot-to-Bot</td>
                   <td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td>
                   <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Bot Response Modifier</td>
+                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
+                  <td>{settings.botResponseModifier.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td>Unsolicited Addressed</td>
