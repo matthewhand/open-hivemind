@@ -18,7 +18,7 @@ echo "[build:frontend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS
 set -x
 # Run vite build directly using local node_modules
 cd src/client
-NODE_ENV=production ../../node_modules/.bin/vite build
+NODE_ENV=production node ../../node_modules/vite/bin/vite.js build
 cd ../..
 set +x
 echo "[build:frontend] finished at $(timestamp)"
