@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-import { MessageSquare, Bot, Users, Zap, BarChart3 } from 'lucide-react';
+import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -12,80 +12,7 @@ interface MessagingConfig {
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
-  semanticRelevanceEnabled: boolean;
-  semanticRelevanceBonus: number;
 }
-
-/**
- * RelevanceImpactCalculator - Visual tool to understand how semantic relevance affects response probability
- */
-interface RelevanceImpactCalculatorProps {
-  baseChance: number;
-  relevanceBonus: number;
-  isEnabled: boolean;
-}
-
-const RelevanceImpactCalculator: React.FC<RelevanceImpactCalculatorProps> = ({
-  baseChance,
-  relevanceBonus,
-  isEnabled
-}) => {
-  const scenarios = [
-    { label: 'Low Relevance', score: 0.3, color: 'bg-error' },
-    { label: 'Medium Relevance', score: 0.6, color: 'bg-warning' },
-    { label: 'High Relevance', score: 0.9, color: 'bg-success' },
-  ];
-
-  const calculateFinalChance = (relevanceScore: number) => {
-    if (!isEnabled) return baseChance;
-    // Formula: baseChance + (relevanceScore * relevanceBonus * 2)
-    // The multiplier of 2 is for demonstration to show significant differences
-    const boost = relevanceScore * relevanceBonus * 2;
-    return Math.min(baseChance + boost, 100);
-  };
-
-  return (
-    <div className={`p-3 rounded-lg bg-base-100 border border-base-300 ${!isEnabled ? 'opacity-50' : ''}`}>
-      <h6 className="text-sm font-semibold mb-3 flex items-center gap-2">
-        <BarChart3 className="w-4 h-4 text-info" />
-        Relevance Impact Preview
-        {!isEnabled && <span className="badge badge-sm badge-ghost">Disabled</span>}
-      </h6>
-
-      <div className="space-y-3">
-        {scenarios.map((scenario) => {
-          const finalChance = calculateFinalChance(scenario.score);
-          return (
-            <div key={scenario.label} className="flex flex-col gap-1">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-medium">{scenario.label}</span>
-                <span className="font-mono text-info">{finalChance.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
-                <div
-                  className={`h-full ${scenario.color} transition-all duration-500`}
-                  style={{ width: `${finalChance}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-base-content/50">
-                <span>Base: {baseChance}%</span>
-                <span>Boost: +{(finalChance - baseChance).toFixed(1)}%</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-3 p-2 bg-info/10 rounded text-xs">
-        <p className="text-info">
-          <strong>How it works:</strong> When semantic relevance is enabled, the bot analyzes
-          each message with a 1-token LLM call. High relevance scores multiply your base chance,
-          making the bot more likely to engage with on-topic conversations.
-        </p>
-      </div>
-    </div>
-  );
-};
 
 const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
@@ -96,8 +23,6 @@ const SettingsMessaging: React.FC = () => {
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
-    semanticRelevanceEnabled: true,
-    semanticRelevanceBonus: 10,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -126,8 +51,6 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
-        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? true,
-        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 10,
       });
     } catch {
       setAlert({
@@ -162,8 +85,6 @@ const SettingsMessaging: React.FC = () => {
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
-            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
-            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -334,7 +255,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control mb-3">
+          <div className="form-control">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -349,55 +270,6 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
-
-          <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Semantic Search Relevance</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.semanticRelevanceEnabled}
-                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
-                color="info"
-              />
-            </label>
-          </div>
-
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Semantic Relevance Threshold Tuning</span>
-              <span className="badge badge-info font-mono text-xs">{settings.semanticRelevanceBonus}x</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              value={settings.semanticRelevanceBonus}
-              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-              className="range range-sm range-info"
-              disabled={!settings.semanticRelevanceEnabled}
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>1x</span>
-              <span>25x</span>
-              <span>50x</span>
-            </div>
-            <p className="text-xs text-base-content/60 mt-2">
-              Multiplier to apply when a message is semantically relevant and the bot has posted recently
-            </p>
-          </div>
-
-          {/* Relevance Impact Calculator */}
-          <div className="divider my-3"></div>
-          <RelevanceImpactCalculator
-            baseChance={settings.baseChance}
-            relevanceBonus={settings.semanticRelevanceBonus}
-            isEnabled={settings.semanticRelevanceEnabled}
-          />
         </div>
 
         {/* Probability */}
@@ -487,16 +359,6 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
-                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance Bonus</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
-                  <td>{settings.semanticRelevanceBonus}</td>
                 </tr>
               </tbody>
             </table>
