@@ -54,8 +54,7 @@ export enum LLMProviderType {
   ANTHROPIC = 'anthropic',
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
-  LOCAL = 'local',
-  FLOWISE = 'flowise'
+  LOCAL = 'local'
 }
 
 export interface Persona {
@@ -343,7 +342,13 @@ export const LLM_PROVIDER_CONFIGS = {
     displayName: 'Ollama',
     description: 'Local models via Ollama',
     icon: '🦙',
-    fields: [],
+    fields: [
+      { name: 'endpoint', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:11434' },
+      { name: 'model', label: 'Model', type: 'text', required: true, placeholder: 'llama2, codellama, mistral, etc.' },
+      { name: 'maxTokens', label: 'Max Tokens', type: 'number', required: false, placeholder: '2048', validation: { min: 1, max: 8192 } },
+      { name: 'temperature', label: 'Temperature', type: 'number', required: false, placeholder: '0.7', validation: { min: 0, max: 2 } },
+      { name: 'keepAlive', label: 'Keep Alive', type: 'text', required: false, placeholder: '5m' },
+    ],
   },
   huggingface: {
     type: LLMProviderType.HUGGINGFACE,
@@ -358,17 +363,6 @@ export const LLM_PROVIDER_CONFIGS = {
     description: 'Custom local models',
     icon: '🏠',
     fields: [],
-  },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Connect to Flowise AI chatflows',
-    icon: '⚡',
-    fields: [
-      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
-    ],
   },
 };
 
