@@ -3,9 +3,9 @@ import { twMerge } from 'tailwind-merge';
 
 export interface DiffProps {
   /** The first item to compare (left side) */
-  item1: React.ReactNode;
+  oldVersion: React.ReactNode;
   /** The second item to compare (right side) */
-  item2: React.ReactNode;
+  currentVersion: React.ReactNode;
   /** Additional CSS classes for the container */
   className?: string;
   /** Additional CSS classes for the resizer handle */
@@ -21,14 +21,14 @@ export interface DiffProps {
  *
  * @example
  * <Diff
- *   item1={<img src="img1.jpg" alt="Before" />}
- *   item2={<img src="img2.jpg" alt="After" />}
+ *   oldVersion={<img src="img1.jpg" alt="Before" />}
+ *   currentVersion={<img src="img2.jpg" alt="After" />}
  *   aspectRatio="aspect-[16/9]"
  * />
  */
 const Diff: React.FC<DiffProps> = ({
-  item1,
-  item2,
+  oldVersion,
+  currentVersion,
   className = '',
   resizerClassName = '',
   aspectRatio = 'aspect-[16/9]'
@@ -36,10 +36,10 @@ const Diff: React.FC<DiffProps> = ({
   return (
     <div className={twMerge('diff', aspectRatio, className)}>
       <div className="diff-item-1">
-        {item1}
+        {oldVersion}
       </div>
       <div className="diff-item-2">
-        {item2}
+        {currentVersion}
       </div>
       <div className={twMerge('diff-resizer', resizerClassName)}></div>
     </div>

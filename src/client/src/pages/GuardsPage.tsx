@@ -295,11 +295,10 @@ const GuardsPage: React.FC = () => {
             },
           ]}
         >
-          <div className="form-control mb-4">
-            <label className="label"><span className="label-text">Profile Name</span></label>
-            <input
+          <div className="mb-4">
+            <Input
               type="text"
-              className="input input-bordered"
+              label="Profile Name"
               value={editingProfile.name}
               onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
               placeholder="e.g. Strict Production"
@@ -346,12 +345,11 @@ const GuardsPage: React.FC = () => {
                   </select>
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
-                  <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <input
+                  <div className="mt-4">
+                    <Input
                       id="allowed-users"
                       type="text"
-                      className="input input-bordered"
+                      label="Allowed User IDs (comma separated)"
                       value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
                       // Note: Using trimStart() allows trailing commas during typing for better UX.
                       // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
@@ -361,20 +359,19 @@ const GuardsPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <input
+                <div className="mt-4">
+                  <Input
                     id="allowed-tools"
                     type="text"
-                    className="input input-bordered"
+                    label="Allowed Tools (comma separated)"
                     placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
                     // Note: Using trimStart() allows trailing commas during typing for better UX.
                     // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
                     onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
+                    helperText="Leave empty to allow all tools (if enabled)"
                   />
-                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
               </div>
             </div>

@@ -30,7 +30,13 @@ export class SlackInteractiveHandler {
 
   async handleBlockAction(payload: any, res: Response): Promise<void> {
     try {
-      const actionId = payload.actions[0].action_id;
+      const actionId = payload.actions?.[0]?.action_id;
+      if (!actionId) {
+        debug('[Slack] Missing or invalid actions array in payload');
+        res.status(400).send('Bad Request');
+        return;
+      }
+
       debug(`[Slack] Handling block action: ${actionId}`);
       // Immediately acknowledge the interactive action.
       res.status(200).send();
@@ -42,7 +48,8 @@ export class SlackInteractiveHandler {
       }
 
       if (actionId === 'getting_started') {
-        await this.handlers.sendInteractiveHelpMessage(defaultChannel, payload.user.id);
+        const userId = payload.user?.id || 'unknown';
+        await this.handlers.sendInteractiveHelpMessage(defaultChannel, userId);
       } else {
         switch (actionId) {
           case 'see_course_info':
@@ -55,6 +62,10 @@ export class SlackInteractiveHandler {
             await this.handlers.sendStudyResources(defaultChannel);
             break;
           case 'ask_question':
+            if (!payload.trigger_id) {
+              debug('[Slack] Missing trigger_id in ask_question payload. Cannot open modal.');
+              break;
+            }
             await this.handlers.sendAskQuestionModal(payload.trigger_id);
             break;
           default:

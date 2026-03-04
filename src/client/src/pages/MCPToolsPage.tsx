@@ -7,21 +7,9 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, Input } from '../components/DaisyUI';
 
-interface MCPTool {
-  id: string;
-  name: string;
-  serverId: string;
-  serverName: string;
-  description: string;
-  category: string;
-  inputSchema: any;
-  outputSchema: any;
-  usageCount: number;
-  lastUsed?: string;
-  enabled: boolean;
-}
+import { type MCPTool } from '../types/mcp';
 
 const MCPToolsPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
@@ -87,7 +75,7 @@ const MCPToolsPage: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchTerm.toLowerCase()),
+        (tool.description || '').toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -104,7 +92,7 @@ const MCPToolsPage: React.FC = () => {
     setFilteredTools(filtered);
   }, [tools, searchTerm, categoryFilter, serverFilter]);
 
-  const categories = Array.from(new Set(tools.map(tool => tool.category)));
+  const categories = Array.from(new Set(tools.map(tool => tool.category || 'uncategorized')));
   const servers = Array.from(new Set(tools.map(tool => ({ id: tool.serverId, name: tool.serverName }))));
 
   const getCategoryColor = (category: string) => {
@@ -185,7 +173,7 @@ const MCPToolsPage: React.FC = () => {
       // Update usage count
       setTools(prev => prev.map(t =>
         t.id === selectedTool.id
-          ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
+          ? { ...t, usageCount: (t.usageCount || 0) + 1, lastUsed: new Date().toISOString() }
           : t,
       ));
 
@@ -247,18 +235,16 @@ const MCPToolsPage: React.FC = () => {
                   disabled={isRunning}
                 />
               ) : type === 'integer' || type === 'number' ? (
-                <input
+                <Input
                   type="number"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] !== undefined && formArgs[key] !== null ? formArgs[key] : ''}
                   onChange={(e) => updateFormArg(key, e.target.value === '' ? undefined : Number(e.target.value))}
                   disabled={isRunning}
                 />
               ) : (
-                <input
+                <Input
                   type="text"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] || ''}
                   onChange={(e) => updateFormArg(key, e.target.value)}
@@ -312,19 +298,15 @@ const MCPToolsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
-          <div className="input-group">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search tools..."
-                className="input input-bordered w-full pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
-            </div>
-          </div>
+        <div className="w-full md:w-auto md:flex-1 max-w-md">
+          <Input
+            type="text"
+            placeholder="Search tools..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            prefix={<SearchIcon className="w-5 h-5 text-base-content/50" />}
+          />
         </div>
 
         <select
@@ -379,14 +361,14 @@ const MCPToolsPage: React.FC = () => {
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                <div className={`badge ${getCategoryColor(tool.category)}`}>
-                  {tool.category}
+                <div className={`badge ${getCategoryColor(tool.category || 'uncategorized')}`}>
+                  {tool.category || 'Uncategorized'}
                 </div>
                 <div className="badge badge-outline">{tool.serverName}</div>
               </div>
 
               <div className="text-xs space-y-1 mb-4">
-                <p><strong>Usage:</strong> {tool.usageCount} times</p>
+                <p><strong>Usage:</strong> {tool.usageCount || 0} times</p>
                 {tool.lastUsed && (
                   <p className="text-base-content/50">
                     Last used: {new Date(tool.lastUsed).toLocaleString()}
@@ -397,7 +379,7 @@ const MCPToolsPage: React.FC = () => {
               <div className="card-actions justify-between mt-auto">
                 <button
                   className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
-                  onClick={() => handleToggleTool(tool.id)}
+                  onClick={() => handleToggleTool(tool.id!)}
                 >
                   {tool.enabled ? 'Disable' : 'Enable'}
                 </button>
@@ -483,12 +465,12 @@ const MCPToolsPage: React.FC = () => {
             </div>
 
             {mode === 'form' ? (
-               <div className="bg-base-200 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-bold text-sm uppercase opacity-50">Arguments Form</span>
-                  </div>
-                  {renderFormFields()}
-               </div>
+              <div className="bg-base-200 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-bold text-sm uppercase opacity-50">Arguments Form</span>
+                </div>
+                {renderFormFields()}
+              </div>
             ) : (
               <div className="form-control">
                 <label className="label">
@@ -503,7 +485,7 @@ const MCPToolsPage: React.FC = () => {
                     // Try to sync back to formArgs if valid JSON
                     try {
                       setFormArgs(JSON.parse(e.target.value));
-                    } catch {}
+                    } catch { }
                   }}
                   placeholder="{}"
                   disabled={isRunning}

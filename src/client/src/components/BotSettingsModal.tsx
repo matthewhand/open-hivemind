@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
+import { Tooltip } from './DaisyUI';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 
 // Extended Bot type with UI-specific fields
@@ -47,12 +48,20 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     onDelete,
     onViewDetails
 }) => {
-    if (!isOpen) return null;
+    const dialogRef = useRef<HTMLDialogElement>(null);
 
-    const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
+    useEffect(() => {
+        if (isOpen) {
+            if (!dialogRef.current?.open) dialogRef.current?.showModal();
+        } else {
+            if (dialogRef.current?.open) dialogRef.current?.close();
+        }
+    }, [isOpen]);
+
+    const isEnvProtected = bot?.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     return (
-        <dialog className="modal modal-open" onClose={onClose}>
+        <dialog ref={dialogRef} className="modal" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
                     <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
@@ -86,9 +95,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <span className="label-text flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4 opacity-70" /> Messenger
                                     {bot.envOverrides?.messageProvider && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Communication channel</span>
@@ -123,9 +132,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <span className="label-text flex items-center gap-2">
                                     <Cpu className="w-4 h-4 opacity-70" /> LLM Profile
                                     {bot.envOverrides?.llmProvider && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Intelligence model</span>
@@ -175,9 +184,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                     </div>
                                     Persona
                                     {bot.envOverrides?.persona && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Personality & Instructions</span>
@@ -246,15 +255,26 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <Copy className="w-4 h-4" /> Clone Configuration
                             </button>
 
-                            <div className={isEnvProtected ? 'tooltip tooltip-top w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
-                                <button
-                                    className="btn btn-outline btn-error w-full justify-start gap-3"
-                                    disabled={isEnvProtected}
-                                    onClick={() => onDelete(bot)}
-                                >
-                                    <Trash2 className="w-4 h-4" /> Delete Bot
-                                </button>
-                            </div>
+                            {isEnvProtected ? (
+                                <Tooltip content="Cannot delete: Defined by environment variables" position="top" className="w-full">
+                                    <button
+                                        className="btn btn-outline btn-error w-full justify-start gap-3"
+                                        disabled={isEnvProtected}
+                                        onClick={() => onDelete(bot)}
+                                    >
+                                        <Trash2 className="w-4 h-4" /> Delete Bot
+                                    </button>
+                                </Tooltip>
+                            ) : (
+                                <div className="w-full">
+                                    <button
+                                        className="btn btn-outline btn-error w-full justify-start gap-3"
+                                        onClick={() => onDelete(bot)}
+                                    >
+                                        <Trash2 className="w-4 h-4" /> Delete Bot
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                     </div>

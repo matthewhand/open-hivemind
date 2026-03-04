@@ -40,7 +40,7 @@ describe('SlackInteractiveHandler', () => {
   describe('handleRequest', () => {
     it('should handle various request scenarios', async () => {
       // Test block_actions payload type
-      let payload = {
+      let payload: any = {
         type: 'block_actions',
         actions: [{ action_id: 'see_course_info' }],
         user: { id: 'U123' },
@@ -140,7 +140,7 @@ describe('SlackInteractiveHandler', () => {
   describe('handleBlockAction', () => {
     it('should handle block action scenarios', async () => {
       // Test see_course_info action
-      let payload = {
+      let payload: any = {
         actions: [{ action_id: 'see_course_info' }],
       };
 
@@ -170,6 +170,69 @@ describe('SlackInteractiveHandler', () => {
       expect(mockResponse.send).toHaveBeenCalled();
       // Unknown actions should not call any handlers
       expect(mockHandlers.sendCourseInfo).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 Bad Request when actions array is missing or empty', async () => {
+      let payload: any = {
+        type: 'block_actions'
+        // actions field missing completely
+      };
+
+      await (handler as any).handleBlockAction(payload, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith('Bad Request');
+
+      jest.clearAllMocks();
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      } as any;
+
+      payload = {
+        type: 'block_actions',
+        actions: [] // empty actions array
+      };
+
+      await (handler as any).handleBlockAction(payload, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith('Bad Request');
+    });
+
+    it('should handle missing user object gracefully for getting_started action', async () => {
+      const payload = {
+        actions: [{ action_id: 'getting_started' }]
+        // user object missing completely
+      };
+
+      process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
+
+      await (handler as any).handleBlockAction(payload, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.send).toHaveBeenCalled();
+
+      // Should fallback to 'unknown'
+      expect(mockHandlers.sendInteractiveHelpMessage).toHaveBeenCalledWith('C123', 'unknown');
+    });
+
+    it('should handle missing trigger_id gracefully for ask_question action', async () => {
+      const payload = {
+        actions: [{ action_id: 'ask_question' }]
+        // trigger_id missing
+      };
+
+      process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
+
+      await (handler as any).handleBlockAction(payload, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.send).toHaveBeenCalled();
+
+      // Should log and break without calling handler
+      expect(mockHandlers.sendAskQuestionModal).not.toHaveBeenCalled();
     });
   });
 });

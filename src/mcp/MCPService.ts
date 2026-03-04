@@ -13,19 +13,14 @@ export interface MCPConfig {
   name: string;
 }
 
-export interface MCPTool {
-  name: string;
-  description?: string;
-  inputSchema?: any;
-  serverName: string;
-}
+import { type MCPTool } from '../types/mcp';
 
 export class MCPService {
   private static instance: MCPService;
   private clients = new Map<string, any>();
   private tools = new Map<string, MCPTool[]>();
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Gets the singleton instance of MCPService.
