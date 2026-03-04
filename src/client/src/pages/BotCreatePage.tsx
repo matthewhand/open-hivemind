@@ -258,7 +258,7 @@ const BotCreatePage: React.FC = () => {
                   </div>
 
                   {/* System Instruction */}
-                  <div className="form-control w-full md:col-span-2">
+                  <div className="form-control w-full md:row-span-2 flex flex-col h-full">
                     <label className="label">
                       <span className="label-text font-medium">System Instruction</span>
                       <AIAssistButton
@@ -274,7 +274,7 @@ const BotCreatePage: React.FC = () => {
                       placeholder="e.g., You are a helpful and concise assistant."
                       value={formData.systemInstruction}
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
-                      className="h-24 textarea-bordered"
+                      className="flex-1 textarea-bordered h-full min-h-[8rem]"
                     />
                     <div className="flex justify-between items-center mt-1">
                       <div className="flex-1">
@@ -296,7 +296,7 @@ const BotCreatePage: React.FC = () => {
                   </div>
 
                   {/* LLM Provider */}
-                  <div className="form-control w-full">
+                  <div className="form-control w-full self-end">
                     <label className="label">
                       <span className="label-text font-medium">
                         LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}

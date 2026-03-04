@@ -1,0 +1,57 @@
+redirectsOrigin = "config"
+plugins = []
+functionsDirectory = "/app/dist/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
+headers = []
+
+[dev]
+command = "npm run dev"
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/app/dist/client"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build:netlify"
+functions = "/app/dist/netlify/functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/server"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
