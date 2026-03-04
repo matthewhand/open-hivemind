@@ -19,6 +19,7 @@ export interface ChatMessage {
     edited?: boolean;
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     toolCalls?: any[];
+    toolCallId?: string;
   };
 }
 
@@ -146,6 +147,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       );
     }
 
+    // Hide standalone tool responses; they will be rendered inside the corresponding tool call block
+    if (message.metadata?.toolCallId && message.sender.type === 'bot' && !message.metadata.toolCalls) {
+      return null;
+    }
+
     return (
       <React.Fragment key={message.id}>
         {showUnreadDivider && (
@@ -227,19 +233,52 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {/* Tool Calls */}
         {message.metadata?.toolCalls && message.metadata.toolCalls.length > 0 && (
           <div className="mt-2 w-full max-w-sm">
-            {message.metadata.toolCalls.map((tc, tcIndex) => (
-              <div key={tc.id || tcIndex} className="bg-base-200 border border-base-300 rounded-md p-2 mb-2 text-sm shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide">Tool Call</span>
-                  <span className="text-xs font-mono bg-base-300 px-1 rounded truncate">{tc.function?.name || 'unknown'}</span>
-                </div>
-                {tc.function?.arguments && (
-                  <div className="mockup-code bg-base-300 text-base-content before:hidden p-2 text-xs">
-                    <pre><code>{tc.function.arguments}</code></pre>
+            {message.metadata.toolCalls.map((tc, tcIndex) => {
+              // Find the corresponding tool response message if it exists
+              const toolResponse = messages.find(m => m.metadata?.toolCallId === tc.id);
+
+              return (
+                <div key={tc.id || tcIndex} className="bg-base-200 border border-base-300 rounded-md mb-2 text-sm shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between p-2 border-b border-base-300 bg-base-300/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-primary/80 uppercase tracking-wide flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                        Tool
+                      </span>
+                      <span className="text-xs font-mono bg-base-100 px-1.5 py-0.5 rounded shadow-sm truncate">{tc.function?.name || 'unknown'}</span>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <div className="p-2 space-y-2">
+                    {/* Request Payload Details */}
+                    {tc.function?.arguments && (
+                      <details className="group">
+                        <summary className="text-xs font-semibold cursor-pointer select-none flex items-center gap-1 text-base-content/70 hover:text-base-content">
+                          <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          Request Payload
+                        </summary>
+                        <div className="mt-1 mockup-code bg-base-300 text-base-content before:hidden p-2 text-xs overflow-x-auto">
+                          <pre><code>{tc.function.arguments}</code></pre>
+                        </div>
+                      </details>
+                    )}
+
+                    {/* Response Payload Details */}
+                    {toolResponse && (
+                      <details className="group">
+                        <summary className="text-xs font-semibold cursor-pointer select-none flex items-center gap-1 text-success hover:text-success/80">
+                          <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          Response Payload
+                        </summary>
+                        <div className="mt-1 mockup-code bg-base-300 text-base-content before:hidden p-2 text-xs overflow-x-auto">
+                          <pre><code>{toolResponse.content}</code></pre>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

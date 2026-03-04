@@ -154,6 +154,13 @@ test.describe('Chat Monitor Screenshots', () => {
                 ]
               },
               {
+                id: 'msg-7b',
+                content: '{"weather": "sunny", "temperature": "18C"}',
+                createdAt: new Date(Date.now() - 1000 * 60 * 23.5).toISOString(),
+                author: { id: 'bot-1', username: 'Support Bot', role: 'tool', bot: true },
+                tool_call_id: 'call_abc123'
+              },
+              {
                 id: 'msg-8',
                 content: 'No, that is all. Thanks!',
                 createdAt: new Date(Date.now() - 1000 * 60 * 23).toISOString(),
