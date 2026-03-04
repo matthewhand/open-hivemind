@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
+import { Button, IconButton, Modal, Card, Alert, Badge } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -160,8 +160,8 @@ const LlmProfileManager: React.FC = () => {
                 <Badge variant="neutral">{Object.keys(profile.config || {}).length} config keys</Badge>
               </div>
               <div className="card-actions justify-end mt-4">
-                <Button variant="ghost" size="sm" aria-label="Edit profile" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="sm" className="text-error" aria-label="Delete profile" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
+                <IconButton variant="ghost" size="sm" aria-label="Edit profile" onClick={() => openEditDialog(profile)} icon={<PencilIcon className="w-4 h-4" />} />
+                <IconButton variant="ghost" size="sm" className="text-error" aria-label="Delete profile" onClick={() => handleDelete(profile.key)} icon={<TrashIcon className="w-4 h-4" />} />
               </div>
             </div>
           </Card>
