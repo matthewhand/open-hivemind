@@ -84,6 +84,8 @@ export const validateBotConfigCreation = [
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
     .isLength({ max: 5000 })
     .withMessage('System instruction must be less than 5000 characters'),
@@ -280,6 +282,8 @@ export const validateBotConfigUpdate = [
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
     .isLength({ max: 5000 })
     .withMessage('System instruction must be less than 5000 characters'),
