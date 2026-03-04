@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { WebSocketService } from './WebSocketService';
@@ -257,6 +258,6 @@ export class RealTimeNotificationService extends EventEmitter {
   }
 
   private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${crypto.randomUUID()}`;
   }
 }
