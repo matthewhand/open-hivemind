@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import SearchFilterBar from '../SearchFilterBar';
 
 describe('SearchFilterBar', () => {
@@ -76,3 +76,101 @@ describe('SearchFilterBar', () => {
     expect(input).toHaveClass('pr-10');
   });
 });
+
+  it('renders active filter chips', () => {
+    const handleFilterChange = jest.fn();
+    const mockFilters = [
+      {
+        key: 'category',
+        value: 'general',
+        onChange: handleFilterChange,
+        options: [
+          { value: 'all', label: 'All Categories' },
+          { value: 'general', label: 'General' }
+        ]
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={mockFilters}
+      />
+    );
+
+    // The chip should display the label "General" and key "category:"
+    expect(screen.getByText('category:')).toBeInTheDocument();
+    expect(screen.getAllByText('General')[0]).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Active filter: category General/ })).toBeInTheDocument();
+  });
+
+  it('does not render chips for "all" or empty values', () => {
+    const mockFilters = [
+      {
+        key: 'category',
+        value: 'all',
+        onChange: jest.fn(),
+        options: [
+          { value: 'all', label: 'All Categories' }
+        ]
+      },
+      {
+        key: 'status',
+        value: '',
+        onChange: jest.fn(),
+        options: [
+          { value: '', label: 'All Statuses' }
+        ]
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={mockFilters}
+      />
+    );
+
+    expect(screen.queryByText('category:')).not.toBeInTheDocument();
+    expect(screen.queryByText('status:')).not.toBeInTheDocument();
+  });
+
+  it('triggers onChange with default value after clear animation timeout', () => {
+    jest.useFakeTimers();
+    const handleFilterChange = jest.fn();
+    const mockFilters = [
+      {
+        key: 'category',
+        value: 'general',
+        onChange: handleFilterChange,
+        options: [
+          { value: 'all', label: 'All Categories' },
+          { value: 'general', label: 'General' }
+        ]
+      }
+    ];
+
+    render(
+      <SearchFilterBar
+        searchValue=""
+        onSearchChange={jest.fn()}
+        filters={mockFilters}
+      />
+    );
+
+    const clearButton = screen.getByRole('button', { name: /Active filter: category General/ });
+
+    act(() => { fireEvent.click(clearButton); });
+
+    // Should not have been called immediately due to animation
+    expect(handleFilterChange).not.toHaveBeenCalled();
+
+    // Fast forward time
+    act(() => { jest.advanceTimersByTime(250); });
+
+    // Should be called with 'all'
+    expect(handleFilterChange).toHaveBeenCalledWith('all');
+    jest.useRealTimers();
+  });
