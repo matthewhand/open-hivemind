@@ -11,10 +11,8 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button, Input, Select, Toggle, Textarea } from '../DaisyUI';
+import { Button, Input, Select, Textarea, Toggle } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
-import { ProviderConfigForm } from '../ProviderConfigForm';
-import { getProviderSchema } from '../../provider-configs';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -105,8 +103,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return (configs as any)[selectedType];
   };
 
-  const richSchema = getProviderSchema(selectedType);
-
   const validateField = (field: FieldConfig, value: any): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return `${field.label} is required`;
@@ -151,49 +147,15 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       isValid = false;
     }
 
-    // Validate required fields if not using rich schema, or let the rich schema validate it later
-    if (!richSchema) {
-      const allFields = config.fields || [];
-      allFields.forEach(field => {
-        const error = validateField(field, formData[field.name]);
-        if (error) {
-          newErrors[field.name] = error;
-          isValid = false;
-        }
-      });
-    } else {
-      // Validate rich schema fields
-      richSchema.fields.forEach(field => {
-        if (field.required && (!formData[field.name] || (typeof formData[field.name] === 'string' && formData[field.name].trim() === ''))) {
-          newErrors[field.name] = `${field.label} is required`;
-          isValid = false;
-        }
-        if (field.validation && formData[field.name]) {
-          const { min, max, pattern } = field.validation;
-          if (field.type === 'number' && typeof formData[field.name] !== 'undefined') {
-            const numVal = Number(formData[field.name]);
-            if (min !== undefined && numVal < min) {
-              newErrors[field.name] = `${field.label} must be at least ${min}`;
-              isValid = false;
-            }
-            if (max !== undefined && numVal > max) {
-              newErrors[field.name] = `${field.label} must be at most ${max}`;
-              isValid = false;
-            }
-          } else if (field.type === 'text' && typeof formData[field.name] === 'string') {
-            const len = formData[field.name].length;
-            if (min !== undefined && len < min) {
-              newErrors[field.name] = `${field.label} must be at least ${min} characters`;
-              isValid = false;
-            }
-            if (max !== undefined && len > max) {
-              newErrors[field.name] = `${field.label} must be at most ${max} characters`;
-              isValid = false;
-            }
-          }
-        }
-      });
-    }
+    // Validate required fields
+    const allFields = config.fields || [];
+    allFields.forEach(field => {
+      const error = validateField(field, formData[field.name]);
+      if (error) {
+        newErrors[field.name] = error;
+        isValid = false;
+      }
+    });
 
     setErrors(newErrors);
     return isValid;
@@ -208,7 +170,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const config = getCurrentConfig();
-    const allFields = richSchema ? richSchema.fields : config.fields || [];
+    const allFields = config.fields || [];
     const providerConfig: Record<string, any> = {};
 
     // Only include fields that have values
@@ -246,126 +208,107 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const error = errors[field.name];
     const value = formData[field.name] || '';
 
-    const getLabelNode = (fieldLabel: string, required?: boolean) => (
-      <span className="label-text font-medium text-base-content">
-        {fieldLabel}
-        {required && <span className="text-error ml-1">*</span>}
-      </span>
-    );
+    const fieldClasses = `
+      w-full
+      ${error ? 'input-error' : ''}
+      ${field.type === 'textarea' ? 'textarea' : 'input'}
+      input-bordered
+    `;
 
     switch (field.type) {
     case 'password':
       return (
-        <div key={field.name} className="mb-4">
+        <div key={field.name}>
           <Input
             type="password"
-            label={getLabelNode(field.label, field.required)}
+            label={field.label}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             error={error}
-            bordered
-            className="w-full"
+            required={field.required}
           />
         </div>
       );
 
     case 'number':
       return (
-        <div key={field.name} className="mb-4">
+        <div key={field.name}>
           <Input
             type="number"
-            label={getLabelNode(field.label, field.required)}
+            label={field.label}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            error={error}
+            required={field.required}
             min={field.validation?.min}
             max={field.validation?.max}
             step={field.name === 'temperature' ? '0.1' : '1'}
-            error={error}
-            bordered
-            className="w-full"
           />
         </div>
       );
 
     case 'select':
       return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <label className="label pb-1">
-            {getLabelNode(field.label, field.required)}
-          </label>
+        <div key={field.name}>
           <Select
+            label={field.label}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             error={!!error}
-            className="w-full"
-          >
-            <option value="">Select {field.label.toLowerCase()}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </Select>
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
-            </label>
-          )}
+            required={field.required}
+            options={[
+              { value: '', label: `Select ${field.label.toLowerCase()}` },
+              ...(field.options || [])
+            ]}
+          />
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
       );
 
     case 'textarea':
       return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <label className="label pb-1">
-            {getLabelNode(field.label, field.required)}
-          </label>
+        <div key={field.name}>
           <Textarea
+            label={field.label}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            error={error}
+            required={field.required}
             rows={4}
-            className={`w-full ${error ? 'textarea-error' : ''}`}
-            bordered
           />
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
-            </label>
-          )}
         </div>
       );
 
     case 'checkbox':
       return (
-        <div key={field.name} className="mb-4 form-control w-full">
-          <Toggle
-            label={field.label}
-            checked={!!value}
-            onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-            color="primary"
-          />
-          {error && (
-            <label className="label pt-1 pb-0">
-              <span className="label-text-alt text-error">{error}</span>
-            </label>
-          )}
+        <div key={field.name} className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text font-medium">{field.label}</span>
+            <Toggle
+              color="primary"
+              checked={!!value}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+            />
+          </label>
+          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
         </div>
       );
 
     default:
       // text and others
       return (
-        <div key={field.name} className="mb-4">
+        <div key={field.name}>
           <Input
             type="text"
-            label={getLabelNode(field.label, field.required)}
+            label={field.label}
             placeholder={field.placeholder}
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             error={error}
-            bordered
-            className="w-full"
+            required={field.required}
           />
         </div>
       );
@@ -382,8 +325,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const allFields = config?.fields || [];
 
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box max-w-2xl bg-base-100">
+    <div className="modal modal-open">
+      <div className="modal-box max-w-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold">
@@ -430,47 +373,18 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <Input
               type="text"
               name="name"
-              label={
-                <span className="label-text font-medium text-base-content">
-                  Provider Name
-                  <span className="text-error ml-1">*</span>
-                </span>
-              }
+              label="Provider Name"
               placeholder="Enter a descriptive name for this provider"
               value={formData.name || ''}
               onChange={(e) => handleFieldChange('name', e.target.value)}
               error={errors.name}
-              bordered
-              className="w-full"
+              required={true}
             />
           </div>
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {richSchema ? (
-              <ProviderConfigForm
-                providerType={selectedType}
-                schema={richSchema}
-                initialConfig={formData}
-                externalErrors={errors}
-                onConfigChange={(newConfig) => {
-                  setFormData(prev => ({ ...prev, ...newConfig }));
-                  // Clear errors when config changes
-                  setErrors(prevErrors => {
-                    const nextErrors = { ...prevErrors };
-                    // Find keys that exist in both previous and new config
-                    Object.keys(newConfig).forEach(k => {
-                      if (nextErrors[k]) {
-                        delete nextErrors[k];
-                      }
-                    });
-                    return nextErrors;
-                  });
-                }}
-              />
-            ) : (
-              allFields.map(renderField)
-            )}
+            {allFields.map(renderField)}
           </div>
 
           {/* Actions */}
@@ -492,10 +406,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
-      <form method="dialog" className="modal-backdrop" onClick={onClose}>
-        <button>close</button>
-      </form>
-    </dialog>
+    </div>
   );
 };
 
