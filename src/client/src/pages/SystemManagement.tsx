@@ -579,22 +579,14 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
+
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
-                <div className="flex gap-2">
-                  <button
-                    className="btn btn-sm btn-ghost"
-                    onClick={fetchPerformanceData}
-                    disabled={isPerformanceLoading}
-                  >
-                    {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                  </button>
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={handleClearCache}
-                  >
-                    Clear System Cache
-                  </button>
-                </div>
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={handleClearCache}
+                >
+                  Clear System Cache
+                </button>
               </div>
 
               {apiStatus && (
@@ -621,8 +613,15 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold mb-4">System Information & Database Status</h3>
+              <div className="flex justify-between items-center mt-8">
+                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={fetchPerformanceData}
+                  disabled={isPerformanceLoading}
+                >
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                </button>
               </div>
 
               {systemInfo && (

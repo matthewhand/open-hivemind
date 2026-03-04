@@ -67,7 +67,7 @@ describe('webhookSecurity edge cases', () => {
 
     it('allows when Authorization header uses Bearer token', async () => {
       const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { authorization: 'Bearer secret-token' },
+        headers: { 'authorization': 'Bearer secret-token' },
       });
       expect(res.statusCode).toBe(200);
     });
