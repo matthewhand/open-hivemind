@@ -240,17 +240,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const error = errors[field.name];
     const value = formData[field.name] || '';
 
-    const fieldClasses = `
-      w-full
-      ${error ? 'input-error' : ''}
-      ${field.type === 'textarea' ? 'textarea' : 'input'}
-      input-bordered
-    `;
+    const fieldClasses = `w-full ${error ? 'input-error ' : ''}${field.type === 'textarea' ? 'textarea ' : 'input '}input-bordered`;
 
     switch (field.type) {
       case 'password':
         return (
-          <div key={field.name}>
+          <div key={field.name} className="form-control w-full">
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -268,7 +263,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'number':
         return (
-          <div key={field.name}>
+          <div key={field.name} className="form-control w-full">
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -289,7 +284,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'select':
         return (
-          <div key={field.name}>
+          <div key={field.name} className="form-control w-full">
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -310,7 +305,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'textarea':
         return (
-          <div key={field.name}>
+          <div key={field.name} className="form-control w-full">
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -345,7 +340,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       default:
         // text and others
         return (
-          <div key={field.name}>
+          <div key={field.name} className="form-control w-full">
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
