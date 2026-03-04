@@ -7,6 +7,52 @@ interface FieldError {
   [fieldName: string]: string;
 }
 
+// Helper component for KeyValue field to manage its own local state without breaking rules of hooks
+const KeyValueField: React.FC<{
+  field: ProviderConfigField;
+  value: any;
+  error: string | undefined;
+  inputClasses: string;
+  onChange: (value: Record<string, string>) => void;
+}> = ({ field, value, error, inputClasses, onChange }) => {
+  const [localValue, setLocalValue] = useState(
+    typeof value === 'object'
+      ? Object.entries(value).map(([k, v]) => `${k}=${v}`).join('\n')
+      : value || ''
+  );
+
+  useEffect(() => {
+    const newStringValue = typeof value === 'object'
+      ? Object.entries(value).map(([k, v]) => `${k}=${v}`).join('\n')
+      : value || '';
+    if (newStringValue !== localValue) {
+      setLocalValue(newStringValue);
+    }
+  }, [value]);
+
+  return (
+    <Textarea
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={(e) => {
+        const lines = e.target.value.split('\n');
+        const obj: Record<string, string> = {};
+        lines.forEach(line => {
+          const [k, ...v] = line.split('=');
+          if (k && v.length > 0) {
+            obj[k.trim()] = v.join('=').trim();
+          }
+        });
+        onChange(obj);
+      }}
+      placeholder={field.placeholder || 'KEY=value\nANOTHER_KEY=another_value'}
+      rows={4}
+      className={`${inputClasses} font-mono text-sm`}
+      aria-invalid={!!error}
+    />
+  );
+};
+
 export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   schema,
   initialConfig = {},
@@ -37,13 +83,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const validateField = (field: ProviderConfigField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
       return `${field.label} is required`;
-    }
-
-    if (field.type === 'url' && value && typeof value === 'string') {
-      const validateUrlRegex = /^(https?:\/\/)?(localhost|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/i;
-      if (!validateUrlRegex.test(value)) {
-        return `${field.label} must be a valid URL`;
-      }
     }
 
     if (field.validation && value !== undefined && value !== null && value !== '') {
@@ -168,8 +207,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = externalErrors[field.name] || errors[field.name];
 
-    const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
+    const baseInputClasses = 'bg-base-100 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
+    const errorClasses = error ? 'border-error focus:ring-error text-error' : 'border-base-300 focus:ring-primary';
     const inputClasses = `${baseInputClasses} ${errorClasses}`;
 
     const renderInput = () => {
@@ -182,6 +221,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
             aria-label={`${field.label} password input`}
           />
         );
@@ -197,6 +237,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             max={field.validation?.max}
             step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
             className={inputClasses}
+            error={!!error}
           />
         );
 
@@ -208,6 +249,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
           />
         );
 
@@ -217,6 +259,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             value={value}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             className={inputClasses}
+            error={!!error}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,
@@ -235,6 +278,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               handleFieldChange(field.name, selectedOptions);
             }}
             className={`${inputClasses} h-24`}
+            error={!!error}
             options={field.options?.map((option) => ({
               label: option.label,
               value: option.value,
@@ -243,7 +287,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         );
 
       case 'boolean':
-      case 'checkbox':
         return (
           <div className="flex items-center h-full">
             <Toggle
@@ -255,67 +298,28 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           </div>
         );
 
-      case 'keyvalue': {
-        const pairs = (value as Record<string, string>) || {};
-        const entries = Object.entries(pairs);
-
+      case 'checkbox':
         return (
-          <div className="space-y-2">
-            {entries.map(([key, val], index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Key"
-                  className="input input-bordered input-sm flex-1"
-                  value={key}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    newPairs[e.target.value] = val;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Value"
-                  className="input input-bordered input-sm flex-1"
-                  value={val}
-                  onChange={(e) => {
-                    const newPairs = { ...pairs };
-                    newPairs[key] = e.target.value;
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm text-error"
-                  aria-label="Remove item"
-                  onClick={() => {
-                    const newPairs = { ...pairs };
-                    delete newPairs[key];
-                    handleFieldChange(field.name, newPairs);
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
-              onClick={() => {
-                const newPairs = { ...pairs };
-                let i = 0;
-                while (newPairs[`NEW_KEY_${i}`] !== undefined) {i++;}
-                newPairs[`NEW_KEY_${i}`] = '';
-                handleFieldChange(field.name, newPairs);
-              }}
-            >
-              + Add Item
-            </button>
+          <div className="flex items-center h-full">
+            <Toggle
+              color="primary"
+              checked={Boolean(value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              label={field.placeholder || "Enable"}
+            />
           </div>
         );
-      }
+
+      case 'keyvalue':
+        return (
+          <KeyValueField
+            field={field}
+            value={value}
+            error={error}
+            inputClasses={inputClasses}
+            onChange={(newValue) => handleFieldChange(field.name, newValue)}
+          />
+        );
 
       case 'textarea':
         return (
@@ -325,6 +329,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             placeholder={field.placeholder}
             rows={4}
             className={inputClasses}
+            aria-invalid={!!error}
           />
         );
 
@@ -343,6 +348,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             placeholder={field.placeholder || '{"key": "value"}'}
             rows={4}
             className={`${inputClasses} font-mono text-sm`}
+            aria-invalid={!!error}
           />
         );
 
@@ -383,6 +389,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             className={inputClasses}
+            error={!!error}
             aria-label={`${field.label} text input`}
           />
         );
@@ -390,10 +397,12 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     };
 
     return (
-      <div className="space-y-1">
+      <div className="form-control space-y-1">
         {renderInput()}
         {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
+          <label className="label pt-0 pb-0">
+            <span className="label-text-alt text-error">{error}</span>
+          </label>
         )}
       </div>
     );
