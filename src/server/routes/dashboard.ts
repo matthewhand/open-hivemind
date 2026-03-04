@@ -427,12 +427,13 @@ function parseDate(value: unknown): Date | null {
 }
 
 /**
- * Redacts a string by masking all but the last 4 characters.
+ * Redacts a string by fully masking short strings and partially masking longer ones.
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
  */
 function redactString(val: string | undefined): string | undefined {
-  if (!val || val.length <= 4) return val;
-  return '*'.repeat(val.length - 4) + val.slice(-4);
+  if (!val) return val;
+  if (val.length <= 3) return '***';
+  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
 }
 
 function annotateEvent(
