@@ -72,10 +72,10 @@ export class AuthManager {
         .storeConfig({
           id: `${prefix}_secret`,
           name: `${prefix} Secret`,
-          type: 'auth',
+          type: 'system',
           data: { secret },
           createdAt: new Date().toISOString(),
-        } as any)
+        } as Parameters<typeof secureConfig.storeConfig>[0])
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -108,11 +108,11 @@ export class AuthManager {
 
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
-      console.warn('================================================================');
-      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
-      console.warn(`Generated temporary admin password: ${password}`);
-      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
-      console.warn('================================================================');
+      debug('================================================================');
+      debug('WARNING: No ADMIN_PASSWORD environment variable found.');
+      debug(`Generated temporary admin password: ${password}`);
+      debug('Please change this password immediately or set ADMIN_PASSWORD.');
+      debug('================================================================');
     }
 
     const defaultAdmin: User = {
