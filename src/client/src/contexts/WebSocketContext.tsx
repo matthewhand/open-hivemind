@@ -18,6 +18,7 @@ interface WebSocketContextType {
   alerts: AlertEvent[];
   performanceMetrics: PerformanceMetric[];
   botStats: BotStat[];
+  dashboardAnnotations: any[];
   connect: () => void;
   disconnect: () => void;
 }
@@ -34,6 +35,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
+  const [dashboardAnnotations, setDashboardAnnotations] = useState<any[]>([]);
 
   const connect = () => {
     if (socket?.connected) { return; }
@@ -141,11 +143,35 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('WebSocket error:', error);
     });
 
+    newSocket.on('dashboard_annotations_update', (data) => {
+      setDashboardAnnotations(data.annotations || []);
+    });
+
+    newSocket.on('dashboard_annotations_broadcast', (data) => {
+      // Limit to 50 annotations to prevent memory leaks
+      setDashboardAnnotations((data.annotations || []).slice(0, 50));
+    });
+
+    newSocket.emit('request_dashboard_annotations');
+
+    // Only bind if it hasn't been bound yet
+    const handleWsTestEvent = (e: CustomEvent) => {
+      // Limit to 50 annotations to prevent memory leaks
+      setDashboardAnnotations((e.detail.annotations || []).slice(0, 50));
+    };
+    window.addEventListener('ws_dashboard_annotations', handleWsTestEvent as EventListener);
+
+    // Attach to socket so we can unbind it in disconnect
+    (newSocket as any)._wsTestListener = handleWsTestEvent;
+
     setSocket(newSocket);
   };
 
   const disconnect = () => {
     if (socket) {
+      if ((socket as any)._wsTestListener) {
+        window.removeEventListener('ws_dashboard_annotations', (socket as any)._wsTestListener);
+      }
       socket.disconnect();
       setSocket(null);
       setIsConnected(false);
@@ -165,6 +191,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     alerts,
     performanceMetrics,
     botStats,
+    dashboardAnnotations,
     connect,
     disconnect,
   };

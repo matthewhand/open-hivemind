@@ -47,6 +47,14 @@ export interface AlertEvent {
   resolvedAt?: string;
 }
 
+export interface DashboardAnnotationEvent {
+  id: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  title: string;
+  message: string;
+  timestamp: string;
+}
+
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
@@ -57,6 +65,7 @@ export class WebSocketService {
   private messageFlow: MessageFlowEvent[] = [];
   private performanceMetrics: PerformanceMetric[] = [];
   private alerts: AlertEvent[] = [];
+  private dashboardAnnotations: DashboardAnnotationEvent[] = [];
   private messageRateHistory: number[] = [];
   private errorRateHistory: number[] = [];
   // internal sampling state
@@ -411,6 +420,10 @@ export class WebSocketService {
         this.sendPerformanceMetrics(socket);
       });
 
+      socket.on('request_dashboard_annotations', () => {
+        this.sendDashboardAnnotations(socket);
+      });
+
       socket.on('request_monitoring_dashboard', () => {
         this.sendMonitoringDashboard(socket);
       });
@@ -443,6 +456,7 @@ export class WebSocketService {
         this.broadcastBotStatus();
         this.broadcastSystemMetrics();
         this.broadcastMonitoringData();
+        this.broadcastDashboardAnnotations();
       }
     }, 5000);
   }
@@ -631,6 +645,42 @@ export class WebSocketService {
       return;
     }
     this.io.emit('bot_status_broadcast', { timestamp: new Date().toISOString() });
+  }
+
+  public addDashboardAnnotation(
+    annotation: Omit<DashboardAnnotationEvent, 'id' | 'timestamp'>
+  ): void {
+    this.dashboardAnnotations.push({
+      ...annotation,
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: new Date().toISOString(),
+    });
+    if (this.dashboardAnnotations.length > 50) {
+      this.dashboardAnnotations.shift();
+    }
+    this.broadcastDashboardAnnotations();
+  }
+
+  private broadcastDashboardAnnotations(): void {
+    if (!this.io) {
+      return;
+    }
+    this.io.emit('dashboard_annotations_broadcast', {
+      annotations: this.dashboardAnnotations.slice(-10),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  private sendDashboardAnnotations(socket: any): void {
+    try {
+      socket.emit('dashboard_annotations_update', {
+        annotations: this.dashboardAnnotations,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      debug('Error sending dashboard annotations:', error);
+      socket.emit('error', { message: 'Failed to get dashboard annotations' });
+    }
   }
 
   private broadcastSystemMetrics(): void {
