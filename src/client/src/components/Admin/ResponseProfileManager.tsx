@@ -171,9 +171,9 @@ const ResponseProfileManager: React.FC = () => {
                 <Badge variant="neutral">{Object.keys(profile.settings).length} settings</Badge>
               </div>
               <div className="card-actions justify-end mt-4">
-                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="sm" aria-label="Edit profile" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
                 {!profile.isBuiltIn && (
-                  <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" className="text-error" aria-label="Delete profile" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
                 )}
               </div>
             </div>
