@@ -108,7 +108,32 @@ test.describe('LLM Providers Screenshots', () => {
     // Wait for modal to be visible
     await expect(page.locator('.modal-box')).toBeVisible();
 
-    // Take screenshot of the modal
+    // Clear provider name to trigger validation error
+    await page.locator('input[name="name"]').fill('');
+
+    // Clear API key if it has a default value, depending on provider
+    const apiKeyInput = page.getByPlaceholder('sk-...');
+    if (await apiKeyInput.isVisible()) {
+      await apiKeyInput.fill('');
+    }
+
+    // Submit form to trigger inline validation messages
+    await page.getByRole('button', { name: 'Submit Provider' }).click();
+
+    // Assert that validation messages are visible
+    await expect(page.getByText('Provider name is required')).toBeVisible();
+    await expect(page.getByText('API Key is required')).toBeVisible();
+
+    // Take screenshot of the modal with validation errors
+    await page.screenshot({ path: 'docs/screenshots/llm-add-profile-modal-validation.png' });
+
+    // Fill in required fields to show it is functional
+    await page.locator('input[name="name"]').fill('My Custom OpenAI');
+    if (await apiKeyInput.isVisible()) {
+      await apiKeyInput.fill('sk-test-1234567890');
+    }
+
+    // Submit provider and take functional screenshot
     await page.screenshot({ path: 'docs/screenshots/llm-add-profile-modal.png' });
   });
 });
