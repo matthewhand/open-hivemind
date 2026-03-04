@@ -156,6 +156,8 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
                 variant="ghost"
                 onClick={() => { setLoading(true); fetchActivity(); }}
                 disabled={loading}
+                aria-label="Refresh activity"
+                title="Refresh activity"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
