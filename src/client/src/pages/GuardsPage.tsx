@@ -161,7 +161,15 @@ const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onBlur={() => setShowValidation(true)}
+          onBlur={() => {
+            setShowValidation(true);
+            if (inputValue.trim()) {
+              if (!value.includes(inputValue.trim()) && value.length < maxItems) {
+                onChange([...value, inputValue.trim()]);
+              }
+              setInputValue('');
+            }
+          }}
           placeholder={value.length === 0 ? placeholder : ''}
           disabled={disabled}
         />
