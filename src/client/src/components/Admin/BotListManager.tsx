@@ -9,7 +9,6 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
-import type { BotConfig } from '../../../../types/config';
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -17,25 +16,31 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
-interface BotConfigExtended extends Omit<BotConfig, 'discord' | 'slack' | 'isActive'> {
+interface BotConfig {
+    name: string;
+    messageProvider: string;
+    llmProvider: string;
+    llmProfile?: string;
+    persona?: string;
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
+    [key: string]: unknown;
 }
 
 interface BotListResponse {
-    bots: BotConfigExtended[];
+    bots: BotConfig[];
     count: number;
     warnings: string[];
 }
 
 const BotListManager: React.FC = () => {
-  const [bots, setBots] = useState<BotConfigExtended[]>([]);
+  const [bots, setBots] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [selectedBot, setSelectedBot] = useState<BotConfigExtended | null>(null);
+  const [selectedBot, setSelectedBot] = useState<BotConfig | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -61,7 +66,7 @@ const BotListManager: React.FC = () => {
     }
   };
 
-  const handleViewBot = (bot: BotConfigExtended) => {
+  const handleViewBot = (bot: BotConfig) => {
     setSelectedBot(bot);
     setIsModalOpen(true);
   };

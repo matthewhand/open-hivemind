@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import crypto from 'crypto';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
@@ -978,7 +977,7 @@ export class RealTimeValidationService extends EventEmitter {
    * Generate report ID
    */
   private generateReportId(): string {
-    return 'val-' + crypto.randomUUID();
+    return 'val-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
   /**

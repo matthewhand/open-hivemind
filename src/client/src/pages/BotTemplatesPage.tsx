@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, EmptyState, Carousel } from '../components/DaisyUI';
+import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -27,22 +27,6 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
-
-  const carouselItems = useMemo(() => {
-    // Top 3 featured templates, or top 3 templates if none are featured
-    const featured = templates.filter(t => t.featured);
-    const selected = featured.length > 0 ? featured : templates.slice(0, 3);
-
-    return selected.map(t => ({
-      image: '',
-      title: t.name,
-      description: t.description,
-      bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
-                  t.platform === 'slack' ? 'linear-gradient(135deg, #4A154B, #E01E5A)' :
-                  t.platform === 'telegram' ? 'linear-gradient(135deg, #0088cc, #33aadd)' :
-                  'linear-gradient(135deg, #059669, #10b981)',
-    }));
-  }, [templates]);
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/admin/bots' },
@@ -182,15 +166,6 @@ const BotTemplatesPage: React.FC = () => {
   return (
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-
-
-      {/* Recommended Templates Carousel */}
-      {carouselItems.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Recommended Templates</h2>
-          <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
-        </div>
-      )}
 
       <div className="mt-4 mb-8">
         <div className="flex justify-between items-center mb-4">

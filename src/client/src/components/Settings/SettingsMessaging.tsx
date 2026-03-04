@@ -409,7 +409,7 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.semanticRelevanceBonus}
               onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-              className="range range-sm range-info w-full"
+              className="range range-sm range-info"
               disabled={!settings.semanticRelevanceEnabled}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -418,10 +418,7 @@ const SettingsMessaging: React.FC = () => {
               <span>50x</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Multiplier to apply when a message is semantically relevant and the bot has posted recently.
-              {settings.semanticRelevanceBonus <= 10 && " (Gentle boost for related topics)"}
-              {settings.semanticRelevanceBonus > 10 && settings.semanticRelevanceBonus <= 30 && " (Moderate boost for solid topic matches)"}
-              {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
+              Multiplier to apply when a message is semantically relevant and the bot has posted recently
             </p>
           </div>
 
