@@ -13,6 +13,10 @@ const ALLOWED_LLM_PROVIDERS = [
   'replicate',
   'n8n',
   'openswarm',
+  'anthropic',
+  'ollama',
+  'huggingface',
+  'local',
 ];
 
 /**
