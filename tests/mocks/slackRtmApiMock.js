@@ -1,11 +1,9 @@
+const mockRtmClient = {
+  on: jest.fn(),
+  start: jest.fn().mockResolvedValue(true),
+  disconnect: jest.fn(),
+  sendMessage: jest.fn().mockResolvedValue({ ts: '123' })
+};
 module.exports = {
-  RTMClient: jest.fn().mockImplementation(() => {
-    return {
-      start: jest.fn().mockResolvedValue({}),
-      on: jest.fn(),
-      disconnect: jest.fn(),
-      sendMessage: jest.fn().mockResolvedValue({}),
-      subscribe: jest.fn()
-    };
-  })
+  RTMClient: jest.fn(() => mockRtmClient)
 };

@@ -235,11 +235,9 @@ export const CommonValidators = {
       const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
       const hasDangerousKey = (obj: any): boolean => {
         if (typeof obj !== 'object' || obj === null) return false;
-        for (const key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            if (dangerousKeys.includes(key)) return true;
-            if (hasDangerousKey(obj[key])) return true;
-          }
+        for (const key of Object.keys(obj)) {
+          if (dangerousKeys.includes(key)) return true;
+          if (hasDangerousKey(obj[key])) return true;
         }
         return false;
       };
@@ -410,14 +408,12 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
       '$natural',
     ];
 
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        if (dangerousOperators.includes(key)) {
-          return true;
-        }
-        if (typeof obj[key] === 'object' && checkForInjection(obj[key])) {
-          return true;
-        }
+    for (const key of Object.keys(obj)) {
+      if (dangerousOperators.includes(key)) {
+        return true;
+      }
+      if (typeof obj[key] === 'object' && checkForInjection(obj[key])) {
+        return true;
       }
     }
     return false;

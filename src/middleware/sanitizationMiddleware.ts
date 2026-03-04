@@ -29,10 +29,8 @@ function sanitizeObject(obj: any): any {
 
   if (obj !== null && typeof obj === 'object') {
     const sanitized: any = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        sanitized[key] = sanitizeObject(obj[key]);
-      }
+    for (const key of Object.keys(obj)) {
+      sanitized[key] = sanitizeObject(obj[key]);
     }
     return sanitized;
   }

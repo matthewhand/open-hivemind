@@ -73,7 +73,6 @@ describe('Bots Router', () => {
 
     mockManager = {
       getAllBots: jest.fn(),
-      getBot: jest.fn(),
       getBotsStatus: jest.fn(),
       createBot: jest.fn(),
       updateBot: jest.fn(),
@@ -178,7 +177,6 @@ describe('Bots Router', () => {
   });
 
   it('GET /api/bots/:id/activity should return activity logs', async () => {
-    mockManager.getBot.mockResolvedValue({ id: 'bot1', name: 'Bot 1' });
     const res = await request(app).get('/api/bots/bot1/activity');
     expect(res.status).toBe(200);
     expect(res.body.data.activity).toEqual([]);
