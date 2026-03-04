@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type {
   ProviderModalState,
   ProviderTypeConfig,
@@ -13,8 +13,6 @@ import {
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
-import { ProviderConfigForm } from '../ProviderConfigForm';
-import { getProviderSchema } from '../../provider-configs';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -105,12 +103,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return (configs as any)[selectedType];
   };
 
-  const validateField = (field: FieldConfig | any, value: any): string | null => {
+  const validateField = (field: FieldConfig, value: any): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return `${field.label} is required`;
     }
 
-    if (field.validation && value !== undefined && value !== null && value !== '') {
+    if (field.validation && value) {
       const { min, max, pattern } = field.validation;
 
       if (field.type === 'number') {
@@ -123,34 +121,15 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         }
       }
 
-      if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
-        const strValue = String(value);
-        if (min !== undefined && strValue.length < min) {
-          return `${field.label} must be at least ${min} characters`;
-        }
-        if (max !== undefined && strValue.length > max) {
-          return `${field.label} must be at most ${max} characters`;
-        }
-      }
-
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
-          // For API keys, don't fail validation in UI, just warn (ProviderConfigForm does this)
-          if (field.name === 'apiKey' || field.type === 'password') {
-            // Just pass for API Keys
-          } else {
-            if (field.type === 'url') {
-              return `${field.label} must be a valid HTTPS URL`;
-            }
-            return `${field.label} format is invalid`;
+          // Provide specific error messages for common field types
+          if ((field.type as string) === 'url') {
+            return `${field.label} must be a valid HTTPS URL`;
           }
+          return `${field.label} format is invalid`;
         }
-      }
-
-      if (field.validation.custom) {
-        const customError = field.validation.custom(value);
-        if (customError) { return customError; }
       }
     }
 
@@ -168,11 +147,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       isValid = false;
     }
 
-    const schema = getProviderSchema(selectedType);
-    const allFields = schema ? schema.fields : (config.fields || []);
-
     // Validate required fields
-    allFields.forEach((field: any) => {
+    const allFields = config.fields || [];
+    allFields.forEach(field => {
       const error = validateField(field, formData[field.name]);
       if (error) {
         newErrors[field.name] = error;
@@ -193,13 +170,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const config = getCurrentConfig();
-    const schema = getProviderSchema(selectedType);
-    const allFields = schema ? schema.fields : (config.fields || []);
-
+    const allFields = config.fields || [];
     const providerConfig: Record<string, any> = {};
 
-    // Only include fields that have values, and perform casting
-    allFields.forEach((field: any) => {
+    // Only include fields that have values
+    allFields.forEach(field => {
       const value = formData[field.name];
       if (value !== undefined && value !== '') {
         providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
@@ -214,13 +189,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     };
 
     onSubmit(providerData);
-  };
-
-  const handleProviderConfigChange = (newConfig: Record<string, any>) => {
-    setFormData(prev => ({
-      ...prev,
-      ...newConfig,
-    }));
   };
 
   const handleFieldChange = (key: string, value: any) => {
@@ -240,12 +208,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const error = errors[field.name];
     const value = formData[field.name] || '';
 
-    const fieldClasses = `w-full ${error ? 'input-error ' : ''}${field.type === 'textarea' ? 'textarea ' : 'input '}input-bordered`;
+    const fieldClasses = `
+      w-full
+      ${error ? 'input-error' : ''}
+      ${field.type === 'textarea' ? 'textarea' : 'input'}
+      input-bordered
+    `;
 
     switch (field.type) {
       case 'password':
         return (
-          <div key={field.name} className="form-control w-full">
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -263,7 +236,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'number':
         return (
-          <div key={field.name} className="form-control w-full">
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -284,7 +257,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'select':
         return (
-          <div key={field.name} className="form-control w-full">
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -305,7 +278,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'textarea':
         return (
-          <div key={field.name} className="form-control w-full">
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -340,7 +313,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       default:
         // text and others
         return (
-          <div key={field.name} className="form-control w-full">
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -358,7 +331,15 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
   };
 
-  if (!modalState.isOpen) { return null; }
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (modalState.isOpen) {
+      if (!dialogRef.current?.open) dialogRef.current?.showModal();
+    } else {
+      if (dialogRef.current?.open) dialogRef.current?.close();
+    }
+  }, [modalState.isOpen]);
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
@@ -368,7 +349,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const allFields = config?.fields || [];
 
   return (
-    <div className="modal modal-open">
+    <dialog ref={dialogRef} className="modal" onClose={onClose}>
       <div className="modal-box max-w-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -430,37 +411,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {getProviderSchema(selectedType) ? (
-              <ProviderConfigForm
-                providerType={selectedType}
-                schema={getProviderSchema(selectedType)!}
-                initialConfig={formData}
-                onConfigChange={handleProviderConfigChange}
-                externalErrors={errors}
-                onTestConnection={async (config) => {
-                  // Enhanced test connection with provider-specific validation
-                  try {
-                    const response = await fetch('/api/v1/admin/providers/test-connection', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        providerType: selectedType,
-                        config,
-                      }),
-                    });
-                    return response.ok;
-                  } catch {
-                    // Fallback: basic validation if endpoint not available
-                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
-                      key => config[key] && config[key].toString().trim() !== ''
-                    );
-                    return hasRequiredFields;
-                  }
-                }}
-              />
-            ) : (
-              allFields.map(renderField)
-            )}
+            {allFields.map(renderField)}
           </div>
 
           {/* Actions */}
@@ -482,7 +433,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
   );
 };
 

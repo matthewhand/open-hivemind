@@ -15,11 +15,7 @@ interface MCPServer {
   tools?: unknown[];
 }
 
-interface MCPTool {
-  name: string;
-  description: string;
-  inputSchema: unknown;
-}
+import { type MCPTool } from '../types/mcp';
 
 const getAuthHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

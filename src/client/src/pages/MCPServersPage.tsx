@@ -12,7 +12,7 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, EmptyState, Tooltip } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
@@ -159,7 +159,7 @@ const MCPServersPage: React.FC = () => {
         });
       } else {
         const server = servers.find(s => s.id === serverId);
-        if (!server) {throw new Error('Server not found');}
+        if (!server) { throw new Error('Server not found'); }
 
         response = await fetch('/api/admin/mcp-servers/connect', {
           method: 'POST',
@@ -425,15 +425,15 @@ const MCPServersPage: React.FC = () => {
               <div className="text-sm space-y-1 mb-4 bg-base-200/50 p-3 rounded-lg">
                 <p className="truncate" title={server.url}><strong>URL:</strong> {server.url}</p>
                 <div className="flex items-center gap-2">
-                    <p><strong>Tools:</strong> {server.toolCount}</p>
-                    {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
-                        <button
-                            className="btn btn-xs btn-ghost text-primary"
-                            onClick={() => handleViewTools(server)}
-                        >
-                            View Tools
-                        </button>
-                    )}
+                  <p><strong>Tools:</strong> {server.toolCount}</p>
+                  {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
+                    <button
+                      className="btn btn-xs btn-ghost text-primary"
+                      onClick={() => handleViewTools(server)}
+                    >
+                      View Tools
+                    </button>
+                  )}
                 </div>
                 {server.lastConnected && (
                   <p className="text-base-content/50 text-xs">
@@ -445,52 +445,57 @@ const MCPServersPage: React.FC = () => {
               <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-error tooltip"
-                      data-tip="Disconnect"
-                      aria-label={`Disconnect ${server.name}`}
-                      onClick={() => handleServerAction(server.id, 'stop')}
-                    >
-                      <StopIcon className="w-5 h-5" />
-                    </button>
+                    <Tooltip content="Disconnect">
+                      <button
+                        className="btn btn-ghost btn-sm btn-circle text-error"
+                        aria-label={`Disconnect ${server.name}`}
+                        onClick={() => handleServerAction(server.id, 'stop')}
+                      >
+                        <StopIcon className="w-5 h-5" />
+                      </button>
+                    </Tooltip>
                   ) : (
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-success tooltip"
-                      data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
-                      aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
-                      onClick={() => handleServerAction(server.id, 'start')}
-                    >
+                    <Tooltip content={server.status === 'stopped' ? "Connect" : "Retry Connection"}>
+                      <button
+                        className="btn btn-ghost btn-sm btn-circle text-success"
+                        aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
+                        onClick={() => handleServerAction(server.id, 'start')}
+                      >
                         {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
-                    </button>
+                      </button>
+                    </Tooltip>
                   )}
                   {server.toolCount > 0 && (
-                     <button
-                        className="btn btn-ghost btn-sm btn-circle tooltip"
-                        data-tip="View Tools"
+                    <Tooltip content="View Tools">
+                      <button
+                        className="btn btn-ghost btn-sm btn-circle"
                         aria-label={`View Tools for ${server.name}`}
                         onClick={() => handleViewTools(server)}
-                     >
+                      >
                         <WrenchScrewdriverIcon className="w-5 h-5" />
-                     </button>
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    className="btn btn-ghost btn-sm btn-circle tooltip"
-                    data-tip="Edit Configuration"
-                    aria-label={`Edit ${server.name}`}
-                    onClick={() => handleEditServer(server)}
-                  >
-                    <PencilIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-sm btn-circle text-error tooltip"
-                    data-tip="Delete"
-                    aria-label={`Delete ${server.name}`}
-                    onClick={() => handleDeleteServer(server.id)}
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+                  <Tooltip content="Edit Configuration">
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle"
+                      aria-label={`Edit ${server.name}`}
+                      onClick={() => handleEditServer(server)}
+                    >
+                      <PencilIcon className="w-5 h-5" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete">
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-error"
+                      aria-label={`Delete ${server.name}`}
+                      onClick={() => handleDeleteServer(server.id)}
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -564,37 +569,37 @@ const MCPServersPage: React.FC = () => {
         title={`Tools provided by ${viewingServerName}`}
       >
         <div className="overflow-y-auto max-h-[60vh]">
-            {viewingTools.length === 0 ? (
-                <div className="text-center py-8 opacity-50">No tools found for this server.</div>
-            ) : (
-                <div className="flex flex-col gap-4">
-                    {viewingTools.map((tool, idx) => (
-                        <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
-                                <h3 className="font-bold text-lg">{tool.name}</h3>
-                            </div>
-                            <p className="text-sm text-base-content/80 mb-2">{tool.description || 'No description provided.'}</p>
-                            {tool.inputSchema && (
-                                <div className="collapse collapse-arrow bg-base-200">
-                                    <input type="checkbox" />
-                                    <div className="collapse-title text-xs font-medium uppercase opacity-50">
-                                        Input Schema
-                                    </div>
-                                    <div className="collapse-content">
-                                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
-                                            {JSON.stringify(tool.inputSchema, null, 2)}
-                                        </pre>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+          {viewingTools.length === 0 ? (
+            <div className="text-center py-8 opacity-50">No tools found for this server.</div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {viewingTools.map((tool, idx) => (
+                <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-lg">{tool.name}</h3>
+                  </div>
+                  <p className="text-sm text-base-content/80 mb-2">{tool.description || 'No description provided.'}</p>
+                  {tool.inputSchema && (
+                    <div className="collapse collapse-arrow bg-base-200">
+                      <input type="checkbox" />
+                      <div className="collapse-title text-xs font-medium uppercase opacity-50">
+                        Input Schema
+                      </div>
+                      <div className="collapse-content">
+                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                          {JSON.stringify(tool.inputSchema, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
-            )}
+              ))}
+            </div>
+          )}
         </div>
         <div className="modal-action">
-            <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
+          <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
         </div>
       </Modal>
 

@@ -2,8 +2,39 @@
  * MCP (Model Context Protocol) Provider Types
  *
  * This file defines the type system for MCP server providers, which allow
+ * This file defines the type system for MCP server providers, which allow
  * bots to connect to external tools and data sources via the MCP protocol.
  */
+
+export interface MCPTool {
+  id?: string;
+  name: string;
+  description?: string;
+  inputSchema?: any;
+  outputSchema?: any;
+  serverName?: string;
+  serverId?: string;
+  category?: string;
+  usageCount?: number;
+  lastUsed?: string;
+  enabled?: boolean;
+}
+
+export interface MCPResource {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+  serverName?: string;
+}
+
+export interface MCPDescriptor {
+  type: string;
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+}
 
 export interface MCPProviderConfig {
   id: string;
@@ -123,13 +154,13 @@ export interface MCPProviderManager {
 
 export interface MCPProviderEvent {
   type:
-    | 'provider_added'
-    | 'provider_removed'
-    | 'provider_updated'
-    | 'provider_started'
-    | 'provider_stopped'
-    | 'provider_error'
-    | 'provider_test_completed';
+  | 'provider_added'
+  | 'provider_removed'
+  | 'provider_updated'
+  | 'provider_started'
+  | 'provider_stopped'
+  | 'provider_error'
+  | 'provider_test_completed';
   providerId: string;
   timestamp: Date;
   data?: any;

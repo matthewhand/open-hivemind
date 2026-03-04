@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
+import { Tooltip } from './DaisyUI';
 
 /**
  * Props for the AIAssistButton component.
@@ -48,10 +49,10 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div
-      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
-      data-tip={error || (loading ? 'Generating...' : label)}
-      aria-live="polite"
+    <Tooltip
+      position="right"
+      content={error || (loading ? 'Generating...' : label)}
+      className={`font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
     >
       <button
         type="button"
@@ -67,7 +68,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
           <Sparkles className="w-4 h-4" />
         )}
       </button>
-    </div>
+    </Tooltip>
   );
 };
 

@@ -14,6 +14,7 @@ import {
   LoadingSpinner,
   EmptyState,
   ToastNotification,
+  Tooltip,
 } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
@@ -480,9 +481,9 @@ const PersonasPage: React.FC = () => {
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 Persona Name
-                <div className="tooltip tooltip-right" data-tip="A unique name for this persona">
+                <Tooltip position="right" content="A unique name for this persona">
                   <Info className="w-3 h-3 text-base-content/40" />
-                </div>
+                </Tooltip>
               </span>
             </label>
             <Input
@@ -527,9 +528,9 @@ const PersonasPage: React.FC = () => {
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 System Prompt
-                <div className="tooltip tooltip-right" data-tip="The core instruction set that governs the AI's behavior, tone, and capabilities.">
+                <Tooltip position="right" content="The core instruction set that governs the AI's behavior, tone, and capabilities.">
                   <Info className="w-3 h-3 text-base-content/40" />
-                </div>
+                </Tooltip>
               </span>
             </label>
             <textarea
@@ -547,9 +548,9 @@ const PersonasPage: React.FC = () => {
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 Assign to Bots
-                <div className="tooltip tooltip-right" data-tip="Select which bots should use this persona. They will be updated immediately upon saving.">
+                <Tooltip position="right" content="Select which bots should use this persona. They will be updated immediately upon saving.">
                   <Info className="w-3 h-3 text-base-content/40" />
-                </div>
+                </Tooltip>
               </span>
               <span className="label-text-alt text-base-content/60">Optional</span>
             </label>

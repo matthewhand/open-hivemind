@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheckIcon,
   CloudIcon,
@@ -97,6 +97,25 @@ const EnterpriseManager: React.FC = () => {
     region: '',
     credentials: {} as Record<string, any>,
   });
+
+  const integrationDialogRef = useRef<HTMLDialogElement>(null);
+  const cloudProviderDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (addIntegrationDialog) {
+      if (!integrationDialogRef.current?.open) integrationDialogRef.current?.showModal();
+    } else {
+      if (integrationDialogRef.current?.open) integrationDialogRef.current?.close();
+    }
+  }, [addIntegrationDialog]);
+
+  useEffect(() => {
+    if (addCloudProviderDialog) {
+      if (!cloudProviderDialogRef.current?.open) cloudProviderDialogRef.current?.showModal();
+    } else {
+      if (cloudProviderDialogRef.current?.open) cloudProviderDialogRef.current?.close();
+    }
+  }, [addCloudProviderDialog]);
 
   useEffect(() => {
     loadEnterpriseData();
@@ -332,237 +351,237 @@ const EnterpriseManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'active':
-    case 'connected':
-    case 'compliant':
-      return 'badge-success';
-    case 'inactive':
-    case 'disconnected':
-    case 'non-compliant':
-      return 'badge-error';
-    case 'configuring':
-    case 'checking':
-      return 'badge-warning';
-    default:
-      return 'badge-ghost';
+      case 'active':
+      case 'connected':
+      case 'compliant':
+        return 'badge-success';
+      case 'inactive':
+      case 'disconnected':
+      case 'non-compliant':
+        return 'badge-error';
+      case 'configuring':
+      case 'checking':
+        return 'badge-warning';
+      default:
+        return 'badge-ghost';
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-    case 'critical':
-      return 'badge-error';
-    case 'high':
-      return 'badge-warning';
-    case 'medium':
-      return 'badge-info';
-    case 'low':
-      return 'badge-success';
-    default:
-      return 'badge-ghost';
+      case 'critical':
+        return 'badge-error';
+      case 'high':
+        return 'badge-warning';
+      case 'medium':
+        return 'badge-info';
+      case 'low':
+        return 'badge-success';
+      default:
+        return 'badge-ghost';
     }
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
-    case 0: // Security & Compliance
-      return (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {complianceRules.map((rule) => (
-              <div key={rule.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{rule.name}</h3>
-                      <p className="text-sm text-base-content/70">{rule.category}</p>
-                    </div>
-                    <div className="flex gap-1 flex-wrap justify-end">
-                      <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
-                        {rule.severity}
+      case 0: // Security & Compliance
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {complianceRules.map((rule) => (
+                <div key={rule.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{rule.name}</h3>
+                        <p className="text-sm text-base-content/70">{rule.category}</p>
                       </div>
-                      <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
-                        {rule.status}
+                      <div className="flex gap-1 flex-wrap justify-end">
+                        <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
+                          {rule.severity}
+                        </div>
+                        <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
+                          {rule.status}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <p className="text-sm mb-2">{rule.description}</p>
-                  {rule.remediation && (
-                    <div className="alert alert-warning text-sm py-2">
-                      <ExclamationTriangleIcon className="w-4 h-4" />
-                      <span>{rule.remediation}</span>
-                    </div>
-                  )}
-                  <div className="text-xs text-base-content/50 mt-2">
+                    <p className="text-sm mb-2">{rule.description}</p>
+                    {rule.remediation && (
+                      <div className="alert alert-warning text-sm py-2">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        <span>{rule.remediation}</span>
+                      </div>
+                    )}
+                    <div className="text-xs text-base-content/50 mt-2">
                       Last checked: {new Date(rule.lastChecked).toLocaleString()}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      );
+        );
 
-    case 1: // Multi-Cloud
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Cloud Providers</h2>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setAddCloudProviderDialog(true)}
-              disabled={loading}
-            >
-              <PlusIcon className="w-4 h-4 mr-1" />
+      case 1: // Multi-Cloud
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Cloud Providers</h2>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setAddCloudProviderDialog(true)}
+                disabled={loading}
+              >
+                <PlusIcon className="w-4 h-4 mr-1" />
                 Add Provider
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cloudProviders.map((provider) => (
-              <div key={provider.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{provider.name}</h3>
-                      <p className="text-sm text-base-content/70">
-                        {provider.type.toUpperCase()} • {provider.region}
-                      </p>
-                    </div>
-                    <div className={`badge ${getStatusColor(provider.status)}`}>
-                      {provider.status}
-                    </div>
-                  </div>
-                  <p className="text-sm font-semibold mb-1">Resources:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {provider.resources.map((resource, index) => (
-                      <div key={index} className="badge badge-outline badge-sm">
-                        {resource.type}: {resource.count}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cloudProviders.map((provider) => (
+                <div key={provider.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{provider.name}</h3>
+                        <p className="text-sm text-base-content/70">
+                          {provider.type.toUpperCase()} • {provider.region}
+                        </p>
                       </div>
-                    ))}
+                      <div className={`badge ${getStatusColor(provider.status)}`}>
+                        {provider.status}
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold mb-1">Resources:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {provider.resources.map((resource, index) => (
+                        <div key={index} className="badge badge-outline badge-sm">
+                          {resource.type}: {resource.count}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      );
+        );
 
-    case 2: // Integrations
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setAddIntegrationDialog(true)}
-              disabled={loading}
-            >
-              <PlusIcon className="w-4 h-4 mr-1" />
+      case 2: // Integrations
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setAddIntegrationDialog(true)}
+                disabled={loading}
+              >
+                <PlusIcon className="w-4 h-4 mr-1" />
                 Add Integration
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.map((integration) => (
-              <div key={integration.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{integration.name}</h3>
-                      <p className="text-sm text-base-content/70">
-                        {integration.provider} • {integration.type}
-                      </p>
-                    </div>
-                    <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
-                      {integration.status}
-                    </div>
-                  </div>
-                  <p className="text-sm mb-2">
-                      Last sync: {new Date(integration.lastSync).toLocaleString()}
-                  </p>
-                  <div className="card-actions justify-end">
-                    <button className="btn btn-xs btn-outline">Configure</button>
-                    <button className="btn btn-xs btn-outline">Test</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 3: // Audit & Governance
-      return (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
-          <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Resource</th>
-                  <th>Result</th>
-                  <th>IP Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {auditEvents.map((event) => (
-                  <tr key={event.id}>
-                    <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
-                    <td>{event.user}</td>
-                    <td>{event.action}</td>
-                    <td>{event.resource}</td>
-                    <td>
-                      <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
-                        {event.result}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {integrations.map((integration) => (
+                <div key={integration.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{integration.name}</h3>
+                        <p className="text-sm text-base-content/70">
+                          {integration.provider} • {integration.type}
+                        </p>
                       </div>
-                    </td>
-                    <td className="font-mono text-xs">{event.ipAddress}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-
-    case 4: // Performance Optimization
-      return (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {performanceMetrics.map((metric) => (
-              <div key={metric.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="card-title text-base">{metric.name}</h3>
-                    <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
-                      {metric.status}
+                      <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
+                        {integration.status}
+                      </div>
+                    </div>
+                    <p className="text-sm mb-2">
+                      Last sync: {new Date(integration.lastSync).toLocaleString()}
+                    </p>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-xs btn-outline">Configure</button>
+                      <button className="btn btn-xs btn-outline">Test</button>
                     </div>
                   </div>
-                  <div className="text-3xl font-bold mb-1">
-                    {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
-                  </div>
-                  <div className="flex items-center mb-2 text-sm text-base-content/70">
-                    <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
-                    {metric.trend === 'up' && <span className="text-error">↗</span>}
-                    {metric.trend === 'down' && <span className="text-success">↘</span>}
-                    {metric.trend === 'stable' && <span>→</span>}
-                  </div>
-                  <div className="card-actions justify-end">
-                    <button className="btn btn-sm btn-outline">Optimize</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 3: // Audit & Governance
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
+            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditEvents.map((event) => (
+                    <tr key={event.id}>
+                      <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
+                      <td>{event.user}</td>
+                      <td>{event.action}</td>
+                      <td>{event.resource}</td>
+                      <td>
+                        <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
+                          {event.result}
+                        </div>
+                      </td>
+                      <td className="font-mono text-xs">{event.ipAddress}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+      case 4: // Performance Optimization
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {performanceMetrics.map((metric) => (
+                <div key={metric.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="card-title text-base">{metric.name}</h3>
+                      <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
+                        {metric.status}
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">
+                      {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
+                    </div>
+                    <div className="flex items-center mb-2 text-sm text-base-content/70">
+                      <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
+                      {metric.trend === 'up' && <span className="text-error">↗</span>}
+                      {metric.trend === 'down' && <span className="text-success">↘</span>}
+                      {metric.trend === 'stable' && <span>→</span>}
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-sm btn-outline">Optimize</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      );
+        );
 
-    default:
-      return null;
+      default:
+        return null;
     }
   };
 
@@ -640,7 +659,7 @@ const EnterpriseManager: React.FC = () => {
       {renderTabContent()}
 
       {/* Add Integration Dialog */}
-      <dialog className={`modal ${addIntegrationDialog ? 'modal-open' : ''}`}>
+      <dialog ref={integrationDialogRef} className="modal" onClose={() => setAddIntegrationDialog(false)}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Integration</h3>
           <div className="form-control w-full mb-4">
@@ -698,7 +717,7 @@ const EnterpriseManager: React.FC = () => {
       </dialog>
 
       {/* Add Cloud Provider Dialog */}
-      <dialog className={`modal ${addCloudProviderDialog ? 'modal-open' : ''}`}>
+      <dialog ref={cloudProviderDialogRef} className="modal" onClose={() => setAddCloudProviderDialog(false)}>
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Cloud Provider</h3>
           <div className="form-control w-full mb-4">

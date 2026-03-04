@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle, CheckCircle, Lock } from 'lucide-react';
+import { Tooltip } from './DaisyUI';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -38,7 +39,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
   };
 
   const handleSave = async () => {
-    if (Object.keys(modifiedConfig).length === 0) {return;}
+    if (Object.keys(modifiedConfig).length === 0) { return; }
 
     try {
       setSaving(true);
@@ -85,7 +86,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
           </div>
         </label>
 
-        <div className={isLocked ? 'tooltip tooltip-bottom' : ''} data-tip={isLocked ? `Managed by ${schema.env}` : ''}>
+        <Tooltip position="bottom" content={isLocked ? `Managed by ${schema.env}` : ''}>
           {isBoolean ? (
             <div className="flex items-center gap-3">
               <input
@@ -131,7 +132,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
               readOnly={isLocked}
             />
           )}
-        </div>
+        </Tooltip>
 
         {schema.doc && (
           <label className="label">
@@ -159,7 +160,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
               disabled={saving}
             >
               {saving ? <span className="loading loading-spinner loading-xs" /> : <Save className="w-4 h-4" />}
-                        Save Changes
+              Save Changes
             </button>
           )}
         </div>
@@ -183,10 +184,10 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
             renderConfigField(key, schemaProps[key] || {}, value),
           )}
         </div>
-            
+
         {Object.keys(configData.values || {}).length === 0 && (
           <div className="text-center py-8 opacity-50">
-                    No configuration fields found.
+            No configuration fields found.
           </div>
         )}
       </div>

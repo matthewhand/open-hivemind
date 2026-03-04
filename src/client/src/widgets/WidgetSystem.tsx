@@ -250,20 +250,20 @@ const WidgetRenderer: React.FC<{ widget: WidgetConfig; editable?: boolean; onEdi
   // Simulate data fetching based on dataSource
   const getWidgetData = () => {
     switch (widget.dataSource) {
-    case 'performance.responseTime':
-      return performance.responseTime || 0;
-    case 'performance.memoryUsage':
-      return performance.memoryUsage || 0;
-    case 'performance.cpuUsage':
-      return performance.cpuUsage || 0;
-    case 'performance.errorRate':
-      return performance.errorRate || 0;
-    case 'dashboard.bots':
-      return dashboard.bots || [];
-    case 'dashboard.analytics':
-      return dashboard.analytics || {};
-    default:
-      return Math.random() * 100; // Fallback for demo
+      case 'performance.responseTime':
+        return performance.responseTime || 0;
+      case 'performance.memoryUsage':
+        return performance.memoryUsage || 0;
+      case 'performance.cpuUsage':
+        return performance.cpuUsage || 0;
+      case 'performance.errorRate':
+        return performance.errorRate || 0;
+      case 'dashboard.bots':
+        return dashboard.bots || [];
+      case 'dashboard.analytics':
+        return dashboard.analytics || {};
+      default:
+        return Math.random() * 100; // Fallback for demo
     }
   };
 
@@ -313,6 +313,25 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   const [widgets, setWidgets] = useState<WidgetConfig[]>(externalWidgets || defaultWidgets);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
+  const addDialogRef = useRef<HTMLDialogElement>(null);
+  const editDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (showAddDialog) {
+      if (!addDialogRef.current?.open) addDialogRef.current?.showModal();
+    } else {
+      if (addDialogRef.current?.open) addDialogRef.current?.close();
+    }
+  }, [showAddDialog]);
+
+  useEffect(() => {
+    if (editingWidget) {
+      if (!editDialogRef.current?.open) editDialogRef.current?.showModal();
+    } else {
+      if (editDialogRef.current?.open) editDialogRef.current?.close();
+    }
+  }, [editingWidget]);
+
   const dragStateRef = useRef<DragState>({
     isDragging: false,
     draggedWidget: null,
@@ -385,88 +404,89 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
       </AdaptiveGrid>
 
       {/* Add Widget Dialog */}
-      {showAddDialog && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Add New Widget</h3>
-            <div className="py-4 space-y-4">
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Widget Title</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  defaultValue="New Widget"
-                  onChange={() => {
-                    // Handle title change for new widget
-                  }}
-                />
-              </div>
-
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Widget Type</span>
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  defaultValue="metric"
-                >
-                  <option value="metric">Metric</option>
-                  <option value="chart">Chart</option>
-                  <option value="status">Status</option>
-                  <option value="table">Table</option>
-                </select>
-              </div>
-
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Data Source</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  defaultValue="performance.responseTime"
-                />
-                <label className="label">
-                  <span className="label-text-alt">Select the data source for this widget</span>
-                </label>
-              </div>
-
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Refresh Interval (ms)</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered w-full"
-                  defaultValue={5000}
-                />
-              </div>
+      <dialog ref={addDialogRef} className="modal" onClose={() => setShowAddDialog(false)}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Add New Widget</h3>
+          <div className="py-4 space-y-4">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Widget Title</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                defaultValue="New Widget"
+                onChange={() => {
+                  // Handle title change for new widget
+                }}
+              />
             </div>
-            <div className="modal-action">
-              <button className="btn" onClick={() => setShowAddDialog(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => {
-                handleAddWidget({
-                  type: 'metric',
-                  title: 'New Widget',
-                  position: { x: 0, y: 0, w: 3, h: 2 },
-                  dataSource: 'performance.responseTime',
-                  refreshInterval: 5000,
-                  visible: true,
-                  settings: {},
-                });
-              }}>
-                Add Widget
-              </button>
+
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Widget Type</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                defaultValue="metric"
+              >
+                <option value="metric">Metric</option>
+                <option value="chart">Chart</option>
+                <option value="status">Status</option>
+                <option value="table">Table</option>
+              </select>
+            </div>
+
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Data Source</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                defaultValue="performance.responseTime"
+              />
+              <label className="label">
+                <span className="label-text-alt">Select the data source for this widget</span>
+              </label>
+            </div>
+
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Refresh Interval (ms)</span>
+              </label>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                defaultValue={5000}
+              />
             </div>
           </div>
+          <div className="modal-action">
+            <button className="btn" onClick={() => setShowAddDialog(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={() => {
+              handleAddWidget({
+                type: 'metric',
+                title: 'New Widget',
+                position: { x: 0, y: 0, w: 3, h: 2 },
+                dataSource: 'performance.responseTime',
+                refreshInterval: 5000,
+                visible: true,
+                settings: {},
+              });
+            }}>
+              Add Widget
+            </button>
+          </div>
         </div>
-      )}
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setShowAddDialog(false)}>close</button>
+        </form>
+      </dialog>
 
       {/* Edit Widget Dialog */}
-      {editingWidget && (
-        <div className="modal modal-open">
+      < dialog ref={editDialogRef} className="modal" onClose={() => setEditingWidget(null)}>
+        {editingWidget && (
           <div className="modal-box">
             <h3 className="font-bold text-lg">Edit Widget</h3>
             <div className="py-4 space-y-4">
@@ -546,9 +566,12 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setEditingWidget(null)}>close</button>
+        </form>
+      </dialog >
+    </div >
   );
 };
 

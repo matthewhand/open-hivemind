@@ -3,6 +3,36 @@
  * Defines types for MCP provider configuration, status, and management
  */
 
+export interface MCPTool {
+    id?: string;
+    name: string;
+    description?: string;
+    inputSchema?: any;
+    outputSchema?: any;
+    serverName?: string;
+    serverId?: string;
+    category?: string;
+    usageCount?: number;
+    lastUsed?: string;
+    enabled?: boolean;
+}
+
+export interface MCPResource {
+    uri: string;
+    name: string;
+    description?: string;
+    mimeType?: string;
+    serverName?: string;
+}
+
+export interface MCPDescriptor {
+    type: string;
+    id: string;
+    name: string;
+    description?: string;
+    version?: string;
+}
+
 export interface MCPProviderConfig {
     id: string;
     name: string;

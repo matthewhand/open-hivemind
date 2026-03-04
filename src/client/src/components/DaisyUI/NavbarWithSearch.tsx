@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Tooltip from './Tooltip';
 
 interface NavItem {
   id: string;
@@ -271,7 +272,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               </svg>
             </button>
           </div>
-          
+
           {/* Search Suggestions Dropdown */}
           {showSuggestions && (
             <div
@@ -285,9 +286,8 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                     {filteredSuggestions.map((suggestion, index) => (
                       <li key={index}>
                         <button
-                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors ${
-                            selectedSuggestionIndex === index ? 'bg-primary text-primary-content' : ''
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors ${selectedSuggestionIndex === index ? 'bg-primary text-primary-content' : ''
+                            }`}
                           onClick={() => handleSearchSubmitWithOptions(suggestion)}
                           onMouseEnter={() => setSelectedSuggestionIndex(index)}
                         >
@@ -303,7 +303,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                   </ul>
                 </div>
               )}
-              
+
               {recentSearches.length > 0 && (
                 <div className="p-2">
                   {searchQuery && filteredSuggestions.length > 0 && <div className="divider my-1"></div>}
@@ -335,7 +335,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                   </ul>
                 </div>
               )}
-              
+
               {!searchQuery && recentSearches.length === 0 && (
                 <div className="p-4 text-center text-sm text-base-content/60">
                   <div className="flex flex-col items-center gap-2">
@@ -355,13 +355,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       {/* Navbar End */}
       <div className="navbar-end gap-2">
         {/* Quick Actions */}
-        <div className="tooltip tooltip-bottom" data-tip="Create New Bot">
+        <Tooltip position="bottom" content="Create New Bot">
           <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
             </svg>
           </button>
-        </div>
+        </Tooltip>
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">
@@ -413,11 +413,11 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li className="menu-title">Choose Theme</li>
             {themeOptions.map((theme) => (
               <li key={theme.value}>
-                <input 
-                  type="radio" 
-                  name="theme-dropdown" 
-                  className="theme-controller" 
-                  value={theme.value} 
+                <input
+                  type="radio"
+                  name="theme-dropdown"
+                  className="theme-controller"
+                  value={theme.value}
                   aria-label={theme.label}
                 />
                 <span className="flex items-center gap-2">

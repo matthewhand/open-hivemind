@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { container } from 'tsyringe';
+import { container, Lifecycle } from 'tsyringe';
 import {
   isRegistered,
   registerInstance,
@@ -52,6 +52,14 @@ describe('DI Container', () => {
       expect(instance1).toBeInstanceOf(DummyService);
       expect(instance1).toBe(instance2);
     });
+
+    it('delegates to tsyringe container.register with Singleton lifecycle', () => {
+      const spy = jest.spyOn(container, 'register');
+      registerSingleton('spy-singleton', DummyService);
+
+      expect(spy).toHaveBeenCalledWith('spy-singleton', { useClass: DummyService }, { lifecycle: Lifecycle.Singleton });
+      spy.mockRestore();
+    });
   });
 
   describe('registerTransient', () => {
@@ -67,6 +75,14 @@ describe('DI Container', () => {
       expect(instance1).toBeInstanceOf(DummyService);
       expect(instance2).toBeInstanceOf(DummyService);
       expect(instance1).not.toBe(instance2);
+    });
+
+    it('delegates to tsyringe container.register without explicit lifecycle', () => {
+      const spy = jest.spyOn(container, 'register');
+      registerTransient('spy-transient', DummyService);
+
+      expect(spy).toHaveBeenCalledWith('spy-transient', { useClass: DummyService });
+      spy.mockRestore();
     });
   });
 
@@ -93,7 +109,16 @@ describe('DI Container', () => {
     it('should throw when resolving an unregistered service', () => {
       expect(() => {
         resolve('unregistered-token');
-      }).toThrow();
+      }).toThrow('Attempted to resolve unregistered dependency token');
+    });
+
+    it('delegates resolution to the underlying tsyringe container', () => {
+      const spy = jest.spyOn(container, 'resolve').mockReturnValue('spy-resolved');
+      const result = resolve('spy-token');
+
+      expect(spy).toHaveBeenCalledWith('spy-token');
+      expect(result).toBe('spy-resolved');
+      spy.mockRestore();
     });
 
     it('should delegate to container.resolve with the correct token', () => {

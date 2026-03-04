@@ -13,7 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards, Tooltip } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -358,7 +358,7 @@ const ExportPage: React.FC = () => {
                       <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-left" data-tip="Restore">
+                        <Tooltip position="left" content="Restore">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -368,8 +368,8 @@ const ExportPage: React.FC = () => {
                           >
                             <RotateCcw className="w-4 h-4" />
                           </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Download">
+                        </Tooltip>
+                        <Tooltip position="left" content="Download">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -379,8 +379,8 @@ const ExportPage: React.FC = () => {
                           >
                             <Download className="w-4 h-4" />
                           </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Delete">
+                        </Tooltip>
+                        <Tooltip position="left" content="Delete">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -390,7 +390,7 @@ const ExportPage: React.FC = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </div>
+                        </Tooltip>
                       </td>
                     </tr>
                   ))
