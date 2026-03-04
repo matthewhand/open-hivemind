@@ -25,8 +25,9 @@ export class DiscordMessageSender {
     try {
       const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
       const bots = this.botManager.getAllBots();
-      const botInfo =
-        (senderName && isSnowflake(senderName)
+      const t0 = Date.now();
+    const botInfo =
+      (senderName && isSnowflake(senderName)
           ? bots.find(
               (b) =>
                 b.botUserId === senderName ||
@@ -103,6 +104,7 @@ export class DiscordMessageSender {
     }
 
     const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
+    const t0 = Date.now();
     const botInfo =
       (senderName && isSnowflake(senderName)
         ? bots.find(
@@ -197,6 +199,7 @@ export class DiscordMessageSender {
           userId: '',
           messageType: 'outgoing',
           contentLength: (text || '').length,
+          processingTime: Date.now() - t0,
           status: 'success',
         });
       } catch {}
