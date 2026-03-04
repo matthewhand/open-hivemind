@@ -40,11 +40,14 @@ describe('webhookRoutes', () => {
     const { res } = await runRoute(app, 'post', '/webhook', { body });
     expect(res.statusCode).toBe(200);
 
+    const expectedMessage = '✅ **Task Succeeded**\n\n**Output:** Answer is 42\n**Image URL:** N/A';
+    expect(res.body.message).toBe(expectedMessage);
+
     // The route sends a single announcement with constructed message
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [channel, message] = messageService.sendPublicAnnouncement.mock.calls[0];
     expect(channel).toBe(''); // empty per current implementation
-    expect(message).toBe('✅ **Task Succeeded**\n\n**Output:** Answer is 42\n**Image URL:** N/A');
+    expect(message).toBe(expectedMessage);
     // Image URL may be undefined if not pre-populated; ensure message contains format when present
   });
 
@@ -58,9 +61,12 @@ describe('webhookRoutes', () => {
     const { res } = await runRoute(app, 'post', '/webhook', { body });
     expect(res.statusCode).toBe(200);
 
+    const expectedMessage = '⏳ **Task Processing**\n\n**Prediction ID:** `pred-2`\n**Status:** `processing`';
+    expect(res.body.message).toBe(expectedMessage);
+
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [, message] = messageService.sendPublicAnnouncement.mock.calls[0];
-    expect(message).toBe('⏳ **Task Processing**\n\n**Prediction ID:** `pred-2`\n**Status:** `processing`');
+    expect(message).toBe(expectedMessage);
   });
 
   it('returns 400 when predictionId or status is missing', async () => {
