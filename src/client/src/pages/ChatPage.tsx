@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
+import { RefreshCw, MessageSquare } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 // Define Bot type based on API response
 interface BotData {
@@ -20,71 +19,16 @@ interface BotData {
   persona?: string;
 }
 
-// LLM Provider option interface
-interface LlmProviderOption {
-  key: string;
-  name: string;
-  provider: string;
-}
-
 const ChatPage: React.FC = () => {
   const [bots, setBots] = useState<BotData[]>([]);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
-  const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
-  const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
-
-  const showSuccess = useSuccessToast();
-  const showError = useErrorToast();
-
-  // Fetch LLM providers
-  const fetchLlmProviders = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/llm-profiles');
-      if (response.ok) {
-        const data = await response.json();
-        setLlmProviders(data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch LLM providers:', err);
-    }
-  }, []);
-
-  // Hot swap LLM provider
-  const handleSwapProvider = async (botId: string, newProviderKey: string) => {
-    setSwappingProvider(botId);
-    try {
-      const response = await fetch(`/api/admin/bots/${botId}/llm-provider`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ llmProvider: newProviderKey }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to swap provider');
-      }
-
-      // Update local state
-      setBots(prev => prev.map(bot =>
-        bot.id === botId ? { ...bot, llmProvider: newProviderKey } : bot
-      ));
-
-      showSuccess('LLM provider updated successfully');
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to swap provider');
-    } finally {
-      setSwappingProvider(null);
-      setShowProviderDropdown(null);
-    }
-  };
 
   useEffect(() => {
     fetchBots();
-    fetchLlmProviders();
-  }, [fetchLlmProviders]);
+  }, []);
 
   useEffect(() => {
     if (selectedBotId) {
@@ -204,7 +148,7 @@ const ChatPage: React.FC = () => {
             ) : (
               <ul className="menu w-full p-2 gap-1">
                 {bots.map(bot => (
-                  <li key={bot.id} className="relative">
+                  <li key={bot.id}>
                     <button
                       className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
                       onClick={() => setSelectedBotId(bot.id)}
@@ -213,71 +157,9 @@ const ChatPage: React.FC = () => {
                         <BotAvatar bot={bot} />
                         <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
                       </div>
-                      <div className="flex flex-col items-start min-w-0 flex-1">
+                      <div className="flex flex-col items-start min-w-0">
                         <span className="font-semibold truncate w-full text-left">{bot.name}</span>
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
-                          <span className="text-xs opacity-30">•</span>
-                          {/* LLM Provider Hot Swap Dropdown */}
-                          <div className="dropdown dropdown-hover dropdown-right flex-1">
-                            <button
-                              className="btn btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowProviderDropdown(showProviderDropdown === bot.id ? null : bot.id);
-                              }}
-                              disabled={swappingProvider === bot.id}
-                              title="Click to change LLM provider"
-                            >
-                              <Cpu className="w-3 h-3" />
-                              {swappingProvider === bot.id ? (
-                                <span className="loading loading-spinner loading-xs" />
-                              ) : (
-                                <>
-                                  <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
-                                  <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                </>
-                              )}
-                            </button>
-                            {showProviderDropdown === bot.id && (
-                              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-50 max-h-60 overflow-y-auto">
-                                <li className="menu-title">
-                                  <span>Switch Provider</span>
-                                </li>
-                                <li>
-                                  <button
-                                    className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSwapProvider(bot.id, '');
-                                    }}
-                                  >
-                                    <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
-                                    System Default
-                                  </button>
-                                </li>
-                                <div className="divider my-1"></div>
-                                {llmProviders.map(provider => (
-                                  <li key={provider.key}>
-                                    <button
-                                      className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSwapProvider(bot.id, provider.key);
-                                      }}
-                                    >
-                                      <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
-                                      <div className="flex flex-col items-start">
-                                        <span className="font-medium">{provider.name}</span>
-                                        <span className="text-xs opacity-50">{provider.provider}</span>
-                                      </div>
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        </div>
+                        <span className="text-xs opacity-50 truncate w-full text-left capitalize">{bot.messageProvider} • {bot.llmProvider}</span>
                       </div>
                     </button>
                   </li>
@@ -291,6 +173,28 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 flex flex-col bg-base-100 relative">
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
+              {/* ── Bot context header ── */}
+              <div className="px-4 py-2 bg-base-200 border-b border-base-300 flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  <BotAvatar bot={selectedBot} />
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-base-200 ${selectedBot.connected ? 'bg-success' : 'bg-base-300'}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm truncate block">{selectedBot.name}</span>
+                  <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                    <span className="badge badge-info badge-sm capitalize">{selectedBot.messageProvider}</span>
+                    <span className="badge badge-secondary badge-sm capitalize" title="Active LLM Provider">
+                      🤖 {selectedBot.llmProvider}
+                    </span>
+                    {selectedBot.persona && (
+                      <span className="badge badge-ghost badge-sm capitalize">{selectedBot.persona}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-xs text-base-content/40 flex-shrink-0">
+                  {selectedBot.messageCount} msgs
+                </div>
+              </div>
               {historyLoading && (
                 <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
                   <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -304,8 +208,8 @@ const ChatPage: React.FC = () => {
                 maxHeight="100%"
                 isLoading={false}
               />
-              {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>
+
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
               <EmptyState
