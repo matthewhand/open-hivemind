@@ -139,6 +139,7 @@ export interface IWebSocketService {
     userId: string;
     messageType: 'incoming' | 'outgoing';
     contentLength: number;
+    processingTime?: number;
     status: string;
   }) => void;
   /** Record an alert for monitoring */
