@@ -9,6 +9,14 @@ export interface MetricData {
   category?: string;
 }
 
+type TrendDirection = 'up' | 'down' | 'stable';
+
+const TREND_COLORS = {
+  success: 'text-success',
+  error: 'text-error',
+  neutral: 'text-neutral',
+} as const;
+
 export interface MetricChartProps {
   title: string;
   data: MetricData[];
@@ -22,6 +30,15 @@ export interface MetricChartProps {
   refreshInterval?: number;
   onRefresh?: () => void;
   className?: string;
+  /**
+   * If true, an upward trend will be colored red (error) and a downward trend green (success).
+   * Useful for metrics where lower is better, such as error rates or latency.
+   */
+  inverseTrendColor?: boolean;
+  /**
+   * The percentage difference threshold required to classify a trend as 'up' or 'down'. Defaults to 5%.
+   */
+  trendThresholdPercent?: number;
 }
 
 const MetricChart: React.FC<MetricChartProps> = ({
@@ -37,6 +54,8 @@ const MetricChart: React.FC<MetricChartProps> = ({
   refreshInterval,
   onRefresh,
   className = '',
+  inverseTrendColor = false,
+  trendThresholdPercent = 5,
 }) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -138,25 +157,39 @@ const MetricChart: React.FC<MetricChartProps> = ({
     return `${Math.round(sum / chartData.length)}${unit}`;
   };
 
-  const getTrend = () => {
-    if (chartData.length < 2) {return 'stable';}
+  const getTrend = (): { direction: TrendDirection; percent: number } => {
+    if (chartData.length < 2) {return { direction: 'stable', percent: 0 };}
     const recent = chartData.slice(-5);
     const older = chartData.slice(-10, -5);
 
-    if (recent.length === 0 || older.length === 0) {return 'stable';}
+    if (recent.length === 0 || older.length === 0) {return { direction: 'stable', percent: 0 };}
 
     const recentAvg = recent.reduce((acc, item) => acc + item.value, 0) / recent.length;
     const olderAvg = older.reduce((acc, item) => acc + item.value, 0) / older.length;
 
+    if (olderAvg === 0) {
+       if (recentAvg > 0) return { direction: 'up', percent: 100 }; // infinite effectively
+       return { direction: 'stable', percent: 0 };
+    }
+
     const diff = ((recentAvg - olderAvg) / olderAvg) * 100;
 
-    if (diff > 5) {return 'up';}
-    if (diff < -5) {return 'down';}
-    return 'stable';
+    if (diff > trendThresholdPercent) {return { direction: 'up', percent: diff };}
+    if (diff < -trendThresholdPercent) {return { direction: 'down', percent: diff };}
+    return { direction: 'stable', percent: Math.abs(diff) };
   };
 
-  const trend = getTrend();
-  const trendColor = trend === 'up' ? 'text-success' : trend === 'down' ? 'text-error' : 'text-neutral';
+  const trendData = getTrend();
+  const trend = trendData.direction;
+  const trendColor = trend === 'stable' ? TREND_COLORS.neutral :
+    trend === 'up' ? (inverseTrendColor ? TREND_COLORS.error : TREND_COLORS.success) :
+      (inverseTrendColor ? TREND_COLORS.success : TREND_COLORS.error);
+
+  const getTrendLabel = () => {
+    if (trend === 'stable') return 'stable';
+    const sign = trend === 'up' ? '+' : '';
+    return `${sign}${trendData.percent.toFixed(1)}%`;
+  };
 
   return (
     <div className={`card bg-base-100 shadow-xl ${className}`}>
@@ -173,11 +206,14 @@ const MetricChart: React.FC<MetricChartProps> = ({
             {isLoading && (
               <div className="loading loading-spinner loading-sm"></div>
             )}
-            <div className={`flex items-center gap-1 ${trendColor}`}>
-              {trend === 'up' && <span className="text-lg">↑</span>}
-              {trend === 'down' && <span className="text-lg">↓</span>}
-              {trend === 'stable' && <span className="text-lg">→</span>}
-              <span className="text-xs">{trend}</span>
+            <div className={`flex items-center gap-1 ${trendColor}`} aria-live="polite">
+              {trend === 'up' && <span className="text-lg" aria-hidden="true">↑</span>}
+              {trend === 'down' && <span className="text-lg" aria-hidden="true">↓</span>}
+              {trend === 'stable' && <span className="text-lg" aria-hidden="true">→</span>}
+              <span className="text-xs font-medium">
+                {trend === 'up' ? <span className="sr-only">Increased by </span> : trend === 'down' ? <span className="sr-only">Decreased by </span> : <span className="sr-only">Trend is </span>}
+                {getTrendLabel()}
+              </span>
             </div>
           </div>
         </div>
