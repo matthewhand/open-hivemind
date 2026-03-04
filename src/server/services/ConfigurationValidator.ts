@@ -1,6 +1,7 @@
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import type { BotConfig } from '../../types/config';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -13,84 +14,6 @@ export interface TestResult {
   success: boolean;
   message: string;
   details?: any;
-}
-
-export interface BotConfig {
-  name: string;
-  messageProvider: string;
-  llmProvider: string;
-  llmProfile?: string;
-  discord?:
-    | {
-        token: string;
-        clientId?: string;
-        guildId?: string;
-        channelId?: string;
-        voiceChannelId?: string;
-      }
-    | string;
-  slack?:
-    | {
-        botToken: string;
-        appToken?: string;
-        signingSecret: string;
-        joinChannels?: string;
-        defaultChannelId?: string;
-        mode?: 'socket' | 'rtm';
-      }
-    | string;
-  mattermost?:
-    | {
-        serverUrl: string;
-        token: string;
-        teamId?: string;
-        channelId?: string;
-      }
-    | string;
-  openai?:
-    | {
-        apiKey: string;
-        model?: string;
-        temperature?: number;
-        maxTokens?: number;
-      }
-    | string;
-  flowise?:
-    | {
-        apiKey: string;
-        endpoint: string;
-        chatflowId?: string;
-      }
-    | string;
-  openwebui?:
-    | {
-        apiKey: string;
-        endpoint: string;
-        model?: string;
-      }
-    | string;
-  openswarm?:
-    | {
-        apiKey: string;
-        endpoint: string;
-        agentId?: string;
-      }
-    | string;
-  persona?: string;
-  mcpGuardProfile?: string;
-  responseProfile?: string;
-  systemInstruction?: string;
-  mcpServers?: string | string[] | { name: string; serverUrl?: string }[];
-  mcpGuard?:
-    | {
-        enabled: boolean;
-        type: 'owner' | 'custom';
-        allowedUserIds?: string[];
-      }
-    | string;
-  createdAt?: string;
-  updatedAt?: string;
-  isActive?: boolean;
 }
 
 export class ConfigurationValidator {
@@ -256,7 +179,7 @@ export class ConfigurationValidator {
     const normalizedLlmProvider =
       typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
     const llmDefaults = getLlmDefaultStatus();
-    const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider };
+    const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider as any };
 
     if (!normalizedLlmProvider) {
       if (!llmDefaults.configured) {
@@ -366,11 +289,11 @@ export class ConfigurationValidator {
 
       case 'flowise': {
         const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
-        if (!flowise?.endpoint) {
+        if (!flowise?.apiBaseUrl && !(flowise as any)?.endpoint) {
           errors.push('Flowise endpoint is required');
         } else {
           try {
-            new URL(flowise.endpoint);
+            new URL(flowise.apiBaseUrl || (flowise as any).endpoint);
           } catch {
             errors.push('Flowise endpoint must be a valid URL');
           }
@@ -383,11 +306,11 @@ export class ConfigurationValidator {
         if (!openwebui?.apiKey) {
           errors.push('OpenWebUI API key is required');
         }
-        if (!openwebui?.endpoint) {
+        if (!openwebui?.apiUrl && !(openwebui as any)?.endpoint) {
           errors.push('OpenWebUI endpoint is required');
         } else {
           try {
-            new URL(openwebui.endpoint);
+            new URL(openwebui.apiUrl || (openwebui as any).endpoint);
           } catch {
             errors.push('OpenWebUI endpoint must be a valid URL');
           }
@@ -400,11 +323,11 @@ export class ConfigurationValidator {
         if (!openswarm?.apiKey) {
           errors.push('OpenSwarm API key is required');
         }
-        if (!openswarm?.endpoint) {
+        if (!openswarm?.baseUrl && !(openswarm as any)?.endpoint) {
           errors.push('OpenSwarm endpoint is required');
         } else {
           try {
-            new URL(openswarm.endpoint);
+            new URL(openswarm.baseUrl || (openswarm as any).endpoint);
           } catch {
             errors.push('OpenSwarm endpoint must be a valid URL');
           }
@@ -452,7 +375,7 @@ export class ConfigurationValidator {
     // MCP Guard validation
     const mcpGuard = typeof config.mcpGuard === 'string' ? undefined : config.mcpGuard;
     if (mcpGuard?.enabled) {
-      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUserIds?.length) {
+      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUsers?.length && !(mcpGuard as any).allowedUserIds?.length) {
         warnings.push('MCP Guard is enabled but no allowed users specified');
         suggestions.push('Add user IDs to the allowed list or consider using owner-only mode');
       }
