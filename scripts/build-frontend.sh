@@ -15,10 +15,10 @@ if [[ -z "${NODE_OPTIONS:-}" ]]; then
 fi
 
 echo "[build:frontend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
-pushd src/client >/dev/null
 set -x
-# Use npx to find vite in PATH or node_modules
-NODE_ENV=production npx vite build
+# Run vite build directly using local node_modules
+cd src/client
+NODE_ENV=production ../../node_modules/.bin/vite build
+cd ../..
 set +x
-popd >/dev/null
 echo "[build:frontend] finished at $(timestamp)"
