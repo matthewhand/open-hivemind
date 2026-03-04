@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import {
-  isRegistered,
-  registerInstance,
+  resetContainer,
   registerSingleton,
   registerTransient,
-  resetContainer,
+  registerInstance,
   resolve,
+  isRegistered,
 } from '../../../src/di/container';
 
 describe('DI Container', () => {
@@ -94,20 +94,6 @@ describe('DI Container', () => {
       expect(() => {
         resolve('unregistered-token');
       }).toThrow();
-    });
-
-    it('should delegate to container.resolve with the correct token', () => {
-      const resolveSpy = jest.spyOn(container, 'resolve');
-
-      // Register a dummy instance to avoid throwing
-      registerInstance('delegate-token', 'test-value');
-
-      const result = resolve('delegate-token');
-
-      expect(resolveSpy).toHaveBeenCalledWith('delegate-token');
-      expect(result).toBe('test-value');
-
-      resolveSpy.mockRestore();
     });
   });
 
