@@ -141,7 +141,7 @@ const ExportPage: React.FC = () => {
 
   const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
     try {
-      const response = await fetch(`/webui/api/openapi.${format}`);
+      const response = await fetch(`/api/openapi.${format}`);
       if (!response.ok) {
         throw new Error('Failed to download OpenAPI spec');
       }
