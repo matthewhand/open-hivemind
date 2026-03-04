@@ -12,7 +12,7 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState, Tooltip } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
@@ -441,7 +441,7 @@ const MCPServersPage: React.FC = () => {
               <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
-                    <Tooltip message="Disconnect">
+                    <div className="tooltip" data-tip="Disconnect">
                       <button
                         className="btn btn-ghost btn-sm btn-circle text-error"
                         aria-label={`Disconnect ${server.name}`}
@@ -449,9 +449,9 @@ const MCPServersPage: React.FC = () => {
                       >
                         <StopIcon className="w-5 h-5" />
                       </button>
-                    </Tooltip>
+                    </div>
                   ) : (
-                    <Tooltip message={server.status === 'stopped' ? "Connect" : "Retry Connection"}>
+                    <div className="tooltip" data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}>
                       <button
                         className="btn btn-ghost btn-sm btn-circle text-success"
                         aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
@@ -459,10 +459,10 @@ const MCPServersPage: React.FC = () => {
                       >
                           {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
                       </button>
-                    </Tooltip>
+                    </div>
                   )}
                   {server.toolCount > 0 && (
-                     <Tooltip message="View Tools">
+                     <div className="tooltip" data-tip="View Tools">
                        <button
                           className="btn btn-ghost btn-sm btn-circle"
                           aria-label={`View Tools for ${server.name}`}
@@ -470,11 +470,11 @@ const MCPServersPage: React.FC = () => {
                        >
                           <WrenchScrewdriverIcon className="w-5 h-5" />
                        </button>
-                     </Tooltip>
+                     </div>
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <Tooltip message="Edit Configuration">
+                  <div className="tooltip" data-tip="Edit Configuration">
                     <button
                       className="btn btn-ghost btn-sm btn-circle"
                       aria-label={`Edit ${server.name}`}
@@ -482,8 +482,8 @@ const MCPServersPage: React.FC = () => {
                     >
                       <PencilIcon className="w-5 h-5" />
                     </button>
-                  </Tooltip>
-                  <Tooltip message="Delete">
+                  </div>
+                  <div className="tooltip" data-tip="Delete">
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-error"
                       aria-label={`Delete ${server.name}`}
@@ -491,7 +491,7 @@ const MCPServersPage: React.FC = () => {
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
-                  </Tooltip>
+                  </div>
                 </div>
               </div>
             </div>
