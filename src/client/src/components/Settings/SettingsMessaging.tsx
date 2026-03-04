@@ -378,7 +378,7 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.semanticRelevanceBonus}
               onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-              className="range range-sm range-info"
+              className="range range-sm range-info w-full"
               disabled={!settings.semanticRelevanceEnabled}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
