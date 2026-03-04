@@ -68,25 +68,3 @@ export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUICompon
 
 // Advanced Components
 export { default as ModelAutocomplete } from './ModelAutocomplete';
-
-// Robot Themed Components
-export { default as RobotCheckbox, RobotCheckboxGroup } from './RobotCheckbox';
-export { default as RobotRadio, RobotRadioGroup } from './RobotRadio';
-export { default as RobotToggle, RobotToggleGroup } from './RobotToggle';
-export { default as RobotButton, RobotButtonGroup } from './RobotButton';
-export { default as RobotHamburgerMenu } from './RobotHamburgerMenu';
-
-// Robot UI Provider & Hooks
-export {
-    RobotUIProvider,
-    useRobotUI,
-    useIsRobotUI,
-    withRobotUI,
-    RobotUIToggle,
-} from './RobotUIProvider';
-
-// Robot Component Demos
-export { default as RobotCheckboxDemo } from './RobotCheckboxDemo';
-export { default as RobotRadioDemo } from './RobotRadioDemo';
-export { default as RobotToggleDemo } from './RobotToggleDemo';
-export { default as RobotButtonDemo } from './RobotButtonDemo';

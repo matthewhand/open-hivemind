@@ -176,7 +176,6 @@ const AnalyticsDashboard: React.FC = () => {
           color="#ef4444"
           unit="ms"
           height={350}
-          inverseTrendColor={true}
         />
       </div>
 
