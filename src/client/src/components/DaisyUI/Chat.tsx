@@ -47,14 +47,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   maxHeight = '600px',
 }) => {
   const [inputValue, setInputValue] = useState('');
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
+  const scrollToBottom = (force = false) => {
+    if (messagesEndRef.current && (isAutoScroll || force)) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (force) {
+          setIsAutoScroll(true);
+          setHasNewMessages(false);
+        }
       }, 0);
+    } else if (!isAutoScroll) {
+      setHasNewMessages(true);
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+
+    if (isAtBottom) {
+      setIsAutoScroll(true);
+      setHasNewMessages(false);
+    } else {
+      setIsAutoScroll(false);
     }
   };
 
@@ -231,7 +255,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-1 relative"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="text-6xl mb-4">💬</div>
@@ -258,6 +286,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             <div ref={messagesEndRef} />
           </>
+        )}
+
+        {/* Floating Scroll to Bottom Button */}
+        {!isAutoScroll && hasNewMessages && (
+          <div className="sticky bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10">
+            <button
+              className="btn btn-sm btn-secondary shadow-lg pointer-events-auto flex items-center gap-2 animate-bounce"
+              onClick={() => scrollToBottom(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              New Messages
+            </button>
+          </div>
         )}
       </div>
 
