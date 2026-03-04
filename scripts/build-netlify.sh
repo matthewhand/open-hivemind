@@ -22,11 +22,19 @@ else
   exit 1
 fi
 
+# 4. Generate _redirects
+echo "🔹 Generating _redirects..."
+# Note: 200! means force=true
+# cat <<EOF > dist/client/_redirects
+# /api/*  /.netlify/functions/server  200!
+# /*      /index.html                 200
+# EOF
+
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
-# Use explicit typescript compiler path to compile the specific file
-node ./node_modules/typescript/bin/tsc src/netlify/functions/server.ts \
+# Use npx tsc to compile the specific file
+npx tsc src/netlify/functions/server.ts \
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \
