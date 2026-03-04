@@ -19,6 +19,7 @@ import {
   Bot,
 } from 'lucide-react';
 
+import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
@@ -91,23 +92,22 @@ const IntegrationsPanel: React.FC = () => {
     try {
       setLoading(true);
       const [configRes, botsRes, profilesRes] = await Promise.all([
-        fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
-        fetch('/api/config/llm-profiles'),
+        apiService.get('/api/config/global'),
+        apiService.get('/api/dashboard/status'), // Using status endpoint for bots list
+        apiService.get('/api/config/llm-profiles'),
       ]);
 
-      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
-      const configData = await configRes.json();
+      const configData = configRes as any;
       setConfig(configData);
       setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
 
-      if (botsRes.ok) {
-        const botsData = await botsRes.json();
+      if (botsRes) {
+        const botsData = botsRes as any;
         setBots(botsData.bots || []);
       }
 
-      if (profilesRes.ok) {
-        const profilesData = await profilesRes.json();
+      if (profilesRes) {
+        const profilesData = profilesRes as any;
         setLlmProfiles(profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
