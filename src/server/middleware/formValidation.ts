@@ -13,6 +13,10 @@ const ALLOWED_LLM_PROVIDERS = [
   'replicate',
   'n8n',
   'openswarm',
+  'anthropic',
+  'ollama',
+  'huggingface',
+  'local',
 ];
 
 /**
@@ -164,10 +168,7 @@ export const validateBotConfigCreation = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
@@ -366,10 +367,7 @@ export const validateBotConfigUpdate = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
