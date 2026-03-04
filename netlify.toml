@@ -1,42 +1,9 @@
-# ─── Netlify Build Configuration ─────────────────────────────────────────────
-#
-# This project has a split frontend/backend architecture:
-#   - Frontend: React SPA built with Vite (served from Netlify CDN)
-#   - Backend:  Express server (runs as Netlify Serverless Function via adapter)
-#
-# The `build:netlify` script in package.json builds ONLY the frontend bundle
-# and wraps the Express server as a Netlify Function. It does NOT run the full
-# TypeScript backend compilation — Netlify handles that in the function build.
-#
-# ─── Why we don't use `npm run build` directly ───────────────────────────────
-# `npm run build` compiles the full backend + frontend, which assumes a
-# persistent Node.js server environment. Netlify only needs the frontend bundle
-# and the serverless function adapter — using the full build would include
-# unnecessary backend artifacts and exceed Netlify's function size limits.
-#
 [build]
-  command   = "npm run build:netlify"
-  ignore    = "test \"$BRANCH\" != \"main\""
-  functions = "dist/netlify/functions"   # Location of compiled serverless functions
-  publish   = "dist/client"              # Frontend bundle served from CDN
+  command = "npm run build:netlify"
+  # Only build on main branch to avoid unnecessary builds on feature branches
+  ignore = "test \"$BRANCH\" != \"main\""
+  functions = "dist/netlify/functions"
+  publish = "dist/client"
 
-# ─── API Proxy ───────────────────────────────────────────────────────────────
-# All /api/* requests are forwarded to the Express server running as a
-# Netlify Function. force=true ensures this overrides any static file matches.
-[[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/server"
-  status = 200
-  force  = true
-
-# ─── SPA Client-Side Routing ─────────────────────────────────────────────────
-# All other routes fall through to index.html so React Router handles them.
-# This must come AFTER the /api/* redirect rule.
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
-
-# ─── Local Dev Server ────────────────────────────────────────────────────────
 [dev]
   command = "npm run dev"

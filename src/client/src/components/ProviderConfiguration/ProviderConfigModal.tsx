@@ -11,7 +11,7 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button, Input, Select, Modal } from '../DaisyUI';
+import { Button, Input, Select } from '../DaisyUI';
 import { X as XIcon, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import { getProviderSchema } from '../../provider-configs';
@@ -241,14 +241,28 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const richSchema = getProviderSchema(selectedType);
 
   return (
-    <Modal
-      isOpen={modalState.isOpen}
-      onClose={onClose}
-      className="max-w-2xl"
-      size="lg"
-      title={`${modalState.isEdit ? 'Edit' : 'Add'} ${modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider`}
+    <div
+      ref={modalRef}
+      className="modal modal-open"
+      style={{ zIndex: 9999 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
-      <div ref={modalRef}>
+      <div className="modal-box max-w-2xl">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h3 id="modal-title" className="text-xl font-bold">
+            {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
+          </h3>
+          <button
+            className="btn btn-sm btn-circle btn-ghost"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Provider Type Tabs - flex-wrap and gap-1 fix overlapping tabs in modal */}
         <div
@@ -371,7 +385,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
-    </Modal>
+    </div>
   );
 };
 
