@@ -833,7 +833,7 @@ export class ProviderMetricsCollector extends EventEmitter {
 
       output += `# HELP hivemind_llm_tokens_used Total tokens used\n`;
       output += `# TYPE hivemind_llm_tokens_used counter\n`;
-      output += `hemind_llm_tokens_used{provider="${provider}"} ${metrics.tokensUsed} ${timestamp}\n`;
+      output += `hivemind_llm_tokens_used{provider="${provider}"} ${metrics.tokensUsed} ${timestamp}\n`;
 
       output += `# HELP hivemind_llm_latency Average latency in ms\n`;
       output += `# TYPE hivemind_llm_latency gauge\n`;
