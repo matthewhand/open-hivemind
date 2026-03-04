@@ -544,7 +544,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   };
 
   const openApiSpec = (format: 'json' | 'yaml') => {
-    window.open(`/webui/api/openapi?format=${format}`, '_blank', 'noopener');
+    window.open(`/api/openapi?format=${format}`, '_blank', 'noopener');
   };
 
   return (
