@@ -1,1 +1,0 @@
-{"functions":[{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/app/dist/netlify/functions/server.js","name":"server","priority":10,"runtimeVersion":"nodejs22.x","path":"/app/.netlify/functions/server.zip","runtime":"js"}],"system":{"arch":"x64","platform":"linux"},"timestamp":1772663146891,"version":1}

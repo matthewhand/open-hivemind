@@ -55,7 +55,7 @@ export enum LLMProviderType {
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
   LOCAL = 'local',
-  OPENWEBUI = 'openwebui'
+  FLOWISE = 'flowise'
 }
 
 export interface Persona {
@@ -359,15 +359,15 @@ export const LLM_PROVIDER_CONFIGS = {
     icon: '🏠',
     fields: [],
   },
-  openwebui: {
-    type: LLMProviderType.OPENWEBUI,
-    displayName: 'OpenWebUI',
-    description: 'Connect to an OpenWebUI instance',
-    icon: '🌐',
+  flowise: {
+    type: LLMProviderType.FLOWISE,
+    displayName: 'Flowise',
+    description: 'Connect to Flowise AI chatflows',
+    icon: '⚡',
     fields: [
-      { name: 'apiUrl', label: 'API URL', type: 'text', required: true, placeholder: 'http://localhost:3000/api/' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false, placeholder: 'sk-...' },
-      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'llama3:latest' },
+      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
+      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
     ],
   },
 };
