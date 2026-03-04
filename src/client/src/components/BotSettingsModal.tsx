@@ -6,7 +6,7 @@ import {
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 
 // Extended Bot type with UI-specific fields
-export interface BotConfigExtended extends ApiBot {
+interface BotConfig extends ApiBot {
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field
@@ -23,15 +23,15 @@ interface LLMProfile {
 interface BotSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    bot: BotConfigExtended;
+    bot: BotConfig;
     personas: ApiPersona[];
     llmProfiles: LLMProfile[];
     integrationOptions: { message: string[] };
-    onUpdateConfig: (bot: BotConfigExtended, key: string, value: any) => Promise<void>;
-    onUpdatePersona: (bot: BotConfigExtended, personaId: string) => Promise<void>;
-    onClone: (bot: BotConfigExtended) => void;
-    onDelete: (bot: BotConfigExtended) => void;
-    onViewDetails: (bot: BotConfigExtended) => void;
+    onUpdateConfig: (bot: BotConfig, key: string, value: any) => Promise<void>;
+    onUpdatePersona: (bot: BotConfig, personaId: string) => Promise<void>;
+    onClone: (bot: BotConfig) => void;
+    onDelete: (bot: BotConfig) => void;
+    onViewDetails: (bot: BotConfig) => void;
 }
 
 export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({

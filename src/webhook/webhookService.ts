@@ -13,7 +13,6 @@
 
 import Debug from 'debug';
 import express from 'express';
-import { securityHeaders } from '@src/server/middleware/security';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 
@@ -30,30 +29,24 @@ export const webhookService = {
     app: express.Application | null,
     messageService: IMessengerService | null,
     channelId: string
-  ): express.Application => {
-    let appInstance = app;
-    if (!appInstance) {
-      appInstance = express(); // Create a new app if none is passed
-      appInstance.use(express.json()); // Middleware to parse JSON request bodies
-
-      // Apply standard security headers manually since this isolated instance
-      // bypasses the global middleware pipeline defined in the main server.
-      appInstance.use(securityHeaders);
+  ) => {
+    if (!app) {
+      app = express(); // Create a new app if none is passed
+      app.use(express.json()); // Middleware to parse JSON request bodies
     }
 
     // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
     if (!messageService) {
       try {
-        configureWebhookRoutes(appInstance, null as unknown as IMessengerService, channelId);
+        configureWebhookRoutes(app, null as unknown as IMessengerService, channelId);
       } catch {
         // Keep startup resilient when no message service is available
       }
     } else {
-      configureWebhookRoutes(appInstance, messageService as IMessengerService, channelId);
+      configureWebhookRoutes(app, messageService as IMessengerService, channelId);
     }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
-    return appInstance;
   },
 };

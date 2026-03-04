@@ -32,7 +32,6 @@ import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
-import { PROMETHEUS_METRICS_PATH } from './routes/health';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 
@@ -171,17 +170,6 @@ export class WebUIServer {
   private setupRoutes(): void {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
-
-    /**
-     * Proxies requests from /metrics to /metrics/prometheus
-     * Maintains compatibility with Prometheus scraping conventions
-     */
-    this.app.use('/metrics', (req, res, next) => {
-      // Create a shared handler to avoid manually re-routing internal variables
-      // Since it's exactly one sub-route, we can just proxy the request properly.
-      req.url = PROMETHEUS_METRICS_PATH;
-      healthRouter(req, res, next);
-    });
 
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);

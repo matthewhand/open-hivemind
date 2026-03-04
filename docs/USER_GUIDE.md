@@ -274,12 +274,6 @@ Browse and manage persisted specifications and design documents.
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
 
-![Static Pages](screenshots/static-pages.png)
-
-*   **Catalog View**: Browse through all available static pages in a card-based layout.
-*   **Descriptions**: Read a brief description of what each static page is meant to showcase or test.
-*   **Direct Access**: Click on any card to immediately navigate to that static page.
-
 ---
 
 ## Documentation Maintenance
