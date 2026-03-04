@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import Input from './DaisyUI/Input';
-import Select, { SelectOption } from './DaisyUI/Select';
+import Select, { type SelectOption } from './DaisyUI/Select';
 
 export interface FilterConfig {
   key: string;
@@ -40,7 +40,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   const activeFilterCount = activeFilters.length;
 
 
-  const handleClearFilter = (filter: FilterConfig) => {
+  const handleClearFilter = (filter: FilterConfig): void => {
     setRemovingFilter(filter.key);
     setTimeout(() => {
       const defaultOption = filter.options.find((o) => o.value === 'all' || o.value === '');
@@ -49,7 +49,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     }, CHIP_EXIT_DURATION_MS); // Wait for exit animation
   };
 
-  const handleClearSearch = () => {
+  const handleClearSearch = (): void => {
     onSearchChange('');
     if (onClear) onClear();
   };
