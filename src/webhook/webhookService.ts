@@ -13,6 +13,7 @@
 
 import Debug from 'debug';
 import express from 'express';
+import { securityHeaders } from '@src/server/middleware/security';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 
@@ -37,11 +38,7 @@ export const webhookService = {
 
       // Apply standard security headers manually since this isolated instance
       // bypasses the global middleware pipeline defined in the main server.
-      appInstance.use((req, res, next) => {
-        res.setHeader('X-Frame-Options', 'DENY');
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        next();
-      });
+      appInstance.use(securityHeaders);
     }
 
     // Register the webhook routes with the message service
