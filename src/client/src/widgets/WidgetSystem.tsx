@@ -386,8 +386,8 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
 
       {/* Add Widget Dialog */}
       {showAddDialog && (
-        <div className="modal modal-open">
-          <div className="modal-box">
+        <dialog className="modal modal-open" onClose={() => setShowAddDialog(false)}>
+          <div className="modal-box bg-base-100">
             <h3 className="font-bold text-lg">Add New Widget</h3>
             <div className="py-4 space-y-4">
               <div className="form-control w-full">
@@ -461,13 +461,16 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </button>
             </div>
           </div>
-        </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setShowAddDialog(false)}>
+            <button>close</button>
+          </form>
+        </dialog>
       )}
 
       {/* Edit Widget Dialog */}
       {editingWidget && (
-        <div className="modal modal-open">
-          <div className="modal-box">
+        <dialog className="modal modal-open" onClose={() => setEditingWidget(null)}>
+          <div className="modal-box bg-base-100">
             <h3 className="font-bold text-lg">Edit Widget</h3>
             <div className="py-4 space-y-4">
               <div className="form-control w-full">
@@ -546,7 +549,10 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </button>
             </div>
           </div>
-        </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setEditingWidget(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );

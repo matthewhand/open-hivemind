@@ -253,8 +253,8 @@ const ModalForm: React.FC<ModalFormProps> = ({
   if (!isOpen) {return null;}
 
   return (
-    <div className="modal modal-open">
-      <div className={`modal-box ${getSizeClass()}`}>
+    <dialog className="modal modal-open" onClose={onClose}>
+      <div className={`modal-box bg-base-100 ${getSizeClass()}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg">{title}</h3>
@@ -377,7 +377,10 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
+    </dialog>
   );
 };
 

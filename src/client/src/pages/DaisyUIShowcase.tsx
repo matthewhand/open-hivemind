@@ -1259,8 +1259,8 @@ const DaisyUIShowcase: React.FC = () => {
 
       {/* Modal */}
       {modalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
+        <dialog className="modal modal-open" onClose={() => setModalOpen(false)}>
+          <div className="modal-box bg-base-100">
             <h3 className="font-bold text-lg">Hello!</h3>
             <p className="py-4">This is a DaisyUI modal dialog.</p>
             <div className="modal-action">
