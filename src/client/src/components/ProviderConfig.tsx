@@ -246,8 +246,11 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
           title: 'OpenWebUI Configuration',
           icon: <Settings className="w-5 h-5" />,
           fields: [
-            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenWebUI API key' },
-            { key: 'apiUrl', label: 'API URL', helperText: 'OpenWebUI API base URL', placeholder: 'http://localhost:3000/api' },
+            { key: 'apiUrl', label: 'API URL', helperText: 'OpenWebUI API base URL', placeholder: 'http://localhost:3000/api/' },
+            { key: 'apiKey', label: 'API Key', type: 'password', helperText: 'OpenWebUI API key (if using token auth)', placeholder: 'sk-...' },
+            { key: 'authHeader', label: 'Auth Header Name', helperText: 'Custom authorization header name (e.g. X-API-Key)', placeholder: 'Authorization' },
+            { key: 'username', label: 'Username', helperText: 'OpenWebUI Username (if using user/pass auth)', placeholder: 'admin' },
+            { key: 'password', label: 'Password', type: 'password', helperText: 'OpenWebUI Password', placeholder: '••••••••' },
             { key: 'model', label: 'Model', helperText: 'Model to use in OpenWebUI' },
           ],
         },
