@@ -182,7 +182,7 @@ router.put('/:id', (req: Request, res: Response) => {
                 acc[key] = newValue;
               }
               return acc;
-            }, {} as any)
+            }, {} as Record<string, unknown>)
         : profiles[profileIndex].guards;
 
     const updatedProfile = {
