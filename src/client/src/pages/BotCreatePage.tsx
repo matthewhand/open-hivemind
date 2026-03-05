@@ -41,11 +41,21 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasData, profilesData, mcpResponse] = await Promise.all([
+        const [personasData, profilesData] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
-          fetch('/api/admin/mcp-servers').then(res => res.ok ? res.json() : { data: [] }).catch(() => ({ data: [] })),
         ]);
+
+        let mcpResponse: any = { data: [] };
+        try {
+          const res = await fetch('/api/admin/mcp-servers');
+          if (res.ok) {
+            mcpResponse = await res.json();
+          }
+        } catch {
+          // Silent fallback for MCP servers
+        }
+
         setPersonas(personasData || []);
         setLlmProfiles(profilesData?.profiles?.llm || []);
         const servers = mcpResponse?.data || mcpResponse || [];

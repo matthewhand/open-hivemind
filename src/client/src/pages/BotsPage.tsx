@@ -24,6 +24,9 @@ import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { apiService } from '../services/api';
+import { ErrorService } from '../services/ErrorService';
+import { withRetry } from '../utils/withRetry';
+import toast from 'react-hot-toast';
 
 /**
  * Represents the configuration and runtime state of a generic bot instance.
@@ -150,10 +153,11 @@ const BotsPage: React.FC = () => {
       // Fetch activity logs
       const fetchActivity = async () => {
         try {
-          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`);
+          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`));
           setActivityLogs(json.data?.activity || []);
         } catch (err) {
-          console.error('Failed to fetch activity logs:', err);
+          ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
+          toast.error('Failed to load bot activity logs');
           setActivityLogs([]);
         }
       };
@@ -164,10 +168,11 @@ const BotsPage: React.FC = () => {
       const fetchChatHistory = async () => {
         setChatLoading(true);
         try {
-          const json = await apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`);
+          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
           setChatHistory(json.data?.history || []);
         } catch (err) {
-          console.error('Failed to fetch chat history:', err);
+          ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
+          toast.error('Failed to load chat history');
           setChatHistory([]);
         } finally {
           setChatLoading(false);
@@ -793,14 +798,18 @@ const BotsPage: React.FC = () => {
                       />
                       <select
                         className="select select-xs select-bordered join-item"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const limit = e.target.value;
                           if (previewBot) {
-                            apiService
-                              .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
-                              .then((json) => {
-                                setActivityLogs(json.data?.activity || []);
-                              });
+                            try {
+                              const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
+                              setActivityLogs(json.data?.activity || []);
+                            } catch (err) {
+                              ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
+                              toast.error('Failed to load bot activity logs');
+                              setError(err instanceof Error ? err.message : 'Failed to fetch bot activity logs');
+                              setActivityLogs([]);
+                            }
                           }
                         }}
                       >
