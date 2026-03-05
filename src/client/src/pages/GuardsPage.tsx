@@ -8,10 +8,13 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
+<<<<<<< HEAD
+=======
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+>>>>>>> origin/main
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -409,6 +412,13 @@ const GuardsPage: React.FC = () => {
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
 <<<<<<< HEAD
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
+                    <CommaSeparatedInput
+                      id="allowed-users"
+                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                      onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
+=======
+<<<<<<< HEAD
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
                     <input
                       id="allowed-users"
@@ -440,6 +450,7 @@ const GuardsPage: React.FC = () => {
 >>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
+>>>>>>> origin/main
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                   </div>
@@ -447,12 +458,19 @@ const GuardsPage: React.FC = () => {
 
                 <div className="form-control mt-4">
 <<<<<<< HEAD
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
+                  <CommaSeparatedInput
+=======
+<<<<<<< HEAD
                   <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
                   <input
+>>>>>>> origin/main
                     id="allowed-tools"
-                    type="text"
-                    className="input input-bordered"
                     placeholder="e.g. calculator, weather"
+<<<<<<< HEAD
+                    value={editingProfile.guards.mcpGuard.allowedTools || []}
+                    onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
+=======
                     value={editingProfile.guards.mcpGuard.allowedTools?.join(',') || ''}
                     // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
                     onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',') })}
@@ -478,6 +496,7 @@ const GuardsPage: React.FC = () => {
                     placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
@@ -595,11 +614,19 @@ const GuardsPage: React.FC = () => {
 
                 <div className="form-control mt-4">
 <<<<<<< HEAD
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
+                  <CommaSeparatedInput
+=======
+<<<<<<< HEAD
                   <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
                   <textarea
+>>>>>>> origin/main
                     id="blocked-terms"
-                    className="textarea textarea-bordered h-20"
                     placeholder="e.g. secret, password, confidential"
+<<<<<<< HEAD
+                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                    onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
+=======
                     value={editingProfile.guards.contentFilter?.blockedTerms?.join(',') || ''}
                     // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
                     onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',') })}
@@ -626,6 +653,7 @@ const GuardsPage: React.FC = () => {
                     placeholder="e.g. secret, password, confidential"
                     value={editingProfile.guards.contentFilter?.blockedTerms || []}
                     onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main

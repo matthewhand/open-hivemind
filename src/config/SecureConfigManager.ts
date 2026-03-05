@@ -59,9 +59,13 @@ export class SecureConfigManager {
         'validation' as any,
 =======
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
@@ -83,9 +87,13 @@ export class SecureConfigManager {
         'validation' as any,
 =======
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
@@ -108,9 +116,13 @@ export class SecureConfigManager {
         'validation' as any,
 =======
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_ID_REQUIRED',
@@ -124,9 +136,13 @@ export class SecureConfigManager {
         'validation' as any,
 =======
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_NAME_REQUIRED',
@@ -319,9 +335,13 @@ export class SecureConfigManager {
           'validation',
 =======
 <<<<<<< HEAD
+          'validation',
+=======
+<<<<<<< HEAD
           'ValidationError' as any,
 =======
           'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
 >>>>>>> origin/main
           'SECURE_CONFIG_INVALID_BACKUP_ID',
