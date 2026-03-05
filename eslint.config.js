@@ -31,7 +31,6 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
-      'unused-imports': require('eslint-plugin-unused-imports'),
       prettier: eslintPluginPrettier,
     },
     rules: {
@@ -47,20 +46,8 @@ module.exports = [
       // Errors - critical issues only
       'no-debugger': 'error',
 
-      // Unused imports rule
-      'unused-imports/no-unused-imports': 'error',
-      'unused-imports/no-unused-vars': [
-        'warn',
-        {
-          vars: 'all',
-          varsIgnorePattern: '^_',
-          args: 'after-used',
-          argsIgnorePattern: '^_',
-        },
-      ],
-
       // Warnings - gradual cleanup
-      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
