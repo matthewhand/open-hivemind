@@ -991,7 +991,11 @@ export class RealTimeValidationService extends EventEmitter {
    * Generate report ID
    */
   private generateReportId(): string {
+<<<<<<< HEAD
+    return 'val-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+=======
     return 'val-' + crypto.randomUUID();
+>>>>>>> origin/main
   }
 
   /**

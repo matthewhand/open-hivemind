@@ -742,10 +742,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
+<<<<<<< HEAD
+    </div>
+=======
       <form method="dialog" className="modal-backdrop" onClick={onClose}>
         <button>close</button>
       </form>
     </dialog>
+>>>>>>> origin/main
   );
 };
 

@@ -10,16 +10,10 @@ test('Flowise config forms', async ({ page }) => {
 <<<<<<< HEAD
   // Try to click edit on flowise if it exists
   const flowiseCard = page.locator('text="Flowise"');
-  if ((await flowiseCard.count()) > 0) {
-    await flowiseCard
-      .first()
-      .locator('..')
-      .locator('..')
-      .locator('button:has-text("Edit")')
-      .click()
-      .catch(() => null);
-    await page.waitForTimeout(1000);
-    await page.screenshot({ path: 'test-results/flowise-config-verify.png', fullPage: true });
+  if (await flowiseCard.count() > 0) {
+      await flowiseCard.first().locator('..').locator('..').locator('button:has-text("Edit")').click().catch(() => null);
+      await page.waitForTimeout(1000);
+      await page.screenshot({ path: 'test-results/flowise-config-verify.png', fullPage: true });
   }
 =======
   // Mock background polling endpoints

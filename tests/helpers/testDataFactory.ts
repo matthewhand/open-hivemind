@@ -122,6 +122,8 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+<<<<<<< HEAD
+=======
 // Telegram Config Test Data
 export const telegramConfigData: ConfigTestData = {
   defaults: {
@@ -194,6 +196,7 @@ export const webhookConfigData: ConfigTestData = {
   },
 };
 
+>>>>>>> origin/main
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -259,6 +262,12 @@ export const commandParserTestData = {
   },
 };
 
+<<<<<<< HEAD
+/**
+ * Factory function to create test data for different scenarios
+ */
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
+=======
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
 import messageConfig from '../../src/config/messageConfig';
@@ -326,14 +335,16 @@ export function createTestData(
 export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
 >>>>>>> origin/main
+>>>>>>> origin/main
   switch (type) {
     case 'discord':
-      data = discordConfigData;
-      break;
+      return discordConfigData;
     case 'message':
-      data = messageConfigData;
-      break;
+      return messageConfigData;
     case 'slack':
+<<<<<<< HEAD
+      return slackConfigData;
+=======
       data = slackConfigData;
       break;
     case 'telegram':
@@ -345,29 +356,20 @@ export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'
     case 'webhook':
       data = webhookConfigData;
       break;
+>>>>>>> origin/main
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
+<<<<<<< HEAD
+=======
 
   // Validate the data against the schema
   validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data.expectedResults);
   return data;
+>>>>>>> origin/main
 }
-
-/**
- * Property-based test generator for Telegram configuration
- * Generates random, valid Telegram configurations for property-based testing
- */
-export const telegramConfigGenerator = fc.record({
-  TELEGRAM_BOT_TOKEN: fc.string({ minLength: 10 }),
-  TELEGRAM_WEBHOOK_URL: fc.webUrl().chain(url => fc.constant(url || '')),
-  TELEGRAM_PARSE_MODE: fc.constantFrom('HTML', 'Markdown', 'None', ''),
-  TELEGRAM_ALLOWED_CHATS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_BLOCKED_USERS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_ENABLE_COMMANDS: fc.boolean()
-});
 
 /**
  * Helper to generate performance test data

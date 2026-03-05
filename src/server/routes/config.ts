@@ -91,7 +91,6 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 
