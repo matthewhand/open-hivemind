@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, Tag } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -495,33 +495,38 @@ const GuardsPage: React.FC = () => {
                   </select>
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
-                  <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <input
+                  <div className="mt-4">
+                    <CommaSeparatedInput
                       id="allowed-users"
-                      type="text"
-                      className="input input-bordered"
-                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(',') || ''}
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',') })}
+                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                      onChange={(value) => updateGuard('mcpGuard', { allowedUsers: value })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
+                      placeholder="user1, user2..."
+                      label="Allowed User IDs"
+                      maxItems={50}
+                      validate={(item) => {
+                        const trimmed = item.trim();
+                        if (!trimmed) return { valid: false, message: 'Empty value' };
+                        if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+                          return { valid: false, message: 'Only alphanumeric, underscore, and hyphen allowed' };
+                        }
+                        return { valid: true };
+                      }}
                     />
                   </div>
                 )}
 
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <input
+                <div className="mt-4">
+                  <CommaSeparatedInput
                     id="allowed-tools"
-                    type="text"
-                    className="input input-bordered"
-                    placeholder="e.g. calculator, weather"
-                    value={editingProfile.guards.mcpGuard.allowedTools?.join(',') || ''}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',') })}
+                    value={editingProfile.guards.mcpGuard.allowedTools || []}
+                    onChange={(value) => updateGuard('mcpGuard', { allowedTools: value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
+                    placeholder="calculator, weather, search..."
+                    label="Allowed Tools"
+                    maxItems={100}
+                    helperText="Leave empty to allow all tools (if enabled)"
                   />
-                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
               </div>
             </div>
@@ -631,16 +636,23 @@ const GuardsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                  <textarea
+                <div className="mt-4">
+                  <CommaSeparatedInput
                     id="blocked-terms"
-                    className="textarea textarea-bordered h-20"
-                    placeholder="e.g. secret, password, confidential"
-                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(',') || ''}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',') })}
+                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                    onChange={(value) => updateGuard('contentFilter', { blockedTerms: value })}
                     disabled={!editingProfile.guards.contentFilter?.enabled}
+                    placeholder="secret, password, confidential..."
+                    label="Blocked Terms"
+                    maxItems={100}
+                    validate={(item) => {
+                      const trimmed = item.trim();
+                      if (!trimmed) return { valid: false, message: 'Empty term' };
+                      if (trimmed.length < 2) {
+                        return { valid: false, message: 'Term must be at least 2 characters' };
+                      }
+                      return { valid: true };
+                    }}
                   />
                 </div>
               </div>
