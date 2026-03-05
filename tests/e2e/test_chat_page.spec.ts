@@ -104,8 +104,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     await page.screenshot({ path: 'docs/screenshots/chatpage-optimistic.png' });
 
     // Wait for the failure to resolve and rollback to occur
-    // The rollback will remove the optimistic message
-    await expect(page.getByText(testMessage)).not.toBeVisible({ timeout: 2000 });
+    // The rollback will mark the optimistic message as failed, instead of removing it
+    await expect(page.getByText('Retry')).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText(testMessage)).toBeVisible();
 
     // Take a screenshot of the rollback state
     await page.screenshot({ path: 'docs/screenshots/chatpage-rollback.png' });
