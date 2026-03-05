@@ -22,9 +22,13 @@ interface DataTableProps<T> {
     showSizeChanger?: boolean;
     pageSizeOptions?: number[];
   };
+  /** Controls whether a search box is displayed in the toolbar. */
   searchable?: boolean;
+  /** Controls whether an "Export CSV" button is displayed in the toolbar. */
   exportable?: boolean;
+  /** Additional CSS classes for the root container. */
   className?: string;
+  /** Enables a UI toggle switch to change the table from paginated mode to an IntersectionObserver-driven infinite scroll mode. */
   enableInfiniteScrollToggle?: boolean;
 }
 

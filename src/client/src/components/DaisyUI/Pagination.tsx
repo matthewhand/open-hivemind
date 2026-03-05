@@ -2,13 +2,23 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 
 type PaginationStyle = 'compact' | 'standard' | 'extended';
 
+/**
+ * Configuration properties for the Pagination component.
+ */
 interface PaginationProps {
+  /** The currently active page number, starting from 1. */
   currentPage: number;
+  /** The total number of items across all pages. */
   totalItems: number;
+  /** The number of items displayed per page. Defaults to 10. */
   pageSize?: number;
+  /** Callback triggered when a user selects a new page. */
   onPageChange: (page: number) => void;
+  /** The visual style of the pagination (compact, standard, or extended). */
   style?: PaginationStyle;
+  /** Additional CSS classes for the root container. */
   className?: string;
+  /** Explicit override for the maximum number of visible page buttons before truncating with ellipsis. */
   maxVisiblePages?: number;
 }
 
@@ -109,14 +119,27 @@ const Pagination: React.FC<PaginationProps> = ({
     return pages;
   }, [totalPages, currentPage, maxVisiblePages]);
 
+  /**
+   * Navigates backward by 5 pages, ensuring it does not drop below page 1.
+   * @sideeffects Calls `onPageChange` with the new page number.
+   */
   const handleJumpPrev = () => {
     onPageChange(Math.max(1, currentPage - 5));
   };
 
+  /**
+   * Navigates forward by 5 pages, ensuring it does not exceed `totalPages`.
+   * @sideeffects Calls `onPageChange` with the new page number.
+   */
   const handleJumpNext = () => {
     onPageChange(Math.min(totalPages, currentPage + 5));
   };
 
+  /**
+   * Enables keyboard arrow navigation when the component is focused.
+   * @param {React.KeyboardEvent<HTMLDivElement>} e - The keyboard event object.
+   * @sideeffects Calls `handlePrevious` or `handleNext` depending on the arrow key.
+   */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowLeft') {
       handlePrevious();
