@@ -402,3 +402,109 @@ describe('Main Configuration Encryption', () => {
     expect(result).toBeNull();
   });
 });
+
+describe('SecureConfigManager - Additional error paths and validations', () => {
+  let secureConfigManager;
+  const testConfigDir = require('path').join(process.cwd(), 'config', 'user');
+  const testBackupDir = require('path').join(testConfigDir, 'backups');
+
+  beforeEach(() => {
+    try {
+      if (fs.existsSync(testConfigDir)) {
+        fs.rmSync(testConfigDir, { recursive: true, force: true });
+      }
+    } catch (error) {}
+    try {
+      fs.mkdirSync(testConfigDir, { recursive: true });
+    } catch (error) {}
+    try {
+      fs.mkdirSync(testBackupDir, { recursive: true });
+    } catch (error) {}
+
+    (require('../../src/config/SecureConfigManager').SecureConfigManager as any).instance = null;
+
+    secureConfigManager = require('../../src/config/SecureConfigManager').SecureConfigManager.getInstance();
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(testConfigDir)) {
+      fs.rmSync(testConfigDir, { recursive: true, force: true });
+    }
+  });
+
+  test('should reject creation without a name', async () => {
+    const invalidConfig = {
+      id: 'bot-no-name',
+      name: '',
+      type: 'bot',
+      data: {}
+    };
+
+    await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow('Configuration name is required');
+  });
+
+  test('should handle validation errors when retrieving corrupted file (invalid JSON)', async () => {
+    const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
+      id: 'corrupted-json-test',
+      name: 'Corrupted JSON',
+      type: 'bot',
+      data: {},
+      createdAt: new Date().toISOString()
+    };
+
+    await secureConfigManager.storeConfig(config);
+
+    // Overwrite the file with a valid encrypted string that decrypts to invalid JSON
+    const filePath = path.join(testConfigDir, 'corrupted-json-test.enc');
+    const encryptedInvalidJson = secureConfigManager.encrypt('{invalid: json}');
+    fs.writeFileSync(filePath, encryptedInvalidJson, 'utf8');
+
+    const result = await secureConfigManager.getConfig('corrupted-json-test');
+    expect(result).toBeNull();
+  });
+
+  test('should reject path traversal in restoreBackup', async () => {
+    await expect(secureConfigManager.restoreBackup('../../../etc/passwd')).rejects.toThrow('Invalid backup ID: Path traversal detected');
+  });
+
+  test('should handle non-existent backup in restoreBackup', async () => {
+    await expect(secureConfigManager.restoreBackup('backup_does_not_exist')).rejects.toThrow('Backup backup_does_not_exist not found');
+  });
+
+  test('should throw integrity error when restoring tampered backup', async () => {
+    const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
+      id: 'backup-tamper-test',
+      name: 'Backup Tamper Test',
+      type: 'bot',
+      data: {},
+      createdAt: new Date().toISOString()
+    };
+
+    await secureConfigManager.storeConfig(config);
+    const backupId = await secureConfigManager.createBackup();
+
+    // Read, tamper, encrypt, write
+    const backupPath = path.join(testBackupDir, `${backupId}.json`);
+    const encryptedBackup = fs.readFileSync(backupPath, 'utf8');
+    const fullBackupData = JSON.parse(secureConfigManager.decrypt(encryptedBackup));
+
+    // Tamper with data but keep old checksum
+    fullBackupData.metadata.version = '99.99';
+
+    const tamperedEncryptedBackup = secureConfigManager.encrypt(JSON.stringify(fullBackupData));
+    fs.writeFileSync(backupPath, tamperedEncryptedBackup, 'utf8');
+
+    await expect(secureConfigManager.restoreBackup(backupId)).rejects.toThrow('Backup integrity check failed');
+  });
+
+  test('should handle empty id during storeConfig', async () => {
+    const invalidConfig = {
+      id: '   ',
+      name: 'Test',
+      type: 'bot',
+      data: {}
+    };
+
+    await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow('Configuration ID is required');
+  });
+});
