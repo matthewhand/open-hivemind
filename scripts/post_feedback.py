@@ -7,7 +7,6 @@ a pending.json summary for the human/AI reviewer to inspect later.
 
 Usage (from repo root):
   python3 scripts/post_feedback.py [--limit N]
-  python3 scripts/post_feedback.py 1201 1202 1199
 
 This is a ONE-SHOT script, not a watcher. Run it once, let Jules work,
 then run check_responses.py to see what changed.
@@ -16,7 +15,6 @@ import subprocess, json, time, os, re, argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--limit", type=int, default=20, help="Max PRs to process (default: 20)")
-parser.add_argument("prs", nargs="*", help="Specific PR numbers to target")
 args = parser.parse_args()
 
 REPO_PATH = subprocess.check_output(
@@ -82,40 +80,19 @@ def get_feedback(title):
     body += "_Push any improvements to this branch — we'll review before merging._"
     return body
 
-def get_pr_info(num):
-    out = run(f"gh pr view {num} --json number,title,headRefName --jq '[.number,.headRefName,.title] | @json'")
-    if out:
-        try:
-            data = json.loads(out)
-            branch = data[1]
-            sha_out = run(f"git ls-remote origin refs/heads/{branch}")
-            sha = sha_out.split()[0] if sha_out else ""
-            return [data[0], branch, data[2], sha]
-        except Exception:
-            pass
-    return None
 
-out_lines = []
-if args.prs:
-    for pr_num in args.prs:
-        info = get_pr_info(pr_num)
-        if info:
-            out_lines.append(json.dumps(info))
-else:
-    out = run(
-        "gh pr list --state open --limit 100 "
-        "--json number,title,headRefName,headRefOid "
-        "--jq '.[] | [.number,.headRefName,.title,.headRefOid] | @json'"
-    )
-    if out:
-        out_lines = out.splitlines()
+out = run(
+    "gh pr list --state open --limit 100 "
+    "--json number,title,headRefName,headRefOid "
+    "--jq '.[] | [.number,.headRefName,.title,.headRefOid] | @json'"
+)
 
-if not out_lines:
-    print("⚠️  No open PRs found or gh API error.")
+if not out:
+    print("⚠️  No open PRs or gh API error.")
     raise SystemExit(0)
 
 processed = 0
-for line in out_lines:
+for line in out.splitlines():
     if processed >= args.limit:
         break
     try:

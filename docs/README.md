@@ -31,7 +31,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 ### Generating Screenshots
 To automatically generate updated screenshots for the documentation, run:
 ```bash
-pnpm generate-docs
+npm run generate-docs
 ```
 
 This will run the Playwright screenshot tests and update the images in `docs/screenshots/`.
