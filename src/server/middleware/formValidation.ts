@@ -2,6 +2,7 @@ import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { body, matchedData, validationResult } from 'express-validator';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { CONFIG_LIMITS } from '../../types/config';
 
 const debug = Debug('app:formValidation');
 
@@ -85,8 +86,8 @@ export const validateBotConfigCreation = [
   body('systemInstruction')
     .optional()
     .trim()
-    .isLength({ max: 5000 })
-    .withMessage('System instruction must be less than 5000 characters'),
+    .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
+    .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
 
   // MCP servers validation
   body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),
@@ -278,8 +279,8 @@ export const validateBotConfigUpdate = [
   body('systemInstruction')
     .optional()
     .trim()
-    .isLength({ max: 5000 })
-    .withMessage('System instruction must be less than 5000 characters'),
+    .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
+    .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
 
   // MCP servers validation
   body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),

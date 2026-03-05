@@ -810,3 +810,12 @@ export const CONFIG_EXTENSIONS = {
   ENCRYPTED: '.enc',
   BACKUP: '.json',
 } as const;
+
+/**
+ * Configuration limits and boundaries
+ */
+export const CONFIG_LIMITS = {
+  SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
+  SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
+  SYSTEM_INSTRUCTION_MIN_LENGTH: 10,
+} as const;

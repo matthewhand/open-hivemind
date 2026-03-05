@@ -14,6 +14,7 @@ import {
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
+import { CONFIG_LIMITS } from '../../../types/config';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -278,19 +279,19 @@ const BotCreatePage: React.FC = () => {
                     />
                     <div className="flex justify-between items-center mt-1">
                       <div className="flex-1">
-                        {formData.systemInstruction && formData.systemInstruction.length < 10 && (
+                        {formData.systemInstruction && formData.systemInstruction.length < CONFIG_LIMITS.SYSTEM_INSTRUCTION_MIN_LENGTH && (
                           <div className="text-warning text-xs">
                             System instruction is very short. Consider providing more detail.
                           </div>
                         )}
-                        {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
+                        {formData.systemInstruction && formData.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH && (
                           <div className="text-error text-xs">
-                            System instruction is very long (max 2000 chars recommended).
+                            System instruction is very long (max {CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH} chars recommended).
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
-                        {formData.systemInstruction.length}/2000
+                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH ? 'text-error font-bold' : ''}`}>
+                        {formData.systemInstruction.length}/{CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH}
                       </div>
                     </div>
                   </div>

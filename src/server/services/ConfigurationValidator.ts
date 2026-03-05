@@ -1,6 +1,7 @@
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { CONFIG_LIMITS } from '../../types/config';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -425,10 +426,10 @@ export class ConfigurationValidator {
   ): void {
     // System instruction validation
     if (config.systemInstruction) {
-      if (config.systemInstruction.length > 2000) {
+      if (config.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH) {
         warnings.push('System instruction is very long and may affect response times');
       }
-      if (config.systemInstruction.length < 10) {
+      if (config.systemInstruction.length < CONFIG_LIMITS.SYSTEM_INSTRUCTION_MIN_LENGTH) {
         suggestions.push(
           'System instruction is very short. Consider adding more detailed instructions'
         );
