@@ -12,8 +12,6 @@ interface MessagingConfig {
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
-  semanticRelevanceEnabled: boolean;
-  semanticRelevanceBonus: number;
 }
 
 const SettingsMessaging: React.FC = () => {
@@ -25,8 +23,6 @@ const SettingsMessaging: React.FC = () => {
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
-    semanticRelevanceEnabled: true,
-    semanticRelevanceBonus: 10,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,8 +51,6 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
-        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? true,
-        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 10,
       });
     } catch {
       setAlert({
@@ -91,8 +85,6 @@ const SettingsMessaging: React.FC = () => {
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
-            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
-            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -263,7 +255,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control mb-3">
+          <div className="form-control">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -278,6 +270,8 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
+<<<<<<< HEAD
+=======
 
           <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
@@ -329,6 +323,7 @@ const SettingsMessaging: React.FC = () => {
               Multiplier to apply when a message is semantically relevant and the bot has posted recently
             </p>
           </div>
+>>>>>>> origin/main
         </div>
 
         {/* Probability */}
@@ -449,16 +444,6 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
-                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance Bonus</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
-                  <td>{settings.semanticRelevanceBonus}</td>
                 </tr>
               </tbody>
             </table>

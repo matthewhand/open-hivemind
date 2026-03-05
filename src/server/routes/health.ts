@@ -247,9 +247,49 @@ nodejs_version_info{version="${process.version}"} 1
 ${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
 
-  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Content-Type', 'text/plain');
   return res.send(metrics);
 });
+
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
+# TYPE process_uptime_seconds gauge
+process_uptime_seconds ${uptime}
+
+# HELP process_memory_heap_used_bytes Process heap memory used in bytes
+# TYPE process_memory_heap_used_bytes gauge
+process_memory_heap_used_bytes ${memoryUsage.heapUsed}
+
+# HELP process_memory_heap_total_bytes Process heap memory total in bytes
+# TYPE process_memory_heap_total_bytes gauge
+process_memory_heap_total_bytes ${memoryUsage.heapTotal}
+
+# HELP process_resident_memory_bytes Resident memory size in bytes
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes ${memoryUsage.rss}
+
+# HELP nodejs_heap_size_total_bytes Total heap size in bytes
+# TYPE nodejs_heap_size_total_bytes gauge
+nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
+
+# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
+# TYPE process_cpu_user_seconds_total counter
+process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
+
+# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
+# TYPE process_cpu_system_seconds_total counter
+process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
+
+# HELP nodejs_version_info Node.js version info
+# TYPE nodejs_version_info gauge
+nodejs_version_info{version="${process.version}"} 1
+`;
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+};
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
