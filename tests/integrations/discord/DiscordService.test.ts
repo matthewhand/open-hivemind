@@ -389,6 +389,29 @@ describe('DiscordService', () => {
       await freshService.shutdown();
     });
 
+    it('throws configuration validation error on empty token in env', () => {
+      process.env.DISCORD_BOT_TOKEN = 'token1,,token3';
+
+      mockDeps.getAllBotConfigs = jest.fn().mockReturnValue([]);
+
+      expect(() => {
+        new DiscordService(mockDeps);
+      }).toThrow('Empty token at position 2');
+
+      delete process.env.DISCORD_BOT_TOKEN;
+    });
+
+    it('throws configuration validation error on empty token in config file', () => {
+      mockDeps.getAllBotConfigs = jest.fn().mockReturnValue([
+        { name: 'Bot1', discordBotToken: 'token1', messageProvider: 'discord' },
+        { name: 'Bot2', discordBotToken: '', messageProvider: 'discord' },
+      ]);
+
+      expect(() => {
+        new DiscordService(mockDeps);
+      }).toThrow('Empty token at position 2 in config file');
+    });
+
     it('adds bot successfully', async () => {
       await service.initialize();
 
