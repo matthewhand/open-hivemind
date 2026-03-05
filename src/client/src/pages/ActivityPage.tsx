@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Alert,
   Badge,
@@ -427,17 +428,27 @@ const ActivityPage: React.FC = () => {
             className="input-sm w-auto"
             placeholder="End Date"
           />
-          {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
-             <Button
-               size="sm"
-               variant="ghost"
-               className="btn-square animate-in fade-in zoom-in duration-200"
-               onClick={handleClearFilters}
-               title="Clear All Filters"
-             >
-               <X className="w-4 h-4" />
-             </Button>
-          )}
+          <AnimatePresence>
+            {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
+               <motion.div
+                 initial={{ opacity: 0, scale: 0.8 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 0.8 }}
+                 transition={{ duration: 0.2 }}
+                 className="flex"
+               >
+                 <Button
+                   size="sm"
+                   variant="ghost"
+                   className="btn-square motion-reduce:transition-none"
+                   onClick={handleClearFilters}
+                   title="Clear All Filters"
+                 >
+                   <X className="w-4 h-4" />
+                 </Button>
+               </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </SearchFilterBar>
 

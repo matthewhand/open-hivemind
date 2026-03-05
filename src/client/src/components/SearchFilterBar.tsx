@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Input from './DaisyUI/Input';
 import Select, { SelectOption } from './DaisyUI/Select';
 
@@ -48,15 +49,25 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           className="pl-10 pr-10 w-full"
           size="sm"
           suffix={
-            searchValue ? (
-              <button
-                onClick={handleClearSearch}
-                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200"
-                aria-label="Clear search"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            ) : null
+            <AnimatePresence>
+              {searchValue ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex"
+                >
+                  <button
+                    onClick={handleClearSearch}
+                    className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 motion-reduce:transition-none"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           }
         />
       </div>

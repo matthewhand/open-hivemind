@@ -100,7 +100,7 @@ const BotCreatePage: React.FC = () => {
     { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
     { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
     { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
-    { id: 'webhook', name: 'Webhook', icon: Send, color: 'text-emerald-500' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);
