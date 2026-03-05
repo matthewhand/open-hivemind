@@ -107,7 +107,7 @@ const BotTemplatesPage: React.FC = () => {
       discord: 'badge-primary',
       slack: 'badge-secondary',
       mattermost: 'badge-info',
-      telegram: 'badge-success',
+      webhook: 'badge-success',
     };
     return colors[platform] || 'badge-ghost';
   };

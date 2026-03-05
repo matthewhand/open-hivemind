@@ -44,17 +44,18 @@ export interface LLMProvider {
 export enum MessageProviderType {
   SLACK = 'slack',
   DISCORD = 'discord',
-  TELEGRAM = 'telegram',
   WEBHOOK = 'webhook',
   MATTERMOST = 'mattermost'
 }
 
 export enum LLMProviderType {
   OPENAI = 'openai',
-  ANTHROPIC = 'anthropic',
-  OLLAMA = 'ollama',
-  HUGGINGFACE = 'huggingface',
-  LOCAL = 'local'
+  FLOWISE = 'flowise',
+  OPENWEBUI = 'openwebui',
+  PERPLEXITY = 'perplexity',
+  REPLICATE = 'replicate',
+  N8N = 'n8n',
+  OPENSWARM = 'openswarm'
 }
 
 export interface Persona {
@@ -284,15 +285,6 @@ export const MESSAGE_PROVIDER_CONFIGS = {
       { name: 'clientId', label: 'Client ID', type: 'text', required: true },
     ],
   },
-  telegram: {
-    type: MessageProviderType.TELEGRAM,
-    displayName: 'Telegram',
-    description: 'Connect to Telegram groups',
-    icon: '✈️',
-    fields: [
-      { name: 'token', label: 'Bot Token', type: 'password', required: true },
-    ],
-  },
   webhook: {
     type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
@@ -327,42 +319,69 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'gpt-4o' },
     ],
   },
-  anthropic: {
-    type: LLMProviderType.ANTHROPIC,
-    displayName: 'Anthropic',
-    description: 'Claude models from Anthropic',
-    icon: '🧠',
+  flowise: {
+    type: LLMProviderType.FLOWISE,
+    displayName: 'Flowise',
+    description: 'Visual LLM orchestration',
+    icon: '🌊',
     fields: [
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'claude-3-opus-20240229' },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
-  ollama: {
-    type: LLMProviderType.OLLAMA,
-    displayName: 'Ollama',
-    description: 'Local models via Ollama',
-    icon: '🦙',
+  openwebui: {
+    type: LLMProviderType.OPENWEBUI,
+    displayName: 'OpenWebUI',
+    description: 'Self-hosted AI interface',
+    icon: '🌐',
     fields: [
-      { name: 'endpoint', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:11434' },
-      { name: 'model', label: 'Model', type: 'text', required: true, placeholder: 'llama2, codellama, mistral, etc.' },
-      { name: 'maxTokens', label: 'Max Tokens', type: 'number', required: false, placeholder: '2048', validation: { min: 1, max: 8192 } },
-      { name: 'temperature', label: 'Temperature', type: 'number', required: false, placeholder: '0.7', validation: { min: 0, max: 2 } },
-      { name: 'keepAlive', label: 'Keep Alive', type: 'text', required: false, placeholder: '5m' },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
     ],
   },
-  huggingface: {
-    type: LLMProviderType.HUGGINGFACE,
-    displayName: 'Hugging Face',
-    description: 'Models from Hugging Face',
-    icon: '🤗',
-    fields: [],
+  perplexity: {
+    type: LLMProviderType.PERPLEXITY,
+    displayName: 'Perplexity',
+    description: 'Search-augmented AI models',
+    icon: '🔍',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
   },
-  local: {
-    type: LLMProviderType.LOCAL,
-    displayName: 'Local',
-    description: 'Custom local models',
-    icon: '🏠',
-    fields: [],
+  replicate: {
+    type: LLMProviderType.REPLICATE,
+    displayName: 'Replicate',
+    description: 'Run open-source models',
+    icon: '🚀',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
+  },
+  n8n: {
+    type: LLMProviderType.N8N,
+    displayName: 'n8n',
+    description: 'Workflow automation platform',
+    icon: '⚡',
+    fields: [
+      { name: 'webhookUrl', label: 'Webhook URL', type: 'text', required: true },
+      { name: 'authHeader', label: 'Auth Header', type: 'password', required: false },
+    ],
+  },
+  openswarm: {
+    type: LLMProviderType.OPENSWARM,
+    displayName: 'OpenSwarm',
+    description: 'Multi-agent orchestration',
+    icon: '🐝',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
+      { name: 'team', label: 'Team', type: 'text', required: false },
+    ],
   },
 };
 
