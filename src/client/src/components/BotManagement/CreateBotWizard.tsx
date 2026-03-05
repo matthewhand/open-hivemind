@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 
 interface CreateBotWizardProps {
@@ -25,9 +25,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        messageProvider: 'discord',
+        messageProvider: '',
         llmProvider: '',
-        persona: 'default',
+        persona: '',
         mcpGuardProfile: '',
         guards: {
             accessControl: false,
@@ -236,9 +236,19 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="form-control">
-                                <label className="label"><span className="label-text">Message Provider</span></label>
+                                <label className="label flex justify-between">
+                                    <span className="label-text">Message Provider <span className="text-error">*</span></span>
+                                    <button
+                                        type="button"
+                                        className="btn btn-square btn-xs btn-ghost"
+                                        onClick={() => window.open('/admin/config', '_blank')}
+                                        title="Add Message Provider"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </label>
                                 <select
-                                    className="select select-bordered w-full"
+                                    className={`select select-bordered w-full ${!formData.messageProvider ? 'select-error' : ''}`}
                                     value={formData.messageProvider}
                                     onChange={e => {
                                         if (e.target.value === '___manage___') {
@@ -248,6 +258,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                         setFormData({ ...formData, messageProvider: e.target.value });
                                     }}
                                 >
+                                    <option value="" disabled>Select Provider</option>
                                     <option value="discord">Discord</option>
                                     <option value="slack">Slack</option>
                                     <option value="mattermost">Mattermost</option>
@@ -261,7 +272,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span>
                                 </label>
                                 <select
-                                    className="select select-bordered w-full"
+                                    className={`select select-bordered w-full ${!defaultLlmConfigured && !formData.llmProvider ? 'select-error' : ''}`}
                                     value={formData.llmProvider}
                                     onChange={e => {
                                         if (e.target.value === '___manage___') {
@@ -298,7 +309,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                 {step === 2 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="form-control">
-                            <label className="label"><span className="label-text">Select Persona</span></label>
+                            <label className="label"><span className="label-text">Select Persona <span className="text-error">*</span></span></label>
                             <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
                                 <label className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === 'default' ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
                                     <span className="label-text flex flex-col">
