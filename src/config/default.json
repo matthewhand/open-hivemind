@@ -35,8 +35,8 @@
     },
     "message": {
         "discord": {
-            "token": "YOUR_DISCORD_BOT_TOKEN",
-            "clientId": "YOUR_CLIENT_ID",
+            "token": "",
+            "clientId": "",
             "channelId": "YOUR_CHANNEL_ID",
             "botUserId": "YOUR_BOT_USER_ID",
             "voiceChannelId": "YOUR_VOICE_CHANNEL_ID",
@@ -74,6 +74,10 @@
                 ]
             }
         }
+    },
+    "greeting": {
+        "disabled": false,
+        "message": "Hello! I'm online and ready to assist."
     },
     "service": {
         "webhook": {

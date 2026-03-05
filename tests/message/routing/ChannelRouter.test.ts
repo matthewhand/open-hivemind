@@ -1,80 +1,117 @@
-import { computeScore, getBonusForChannel, getPriorityForChannel, pickBestChannel } from '@message/routing/ChannelRouter';
-import messageConfig from '@config/messageConfig';
+import messageConfig from '../../../src/config/messageConfig';
+import {
+  computeScore,
+  getBonusForChannel,
+  // Actually it is not exported. I will test via getChannelBonuses/Priorities quirks or see if I can export it for testing?
+  // The previous view_file showed it as non-exported function.
+  // I will test public API: getChannelBonuses, getChannelPriorities, computeScore, pickBestChannel
+  getChannelBonuses,
+  getChannelPriorities,
+  getPriorityForChannel,
+  parseKeyNumberMap, // Not exported but tested via usage if internal, or needs export?
+  pickBestChannel,
+} from '../../../src/message/routing/ChannelRouter';
 
-describe('[ChannelRouter] parsing and scoring', () => {
-  const originalGet = messageConfig.get.bind(messageConfig);
+jest.mock('../../../src/config/messageConfig', () => ({
+  get: jest.fn(),
+}));
 
-  afterEach(() => {
-    // Reset to original get behavior by mocking to default undefined for our keys
-    (messageConfig.get as any) = originalGet;
-    jest.restoreAllMocks();
+describe('ChannelRouter', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  function mockConfig(bonuses: any, priorities: any) {
-    jest.spyOn(messageConfig, 'get').mockImplementation((key: any) => {
-      if (key === 'CHANNEL_BONUSES') return bonuses;
-      if (key === 'CHANNEL_PRIORITIES') return priorities;
-      return originalGet(key);
+  describe('Config Parsing (Bonuses & Priorities)', () => {
+    it('should parse object map for bonuses', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue({ C1: 1.5, C2: 0.5 });
+      const bonuses = getChannelBonuses();
+      expect(bonuses).toEqual({ C1: 1.5, C2: 0.5 });
     });
-  }
 
-  test('CSV parsing for bonuses within range and priorities as integers', () => {
-    mockConfig('C1:1.2,C2:0.8, C3:2.0', 'C1:0,C2:1,C3:2');
-    expect(getBonusForChannel('C1')).toBeCloseTo(1.2, 5);
-    expect(getBonusForChannel('C2')).toBeCloseTo(0.8, 5);
-    expect(getBonusForChannel('C3')).toBeCloseTo(2.0, 5);
-    expect(getPriorityForChannel('C1')).toBe(0);
-    expect(getPriorityForChannel('C2')).toBe(1);
-    expect(getPriorityForChannel('C3')).toBe(2);
+    it('should parse CSV string for bonuses', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue('C1:1.2, C2:0.8');
+      const bonuses = getChannelBonuses();
+      expect(bonuses).toEqual({ C1: 1.2, C2: 0.8 });
+    });
+
+    it('should ignore invalid bonuses (outside 0-2 range)', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue({ C1: 2.5, C2: -0.1, C3: 1.0 });
+      const bonuses = getChannelBonuses();
+      expect(bonuses).toEqual({ C3: 1.0 });
+    });
+
+    it('should parse integer priorities', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue({ C1: 1, C2: 0 });
+      const priorities = getChannelPriorities();
+      expect(priorities).toEqual({ C1: 1, C2: 0 });
+    });
+
+    it('should ignore non-integer priorities', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue('C1:1.5, C2:2');
+      const priorities = getChannelPriorities();
+      expect(priorities).toEqual({ C2: 2 });
+    });
   });
 
-  test('JSON object parsing for bonuses/priorities with defaults when missing', () => {
-    mockConfig({ A: 1.5 }, { A: 3 });
-    expect(getBonusForChannel('A')).toBeCloseTo(1.5, 5);
-    expect(getPriorityForChannel('A')).toBe(3);
-    // Missing channel uses defaults: bonus 1.0, priority 0
-    expect(getBonusForChannel('Z')).toBeCloseTo(1.0, 5);
-    expect(getPriorityForChannel('Z')).toBe(0);
+  describe('Scoring Logic', () => {
+    it('should compute score with defaults', () => {
+      (messageConfig.get as jest.Mock).mockReturnValue({});
+      const score = computeScore('C1');
+      // base 1.0 * bonus 1.0 / (1 + priority 0) = 1.0
+      expect(score).toBe(1.0);
+    });
+
+    it('should compute score with bonus and priority', () => {
+      // Mock separate calls? getChannelBonuses calls get('CHANNEL_BONUSES')
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'CHANNEL_BONUSES') return { C1: 1.5 };
+        if (key === 'CHANNEL_PRIORITIES') return { C1: 1 }; // Priority 1 => divider 2
+        return null;
+      });
+
+      const score = computeScore('C1');
+      // 1.0 * 1.5 / (1 + 1) = 0.75
+      expect(score).toBe(0.75);
+    });
   });
 
-  test('computeScore formula: base*bonus/(1+priority)', () => {
-    mockConfig({ X: 2.0, Y: 1.0 }, { X: 0, Y: 1 });
-    // X: 1.0 * 2.0 / (1 + 0) = 2.0
-    // Y: 1.0 * 1.0 / (1 + 1) = 0.5
-    expect(computeScore('X')).toBeCloseTo(2.0, 5);
-    expect(computeScore('Y')).toBeCloseTo(0.5, 5);
-  });
+  describe('pickBestChannel', () => {
+    it('should return null for empty list', () => {
+      expect(pickBestChannel([])).toBeNull();
+    });
 
-  test('invalid out-of-range bonuses in CSV are ignored; non-integer priorities ignored', () => {
-    // 3.5 is out of [0,2], "hi" not a number, priorities "p" not integer
-    mockConfig('C1:1.0,C2:3.5,C3:hi', 'C1:0,C2:p,C3:2');
-    // C2 bonus invalid -> defaults to 1.0
-    expect(getBonusForChannel('C2')).toBeCloseTo(1.0, 5);
-    // C3 bonus invalid "hi" -> defaults to 1.0
-    expect(getBonusForChannel('C3')).toBeCloseTo(1.0, 5);
-    // C2 priority invalid -> defaults to 0
-    expect(getPriorityForChannel('C2')).toBe(0);
-    // C3 priority valid integer 2
-    expect(getPriorityForChannel('C3')).toBe(2);
-  });
+    it('should pick highest score', () => {
+      // C1=0.75, C2=2.0 (High Bonus, Low Priority)
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'CHANNEL_BONUSES') return { C1: 1.5, C2: 2.0 }; // C2 max bonus
+        if (key === 'CHANNEL_PRIORITIES') return { C1: 1, C2: 0 }; // C2 best priority
+        return {};
+      });
+      // C1 score: 0.75
+      // C2 score: 2.0 * 1.0 / 1 = 2.0
+      expect(pickBestChannel(['C1', 'C2'])).toBe('C2');
+    });
 
-  test('pickBestChannel chooses highest score; tie-breakers: highest bonus then lexicographic id', () => {
-    // Setup so that A and B have same score, but B has higher bonus
-    // score = bonus/(1+priority)
-    // A: bonus 1.0, priority 0 => 1.0
-    // B: bonus 1.5, priority 0 => 1.5
-    // C: bonus 1.5, priority 0 => 1.5 (tie with B -> tie-break by highest bonus equal, then lexicographic id => B over C because 'B' < 'C')
-    mockConfig({ A: 1.0, B: 1.5, C: 1.5 }, { A: 0, B: 0, C: 0 });
+    it('should break ties via bonus', () => {
+      // Tie score:
+      // C1: Bonus 2.0, Priority 1 => 2.0 / 2 = 1.0
+      // C2: Bonus 1.0, Priority 0 => 1.0 / 1 = 1.0
+      // Tie!
+      // Winner should be C1 (higher bonus 2.0 vs 1.0)
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'CHANNEL_BONUSES') return { C1: 2.0, C2: 1.0 };
+        if (key === 'CHANNEL_PRIORITIES') return { C1: 1, C2: 0 };
+        return {};
+      });
+      expect(pickBestChannel(['C1', 'C2'])).toBe('C1');
+    });
 
-    expect(pickBestChannel(['A', 'B', 'C'])).toBe('B');
-
-    // Now create equal scores and equal bonuses for X and Y, lexicographic tiebreaker
-    mockConfig({ X: 1.0, Y: 1.0 }, { X: 0, Y: 0 });
-    expect(pickBestChannel(['Y', 'X'])).toBe('X');
-  });
-
-  test('empty candidates returns null', () => {
-    mockConfig({}, {});
-    expect(pickBestChannel([])).toBeNull();
+    it('should break ties via ID (lexicographic)', () => {
+      // Exact same parameters
+      (messageConfig.get as jest.Mock).mockReturnValue({});
+      // C1 vs C2. Bonus 1.0, Priority 0. Score 1.0.
+      // Lexicographic: C1 < C2. So C1 wins.
+      expect(pickBestChannel(['C2', 'C1'])).toBe('C1');
+    });
   });
 });

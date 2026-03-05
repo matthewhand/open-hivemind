@@ -1,7 +1,8 @@
-import { getLlmProvider } from '@src/llm/getLlmProvider';
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import discordConfig from '@config/discordConfig';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -10,19 +11,17 @@ const debug = Debug('app:sendFollowUpRequest');
  * @param msg - The message to follow up on.
  * @param channelId - The channel where the follow-up should be sent.
  * @param followUpText - The follow-up text to send.
+ * @param messageProvider - The provider to use for sending the message.
  */
 export async function sendFollowUpRequest(
   msg: IMessage,
   channelId: string,
-  followUpText: string
+  followUpText: string,
+  messageProvider: IMessageProvider,
+  senderKey?: string
 ): Promise<void> {
-  const llmProvider = getLlmProvider();
-  if (!llmProvider.length) {
-    debug('No LLM providers available');
-    return;
-  }
-
-  if (!llmProvider[0].supportsChatCompletion()) {
+  const { provider, metadata } = await getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
+  if (!provider.supportsChatCompletion()) {
     debug(`LLM provider does not support chat completions for channel: ${channelId}`);
     return;
   }
@@ -42,10 +41,11 @@ export async function sendFollowUpRequest(
   debug(`Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
+    const response = await provider.generateChatCompletion(followUpText, historyMessages, metadata);
     const followUpMessage = followUpText + ' ' + response;
-    debug('TODO Sending follow-up message:', followUpMessage);
-    // await sendMessageToChannel(channelId, followUpMessage); // Uncomment when implemented
+    debug('Sending follow-up message:', followUpMessage);
+
+    await messageProvider.sendMessageToChannel(channelId, followUpMessage, senderKey);
   } catch (error) {
     debug('Error generating follow-up:', error);
   }

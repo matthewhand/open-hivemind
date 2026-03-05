@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:votingUtils');
 
@@ -12,9 +12,9 @@ const debug = Debug('app:votingUtils');
  * @returns A promise resolving with the result of the voting process.
  */
 export async function startVotingProcess(userId: string): Promise<{ votePassed: boolean }> {
-    debug(`Starting voting process for user ID: ${userId}`);
-    // Simulated voting process result
-    return { votePassed: true };
+  debug(`Starting voting process for user ID: ${userId}`);
+  // Simulated voting process result
+  return { votePassed: true };
 }
 
 /**
@@ -27,7 +27,7 @@ export async function startVotingProcess(userId: string): Promise<{ votePassed: 
  * @returns A boolean indicating if the user is eligible.
  */
 export function checkVotingEligibility(userId: string): boolean {
-    debug(`Checking voting eligibility for user ID: ${userId}`);
-    // Simulated eligibility check
-    return true;
+  debug(`Checking voting eligibility for user ID: ${userId}`);
+  // Simulated eligibility check
+  return true;
 }

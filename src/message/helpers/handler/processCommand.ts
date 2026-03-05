@@ -1,15 +1,16 @@
-import Debug from 'debug';  // ✅ Added missing import
-import { handleStatusCommand } from '../commands/statusCommand';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import Debug from 'debug'; // ✅ Added missing import
 
-const debug = Debug('app:processCommand');  // ✅ Initialize Debug instance
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import { handleStatusCommand } from '../commands/statusCommand';
+
+const debug = Debug('app:processCommand'); // ✅ Initialize Debug instance
 
 /**
  * Process Command
- * 
- * This function processes a command extracted from a given message. It identifies and executes the command, 
+ *
+ * This function processes a command extracted from a given message. It identifies and executes the command,
  * or returns false if no command is found.
- * 
+ *
  * @param {IMessage} message - The original message object containing the command or text.
  * @param {(result: string) => Promise<void>} callback - A callback function to handle the result.
  * @returns {Promise<boolean>} A promise that resolves to true if a command was processed, false otherwise.
@@ -28,8 +29,9 @@ export async function processCommand(
     }
 
     // Handle command messages
-    const command = text.slice(1).split(' ')[0];  // Extract command after the "!"
-    const args = text.slice(1 + command.length).trim(); // Extract arguments after the command
+    const command = text.slice(1).split(' ')[0]; // Extract command after the "!"
+    const argsString = text.slice(1 + command.length).trim(); // Extract arguments after the command
+    const args = argsString ? argsString.split(/\s+/) : [];
     debug('[processCommand] Command extracted: ' + command);
 
     if (command.toLowerCase() === 'status') {
@@ -43,7 +45,10 @@ export async function processCommand(
 
     return true;
   } catch (error: any) {
-    debug('[processCommand] Error processing message: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      '[processCommand] Error processing message: ' +
+        (error instanceof Error ? error.message : String(error))
+    );
     return false;
   }
 }

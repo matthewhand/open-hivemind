@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import DiscordMessage from '../../../src/integrations/discord/DiscordMessage';
+import { DiscordMessage } from '@hivemind/adapter-discord';
 
 // Silence debug and console noise
 jest.mock('debug', () => () => jest.fn());
@@ -36,7 +36,7 @@ describe('DiscordMessage - branches and edge cases', () => {
     channel: baseChannel(),
     // mentions: mimic discord.js Mentions object shape expected by DiscordMessage
     mentions: {
-      users: [ { id: 'user-2' }, { id: 'user-3' } ],
+      users: [{ id: 'user-2' }, { id: 'user-3' }],
     },
     reference: undefined,
     ...over,
@@ -75,7 +75,7 @@ describe('DiscordMessage - branches and edge cases', () => {
     const editReject = jest.fn().mockRejectedValue(new Error('edit failed'));
     const editable2 = baseMessage({ editable: true, edit: editReject });
     const dmErr = new DiscordMessage(editable2 as any);
-    dmErr.setText('new text C');
+    await expect(dmErr.setText('new text C')).rejects.toThrow('edit failed');
     expect(editReject).toHaveBeenCalledWith('new text C');
   });
 
@@ -91,7 +91,9 @@ describe('DiscordMessage - branches and edge cases', () => {
     expect(dm2.getChannelTopic()).toBeNull();
 
     // channel without topic property -> null
-    const noTopicProp = baseMessage({ channel: { id: 'c', members: undefined, messages: { fetch: jest.fn() } } });
+    const noTopicProp = baseMessage({
+      channel: { id: 'c', members: undefined, messages: { fetch: jest.fn() } },
+    });
     const dm3 = new DiscordMessage(noTopicProp as any);
     expect(dm3.getChannelTopic()).toBeNull();
 
@@ -111,7 +113,9 @@ describe('DiscordMessage - branches and edge cases', () => {
     expect(dm.getAuthorId()).toBe('user-1');
     expect(dm.getAuthorName()).toBe('TestUser');
 
-    const dmUnknown = new DiscordMessage(baseMessage({ author: baseAuthor({ username: '' }) }) as any);
+    const dmUnknown = new DiscordMessage(
+      baseMessage({ author: baseAuthor({ username: '' }) }) as any
+    );
     expect(dmUnknown.getAuthorName()).toBe('Unknown Author');
   });
 

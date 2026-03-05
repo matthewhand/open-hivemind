@@ -21,14 +21,14 @@ export abstract class IMessage {
    * The text content of the message.
    * @type {string}
    */
-  public content: string = "";
+  public content = '';
 
   /**
    * The unique identifier of the channel where this message was sent.
    * Canonical channel identifier used for routing and prioritization.
    * @type {string}
    */
-  public channelId: string = "";
+  public channelId = '';
 
   /**
    * Raw platform-specific data associated with the message.
@@ -43,6 +43,13 @@ export abstract class IMessage {
    * @type {string}
    */
   public role: string;
+
+  /**
+   * The platform this message originated from.
+   * Common values: "discord", "slack", "telegram", "mattermost"
+   * @type {string}
+   */
+  public platform = '';
 
   /**
    * Optional metadata associated with the message.
@@ -109,7 +116,7 @@ export abstract class IMessage {
    */
   getText(): string {
     if (this.role === 'tool') {
-      return this.content;  // Default to content, override in implementations if needed
+      return this.content; // Default to content, override in implementations if needed
     }
     return this.content;
   }
@@ -189,7 +196,9 @@ export abstract class IMessage {
    *
    * @returns {boolean} True if this message is a reply to a bot
    */
-  isReplyToBot(): boolean { return false; }
+  isReplyToBot(): boolean {
+    return false;
+  }
 
   /**
    * Checks if this message mentions a specific user.
@@ -215,4 +224,13 @@ export abstract class IMessage {
    * @returns {string} The author's display name
    */
   abstract getAuthorName(): string;
+
+  /**
+   * Checks if this message was sent in a direct message (DM) context.
+   *
+   * @returns {boolean} True if the message is a DM
+   */
+  isDirectMessage(): boolean {
+    return false;
+  }
 }

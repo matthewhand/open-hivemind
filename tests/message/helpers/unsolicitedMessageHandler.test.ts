@@ -1,54 +1,95 @@
+import messageConfig from '../../../src/config/messageConfig';
+import { clearBotActivity } from '../../../src/message/helpers/processing/ChannelActivity';
 import { shouldReplyToUnsolicitedMessage } from '../../../src/message/helpers/unsolicitedMessageHandler';
-import { ConfigurationManager } from '@config/ConfigurationManager';
 
-jest.mock('@config/ConfigurationManager', () => ({
-  ConfigurationManager: {
-    getInstance: jest.fn(),
-  },
+jest.mock('../../../src/config/messageConfig', () => ({
+  __esModule: true,
+  default: { get: jest.fn() },
 }));
 
-const mockConfigManagerInstance = {
-  getSession: jest.fn(),
-  setSession: jest.fn(),
-};
-
-(ConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockConfigManagerInstance);
-
 describe('shouldReplyToUnsolicitedMessage', () => {
-  let msg: any;
   const botId = 'bot123';
   const integration = 'discord';
 
   beforeEach(() => {
-    msg = {
-      getChannelId: jest.fn(),
-      isMentioning: jest.fn(),
-      isReply: jest.fn(),
+    jest.clearAllMocks();
+    clearBotActivity();
+    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
+      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return false;
+      if (key === 'MESSAGE_ACTIVITY_TIME_WINDOW') return 300000;
+      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
+      return null;
+    });
+  });
+
+  it('does not hard-block unsolicited messages (pipeline proceeds)', () => {
+    const msg: any = {
+      getChannelId: () => 'c1',
+      getText: () => 'hello',
+      mentionsUsers: () => false,
+      isReplyToBot: () => false,
     };
-    mockConfigManagerInstance.getSession.mockClear();
-    mockConfigManagerInstance.setSession.mockClear();
+
+    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
+
+    const mentioned: any = { ...msg, mentionsUsers: () => true };
+    expect(shouldReplyToUnsolicitedMessage(mentioned, botId, integration)).toBe(true);
   });
 
-  it('should return false if bot has never spoken and it is not a direct query', () => {
-    const channelId = 'channel1';
-    msg.getChannelId.mockReturnValue(channelId);
-    mockConfigManagerInstance.getSession.mockReturnValue(false);
-    msg.isMentioning.mockReturnValue(false);
-    msg.isReply.mockReturnValue(false);
+  it('returns true for wakeword when MESSAGE_ONLY_WHEN_SPOKEN_TO=true', () => {
+    const msg: any = {
+      getChannelId: () => 'c1',
+      getText: () => 'bot help me',
+      mentionsUsers: () => false,
+      isReplyToBot: () => false,
+    };
 
-    const result = shouldReplyToUnsolicitedMessage(msg, botId, integration);
-    expect(result).toBe(false);
+    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
   });
 
-  it('should return true if bot has never spoken but it is a direct query', () => {
-    const channelId = 'channel2';
-    msg.getChannelId.mockReturnValue(channelId);
-    mockConfigManagerInstance.getSession.mockReturnValue(false);
-    msg.isMentioning.mockReturnValue(true);
-    msg.isReply.mockReturnValue(false);
+  it('when MESSAGE_ONLY_WHEN_SPOKEN_TO=false, does not hard-block (opportunity handled elsewhere)', () => {
+    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return true;
+      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
+      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
+      return null;
+    });
 
-    const result = shouldReplyToUnsolicitedMessage(msg, botId, integration);
-    expect(result).toBe(true);
-    expect(mockConfigManagerInstance.setSession).toHaveBeenCalledWith(integration, channelId, 'active');
+    const msg: any = {
+      getChannelId: () => 'c1',
+      getText: () => 'this is chatter',
+      mentionsUsers: () => false,
+      isReplyToBot: () => false,
+      getUserMentions: () => [],
+    };
+
+    // No hard blocks here; probability is handled elsewhere.
+    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
+
+    // Opportunity -> yes
+    const q: any = { ...msg, getText: () => 'anyone know how do i fix this?' };
+    expect(shouldReplyToUnsolicitedMessage(q, botId, integration)).toBe(true);
+  });
+
+  it('does not hard-block addressed/unaddressed config when MESSAGE_ONLY_WHEN_SPOKEN_TO=false', () => {
+    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
+      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
+      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
+      return null;
+    });
+
+    const addressed: any = {
+      getChannelId: () => 'c1',
+      getText: () => 'hey @someone, can someone help?',
+      mentionsUsers: () => false,
+      isReplyToBot: () => false,
+      getUserMentions: () => ['someone'],
+    };
+    expect(shouldReplyToUnsolicitedMessage(addressed, botId, integration)).toBe(true);
   });
 });

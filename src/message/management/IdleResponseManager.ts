@@ -1,9 +1,8 @@
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { handleMessage } from '@message/handlers/messageHandler';
+import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
-import { SyntheticMessage } from './SyntheticMessage';
 
 const log = Debug('app:idleResponseManager');
 
@@ -13,6 +12,7 @@ interface ChannelActivity {
   interactionCount: number;
   timer?: NodeJS.Timeout;
   lastMessageId?: string;
+  idleResponseSentSinceLastInteraction?: boolean;
 }
 
 interface ServiceActivity {
@@ -24,21 +24,21 @@ interface ServiceActivity {
 
 export class IdleResponseManager {
   private static instance: IdleResponseManager;
-  private serviceActivities: Map<string, ServiceActivity> = new Map();
-  private enabled: boolean = true;
-  private minDelay: number = 60000; // 60 seconds
-  private maxDelay: number = 3600000; // 60 minutes
+  private serviceActivities = new Map<string, ServiceActivity>();
+  private enabled = true;
+  private minDelay: number = parseInt(process.env.IDLE_RESPONSE_MIN_DELAY || '60000', 10); // 60 seconds
+  private maxDelay: number = parseInt(process.env.IDLE_RESPONSE_MAX_DELAY || '3600000', 10); // 60 minutes
   private idlePrompts: string[] = [
     "The conversation seems to have paused. Is there anything else you'd like to discuss or any questions I can help with?",
     "I notice it's been quiet for a bit. I'm here if you need assistance or want to continue our conversation.",
-    "The channel has been idle. Would you like to explore any topics or need help with something?",
-    "Taking a moment to check in - is there anything on your mind I can help with?",
-    "It looks like we have a pause in the conversation. What would you like to talk about next?",
+    'The channel has been idle. Would you like to explore any topics or need help with something?',
+    'Taking a moment to check in - is there anything on your mind I can help with?',
+    'It looks like we have a pause in the conversation. What would you like to talk about next?',
     "Silence falls... but I'm still here, ready to dive deeper into whatever thoughts are percolating.",
-    "The digital winds have stilled. What currents of thought are stirring beneath the surface?",
-    "A moment of quiet - perfect for reflection. What aspects of our discussion linger in your mind?",
-    "The conversation breathes... shall we explore new territories or revisit uncharted depths?",
-    "In this pause, I sense potential energy. What direction shall we channel it?"
+    'The digital winds have stilled. What currents of thought are stirring beneath the surface?',
+    'A moment of quiet - perfect for reflection. What aspects of our discussion linger in your mind?',
+    'The conversation breathes... shall we explore new territories or revisit uncharted depths?',
+    'In this pause, I sense potential energy. What direction shall we channel it?',
   ];
 
   private constructor() {
@@ -58,36 +58,42 @@ export class IdleResponseManager {
       const envMinDelay = process.env.IDLE_RESPONSE_MIN_DELAY;
       const envMaxDelay = process.env.IDLE_RESPONSE_MAX_DELAY;
       const envEnabled = process.env.IDLE_RESPONSE_ENABLED;
-      
+
       const messageConfig = require('@config/messageConfig');
       const config = messageConfig.get('IDLE_RESPONSE') || {};
-      
+
       this.enabled = envEnabled !== undefined ? envEnabled === 'true' : (config.enabled ?? true);
-      
+
       // Use environment variables with fallback to config, then defaults
       const parseEnvInt = (value: string | undefined, fallback: number): number => {
-        if (!value) return fallback;
+        if (!value) {
+          return fallback;
+        }
         const parsed = parseInt(value, 10);
         return isNaN(parsed) ? fallback : parsed;
       };
-      
+
       this.minDelay = parseEnvInt(envMinDelay, config.minDelay ?? 60000);
       this.maxDelay = parseEnvInt(envMaxDelay, config.maxDelay ?? 3600000);
-      
+
       // Ensure minDelay is not greater than maxDelay
       if (this.minDelay > this.maxDelay) {
         this.minDelay = this.maxDelay;
       }
-      
+
       if (config.prompts && Array.isArray(config.prompts)) {
         this.idlePrompts = config.prompts;
       }
-      
-      log(`Idle response configured: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`);
-      
+
+      log(
+        `Idle response configured: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`
+      );
+
       // Log if environment variables are being used
       if (envMinDelay || envMaxDelay || envEnabled) {
-        log(`Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`);
+        log(
+          `Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`
+        );
       }
     } catch (error) {
       log('Using default idle response configuration');
@@ -101,7 +107,7 @@ export class IdleResponseManager {
     }
 
     const messengerServices = getMessengerProvider();
-    
+
     // If serviceNames provided (for testing), use those instead of actual services
     if (serviceNames && serviceNames.length > 0) {
       for (const serviceName of serviceNames) {
@@ -115,73 +121,78 @@ export class IdleResponseManager {
             sendPublicAnnouncement: async () => {},
             getDefaultChannel: () => 'test-channel',
             shutdown: async () => {},
-            setMessageHandler: () => {}
+            setMessageHandler: () => {},
           };
-          
+
           this.serviceActivities.set(serviceName, {
             channels: new Map(),
             lastInteractedChannelId: null,
             messengerService: mockService,
-            botConfig: this.getBotConfig(serviceName)
+            botConfig: this.getBotConfig(serviceName),
           });
-          
+
           log(`Initialized idle response tracking for service: ${serviceName}`);
         }
       }
     } else {
       // Use actual messenger services with unique identification
       for (const service of messengerServices) {
-        let serviceName = (service as any).providerName || 'generic';
-        
-        // Handle Discord service with multiple bot instances
-        if (serviceName === 'discord' && (service as any).getAllBots) {
-          const discordService = service as any;
-          const bots = discordService.getAllBots();
-          
-          // Create separate service entries for each Discord bot instance
-          bots.forEach((bot: any, index: number) => {
-            const botServiceName = `${serviceName}-${bot.botUserName || `bot${index + 1}`}`;
-            
-            if (!this.serviceActivities.has(botServiceName)) {
-              // Create a wrapper that uses the specific bot instance
-              const botWrapper: IMessengerService = {
-                sendMessageToChannel: async (channelId: string, text: string, senderName?: string) => {
-                  return await discordService.sendMessageToChannel(channelId, text, bot.botUserName || senderName);
-                },
-                getMessagesFromChannel: async (channelId: string) => {
-                  return await discordService.getMessagesFromChannel(channelId);
-                },
-                getClientId: () => bot.botUserId || discordService.getClientId(),
-                initialize: async () => {},
-                sendPublicAnnouncement: async (channelId: string, announcement: string, threadId?: string) => {
-                  return await discordService.sendPublicAnnouncement(channelId, announcement, threadId);
-                },
-                getDefaultChannel: () => discordService.getDefaultChannel(),
-                shutdown: async () => {},
-                setMessageHandler: (handler: any) => {}
-              };
-              
-              this.serviceActivities.set(botServiceName, {
+        const baseServiceName = (service as any).providerName || 'generic';
+
+        // Check if the service supports delegation (e.g. multi-bot Discord)
+        if (typeof service.getDelegatedServices === 'function') {
+          const delegates = service.getDelegatedServices();
+
+          for (const delegate of delegates) {
+            if (!this.serviceActivities.has(delegate.serviceName)) {
+              this.serviceActivities.set(delegate.serviceName, {
                 channels: new Map(),
                 lastInteractedChannelId: null,
-                messengerService: botWrapper,
-                botConfig: this.getBotConfig(serviceName)
+                messengerService: delegate.messengerService,
+                botConfig: delegate.botConfig || this.getBotConfig(baseServiceName),
               });
-              
-              log(`Initialized idle response tracking for Discord bot: ${botServiceName}`);
+              log(`Initialized idle response tracking for delegated bot: ${delegate.serviceName}`);
             }
-          });
+          }
+        } else if (typeof (service as any).getAllBots === 'function') {
+          // Backwards-compatible multi-bot support (older Discord implementation).
+          const bots = (service as any).getAllBots();
+          const providerPrefix = String(baseServiceName).toLowerCase();
+
+          if (Array.isArray(bots) && bots.length > 0) {
+            bots.forEach((bot: any, index: number) => {
+              const rawName = typeof bot?.botUserName === 'string' ? bot.botUserName.trim() : '';
+              const rawId = typeof bot?.botUserId === 'string' ? bot.botUserId.trim() : '';
+
+              const suffix = rawName
+                ? rawName
+                : rawId
+                  ? rawId.split('-')[0].toLowerCase()
+                  : `bot${index + 1}`;
+
+              const serviceName = `${providerPrefix}-${suffix}`;
+              if (!this.serviceActivities.has(serviceName)) {
+                this.serviceActivities.set(serviceName, {
+                  channels: new Map(),
+                  lastInteractedChannelId: null,
+                  messengerService: service,
+                  botConfig: this.getBotConfig(baseServiceName),
+                });
+                log(`Initialized idle response tracking for multi-bot service: ${serviceName}`);
+              }
+            });
+          }
         } else {
-          // Handle other services normally
-          if (!this.serviceActivities.has(serviceName)) {
-            this.serviceActivities.set(serviceName, {
+          // Handle standard services
+          if (!this.serviceActivities.has(baseServiceName)) {
+            this.serviceActivities.set(baseServiceName, {
               channels: new Map(),
               lastInteractedChannelId: null,
               messengerService: service,
-              botConfig: this.getBotConfig(serviceName)
+              botConfig: this.getBotConfig(baseServiceName),
             });
-            
-            log(`Initialized idle response tracking for service: ${serviceName}`);
+
+            log(`Initialized idle response tracking for service: ${baseServiceName}`);
           }
         }
       }
@@ -198,7 +209,9 @@ export class IdleResponseManager {
   }
 
   public recordInteraction(serviceName: string, channelId: string, messageId?: string): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      return;
+    }
 
     const serviceActivity = this.serviceActivities.get(serviceName);
     if (!serviceActivity) {
@@ -207,13 +220,14 @@ export class IdleResponseManager {
     }
 
     const now = Date.now();
-    
+
     if (!serviceActivity.channels.has(channelId)) {
       serviceActivity.channels.set(channelId, {
         lastInteractionTime: now,
         lastBotResponseTime: 0,
         interactionCount: 0,
-        lastMessageId: messageId
+        lastMessageId: messageId,
+        idleResponseSentSinceLastInteraction: false,
       });
     }
 
@@ -223,9 +237,10 @@ export class IdleResponseManager {
     if (messageId) {
       activity.lastMessageId = messageId;
     }
+    activity.idleResponseSentSinceLastInteraction = false;
 
     serviceActivity.lastInteractedChannelId = channelId;
-    
+
     // Cancel any existing timer for this channel
     if (activity.timer) {
       clearTimeout(activity.timer);
@@ -237,7 +252,9 @@ export class IdleResponseManager {
       this.scheduleIdleResponse(serviceName, channelId);
     }
 
-    log(`Recorded interaction in ${serviceName}:${channelId}, interaction count: ${activity.interactionCount}`);
+    log(
+      `Recorded interaction in ${serviceName}:${channelId}, interaction count: ${activity.interactionCount}`
+    );
   }
 
   public recordBotResponse(serviceName: string, channelId: string): void {
@@ -252,16 +269,30 @@ export class IdleResponseManager {
 
   private scheduleIdleResponse(serviceName: string, channelId: string): void {
     const serviceActivity = this.serviceActivities.get(serviceName);
-    if (!serviceActivity || !this.enabled) return;
+    if (!serviceActivity || !this.enabled) {
+      return;
+    }
 
     // Only schedule for the last interacted channel
     if (channelId !== serviceActivity.lastInteractedChannelId) {
-      log(`Skipping idle response for ${serviceName}:${channelId} - not the last interacted channel`);
+      log(
+        `Skipping idle response for ${serviceName}:${channelId} - not the last interacted channel`
+      );
       return;
     }
 
     const activity = serviceActivity.channels.get(channelId);
-    if (!activity) return;
+    if (!activity) {
+      return;
+    }
+
+    // Only one idle response per interaction window.
+    if (activity.idleResponseSentSinceLastInteraction) {
+      log(
+        `Skipping idle response scheduling for ${serviceName}:${channelId} - already sent since last interaction`
+      );
+      return;
+    }
 
     // Skip if this is the first interaction (interactionCount <= 1)
     if (activity.interactionCount <= 1) {
@@ -284,6 +315,8 @@ export class IdleResponseManager {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);
       if (currentActivity && currentActivity.timer === activity.timer) {
+        // Clear the timer reference so triggerIdleResponse doesn't think it's a duplicate
+        currentActivity.timer = undefined;
         await this.triggerIdleResponse(serviceName, channelId);
       }
     }, delay);
@@ -293,10 +326,58 @@ export class IdleResponseManager {
     return Math.floor(Math.random() * (this.maxDelay - this.minDelay + 1)) + this.minDelay;
   }
 
+  private getBotDisplayName(serviceName: string, botConfig: any): string {
+    const override = botConfig?.MESSAGE_USERNAME_OVERRIDE;
+    if (override && typeof override === 'string' && override.trim()) {
+      return override.trim();
+    }
+
+    // Discord multi-bot service names look like "discord-<BotName>"
+    if (typeof serviceName === 'string' && serviceName.startsWith('discord-')) {
+      const inferred = serviceName.slice('discord-'.length).trim();
+      if (inferred) {
+        return inferred;
+      }
+    }
+
+    const name = botConfig?.name;
+    if (name && typeof name === 'string' && name.trim()) {
+      return name.trim();
+    }
+
+    return 'Assistant';
+  }
+
+  private getTimestampMs(msg: IMessage): number | null {
+    try {
+      const ts = (msg as any)?.getTimestamp?.();
+      if (!ts) {
+        return null;
+      }
+      if (typeof ts === 'number') {
+        return ts;
+      }
+      if (ts instanceof Date) {
+        return ts.getTime();
+      }
+      if (typeof ts === 'string') {
+        const parsed = Date.parse(ts);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      // Support common mock shapes
+      const maybe = (ts as any)?.getTime?.();
+      return typeof maybe === 'number' ? maybe : null;
+    } catch {
+      return null;
+    }
+  }
+
   private async triggerIdleResponse(serviceName: string, channelId: string): Promise<void> {
     try {
       const serviceActivity = this.serviceActivities.get(serviceName);
-      if (!serviceActivity || !this.enabled) return;
+      if (!serviceActivity || !this.enabled) {
+        return;
+      }
 
       // Double-check conditions before triggering
       if (channelId !== serviceActivity.lastInteractedChannelId) {
@@ -307,6 +388,14 @@ export class IdleResponseManager {
       const activity = serviceActivity.channels.get(channelId);
       if (!activity || activity.interactionCount <= 1) {
         log(`Aborting idle response for ${serviceName}:${channelId} - insufficient interactions`);
+        return;
+      }
+
+      // Enforce at-most-once idle response per interaction window.
+      if (activity.idleResponseSentSinceLastInteraction) {
+        log(
+          `Aborting idle response for ${serviceName}:${channelId} - already sent since last interaction`
+        );
         return;
       }
 
@@ -323,8 +412,7 @@ export class IdleResponseManager {
 
       // Prevent rapid consecutive idle responses
       if (timeSinceLastBotResponse < this.minDelay) {
-        log(`Bot responded too recently to ${serviceName}:${channelId}, rescheduling`);
-        this.scheduleIdleResponse(serviceName, channelId);
+        log(`Bot responded too recently to ${serviceName}:${channelId}, aborting idle response`);
         return;
       }
 
@@ -335,61 +423,100 @@ export class IdleResponseManager {
       }
 
       log(`Triggering idle response for ${serviceName}:${channelId}`);
-      
-      // Get the most recent messages from the channel
-      const messages = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
-      
-      if (messages.length === 0) {
-        log(`No messages found in ${serviceName}:${channelId}, skipping idle response`);
-        return;
+
+      // Get the most recent message that isn't from THIS bot instance
+      let idlePrompt: string;
+      try {
+        const history = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
+        const botClientId = serviceActivity.messengerService.getClientId?.() || '';
+
+        // Find messages NOT from this bot (can be from users or other bots)
+        const nonSelfMessages = history.filter((msg: IMessage) => {
+          const authorId = msg.getAuthorId?.() || '';
+          return authorId !== botClientId;
+        });
+
+        // Get the most recent one (history is oldest-first, so last element is most recent)
+        const mostRecentMessage =
+          nonSelfMessages.length > 0 ? nonSelfMessages[nonSelfMessages.length - 1] : null;
+
+        if (mostRecentMessage) {
+          const oldContent = mostRecentMessage.getText().substring(0, 100);
+          const oldAuthor = (() => {
+            try {
+              const n = mostRecentMessage.getAuthorName?.();
+              return n ? String(n) : 'someone';
+            } catch {
+              return 'someone';
+            }
+          })();
+
+          const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
+
+          // Generate an LLM-based response referencing the old message
+          const contextPrompt = `You are ${botName}. Earlier ${oldAuthor} said: "${oldContent}".
+Write a short, natural follow-up (<= 35 words) that either playfully challenges a claim or asks a sharp, curiosity-driven question.
+Be engaging and a little provocative, but not rude: no insults, no harassment, no sensitive traits.
+Do not mention that the channel was quiet/idle and do not say "I noticed".`;
+
+          try {
+            const { getTaskLlm } = require('@src/llm/taskLlmRouter');
+            const sel = await getTaskLlm('idle', { baseMetadata: { maxTokensOverride: 120 } });
+            if (sel?.provider) {
+              const response = await sel.provider.generateChatCompletion(
+                contextPrompt,
+                [],
+                sel.metadata
+              );
+              if (response && response.trim()) {
+                idlePrompt = response.trim();
+                log('Generated LLM idle response referencing old message');
+              } else {
+                idlePrompt = this.getRandomIdlePrompt();
+              }
+            } else {
+              idlePrompt = this.getRandomIdlePrompt();
+            }
+          } catch (llmError) {
+            log(`LLM failed for idle response, using fallback: ${llmError}`);
+            idlePrompt = this.getRandomIdlePrompt();
+          }
+        } else {
+          idlePrompt = this.getRandomIdlePrompt();
+        }
+      } catch (historyError) {
+        log(`Could not fetch history for idle response: ${historyError}`);
+        idlePrompt = this.getRandomIdlePrompt();
       }
 
-      // Create a unique synthetic message with contextual information
-      const syntheticMessage = this.createUniqueSyntheticMessage(messages, serviceName, channelId);
-      
-      // Process this through the normal message handler flow
-      const response = await handleMessage(syntheticMessage, messages, serviceActivity.botConfig);
-      
-      if (response && response.trim()) {
-        await serviceActivity.messengerService.sendMessageToChannel(
-          channelId,
-          response,
-          serviceActivity.botConfig.MESSAGE_USERNAME_OVERRIDE || 'Assistant'
-        );
-        
-        this.recordBotResponse(serviceName, channelId);
-        log(`Sent idle response to ${serviceName}:${channelId}: "${response.substring(0, 100)}..."`);
-      }
-      
+      // Send the idle response directly without going through message processing
+      const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
+      await serviceActivity.messengerService.sendMessageToChannel(channelId, idlePrompt, botName);
+      try {
+        const activityBotId = serviceActivity.messengerService.getClientId?.();
+        if (activityBotId) {
+          recordBotActivity(channelId, activityBotId);
+        }
+      } catch {}
+
+      this.recordBotResponse(serviceName, channelId);
+      activity.idleResponseSentSinceLastInteraction = true;
+      log(
+        `Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`
+      );
+      console.info(
+        `✅ IDLE RESPONSE SENT | bot: ${botName} | channel: ${channelId} | content: "${idlePrompt.substring(0, 50)}..."`
+      );
+
       // Don't immediately reschedule - wait for next interaction
       log(`Idle response completed for ${serviceName}:${channelId}, waiting for next interaction`);
-      
     } catch (error) {
       log(`Error triggering idle response for ${serviceName}:${channelId}:`, error);
     }
   }
 
-  private createUniqueSyntheticMessage(messages: IMessage[], serviceName: string, channelId: string): IMessage {
-    // Create a more unique prompt based on conversation context
-    const recentMessages = messages.slice(-5); // Last 5 messages
-    const conversationContext = recentMessages.map(m => m.getText()).join(' ').substring(0, 200);
-    
-    // Generate a unique prompt based on context
-    const basePrompts = [
-      "The conversation has naturally paused. Based on our recent discussion about: {context}",
-      "Taking a thoughtful pause here. Our last exchange touched on: {context}",
-      "In this moment of quiet, I'm curious about where our conversation about {context} might lead next.",
-      "The digital space breathes... our dialogue about {context} feels like it's opening new possibilities.",
-      "This pause invites reflection. Our exploration of {context} seems rich with potential directions."
-    ];
-    
-    const selectedPrompt = basePrompts[Math.floor(Math.random() * basePrompts.length)];
-    const contextualPrompt = selectedPrompt.replace('{context}', conversationContext || 'various topics');
-    
-    // Add timestamp and service info for uniqueness
-    const uniquePrompt = `${contextualPrompt} [${serviceName}:${channelId}:${Date.now()}]`;
-    
-    return new SyntheticMessage(messages[0], uniquePrompt);
+  private getRandomIdlePrompt(): string {
+    return this.idlePrompts[Math.floor(Math.random() * this.idlePrompts.length)];
   }
 
   public configure(config: {
@@ -401,12 +528,14 @@ export class IdleResponseManager {
     this.enabled = config.enabled ?? this.enabled;
     this.minDelay = config.minDelay ?? this.minDelay;
     this.maxDelay = config.maxDelay ?? this.maxDelay;
-    
+
     if (config.prompts && Array.isArray(config.prompts)) {
       this.idlePrompts = config.prompts;
     }
-    
-    log(`Reconfigured idle response: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`);
+
+    log(
+      `Reconfigured idle response: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`
+    );
   }
 
   public clearChannel(serviceName: string, channelId: string): void {
@@ -417,7 +546,7 @@ export class IdleResponseManager {
         clearTimeout(activity.timer);
       }
       serviceActivity.channels.delete(channelId);
-      
+
       if (serviceActivity.lastInteractedChannelId === channelId) {
         serviceActivity.lastInteractedChannelId = null;
       }
@@ -438,29 +567,33 @@ export class IdleResponseManager {
 
   public getStats(): {
     totalServices: number;
-    serviceDetails: Array<{
+    serviceDetails: {
       serviceName: string;
       totalChannels: number;
       lastInteractedChannel: string | null;
-      channelDetails: Array<{
+      channelDetails: {
         channelId: string;
         interactionCount: number;
         lastInteraction: Date;
         hasTimer: boolean;
-      }>;
-    }>;
+      }[];
+    }[];
   } {
-    const serviceDetails = Array.from(this.serviceActivities.entries()).map(([serviceName, serviceActivity]) => ({
-      serviceName,
-      totalChannels: serviceActivity.channels.size,
-      lastInteractedChannel: serviceActivity.lastInteractedChannelId,
-      channelDetails: Array.from(serviceActivity.channels.entries()).map(([channelId, activity]) => ({
-        channelId,
-        interactionCount: activity.interactionCount,
-        lastInteraction: new Date(activity.lastInteractionTime),
-        hasTimer: !!activity.timer,
-      })),
-    }));
+    const serviceDetails = Array.from(this.serviceActivities.entries()).map(
+      ([serviceName, serviceActivity]) => ({
+        serviceName,
+        totalChannels: serviceActivity.channels.size,
+        lastInteractedChannel: serviceActivity.lastInteractedChannelId,
+        channelDetails: Array.from(serviceActivity.channels.entries()).map(
+          ([channelId, activity]) => ({
+            channelId,
+            interactionCount: activity.interactionCount,
+            lastInteraction: new Date(activity.lastInteractionTime),
+            hasTimer: !!activity.timer,
+          })
+        ),
+      })
+    );
 
     return {
       totalServices: this.serviceActivities.size,

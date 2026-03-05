@@ -1,31 +1,86 @@
 import slackConfig from '../../src/config/slackConfig';
 
 describe('slackConfig', () => {
-  it('should have default values', () => {
-    // Save original environment variables
+  it('should handle complex Slack configuration scenarios with validation', () => {
     const OLD_ENV = process.env;
-
-    // Reset environment variables to test defaults
-    process.env = {};
-
-    // Reset modules to force re-import of config with new environment
+    
+    // Test complex configuration with multiple environment variables
+    process.env.SLACK_BOT_TOKEN = 'xoxb-complex-token-1234567890';
+    process.env.SLACK_APP_TOKEN = 'xapp-complex-app-token-0987654321';
+    process.env.SLACK_SIGNING_SECRET = 'complex-signing-secret-hash';
+    process.env.SLACK_MODE = 'rtm';
+    process.env.SLACK_JOIN_CHANNELS = 'C1234567890,C0987654321,C1122334455';
+    process.env.SLACK_DEFAULT_CHANNEL_ID = 'C1234567890';
+    process.env.SLACK_BUTTON_MAPPINGS = 'learn_objectives:Learn,report_issue:Report';
+    
     jest.resetModules();
-    const freshSlackConfig = require('../../src/config/slackConfig').default;
+    const config = require('../../src/config/slackConfig').default;
+    
+    // Validate complex configuration loading
+    expect(config.get('SLACK_BOT_TOKEN')).toBe('xoxb-complex-token-1234567890');
+    expect(config.get('SLACK_APP_TOKEN')).toBe('xapp-complex-app-token-0987654321');
+    expect(config.get('SLACK_SIGNING_SECRET')).toBe('complex-signing-secret-hash');
+    expect(config.get('SLACK_MODE')).toBe('rtm');
+    expect(config.get('SLACK_JOIN_CHANNELS')).toBe('C1234567890,C0987654321,C1122334455');
+    expect(config.get('SLACK_DEFAULT_CHANNEL_ID')).toBe('C1234567890');
+    
+    // Validate message templates with placeholders
+    const joinMessage = config.get('SLACK_BOT_JOIN_CHANNEL_MESSAGE');
+    expect(joinMessage).toContain('{channel}');
+    expect(joinMessage.length).toBeGreaterThan(20);
+    
+    const userMessage = config.get('SLACK_USER_JOIN_CHANNEL_MESSAGE');
+    expect(userMessage).toContain('{user}');
+    expect(userMessage.length).toBeGreaterThan(15);
+    
+    // Validate button mappings parsing
+    const buttonMappings = config.get('SLACK_BUTTON_MAPPINGS');
+    expect(buttonMappings).toContain('learn_objectives');
+    expect(buttonMappings).toContain('Report');
+    
+    // Test validation with complex configuration
+    expect(() => config.validate({ allowed: 'strict' })).not.toThrow();
+    
+    process.env = OLD_ENV;
+  });
 
-    expect(freshSlackConfig.get('SLACK_BOT_TOKEN')).toBe('');
-    expect(freshSlackConfig.get('SLACK_APP_TOKEN')).toBe('');
-    expect(freshSlackConfig.get('SLACK_SIGNING_SECRET')).toBe('');
-    expect(freshSlackConfig.get('SLACK_JOIN_CHANNELS')).toBe('C08BC0X4DFD');
-    expect(freshSlackConfig.get('SLACK_DEFAULT_CHANNEL_ID')).toBe('C08BC0X4DFD');
-    expect(freshSlackConfig.get('SLACK_MODE')).toBe('socket');
-    expect(freshSlackConfig.get('SLACK_BOT_JOIN_CHANNEL_MESSAGE')).toContain('Bot joined the {channel} channel');
-    expect(freshSlackConfig.get('SLACK_USER_JOIN_CHANNEL_MESSAGE')).toContain('Welcome, {user}');
-    expect(freshSlackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE')).toContain('Here’s more info about channel');
-    expect(freshSlackConfig.get('SLACK_BUTTON_MAPPINGS')).toContain('learn_objectives');
-    expect(freshSlackConfig.get('WELCOME_RESOURCE_URL')).toBe('https://university.example.com/resources');
-    expect(freshSlackConfig.get('REPORT_ISSUE_URL')).toBe('https://university.example.com/report-issue');
+  it('should handle Slack configuration edge cases and validation scenarios', () => {
+    const OLD_ENV = process.env;
+    
+    // Test with edge case configuration values
+    process.env.SLACK_BOT_TOKEN = ''; // Empty token should be handled gracefully
+    process.env.SLACK_MODE = 'rtm'; // Valid mode
+    process.env.SLACK_JOIN_CHANNELS = ''; // Empty channels list should be handled
+    process.env.SLACK_BUTTON_MAPPINGS = 'invalid-format-no-colon'; // Invalid format should be handled
+    process.env.WELCOME_RESOURCE_URL = 'not-a-valid-url'; // Invalid URL should be handled
+    
+    jest.resetModules();
+    const config = require('../../src/config/slackConfig').default;
+    
+    // Should handle empty values gracefully
+    expect(config.get('SLACK_BOT_TOKEN')).toBe('');
+    expect(config.get('SLACK_MODE')).toBe('rtm'); // Should accept valid mode
+    expect(config.get('SLACK_JOIN_CHANNELS')).toBe(''); // Should accept empty value
+    expect(config.get('SLACK_BUTTON_MAPPINGS')).toBe('invalid-format-no-colon'); // Should accept as-is
+    
+    // Should validate successfully with valid inputs
+    expect(() => config.validate({ allowed: 'strict' })).not.toThrow();
+    
+    process.env = OLD_ENV;
+  });
 
-    // Restore original environment variables
+  it('should fail validation with invalid mode', () => {
+    const OLD_ENV = process.env;
+    
+    // Test validation failure with invalid mode
+    process.env.SLACK_MODE = 'invalid-mode';
+    
+    jest.resetModules();
+    const config = require('../../src/config/slackConfig').default;
+    
+    // Should fail validation with invalid mode
+    expect(() => config.validate({ allowed: 'strict' })).toThrow('SLACK_MODE: must be one of the possible values: ["socket","rtm"]');
+    
     process.env = OLD_ENV;
   });
 

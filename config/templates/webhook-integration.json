@@ -1,0 +1,23 @@
+{
+  "id": "webhook-integration",
+  "name": "Webhook Integration",
+  "description": "Generic webhook integration for custom messaging",
+  "category": "webhook",
+  "tags": [
+    "webhook",
+    "integration",
+    "custom"
+  ],
+  "config": {
+    "messageProvider": "webhook",
+    "llmProvider": "flowise",
+    "flowise": {
+      "apiKey": "${FLOWISE_API_KEY}",
+      "endpoint": "${FLOWISE_ENDPOINT}"
+    }
+  },
+  "isBuiltIn": true,
+  "createdAt": "2025-09-20T02:43:39.152Z",
+  "updatedAt": "2025-09-20T02:43:39.152Z",
+  "usageCount": 0
+}

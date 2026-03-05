@@ -1,5 +1,5 @@
-import { IMessengerService } from '../../../src/message/interfaces/IMessengerService';
 import { IMessage } from '../../../src/message/interfaces/IMessage';
+import { IMessengerService } from '../../../src/message/interfaces/IMessengerService';
 
 // Test implementation of IMessage for integration testing
 class TestMessage extends IMessage {
@@ -90,7 +90,9 @@ class TestMessengerService implements IMessengerService {
   private messages: Map<string, IMessage[]> = new Map();
   private clientId: string;
   private defaultChannel: string;
-  private messageHandler: ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) | null = null;
+  private messageHandler:
+    | ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>)
+    | null = null;
   private initialized: boolean = false;
 
   constructor(clientId: string = 'test-client-123', defaultChannel: string = 'general') {
@@ -102,7 +104,12 @@ class TestMessengerService implements IMessengerService {
     this.initialized = true;
   }
 
-  async sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string): Promise<string> {
+  async sendMessageToChannel(
+    channelId: string,
+    message: string,
+    senderName?: string,
+    threadId?: string
+  ): Promise<string> {
     if (!this.initialized) {
       throw new Error('Service not initialized');
     }
@@ -125,7 +132,7 @@ class TestMessengerService implements IMessengerService {
     if (!this.messages.has(channelId)) {
       this.messages.set(channelId, []);
     }
-    
+
     this.messages.get(channelId)!.push(testMessage);
     return messageId;
   }
@@ -160,7 +167,7 @@ class TestMessengerService implements IMessengerService {
     if (!this.messages.has(channelId)) {
       this.messages.set(channelId, []);
     }
-    
+
     this.messages.get(channelId)!.push(announcementMessage);
   }
 
@@ -177,7 +184,9 @@ class TestMessengerService implements IMessengerService {
     this.messages.clear();
   }
 
-  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
+  setMessageHandler(
+    handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+  ): void {
     this.messageHandler = handler;
   }
 
@@ -215,17 +224,17 @@ describe('IMessengerService Integration Tests', () => {
   describe('Service Lifecycle', () => {
     it('should initialize and shutdown correctly', async () => {
       expect(service.isInitialized()).toBe(false);
-      
+
       await service.initialize();
       expect(service.isInitialized()).toBe(true);
-      
+
       await service.shutdown();
       expect(service.isInitialized()).toBe(false);
     });
 
     it('should provide client and channel information', () => {
       const customService = new TestMessengerService('custom-client', 'custom-channel');
-      
+
       expect(customService.getClientId()).toBe('custom-client');
       expect(customService.getDefaultChannel()).toBe('custom-channel');
     });
@@ -234,15 +243,11 @@ describe('IMessengerService Integration Tests', () => {
   describe('Message Sending', () => {
     it('should send messages to channels', async () => {
       await service.initialize();
-      
-      const messageId = await service.sendMessageToChannel(
-        'general',
-        'Hello, world!',
-        'TestBot'
-      );
+
+      const messageId = await service.sendMessageToChannel('general', 'Hello, world!', 'TestBot');
 
       expect(messageId).toMatch(/^msg-\d+-[a-z0-9]+$/);
-      
+
       const messages = service.getStoredMessages('general');
       expect(messages).toHaveLength(1);
       expect(messages[0].getText()).toBe('Hello, world!');
@@ -251,7 +256,7 @@ describe('IMessengerService Integration Tests', () => {
 
     it('should send messages with thread IDs', async () => {
       await service.initialize();
-      
+
       const messageId = await service.sendMessageToChannel(
         'general',
         'Thread reply',
@@ -260,14 +265,14 @@ describe('IMessengerService Integration Tests', () => {
       );
 
       expect(messageId).toBeDefined();
-      
+
       const messages = service.getStoredMessages('general');
       expect(messages[0].data.threadId).toBe('thread-123');
     });
 
     it('should handle multiple channels', async () => {
       await service.initialize();
-      
+
       await service.sendMessageToChannel('general', 'Message 1');
       await service.sendMessageToChannel('random', 'Message 2');
       await service.sendMessageToChannel('general', 'Message 3');
@@ -283,21 +288,21 @@ describe('IMessengerService Integration Tests', () => {
     });
 
     it('should throw error when sending messages before initialization', async () => {
-      await expect(
-        service.sendMessageToChannel('general', 'Test message')
-      ).rejects.toThrow('Service not initialized');
+      await expect(service.sendMessageToChannel('general', 'Test message')).rejects.toThrow(
+        'Service not initialized'
+      );
     });
   });
 
   describe('Message Retrieval', () => {
     it('should retrieve messages from channels', async () => {
       await service.initialize();
-      
+
       await service.sendMessageToChannel('general', 'First message');
       await service.sendMessageToChannel('general', 'Second message');
-      
+
       const messages = await service.getMessagesFromChannel('general');
-      
+
       expect(messages).toHaveLength(2);
       expect(messages[0].getText()).toBe('First message');
       expect(messages[1].getText()).toBe('Second message');
@@ -305,32 +310,32 @@ describe('IMessengerService Integration Tests', () => {
 
     it('should return empty array for channels with no messages', async () => {
       await service.initialize();
-      
+
       const messages = await service.getMessagesFromChannel('empty-channel');
-      
+
       expect(messages).toHaveLength(0);
       expect(messages).toEqual([]);
     });
 
     it('should throw error when retrieving messages before initialization', async () => {
-      await expect(
-        service.getMessagesFromChannel('general')
-      ).rejects.toThrow('Service not initialized');
+      await expect(service.getMessagesFromChannel('general')).rejects.toThrow(
+        'Service not initialized'
+      );
     });
   });
 
   describe('Public Announcements', () => {
     it('should send public announcements', async () => {
       await service.initialize();
-      
+
       const announcement = {
         title: 'System Update',
         message: 'The system will be updated at 3 PM',
-        priority: 'high'
+        priority: 'high',
       };
-      
+
       await service.sendPublicAnnouncement('general', announcement);
-      
+
       const messages = service.getStoredMessages('general');
       expect(messages).toHaveLength(1);
       expect(messages[0].role).toBe('system');
@@ -340,9 +345,9 @@ describe('IMessengerService Integration Tests', () => {
 
     it('should handle empty announcement messages', async () => {
       await service.initialize();
-      
+
       await service.sendPublicAnnouncement('general', {});
-      
+
       const messages = service.getStoredMessages('general');
       expect(messages).toHaveLength(1);
       expect(messages[0].getText()).toBe('Announcement');
@@ -352,10 +357,10 @@ describe('IMessengerService Integration Tests', () => {
   describe('Message Handler Integration', () => {
     it('should set and use message handlers', async () => {
       await service.initialize();
-      
+
       const mockHandler = jest.fn().mockResolvedValue('Processed response');
       service.setMessageHandler(mockHandler);
-      
+
       const testMessage = new TestMessage(
         {},
         'user',
@@ -368,25 +373,21 @@ describe('IMessengerService Integration Tests', () => {
       );
 
       const response = await service.simulateMessage(testMessage);
-      
+
       expect(response).toBe('Processed response');
-      expect(mockHandler).toHaveBeenCalledWith(
-        testMessage,
-        [],
-        {}
-      );
+      expect(mockHandler).toHaveBeenCalledWith(testMessage, [], {});
     });
 
     it('should provide message history to handlers', async () => {
       await service.initialize();
-      
+
       // Send some initial messages
       await service.sendMessageToChannel('general', 'Previous message 1');
       await service.sendMessageToChannel('general', 'Previous message 2');
-      
+
       const mockHandler = jest.fn().mockResolvedValue('Response with history');
       service.setMessageHandler(mockHandler);
-      
+
       const newMessage = new TestMessage(
         {},
         'user',
@@ -399,12 +400,12 @@ describe('IMessengerService Integration Tests', () => {
       );
 
       await service.simulateMessage(newMessage);
-      
+
       expect(mockHandler).toHaveBeenCalledWith(
         newMessage,
         expect.arrayContaining([
           expect.objectContaining({ content: 'Previous message 1' }),
-          expect.objectContaining({ content: 'Previous message 2' })
+          expect.objectContaining({ content: 'Previous message 2' }),
         ]),
         {}
       );
@@ -412,7 +413,7 @@ describe('IMessengerService Integration Tests', () => {
 
     it('should return null when no handler is set', async () => {
       await service.initialize();
-      
+
       const testMessage = new TestMessage(
         {},
         'user',
@@ -425,7 +426,7 @@ describe('IMessengerService Integration Tests', () => {
       );
 
       const response = await service.simulateMessage(testMessage);
-      
+
       expect(response).toBeNull();
     });
   });
@@ -433,7 +434,7 @@ describe('IMessengerService Integration Tests', () => {
   describe('Complex Message Flow Integration', () => {
     it('should handle complete conversation flow', async () => {
       await service.initialize();
-      
+
       // Set up a simple echo handler
       service.setMessageHandler(async (message, history, config) => {
         return `Echo: ${message.getText()}`;
@@ -456,7 +457,7 @@ describe('IMessengerService Integration Tests', () => {
 
     it('should handle error scenarios gracefully', async () => {
       await service.initialize();
-      
+
       // Set up a handler that throws errors
       service.setMessageHandler(async () => {
         throw new Error('Processing failed');

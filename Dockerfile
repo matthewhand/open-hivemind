@@ -1,57 +1,53 @@
-# ---- Stage 1: Build Environment ----
-    FROM node:20-slim AS build
+FROM node:22-alpine
 
-    # Define an environment variable to detect low memory environments
-    ARG LOW_MEMORY=false
-    
-    WORKDIR /app
-    
-    # Install system dependencies by default unless LOW_MEMORY is set to "true"
-    RUN if [ "$LOW_MEMORY" = "true" ]; then \
-            echo "Skipping apt-get dependencies due to low-memory environment."; \
+# Install Python and additional tools based on feature flags
+# Set default feature flags - these can be overridden during build
+ARG INCLUDE_PYTHON_TOOLS=true
+ARG INCLUDE_NODE_TOOLS=true
+ARG INCLUDE_FFMPEG=true
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    && if [ "$INCLUDE_PYTHON_TOOLS" = "true" ]; then \
+        apk add --no-cache \
+            python3 \
+            py3-pip \
+            python3-dev \
+            build-base \
+            && python3 -m pip install --no-cache-dir --break-system-packages uv \
+        ; fi
+
+# Install Node.js tools (MCP CLI is optional until package is published)
+RUN if [ "$INCLUDE_NODE_TOOLS" = "true" ]; then \
+        npm install -g npx; \
+        if npm view @modelcontextprotocol/cli >/dev/null 2>&1; then \
+            npm install -g @modelcontextprotocol/cli; \
         else \
-            apt-get update && apt-get upgrade -y && \
-            apt-get install -y ffmpeg libsodium-dev libopus-dev && \
-            rm -rf /var/lib/apt/lists/*; \
-        fi
-    
-    # Copy package files and install dependencies for building
-    COPY package*.json ./
-    
-    RUN npm install
-    
-    # Copy the source files for building
-    COPY src/ ./src
-    COPY config/ ./config
-    COPY docs/ ./docs
-    COPY tsconfig.json .
-    COPY tsconfig.paths.json .
-    
-    # Compile TypeScript into JavaScript
-    RUN npm run build
-    
-    # ---- Stage 2: Production Environment ----
-    FROM node:20-alpine AS production
-    
-    WORKDIR /app
-    
-    # Copy the compiled files and production package files
-    COPY --from=build /app/dist /app/dist
-    COPY --from=build /app/package.json /app/package-lock.json ./
-    
-    # Install only production dependencies
-    RUN npm ci --production
-    
-    # Copy any necessary scripts
-    COPY --from=build /app/src/scripts /scripts
-    
-    # Copy and set permissions for the entrypoint script
-COPY scripts/entrypoint-restart.sh /app/entrypoint-restart.sh
-RUN chmod +x /app/entrypoint-restart.sh
-    
-    # Copy the config directory for runtime
-    COPY --from=build /app/config /app/config
-    
-    # Set the entrypoint script to handle process restarts
-    ENTRYPOINT ["/app/entrypoint-restart.sh"]
-    
+            echo "Skipping @modelcontextprotocol/cli install (package not available)"; \
+        fi; \
+    fi
+
+# Install ffmpeg for Discord voice support if enabled
+RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
+        apk add --no-cache ffmpeg; \
+    fi
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY src/client/package.json src/client/
+RUN npm ci && npm cache clean --force
+
+COPY . .
+ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
+RUN npm run build
+
+# Remove dev dependencies after build to keep runtime image slim
+RUN npm prune --omit=dev
+
+# Create feature flag environment file
+RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
+    echo "INCLUDE_NODE_TOOLS=${INCLUDE_NODE_TOOLS}" >> .env.features && \
+    echo "INCLUDE_FFMPEG=${INCLUDE_FFMPEG}" >> .env.features

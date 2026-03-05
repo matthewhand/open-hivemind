@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import { getRandomErrorMessage } from './getRandomErrorMessage';
 
 const debug = Debug('app:handleError');
@@ -27,9 +27,9 @@ function isValidMessageChannel(obj: any): obj is MessageChannel {
 
 /**
  * Handles errors by logging them and optionally sending a random error message to a message channel.
- * 
- * @param error - The error object to be handled. Must be an Error instance or error-like object.
- * @param messageChannel - The message channel to send the error message to. Must have a send method.
+ *
+ * @param error - The error object to be handled.
+ * @param messageChannel - The message channel to send the error message to.
  */
 export function handleError(error: unknown, messageChannel: any = null): void {
   // Validate error parameter

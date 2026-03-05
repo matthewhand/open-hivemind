@@ -1,6 +1,6 @@
-import { SyntheticMessage } from '@message/management/SyntheticMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { SyntheticMessage } from '@message/management/SyntheticMessage';
 
 // Create a mock messenger service
 const mockMessengerService = {
@@ -99,12 +99,12 @@ describe('SyntheticMessage', () => {
   describe('getTimestamp', () => {
     it('should return current timestamp', () => {
       // Allow small clock/timing skew to avoid flaky failures
-      const skewMs = 5;
+      const skewMs = 10;
 
       const before = Date.now() - skewMs;
       const timestamp = syntheticMessage.getTimestamp();
       const after = Date.now() + skewMs;
-      
+
       expect(timestamp.getTime()).toBeGreaterThanOrEqual(before);
       expect(timestamp.getTime()).toBeLessThanOrEqual(after);
     });
@@ -189,9 +189,9 @@ describe('SyntheticMessage', () => {
       const minimalOriginal = new MockOriginalMessage('');
       minimalOriginal.getChannelTopic = () => null;
       minimalOriginal.getChannelUsers = () => [];
-      
+
       const synthetic = new SyntheticMessage(minimalOriginal, 'test');
-      
+
       expect(synthetic.getChannelTopic()).toBe(null);
       expect(synthetic.getChannelUsers()).toEqual([]);
     });

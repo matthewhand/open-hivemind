@@ -1,3 +1,5 @@
+import { SlackService } from '@integrations/slack/SlackService';
+
 /**
  * Test-only SlackService mock to avoid requiring legacy config or network.
  */
@@ -5,15 +7,17 @@ jest.mock('@integrations/slack/SlackService', () => {
   class FakeSlackService {
     static instance: any;
     private handler: any = null;
-    private bots = [
-      { botUserId: 'BTEST123', botUserName: 'TestBot', client: {} as any },
-    ];
+    private bots = [{ botUserId: 'BTEST123', botUserName: 'TestBot', client: {} as any }];
     static getInstance() {
       if (!this.instance) this.instance = new FakeSlackService();
       return this.instance;
     }
-    async initialize() { /* no-op */ }
-    async shutdown() { /* no-op */ FakeSlackService.instance = undefined; }
+    async initialize() {
+      /* no-op */
+    }
+    async shutdown() {
+      /* no-op */ FakeSlackService.instance = undefined;
+    }
     getBotManager() {
       return {
         getAllBots: () => this.bots,
@@ -40,8 +44,6 @@ jest.mock('@integrations/slack/SlackService', () => {
   }
   return { SlackService: FakeSlackService };
 });
-
-import { SlackService } from '@integrations/slack/SlackService';
 
 describe('SlackService Integration (test-mocked)', () => {
   let service: any;

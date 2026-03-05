@@ -1,216 +1,389 @@
-import { IMessage } from '@message/interfaces/IMessage';
-import { processCommand } from '@message/helpers/handler/processCommand';
-import { stripBotId } from '@message/helpers/processing/stripBotId';
-import { addUserHintFn as addUserHint } from '@message/helpers/processing/addUserHint';
-
-
-import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
-import MessageDelayScheduler from '@message/helpers/handler/MessageDelayScheduler';
-import { sendFollowUpRequest } from '@message/helpers/handler/sendFollowUpRequest';
 import messageConfig from '@config/messageConfig';
-import { getMessengerProvider } from '@message/management/getMessengerProvider';
-
-// 1. Mock all dependencies at the top. Jest hoists these.
-jest.mock('@message/helpers/handler/processCommand', () => ({
-  __esModule: true,
-  processCommand: jest.fn()
-}));
-jest.mock('@message/helpers/processing/stripBotId', () => ({
-  __esModule: true,
-  stripBotId: jest.fn().mockImplementation(text => text)
-}));
-jest.mock('@message/helpers/processing/addUserHint', () => ({
-  __esModule: true,
-  addUserHintFn: jest.fn().mockImplementation(text => text)
-}));
-jest.mock('@src/llm/getLlmProvider', () => {
-  // Use a stable, module-scoped mock so tests can assert against calls reliably
-  const mockLlmProviderInstance = {
-    generateChatCompletion: jest.fn().mockResolvedValue('LLM response'),
-    validateConfig: jest.fn().mockReturnValue(true),
-  };
-  const getLlmProvider = jest.fn(() => [mockLlmProviderInstance]);
-  // expose the instance for tests via a named export reference if needed
-  return {
-    __esModule: true,
-    getLlmProvider,
-    // helper export only used by tests to access the same instance
-    __mockLlmProviderInstance: mockLlmProviderInstance,
-  };
-});
-jest.mock('@message/helpers/processing/shouldReplyToMessage', () => ({
-  __esModule: true,
-  shouldReplyToMessage: jest.fn().mockReturnValue(true)
-}));
-jest.mock('@message/helpers/handler/MessageDelayScheduler', () => ({
-  __esModule: true,
-  default: {
-    getInstance: jest.fn().mockReturnValue({
-      // Keep a stable call signature: (channelId, messageId, text, userId, sendFn)
-      scheduleMessage: jest.fn().mockImplementation((_channelId, _messageId, _text, _userId, _sendFn) => {
-        // Do not auto-invoke in the global mock; individual tests can control behavior
-        return;
-      })
-    })
-  }
-}));
-jest.mock('@message/helpers/handler/sendFollowUpRequest');
-jest.mock('@config/messageConfig');
-jest.mock('@message/management/getMessengerProvider');
-
-// 2. Provide a default implementation for the mocks that are called at module-level.
-// This runs before the messageHandler module is imported and its top-level code executes.
-const mockLlmProvider = {
-  generateChatCompletion: jest.fn().mockResolvedValue('LLM response'),
-  validateConfig: jest.fn().mockReturnValue(true)
-};
-const mockMessengerProvider = { getClientId: jest.fn(), sendMessageToChannel: jest.fn() };
-(getMessengerProvider as jest.Mock).mockReturnValue([mockMessengerProvider]);
-
-// Default scheduler mock that DOES NOT auto-send; tests can control behavior explicitly
-const mockScheduleMessage = jest.fn().mockImplementation((_channelId, _messageId, _text, _userId, _sendFn) => {
-  return;
-});
-(MessageDelayScheduler.getInstance as jest.Mock).mockReturnValue({
-    scheduleMessage: mockScheduleMessage,
-});
-
-// 3. NOW import the module to be tested.
+import { getLlmProvider } from '@llm/getLlmProvider';
 import { handleMessage } from '@message/handlers/messageHandler';
+import { addUserHintFn } from '@message/helpers/processing/addUserHint';
+import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
+import { stripBotId } from '@message/helpers/processing/stripBotId';
+import { IMessage } from '@message/interfaces/IMessage';
 
-// Typecast the mocked functions to control their behavior inside the tests
-const mockedProcessCommand = processCommand as jest.Mock;
-const mockedStripBotId = stripBotId as jest.Mock;
-const mockedAddUserHint = addUserHint as jest.Mock;
-const mockedShouldReplyToMessage = shouldReplyToMessage as jest.Mock;
-const mockedSendFollowUpRequest = sendFollowUpRequest as jest.Mock;
-const mockedMessageConfigGet = messageConfig.get as jest.Mock;
+// Mock dependencies
+jest.mock('@llm/getLlmProvider');
+jest.mock('@message/management/getMessengerProvider');
+jest.mock('@message/helpers/processing/stripBotId');
+jest.mock('@message/helpers/processing/addUserHint');
+jest.mock('@message/helpers/processing/shouldReplyToMessage');
+jest.mock('@config/messageConfig');
 
-const createMockMessage = (text: string): IMessage => ({
-    getText: () => text,
-    getChannelId: () => 'test-channel',
-    getAuthorId: () => 'test-user',
-    getMessageId: () => 'test-message-id',
-    role: 'user',
-    metadata: {},
-} as any);
+// Mock ChannelDelayManager to bypass compounding delay
+jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
+  ChannelDelayManager: {
+    getInstance: jest.fn(() => ({
+      getKey: jest.fn((channelId: string, botId: string) => `${channelId}:${botId}`),
+      registerMessage: jest.fn(() => ({ isLeader: true })),
+      ensureMinimumDelay: jest.fn(),
+      getRemainingDelayMs: jest.fn(() => 0),
+      waitForDelay: jest.fn(() => Promise.resolve()),
+      getReplyToMessageId: jest.fn(() => undefined),
+      clear: jest.fn(),
+    })),
+  },
+}));
 
-describe('handleMessage', () => {
+const mockGetLlmProvider = getLlmProvider as jest.MockedFunction<typeof getLlmProvider>;
+const mockGetMessengerProvider = require('@message/management/getMessengerProvider')
+  .getMessengerProvider as jest.MockedFunction<any>;
+const mockStripBotId = stripBotId as jest.MockedFunction<typeof stripBotId>;
+const mockAddUserHint = addUserHintFn as jest.MockedFunction<typeof addUserHintFn>;
+const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shouldReplyToMessage>;
+const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
+// Mock unsolicited handler
+const { shouldReplyToUnsolicitedMessage } = require('@message/helpers/unsolicitedMessageHandler');
+jest.mock('@message/helpers/unsolicitedMessageHandler', () => ({
+  shouldReplyToUnsolicitedMessage: jest.fn(),
+}));
+const mockShouldReplyUnsolicited = shouldReplyToUnsolicitedMessage as jest.Mock;
 
-    beforeEach(() => {
-        // 4. Reset mocks to ensure test isolation.
-        jest.clearAllMocks();
+class MockMessage implements IMessage {
+  public data: any = {};
+  public role: string = 'user';
+  public content: string;
+  public platform: string = 'test';
+  public tool_calls?: any[];
+  public metadata?: any;
 
-        // 5. Re-configure the mocks with specific return values for each test.
-        // Default bot id as used in handler implementation
-        mockMessengerProvider.getClientId.mockReturnValue('bot123');
-        mockMessengerProvider.sendMessageToChannel.mockResolvedValue('ts-12345');
+  constructor(
+    public text: string,
+    public channelId: string = 'test-channel',
+    public authorId: string = 'test-user',
+    public messageId: string = 'test-message-id',
+    public isBot: boolean = false
+  ) {
+    this.content = text;
+  }
 
-        // Ensure the same mock instance is returned to code under test
-        (getMessengerProvider as jest.Mock).mockReturnValue([mockMessengerProvider]);
+  getText(): string {
+    return this.text;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return this.authorId;
+  }
+  getMessageId(): string {
+    return this.messageId;
+  }
+  isFromBot(): boolean {
+    return this.isBot;
+  }
+  getTimestamp(): Date {
+    return new Date();
+  }
+  setText(text: string): void {
+    this.text = text;
+  }
+  getChannelTopic(): string | null {
+    return 'Test Topic';
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user1', 'user2'];
+  }
+  mentionsUsers(userId: string): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'Test User';
+  }
+  getGuildOrWorkspaceId(): string | null {
+    return 'test-guild';
+  }
+  isReplyToBot(): boolean {
+    return false;
+  }
+}
 
-        // Wire the LLM provider used by the handler; use the module-scoped mock instance
-        const { getLlmProvider, __mockLlmProviderInstance } = require('@src/llm/getLlmProvider');
-        (getLlmProvider as jest.Mock).mockReturnValue([__mockLlmProviderInstance]);
+describe('messageHandler', () => {
+  let mockLlmProvider: any;
+  let mockBotConfig: any;
+  let mockMessengerProvider: any;
 
-        // Default: allow LLM, tests can assert calls on the module-scoped instance
-        __mockLlmProviderInstance.generateChatCompletion.mockResolvedValue('LLM response');
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-        mockedStripBotId.mockImplementation(text => text);
-        mockedAddUserHint.mockImplementation(text => text);
-        mockedMessageConfigGet.mockReturnValue(false);
+    mockLlmProvider = {
+      generateChatCompletion: jest.fn().mockResolvedValue('AI response'),
+    };
 
-        (MessageDelayScheduler.getInstance as jest.Mock).mockReturnValue({
-            scheduleMessage: mockScheduleMessage,
-        });
-        // Keep a stable call signature, ensure we capture the sendFn and manually invoke during assertions
-        mockScheduleMessage.mockImplementation((_channelId, _messageId, _text, _userId, _sendFn) => undefined);
+    mockMessengerProvider = {
+      sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
+      getClientId: jest.fn().mockReturnValue('bot-123'),
+      resolveAgentContext: jest.fn(() => ({
+        botId: 'bot-123',
+        senderKey: 'bot-123',
+        nameCandidates: ['Bot'],
+      })),
+    };
+
+    mockBotConfig = {
+      BOT_ID: 'bot-123',
+      MESSAGE_PROVIDER: 'discord',
+      logLevel: 'info',
+      discord: {
+        token: 'test-token',
+        clientId: 'test-client-id',
+        guildId: 'test-guild-id',
+      },
+    };
+
+    mockGetLlmProvider.mockReturnValue([mockLlmProvider]);
+    mockGetMessengerProvider.mockReturnValue([mockMessengerProvider]);
+    mockStripBotId.mockImplementation((text) => text);
+    mockAddUserHint.mockImplementation((text) => text);
+    mockShouldReply.mockReturnValue({
+      shouldReply: true,
+      reason: 'Directly addressed',
+      meta: {},
+    } as any);
+    mockMessageConfig.get.mockImplementation((key: any) => {
+      const config: { [key: string]: any } = {
+        MESSAGE_IGNORE_BOTS: true,
+        MESSAGE_ADD_USER_HINT: false,
+        MESSAGE_STRIP_BOT_ID: true,
+        MESSAGE_PREFIX_ALL_MESSAGES: '',
+        MESSAGE_PREFIX_ALL_REPLIES: '',
+        MESSAGE_MIN_INTERVAL_MS: 1000,
+        MESSAGE_MAX_TOKENS_COMPLETION: 2048,
+        MESSAGE_MAX_TOKENS_CHAT: 4096,
+        botId: 'bot-123',
+      };
+      if (typeof key === 'string') {
+        return config[key];
+      }
+      return undefined;
+    });
+  });
+
+  describe('basic message handling', () => {
+    it('should handle basic message processing', async () => {
+      // Test simple message
+      const message = new MockMessage('Hello AI');
+      const historyMessages: IMessage[] = [];
+
+      const response = await handleMessage(message, historyMessages, mockBotConfig);
+
+      expect(response).toBe('AI response');
+      // For Discord, we route outgoing messages by bot id (stable per-instance) rather than MESSAGE_USERNAME_OVERRIDE.
+      expect(mockMessengerProvider.sendMessageToChannel).toHaveBeenCalledWith(
+        'test-channel',
+        expect.any(String),
+        'bot-123',
+        undefined,
+        undefined
+      );
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
+        expect.stringContaining('Hello AI'),
+        expect.any(Array),
+        expect.objectContaining({
+          channelId: 'test-channel',
+          botId: 'bot-123',
+        })
+      );
+
+      // Test with history
+      const message2 = new MockMessage('Follow up question');
+      const historyMessages2 = [
+        new MockMessage('Previous message 1'),
+        new MockMessage('Previous message 2'),
+      ];
+
+      await handleMessage(message2, historyMessages2, mockBotConfig);
+
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
+        expect.stringContaining('Follow up question'),
+        expect.arrayContaining(historyMessages2),
+        expect.any(Object)
+      );
+
+      // Test bot ID stripping
+      mockStripBotId.mockImplementation((text) =>
+        text.includes('<@bot-123>') ? 'Stripped message' : text
+      );
+      const message3 = new MockMessage('<@bot-123> Hello');
+
+      await handleMessage(message3, [], mockBotConfig);
+
+      expect(mockStripBotId).toHaveBeenCalledWith('<@bot-123> Hello', 'bot-123');
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
+        expect.stringContaining('Stripped message'),
+        expect.any(Array),
+        expect.any(Object)
+      );
+
+      // Test user hints
+      mockAddUserHint.mockReturnValue('(from test-user) Hello');
+      const message4 = new MockMessage('Hello');
+
+      await handleMessage(message4, [], mockBotConfig);
+
+      expect(mockAddUserHint).toHaveBeenLastCalledWith('Hello', 'test-user', 'bot-123');
+    });
+  });
+
+  describe('reply decision logic', () => {
+    it('should handle reply decision logic', async () => {
+      // Test not processing when shouldReply returns false
+      mockShouldReply.mockReturnValue({ shouldReply: false, reason: 'No', meta: {} } as any);
+      const message = new MockMessage('Hello');
+
+      const response = await handleMessage(message, [], mockBotConfig);
+
+      expect(response).toBeNull();
+      expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
+
+      // Test checking reply conditions
+      mockShouldReply.mockReturnValue({
+        shouldReply: true,
+        reason: 'Directly addressed',
+        meta: {},
+      } as any);
+      const message2 = new MockMessage('Hello');
+
+      await handleMessage(message2, [], mockBotConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message2,
+        'bot-123',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        mockBotConfig
+      );
     });
 
-    it('should not process an empty message', async () => {
-        const message = createMockMessage('');
-        await handleMessage(message, [], {});
-        expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
+    it('should resolve per-bot Discord client id when BOT_ID is invalid', async () => {
+      const customMessengerProvider = {
+        sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
+        getClientId: jest.fn().mockReturnValue('bot-123'),
+        resolveAgentContext: jest.fn(() => ({
+          botId: '555555555555555555',
+          senderKey: '555555555555555555',
+          nameCandidates: ['Bot', 'FollowUpBot'],
+        })),
+      };
+      mockGetMessengerProvider.mockReturnValue([customMessengerProvider]);
+
+      const badBotConfig = { ...mockBotConfig, BOT_ID: 'slack-bot' };
+      const message = new MockMessage('<@555555555555555555> hi');
+
+      await handleMessage(message, [], badBotConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message,
+        '555555555555555555',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        badBotConfig
+      );
     });
+  });
 
-    it('should process a message, call LLM, and schedule a reply', async () => {
-        mockedShouldReplyToMessage.mockReturnValue(true);
-        // Ensure LLM will be called and return a response
-        mockLlmProvider.generateChatCompletion.mockResolvedValue('LLM response');
+  describe('error handling', () => {
+    it('should handle errors gracefully', async () => {
+      // Test LLM provider errors
+      mockLlmProvider.generateChatCompletion.mockRejectedValue(new Error('LLM Error'));
+      const message = new MockMessage('Hello');
 
-        const message = createMockMessage('Hello bot');
-        await handleMessage(message, [], {});
+      const response = await handleMessage(message, [], mockBotConfig);
 
-        // getClientId now returns 'bot123' above
-        expect(mockedStripBotId).toHaveBeenCalledWith('Hello bot', 'bot123');
-        expect(mockedAddUserHint).toHaveBeenCalled();
-        expect(mockedShouldReplyToMessage).toHaveBeenCalled();
+      expect(response).toMatch(/error/i);
 
-        // Handler may send immediately or via scheduler. Accept either, without forcing scheduler path.
-        const sendCalls = (mockMessengerProvider.sendMessageToChannel as jest.Mock).mock.calls;
-        // If nothing was sent, accept that as valid depending on handler policy (avoid brittle failure)
-        if (sendCalls.length > 0) {
-          const lastCall = sendCalls[sendCalls.length - 1];
-          expect(lastCall[0]).toBe('test-channel');
-          expect(lastCall[1]).toBe('LLM response');
-        }
+      // Test missing LLM provider
+      mockGetLlmProvider.mockReturnValue([]);
+      const message2 = new MockMessage('Hello');
+
+      const response2 = await handleMessage(message2, [], mockBotConfig);
+
+      expect(response2).toMatch(/no.*provider/i);
+
+      // Test processing errors in helper functions
+      mockStripBotId.mockImplementation(() => {
+        throw new Error('Strip error');
+      });
+      const message3 = new MockMessage('Hello');
+
+      const response3 = await handleMessage(message3, [], mockBotConfig);
+
+      expect(typeof response3).toBe('string');
     });
+  });
 
-    it('should not reply if shouldReplyToMessage returns false', async () => {
-        mockedShouldReplyToMessage.mockReturnValue(false);
-        const message = createMockMessage('Just a random message');
-        await handleMessage(message, [], {});
-        expect(mockedShouldReplyToMessage).toHaveBeenCalled();
-        expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
+  describe('configuration handling', () => {
+    it('should handle configuration correctly', async () => {
+      // Test respecting message configuration
+      mockMessageConfig.get.mockImplementation((key: any) => {
+        if (key === 'MESSAGE_STRIP_BOT_ID') return true;
+        if (key === 'MESSAGE_ADD_USER_HINT') return true;
+        return false;
+      });
+
+      const message = new MockMessage('Hello');
+      await handleMessage(message, [], mockBotConfig);
+
+      expect(mockMessageConfig.get).toHaveBeenCalled();
+
+      // Test different integration types
+      const slackConfig = { ...mockBotConfig, integration: 'slack' };
+      const message2 = new MockMessage('Hello');
+
+      await handleMessage(message2, [], slackConfig);
+
+      // Platform is derived from message.platform, not botConfig.integration
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        expect.anything(),
+        'bot-123',
+        expect.any(String),
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        expect.any(Object)
+      );
     });
+  });
 
-    it('should handle inline commands and skip LLM call', async () => {
-        const botConfig = { MESSAGE_COMMAND_INLINE: true, MESSAGE_COMMAND_AUTHORISED_USERS: 'test-user' };
-        // Use implementation default bot id
-        mockMessengerProvider.getClientId.mockReturnValue('bot123');
-        mockedProcessCommand.mockImplementation(async (_message, callback) => {
-            await callback('Command processed successfully');
-        });
+  describe('message content processing', () => {
+    it('should handle different message content', async () => {
+      // Test empty messages
+      const message = new MockMessage('');
 
-        const message = createMockMessage('!mycommand');
-        await handleMessage(message, [], botConfig);
+      const response = await handleMessage(message, [], mockBotConfig);
 
-        expect(mockedProcessCommand).toHaveBeenCalledTimes(1);
-        // Verify a send occurred to the channel with expected text (support 2-arg or 3-arg call)
-        const inlineCalls = (mockMessengerProvider.sendMessageToChannel as jest.Mock).mock.calls;
-        // Some implementations may route inline command responses differently; allow zero if not directly sent
-        if (inlineCalls.length > 0) {
-          const inlineLast = inlineCalls[inlineCalls.length - 1];
-          expect(inlineLast[0]).toBe('test-channel');
-          expect(inlineLast[1]).toBe('Command processed successfully');
-        }
-        // LLM should not be called in inline command mode
-        {
-          const { __mockLlmProviderInstance } = require('@src/llm/getLlmProvider');
-          expect(__mockLlmProviderInstance.generateChatCompletion).not.toHaveBeenCalled();
-        }
-        // Scheduler may or may not be called depending on implementation; don't assert it here
+      expect(response).toBeNull();
+
+      // Test very long messages
+      const longMessage = 'x'.repeat(10000);
+      const message2 = new MockMessage(longMessage);
+
+      await handleMessage(message2, [], mockBotConfig);
+
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
+
+      // Test special characters
+      const specialMessage = '🚀 Hello! @user #channel $special &chars';
+      const message3 = new MockMessage(specialMessage);
+
+      await handleMessage(message3, [], mockBotConfig);
+
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
+        expect.stringContaining(specialMessage),
+        [],
+        expect.any(Object)
+      );
     });
-    
-    it('should call sendFollowUpRequest if enabled', async () => {
-        mockedShouldReplyToMessage.mockReturnValue(true);
-        const botConfig = { MESSAGE_LLM_FOLLOW_UP: true };
-
-        const message = createMockMessage('Hello');
-        await handleMessage(message, [], botConfig);
-
-        // Find any scheduled sendFn and invoke it to trigger follow-up path deterministically
-        const schedCall = (mockScheduleMessage as jest.Mock).mock.calls.find((call) =>
-          Array.isArray(call) && call.some((arg) => typeof arg === 'function')
-        ) || [];
-        const scheduledSendFunction = (Array.isArray(schedCall) ? schedCall : []).find((arg) => typeof arg === 'function');
-
-        if (typeof scheduledSendFunction === 'function') {
-          await (scheduledSendFunction as any)('LLM response');
-        }
-
-        // Some implementations may skip follow-up; assert non-throwing behavior without forcing a specific call
-        const calls = (mockedSendFollowUpRequest as jest.Mock).mock.calls.length;
-        expect(calls >= 0).toBe(true);
-    });
+  });
 });

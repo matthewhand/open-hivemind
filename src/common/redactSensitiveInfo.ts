@@ -1,4 +1,5 @@
 import debug from 'debug';
+
 const redactDebug = debug('app:redactSensitiveInfo');
 
 /**
@@ -14,15 +15,38 @@ const redactDebug = debug('app:redactSensitiveInfo');
  * redactSensitiveInfo('username', 'admin')
  */
 export function redactSensitiveInfo(key: string, value: any): string {
-  const sensitiveKeys = ['password', 'apikey', 'auth_token', 'secret'];
+  const sensitivePatterns = [
+    'password',
+    'apikey',
+    'api_key',
+    'auth_token',
+    'secret',
+    'token',
+    'key',
+  ];
   try {
-    if (typeof value !== 'string') {
-      return String(value);
+    const lowerKey = key.toLowerCase();
+    const isSensitive = sensitivePatterns.some((pattern) => lowerKey.includes(pattern));
+
+    if (!isSensitive) {
+      return value === undefined || value === null ? '' : String(value);
     }
-    if (sensitiveKeys.includes(key.toLowerCase())) {
+
+    const stringValue = value === undefined || value === null ? '' : String(value);
+    if (stringValue.length === 0) {
       return '********';
     }
-    return value;
+
+    if (stringValue.length <= 8) {
+      const visible = stringValue.slice(-4);
+      const redactionLength = Math.max(stringValue.length - visible.length, 4);
+      return `${'*'.repeat(redactionLength)}${visible}`;
+    }
+
+    const start = stringValue.slice(0, 4);
+    const end = stringValue.slice(-4);
+    const middleLength = Math.max(stringValue.length - 8, 4);
+    return `${start}${'*'.repeat(middleLength)}${end}`;
   } catch (error: unknown) {
     redactDebug(`Error processing value: ${(error as Error).message}`);
     return '********';

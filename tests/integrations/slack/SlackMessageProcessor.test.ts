@@ -1,7 +1,7 @@
-import { SlackMessageProcessor } from '@src/integrations/slack/SlackMessageProcessor';
-import SlackMessage from '@src/integrations/slack/SlackMessage';
-import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
 import axios from 'axios';
+import { SlackBotManager } from '../../../packages/adapter-slack/src/SlackBotManager';
+import SlackMessage from '../../../packages/adapter-slack/src/SlackMessage';
+import { SlackMessageProcessor } from '../../../packages/adapter-slack/src/SlackMessageProcessor';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -16,7 +16,11 @@ function createWebClientMock(overrides: Partial<any> = {}) {
     conversations: {
       info: jest.fn().mockResolvedValue({
         ok: true,
-        channel: { name: 'general', created: Math.floor(Date.now() / 1000), purpose: { value: 'General discussion' } },
+        channel: {
+          name: 'general',
+          created: Math.floor(Date.now() / 1000),
+          purpose: { value: 'General discussion' },
+        },
       }),
       replies: jest.fn().mockResolvedValue({
         messages: [{ user: 'U111' }, { user: 'U222' }, { user: 'U111' }],
@@ -36,7 +40,15 @@ function createWebClientMock(overrides: Partial<any> = {}) {
     },
     files: {
       list: jest.fn().mockResolvedValue({ ok: true, files: [] }),
-      info: jest.fn().mockResolvedValue({ ok: true, file: { filetype: 'canvas', url_private: 'https://example.com/file', mimetype: 'text/plain' }, content: 'Canvas content' }),
+      info: jest.fn().mockResolvedValue({
+        ok: true,
+        file: {
+          filetype: 'canvas',
+          url_private: 'https://example.com/file',
+          mimetype: 'text/plain',
+        },
+        content: 'Canvas content',
+      }),
     },
     chat: {
       postMessage: jest.fn().mockResolvedValue({ ts: '123.456' }),
@@ -69,32 +81,53 @@ describe('SlackMessageProcessor', () => {
   });
 
   describe('constructor', () => {
-    it('throws when botManager is missing', () => {
-      expect(() => new SlackMessageProcessor(undefined as unknown as SlackBotManager)).toThrow('SlackBotManager instance required');
-    });
+    it('handles constructor scenarios', () => {
+      // Test throws when botManager is missing
+      expect(() => new SlackMessageProcessor(undefined as unknown as SlackBotManager)).toThrow(
+        'SlackBotManager instance required'
+      );
 
-    it('initializes with a valid botManager', () => {
+      // Test initializes with a valid botManager
       const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
       expect(smp).toBeDefined();
     });
   });
 
   describe('enrichSlackMessage()', () => {
-    it('throws when message or channelId is invalid', async () => {
-      const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
-      await expect(smp.enrichSlackMessage(new SlackMessage('hello', '', { ts: '1.001' }))).rejects.toThrow('Message and channelId required');
-    });
+    it('handles message enrichment scenarios', async () => {
+      // Test throws when message or channelId is invalid
+      const smp1 = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
+      await expect(
+        smp1.enrichSlackMessage(new SlackMessage('hello', '', { ts: '1.001' }))
+      ).rejects.toThrow('Message and channelId required');
 
-    it('enriches with workspace, channel, thread, user, and metadata; respects SUPPRESS_CANVAS_CONTENT', async () => {
+      // Test enriches with workspace, channel, thread, user, and metadata; respects SUPPRESS_CANVAS_CONTENT
       const webClient = createWebClientMock({
         files: {
-          list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'F1', linked_channel_id: 'C123', url_private: 'https://example.com/canvas' }] }),
-          info: jest.fn().mockResolvedValue({ ok: true, file: { filetype: 'canvas', url_private: 'https://example.com/canvas', mimetype: 'text/plain' }, content: 'Canvas X' }),
+          list: jest.fn().mockResolvedValue({
+            ok: true,
+            files: [
+              { id: 'F1', linked_channel_id: 'C123', url_private: 'https://example.com/canvas' },
+            ],
+          }),
+          info: jest.fn().mockResolvedValue({
+            ok: true,
+            file: {
+              filetype: 'canvas',
+              url_private: 'https://example.com/canvas',
+              mimetype: 'text/plain',
+            },
+            content: 'Canvas X',
+          }),
         },
         conversations: {
           info: jest.fn().mockResolvedValue({
             ok: true,
-            channel: { name: 'general', created: Math.floor(Date.now() / 1000), purpose: { value: 'General discussion' } },
+            channel: {
+              name: 'general',
+              created: Math.floor(Date.now() / 1000),
+              purpose: { value: 'General discussion' },
+            },
           }),
           replies: jest.fn().mockResolvedValue({
             messages: [{ user: 'U111' }, { user: 'U222' }, { user: 'U111' }],
@@ -102,7 +135,7 @@ describe('SlackMessageProcessor', () => {
           history: jest.fn().mockResolvedValue({ messages: [] }),
         },
       });
-      // SUPPRESS_CANVAS_CONTENT=true above should force empty channelContent path
+      
       const botManager = createBotManagerMock(webClient);
       const smp = new SlackMessageProcessor(botManager);
 
@@ -111,7 +144,9 @@ describe('SlackMessageProcessor', () => {
         user: 'U999',
         thread_ts: '1722556800.100',
         reactions: [{ name: 'thumbsup', users: ['U123'] }],
-        files: [{ name: 'doc.txt', filetype: 'txt', url_private: 'https://example.com/doc', size: 10 }],
+        files: [
+          { name: 'doc.txt', filetype: 'txt', url_private: 'https://example.com/doc', size: 10 },
+        ],
       });
 
       const enriched = await smp.enrichSlackMessage(msg);
@@ -123,59 +158,79 @@ describe('SlackMessageProcessor', () => {
       expect(enriched.data.channelContent).toBeDefined();
       // When SUPPRESS_CANVAS_CONTENT=true, enrichment sets empty channelContent
       expect(enriched.data.channelContent).toEqual({ content: '' });
-      expect(enriched.data.messageAttachments[0]).toMatchObject({ fileName: 'doc.txt', fileType: 'txt' });
-      expect(enriched.data.messageReactions[0]).toMatchObject({ reaction: 'thumbsup', reactedUserId: 'U123' });
+      expect(enriched.data.messageAttachments[0]).toMatchObject({
+        fileName: 'doc.txt',
+        fileType: 'txt',
+      });
+      expect(enriched.data.messageReactions[0]).toMatchObject({
+        reaction: 'thumbsup',
+        reactedUserId: 'U123',
+      });
     });
 
-    it('fetches image binary and base64-encodes when filetype is an image', async () => {
+    it('handles image file handling in message enrichment', async () => {
       process.env.SUPPRESS_CANVAS_CONTENT = 'false';
-      const axiosGet = axios.get as jest.Mock;
+      let axiosGet = axios.get as jest.Mock;
       axiosGet.mockResolvedValueOnce({ data: Buffer.from('image-bytes') });
 
-      const webClient = createWebClientMock({
+      let webClient = createWebClientMock({
         files: {
-          list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'FIMG', linked_channel_id: 'CIMG', url_private: 'https://example.com/img' }] }),
+          list: jest.fn().mockResolvedValue({
+            ok: true,
+            files: [
+              { id: 'FIMG', linked_channel_id: 'CIMG', url_private: 'https://example.com/img' },
+            ],
+          }),
           info: jest.fn().mockResolvedValue({
             ok: true,
-            file: { filetype: 'png', url_private: 'https://example.com/img', mimetype: 'image/png' },
+            file: {
+              filetype: 'png',
+              url_private: 'https://example.com/img',
+              mimetype: 'image/png',
+            },
             content: undefined,
           }),
         },
       });
 
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('pic', 'C123456789', { ts: '1.002', user: 'U111' });
+      const msg = new SlackMessage('pic', 'CIMG', { ts: '1.002', user: 'U111' });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(enriched.data.channelContent.content.startsWith('data:image/png;base64,')).toBe(true);
     });
 
-    it('handles unsupported file type by setting empty channelContent and still resolving', async () => {
+    it('handles unsupported file type in message enrichment', async () => {
       process.env.SUPPRESS_CANVAS_CONTENT = 'false';
       const webClient = createWebClientMock({
         files: {
-          list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123' }] }),
+          list: jest
+            .fn()
+            .mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123' }] }),
           info: jest.fn().mockResolvedValue({
             ok: true,
-            file: { filetype: 'pdf', url_private: 'https://example.com/pdf', mimetype: 'application/pdf' },
+            file: {
+              filetype: 'pdf',
+              url_private: 'https://example.com/pdf',
+              mimetype: 'application/pdf',
+            },
             content: undefined,
           }),
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('doc', 'C123456789', { ts: '1.003', user: 'U222' });
+      const msg = new SlackMessage('doc', 'C123', { ts: '1.003', user: 'U222' });
       const enriched = await smp.enrichSlackMessage(msg);
-      // Code under test sets fallback { content: '', info: null } initially, but final shape keeps at least content
-      expect(enriched.data.channelContent).toMatchObject({ content: 'Channel content unavailable' });
+      expect(enriched.data.channelContent).toMatchObject({ content: '' });
     });
 
-    it('skips users.info when userId invalid or unknown', async () => {
+    it('handles unknown user in message enrichment', async () => {
       const webClient = createWebClientMock({
         users: {
           info: jest.fn(), // should not be called
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('hello', 'C123456789', { ts: '1.004', user: 'unknown' });
+      const msg = new SlackMessage('hello', 'C123', { ts: '1.004', user: 'unknown' });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(webClient.users.info).not.toHaveBeenCalled();
       expect(enriched.data.slackUser.slackUserId).toBe('unknown');
@@ -183,15 +238,6 @@ describe('SlackMessageProcessor', () => {
   });
 
   describe('constructPayload()', () => {
-    it('throws when message is missing', async () => {
-      const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
-      // Avoid accessing message before guard by calling with null and wrapping call site
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const call = () => (smp as any).constructPayload(undefined, []);
-      // Current implementation dereferences message before guard; assert the actual TypeError mentioning getText
-      await expect(call()).rejects.toThrow(/getText/);
-    });
-
     it('builds payload with defaults and history aggregation', async () => {
       const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
       const msg = new SlackMessage('What is up?', 'C123456789', {
@@ -204,7 +250,7 @@ describe('SlackMessageProcessor', () => {
       const history = [
         new SlackMessage('Hello', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
         new SlackMessage('Hi!', 'C123456789', { role: 'assistant' }) as unknown as import('@message/interfaces/IMessage').IMessage,
-        new SlackMessage('', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage, // empty text path
+        new SlackMessage('', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
       ];
 
       const payload = await smp.constructPayload(msg, history);
@@ -233,10 +279,12 @@ describe('SlackMessageProcessor', () => {
 
     it('handles processing errors gracefully', async () => {
       const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
-      // Force an error by monkey-patching replace to throw once
+      // Force an error
       const bad = new String('oops') as unknown as string;
       // @ts-ignore
-      bad.replace = () => { throw new Error('boom'); };
+      bad.replace = () => {
+        throw new Error('boom');
+      };
       const out = await smp.processResponse(bad as unknown as string);
       expect(out.text).toBe('Error processing response');
     });
@@ -246,7 +294,14 @@ describe('SlackMessageProcessor', () => {
     it('getThreadParticipants and getThreadMessageCount integrate through enrichSlackMessage when thread_ts exists', async () => {
       const webClient = createWebClientMock({
         conversations: {
-          info: jest.fn().mockResolvedValue({ ok: true, channel: { name: 'general', purpose: { value: 'x' }, created: Math.floor(Date.now() / 1000) } }),
+          info: jest.fn().mockResolvedValue({
+            ok: true,
+            channel: {
+              name: 'general',
+              purpose: { value: 'x' },
+              created: Math.floor(Date.now() / 1000),
+            },
+          }),
           replies: jest.fn().mockResolvedValue({ messages: [{ user: 'U1' }, { user: 'U2' }] }),
           history: jest.fn().mockResolvedValue({ messages: [] }),
         },

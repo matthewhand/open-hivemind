@@ -1,0 +1,30 @@
+{
+  "id": "discord-voice",
+  "name": "Discord Voice Bot",
+  "description": "Discord bot with voice channel support and speech-to-text",
+  "category": "discord",
+  "tags": [
+    "discord",
+    "voice",
+    "advanced"
+  ],
+  "config": {
+    "messageProvider": "discord",
+    "llmProvider": "openai",
+    "discord": {
+      "token": "${DISCORD_BOT_TOKEN}",
+      "clientId": "${DISCORD_CLIENT_ID}",
+      "guildId": "${DISCORD_GUILD_ID}",
+      "channelId": "${DISCORD_CHANNEL_ID}",
+      "voiceChannelId": "${DISCORD_VOICE_CHANNEL_ID}"
+    },
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "gpt-4"
+    }
+  },
+  "isBuiltIn": true,
+  "createdAt": "2025-09-20T02:43:39.152Z",
+  "updatedAt": "2025-09-20T02:43:39.152Z",
+  "usageCount": 0
+}

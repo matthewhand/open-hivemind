@@ -1,7 +1,10 @@
 import axios from 'axios';
-import { getFlowiseResponse, getFlowiseResponseFallback } from '@integrations/flowise/flowiseRestClient';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import { ConfigurationManager } from '@config/ConfigurationManager';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import {
+  getFlowiseResponse,
+  getFlowiseResponseFallback,
+} from '@integrations/flowise/flowiseRestClient';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -49,7 +52,9 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
   });
 
   it('throws if question is empty/whitespace', async () => {
-    await expect(getFlowiseResponse(channelId, '   ')).rejects.toThrow('Cannot send an empty question to Flowise.');
+    await expect(getFlowiseResponse(channelId, '   ')).rejects.toThrow(
+      'Cannot send an empty question to Flowise.'
+    );
   });
 
   it('throws if config is incomplete (missing pieces)', async () => {
@@ -61,7 +66,9 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
       };
       return map[key];
     });
-    await expect(getFlowiseResponse(channelId, 'hello')).rejects.toThrow('Flowise configuration incomplete.');
+    await expect(getFlowiseResponse(channelId, 'hello')).rejects.toThrow(
+      'Flowise configuration incomplete.'
+    );
   });
 
   it('sends POST with headers and returns text; updates chatId when returned', async () => {
@@ -95,7 +102,7 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
           Authorization: 'Bearer test-api-key',
           'Content-Type': 'application/json',
         },
-      },
+      }
     );
 
     // chatId updated in session
@@ -121,17 +128,28 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
 
   it('throws when API returns empty/invalid text', async () => {
     mockedAxios.post.mockResolvedValueOnce({ data: { text: '   ' } } as any);
-    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow('Failed to fetch response from Flowise.');
+    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
+      'Failed to fetch response from Flowise.'
+    );
   });
 
   it('wraps axios errors into a generic error', async () => {
-    mockedAxios.post.mockRejectedValueOnce(Object.assign(new Error('boom'), { isAxiosError: true, response: { status: 500, data: { err: 'x' } } }));
-    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow('Failed to fetch response from Flowise.');
+    mockedAxios.post.mockRejectedValueOnce(
+      Object.assign(new Error('boom'), {
+        isAxiosError: true,
+        response: { status: 500, data: { err: 'x' } },
+      })
+    );
+    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
+      'Failed to fetch response from Flowise.'
+    );
   });
 
   it('wraps non-axios errors into a generic error', async () => {
     mockedAxios.post.mockRejectedValueOnce(new Error('other'));
-    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow('Failed to fetch response from Flowise.');
+    await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
+      'Failed to fetch response from Flowise.'
+    );
   });
 
   it('fallback delegates to getFlowiseResponse', async () => {

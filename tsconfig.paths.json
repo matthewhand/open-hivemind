@@ -10,7 +10,11 @@
       "@webhook/*": ["src/webhook/*"],
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
-      "@src/*": ["src/*"]
+      "@src/*": ["src/*"],
+      "@client/*": ["src/client/*"],
+      "@server/*": ["src/server/*"],
+      "@tests/*": ["tests/*"],
+      "testUtils": ["./tests/testUtils"]
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "id": "discord-basic",
+  "name": "Discord Basic Bot",
+  "description": "Basic Discord bot configuration with text commands",
+  "category": "discord",
+  "tags": [
+    "discord",
+    "basic",
+    "text"
+  ],
+  "config": {
+    "messageProvider": "discord",
+    "llmProvider": "flowise",
+    "discord": {
+      "token": "${DISCORD_BOT_TOKEN}",
+      "clientId": "${DISCORD_CLIENT_ID}",
+      "guildId": "${DISCORD_GUILD_ID}",
+      "channelId": "${DISCORD_CHANNEL_ID}"
+    },
+    "flowise": {
+      "apiKey": "${FLOWISE_API_KEY}",
+      "endpoint": "${FLOWISE_ENDPOINT}"
+    }
+  },
+  "isBuiltIn": true,
+  "createdAt": "2025-09-20T02:43:39.153Z",
+  "updatedAt": "2025-09-20T02:43:39.153Z",
+  "usageCount": 0
+}

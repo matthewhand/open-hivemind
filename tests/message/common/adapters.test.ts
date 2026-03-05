@@ -1,4 +1,4 @@
-import { toCommonMessage, fromCommonMessage } from '@src/message/common/adapters';
+import { fromCommonMessage, toCommonMessage } from '@src/message/common/adapters';
 import { ICommonMessage } from '@src/message/common/commonTypes';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
@@ -11,7 +11,7 @@ class DummyMessage extends IMessage {
   private messageId: string;
   private timestamp: Date;
   private authorId: string;
-  
+
   constructor(text: string, channelId: string, authorId: string, messageId: string) {
     super({}, 'user');
     this.content = text;
@@ -22,7 +22,7 @@ class DummyMessage extends IMessage {
     this.messageId = messageId;
     this.timestamp = new Date();
   }
-  
+
   getMessageId(): string {
     return this.messageId;
   }
@@ -82,7 +82,7 @@ describe('Common Message Adapter', () => {
       channelId: 'channel-2',
       senderId: 'user-456',
       timestamp: new Date(),
-      uiElements: [{ type: 'text', text: 'Extra UI text' }]
+      uiElements: [{ type: 'text', text: 'Extra UI text' }],
     };
     const partialMsg = fromCommonMessage(commonMsg);
     expect(partialMsg.content).toBe(commonMsg.text);

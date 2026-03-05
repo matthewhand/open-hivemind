@@ -1,4 +1,4 @@
-import { IMessage } from './IMessage';
+import type { IMessage } from './IMessage';
 
 /**
  * Interface for low-level message transport providers.
@@ -38,6 +38,7 @@ export interface IMessageProvider {
    * Retrieves all messages from a specific channel.
    *
    * @param {string} channelId - The unique identifier of the channel
+   * @param {number} [limit] - Optional maximum number of messages to retrieve (provider-dependent)
    * @returns {Promise<IMessage[]>} A promise that resolves to an array of messages
    *
    * @example
@@ -47,7 +48,7 @@ export interface IMessageProvider {
    * messages.forEach(msg => console.log(msg.getText()));
    * ```
    */
-  getMessages(channelId: string): Promise<IMessage[]>;
+  getMessages(channelId: string, limit?: number): Promise<IMessage[]>;
 
   /**
    * Sends a message to a channel with an optional agent name.
@@ -70,7 +71,11 @@ export interface IMessageProvider {
    * );
    * ```
    */
-  sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string>;
+  sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string>;
 
   /**
    * Gets the unique client identifier for this provider.
@@ -87,4 +92,20 @@ export interface IMessageProvider {
    * ```
    */
   getClientId(): string;
+
+  /**
+   * Gets the owner/creator of a message forum (channel, group, etc.)
+   *
+   * This method is used for permission checking when using MCP tools.
+   *
+   * @param {string} forumId - The unique identifier of the forum (channel, group, etc.)
+   * @returns {Promise<string>} A promise that resolves to the user ID of the forum owner
+   */
+  getForumOwner(forumId: string): Promise<string>;
+
+  /**
+   * Triggers a typing indicator in the channel.
+   * Optional method, as not all providers support it.
+   */
+  sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
 }

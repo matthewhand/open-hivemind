@@ -1,105 +1,113 @@
 # Open-Hivemind
 
-![Project Logo](path/to/logo.png)
+[![CI](https://github.com/matthewhand/open-hivemind/workflows/CI/badge.svg)](https://github.com/matthewhand/open-hivemind/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
-## Overview
+Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
 
-Open-Hivemind is not just a bot framework—it is a revolutionary open-source ecosystem that fuses the chaos of multiple messaging platforms into a singular, harmonious AI‐driven symphony. Imagine a digital hivemind—a borg‐like collective of bots—where every agent is a neuron in a vast, unified brain. Built with TypeScript, it transcends traditional bot limitations by offering a modular, extensible architecture that is as easy to deploy as it is to customize. Whether operating as a single bot or a sprawling swarm, Open-Hivemind leverages cutting‐edge LLMs like OpenAI, Flowise, OpenWebUI, or the multi‐agent juggernaut Open‐Swarm to deliver intelligent, context‐aware conversational experiences in real time.
+Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.
 
-## Features
+## Why Open-Hivemind?
 
-### Multi-Platform Mastery & Simultaneous Connectivity
-- **Unified Messaging Fabric:** Seamlessly bridges Discord and Slack, synchronizing every message, channel, and platform into one cohesive operational consciousness.
-- **Real-Time Connectivity:** Ensures no lag and no fuss as messages flow between platforms, creating a dynamic, integrated environment.
-- **Platform-Agnostic Presence:** The same intelligent agents operate consistently whether on Slack’s sleek channels or Discord’s vibrant servers, eliminating the need for multiple separate bots.
+Unlike standard chatbots that simply wait for a command and reply, Open-Hivemind agents are designed for **immersive, human-like interaction**. They possess a degree of autonomy and social awareness that makes them feel like active participants in a community rather than just tools.
 
-### Future-Proof Expansion
-- **Modular Integration:** Easily extend functionality to new platforms such as Telegram, WhatsApp, and beyond with plug-and-play modules—no rewiring required.
-- **Scalable Architecture:** Designed to evolve, Open-Hivemind readily incorporates future technologies and platforms, ensuring long-term viability.
+### 🧠 Selective Engagement
+Bots don't always respond. Just like a human, they "listen" to the conversation and decide whether to chime in based on probability, relevance, and their specific personality traits. They aren't just request-response machines; they have agency.
 
-## Discord Integration
+### 🗣️ Natural Conversation Dynamics
+*   **Engagement:** While they may stay quiet in the background, directly addressing a bot or asking a question significantly increases the chance of a response.
+*   **Momentum:** Once a bot is "engaged" in a conversation, it tends to stay engaged, maintaining the flow of dialogue without needing to be constantly re-prompted.
+*   **Context Awareness:** They remember what was said previously, allowing for coherent, multi-turn discussions.
 
-### Solo or Swarm Modes
-- **Single Bot Simplicity:** Run a single bot using one `DISCORD_BOT_TOKEN` for straightforward management.
-- **Multi-Agent Swarm:** Provide comma-separated tokens in `DISCORD_BOT_TOKEN` (e.g., `token1,token2,token3`) to create multiple bot instances. Each instance will automatically be assigned a numbered name (e.g., "BotName #1", "BotName #2").
-- **Instance Configuration:**
-  - All instances share the same base name from `MESSAGE_USERNAME_OVERRIDE`
-  - Each instance maintains its own connection and message handlers
-  - Messages can be sent through specific instances by including the numbered name
-- **Validation:** The system validates tokens on startup and throws clear errors for:
-  - Missing tokens
-  - Empty tokens in the comma-separated list
-  - No available bot instances
+### 🚦 Social Awareness & Crowd Control
+In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind implements "social anxiety" logic:
+*   **Avoid Overcrowding:** If a conversation is already populated by too many other bots or is moving too fast, a bot will be less likely to join in, preventing a "pile-on" effect.
+*   **Politeness:** Bots respect the flow of conversation and try not to interrupt or talk over one another excessively.
 
-### Channel Omniscience & Multi-Agent Choreography
-- **Event-Driven Vigilance:** Listens to every `messageCreate` event across all bot instances, filtering out bot messages to focus on human interactions.
-- **Instance-Specific Handling:** Each numbered bot instance maintains its own:
-  - Connection state
-  - Message handlers
-  - Channel mappings
-- **Coordinated Responses:** The system ensures responses are routed through the appropriate instance while maintaining a unified context across all interactions.
+## Core Functionality
 
-## Agent Presentation & Dynamic Response Crafting
+![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
-- **Unified Voice:** All outbound communications are prefixed with the agent's name (e.g., *AgentName*:) creating a consistent, unified presentation.
-- **Personalized Yet Collective:** Customize agent names via `DISCORD_USERNAME_OVERRIDE` to inject personality—imagine Jeeves with timeless formality and Mycroft with sly wit, yet both responding as one cohesive unit.
-- **Context-Aware Replies:** Agents intelligently weave user input into their responses, echoing content (e.g., `<@user> your message`) to affirm context and engagement, thereby crafting replies that feel both deliberate and dynamic.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
+*   **Unified Voice**: Maintain consistent identities across different platforms.
+*   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
+*   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required.
+*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression ensure stability.
+*   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
 
-## Message Handling
+## Installation & Quick Start
 
-- **Cross-Platform Listening:** With persistent event monitoring on Discord and Slack, Open-Hivemind captures every significant message, filtering, parsing, and processing them with acute accuracy.
-- **Wakeword & Mention Detection:** Configurable triggers ensure that the hivemind activates only when necessary. Wakewords such as `!help` or `!ping` prompt immediate, contextually relevant responses.
-- **Contextual Memory:** Leverages history retrieval to accumulate up to 10 recent messages per channel, stitching together a rich tapestry of contextual dialogue that informs intelligent response generation.
-- **Command Parsing Efficiency:** Developed with extensibility in mind, the command processing routines adapt to new instructions with ease, offering seamless integration of additional features over time.
-- **Single-Voice Output:** Despite potentially operating multiple agents, the bot ensures that responses are concise and managed by a singular, coordinated output stream, eliminating redundant chatter.
+Choose the method that best suits your environment.
 
-## Configuration & Agent Orchestration
+### Option 1: Pinokio (Easiest / Local)
 
-### Environment-Driven Control
-- **Convict-Powered Customization:** Utilizes convict to manage .env files and JSON configurations, providing granular control over tokens, platform behavior, LLM keys, and rate limits.
-- **Dynamic Tuning:** Adjust `MESSAGE_RATE_LIMIT_PER_CHANNEL` to prevent message flooding, and enable `MESSAGE_ADD_USER_HINT` for enhanced user engagement.
-- **Flexible Agent Mapping:** Assign tokens and usernames dynamically, allowing both single-bot and swarm configurations to operate optimally in their designated environments.
+Recommended for users who want a one-click local setup.
 
-### Platform-Specific Tuning
-- **Slack Customization:** Leverages `SLACK_JOIN_CHANNELS` to dictate ingress points into channels, ensuring that the hivemind infiltrates precisely where needed.
-- **Discord Integration:** Configures `DISCORD_CHANNEL_ID` and related settings to pin the hivemind to specific hubs, balancing flexibility with precision.
+1.  Install [Pinokio](https://pinokio.computer/).
+2.  Open Pinokio and click **Discover**.
+3.  Enter the URL for this repository: `https://github.com/matthewhand/open-hivemind`.
+4.  Click **Download** and then **Install**.
+5.  Once installed, click **Start**.
+6.  Click **Open WebUI** to launch the dashboard in your browser.
 
-## Robust & Reliable Operation
+### Option 2: Docker (Containerized)
 
-### Error Resilience & Detailed Diagnostics
-- **Graceful Fallbacks:** Error handling is meticulously designed—errors are swallowed like a black hole but logged using the Debug library to provide comprehensive diagnostic data for post-mortem analysis.
-- **Real-Time Debug Logs:** With `DEBUG=app:*`, delve into granular logs that capture every significant operation—from client login to shutdown—offering invaluable insight for troubleshooting.
-- **Clean Shutdown and Resource Stewardship:** The shutdown procedure meticulously disconnects each agent, ensuring no lingering processes or resource leaks remain.
+Ideal for production or isolated environments.
 
-## Testing & Deployment
+```bash
+# Pull the latest image
+docker pull matthewhand/open-hivemind:latest
 
-### Test Suite Titan
-- **Extensive Coverage:** Powered by 33 Jest test suites, Open-Hivemind validates multi-agent synchronization, message scheduling, event mirroring, and the entire operational lifecycle.
-- **Proactive Diagnostics:** Every integration point is tested rigorously, from message fetch limits to dynamic response crafting, ensuring reliable performance under diverse conditions.
-- **Continuous Integration Ready:** Designed for seamless deployment in Node.js v18+, Open-Hivemind requires minimal setup and scales effortlessly, whether you deploy a single bot or a multi-agent system.
+# Run the container (ensure you have a .env file configured)
+docker run --rm \
+  --env-file .env \
+  -p 3028:3028 \
+  matthewhand/open-hivemind:latest
+```
 
-## Channel Routing
+Access the WebUI at `http://localhost:3028`.
 
-Channel prioritization and selection is supported via a feature-flagged ChannelRouter that can score channels and pick the best candidate based on configuration.
+### Option 3: Node.js (Developer)
 
-- Feature flag: set MESSAGE_CHANNEL_ROUTER_ENABLED=true to enable routing/scoring behavior. When disabled (default), services return 0 for scoreChannel() and preserve legacy behavior.
-- Configuration inputs:
-  - CHANNEL_BONUSES: per-channel bonus multipliers (CSV or JSON)
-  - CHANNEL_PRIORITIES: per-channel integer priorities (CSV or JSON)
-- Deterministic tie-breakers: higher bonus wins; then lexicographic channel ID.
-- Providers: Discord, Slack, and Mattermost expose supportsChannelPrioritization=true and delegate scoreChannel() to the ChannelRouter when the flag is on.
+For developers who want to modify the code or run locally without Docker.
 
-See the detailed guide with examples:
-- docs/channel-routing.md
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/matthewhand/open-hivemind.git
+    cd open-hivemind
+    ```
 
-## Future Enhancements
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-- **Integrated LLM Improvements:** Future updates will enrich response quality and contextual intelligence, pushing the envelope of chatbot capabilities.
-- **Expanded Platform Support:** Roadmap plans include integration with additional messaging platforms such as Telegram and WhatsApp, ensuring a comprehensive, unified messaging ecosystem.
-- **Community-Driven Module Development:** Open-Hivemind encourages the development of community plugins and custom modules to continuously evolve the framework.
+3.  **Start the development server:**
+    ```bash
+    npm run dev
+    ```
 
----
+Access the WebUI at `http://localhost:3028`.
 
-Open-Hivemind continues to evolve. This documentation provides a deep dive into its revolutionary multi-agent architecture and unified messaging fabric—designed to empower developers and end-users alike in managing an interconnected bot ecosystem.
+## Getting Started with WebUI
 
-For further technical details, refer to the Development Guide and User Guide sections of this repository.
+Once the application is running, open your browser to `http://localhost:3028`.
+
+1.  **Configure LLM Provider**: Navigate to **Configuration > LLM Providers** to set up your API keys (e.g., OpenAI, Anthropic).
+2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
+3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
+
+For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](USERGUIDE.md).
+
+## Documentation
+
+*   [User Guide](docs/USER_GUIDE.md): Detailed explanation of all WebUI features.
+*   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
+*   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
+
+## License
+
+Released under the [MIT License](LICENSE).

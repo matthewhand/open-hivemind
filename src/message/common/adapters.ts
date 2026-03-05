@@ -1,5 +1,5 @@
-import { ICommonMessage } from './commonTypes';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { ICommonMessage } from './commonTypes';
 
 /**
  * Converts a provider‑specific IMessage into a common message format.

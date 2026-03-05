@@ -5,11 +5,11 @@ export const get = jest.fn((key: string) => {
         enabled: true,
         minDelay: 1000,
         maxDelay: 2000,
-        prompts: ['Test prompt 1', 'Test prompt 2', 'Test prompt 3']
+        prompts: ['Test prompt 1', 'Test prompt 2', 'Test prompt 3'],
       };
     case 'test-messenger':
       return {
-        MESSAGE_USERNAME_OVERRIDE: 'TestBot'
+        MESSAGE_USERNAME_OVERRIDE: 'TestBot',
       };
     default:
       return {};

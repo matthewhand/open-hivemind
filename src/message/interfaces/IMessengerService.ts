@@ -1,4 +1,4 @@
-import { IMessage } from './IMessage';
+import type { IMessage } from './IMessage';
 
 /**
  * High-level interface for messaging services across different platforms.
@@ -22,6 +22,44 @@ import { IMessage } from './IMessage';
  * ```
  */
 export interface IMessengerService {
+  /**
+   * Optional: return per-instance startup summaries for operator-friendly logging.
+   * Implementations that don't support per-instance introspection can omit this.
+   */
+  getAgentStartupSummaries?: () => {
+    name: string;
+    provider: string;
+    botId?: string;
+    messageProvider?: string;
+    llmProvider?: string;
+    llmModel?: string;
+    llmEndpoint?: string;
+    systemPrompt?: string;
+  }[];
+
+  /**
+   * Optional integration hook: resolve per-agent identity and routing hints.
+   *
+   * This allows platform-specific logic (multi-bot identity, sender selection, name aliases)
+   * to live inside the integration rather than in the message handler.
+   *
+   * Implementations that don't need this can omit it (or return null).
+   */
+  resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
+    /**
+     * Bot/user id for this agent instance (used for mention detection and self-filtering).
+     */
+    botId?: string;
+    /**
+     * Provider-specific sender key passed to sendMessageToChannel/sendTyping to select the correct bot instance.
+     */
+    senderKey?: string;
+    /**
+     * Candidate names that should count as "spoken to" when typed in plain text.
+     */
+    nameCandidates?: string[];
+  };
+
   /**
    * Initializes the messaging service.
    *
@@ -56,21 +94,28 @@ export interface IMessengerService {
    * );
    * ```
    */
-  sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string): Promise<string>;
+  sendMessageToChannel(
+    channelId: string,
+    message: string,
+    senderName?: string,
+    threadId?: string,
+    replyToMessageId?: string
+  ): Promise<string>;
 
   /**
    * Retrieves messages from a specific channel.
    *
    * @param {string} channelId - The channel identifier to fetch messages from
+   * @param {number} [limit] - Optional limit on number of messages to retrieve
    * @returns {Promise<IMessage[]>} A promise that resolves to an array of messages
    *
    * @example
    * ```typescript
-   * const messages = await service.getMessagesFromChannel("general");
+   * const messages = await service.getMessagesFromChannel("general", 20);
    * messages.forEach(msg => console.log(msg.getText()));
    * ```
    */
-  getMessagesFromChannel(channelId: string): Promise<IMessage[]>;
+  getMessagesFromChannel(channelId: string, limit?: number): Promise<IMessage[]>;
 
   /**
    * Sends a public announcement to a channel.
@@ -98,6 +143,14 @@ export interface IMessengerService {
    * @returns {string} The client ID (typically bot user ID)
    */
   getClientId(): string;
+
+  /**
+   * Gets the topic/description of a channel.
+   *
+   * @param {string} channelId - The channel identifier
+   * @returns {Promise<string | null>} The channel topic or null if not available
+   */
+  getChannelTopic?(channelId: string): Promise<string | null>;
 
   /**
    * Gets the default channel identifier for this service.
@@ -148,5 +201,54 @@ export interface IMessengerService {
    * });
    * ```
    */
-  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void;
+  setMessageHandler(
+    handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>
+  ): void;
+
+  /**
+   * Gets the owner/creator of a forum/channel.
+   *
+   * This method is used by MCP guards to determine channel ownership
+   * for permission checks.
+   *
+   * @param {string} forumId - The forum/channel identifier
+   * @returns {Promise<string>} The user ID of the forum/channel owner
+   *
+   * @example
+   * ```typescript
+   * const ownerId = await service.getForumOwner("C1234567890");
+   * console.log(`Channel owner: ${ownerId}`);
+   * ```
+   */
+  getForumOwner?(forumId: string): Promise<string>;
+
+  /**
+   * Optional: Returns extended sub-services managed by this provider.
+   * Useful for services like Discord that manage multiple bot instances under one connection.
+   * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
+   */
+  getDelegatedServices?(): {
+    serviceName: string;
+    messengerService: IMessengerService;
+    botConfig: any;
+  }[];
+
+  /**
+   * Optional: Updates the bot's presence/activity status with model info.
+   * For Discord, this updates the "Currently playing" status.
+   *
+   * @param {string} modelId - The model identifier to display
+   * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
+   */
+  setModelActivity?(modelId: string, senderKey?: string): Promise<void>;
+
+  /**
+   * Optional: Triggers a typing indicator in the channel.
+   * Not all platforms support this; implementations may no-op.
+   *
+   * @param {string} channelId - The channel identifier
+   * @param {string} [senderName] - Optional sender key to select a specific bot instance
+   * @param {string} [threadId] - Optional thread identifier
+   */
+  sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
 }

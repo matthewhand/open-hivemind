@@ -1,91 +1,120 @@
 import Debug from 'debug';
-import express, { Request, Response } from 'express';
-import { z } from 'zod';
+import type { Request, Response } from 'express';
+import type express from 'express';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
-import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
+// Import after jest.doMock of config to allow per-test overrides
+import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
 
 const debug = Debug('app:webhookRoutes');
 
-// Webhook request body schema
-const webhookRequestSchema = z.object({
-  id: z.string().min(1, 'Prediction ID is required'),
-  status: z.enum(['starting', 'processing', 'succeeded', 'failed', 'canceled'], {
-    errorMap: () => ({ message: 'Status must be one of: starting, processing, succeeded, failed, canceled' })
-  }),
-  output: z.array(z.string()).optional(),
-  error: z.string().optional(),
-  logs: z.string().optional(),
-  created_at: z.string().optional(),
-  completed_at: z.string().optional()
-});
+// Webhook request body schema validation
+function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
 
-type WebhookRequest = z.infer<typeof webhookRequestSchema>;
+  if (!body || typeof body !== 'object') {
+    errors.push('Request body must be a valid JSON object');
+    return { valid: false, errors };
+  }
 
-export function configureWebhookRoutes(app: express.Application, messageService: IMessengerService): void {
-  app.post('/webhook', verifyWebhookToken, verifyIpWhitelist, async (req: Request, res: Response) => {
-    debug('Received webhook request', {
-      predictionId: req.body?.id,
-      status: req.body?.status,
-      hasOutput: !!req.body?.output,
-      timestamp: new Date().toISOString()
-    });
+  // Validate prediction ID
+  if (!body.id || typeof body.id !== 'string') {
+    errors.push('Missing or invalid "id" field (must be non-empty string)');
+  } else if (body.id.length === 0 || body.id.length > 100) {
+    errors.push('"id" field must be between 1 and 100 characters');
+  }
 
-    // Validate request body schema
-    const validationResult = webhookRequestSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      const errorDetails = validationResult.error.errors.map(err => ({
-        field: err.path.join('.'),
-        message: err.message,
-        received: err.code === 'invalid_type' ? typeof req.body?.[err.path[0]] : req.body?.[err.path[0]]
-      }));
-      
-      debug('Webhook validation failed:', { errors: errorDetails, body: req.body });
-      return res.status(400).json({
-        error: 'Invalid request body',
-        details: errorDetails,
-        timestamp: new Date().toISOString()
-      });
+  // Validate status
+  if (!body.status || typeof body.status !== 'string') {
+    errors.push('Missing or invalid "status" field (must be string)');
+  } else {
+    const validStatuses = ['starting', 'processing', 'succeeded', 'failed', 'canceled'];
+    if (!validStatuses.includes(body.status.toLowerCase())) {
+      errors.push(`Invalid status "${body.status}". Must be one of: ${validStatuses.join(', ')}`);
     }
+  }
 
-    const { id: predictionId, status: predictionStatus, output: resultArray } = validationResult.data;
-    const imageUrl = predictionImageMap.get(predictionId);
-
-    debug('Processing webhook', {
-      predictionId,
-      status: predictionStatus,
-      hasImageUrl: !!imageUrl,
-      outputLength: resultArray?.length || 0
-    });
-
-    // Use the message service to send platform-agnostic messages
-    const resultMessage = predictionStatus === 'succeeded'
-      ? `${resultArray?.join(' ') || 'No output provided'}\nImage URL: ${imageUrl || 'No image URL'}`
-      : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
-
-    try {
-      // TODO: Parameterize target announcement channel instead of empty default
-      await messageService.sendPublicAnnouncement('', resultMessage);
-      debug('Message sent successfully', { predictionId, messageLength: resultMessage.length });
-    } catch (error: any) {
-      debug('Failed to send message', {
-        predictionId,
-        error: error.message,
-        errorType: error.constructor.name
-      });
-      // Don't return error to webhook caller - this is an internal issue
+  // Validate output array if present
+  if (body.output !== undefined) {
+    if (!Array.isArray(body.output)) {
+      errors.push('Invalid "output" field (must be array if present)');
+    } else if (body.output.length > 10) {
+      errors.push('"output" array cannot contain more than 10 items');
     }
+  }
 
-    // Clean up prediction mapping
-    const wasDeleted = predictionImageMap.delete(predictionId);
-    debug('Cleanup completed', { predictionId, mappingDeleted: wasDeleted });
-    
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({
-      success: true,
-      predictionId,
-      processed: true,
-      timestamp: new Date().toISOString()
-    });
-  });
+  // Validate URLs if present
+  if (body.urls && !Array.isArray(body.urls)) {
+    errors.push('Invalid "urls" field (must be array if present)');
+  }
+
+  // Security: Check for potentially malicious content
+  const maliciousPatterns = [/<script/i, /javascript:/i, /on\w+\s*=/i, /<iframe/i, /<object/i];
+
+  const checkString = JSON.stringify(body);
+  for (const pattern of maliciousPatterns) {
+    if (pattern.test(checkString)) {
+      errors.push('Request contains potentially malicious content');
+      break;
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function configureWebhookRoutes(
+  app: express.Application,
+  messageService: IMessengerService,
+  targetChannel?: string
+): void {
+  app.post(
+    '/webhook',
+    verifyWebhookToken,
+    verifyIpWhitelist,
+    async (req: Request, res: Response) => {
+      debug('Received webhook request:', {
+        headers: {
+          'content-type': req.headers['content-type'],
+          'user-agent': req.headers['user-agent'],
+        },
+        bodyKeys: Object.keys(req.body || {}),
+        predictionId: req.body?.id,
+        status: req.body?.status,
+      });
+
+      // Validate request body
+      const validation = validateWebhookBody(req.body);
+      if (!validation.valid) {
+        debug('Webhook validation failed:', validation.errors);
+        return res.status(400).json({
+          error: 'Invalid request body',
+          details: validation.errors,
+        });
+      }
+
+      const { id: predictionId, status: predictionStatus, output: resultArray } = req.body;
+      const imageUrl = predictionImageMap.get(predictionId);
+
+      debug('Processing webhook:', { predictionId, predictionStatus, hasImageUrl: !!imageUrl });
+
+      // Use the message service to send platform-agnostic messages
+      const resultMessage =
+        predictionStatus === 'succeeded'
+          ? `${(resultArray || []).join(' ')}\nImage URL: ${imageUrl || 'N/A'}`
+          : `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+
+      try {
+        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
+        await messageService.sendPublicAnnouncement(channelId, resultMessage);
+        debug('Successfully sent webhook message to channel:', channelId);
+      } catch (error: any) {
+        debug('Failed to send webhook message:', error.message);
+        return res.status(500).json({ error: 'Failed to process webhook' });
+      }
+
+      predictionImageMap.delete(predictionId);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).json({ success: true, processed: predictionId });
+    }
+  );
 }

@@ -1,29 +1,66 @@
 {
-  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es2018",
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "module": "CommonJS",
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitThis": false,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./",
+    "baseUrl": "./",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
-    "downlevelIteration": true
-  },
-  "paths": {
-    "@src/*": ["src/*"],
-    "@tests/*": ["tests/*"],
-    "testUtils": ["./tests/testUtils"]
+    "noEmitOnError": false,
+    "downlevelIteration": true,
+    "jsx": "react",
+    "forceConsistentCasingInFileNames": false,
+    "isolatedModules": false,
+    "paths": {
+      "@command/*": ["src/command/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@llm/*": ["src/llm/*"],
+      "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
+      "@integrations/*": ["src/integrations/*"],
+      "@types/*": ["src/types/*"],
+      "@src/integrations/slack/*": ["packages/adapter-slack/src/*"],
+      "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
+      "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
+      "@hivemind/shared-types/*": ["packages/shared-types/src/*"],
+      "@src/*": ["src/*"],
+      "@tests/*": ["tests/*"],
+      "testUtils": ["./tests/testUtils"],
+      "@hivemind/provider-openai": ["packages/provider-openai/src/index.ts"],
+      "@hivemind/provider-openai/*": ["packages/provider-openai/src/*"],
+      "@hivemind/adapter-discord": ["packages/adapter-discord/src/index.ts"],
+      "@hivemind/adapter-discord/*": ["packages/adapter-discord/src/*"],
+      "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
+      "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
+      "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
+      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*",
-    "tests/**/*"
+    "packages/provider-openai/src/**/*",
+    "packages/adapter-discord/src/**/*",
+    "packages/adapter-slack/src/**/*",
+    "packages/adapter-mattermost/src/**/*"
   ],
-  "files": [
-    "src/types/express.d.ts",
-    "src/global.d.ts"
-  ]
+  "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
+  "files": ["src/global.d.ts"]
 }

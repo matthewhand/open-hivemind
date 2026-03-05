@@ -49,11 +49,16 @@ export function debugEnvVars() {
     if (key === 'BOT_DEBUG_MODE') {
       return; // Skip BOT_DEBUG_MODE
     }
+    // Security: Skip any variables that might contain credentials
+    if (key.includes('TOKEN') || key.includes('KEY') || key.includes('SECRET') || key.includes('PASSWORD')) {
+      debug(`Skipping sensitive variable: ${key}`);
+      return;
+    }
     let value = process.env[key] || '';
     const upperKey = key.toUpperCase();
     // Redact variables containing KEY, TOKEN, or ending with SECRET
     if (upperKey.includes('KEY') || upperKey.includes('TOKEN') || upperKey.endsWith('SECRET') || upperKey.endsWith('PASSWORD')) {
-      value = redactSensitiveInfo(value, 4);
+      value = redactSensitiveInfo(key, value);
     }
     debug(`${key} = ${value}`);
   });

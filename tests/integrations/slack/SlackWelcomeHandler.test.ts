@@ -1,15 +1,15 @@
-import { SlackWelcomeHandler } from '@src/integrations/slack/SlackWelcomeHandler';
-import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
-import slackConfig from '@src/config/slackConfig';
-import messageConfig from '@src/config/messageConfig';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { KnownBlock } from '@slack/web-api';
+import messageConfig from '@src/config/messageConfig';
+import slackConfig from '@src/config/slackConfig';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { SlackBotManager } from '../../../packages/adapter-slack/src/SlackBotManager';
+import { SlackWelcomeHandler } from '../../../packages/adapter-slack/src/SlackWelcomeHandler';
 
 // Mock dependencies
 jest.mock('@src/config/slackConfig');
 jest.mock('@src/config/messageConfig');
 jest.mock('@src/llm/getLlmProvider');
-jest.mock('@src/integrations/slack/SlackBotManager');
+jest.mock('../../../packages/adapter-slack/src/SlackBotManager');
 
 describe('SlackWelcomeHandler', () => {
   let handler: SlackWelcomeHandler;
@@ -25,34 +25,36 @@ describe('SlackWelcomeHandler', () => {
     mockWebClient = {
       conversations: {
         info: jest.fn(),
-        join: jest.fn()
+        join: jest.fn(),
       },
       chat: {
-        postMessage: jest.fn().mockResolvedValue({ ts: '1234567890.123456' })
-      }
+        postMessage: jest.fn().mockResolvedValue({ ts: '1234567890.123456' }),
+      },
     };
 
     // Setup mock bot manager
     mockBotManager = {
       getAllBots: jest.fn(),
-      getBotByName: jest.fn()
+      getBotByName: jest.fn(),
     } as any;
 
     // Setup mock LLM provider
     mockLlmProvider = {
-      generateChatCompletion: jest.fn()
+      generateChatCompletion: jest.fn(),
     };
 
     // Setup default mocks
     (getLlmProvider as jest.Mock).mockReturnValue([mockLlmProvider]);
-    mockBotManager.getAllBots.mockReturnValue([{
-      webClient: mockWebClient,
-      botUserId: 'U1234567890',
-      botUserName: 'test-bot',
-      botToken: 'xoxb-test-token',
-      signingSecret: 'test-secret',
-      config: {}
-    }]);
+    mockBotManager.getAllBots.mockReturnValue([
+      {
+        webClient: mockWebClient,
+        botUserId: 'U1234567890',
+        botUserName: 'test-bot',
+        botToken: 'xoxb-test-token',
+        signingSecret: 'test-secret',
+        config: {},
+      },
+    ]);
 
     // Setup config mocks
     (slackConfig.get as jest.Mock).mockImplementation((key: string) => {
@@ -86,21 +88,25 @@ describe('SlackWelcomeHandler', () => {
     });
 
     it('should throw error when bot manager is not provided', () => {
-      expect(() => new SlackWelcomeHandler(null as any)).toThrow('SlackBotManager instance required');
+      expect(() => new SlackWelcomeHandler(null as any)).toThrow(
+        'SlackBotManager instance required'
+      );
     });
 
     it('should throw error when bot manager is undefined', () => {
-      expect(() => new SlackWelcomeHandler(undefined as any)).toThrow('SlackBotManager instance required');
+      expect(() => new SlackWelcomeHandler(undefined as any)).toThrow(
+        'SlackBotManager instance required'
+      );
     });
   });
 
   describe('sendBotWelcomeMessage', () => {
     it('should send bot welcome message successfully', async () => {
       mockWebClient.conversations.info.mockResolvedValue({
-        channel: { name: 'test-channel' }
+        channel: { name: 'test-channel' },
       });
       mockLlmProvider.generateChatCompletion.mockResolvedValue('Test quote about channels');
-      
+
       await (handler as any).sendBotWelcomeMessage('C1234567890');
 
       expect(mockWebClient.conversations.info).toHaveBeenCalledWith({ channel: 'C1234567890' });
@@ -120,7 +126,7 @@ describe('SlackWelcomeHandler', () => {
 
     it('should use fallback quote when LLM provider fails', async () => {
       mockWebClient.conversations.info.mockResolvedValue({
-        channel: { name: 'test-channel' }
+        channel: { name: 'test-channel' },
       });
       mockLlmProvider.generateChatCompletion.mockRejectedValue(new Error('LLM error'));
 
@@ -132,19 +138,21 @@ describe('SlackWelcomeHandler', () => {
 
     it('should use fallback quote when no LLM provider is available', async () => {
       (getLlmProvider as jest.Mock).mockReturnValue([]);
-      
+
       await (handler as any).sendBotWelcomeMessage('C1234567890');
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalled();
     });
 
     it('should throw error when channel is not provided', async () => {
-      await expect((handler as any).sendBotWelcomeMessage('')).rejects.toThrow('Channel ID required');
+      await expect((handler as any).sendBotWelcomeMessage('')).rejects.toThrow(
+        'Channel ID required'
+      );
     });
 
     it('should handle empty LLM response with default quote', async () => {
       mockWebClient.conversations.info.mockResolvedValue({
-        channel: { name: 'test-channel' }
+        channel: { name: 'test-channel' },
       });
       mockLlmProvider.generateChatCompletion.mockResolvedValue('');
 
@@ -157,7 +165,7 @@ describe('SlackWelcomeHandler', () => {
   describe('sendUserWelcomeMessage', () => {
     it('should send user welcome message successfully', async () => {
       mockWebClient.conversations.info.mockResolvedValue({
-        channel: { name: 'test-channel' }
+        channel: { name: 'test-channel' },
       });
 
       await (handler as any).sendUserWelcomeMessage('C1234567890', 'john.doe');
@@ -176,11 +184,15 @@ describe('SlackWelcomeHandler', () => {
     });
 
     it('should throw error when channel is not provided', async () => {
-      await expect((handler as any).sendUserWelcomeMessage('', 'john.doe')).rejects.toThrow('Channel and userName required');
+      await expect((handler as any).sendUserWelcomeMessage('', 'john.doe')).rejects.toThrow(
+        'Channel and userName required'
+      );
     });
 
     it('should throw error when userName is not provided', async () => {
-      await expect((handler as any).sendUserWelcomeMessage('C1234567890', '')).rejects.toThrow('Channel and userName required');
+      await expect((handler as any).sendUserWelcomeMessage('C1234567890', '')).rejects.toThrow(
+        'Channel and userName required'
+      );
     });
 
     it('should use custom message from config', async () => {
@@ -199,8 +211,9 @@ describe('SlackWelcomeHandler', () => {
 
   describe('processWelcomeMessage', () => {
     it('should process markdown with buttons successfully', async () => {
-      const markdown = '# Welcome\n\nThis is a test message.\n\n## Actions\n- [Button 1](action:action1)\n- [Button 2](action:action2)';
-      
+      const markdown =
+        '# Welcome\n\nThis is a test message.\n\n## Actions\n- [Button 1](action:action1)\n- [Button 2](action:action2)';
+
       const blocks = await (handler as any).processWelcomeMessage(markdown, 'C1234567890');
 
       expect(blocks).toHaveLength(2); // Content block + actions block
@@ -210,20 +223,20 @@ describe('SlackWelcomeHandler', () => {
           expect.objectContaining({
             type: 'button',
             text: { type: 'plain_text', text: 'Button 1' },
-            action_id: 'action1'
+            action_id: 'action1',
           }),
           expect.objectContaining({
             type: 'button',
             text: { type: 'plain_text', text: 'Button 2' },
-            action_id: 'action2'
-          })
-        ])
+            action_id: 'action2',
+          }),
+        ]),
       });
     });
 
     it('should process markdown without buttons', async () => {
       const markdown = '# Welcome\n\nThis is a test message without buttons.';
-      
+
       const blocks = await (handler as any).processWelcomeMessage(markdown, 'C1234567890');
 
       expect(blocks).toHaveLength(1);
@@ -232,21 +245,26 @@ describe('SlackWelcomeHandler', () => {
 
     it('should handle empty markdown', async () => {
       const blocks = await (handler as any).processWelcomeMessage(' ', 'C1234567890');
-      
+
       expect(blocks).toHaveLength(0);
     });
 
     it('should throw error when markdown is not provided', async () => {
-      await expect((handler as any).processWelcomeMessage('', 'C1234567890')).rejects.toThrow('Markdown and channel required');
+      await expect((handler as any).processWelcomeMessage('', 'C1234567890')).rejects.toThrow(
+        'Markdown and channel required'
+      );
     });
 
     it('should throw error when channel is not provided', async () => {
-      await expect((handler as any).processWelcomeMessage('# Test', '')).rejects.toThrow('Markdown and channel required');
+      await expect((handler as any).processWelcomeMessage('# Test', '')).rejects.toThrow(
+        'Markdown and channel required'
+      );
     });
 
     it('should handle malformed button syntax gracefully', async () => {
-      const markdown = '# Welcome\n\n## Actions\n- Invalid button format\n- [Valid Button](action:valid)';
-      
+      const markdown =
+        '# Welcome\n\n## Actions\n- Invalid button format\n- [Valid Button](action:valid)';
+
       const blocks = await (handler as any).processWelcomeMessage(markdown, 'C1234567890');
 
       expect(blocks).toHaveLength(2);
@@ -255,107 +273,71 @@ describe('SlackWelcomeHandler', () => {
         elements: [
           expect.objectContaining({
             type: 'button',
-            text: { type: 'plain_text', text: 'Valid Button' }
-          })
-        ]
+            text: { type: 'plain_text', text: 'Valid Button' },
+          }),
+        ],
       });
     });
   });
 
   describe('handleButtonClick', () => {
-    it('should handle learn_objectives action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'learn_objectives_C1234567890');
+    it('should handle valid predefined actions', async () => {
+      const actions = [
+        { actionId: 'learn_objectives_C1234567890', expectedText: 'learning objectives' },
+        { actionId: 'how_to_C1234567890', expectedText: 'how I work' },
+        { actionId: 'contact_support_C1234567890', expectedText: 'Need support' },
+        { actionId: 'report_issue_C1234567890', expectedText: 'report it directly' },
+        { actionId: 'learn_more_test', expectedText: 'Learn more about' },
+      ];
 
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('learning objectives')
-        })
-      );
+      for (const { actionId, expectedText } of actions) {
+        mockWebClient.chat.postMessage.mockClear();
+        await (handler as any).handleButtonClick('C1234567890', 'U1234567890', actionId);
+
+        expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            channel: 'C1234567890',
+            text: expect.stringContaining(expectedText),
+          })
+        );
+      }
     });
 
-    it('should handle how_to action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'how_to_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('how I work')
-        })
-      );
-    });
-
-    it('should handle contact_support action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'contact_support_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('Need support')
-        })
-      );
-    });
-
-    it('should handle report_issue action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'report_issue_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('report it directly')
-        })
-      );
-    });
-
-    it('should handle learn_more action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'learn_more_test');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('Learn more about')
-        })
-      );
-    });
-
-    it('should handle custom button mappings', async () => {
-      // Ensure no environment variable overrides the config
+    it('should handle custom and unknown actions', async () => {
+      // Test custom action
       delete process.env.SLACK_BUTTON_MAPPINGS;
-      
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'custom_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: 'C1234567890',
-          text: 'Custom response'
+          text: 'Custom response',
         })
       );
-    });
 
-    it('should handle unknown action', async () => {
+      // Test unknown action
+      mockWebClient.chat.postMessage.mockClear();
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'unknown_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: 'C1234567890',
-          text: expect.stringContaining('Sorry, I don\'t recognize that action')
+          text: expect.stringContaining("Sorry, I don't recognize that action"),
         })
       );
     });
 
-    it('should throw error when channel is not provided', async () => {
-      await expect((handler as any).handleButtonClick('', 'U1234567890', 'action')).rejects.toThrow('Channel, userId, and actionId required');
-    });
+    it('should handle errors and edge cases', async () => {
+      // Test missing parameters
+      await expect((handler as any).handleButtonClick('', 'U1234567890', 'action')).rejects.toThrow(
+        'Channel, userId, and actionId required'
+      );
+      await expect((handler as any).handleButtonClick('C1234567890', '', 'action')).rejects.toThrow(
+        'Channel, userId, and actionId required'
+      );
+      await expect(
+        (handler as any).handleButtonClick('C1234567890', 'U1234567890', '')
+      ).rejects.toThrow('Channel, userId, and actionId required');
 
-    it('should throw error when userId is not provided', async () => {
-      await expect((handler as any).handleButtonClick('C1234567890', '', 'action')).rejects.toThrow('Channel, userId, and actionId required');
-    });
-
-    it('should throw error when actionId is not provided', async () => {
-      await expect((handler as any).handleButtonClick('C1234567890', 'U1234567890', '')).rejects.toThrow('Channel, userId, and actionId required');
-    });
-
-    it('should handle invalid JSON in button mappings', async () => {
+      // Test invalid JSON in button mappings
       (slackConfig.get as jest.Mock).mockImplementation((key: string) => {
         if (key === 'SLACK_BUTTON_MAPPINGS') {
           return 'invalid json';
@@ -364,7 +346,6 @@ describe('SlackWelcomeHandler', () => {
       });
 
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'test_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalled();
     });
   });
@@ -379,7 +360,7 @@ describe('SlackWelcomeHandler', () => {
         botUserName: 'test-bot',
         botToken: 'xoxb-test-token',
         signingSecret: 'test-secret',
-        config: {}
+        config: {},
       });
 
       expect(mockWebClient.conversations.join).toHaveBeenCalledTimes(2);
@@ -398,7 +379,7 @@ describe('SlackWelcomeHandler', () => {
         botUserName: 'test-bot',
         botToken: 'xoxb-test-token',
         signingSecret: 'test-secret',
-        config: {}
+        config: {},
       });
 
       expect(mockWebClient.conversations.join).toHaveBeenCalledTimes(2);
@@ -418,7 +399,7 @@ describe('SlackWelcomeHandler', () => {
         botUserName: 'test-bot',
         botToken: 'xoxb-test-token',
         signingSecret: 'test-secret',
-        config: {}
+        config: {},
       });
 
       expect(mockWebClient.conversations.join).not.toHaveBeenCalled();
@@ -438,7 +419,7 @@ describe('SlackWelcomeHandler', () => {
         botUserName: 'test-bot',
         botToken: 'xoxb-test-token',
         signingSecret: 'test-secret',
-        config: {}
+        config: {},
       });
 
       expect(mockWebClient.conversations.join).not.toHaveBeenCalled();
@@ -460,7 +441,7 @@ describe('SlackWelcomeHandler', () => {
         botUserName: 'test-bot',
         botToken: 'xoxb-test-token',
         signingSecret: 'test-secret',
-        config: {}
+        config: {},
       });
 
       expect(mockWebClient.conversations.join).toHaveBeenCalledWith({ channel: 'general' });
@@ -471,38 +452,51 @@ describe('SlackWelcomeHandler', () => {
   describe('sendMessageToChannel (private method)', () => {
     it('should send message successfully', async () => {
       const result = await (handler as any).sendMessageToChannel('C1234567890', 'Test message');
-      
+
       expect(result).toBe('1234567890.123456');
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: 'C1234567890',
           text: 'Test message',
-          username: 'Test Bot'
+          username: 'Test Bot',
         })
       );
     });
 
     it('should handle message with blocks', async () => {
-      const blocks: KnownBlock[] = [{
-        type: 'section',
-        text: { type: 'mrkdwn', text: 'Test block' }
-      }];
+      const blocks: KnownBlock[] = [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: 'Test block' },
+        },
+      ];
 
-      await (handler as any).sendMessageToChannel('C1234567890', 'Test message', undefined, undefined, blocks);
+      await (handler as any).sendMessageToChannel(
+        'C1234567890',
+        'Test message',
+        undefined,
+        undefined,
+        blocks
+      );
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          blocks: expect.any(Array)
+          blocks: expect.any(Array),
         })
       );
     });
 
     it('should handle message with thread ID', async () => {
-      await (handler as any).sendMessageToChannel('C1234567890', 'Test message', undefined, '1234567890.123456');
+      await (handler as any).sendMessageToChannel(
+        'C1234567890',
+        'Test message',
+        undefined,
+        '1234567890.123456'
+      );
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          thread_ts: '1234567890.123456'
+          thread_ts: '1234567890.123456',
         })
       );
     });
@@ -512,22 +506,24 @@ describe('SlackWelcomeHandler', () => {
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          username: 'Custom Bot'
+          username: 'Custom Bot',
         })
       );
     });
 
     it('should handle empty text with blocks', async () => {
-      const blocks: KnownBlock[] = [{
-        type: 'section',
-        text: { type: 'mrkdwn', text: 'Test block' }
-      }];
+      const blocks: KnownBlock[] = [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: 'Test block' },
+        },
+      ];
 
       await (handler as any).sendMessageToChannel('C1234567890', '', undefined, undefined, blocks);
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          text: 'Message with interactive content'
+          text: 'Message with interactive content',
         })
       );
     });
@@ -537,7 +533,7 @@ describe('SlackWelcomeHandler', () => {
 
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          text: 'No content provided'
+          text: 'No content provided',
         })
       );
     });
@@ -552,25 +548,27 @@ describe('SlackWelcomeHandler', () => {
 
     it('should use fallback bot when bot by name is not found', async () => {
       mockBotManager.getBotByName.mockReturnValue(undefined);
-      mockBotManager.getAllBots.mockReturnValue([{
-        webClient: mockWebClient,
-        botUserId: 'U1234567890',
-        botUserName: 'fallback-bot',
-        botToken: 'xoxb-test-token',
-        signingSecret: 'test-secret',
-        config: {}
-      }]);
+      mockBotManager.getAllBots.mockReturnValue([
+        {
+          webClient: mockWebClient,
+          botUserId: 'U1234567890',
+          botUserName: 'fallback-bot',
+          botToken: 'xoxb-test-token',
+          signingSecret: 'test-secret',
+          config: {},
+        },
+      ]);
 
       await (handler as any).sendMessageToChannel('C1234567890', 'Test message', 'Custom Bot');
-      
+
       expect(mockWebClient.chat.postMessage).toHaveBeenCalled();
     });
 
     it('should handle missing bot manager gracefully', async () => {
       mockBotManager.getAllBots.mockReturnValue([]);
-      
+
       const result = await (handler as any).sendMessageToChannel('C1234567890', 'Test message');
-      
+
       expect(result).toBe('');
     });
   });
