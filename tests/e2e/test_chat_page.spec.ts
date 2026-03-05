@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('ChatPage Optimistic Message Rollback', () => {
@@ -71,7 +71,7 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
   test('sending a message optimistically updates and rolls back on failure', async ({ page }) => {
     // Setup delayed failure mock for message sending so we can see the optimistic state
     await page.route('/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay to see optimistic UI
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay to see optimistic UI
       await route.fulfill({
         status: 500,
         json: { error: 'Failed to send message' },

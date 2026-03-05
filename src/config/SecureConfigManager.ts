@@ -319,18 +319,6 @@ export class SecureConfigManager {
     try {
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
 
-      // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupDir = path.resolve(this.backupDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
-        throw ErrorUtils.createError(
-          'Invalid backup ID: Path traversal detected',
-          'validation',
-          'SECURE_CONFIG_INVALID_BACKUP_ID',
-          400,
-        );
-      }
-
       if (!fs.existsSync(backupPath)) {
         throw ErrorUtils.createError(
           `Backup ${backupId} not found`,

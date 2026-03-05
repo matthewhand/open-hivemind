@@ -2,17 +2,7 @@
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  ignore = "test \"$BRANCH\" != \"main\""
 
 [dev]
   command = "npm run dev"

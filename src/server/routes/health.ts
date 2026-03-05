@@ -243,11 +243,9 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
 nodejs_version_info{version="${process.version}"} 1
-
-${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
 
-  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Content-Type', 'text/plain');
   return res.send(metrics);
 });
 
@@ -530,23 +528,20 @@ router.get('/errors/patterns', (req, res) => {
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);
 
-  // ⚡ Bolt Optimization: Calculate total count once instead of inside the map loop
-  // This changes an O(n²) operation into an O(n) operation when computing error percentages
-  const totalCount = Object.values(errorStats).reduce(
-    (sum: number, val: any) => sum + (val as number),
-    0
-  );
-
   const patternsData = {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
         .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
+          const totalCount = Object.values(errorStats).reduce(
+            (sum: number, val: any) => sum + (val as number),
+            0
+          );
           return {
             type,
             count: count as number,
-            percentage: (totalCount as number) > 0 ? ((count as number) / (totalCount as number)) * 100 : 0,
+            percentage: ((count as number) / (totalCount as number)) * 100,
           };
         }),
       spikes: detectErrorSpikes(errorStats),

@@ -5,7 +5,6 @@ import { Router } from 'express';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import llmConfig from '../../config/llmConfig';
-import llmTaskConfig from '../../config/llmTaskConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
 import messageConfig from '../../config/messageConfig';
@@ -61,7 +60,6 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 

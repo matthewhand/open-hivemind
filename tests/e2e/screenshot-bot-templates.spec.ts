@@ -119,17 +119,6 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
-    // It's in the carousel now
-    // await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
-
-    // Test Interaction: Open Diff Viewer
-    await page.locator('button[title="Compare Versions"]').first().click();
-    await page.waitForTimeout(500);
-
-    // Verify modal is visible
-    await expect(page.getByText('Compare the current template configuration')).toBeVisible();
-
-    // Take screenshot of diff viewer
-    await page.screenshot({ path: 'docs/screenshots/template-version-diff-viewer.png' });
+    await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
   });
 });

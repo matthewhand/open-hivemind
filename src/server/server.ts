@@ -170,13 +170,6 @@ export class WebUIServer {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
 
-    // Prometheus metrics export (no auth required)
-    this.app.get('/metrics', (req, res, next) => {
-      // Ensure the /metrics route correctly calls the prometheus endpoint logic.
-      req.url = '/metrics/prometheus';
-      healthRouter(req, res, next);
-    });
-
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
 
