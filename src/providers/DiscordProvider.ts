@@ -51,7 +51,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     };
   }
 
-  getBotNames() {
+  getBotNames(): string[] {
     // Not strictly used by adminRoutes logic for Discord, but we can implement it
     return [];
   }

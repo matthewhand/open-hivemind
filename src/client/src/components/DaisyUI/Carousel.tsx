@@ -75,10 +75,10 @@ const Carousel: React.FC<CarouselProps> = ({
               <p>{item.description}</p>
             </div>
             <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-              <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev} aria-label="Previous slide">
+              <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev}>
                 ❮
               </a>
-              <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext} aria-label="Next slide">
+              <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext}>
                 ❯
               </a>
             </div>

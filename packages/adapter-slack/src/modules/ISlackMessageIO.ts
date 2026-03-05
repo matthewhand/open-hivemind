@@ -61,7 +61,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           rejectOut!(e);
         }
       )
-      .catch(() => undefined);
+      .catch((): undefined => undefined);
     this.sendTails.set(botName, next as unknown as Promise<any>);
     return out;
   }

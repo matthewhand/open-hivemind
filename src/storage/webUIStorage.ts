@@ -7,12 +7,12 @@ import path from 'path';
  */
 
 interface WebUIConfig {
-  agents: any[];
-  mcpServers: any[];
-  llmProviders: any[];
-  messengerProviders: any[];
-  personas: any[];
-  guards: any[];
+  agents: unknown[];
+  mcpServers: unknown[];
+  llmProviders: unknown[];
+  messengerProviders: unknown[];
+  personas: unknown[];
+  guards: unknown[];
   lastUpdated: string;
 }
 
@@ -57,12 +57,12 @@ export class WebUIStorage {
 
     // Return default configuration
     const defaultConfig = {
-      agents: [],
-      mcpServers: [],
-      llmProviders: [],
-      messengerProviders: [],
-      personas: [],
-      guards: [],
+      agents: [] as unknown[],
+      mcpServers: [] as unknown[],
+      llmProviders: [] as unknown[],
+      messengerProviders: [] as unknown[],
+      personas: [] as unknown[],
+      guards: [] as unknown[],
       lastUpdated: new Date().toISOString(),
     };
 
@@ -296,7 +296,7 @@ export class WebUIStorage {
             description: 'User and IP-based access restrictions',
             type: 'access',
             enabled: true,
-            config: { type: 'users', users: [], ips: [] },
+            config: { type: 'users', users: [] as string[], ips: [] as string[] },
           },
           {
             id: 'rate-limiter',
@@ -321,12 +321,10 @@ export class WebUIStorage {
           config.guards = defaultGuards;
         } else {
           // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
-          // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
-          const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
           for (const defaultGuard of defaultGuards) {
-            if (!existingIds.has(defaultGuard.id)) {
+            const exists = config.guards.find((g: { id: string, enabled: boolean }) => g.id === defaultGuard.id);
+            if (!exists) {
               config.guards.push(defaultGuard);
-              existingIds.add(defaultGuard.id);
             }
           }
         }
@@ -350,7 +348,7 @@ export class WebUIStorage {
       config.guards = [];
     }
 
-    const existingIndex = config.guards.findIndex((g: any) => g.id === guard.id);
+    const existingIndex = config.guards.findIndex((g: { id: string, enabled: boolean }) => g.id === guard.id);
 
     if (existingIndex >= 0) {
       config.guards[existingIndex] = guard;
@@ -370,7 +368,7 @@ export class WebUIStorage {
       return;
     }
 
-    const guard = config.guards.find((g: any) => g.id === id);
+    const guard = (config.guards as { id: string, enabled: boolean }[]).find((g) => g.id === id);
     if (guard) {
       guard.enabled = enabled;
       this.saveConfig(config);

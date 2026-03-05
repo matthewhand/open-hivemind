@@ -1,18 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
+import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import { ErrorFactory, BaseHivemindError } from '../../../src/types/errorClasses';
+import { errorLogger } from '../../../src/utils/errorLogger';
 import {
-  asyncErrorHandler,
   correlationMiddleware,
-  errorRecoveryMiddleware,
   globalErrorHandler,
+  asyncErrorHandler,
   handleUncaughtException,
   handleUnhandledRejection,
-  rateLimitErrorHandler,
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
+  errorRecoveryMiddleware,
+  rateLimitErrorHandler,
 } from '../../../src/middleware/errorHandler';
-import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
-import { BaseHivemindError, ErrorFactory } from '../../../src/types/errorClasses';
-import { errorLogger } from '../../../src/utils/errorLogger';
 
 jest.mock('../../../src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
@@ -116,19 +116,17 @@ describe('errorHandler middleware', () => {
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'MockError',
-          code: 'MOCK_ERROR',
-          message: 'Mock error message',
-          correlationId: 'test-corr-id',
-          details: { foo: 'bar' },
-          recovery: {
-            canRecover: false,
-            steps: ['Step 1'],
-          },
-        })
-      );
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        error: 'MockError',
+        code: 'MOCK_ERROR',
+        message: 'Mock error message',
+        correlationId: 'test-corr-id',
+        details: { foo: 'bar' },
+        recovery: {
+          canRecover: false,
+          steps: ['Step 1'],
+        }
+      }));
 
       // Ensure response doesn't contain stack in production
       const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];

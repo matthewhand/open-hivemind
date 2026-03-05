@@ -106,14 +106,14 @@ async function initializeRedis(): Promise<void> {
     await redisClient.connect();
     redisAvailable = true;
     debug('Redis client initialized successfully');
-  } catch (err) {
+  } catch (err: unknown) {
     console.warn('Redis initialization failed, using in-memory rate limiting:', err);
     redisAvailable = false;
   }
 }
 
 // Initialize Redis on module load
-initializeRedis().catch((err) => {
+initializeRedis().catch((err: Error) => {
   debug('Redis initialization error:', err);
 });
 
@@ -663,7 +663,7 @@ export function shutdownRateLimiter(): void {
   // Close Redis connection
   if (redisClient) {
     debug('Closing Redis connection');
-    redisClient.quit().catch((err) => {
+    redisClient.quit().catch((err: Error) => {
       debug('Error closing Redis:', err);
     });
   }

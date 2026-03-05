@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
@@ -301,8 +299,6 @@ export interface AIFeedback {
   metadata?: Record<string, unknown>;
 }
 
-@singleton()
-@injectable()
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private config?: DatabaseConfig;
@@ -310,7 +306,7 @@ export class DatabaseManager {
   private connected = false;
   private db: Database | null = null;
 
-  constructor(config?: DatabaseConfig) {
+  private constructor(config?: DatabaseConfig) {
     if (config) {
       this.configure(config);
     }

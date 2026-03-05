@@ -102,8 +102,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     await searchInput.fill('Code');
     await page.waitForTimeout(300);
     await expect(page.getByText('Code Reviewer')).toBeVisible();
-    // It's in the carousel now, so it might not be hidden
-    // await expect(page.getByText('Helpful Assistant')).toBeHidden();
+    await expect(page.getByText('Helpful Assistant')).toBeHidden();
 
     // Clear search
     await searchInput.clear();
@@ -119,8 +118,7 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
-    // It's in the carousel now
-    // await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+    await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
 
     // Test Interaction: Open Diff Viewer
     await page.locator('button[title="Compare Versions"]').first().click();

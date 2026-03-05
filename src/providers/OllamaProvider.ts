@@ -16,7 +16,7 @@ export class OllamaProvider implements ILLMProvider {
     return ollamaConfig;
   }
 
-  getSensitiveKeys() {
+  getSensitiveKeys(): string[] {
     return [];
   }
 }

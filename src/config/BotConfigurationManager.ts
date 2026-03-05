@@ -71,7 +71,7 @@ const botSchema = {
   MCP_SERVERS: {
     doc: 'MCP servers configuration (JSON array)',
     format: Array,
-    default: [],
+    default: [] as unknown as McpServerConfig[],
     env: 'BOTS_{name}_MCP_SERVERS',
   },
 

@@ -57,11 +57,6 @@ export interface HealthCheckResult {
   errorMessage?: string;
 }
 
-import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
-
-@singleton()
-@injectable()
 export class ApiMonitorService extends EventEmitter {
   private static instance: ApiMonitorService;
   private endpoints = new Map<string, EndpointConfig>();
@@ -69,7 +64,7 @@ export class ApiMonitorService extends EventEmitter {
   private monitoringIntervals = new Map<string, NodeJS.Timeout>();
   private isMonitoring = false;
 
-  constructor() {
+  private constructor() {
     super();
     // Increase max listeners for monitoring service
     this.setMaxListeners(20);

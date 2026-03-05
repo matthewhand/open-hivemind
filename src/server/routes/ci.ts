@@ -229,8 +229,8 @@ router.post('/api/deployments/validate', (req, res) => {
     // For now, simulate validation
     const validation = {
       valid: true,
-      warnings: [],
-      errors: [],
+      warnings: [] as string[],
+      errors: [] as string[],
       suggestions: [
         'Consider enabling rate limiting for production',
         'Add health check endpoints for monitoring',

@@ -82,7 +82,7 @@ export class ErrorHandler {
       try {
         const result = fn(...args);
         if (result instanceof Promise) {
-          return await result.catch((error) => {
+          return await result.catch((error: unknown): null => {
             this.handle(error, context);
             return null;
           });

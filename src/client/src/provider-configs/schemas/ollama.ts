@@ -1,5 +1,4 @@
 import type { ProviderConfigSchema } from '../types';
-import ModelAutocomplete from '../../components/DaisyUI/ModelAutocomplete';
 
 export const ollamaProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -34,10 +33,6 @@ export const ollamaProviderSchema: ProviderConfigSchema = {
       placeholder: 'llama2, codellama, mistral, etc.',
       defaultValue: 'llama2',
       group: 'Model Configuration',
-      component: ModelAutocomplete,
-      componentProps: {
-        providerType: 'ollama',
-      },
     },
     {
       name: 'maxTokens',

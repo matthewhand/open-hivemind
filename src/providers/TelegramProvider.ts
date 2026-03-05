@@ -81,7 +81,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     };
   }
 
-  getBotNames() {
+  getBotNames(): string[] {
     return [];
   }
 

@@ -120,7 +120,7 @@ router.post('/api/cloud-providers', (req, res) => {
       type,
       region,
       status: 'configuring',
-      resources: [],
+      resources: [] as any[],
       createdAt: new Date().toISOString(),
     };
 

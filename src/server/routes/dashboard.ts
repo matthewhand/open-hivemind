@@ -253,7 +253,7 @@ function isProviderConnected(bot: any): boolean {
 router.get('/status', authenticateToken, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    let bots = [];
+    let bots: any[] = [];
     try {
       bots = manager.getAllBots();
     } catch (e) {

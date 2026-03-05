@@ -722,10 +722,10 @@ export async function handleMessage(
 
           // Sort oldest-first for LLM context (A -> B -> C)
           // Discord fetch usually returns newest-first or mixed, so explicit sort is safest
-          freshHistory.sort((a, b) => a.getTimestamp().getTime() - b.getTimestamp().getTime());
+          freshHistory.sort((a: any, b: any) => a.getTimestamp().getTime() - b.getTimestamp().getTime());
 
           // Filter out the current message to avoid duplication (as it's added as 'userMessage' in prompt)
-          const filtered = freshHistory.filter((m) => m.getMessageId() !== message.getMessageId());
+          const filtered = freshHistory.filter((m: any) => m.getMessageId() !== message.getMessageId());
           historyMessages = filtered;
 
           logger(`Refetched history: ${historyMessages.length} messages (latest context)`);

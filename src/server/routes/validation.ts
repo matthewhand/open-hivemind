@@ -300,14 +300,14 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
       error: errorMessage,
       code: 'VALIDATION_ERROR',
       isValid: false,
-      warnings: [],
+      warnings: [] as any[],
       errors: [errorMessage],
       recommendations: [],
       botValidation: [],
       environmentValidation: {
         valid: false,
         errors: ['Internal validation error'],
-        warnings: [],
+        warnings: [] as any[],
       },
       timestamp: new Date().toISOString(),
     });
@@ -335,7 +335,7 @@ router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Resp
     return res.status(200).json({
       valid: false,
       errors: ['Configuration must include a "bots" array'],
-      warnings: [],
+      warnings: [] as any[],
       recommendations: [],
       botValidation: [],
       timestamp: new Date().toISOString(),
@@ -515,9 +515,9 @@ router.post(
         ...req.body,
         validator: (config: any) => ({
           isValid: true,
-          errors: [],
-          warnings: [],
-          info: [],
+          errors: [] as any[],
+          warnings: [] as any[],
+          info: [] as any[],
           score: 100,
         }),
       };

@@ -25,20 +25,6 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     fetchBots();
@@ -103,34 +89,25 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
-  const handleSendMessage = async (content: string, existingId?: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!selectedBotId) return;
 
-    const tempId = existingId || `temp-${Date.now()}`;
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: ChatMessage = {
+      id: tempId,
+      content,
+      timestamp: new Date().toISOString(),
+      sender: {
+        id: 'current-user',
+        name: 'You',
+        type: 'user',
+      },
+      metadata: {
+        status: 'sending',
+      },
+    };
 
-    if (existingId) {
-      // If retrying, reset the status to sending
-      setMessages(prev => prev.map(m =>
-        m.id === tempId
-          ? { ...m, metadata: { ...m.metadata, status: 'sending' } }
-          : m
-      ));
-    } else {
-      const tempMessage: ChatMessage = {
-        id: tempId,
-        content,
-        timestamp: new Date().toISOString(),
-        sender: {
-          id: 'current-user',
-          name: 'You',
-          type: 'user',
-        },
-        metadata: {
-          status: 'sending',
-        },
-      };
-      setMessages(prev => [...prev, tempMessage]);
-    }
+    setMessages(prev => [...prev, tempMessage]);
 
     try {
       await apiService.post(`/api/bots/${selectedBotId}/message`, { content });
@@ -139,19 +116,8 @@ const ChatPage: React.FC = () => {
       await fetchHistory(selectedBotId);
     } catch (err) {
       console.error('Failed to send message:', err);
-      // Mark optimistic update as failed
-      setMessages(prev => prev.map(m =>
-        m.id === tempId
-          ? { ...m, metadata: { ...m.metadata, status: 'failed' } }
-          : m
-      ));
-    }
-  };
-
-  const handleRetryMessage = (messageId: string) => {
-    const messageToRetry = messages.find(m => m.id === messageId);
-    if (messageToRetry) {
-      handleSendMessage(messageToRetry.content, messageId);
+      // Rollback optimistic update on error
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 
@@ -205,11 +171,6 @@ const ChatPage: React.FC = () => {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col bg-base-100 relative">
-                {isOffline && (
-                    <div className="bg-warning text-warning-content px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2">
-                        <span>⚠️</span> You are currently offline. Messaging is disabled.
-                    </div>
-                )}
                 {selectedBot ? (
                     <div className="flex-1 flex flex-col h-full relative">
                         {historyLoading && (
@@ -220,11 +181,10 @@ const ChatPage: React.FC = () => {
                         <ChatInterface
                             messages={messages}
                             onSendMessage={handleSendMessage}
-                            onRetryMessage={handleRetryMessage}
-                            placeholder={isOffline ? "You are offline" : "Type a message..."}
+                            placeholder="Type a message..."
                             className="h-full"
                             maxHeight="100%"
-                            isLoading={isOffline}
+                            isLoading={false}
                         />
                         {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
                     </div>

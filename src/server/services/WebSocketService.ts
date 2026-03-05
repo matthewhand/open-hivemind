@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
@@ -48,11 +47,6 @@ export interface AlertEvent {
   resolvedAt?: string;
 }
 
-import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
-
-@singleton()
-@injectable()
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
@@ -73,7 +67,7 @@ export class WebSocketService {
   // API monitoring
   private apiMonitorService: ApiMonitorService;
 
-  constructor() {
+  private constructor() {
     this.initializeMonitoringData();
     this.apiMonitorService = ApiMonitorService.getInstance();
     this.setupApiMonitoring();
@@ -154,7 +148,7 @@ export class WebSocketService {
   public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
     const messageEvent: MessageFlowEvent = {
       ...event,
-      id: `msg_${crypto.randomUUID()}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
     };
 
@@ -186,7 +180,7 @@ export class WebSocketService {
   ): void {
     const alertEvent: AlertEvent = {
       ...alert,
-      id: `alert_${crypto.randomUUID()}`,
+      id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       status: 'active',
     };

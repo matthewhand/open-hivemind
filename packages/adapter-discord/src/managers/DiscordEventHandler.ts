@@ -130,7 +130,7 @@ export class DiscordEventHandler {
         try {
           const refId = (message as any)?.reference?.messageId;
           if (refId && message.channel && (message.channel as any).messages?.fetch) {
-            repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+            repliedMessage = await (message.channel as any).messages.fetch(refId).catch((): null => null);
           }
         } catch {
           repliedMessage = null;
