@@ -205,3 +205,4 @@ archive/
 .specify/
 .kilocode/
 .seen_prs.json
+.auto_merge_state.json
