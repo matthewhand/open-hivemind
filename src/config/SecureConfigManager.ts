@@ -56,9 +56,13 @@ export class SecureConfigManager {
       throw ErrorUtils.createError(
         'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
@@ -76,9 +80,13 @@ export class SecureConfigManager {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
@@ -97,9 +105,13 @@ export class SecureConfigManager {
       throw ErrorUtils.createError(
         'Configuration ID is required',
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_ID_REQUIRED',
         400,
@@ -109,9 +121,13 @@ export class SecureConfigManager {
       throw ErrorUtils.createError(
         'Configuration name is required',
 <<<<<<< HEAD
+        'validation' as any,
+=======
+<<<<<<< HEAD
         'ValidationError' as any as any,
 =======
         'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
         'SECURE_CONFIG_NAME_REQUIRED',
         400,
@@ -300,9 +316,13 @@ export class SecureConfigManager {
         throw ErrorUtils.createError(
           'Invalid backup ID: Path traversal detected',
 <<<<<<< HEAD
+          'validation',
+=======
+<<<<<<< HEAD
           'ValidationError' as any,
 =======
           'validation',
+>>>>>>> origin/main
 >>>>>>> origin/main
           'SECURE_CONFIG_INVALID_BACKUP_ID',
           400,

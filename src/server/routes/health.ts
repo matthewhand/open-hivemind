@@ -619,9 +619,13 @@ router.get('/errors/patterns', (req, res) => {
             type,
             count: count as number,
 <<<<<<< HEAD
+            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
+=======
+<<<<<<< HEAD
             percentage: ((count as number) / (totalCount as number)) * 100,
 =======
             percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
+>>>>>>> origin/main
 >>>>>>> origin/main
           };
         }),
