@@ -367,9 +367,9 @@ const SettingsMessaging: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Semantic Relevance Threshold Tuning</span>
-              <span className="badge badge-info font-mono text-xs">{settings.semanticRelevanceBonus}x</span>
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4">Semantic Relevance Threshold Tuning</span>
+              <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
             </label>
             <input
               type="range"
@@ -408,9 +408,9 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Base Chance</span>
-              <span className="badge badge-accent font-mono">{settings.baseChance.toFixed(0)}%</span>
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4">Base Chance</span>
+              <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
             </label>
             <input
               type="range"
