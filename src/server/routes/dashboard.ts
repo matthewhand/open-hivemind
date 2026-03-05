@@ -431,7 +431,8 @@ function parseDate(value: unknown): Date | null {
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
  */
 function redactString(val: string | undefined): string | undefined {
-  if (!val || val.length <= 4) return val;
+  if (!val) return val;
+  if (val.length <= 4) return '*'.repeat(val.length);
   return '*'.repeat(val.length - 4) + val.slice(-4);
 }
 
