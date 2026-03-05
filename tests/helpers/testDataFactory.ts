@@ -122,6 +122,34 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+// Telegram Config Test Data
+export const telegramConfigData: ConfigTestData = {
+  defaults: {
+    TELEGRAM_BOT_TOKEN: '',
+    TELEGRAM_WEBHOOK_URL: '',
+    TELEGRAM_PARSE_MODE: 'HTML',
+    TELEGRAM_ALLOWED_CHATS: '',
+    TELEGRAM_BLOCKED_USERS: '',
+    TELEGRAM_ENABLE_COMMANDS: true,
+  },
+  envVars: {
+    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
+    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
+    TELEGRAM_PARSE_MODE: 'Markdown',
+    TELEGRAM_ALLOWED_CHATS: '12345,67890',
+    TELEGRAM_BLOCKED_USERS: '98765',
+    TELEGRAM_ENABLE_COMMANDS: 'false',
+  },
+  expectedResults: {
+    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
+    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
+    TELEGRAM_PARSE_MODE: 'Markdown',
+    TELEGRAM_ALLOWED_CHATS: '12345,67890',
+    TELEGRAM_BLOCKED_USERS: '98765',
+    TELEGRAM_ENABLE_COMMANDS: false,
+  },
+};
+
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -190,7 +218,7 @@ export const commandParserTestData = {
 /**
  * Factory function to create test data for different scenarios
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'telegram' | 'command'): any {
   switch (type) {
     case 'discord':
       return discordConfigData;
@@ -198,6 +226,8 @@ export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'
       return messageConfigData;
     case 'slack':
       return slackConfigData;
+    case 'telegram':
+      return telegramConfigData;
     case 'command':
       return commandParserTestData;
     default:
