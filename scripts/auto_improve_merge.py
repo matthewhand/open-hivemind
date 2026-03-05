@@ -30,7 +30,14 @@ REPO = re.sub(r".*github\.com[:/](.+?)(?:\.git)?$", r"\1", _remote)
 
 POLL_INTERVAL = 60
 IDLE_EXIT_AFTER = 30
-SEEN: set = set()
+
+# Persist seen PR numbers so restarting doesn't re-process every open PR
+SEEN_FILE = os.path.join(REPO_PATH, ".seen_prs.json")
+SEEN: set = set(json.load(open(SEEN_FILE)) if os.path.exists(SEEN_FILE) else [])
+
+def _save_seen():
+    with open(SEEN_FILE, "w") as f:
+        json.dump(sorted(SEEN), f)
 
 
 def run(cmd, timeout=60, env=None):
@@ -210,6 +217,7 @@ try:
             for pr in new_prs:
                 num, branch, title, body = pr["num"], pr["branch"], pr["title"], pr["body"]
                 SEEN.add(num)
+                _save_seen()
                 print(f"[{now}] 🆕 #{num} {title[:55]}", flush=True)
                 if is_graceful(title):
                     print("  ⏭️  graceful — merging directly", flush=True)
