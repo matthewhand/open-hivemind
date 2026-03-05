@@ -25,8 +25,8 @@ export const validateBotConfigCreation = [
     .trim()
     .notEmpty()
     .withMessage('Bot name is required')
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Bot name must be between 1 and 100 characters')
+    .isLength({ min: CONFIG_LIMITS.BOT_NAME_MIN_LENGTH, max: CONFIG_LIMITS.BOT_NAME_MAX_LENGTH })
+    .withMessage(`Bot name must be between ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} and ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters`)
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Bot name can only contain letters, numbers, underscores, and hyphens'),
 
@@ -58,29 +58,29 @@ export const validateBotConfigCreation = [
   body('llmProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('LLM profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`LLM profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Persona validation
   body('persona')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Persona must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Persona must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Response profile validation
   body('responseProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Response profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Response profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // MCP guard profile validation
   body('mcpGuardProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('MCP guard profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`MCP guard profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // System instruction validation
   body('systemInstruction')
@@ -216,8 +216,8 @@ export const validateBotConfigUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Bot name cannot be empty')
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Bot name must be between 1 and 100 characters')
+    .isLength({ min: CONFIG_LIMITS.BOT_NAME_MIN_LENGTH, max: CONFIG_LIMITS.BOT_NAME_MAX_LENGTH })
+    .withMessage(`Bot name must be between ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} and ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters`)
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Bot name can only contain letters, numbers, underscores, and hyphens'),
 
@@ -251,29 +251,29 @@ export const validateBotConfigUpdate = [
   body('llmProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('LLM profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`LLM profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Persona validation
   body('persona')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Persona must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Persona must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Response profile validation
   body('responseProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Response profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Response profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // MCP guard profile validation
   body('mcpGuardProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('MCP guard profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`MCP guard profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // System instruction validation
   body('systemInstruction')

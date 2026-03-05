@@ -239,10 +239,10 @@ export class ConfigurationValidator {
     // Basic validation
     if (!config.name || config.name.trim().length === 0) {
       errors.push('Bot name is required');
-    } else if (config.name.length < 2) {
-      errors.push('Bot name must be at least 2 characters long');
-    } else if (config.name.length > 50) {
-      errors.push('Bot name must be less than 50 characters long');
+    } else if (config.name.length < CONFIG_LIMITS.BOT_NAME_MIN_LENGTH) {
+      errors.push(`Bot name must be at least ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} characters long`);
+    } else if (config.name.length > CONFIG_LIMITS.BOT_NAME_MAX_LENGTH) {
+      errors.push(`Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`);
     }
 
     if (!config.messageProvider) {
