@@ -247,32 +247,47 @@ gh pr list --state open --limit 30 \
 ### Step 5 — Batch merge all fleet responses
 
 ```bash
-python3 force_merge.py 2>&1
+python3 scripts/force_merge.py 2>&1
 ```
 
-`force_merge.py` logic per PR:
+`scripts/force_merge.py` logic per PR:
 1. Try direct admin squash-merge
 2. If rejected: checkout → rebase `--theirs` → force-push → retry
+
+### Scaling to fill the fleet (~30 concurrent Jules sessions)
+
+When there are many open PRs, process in rolling batches:
+- Post feedback on **all currently open PRs minus 1**
+- Locally improve + merge that 1
+- While fleet responds, fetch the **next batch** of new PRs and repeat
+- Use `scripts/auto_improve_merge.py` as background watcher to catch new arrivals
+
+The fleet can handle ~30 concurrent sessions — always keep the feedback queue saturated.
 
 ---
 
 ## 8. Automation Scripts
 
-### `auto_improve_merge.py`
-Continuous watcher. On each new Jules fleet PR: posts feedback → rebases → squash-merges.
+All scripts live in `scripts/` — tracked in git, portable, no hardcoded paths.
+
+### `scripts/auto_improve_merge.py`
+Continuous watcher. On each new Jules fleet PR: posts topic-aware feedback → rebases → squash-merges.
 
 ```bash
-python3 auto_improve_merge.py &
+# From repo root:
+python3 scripts/auto_improve_merge.py &
 ```
 
-Exits after 30 idle rounds (~30 min).
+Exits after 30 idle rounds (~30 min with no new PRs).
 
-### `force_merge.py`
-Batch rebase + admin squash-merge all currently open PRs.
+### `scripts/force_merge.py`
+Batch rebase + admin squash-merge all currently open PRs. Use after fleet responds to feedback.
 
 ```bash
-python3 force_merge.py 2>&1
+python3 scripts/force_merge.py 2>&1
 ```
+
+**Both scripts auto-detect `REPO_PATH` and `REPO`** via `git rev-parse` and `git remote get-url` — no hardcoded paths.
 
 ---
 
@@ -303,3 +318,94 @@ git push origin v1.2.3
 | Screenshots | Update `docs/screenshots/` after any visible UI change |
 | Branch push | Always `--force-with-lease` or `--force` when rebasing |
 | Main branch | Never push directly — always PR + squash merge |
+| Scripts | Always in `scripts/` — never in `/tmp/` or home directory |
+
+---
+
+## 11. Anti-Patterns (Don't Do This)
+
+Real sins observed and committed during development. Each one has bit us at least once.
+
+### 🚫 1. Hardcoded absolute paths in scripts
+```python
+# ❌ Breaks on any other machine
+REPO_PATH = "/mnt/models/open-hivemind"
+
+# ✅ Portable
+REPO_PATH = subprocess.check_output(
+    ["git", "rev-parse", "--show-toplevel"], text=True
+).strip()
+```
+
+### 🚫 2. Duplicate imports after patch edits
+When patching a file, always check for existing imports before adding new ones.
+```python
+# ❌ Left by a patch that added portable paths
+import subprocess, json, time, os
+import subprocess as _sp, os as _os   # duplicate!
+
+# ✅ One import block, consistent aliases
+import subprocess, json, time, os, re
+```
+
+### 🚫 3. Scratch/debug files committed to main
+Files like `scratch.js`, `patch.js`, `update-discord.js`, `verify.py` have all landed in `main` via unreviewed PRs.
+- Add these patterns to `.gitignore`: `scratch*.js`, `patch.js`, `debug-*.py`
+- Always check `git ls-files | grep -E "scratch|patch|debug"` before merging a batch
+
+### 🚫 4. Pushing directly to main
+```bash
+# ❌ Skips review, breaks linear PR history
+git push origin main
+
+# ✅ Always via PR
+git push origin HEAD:my-branch
+gh pr create ... && gh pr merge ... --squash --admin
+```
+Every commit to main should have a PR number in its subject line.
+
+### 🚫 5. Blind `--theirs` during rebase
+`--strategy-option=theirs` silently discards the branch's changes in conflicts. Only use it for binary files (images, lock files) or when you've explicitly decided the branch content is wrong.
+```bash
+# ❌ Silently drops branch changes
+git rebase origin/main --strategy-option=theirs
+
+# ✅ Resolve conflicts explicitly; use --theirs only for specific files
+git checkout --theirs -- package-lock.json
+git checkout --theirs -- "docs/screenshots/*.png"
+git add -u
+```
+
+### 🚫 6. Not validating empty `gh` API responses
+`gh pr list` returns empty stdout (not an error) when rate-limited or auth fails. Treating empty as "0 PRs" causes silent failures.
+```bash
+# ✅ Always check for empty + error
+OUT=$(gh pr list --state open --limit 30 --json number --jq 'length' 2>&1)
+if [ -z "$OUT" ] || echo "$OUT" | grep -q "error\|rate\|auth"; then
+  echo "gh API error: $OUT" >&2; exit 1
+fi
+```
+
+### 🚫 7. Non-persisted state in long-running scripts
+The `SEEN` set in `auto_improve_merge.py` is lost on restart — the script will re-post feedback to every open PR.
+```python
+# ✅ Persist seen PRs to a temp file
+SEEN_FILE = os.path.join(REPO_PATH, ".seen_prs.json")
+SEEN = set(json.load(open(SEEN_FILE)) if os.path.exists(SEEN_FILE) else [])
+# ... on exit: json.dump(list(SEEN), open(SEEN_FILE, "w"))
+```
+
+### 🚫 8. Scripts written outside the repo
+Scripts in `/tmp/` or `~/` are lost on git checkout or machine restart.
+Always write automation scripts to `scripts/` and commit them.
+
+### 🚫 9. `.gitignore` yo-yo
+Adding a file, removing it from gitignore, committing it, then removing it again creates noisy history.
+**Check `.gitignore` before `git add`:**
+```bash
+git check-ignore -v FILENAME   # shows which rule matches, if any
+```
+
+### 🚫 10. Merging feedback + merge in the same pass without waiting
+Posting scope-widening feedback and then immediately rebasing + merging the PR defeats the purpose — the fleet never gets to act on the feedback.
+**Correct pattern:** post feedback → locally merge 1 PR → wait for fleet → then batch-merge responses.
