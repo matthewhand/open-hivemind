@@ -22,3 +22,4 @@ export const ConfigRestoreSchema = z.object({
 export const ConfigBackupSchema = z.object({
   body: z.object({}).optional(), // No required body parameters for backup creation
 });
+
