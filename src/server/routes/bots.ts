@@ -150,6 +150,7 @@ router.get('/:id/history', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 /**
  * Redacts a string by fully masking short strings and partially masking longer ones.
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
@@ -157,9 +158,11 @@ router.get('/:id/history', async (req, res) => {
 function redactString(val: string | undefined): string | undefined {
   if (!val) return val;
   if (val.length <= 3) return '***';
-  return val.substring(0, 1) + '***' + val.substring(val.length - 1);
+  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
 }
 
+=======
+>>>>>>> origin/main
 // GET /api/bots/:id/activity - Get activity logs
 router.get('/:id/activity', async (req, res) => {
   try {
@@ -185,8 +188,8 @@ router.get('/:id/activity', async (req, res) => {
         result: event.status,
         metadata: {
           type: 'MESSAGE',
-          channelId: redactString(event.channelId),
-          userId: redactString(event.userId),
+          channelId: event.channelId,
+          userId: event.userId,
         },
       }))
       .reverse();

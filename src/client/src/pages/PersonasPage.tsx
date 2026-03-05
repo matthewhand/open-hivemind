@@ -40,7 +40,6 @@ const PersonasPage: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // Bot type from API
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const successToast = ToastNotification.useSuccessToast();
@@ -133,7 +132,7 @@ const PersonasPage: React.FC = () => {
   const handleSavePersona = async () => {
     if (!personaName.trim()) { return; }
 
-    setIsSaving(true);
+    setLoading(true);
     try {
       let savedPersona: ApiPersona;
 
@@ -190,12 +189,6 @@ const PersonasPage: React.FC = () => {
       await Promise.all(updates);
       await fetchData();
 
-      // Show success toast before closing modal for better UX
-      successToast(
-        editingPersona ? 'Persona updated!' : (cloningPersonaId ? 'Persona cloned!' : 'Persona created!'),
-        `${personaName} has been saved successfully.`
-      );
-
       setShowCreateModal(false);
       setShowEditModal(false);
       setEditingPersona(null);
@@ -204,7 +197,7 @@ const PersonasPage: React.FC = () => {
       console.error(err);
       setError('Failed to save persona changes');
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
   };
 
@@ -293,11 +286,16 @@ const PersonasPage: React.FC = () => {
     }
   };
 
-  const stats = [
-    { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
-    { id: 'active', title: 'Assigned Bots', value: personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0), icon: '🤖', color: 'secondary' as const },
-    { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
-  ];
+  const stats = useMemo(() => {
+    const active = personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0);
+    const custom = personas.reduce((acc, p) => acc + (p.isBuiltIn ? 0 : 1), 0);
+
+    return [
+      { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
+      { id: 'active', title: 'Assigned Bots', value: active, icon: '🤖', color: 'secondary' as const },
+      { id: 'custom', title: 'Custom Personas', value: custom, icon: 'user', color: 'accent' as const },
+    ];
+  }, [personas]);
 
   return (
     <div className="space-y-6">
@@ -602,8 +600,8 @@ const PersonasPage: React.FC = () => {
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
             {!isViewMode && (
-              <Button variant="primary" onClick={handleSavePersona} disabled={isSaving}>
-                {isSaving ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
+                {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
               </Button>
             )}
           </div>

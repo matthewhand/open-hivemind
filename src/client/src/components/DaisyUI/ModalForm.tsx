@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Input from './Input';
 
 interface FormField {
@@ -50,14 +50,31 @@ const ModalForm: React.FC<ModalFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
     if (isOpen) {
       setFormData(initialData);
       setErrors({});
       setCurrentStep(0);
+      if (typeof modal.showModal === 'function' && !modal.open) {
+        modal.showModal();
+      }
+    } else {
+      if (typeof modal.close === 'function' && modal.open) {
+        modal.close();
+      }
     }
   }, [isOpen, initialData]);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === modalRef.current && !isSubmitting) {
+      onClose();
+    }
+  };
 
   const getSizeClass = () => {
     switch (size) {
@@ -73,17 +90,17 @@ const ModalForm: React.FC<ModalFormProps> = ({
     if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
       return `${field.label} is required`;
     }
-    
+
     if (field.validation) {
       return field.validation(value);
     }
-    
+
     return null;
   };
 
   const validateStep = (stepIndex: number): boolean => {
     if (!steps) {return true;}
-    
+
     const stepFields = steps[stepIndex].fields;
     const stepErrors: Record<string, string> = {};
     let isValid = true;
@@ -105,7 +122,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleInputChange = (fieldName: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[fieldName]) {
       setErrors(prev => ({ ...prev, [fieldName]: '' }));
@@ -124,7 +141,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all fields
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
@@ -152,7 +169,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const renderField = (field: FormField) => {
     const hasError = !!errors[field.name];
-    
+
     switch (field.type) {
     case 'textarea':
       return (
@@ -165,7 +182,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           rows={4}
         />
       );
-        
+
     case 'select':
       return (
         <select
@@ -183,7 +200,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           ))}
         </select>
       );
-        
+
     case 'checkbox':
       return (
         <div className="form-control">
@@ -199,7 +216,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </label>
         </div>
       );
-        
+
     case 'radio':
       return (
         <div className="form-control">
@@ -219,7 +236,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           ))}
         </div>
       );
-        
+
     case 'file':
       return (
         <input
@@ -230,7 +247,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           multiple={field.multiple}
         />
       );
-        
+
     default:
       return (
         <Input
@@ -250,15 +267,30 @@ const ModalForm: React.FC<ModalFormProps> = ({
     return fields.filter(field => steps[currentStep].fields.includes(field.name));
   };
 
-  if (!isOpen) {return null;}
+  // If not open and no native dialog support, return null (React fallback)
+  // With native dialog, we keep the element mounted and toggle visibility via showModal()
+  // But wait, the existing pattern conditionally returns null if !isOpen.
+  // Actually, keeping the <dialog> always rendered is better, or rendering it conditionally
+  // like <Modal> does (which keeps it rendered if isOpen or just relies on the hook).
+  // The Modal component relies on open={isOpen} as a fallback.
+  // Wait, I will just render it if isOpen, but actually let's render it always and use open={isOpen}
+  // No, if we return null, the ref becomes null, showModal won't work on first render properly
+  // without careful ref handling. Actually Modal.tsx renders unconditionally and relies on isOpen hook,
+  // but it's simpler to just not conditionally return null if we want to use the native dialog showModal() animation smoothly.
+  // Wait, let's look at Modal.tsx. It conditionally renders children but not the dialog.
 
   return (
-    <div className="modal modal-open">
+    <dialog
+      ref={modalRef}
+      className="modal"
+      onClick={handleBackdropClick}
+      open={isOpen}
+    >
       <div className={`modal-box ${getSizeClass()}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg">{title}</h3>
-          <button 
+          <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
             disabled={isSubmitting}
@@ -273,7 +305,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           <div className="mb-6">
             <ul className="steps steps-horizontal w-full">
               {steps.map((step, index) => (
-                <li 
+                <li
                   key={index}
                   className={`step ${index <= currentStep ? 'step-primary' : ''}`}
                 >
@@ -281,7 +313,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 </li>
               ))}
             </ul>
-            
+
             {steps[currentStep].description && (
               <div className="mt-2 text-sm text-base-content/60 text-center">
                 {steps[currentStep].description}
@@ -303,15 +335,15 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     </span>
                   </label>
                 )}
-                
+
                 {renderField(field)}
-                
+
                 {errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-error">{errors[field.name]}</span>
                   </label>
                 )}
-                
+
                 {field.helperText && !errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-base-content/60">{field.helperText}</span>
@@ -333,7 +365,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 >
                   Previous
                 </button>
-                
+
                 {currentStep < steps.length - 1 ? (
                   <button
                     type="button"
@@ -377,7 +409,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 };
 

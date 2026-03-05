@@ -7,11 +7,11 @@ interface KbdProps {
   'aria-label'?: string;
 }
 
-const Kbd: React.FC<KbdProps> = ({ 
-  children, 
-  size = 'md', 
-  className = '', 
-  'aria-label': ariaLabel, 
+const Kbd: React.FC<KbdProps> = ({
+  children,
+  size = 'md',
+  className = '',
+  'aria-label': ariaLabel,
 }) => {
   const sizeClasses = {
     xs: 'kbd-xs',
@@ -23,8 +23,8 @@ const Kbd: React.FC<KbdProps> = ({
   const kbdClass = `kbd ${sizeClasses[size]} ${className}`.trim();
 
   return (
-    <kbd 
-      className={kbdClass} 
+    <kbd
+      className={kbdClass}
       aria-label={ariaLabel}
     >
       {children}

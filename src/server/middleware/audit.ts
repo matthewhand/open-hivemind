@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { Request, type NextFunction, type Response } from 'express';
+import { type NextFunction, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { AuditLogger } from '../../common/auditLogger';
 

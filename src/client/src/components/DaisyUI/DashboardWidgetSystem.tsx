@@ -51,7 +51,7 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -59,7 +59,7 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
           </div>
         )}
       </div>
-      
+
       <div className="grid grid-cols-1 gap-3">
         {stats.map((stat: any, index: number) => (
           <div key={index} className="stat bg-base-200 rounded-lg p-3">
@@ -79,14 +79,14 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
 
 const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
   const data = widget.data?.chartData || [];
-  
+
   return (
     <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -94,7 +94,7 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
           </div>
         )}
       </div>
-      
+
       {/* Simulated Chart */}
       <div className="relative h-32 bg-base-200 rounded-lg flex items-end p-2 gap-1">
         {[65, 45, 78, 52, 89, 67, 43, 91, 72, 55].map((height, index) => (
@@ -105,7 +105,7 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
           />
         ))}
       </div>
-      
+
       <div className="mt-2 text-center">
         <div className="text-sm text-base-content/60">Message Activity</div>
         <div className="text-xs text-base-content/40">Last 10 hours</div>
@@ -128,7 +128,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -136,7 +136,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
           </div>
         )}
       </div>
-      
+
       <div className="space-y-2 max-h-40 overflow-y-auto">
         {activities.map((activity: any, index: number) => (
           <div key={index} className="flex items-center gap-3 p-2 bg-base-200 rounded-lg">
@@ -170,7 +170,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -178,7 +178,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
           </div>
         )}
       </div>
-      
+
       <div className="grid grid-cols-2 gap-2">
         {actions.map((action: any, index: number) => (
           <button key={index} className={`btn btn-sm ${action.color} gap-1`}>
@@ -205,7 +205,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -213,7 +213,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
           </div>
         )}
       </div>
-      
+
       <div className="space-y-3">
         {Object.entries(health).map(([key, value]) => (
           <div key={key} className="flex items-center gap-3">
@@ -386,7 +386,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent, widgetId: string) => {
     if (!isEditing) {return;}
-    
+
     const widget = widgets.find(w => w.id === widgetId);
     if (!widget) {return;}
 
@@ -403,8 +403,8 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     const newX = Math.max(0, e.clientX - dragOffset.x);
     const newY = Math.max(0, e.clientY - dragOffset.y);
 
-    setWidgets(prev => prev.map(w => 
-      w.id === draggedWidget 
+    setWidgets(prev => prev.map(w =>
+      w.id === draggedWidget
         ? { ...w, position: { x: newX, y: newY } }
         : w,
     ));
@@ -429,9 +429,9 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   const resetLayout = () => {
     const resetWidgets = widgets.map((widget, index) => ({
       ...widget,
-      position: { 
-        x: (index % 3) * 350 + 50, 
-        y: Math.floor(index / 3) * 300 + 50, 
+      position: {
+        x: (index % 3) * 350 + 50,
+        y: Math.floor(index / 3) * 300 + 50,
       },
     }));
     setWidgets(resetWidgets);
@@ -449,7 +449,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
             >
               {isEditing ? '✓ Done' : '✏️ Edit'}
             </button>
-            
+
             {isEditing && (
               <>
                 <button
@@ -458,7 +458,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
                 >
                   ➕ Add Widget
                 </button>
-                
+
                 <button
                   className="btn btn-outline"
                   onClick={resetLayout}

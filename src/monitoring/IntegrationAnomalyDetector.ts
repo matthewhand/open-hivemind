@@ -1,9 +1,5 @@
 import { EventEmitter } from 'events';
-import {
-  ProviderMetricsCollector,
-  type ProviderStatus,
-  type ProviderType,
-} from './ProviderMetricsCollector';
+import { ProviderMetricsCollector, type ProviderType } from './ProviderMetricsCollector';
 
 /**
  * Integration types

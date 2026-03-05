@@ -26,7 +26,7 @@ const BreadcrumbNavigation: React.FC = () => {
     let currentPath = '';
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
-      
+
       // Skip adding breadcrumb for 'admin' as it's the main section
       if (segment === 'admin') {
         breadcrumbs.push({
@@ -65,7 +65,7 @@ const BreadcrumbNavigation: React.FC = () => {
                 {breadcrumb.label}
               </span>
             ) : (
-              <Link 
+              <Link
                 to={breadcrumb.path}
                 className="text-base-content/60 hover:text-primary transition-colors"
               >
