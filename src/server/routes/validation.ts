@@ -34,7 +34,6 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
 
   if (!bot.name) {
     errors.push('Bot name is required');
-    errors.push('Name is required');
   }
 
   if (!bot.messageProvider) {
