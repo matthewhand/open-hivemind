@@ -1,5 +1,13 @@
 import { redactSensitiveInfo } from './redactSensitiveInfo';
 
+export function redactPIIString(val: string | undefined | null): string | undefined {
+  if (!val) return val as undefined;
+  if (val.length <= 4) return '*'.repeat(val.length);
+  return '*'.repeat(val.length - 4) + val.slice(-4);
+}
+
+const PII_KEYS = new Set(['userId', 'channelId', 'email', 'phone', 'ip', 'ipAddress', 'sub']);
+
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
@@ -106,6 +114,9 @@ function sanitizeValue(key: string | undefined, value: unknown, seen: WeakSet<ob
   }
 
   if (typeof value === 'string') {
+    if (key && PII_KEYS.has(key)) {
+      return redactPIIString(value);
+    }
     return key ? redactSensitiveInfo(key, value) : sanitizeLooseString(value);
   }
 
