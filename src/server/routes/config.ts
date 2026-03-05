@@ -14,6 +14,7 @@ import {
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
+import llmTaskConfig from '../../config/llmTaskConfig';
 import {
   createMcpServerProfile,
   deleteMcpServerProfile,
@@ -90,6 +91,7 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
+  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 

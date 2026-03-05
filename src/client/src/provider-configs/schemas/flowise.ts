@@ -5,12 +5,14 @@ export const flowiseProviderSchema: ProviderConfigSchema = {
   providerType: 'flowise',
   displayName: 'Flowise',
   description: 'Connect to Flowise workflow engine for LLM capabilities',
-  icon: '⚡', // Or another suitable icon
+  icon: '🔀', // Or another suitable icon
   color: '#3498DB', // Adjust color as needed
-  defaultConfig: {},
+  defaultConfig: {
+    useRest: true,
+  },
   fields: [
     {
-      name: 'apiUrl',
+      name: 'apiEndpoint',
       label: 'API Endpoint',
       type: 'url',
       required: true,
@@ -28,13 +30,31 @@ export const flowiseProviderSchema: ProviderConfigSchema = {
       group: 'Authentication',
     },
     {
-      name: 'chatflowId',
-      label: 'Chatflow ID',
+      name: 'conversationChatflowId',
+      label: 'Conversation Chatflow ID',
       type: 'text',
       required: true,
       description: 'The ID of the chatflow to use for conversations',
       placeholder: 'chatflow-id-uuid',
       group: 'Configuration',
+    },
+    {
+      name: 'completionChatflowId',
+      label: 'Completion Chatflow ID (Optional)',
+      type: 'text',
+      required: false,
+      description: 'The ID of the chatflow to use for text completion tasks',
+      placeholder: 'completion-chatflow-id-uuid',
+      group: 'Configuration',
+    },
+    {
+      name: 'useRest',
+      label: 'Use REST API',
+      type: 'boolean',
+      required: false,
+      description: 'Use REST API instead of Socket.io for communication',
+      defaultValue: true,
+      group: 'Advanced',
     },
   ],
 };

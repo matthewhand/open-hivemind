@@ -154,7 +154,7 @@ const BotCard: React.FC<BotCardProps> = ({
   const handleEditProvider = (provider: MessageProvider | LLMProvider) => {
     setProviderModalState({
       isOpen: true,
-      providerType: provider.type as any, // Type narrowing might be needed but 'as any' is safe here given context
+      providerType: provider.type as MessageProviderType | LLMProviderType,
       mode: 'edit',
       provider: provider,
       botId: bot.id,

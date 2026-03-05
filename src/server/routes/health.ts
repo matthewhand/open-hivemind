@@ -251,6 +251,46 @@ ${MetricsCollector.getInstance().getPrometheusFormat()}
   return res.send(metrics);
 });
 
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
+# TYPE process_uptime_seconds gauge
+process_uptime_seconds ${uptime}
+
+# HELP process_memory_heap_used_bytes Process heap memory used in bytes
+# TYPE process_memory_heap_used_bytes gauge
+process_memory_heap_used_bytes ${memoryUsage.heapUsed}
+
+# HELP process_memory_heap_total_bytes Process heap memory total in bytes
+# TYPE process_memory_heap_total_bytes gauge
+process_memory_heap_total_bytes ${memoryUsage.heapTotal}
+
+# HELP process_resident_memory_bytes Resident memory size in bytes
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes ${memoryUsage.rss}
+
+# HELP nodejs_heap_size_total_bytes Total heap size in bytes
+# TYPE nodejs_heap_size_total_bytes gauge
+nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
+
+# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
+# TYPE process_cpu_user_seconds_total counter
+process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
+
+# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
+# TYPE process_cpu_system_seconds_total counter
+process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
+
+# HELP nodejs_version_info Node.js version info
+# TYPE nodejs_version_info gauge
+nodejs_version_info{version="${process.version}"} 1
+`;
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+};
+
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
@@ -530,20 +570,23 @@ router.get('/errors/patterns', (req, res) => {
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);
 
+  // ⚡ Bolt Optimization: Calculate total count once instead of inside the map loop
+  // This changes an O(n²) operation into an O(n) operation when computing error percentages
+  const totalCount = Object.values(errorStats).reduce(
+    (sum: number, val: any) => sum + (val as number),
+    0
+  );
+
   const patternsData = {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => ((b as number) - (a as number)))
         .map(([type, count]) => {
-          const totalCount = Object.values(errorStats).reduce(
-            (sum: number, val: any) => sum + (val as number),
-            0
-          );
           return {
             type,
             count: count as number,
-            percentage: ((count as number) / (totalCount as number)) * 100,
+            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),

@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { DatabaseManager, type Anomaly } from '../../database/DatabaseManager';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const debug = Debug('app:webui:anomaly');

@@ -1,9 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { authenticate, requireAdmin } from '../../auth/middleware';
+import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
-import { ErrorUtils, HivemindError } from '../../types/errors';
+import { ErrorUtils } from '../../types/errors';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
 
 const router = Router();
@@ -34,6 +34,7 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
 
   if (!bot.name) {
     errors.push('Bot name is required');
+    errors.push('Name is required');
   }
 
   if (!bot.messageProvider) {

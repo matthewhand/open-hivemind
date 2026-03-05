@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { Router, type Request, type Response } from 'express';
-import { body, param, query, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
@@ -412,19 +412,8 @@ router.post(
       }
 
       // Construct backup file path
-      const backupsDir = path.join(process.cwd(), 'config', 'backups');
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(backupsDir, backupFileName);
-
-      // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(backupsDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid backup path',
-        });
-      }
+      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
 
       const result = await importExportService.restoreFromBackup(
         backupPath,
@@ -511,19 +500,8 @@ router.get(
       }
 
       // Construct backup file path
-      const backupsDir = path.join(process.cwd(), 'config', 'backups');
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(backupsDir, backupFileName);
-
-      // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(backupsDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid backup path',
-        });
-      }
+      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
 
       // Check if file exists
       try {
