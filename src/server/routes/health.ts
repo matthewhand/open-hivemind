@@ -546,7 +546,7 @@ router.get('/errors/patterns', (req, res) => {
           return {
             type,
             count: count as number,
-            percentage: ((totalCount as number) > 0) ? ((count as number) / (totalCount as number)) * 100 : 0,
+            percentage: (totalCount as number) > 0 ? ((count as number) / (totalCount as number)) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),
