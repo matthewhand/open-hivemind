@@ -302,6 +302,22 @@ export class MigrationManager {
           );
         },
       },
+      {
+        id: '011_add_cron_timezone_support',
+        name: 'Add timezone support to cron scheduling tables',
+        version: 11,
+        up: async (db: any) => {
+          await db.exec("ALTER TABLE bot_scheduling ADD COLUMN timezone TEXT DEFAULT 'UTC'");
+          await db.exec("ALTER TABLE bot_backup_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'");
+          await db.exec(
+            "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
+          );
+        },
+        down: async (db: any) => {
+          // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
+          // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
+        },
+      },
     ];
   }
 
