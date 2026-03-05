@@ -9,6 +9,7 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
+import { BotConfig as BaseBotConfig } from '../../../../types/config';
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -16,18 +17,12 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
-interface BotConfig {
-    name: string;
-    messageProvider: string;
-    llmProvider: string;
-    llmProfile?: string;
-    persona?: string;
+type BotConfig = BaseBotConfig & {
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
-    [key: string]: unknown;
-}
+};
 
 interface BotListResponse {
     bots: BotConfig[];

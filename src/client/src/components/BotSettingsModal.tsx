@@ -3,18 +3,19 @@ import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
-import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
+import { Persona as ApiPersona } from '../services/api';
+import { BotConfig as BaseBotConfig } from '../../../types/config';
 
 // Extended Bot type with UI-specific fields
-interface BotConfig extends ApiBot {
+type BotConfig = BaseBotConfig & {
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field
     status?: string;
-}
+};
 
-// Define LLMProfile locally as it's not exported from API
-interface LLMProfile {
+// Define LLMProfile since it's used as a parameter type and not currently shared in types/config.ts
+export interface LLMProfile {
     key: string;
     name: string;
     provider: string;
