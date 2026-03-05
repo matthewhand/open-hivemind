@@ -592,7 +592,17 @@ export class ConfigurationImportExportService {
   }
 
   /**
-   * Create a backup of all configurations
+   * Create a backup of all configurations.
+   *
+   * Side-effects:
+   * - Enforces a configurable backup retention policy (deletes or cold-stores old backups if count > max).
+   * - Emits an audit log event when an old backup is pruned.
+   *
+   * @param name The name of the backup
+   * @param description Optional description for the backup
+   * @param createdBy User who triggered the backup
+   * @param options Additional export options (format, encryption, etc.)
+   * @returns An ExportResult containing the filePath, size, and checksum on success.
    */
   async createBackup(
     name: string,
