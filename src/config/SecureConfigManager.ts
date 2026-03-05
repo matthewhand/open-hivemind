@@ -3,8 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
-import { UserConfigStore } from './UserConfigStore';
-import { AuditLogger } from '../common/auditLogger';
 
 const debug = Debug('app:SecureConfigManager');
 
@@ -255,13 +253,7 @@ export class SecureConfigManager {
   }
 
   /**
-   * Create a backup of all secure configurations.
-   *
-   * Side-effects:
-   * - Enforces a configurable backup retention limit.
-   * - Emits an audit log event when an old secure backup is pruned.
-   *
-   * @returns The newly created backup ID.
+   * Create a backup of all configurations
    */
   public async createBackup(): Promise<string> {
     try {
@@ -301,25 +293,6 @@ export class SecureConfigManager {
       await fs.promises.writeFile(backupPath, encryptedBackup, 'utf8');
 
       debug(`Backup ${backupId} created with ${configs.length} configurations`);
-
-      // Enforce backup retention policy
-      try {
-        const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
-        const maxBackups = typeof generalSettings.backupRetentionLimit === 'number' ? generalSettings.backupRetentionLimit : 10;
-        const allBackups = await this.listBackups();
-        if (allBackups.length > maxBackups) {
-          debug(`Enforcing secure config backup retention policy: keeping latest ${maxBackups} backups`);
-          const backupsToDelete = allBackups.slice(maxBackups);
-          for (const oldBackup of backupsToDelete) {
-            debug(`Deleting old secure config backup: ${oldBackup.id}`);
-            await fs.promises.unlink(path.join(this.backupDir, `${oldBackup.id}.json`));
-            AuditLogger.getInstance().logAdminAction('system', 'DELETE', `secure-config-backup/${oldBackup.id}`, 'success', 'Deleted secure config backup due to retention limit');
-          }
-        }
-      } catch (retentionError) {
-        debug('Error enforcing secure config backup retention:', retentionError);
-      }
-
       return backupId;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -345,6 +318,18 @@ export class SecureConfigManager {
   public async restoreBackup(backupId: string): Promise<void> {
     try {
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
+
+      // Security check to prevent path traversal
+      const resolvedBackupPath = path.resolve(backupPath);
+      const resolvedBackupDir = path.resolve(this.backupDir);
+      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
+        throw ErrorUtils.createError(
+          'Invalid backup ID: Path traversal detected',
+          'ValidationError',
+          'SECURE_CONFIG_INVALID_BACKUP_ID',
+          400,
+        );
+      }
 
       if (!fs.existsSync(backupPath)) {
         throw ErrorUtils.createError(
