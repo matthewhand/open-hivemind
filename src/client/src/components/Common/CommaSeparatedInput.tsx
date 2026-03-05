@@ -199,7 +199,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         <span
           key={v}
           data-testid="chip"
-          className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
+          className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md animate-in fade-in zoom-in duration-200 ${customColorClass}`}
         >
           {v}
           {!disabled && (
@@ -237,7 +237,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           <button
             type="button"
             onClick={handleUndo}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
+            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors animate-in fade-in zoom-in duration-200"
             title="Undo last change (Ctrl+Z)"
             aria-label="Undo"
           >
@@ -251,7 +251,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           <button
             type="button"
             onClick={handleClearAll}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
+            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors animate-in fade-in zoom-in duration-200"
             title="Clear all"
             aria-label="Clear all items"
           >

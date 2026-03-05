@@ -14,8 +14,9 @@ interface MessageChannel {
  * Type guard to check if an object is an Error instance
  */
 function isError(obj: any): obj is Error {
-  return obj instanceof Error || 
-         (obj && typeof obj === 'object' && typeof obj.message === 'string');
+  return (
+    obj instanceof Error || (obj && typeof obj === 'object' && typeof obj.message === 'string')
+  );
 }
 
 /**
@@ -39,7 +40,7 @@ export function handleError(error: unknown, messageChannel: any = null): void {
     const fallbackError = new Error(`Invalid error type: ${typeof error}`);
     debug(`Error Message: ${fallbackError.message}`);
     debug(`Error Stack Trace: ${fallbackError.stack}`);
-    
+
     if (isValidMessageChannel(messageChannel)) {
       const errorMsg = getRandomErrorMessage();
       try {

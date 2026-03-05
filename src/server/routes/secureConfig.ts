@@ -19,7 +19,8 @@ router.get('/', async (req: Request, res: Response) => {
     const configIds = await secureConfigManager.listConfigs();
     const configs = [];
 
-    for (const id of configIds) {
+    for (const idObj of configIds) {
+      const id = idObj.id;
       const config = await secureConfigManager.getConfig(id);
       if (config) {
         // Return metadata without sensitive data
@@ -224,15 +225,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     // Get config before deletion for audit logging
     const configToDelete = await secureConfigManager.getConfig(id);
 
-    const deleted = await secureConfigManager.deleteConfig(id);
-
-    if (!deleted) {
-      logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
-      return res.status(404).json({
-        success: false,
-        error: 'Configuration not found',
-      });
-    }
+    await secureConfigManager.deleteConfig(id);
 
     logConfigChange(
       req,
@@ -298,28 +291,6 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to create backup',
-    });
-  }
-});
-
-/**
- * GET /webui/api/secure-config/backups
- * List all available backups
- */
-router.get('/backups/list', async (req: Request, res: Response) => {
-  try {
-    const backups = await secureConfigManager.listBackups();
-
-    return res.json({
-      success: true,
-      data: backups,
-      count: backups.length,
-    });
-  } catch (error: any) {
-    debug('Failed to list backups:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve backups',
     });
   }
 });

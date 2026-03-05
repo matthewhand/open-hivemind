@@ -311,9 +311,10 @@ export async function handleMessage(
 
         // Calculate and apply delays
         const density = IncomingMessageDensity.getInstance().getDensity(channelId);
-        const isFollowUp = historyMessages.length > 0 && 
-                          historyMessages[historyMessages.length - 1].getAuthorId() === botId;
-        
+        const isFollowUp =
+          historyMessages.length > 0 &&
+          historyMessages[historyMessages.length - 1].getAuthorId() === botId;
+
         const delayMs = timingManager.calculateResponseDelay(
           replyDecision.meta?.chance || 0,
           density,
@@ -323,7 +324,7 @@ export async function handleMessage(
 
         if (delayMs > 0) {
           logger(`Waiting ${delayMs}ms before processing...`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
 
         // Set up typing indicators
@@ -384,16 +385,21 @@ export async function handleMessage(
         }
 
         let responseText = stripSystemPromptLeak(llmResponse.text, systemPrompt);
-        
+
         // Clean up formatting
         responseText = responseText.replace(/\\n/g, '\n').trim();
 
         if (responseText) {
           // Split into parts if needed and send
-          const parts = splitMessageContent(responseText, Number(botConfig.MESSAGE_MAX_LENGTH || 2000));
-          
+          const parts = splitMessageContent(
+            responseText,
+            Number(botConfig.MESSAGE_MAX_LENGTH || 2000)
+          );
+
           for (const part of parts) {
-            const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD ? message.getMessageId() : undefined;
+            const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD
+              ? message.getMessageId()
+              : undefined;
             const sentTs = await messageProvider.sendMessageToChannel(
               channelId,
               part,
@@ -406,7 +412,7 @@ export async function handleMessage(
             duplicateDetector.recordMessage(channelId, part);
             outgoingRateLimiter.recordSend(channelId);
             if (resolvedBotId) recordBotActivity(channelId, resolvedBotId);
-            
+
             idleResponseManager.recordBotResponse(serviceName, channelId);
           }
         }
@@ -415,7 +421,6 @@ export async function handleMessage(
         const processingTime = endTime - startTime;
         logger(`Message processed in ${processingTime}ms`);
         return llmResponse.text;
-
       } catch (error: unknown) {
         ErrorHandler.handle(error, 'messageHandler.handleMessage');
         const modelInfo = botConfig
