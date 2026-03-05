@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { CommaSeparatedInput } from '../components/CommaSeparatedInput';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { CommaSeparatedInput } from '../components/DaisyUI';
@@ -350,10 +351,9 @@ const GuardsPage: React.FC = () => {
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
                     <CommaSeparatedInput
                       id="allowed-users"
-                      className="input input-bordered"
+                      className="input input-bordered w-full"
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={val => updateGuard('mcpGuard', { allowedUsers: val })}
+                      onChange={tokens => updateGuard('mcpGuard', { allowedUsers: tokens })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                   </div>
@@ -363,11 +363,10 @@ const GuardsPage: React.FC = () => {
                   <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
                   <CommaSeparatedInput
                     id="allowed-tools"
-                    className="input input-bordered"
+                    className="input input-bordered w-full"
                     placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={val => updateGuard('mcpGuard', { allowedTools: val })}
+                    onChange={tokens => updateGuard('mcpGuard', { allowedTools: tokens })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -487,7 +486,7 @@ const GuardsPage: React.FC = () => {
                     className="textarea textarea-bordered h-20"
                     placeholder="e.g. secret, password, confidential"
                     value={editingProfile.guards.contentFilter?.blockedTerms?.join(',') || ''}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    // We're leaving blocked terms as a textarea to allow multi-line input in the future or because it uses textarea
                     onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',') })}
                     disabled={!editingProfile.guards.contentFilter?.enabled}
                   />

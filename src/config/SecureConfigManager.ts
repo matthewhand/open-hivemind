@@ -325,7 +325,7 @@ export class SecureConfigManager {
       if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
         throw ErrorUtils.createError(
           'Invalid backup ID: Path traversal detected',
-          'ValidationError' as any,
+          'validation',
           'SECURE_CONFIG_INVALID_BACKUP_ID',
           400,
         );
