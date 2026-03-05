@@ -9,6 +9,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   style?: PaginationStyle;
   className?: string;
+  maxVisiblePages?: number;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -18,30 +19,32 @@ const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   style = 'standard',
   className = '',
+  maxVisiblePages: explicitMaxVisiblePages,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [maxVisiblePages, setMaxVisiblePages] = useState(7);
+  const [dynamicMaxVisiblePages, setDynamicMaxVisiblePages] = useState(7);
   const totalPages = Math.ceil(totalItems / pageSize);
+  const maxVisiblePages = explicitMaxVisiblePages || dynamicMaxVisiblePages;
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (explicitMaxVisiblePages || !containerRef.current) return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = entry.contentRect.width;
         if (width < 350) {
-          setMaxVisiblePages(5); // Ultra compact
+          setDynamicMaxVisiblePages(5); // Ultra compact
         } else if (width < 500) {
-          setMaxVisiblePages(7); // Standard
+          setDynamicMaxVisiblePages(7); // Standard
         } else {
-          setMaxVisiblePages(9); // Extended space
+          setDynamicMaxVisiblePages(9); // Extended space
         }
       }
     });
 
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [explicitMaxVisiblePages]);
 
   const handlePrevious = () => {
     if (currentPage > 1) {
@@ -114,12 +117,30 @@ const Pagination: React.FC<PaginationProps> = ({
     onPageChange(Math.min(totalPages, currentPage + 5));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft') {
+      handlePrevious();
+    } else if (e.key === 'ArrowRight') {
+      handleNext();
+    }
+  };
+
   if (totalPages <= 1) {
     return null;
   }
 
   return (
-    <div ref={containerRef} className={`join ${className} w-full overflow-x-auto`} role="navigation" aria-label="Pagination">
+    <div
+      ref={containerRef}
+      className={`join ${className} w-full overflow-x-auto focus:outline-none focus:ring-1 focus:ring-primary/50`}
+      role="navigation"
+      aria-label="Pagination"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        Page {currentPage} of {totalPages}
+      </div>
       {style === 'extended' && (
         <button
           className="join-item btn"
