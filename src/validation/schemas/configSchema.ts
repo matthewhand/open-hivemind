@@ -23,27 +23,3 @@ export const ConfigBackupSchema = z.object({
   body: z.object({}).optional(), // No required body parameters for backup creation
 });
 
-// Schema for config validation endpoint
-export const ConfigValidateSchema = z.object({
-  query: z.object({}).optional(), // No required query parameters
-});
-
-// Schema for config export endpoint
-export const ConfigExportSchema = z.object({
-  query: z.object({}).optional(), // No required query parameters
-});
-
-// Schema for config sources endpoint
-export const ConfigSourcesSchema = z.object({
-  query: z.object({}).optional(), // No required query parameters
-});
-
-// Schema for config reload endpoint
-export const ConfigReloadSchema = z.object({
-  body: z.object({}).optional(), // No required body parameters
-});
-
-// Schema for cache clear endpoint
-export const CacheClearSchema = z.object({
-  body: z.object({}).optional(), // No required body parameters
-});
