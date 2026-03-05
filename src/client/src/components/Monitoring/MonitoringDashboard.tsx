@@ -14,18 +14,11 @@ import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
+import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
 
-// Mock trace data for the Distributed Trace Waterfall
-const mockTraceSpans: TraceSpan[] = [
-  { id: '1', parentId: null, name: 'GET /api/chat', service: 'api', startTime: 0, duration: 150, status: 'success' },
-  { id: '2', parentId: '1', name: 'authenticateRequest', service: 'auth', startTime: 5, duration: 20, status: 'success' },
-  { id: '3', parentId: '1', name: 'getUserDetails', service: 'database', startTime: 25, duration: 30, status: 'success' },
-  { id: '4', parentId: '1', name: 'generateLLMResponse', service: 'llm', startTime: 60, duration: 80, status: 'success' },
-  { id: '5', parentId: '4', name: 'callOpenAI', service: 'llm', startTime: 65, duration: 70, status: 'success' },
-  { id: '6', parentId: '1', name: 'saveChatHistory', service: 'database', startTime: 140, duration: 8, status: 'success' }
-];
+// Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {
   id: string;
@@ -170,7 +163,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
   ];
 
   const stats = [
@@ -298,10 +291,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>
-          <DistributedTraceWaterfall
-            traceId="trace-req-8f9d3b2a"
-            spans={mockTraceSpans}
-          />
+          <BotActivityWaterfallMonitor />
         </TabPanel>
       </div>
     </div>
