@@ -41,15 +41,15 @@ const DrawerNavigation: React.FC<DrawerNavigationProps> = ({ isOpen, onClose, na
     const isActive = location.pathname === item.path;
     const isExpanded = expandedItems.has(item.id);
     const hasChildren = item.children && item.children.length > 0;
-    
+
     return (
       <li key={item.id} className={`${depth > 0 ? 'ml-4' : ''}`}>
         <div className={`
-          flex items-center justify-between rounded-lg p-2 
+          flex items-center justify-between rounded-lg p-2
           ${isActive ? 'bg-primary text-primary-content' : 'hover:bg-base-200'}
           transition-colors duration-200
         `}>
-          <div 
+          <div
             className="flex items-center flex-1 cursor-pointer"
             onClick={() => item.path ? handleNavigation(item.path) : toggleExpanded(item.id)}
           >
@@ -61,7 +61,7 @@ const DrawerNavigation: React.FC<DrawerNavigationProps> = ({ isOpen, onClose, na
               </div>
             )}
           </div>
-          
+
           {hasChildren && (
             <button
               onClick={(e) => {
@@ -78,7 +78,7 @@ const DrawerNavigation: React.FC<DrawerNavigationProps> = ({ isOpen, onClose, na
             </button>
           )}
         </div>
-        
+
         {hasChildren && isExpanded && (
           <ul className="mt-1 space-y-1">
             {item.children!.map(child => renderNavItem(child, depth + 1))}
@@ -90,26 +90,26 @@ const DrawerNavigation: React.FC<DrawerNavigationProps> = ({ isOpen, onClose, na
 
   return (
     <div className="drawer">
-      <input 
-        id="drawer-toggle" 
-        type="checkbox" 
-        className="drawer-toggle" 
+      <input
+        id="drawer-toggle"
+        type="checkbox"
+        className="drawer-toggle"
         checked={isOpen}
         onChange={() => {}}
       />
-      
+
       <div className="drawer-content">
         {/* Main content goes here */}
       </div>
-      
+
       <div className="drawer-side">
-        <label 
-          htmlFor="drawer-toggle" 
-          aria-label="close sidebar" 
+        <label
+          htmlFor="drawer-toggle"
+          aria-label="close sidebar"
           className="drawer-overlay"
           onClick={onClose}
         />
-        
+
         <aside className="min-h-full w-80 bg-base-100 p-4">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -124,8 +124,8 @@ const DrawerNavigation: React.FC<DrawerNavigationProps> = ({ isOpen, onClose, na
                 <p className="text-xs text-base-content/60">Admin Dashboard</p>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={onClose}
               className="btn btn-ghost btn-sm btn-circle"
               aria-label="Close navigation"
@@ -221,7 +221,7 @@ export const defaultNavItems: NavItem[] = [
       },
       {
         id: 'mcp-tools',
-        label: 'MCP Tools',
+        label: 'Tools',
         icon: '🛠️',
         path: '/admin/mcp/tools',
       },

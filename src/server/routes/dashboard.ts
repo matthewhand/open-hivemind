@@ -230,14 +230,14 @@ router.post('/ai/feedback', authenticateToken, async (req, res) => {
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/adapter-slack').SlackService as any;
+      const svc = require('@hivemind/adapter-slack').SlackService as unknown as Record<string, any>;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/adapter-discord') as any;
+      const svc = require('@hivemind/adapter-discord') as unknown as Record<string, any>;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -431,8 +431,14 @@ function parseDate(value: unknown): Date | null {
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
  */
 function redactString(val: string | undefined): string | undefined {
+<<<<<<< HEAD
+  if (!val) return val;
+  if (val.length <= 3) return '***';
+  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
+=======
   if (!val || val.length <= 4) return val;
   return '*'.repeat(val.length - 4) + val.slice(-4);
+>>>>>>> origin/main
 }
 
 function annotateEvent(

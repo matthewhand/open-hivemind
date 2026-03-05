@@ -64,7 +64,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
     if (!isValid) {return;}
 
     setCompletedSteps(prev => new Set([...prev, activeStep]));
-    
+
     if (activeStep < steps.length - 1) {
       handleStepChange(activeStep + 1);
     } else {
@@ -121,9 +121,9 @@ const StepWizard: React.FC<StepWizardProps> = ({
             <span>Progress</span>
             <span>{Math.round(progressPercentage)}% Complete</span>
           </div>
-          <progress 
-            className="progress progress-primary w-full" 
-            value={progressPercentage} 
+          <progress
+            className="progress progress-primary w-full"
+            value={progressPercentage}
             max="100"
           />
         </div>
@@ -134,13 +134,13 @@ const StepWizard: React.FC<StepWizardProps> = ({
         {steps.map((step, index) => {
           const status = getStepStatus(index);
           const canNavigate = canGoToStep(index);
-          
+
           return (
             <div
               key={step.id}
               className={`step ${
-                status === 'completed' ? 'step-primary' : 
-                  status === 'active' ? 'step-primary' : 
+                status === 'completed' ? 'step-primary' :
+                  status === 'active' ? 'step-primary' :
                     status === 'error' ? 'step-error' : ''
               } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               data-content={getStepIcon(step, status, index)}
@@ -175,7 +175,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
                 <p className="text-base-content/70 mt-2">{steps[activeStep].description}</p>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="badge badge-primary">
                 Step {activeStep + 1} of {steps.length}
@@ -203,7 +203,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
           >
             ← Previous
           </button>
-          
+
           {allowSkip && activeStep < steps.length - 1 && steps[activeStep]?.optional && (
             <button
               className="btn btn-outline"
@@ -223,7 +223,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
               Cancel
             </button>
           )}
-          
+
           <button
             className={`btn btn-primary ${isValidating ? 'loading' : ''}`}
             onClick={handleNext}
@@ -305,7 +305,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
               onChange={(e) => updateFormData('botName', e.target.value)}
             />
           </div>
-          
+
           <div className="form-control">
             <label className="label">
               <span className="label-text">Platform</span>
@@ -318,7 +318,6 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
               <option value="">Select platform</option>
               <option value="discord">Discord</option>
               <option value="slack">Slack</option>
-              <option value="telegram">Telegram</option>
               <option value="mattermost">Mattermost</option>
             </select>
           </div>
@@ -339,7 +338,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
             </svg>
             <span>Your token will be encrypted and stored securely.</span>
           </div>
-          
+
           <div className="form-control">
             <label className="label">
               <span className="label-text">Bot Token</span>
@@ -459,7 +458,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
         <h1 className="text-3xl font-bold mb-2">Bot Setup Wizard</h1>
         <p className="text-base-content/70">Follow these steps to configure your new bot</p>
       </div>
-      
+
       <StepWizard
         steps={steps}
         onComplete={() => onComplete(formData)}

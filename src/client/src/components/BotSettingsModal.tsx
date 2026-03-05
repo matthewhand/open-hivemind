@@ -3,18 +3,23 @@ import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
-import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
+import { Persona as ApiPersona } from '../services/api';
+import { BotConfig as BaseBotConfig } from '../../../types/config';
 
 // Extended Bot type with UI-specific fields
-interface BotConfig extends ApiBot {
+<<<<<<< HEAD
+export interface BotConfigExtended extends ApiBot {
+=======
+type BotConfig = BaseBotConfig & {
+>>>>>>> origin/main
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field
     status?: string;
-}
+};
 
-// Define LLMProfile locally as it's not exported from API
-interface LLMProfile {
+// Define LLMProfile since it's used as a parameter type and not currently shared in types/config.ts
+export interface LLMProfile {
     key: string;
     name: string;
     provider: string;
@@ -23,15 +28,15 @@ interface LLMProfile {
 interface BotSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    bot: BotConfig;
+    bot: BotConfigExtended;
     personas: ApiPersona[];
     llmProfiles: LLMProfile[];
     integrationOptions: { message: string[] };
-    onUpdateConfig: (bot: BotConfig, key: string, value: any) => Promise<void>;
-    onUpdatePersona: (bot: BotConfig, personaId: string) => Promise<void>;
-    onClone: (bot: BotConfig) => void;
-    onDelete: (bot: BotConfig) => void;
-    onViewDetails: (bot: BotConfig) => void;
+    onUpdateConfig: (bot: BotConfigExtended, key: string, value: any) => Promise<void>;
+    onUpdatePersona: (bot: BotConfigExtended, personaId: string) => Promise<void>;
+    onClone: (bot: BotConfigExtended) => void;
+    onDelete: (bot: BotConfigExtended) => void;
+    onViewDetails: (bot: BotConfigExtended) => void;
 }
 
 export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
@@ -55,7 +60,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">
