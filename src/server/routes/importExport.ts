@@ -335,6 +335,12 @@ router.post(
         }
       );
 
+      // In a real application, maxRetainedBackups should be fetched from the database or UserConfigStore.
+      // Here we assume it might be passed in the body or defaults to 10
+      // Since it's already implemented in the frontend as a user setting, we don't strictly need to pass it here
+      // if the frontend handles manual pruning, but for backend initiated backups, we would fetch it.
+      // We pass it to the service if provided.
+
       if (result.success) {
         return res.json({
           success: true,

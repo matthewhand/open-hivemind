@@ -29,7 +29,7 @@ test.describe('Guards Page Rate Limit Screenshots', () => {
                 rateLimit: { enabled: true, maxRequests: 50, windowMs: 60000 },
                 contentFilter: { enabled: true, strictness: 'medium' },
               },
-            }
+            },
           ],
         }),
       });
