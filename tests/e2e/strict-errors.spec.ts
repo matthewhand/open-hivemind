@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {
   assertNoErrors,
   navigateAndWaitReady,
@@ -22,7 +23,9 @@ test.describe('Strict Error Detection Tests', () => {
 
       // Verify page content exists
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-01-dashboard.png' });
+      await expect(page).toHaveScreenshot('strict-01-dashboard.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       // Fail if any errors occurred
       await assertNoErrors(errors, 'Dashboard load');
@@ -33,7 +36,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/bots');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-02-bots.png' });
+      await expect(page).toHaveScreenshot('strict-02-bots.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'Bots page load');
     });
@@ -43,7 +48,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/config');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-03-config.png' });
+      await expect(page).toHaveScreenshot('strict-03-config.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'Config page load');
     });
@@ -53,7 +60,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/personas');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-04-personas.png' });
+      await expect(page).toHaveScreenshot('strict-04-personas.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'Personas page load');
     });
@@ -63,7 +72,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/settings');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-05-settings.png' });
+      await expect(page).toHaveScreenshot('strict-05-settings.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'Settings page load');
     });
@@ -73,7 +84,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/mcp-tools');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-06-mcp.png' });
+      await expect(page).toHaveScreenshot('strict-06-mcp.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'MCP Tools page load');
     });
@@ -83,7 +96,9 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/monitoring');
 
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-      await page.screenshot({ path: 'test-results/strict-07-monitoring.png' });
+      await expect(page).toHaveScreenshot('strict-07-monitoring.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
       await assertNoErrors(errors, 'Monitoring page load');
     });
@@ -107,7 +122,9 @@ test.describe('Strict Error Detection Tests', () => {
         expect(page.url()).toContain(pagePath.split('/').pop());
       }
 
-      await page.screenshot({ path: 'test-results/strict-08-navigation.png' });
+      await expect(page).toHaveScreenshot('strict-08-navigation.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Multi-page navigation');
     });
 
@@ -126,7 +143,9 @@ test.describe('Strict Error Detection Tests', () => {
         }
       }
 
-      await page.screenshot({ path: 'test-results/strict-09-sidebar.png' });
+      await expect(page).toHaveScreenshot('strict-09-sidebar.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Sidebar navigation');
     });
   });
@@ -156,7 +175,9 @@ test.describe('Strict Error Detection Tests', () => {
         }
       }
 
-      await page.screenshot({ path: 'test-results/strict-10-modal.png' });
+      await expect(page).toHaveScreenshot('strict-10-modal.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Bot modal open/close');
     });
 
@@ -191,7 +212,9 @@ test.describe('Strict Error Detection Tests', () => {
         await page.waitForTimeout(300);
       }
 
-      await page.screenshot({ path: 'test-results/strict-11-form.png' });
+      await expect(page).toHaveScreenshot('strict-11-form.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Form interactions');
     });
   });
@@ -208,7 +231,9 @@ test.describe('Strict Error Detection Tests', () => {
       const content = page.locator('[class*="card"], [class*="empty"], [class*="bot"]').first();
       await expect(content).toBeVisible({ timeout: 10000 });
 
-      await page.screenshot({ path: 'test-results/strict-12-bot-list.png' });
+      await expect(page).toHaveScreenshot('strict-12-bot-list.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Bot list display');
     });
 
@@ -221,9 +246,11 @@ test.describe('Strict Error Detection Tests', () => {
 
       // Verify sections exist
       const sections = page.locator('[class*="section"], [class*="card"], [class*="collapse"]');
-      await expect(sections.first()).toBeVisible();
+      expect(await sections.count()).toBeGreaterThan(0);
 
-      await page.screenshot({ path: 'test-results/strict-13-config-sections.png' });
+      await expect(page).toHaveScreenshot('strict-13-config-sections.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Config sections display');
     });
   });
@@ -243,7 +270,9 @@ test.describe('Strict Error Detection Tests', () => {
         await page.waitForTimeout(2000);
       }
 
-      await page.screenshot({ path: 'test-results/strict-14-refresh.png' });
+      await expect(page).toHaveScreenshot('strict-14-refresh.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
       await assertNoErrors(errors, 'Refresh button');
     });
   });
@@ -267,7 +296,9 @@ test.describe('Error Recovery Tests', () => {
     await waitForPageReady(page);
 
     await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
-    await page.screenshot({ path: 'test-results/strict-15-network-recovery.png' });
+    await expect(page).toHaveScreenshot('strict-15-network-recovery.png');
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
 
     // Note: We don't fail on errors here since network failure is expected
   });

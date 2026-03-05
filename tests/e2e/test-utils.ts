@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { expect, Page } from '@playwright/test';
 
 /**
@@ -114,6 +115,12 @@ export async function assertNoErrors(errors: string[], testName?: string) {
  * Returns the errors array for later assertion
  */
 export async function setupTestWithErrorDetection(page: Page): Promise<string[]> {
+  const namespace = randomUUID();
+  await page.route('**/*', async (route) => {
+    const headers = route.request().headers();
+    headers['x-test-namespace'] = namespace;
+    await route.continue({ headers });
+  });
   await setupAuth(page);
   return setupErrorCollection(page);
 }
