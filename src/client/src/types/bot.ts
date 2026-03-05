@@ -365,9 +365,15 @@ export const LLM_PROVIDER_CONFIGS = {
     description: 'Connect to Flowise AI chatflows',
     icon: '⚡',
     fields: [
-      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
+      {
+        name: 'apiUrl',
+        label: 'API Endpoint',
+        type: 'text',
+        required: true,
+        placeholder: 'http://localhost:3000',
+      },
       { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
+      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
 };
