@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import type { Response } from 'node-fetch';
+import { webUIStorage } from '../storage/webUIStorage';
 
 const debug = Debug('app:ApiMonitorService');
 
@@ -131,6 +132,76 @@ export class ApiMonitorService extends EventEmitter {
 
   public getAllStatuses(): EndpointStatus[] {
     return Array.from(this.statuses.values());
+  }
+
+  public syncLlmEndpoints(): void {
+    try {
+      const providers = webUIStorage.getLlmProviders();
+      const currentLlmIds = new Set<string>();
+
+      if (Array.isArray(providers)) {
+        providers.forEach((provider: any) => {
+          if (!provider.isActive) return;
+
+          let url = '';
+          if (provider.config && provider.config.baseUrl) {
+            url = provider.config.baseUrl.replace(/\/$/, '') + '/v1/models';
+          } else if (provider.type === 'openai') {
+            url = 'https://api.openai.com/v1/models';
+          } else {
+            return; // Skip if no URL can be constructed safely
+          }
+
+          if (url && !url.startsWith('http')) {
+             return;
+          }
+
+          const endpointId = `llm-${provider.id || provider.type}`;
+          currentLlmIds.add(endpointId);
+
+          const config: EndpointConfig = {
+            id: endpointId,
+            name: `${provider.name || provider.type} (LLM)`,
+            url: url,
+            method: 'GET',
+            enabled: true,
+            interval: 60000,
+            timeout: 10000,
+            retries: 3,
+            retryDelay: 1000
+          };
+
+          // Note: API keys are used for health check requests but are never exposed
+          // in the `/health/api-endpoints` response, as `getAllStatuses()` returns
+          // `EndpointStatus`, not `EndpointConfig`.
+          if (provider.config && provider.config.apiKey) {
+             config.headers = {
+               'Authorization': `Bearer ${provider.config.apiKey}`
+             };
+          }
+
+          if (!this.endpoints.has(endpointId)) {
+            this.addEndpoint(config);
+          } else {
+            const existing = this.endpoints.get(endpointId);
+            // Only update if url or key changes to avoid resetting intervals unnecessarily
+            if (existing && (existing.url !== config.url || existing.headers?.Authorization !== config.headers?.Authorization)) {
+                this.updateEndpoint(endpointId, config);
+            }
+          }
+        });
+      }
+
+      // Clean up deleted or deactivated providers
+      Array.from(this.endpoints.keys()).forEach((key) => {
+        if (key.startsWith('llm-') && !currentLlmIds.has(key)) {
+          this.removeEndpoint(key);
+        }
+      });
+
+    } catch (e) {
+      debug('Error syncing LLM endpoints:', e);
+    }
   }
 
   public startMonitoring(id: string): void {

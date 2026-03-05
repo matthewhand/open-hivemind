@@ -98,6 +98,9 @@ export class WebSocketService {
       this.handleApiHealthCheckResult(result);
     });
 
+    // Sync LLM endpoints on startup before starting monitoring
+    this.apiMonitorService.syncLlmEndpoints();
+
     // Start monitoring all configured endpoints
     this.apiMonitorService.startAllMonitoring();
   }

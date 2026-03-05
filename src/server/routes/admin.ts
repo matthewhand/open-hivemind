@@ -9,6 +9,7 @@ import { webUIStorage } from '../../storage/webUIStorage';
 import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import activityRouter from './activity';
+import ApiMonitorService from '../../services/ApiMonitorService';
 import agentsRouter from './agents';
 import guardProfilesRouter from './guardProfiles';
 import mcpRouter from './mcp';
@@ -272,6 +273,9 @@ router.post('/llm-providers', configRateLimit, (req: Request, res: Response) => 
     // Save to persistent storage
     webUIStorage.saveLlmProvider(newProvider);
 
+    // Sync monitor endpoints
+    ApiMonitorService.getInstance().syncLlmEndpoints();
+
     return res.json({
       success: true,
       data: { provider: newProvider },
@@ -314,6 +318,9 @@ router.put('/llm-providers/:id', (req: Request, res: Response) => {
     // Save to persistent storage
     webUIStorage.saveLlmProvider(updatedProvider);
 
+    // Sync monitor endpoints
+    ApiMonitorService.getInstance().syncLlmEndpoints();
+
     return res.json({
       success: true,
       data: { provider: updatedProvider },
@@ -334,6 +341,9 @@ router.delete('/llm-providers/:id', (req: Request, res: Response) => {
 
     // Delete from persistent storage
     webUIStorage.deleteLlmProvider(id);
+
+    // Sync monitor endpoints
+    ApiMonitorService.getInstance().syncLlmEndpoints();
 
     return res.json({
       success: true,
@@ -359,6 +369,9 @@ router.post('/llm-providers/:id/toggle', (req: Request, res: Response) => {
     if (provider) {
       provider.isActive = isActive;
       webUIStorage.saveLlmProvider(provider);
+
+      // Sync monitor endpoints
+      ApiMonitorService.getInstance().syncLlmEndpoints();
     } else {
       return res.status(404).json({
         error: 'Provider not found',
