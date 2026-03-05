@@ -257,19 +257,20 @@ const UnifiedDashboard: React.FC = () => {
   );
 
   const statusBots = status?.bots ?? [];
-  // ⚡ Bolt Optimization: Consolidate multiple O(N) array operations into a single O(N) loop
-  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(
-    () =>
-      statusBots.reduce(
-        (acc, bot) => {
-          if (bot.status?.toLowerCase() === 'active') { acc.activeBotCount++; }
-          if (bot.connected) { acc.activeConnections++; }
-          acc.totalMessages += bot.messageCount ?? 0;
-          acc.totalErrors += bot.errorCount ?? 0;
-          return acc;
-        },
-        { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 },
-      ),
+  const activeBotCount = useMemo(
+    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
+    [statusBots],
+  );
+  const activeConnections = useMemo(
+    () => statusBots.filter(bot => bot.connected).length,
+    [statusBots],
+  );
+  const totalMessages = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
+    [statusBots],
+  );
+  const totalErrors = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
     [statusBots],
   );
   const errorRatePercent = totalMessages === 0

@@ -197,12 +197,12 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
               <div className="flex gap-2">
                 <Tooltip content="Edit Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)} aria-label="Edit configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)}>
                     <PencilIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>
                 <Tooltip content="Delete Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)} aria-label="Delete configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)}>
                     <TrashIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>
