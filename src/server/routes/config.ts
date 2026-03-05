@@ -12,7 +12,6 @@ import {
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
 import llmConfig from '../../config/llmConfig';
-import llmTaskConfig from '../../config/llmTaskConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
 import {
@@ -91,7 +90,6 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 
