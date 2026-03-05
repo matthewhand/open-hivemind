@@ -183,7 +183,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     {
       name: 'envOverrides',
       label: 'Custom Overrides',
-      type: 'key-value' as any, // Custom type
+      type: 'key-value', // Custom type
       helperText: 'Add key-value pairs to override global settings for this agent',
     },
   ];

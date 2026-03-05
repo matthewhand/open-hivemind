@@ -65,15 +65,17 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
     const icons: Record<string, string> = {
       // Message providers
       discord: '💬',
-      telegram: '✈️',
       slack: '📱',
+      mattermost: '💻',
       webhook: '🔗',
       // LLM providers
       openai: '🤖',
-      anthropic: '🧠',
-      ollama: '🦙',
-      huggingface: '🤗',
-      custom: '⚙️',
+      flowise: '🌊',
+      openwebui: '🌐',
+      perplexity: '🔍',
+      replicate: '🚀',
+      n8n: '⚡',
+      openswarm: '🐝',
     };
     return icons[providerType] || '❓';
   };
@@ -82,15 +84,17 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
     const labels: Record<string, string> = {
       // Message providers
       discord: 'Discord',
-      telegram: 'Telegram',
       slack: 'Slack',
+      mattermost: 'Mattermost',
       webhook: 'Webhook',
       // LLM providers
       openai: 'OpenAI',
-      anthropic: 'Anthropic',
-      ollama: 'Ollama',
-      huggingface: 'Hugging Face',
-      custom: 'Custom',
+      flowise: 'Flowise',
+      openwebui: 'OpenWebUI',
+      perplexity: 'Perplexity',
+      replicate: 'Replicate',
+      n8n: 'n8n',
+      openswarm: 'OpenSwarm',
     };
     return labels[providerType] || providerType;
   };

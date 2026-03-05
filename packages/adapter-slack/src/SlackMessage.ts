@@ -1,4 +1,5 @@
 import { IMessage } from '@message/interfaces/IMessage';
+import { InputSanitizer, sanitizeMessageText } from '@common/security/inputSanitizer';
 
 // Define proper Slack message interfaces
 interface SlackUser {
@@ -50,9 +51,10 @@ export default class SlackMessage extends IMessage {
 
   constructor(content: string, channelId: string, data: SlackMessageData = {}) {
     super(data, 'user');
-    this.content = content ?? '';
-    this.channelId = channelId ?? '';
-    this.data = data || {};
+    // Sanitize user-provided content
+    this.content = sanitizeMessageText(content ?? '');
+    this.channelId = InputSanitizer.sanitizeChannelId(channelId ?? '');
+    this.data = this.sanitizeMessageData(data || {});
     this.role = 'user';
 
     this.authorId = this.resolveAuthorId(this.data);
@@ -80,7 +82,7 @@ export default class SlackMessage extends IMessage {
   }
 
   public setText(text: string): void {
-    this.content = text ?? '';
+    this.content = sanitizeMessageText(text ?? '');
     // Re-extract mentions when text changes
     this.mentions = this.extractMentions(this.content);
   }
@@ -142,9 +144,10 @@ export default class SlackMessage extends IMessage {
   private resolveAuthorName(data: SlackMessageData): string | undefined {
     // payload.user.username or user.name from richer events
     if (data?.user && typeof data.user === 'object') {
-      return data.user.username || data.user.name;
+      const rawName = data.user.username || data.user.name;
+      return rawName ? InputSanitizer.sanitizeName(rawName) : undefined;
     }
-    return data?.username;
+    return data?.username ? InputSanitizer.sanitizeName(data.username) : undefined;
   }
 
   private resolveMessageId(data: SlackMessageData): string | undefined {
@@ -171,7 +174,8 @@ export default class SlackMessage extends IMessage {
       return [];
     }
     // Matches <@U123ABC456> or <@W123...> (Workspace apps may use W-prefixed IDs)
-    const regex = /<@([UW][A-Z0-9]+)>/g;
+    // Also handles HTML-encoded versions (&lt;@...&gt;) after sanitization
+    const regex = /(?:<@|&lt;@)([UW][A-Z0-9]+)(?:>|&gt;)/g;
     const ids = new Set<string>();
     let m: RegExpExecArray | null;
     while ((m = regex.exec(text)) !== null) {
@@ -193,5 +197,77 @@ export default class SlackMessage extends IMessage {
       return undefined;
     }
     return new Date(sec * 1000 + ms);
+  }
+
+  /**
+   * Sanitizes message data to prevent security issues
+   * @param data - Raw message data from Slack
+   * @returns Sanitized message data
+   */
+  private sanitizeMessageData(data: any): any {
+    if (!data || typeof data !== 'object') {
+      return {};
+    }
+
+    const sanitized = { ...data };
+
+    // Sanitize user-provided text fields
+    if (sanitized.text) {
+      sanitized.text = sanitizeMessageText(sanitized.text);
+    }
+
+    // Sanitize user profile information
+    if (sanitized.user_profile) {
+      if (sanitized.user_profile.real_name) {
+        sanitized.user_profile.real_name = InputSanitizer.sanitizeName(sanitized.user_profile.real_name);
+      }
+      if (sanitized.user_profile.display_name) {
+        sanitized.user_profile.display_name = InputSanitizer.sanitizeName(sanitized.user_profile.display_name);
+      }
+      if (sanitized.user_profile.email) {
+        sanitized.user_profile.email = InputSanitizer.sanitizeEmail(sanitized.user_profile.email);
+      }
+    }
+
+    // Sanitize file attachments
+    if (sanitized.files && Array.isArray(sanitized.files)) {
+      sanitized.files = sanitized.files.map((file: any) => ({
+        ...file,
+        name: InputSanitizer.sanitizeFileName(file.name),
+        title: file.title ? InputSanitizer.sanitizeText(file.title, { maxLength: 200 }) : file.title
+      }));
+    }
+
+    // Sanitize reaction names
+    if (sanitized.reactions && Array.isArray(sanitized.reactions)) {
+      sanitized.reactions = sanitized.reactions.map((reaction: any) => ({
+        ...reaction,
+        name: reaction.name ? InputSanitizer.sanitizeText(reaction.name, { maxLength: 50, allowMarkdown: false }) : reaction.name
+      }));
+    }
+
+    // Sanitize user IDs
+    if (sanitized.user) {
+      if (typeof sanitized.user === 'string') {
+        // Handle string user ID
+        sanitized.user = InputSanitizer.sanitizeUserId(sanitized.user);
+      } else if (sanitized.user && typeof sanitized.user === 'object') {
+        // Handle user object with nested fields
+        if (sanitized.user.id) {
+          sanitized.user.id = InputSanitizer.sanitizeUserId(sanitized.user.id);
+        }
+        if (sanitized.user.name) {
+          sanitized.user.name = InputSanitizer.sanitizeName(sanitized.user.name);
+        }
+        if (sanitized.user.username) {
+          sanitized.user.username = InputSanitizer.sanitizeName(sanitized.user.username);
+        }
+      }
+    }
+    if (sanitized.user_id) {
+      sanitized.user_id = InputSanitizer.sanitizeUserId(sanitized.user_id);
+    }
+
+    return sanitized;
   }
 }

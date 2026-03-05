@@ -1,38 +1,22 @@
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:SecureConfigManager');
 
 export interface SecureConfig {
   id: string;
   name: string;
-  type: 'bot' | 'user' | 'system';
-  data: Record<string, any>;
-  createdAt: string;
+  data: any;
   updatedAt: string;
   checksum: string;
 }
 
-export interface BackupMetadata {
-  id: string;
-  timestamp: string;
-  configs: string[];
-  checksum: string;
-  version: string;
-}
-
 /**
- * Secure Configuration Manager
- *
- * Provides encrypted storage for sensitive user configurations
- * Features:
- * - AES-256 encryption for data at rest
- * - Automatic backup and restore
- * - Data integrity verification
- * - Secure key management
+ * SecureConfigManager handles the encryption and storage of sensitive configuration data.
+ * It uses AES-256-GCM for authenticated encryption and stores data in the filesystem.
  */
 export class SecureConfigManager {
   private static instance: SecureConfigManager;
@@ -40,13 +24,14 @@ export class SecureConfigManager {
   private readonly backupDir: string;
   private readonly encryptionKey: Buffer;
   private readonly algorithm = 'aes-256-gcm';
+  private readonly keyPath: string;
   private readonly mainConfigDir: string;
 
-  constructor() {
-    this.configDir = path.join(process.cwd(), 'config', 'user');
-    this.backupDir = path.join(this.configDir, 'backups');
-
-    // Ensure directories exist first
+  private constructor() {
+    this.configDir = path.join(process.cwd(), 'config', 'secure');
+    this.backupDir = path.join(process.cwd(), 'config', 'backups');
+    this.keyPath = path.join(process.cwd(), 'config', '.key');
+    
     this.ensureDirectories();
 
     // Generate or load encryption key
@@ -64,16 +49,17 @@ export class SecureConfigManager {
   /**
    * Helper to safely resolve a file path and prevent directory traversal
    */
-  /**
-   * Helper to safely resolve a file path and prevent directory traversal
-   */
   private getSecureFilePath(id: string): string {
     // Additional input validation: only allow alphanumeric, hyphens, and underscores
     // This prevents path traversal characters like ../ and ./ from even being processed
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
-        'ValidationError' as any,
+<<<<<<< HEAD
+        'ValidationError' as any as any,
+=======
+        'validation',
+>>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -89,7 +75,11 @@ export class SecureConfigManager {
     if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
-        'ValidationError' as any,
+<<<<<<< HEAD
+        'ValidationError' as any as any,
+=======
+        'validation',
+>>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -106,7 +96,11 @@ export class SecureConfigManager {
     if (!config.id || config.id.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration ID is required',
-        'ValidationError' as any,
+<<<<<<< HEAD
+        'ValidationError' as any as any,
+=======
+        'validation',
+>>>>>>> origin/main
         'SECURE_CONFIG_ID_REQUIRED',
         400,
       );
@@ -114,7 +108,11 @@ export class SecureConfigManager {
     if (!config.name || config.name.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration name is required',
-        'ValidationError' as any,
+<<<<<<< HEAD
+        'ValidationError' as any as any,
+=======
+        'validation',
+>>>>>>> origin/main
         'SECURE_CONFIG_NAME_REQUIRED',
         400,
       );
@@ -131,31 +129,18 @@ export class SecureConfigManager {
       // Calculate checksum before encryption (exclude checksum field itself)
       const { checksum, ...configForChecksum } = secureConfig;
       secureConfig.checksum = this.calculateChecksum(configForChecksum);
-      debug(`Checksum calculated: ${secureConfig.checksum}`);
 
-      // Encrypt and store
-      const encryptedData = this.encrypt(JSON.stringify(secureConfig));
       const filePath = this.getSecureFilePath(config.id);
-      debug(`File path: ${filePath}`);
-
+      const encryptedData = this.encrypt(JSON.stringify(secureConfig));
+      
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
-      debug(`Configuration ${config.id} stored securely`);
-
-      // Verify file was created
-      const fileExists = fs.existsSync(filePath);
-      debug(`File exists after write: ${fileExists}`);
+      debug(`Configuration ${config.id} stored successfully`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to store configuration ${config.id}:`, {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-      });
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
-        `Failed to store configuration: ${hivemindError.message}`,
-        errorInfo.type,
+        `Failed to store secure configuration: ${hivemindError.message}`,
+        'technical',
         'SECURE_CONFIG_STORE_FAILED',
         500,
       );
@@ -168,7 +153,6 @@ export class SecureConfigManager {
   public async getConfig(id: string): Promise<SecureConfig | null> {
     try {
       const filePath = this.getSecureFilePath(id);
-
       if (!fs.existsSync(filePath)) {
         return null;
       }
@@ -178,7 +162,8 @@ export class SecureConfigManager {
       const config: SecureConfig = JSON.parse(decryptedData);
 
       // Verify integrity
-      if (!this.verifyChecksum(config)) {
+      const { checksum, ...configWithoutChecksum } = config;
+      if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Configuration integrity check failed',
           'IntegrityError' as any,
@@ -190,109 +175,98 @@ export class SecureConfigManager {
       return config;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to retrieve configuration ${id}:`, {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-      });
-
-      if (hivemindError.code === 'SECURE_CONFIG_INVALID_ID') {
-        throw error;
-      }
+      debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
-    }
-  }
-
-  /**
-   * List all stored configurations
-   */
-  public async listConfigs(): Promise<string[]> {
-    try {
-      const files = await fs.promises.readdir(this.configDir);
-      return files
-        .filter(file => file.endsWith('.enc'))
-        .map(file => file.replace('.enc', ''));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug('Failed to list configurations:', {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-      });
-      return [];
     }
   }
 
   /**
    * Delete a configuration
    */
-  public async deleteConfig(id: string): Promise<boolean> {
+  public async deleteConfig(id: string): Promise<void> {
     try {
       const filePath = this.getSecureFilePath(id);
-      await fs.promises.unlink(filePath);
-      debug(`Configuration ${id} deleted`);
-      return true;
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+        debug(`Configuration ${id} deleted`);
+      }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug(`Failed to delete configuration ${id}:`, {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-      });
-      if (hivemindError.code === 'SECURE_CONFIG_INVALID_ID') {
-        throw error;
-      }
-      return false;
+      debug(`Failed to delete configuration ${id}:`, hivemindError.message);
+      throw ErrorUtils.createError(
+        `Failed to delete secure configuration: ${hivemindError.message}`,
+        'technical',
+        'SECURE_CONFIG_DELETE_FAILED',
+        500,
+      );
     }
   }
 
   /**
-   * Create a backup of all configurations
+   * List all stored configurations (metadata only)
    */
-  public async createBackup(): Promise<string> {
+  public async listConfigs(): Promise<Omit<SecureConfig, 'data'>[]> {
     try {
-      const configs = await this.listConfigs();
-      const backupId = `backup_${Date.now()}`;
-      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+      const files = await fs.promises.readdir(this.configDir);
+      const configs: Omit<SecureConfig, 'data'>[] = [];
 
-      const backupData: BackupMetadata = {
-        id: backupId,
-        timestamp: new Date().toISOString(),
-        configs: configs,
-        checksum: '',
-        version: '1.0',
-      };
-
-      // Collect all configuration data
-      const configData: Record<string, SecureConfig> = {};
-      for (const configId of configs) {
-        const config = await this.getConfig(configId);
-        if (config) {
-          configData[configId] = config;
+      for (const file of files) {
+        if (file.endsWith('.enc')) {
+          const id = file.replace('.enc', '');
+          const config = await this.getConfig(id);
+          if (config) {
+            const { data, ...metadata } = config;
+            configs.push(metadata);
+          }
         }
       }
 
-      // Create full backup structure
-      const fullBackupData = { metadata: backupData, data: configData };
+      return configs;
+    } catch (error: unknown) {
+      debug('Failed to list configurations:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create a full backup of all secure configurations
+   */
+  public async createBackup(): Promise<string> {
+    try {
+      const configs = await fs.promises.readdir(this.configDir);
+      const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+
+      const allConfigs: Record<string, SecureConfig> = {};
+      for (const file of configs) {
+        if (file.endsWith('.enc')) {
+          const id = file.replace('.enc', '');
+          const config = await this.getConfig(id);
+          if (config) {
+            allConfigs[id] = config;
+          }
+        }
+      }
+
+      const fullBackupData = {
+        metadata: {
+          id: backupId,
+          createdAt: new Date().toISOString(),
+          configCount: Object.keys(allConfigs).length,
+          checksum: '',
+        },
+        data: allConfigs,
+      };
 
       // Calculate backup checksum on metadata
-      const { checksum, ...metadataWithoutChecksum } = backupData;
-      backupData.checksum = this.calculateChecksum(metadataWithoutChecksum);
-
-      // Update full backup with checksum
-      fullBackupData.metadata = backupData;
+      const { checksum, ...metadataWithoutChecksum } = fullBackupData.metadata;
+      fullBackupData.metadata.checksum = this.calculateChecksum(metadataWithoutChecksum);
 
       // Encrypt and store backup
       const encryptedBackup = this.encrypt(JSON.stringify(fullBackupData));
       await fs.promises.writeFile(backupPath, encryptedBackup, 'utf8');
 
-      debug(`Backup ${backupId} created with ${configs.length} configurations`);
+      debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -319,10 +293,26 @@ export class SecureConfigManager {
     try {
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
 
+      // Security check to prevent path traversal
+      const resolvedBackupPath = path.resolve(backupPath);
+      const resolvedBackupDir = path.resolve(this.backupDir);
+      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
+        throw ErrorUtils.createError(
+          'Invalid backup ID: Path traversal detected',
+<<<<<<< HEAD
+          'ValidationError' as any,
+=======
+          'validation',
+>>>>>>> origin/main
+          'SECURE_CONFIG_INVALID_BACKUP_ID',
+          400,
+        );
+      }
+
       if (!fs.existsSync(backupPath)) {
         throw ErrorUtils.createError(
           `Backup ${backupId} not found`,
-          'NotFoundError' as any,
+          'validation',
           'SECURE_CONFIG_BACKUP_NOT_FOUND',
           404,
         );
@@ -333,7 +323,8 @@ export class SecureConfigManager {
       const fullBackupData = JSON.parse(decryptedBackup);
 
       // Verify backup integrity
-      if (!this.verifyChecksum(fullBackupData.metadata)) {
+      const { checksum, ...metadataWithoutChecksum } = fullBackupData.metadata;
+      if (this.calculateChecksum(metadataWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Backup integrity check failed',
           'IntegrityError' as any,
@@ -342,10 +333,10 @@ export class SecureConfigManager {
         );
       }
 
-      const { metadata, data } = fullBackupData;
+      const { data } = fullBackupData;
 
       // Restore configurations
-      for (const [configId, config] of Object.entries(data)) {
+      for (const config of Object.values(data)) {
         await this.storeConfig(config as SecureConfig);
       }
 
@@ -368,160 +359,60 @@ export class SecureConfigManager {
     }
   }
 
-  /**
-   * List available backups
-   */
-  public async listBackups(): Promise<BackupMetadata[]> {
-    try {
-      const files = await fs.promises.readdir(this.backupDir);
-      const backups: BackupMetadata[] = [];
-
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          try {
-            const filePath = path.join(this.backupDir, file);
-            const encryptedData = await fs.promises.readFile(filePath, 'utf8');
-            const decryptedData = this.decrypt(encryptedData);
-            const backupData = JSON.parse(decryptedData);
-
-            if (this.verifyChecksum(backupData.metadata)) {
-              backups.push(backupData.metadata);
-            }
-          } catch (error: unknown) {
-            const hivemindError = ErrorUtils.toHivemindError(error) as any;
-            const errorInfo = ErrorUtils.classifyError(hivemindError);
-            debug(`Failed to read backup ${file}:`, {
-              error: hivemindError.message,
-              errorCode: hivemindError.code,
-              errorType: errorInfo.type,
-              severity: errorInfo.severity,
-              file,
-            });
-          }
-        }
-      }
-
-      return backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug('Failed to list backups:', {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-      });
-      return [];
-    }
-  }
-
-  /**
-   * Encrypt data using AES-256-GCM
-   */
-  public encrypt(data: string): string {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
-
-    let encrypted = cipher.update(data, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-
-    const authTag = cipher.getAuthTag();
-
-    // Combine IV, auth tag, and encrypted data
-    return JSON.stringify({
-      iv: iv.toString('hex'),
-      authTag: authTag.toString('hex'),
-      data: encrypted,
-    });
-  }
-
-  /**
-   * Decrypt data using AES-256-GCM
-   */
-  public decrypt(encryptedData: string): string {
-    const { iv, authTag, data } = JSON.parse(encryptedData);
-
-    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, Buffer.from(iv, 'hex'));
-    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-
-    let decrypted = decipher.update(data, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
-  }
-
-  /**
-   * Get or create encryption key
-   */
-  private getOrCreateEncryptionKey(): Buffer {
-    const keyPath = path.join(this.configDir, '.encryption_key');
-
-    try {
-      if (fs.existsSync(keyPath)) {
-        return Buffer.from(fs.readFileSync(keyPath, 'utf8'), 'hex');
-      }
-    } catch (error) {
-      debug('Failed to read existing encryption key:', error);
-    }
-
-    // Generate new key
-    const key = crypto.randomBytes(32);
-    fs.writeFileSync(keyPath, key.toString('hex'), { mode: 0o600 });
-    debug('New encryption key generated and stored');
-    return key;
-  }
-
-  /**
-   * Ensure required directories exist
-   */
   private ensureDirectories(): void {
     [this.configDir, this.backupDir].forEach(dir => {
       if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-        debug(`Created directory: ${dir}`);
+        fs.mkdirSync(dir, { recursive: true });
       }
     });
   }
 
-  /**
-   * Calculate checksum for data integrity
-   */
-  private calculateChecksum(data: any): string {
-    const hash = crypto.createHash('sha256');
-    hash.update(JSON.stringify(data, Object.keys(data).sort()));
-    return hash.digest('hex');
+  private getOrCreateEncryptionKey(): Buffer {
+    if (fs.existsSync(this.keyPath)) {
+      return fs.readFileSync(this.keyPath);
+    }
+    
+    const key = crypto.randomBytes(32);
+    fs.writeFileSync(this.keyPath, key);
+    return key;
   }
 
-  /**
-   * Verify checksum for data integrity
-   */
-  private verifyChecksum(data: any): boolean {
-    if (!data.checksum) {return false;}
-    const { checksum, ...dataWithoutChecksum } = data;
-    const calculatedChecksum = this.calculateChecksum(dataWithoutChecksum);
-    return checksum === calculatedChecksum;
+  private encrypt(text: string): string {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
+    
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const authTag = cipher.getAuthTag().toString('hex');
+    
+    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
-  public getDecryptedMainConfig(env: string): any | null {
-    const encPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-    if (fs.existsSync(encPath)) {
-      const encrypted = fs.readFileSync(encPath, 'utf8');
-      try {
-        const decrypted = this.decrypt(encrypted);
-        return JSON.parse(decrypted);
-      } catch (error) {
-        debug(`Failed to decrypt main config ${env}:`, error);
-        return null;
-      }
-    }
-    const jsonPath = path.join(this.mainConfigDir, `${env}.json`);
-    if (fs.existsSync(jsonPath)) {
-      try {
-        return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-      } catch (error) {
-        debug(`Failed to parse main config ${env}:`, error);
-        return null;
-      }
-    }
-    return null;
+
+  private decrypt(text: string): string {
+    const [ivHex, authTagHex, encryptedText] = text.split(':');
+    
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, iv);
+    
+    decipher.setAuthTag(authTag);
+    
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  }
+
+  private calculateChecksum(data: any): string {
+    return crypto
+      .createHash('sha256')
+      .update(JSON.stringify(data))
+      .digest('hex');
+  }
+
+  private verifyChecksum(config: SecureConfig | any): boolean {
+    const { checksum, ...data } = config;
+    return this.calculateChecksum(data) === checksum;
   }
 }

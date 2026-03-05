@@ -83,6 +83,7 @@ const SettingsSecurity: React.FC = () => {
           'rateLimit.enabled': settings.enableRateLimit,
           'rateLimit.maxRequests': settings.rateLimitMax,
           'rateLimit.windowMs': settings.rateLimitWindow * 1000,
+          'cors.origins': settings.corsOrigins,
         }),
       });
       

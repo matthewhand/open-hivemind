@@ -15,7 +15,7 @@ interface StatItem {
   changeType?: 'increase' | 'decrease' | 'neutral';
   icon: string | React.ReactNode;
   description?: string;
-  color?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'info';
+  color?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 }
 
 interface StatsCardsProps {
@@ -121,6 +121,23 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) =
 
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
+  const isZeroValue = (value: number | string | undefined): boolean => {
+    if (value === undefined) return false;
+    if (typeof value === 'number') return value === 0;
+    if (typeof value === 'string') {
+      const num = parseFloat(value);
+      return !isNaN(num) && num === 0;
+    }
+    return false;
+  };
+
+  const getEffectiveColor = (stat: StatItem): string | undefined => {
+    if ((stat.color === 'error' || stat.color === 'warning') && isZeroValue(stat.value)) {
+      return 'neutral';
+    }
+    return stat.color;
+  };
+
   const getGradientBg = (color?: string) => {
     switch (color) {
     case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
@@ -130,6 +147,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     case 'warning': return 'bg-gradient-to-br from-warning/20 via-warning/10 to-transparent';
     case 'error': return 'bg-gradient-to-br from-error/20 via-error/10 to-transparent';
     case 'info': return 'bg-gradient-to-br from-info/20 via-info/10 to-transparent';
+    case 'neutral': return 'bg-gradient-to-br from-base-content/10 via-base-content/5 to-transparent';
     default: return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
     }
   };
@@ -143,6 +161,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     case 'warning': return 'text-warning';
     case 'error': return 'text-error';
     case 'info': return 'text-info';
+    case 'neutral': return 'text-base-content/80';
     default: return 'text-primary';
     }
   };
@@ -156,6 +175,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     case 'warning': return 'bg-warning/20';
     case 'error': return 'bg-error/20';
     case 'info': return 'bg-info/20';
+    case 'neutral': return 'bg-base-content/10';
     default: return 'bg-primary/20';
     }
   };
@@ -208,56 +228,60 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
-      {stats.map((stat, index) => (
-        <div
-          key={stat.id}
-          className={`
-            card border border-base-300/50 backdrop-blur-sm
-            hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30
-            transition-all duration-300 cursor-pointer
-            hover:-translate-y-1 animate-fade-in
-            ${getGradientBg(stat.color)}
-          `}
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
-          <div className="card-body p-4">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1 flex-1">
-                <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
-                  {stat.title}
-                </p>
+      {stats.map((stat, index) => {
+        const effectiveColor = getEffectiveColor(stat);
 
-                {typeof stat.value === 'number' ? (
-                  <AnimatedCounter
-                    value={stat.value}
-                    className={`text-3xl font-bold ${getStatColor(stat.color)}`}
-                  />
-                ) : (
-                  <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
-                    {stat.value}
+        return (
+          <div
+            key={stat.id}
+            className={`
+              card border border-base-300/50 backdrop-blur-sm
+              hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30
+              transition-all duration-300 cursor-pointer
+              hover:-translate-y-1 animate-fade-in
+              ${getGradientBg(effectiveColor)}
+            `}
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            <div className="card-body p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1 flex-1">
+                  <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
+                    {stat.title}
                   </p>
-                )}
 
-                {stat.change !== undefined && (
-                  <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>
-                    {getChangeIcon(stat.changeType)}
-                    <span className="font-medium">{Math.abs(stat.change)}%</span>
-                    <span className="text-base-content/40 text-xs">vs last period</span>
-                  </div>
-                )}
+                  {typeof stat.value === 'number' ? (
+                    <AnimatedCounter
+                      value={stat.value}
+                      className={`text-3xl font-bold ${getStatColor(effectiveColor)}`}
+                    />
+                  ) : (
+                    <p className={`text-3xl font-bold ${getStatColor(effectiveColor)}`}>
+                      {stat.value}
+                    </p>
+                  )}
 
-                {stat.description && !stat.change && (
-                  <p className="text-sm text-base-content/60">{stat.description}</p>
-                )}
-              </div>
+                  {stat.change !== undefined && (
+                    <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>
+                      {getChangeIcon(stat.changeType)}
+                      <span className="font-medium">{Math.abs(stat.change)}%</span>
+                      <span className="text-base-content/40 text-xs">vs last period</span>
+                    </div>
+                  )}
 
-              <div className={`p-3 rounded-xl ${getIconBg(stat.color)} ${getStatColor(stat.color)}`}>
-                {resolveIcon(stat.icon)}
+                  {stat.description && !stat.change && (
+                    <p className="text-sm text-base-content/60">{stat.description}</p>
+                  )}
+                </div>
+
+                <div className={`p-3 rounded-xl ${getIconBg(effectiveColor)} ${getStatColor(effectiveColor)}`}>
+                  {resolveIcon(stat.icon)}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
 
+<<<<<<< HEAD
 export interface OpenWebUIProviderConfig {
   apiUrl?: string;
   apiKey?: string;
@@ -47,6 +48,35 @@ export class OpenWebUIProvider implements ILlmProvider {
     this.client = axios.create({
       baseURL: this.resolvedApiUrl,
       headers,
+=======
+/**
+ * Provides chat and non-chat completion functionality for OpenWebUI.
+ */
+export class OpenWebUIProvider implements ILlmProvider {
+  name = 'openwebui';
+  private config: any;
+  private client: import('axios').AxiosInstance;
+
+  constructor(config?: any) {
+    this.config = config || {};
+
+    // Fallback logic for credentials since openWebUIConfig doesn't natively expose apiKey.
+    // In actual use, this logic connects to the OpenWebUI backend relying on the session API or pre-configured proxies.
+    // Or we expect the user to configure API keys per profile.
+    let apiKey = this.config.apiKey || 'ollama';
+    try {
+        apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
+    } catch {
+        // Ignore if apiKey is not in openWebUIConfig schema
+    }
+
+    this.client = axios.create({
+      baseURL: this.config.apiUrl || openWebUIConfig.get('apiUrl'),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`, // Adjust as needed
+      },
+>>>>>>> origin/main
       timeout: 15000,
     });
   }
@@ -58,6 +88,7 @@ export class OpenWebUIProvider implements ILlmProvider {
   supportsCompletion(): boolean {
     return true;
   }
+<<<<<<< HEAD
 
   private hasUserPassAuth(): boolean {
     const username = this.config.username || openWebUIConfig.get('username');
@@ -99,6 +130,8 @@ export class OpenWebUIProvider implements ILlmProvider {
       throw new Error('Authentication failed');
     }
   }
+=======
+>>>>>>> origin/main
 
   async generateChatCompletion(
     userMessage: string,
@@ -112,7 +145,10 @@ export class OpenWebUIProvider implements ILlmProvider {
       { role: 'user', content: userMessage },
     ];
 
+    const model = metadata?.modelOverride || this.config.model || openWebUIConfig.get('model');
+
     try {
+<<<<<<< HEAD
       let reqConfig = {};
       if (this.hasUserPassAuth()) {
         const sessionKey = await this.getSessionKey();
@@ -122,6 +158,12 @@ export class OpenWebUIProvider implements ILlmProvider {
           }
         };
       }
+=======
+      const response = await this.client.post('/chat/completions', {
+        model,
+        messages,
+      });
+>>>>>>> origin/main
 
       const response = await this.client.post('/chat/completions', {
         model: metadata?.modelOverride || metadata?.model || this.model,
@@ -138,7 +180,10 @@ export class OpenWebUIProvider implements ILlmProvider {
   async generateCompletion(prompt: string): Promise<string> {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
+    const model = this.config.model || openWebUIConfig.get('model');
+
     try {
+<<<<<<< HEAD
       let reqConfig = {};
       if (this.hasUserPassAuth()) {
         const sessionKey = await this.getSessionKey();
@@ -151,6 +196,10 @@ export class OpenWebUIProvider implements ILlmProvider {
 
       const response = await this.client.post('/completions', {
         model: this.model,
+=======
+      const response = await this.client.post('/completions', {
+        model,
+>>>>>>> origin/main
         prompt,
         max_tokens: 100,
       }, reqConfig);
