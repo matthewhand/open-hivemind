@@ -264,11 +264,16 @@ describe('DiscordService', () => {
         },
       ]);
 
-      // Re-instantiate service
-      const freshService = new DiscordService(mockDeps);
+      // Re-instantiate service should throw ConfigError
+      expect(() => new DiscordService(mockDeps)).toThrow(
+        mockDeps.errorTypes.ConfigError
+      );
 
-      await freshService.initialize();
-      expect(freshService.getAllBots()).toHaveLength(0);
+      try {
+        new DiscordService(mockDeps);
+      } catch (e: any) {
+        expect(e.message).toBe('Empty token at position 1 in config file');
+      }
     });
   });
 
