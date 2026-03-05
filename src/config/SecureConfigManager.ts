@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { ErrorUtils } from '@src/types/errors';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SecureConfigManager');
 
@@ -73,7 +73,7 @@ export class SecureConfigManager {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
-        'ValidationError' as any,
+        'validation' as any,
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -89,7 +89,7 @@ export class SecureConfigManager {
     if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
-        'ValidationError' as any,
+        'validation' as any,
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -106,7 +106,7 @@ export class SecureConfigManager {
     if (!config.id || config.id.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration ID is required',
-        'ValidationError' as any,
+        'validation' as any,
         'SECURE_CONFIG_ID_REQUIRED',
         400,
       );
@@ -114,7 +114,7 @@ export class SecureConfigManager {
     if (!config.name || config.name.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration name is required',
-        'ValidationError' as any,
+        'validation' as any,
         'SECURE_CONFIG_NAME_REQUIRED',
         400,
       );
@@ -318,6 +318,18 @@ export class SecureConfigManager {
   public async restoreBackup(backupId: string): Promise<void> {
     try {
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
+
+      // Security check to prevent path traversal
+      const resolvedBackupPath = path.resolve(backupPath);
+      const resolvedBackupDir = path.resolve(this.backupDir);
+      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
+        throw ErrorUtils.createError(
+          'Invalid backup ID: Path traversal detected',
+          'validation',
+          'SECURE_CONFIG_INVALID_BACKUP_ID',
+          400,
+        );
+      }
 
       if (!fs.existsSync(backupPath)) {
         throw ErrorUtils.createError(

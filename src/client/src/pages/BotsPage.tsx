@@ -23,25 +23,8 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
+import { useBotStats, BotData } from '../hooks/useBotStats';
 import { apiService } from '../services/api';
-
-/**
- * Represents the configuration and runtime state of a generic bot instance.
- */
-interface BotData {
-  id: string;
-  name: string;
-  provider: string; // Message Provider Name
-  messageProvider?: string; // Alternative field from API
-  llmProvider: string; // LLM Provider Name
-  persona?: string; // Bot Persona
-  status: string;
-  connected: boolean;
-  messageCount: number;
-  errorCount: number;
-  config?: any; // Bot specific config overrides
-  envOverrides?: any;
-}
 
 const BotsPage: React.FC = () => {
   // UI State
@@ -130,6 +113,9 @@ const BotsPage: React.FC = () => {
       (bot.llmProvider || '').toLowerCase().includes(q)
     );
   }), [bots, searchQuery]);
+
+  const botStats = useBotStats(bots);
+
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -355,25 +341,40 @@ const BotsPage: React.FC = () => {
         <div className="stat">
           <div className="stat-title">Active</div>
           <div className="stat-value text-green-500">
-            {bots.filter((b) => b.status === 'active' && b.connected).length}
+            {botStats.active}
           </div>
         </div>
         <div className="stat">
           <div className="stat-title">Disconnected</div>
           <div className="stat-value text-yellow-500">
-            {bots.filter((b) => b.status === 'active' && !b.connected).length}
+            {botStats.disconnected}
           </div>
         </div>
         <div className="stat" tabIndex={0} aria-label="Total error count across all bots">
           <div className="stat-title">Errors</div>
-          {(() => {
-            const totalErrors = bots.reduce((sum, b) => sum + (b.errorCount || 0), 0);
-            return (
-              <div className={`stat-value ${totalErrors > 0 ? 'text-error' : 'text-base-content/60'}`}>
-                {totalErrors}
-              </div>
-            );
-          })()}
+          <div className={`stat-value ${botStats.errors > 0 ? 'text-error' : 'text-base-content/60'}`}>
+            {botStats.errors}
+          </div>
+        </div>
+        <div className="stat hidden md:inline-flex" tabIndex={0} aria-label="LLM Providers breakdown">
+          <div className="stat-title">LLM Breakdown</div>
+          <div className="text-sm mt-1 opacity-75">
+            {Object.entries(botStats.llmProviders)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 2)
+              .map(([provider, count]) => (
+                <div key={provider} className="flex justify-between w-24">
+                  <span className="truncate pr-2">{provider}</span>
+                  <span>{count}</span>
+                </div>
+              ))}
+            {Object.keys(botStats.llmProviders).length > 2 && (
+              <div className="text-xs opacity-50 text-right w-24">+ {Object.keys(botStats.llmProviders).length - 2} more</div>
+            )}
+            {Object.keys(botStats.llmProviders).length === 0 && (
+              <span className="opacity-50">None</span>
+            )}
+          </div>
         </div>
       </div>
 
