@@ -645,6 +645,23 @@ export class ConfigurationImportExportService {
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
+        // Enforce backup retention policy (keep max 10 backups)
+        const MAX_BACKUPS = 10;
+        try {
+          const allBackups = await this.listBackups();
+          if (allBackups.length > MAX_BACKUPS) {
+            debug(`Enforcing backup retention policy: keeping latest ${MAX_BACKUPS} backups`);
+            // listBackups sorts from newest to oldest
+            const backupsToDelete = allBackups.slice(MAX_BACKUPS);
+            for (const oldBackup of backupsToDelete) {
+              debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
+              await this.deleteBackup(oldBackup.id);
+            }
+          }
+        } catch (retentionError) {
+          debug('Error enforcing backup retention:', retentionError);
+        }
+
         return {
           ...result,
           filePath: backupPath,
