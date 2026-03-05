@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
+import { Button, Modal, Card, Alert, Badge, Input, Textarea, Select, Toggle } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -197,10 +197,9 @@ const GuardrailProfileManager: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="form-control">
-            <label className="label"><span className="label-text">Key</span></label>
-            <input
+            <Input
+              label="Key"
               type="text"
-              className="input input-bordered"
               value={formData.key}
               onChange={e => setFormData({ ...formData, key: e.target.value })}
               disabled={!!editingProfile}
@@ -208,43 +207,40 @@ const GuardrailProfileManager: React.FC = () => {
             />
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Name</span></label>
-            <input
+            <Input
+              label="Name"
               type="text"
-              className="input input-bordered"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Description</span></label>
-            <textarea
-              className="textarea textarea-bordered"
+            <Textarea
+              label="Description"
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
           <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text">Guard Enabled</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
+            <div className="flex items-center justify-between py-2">
+              <span className="label-text font-medium">Guard Enabled</span>
+              <Toggle
+                variant="primary"
                 checked={formData.enabled}
                 onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
               />
-            </label>
+            </div>
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Guard Type</span></label>
-            <select
-              className="select select-bordered"
+            <Select
+              label="Guard Type"
               value={formData.type}
               onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
-            >
-              <option value="owner">Owner Only</option>
-              <option value="custom">Custom Allow List</option>
-            </select>
+              options={[
+                { value: 'owner', label: 'Owner Only' },
+                { value: 'custom', label: 'Custom Allow List' }
+              ]}
+            />
           </div>
           {formData.type === 'custom' && (
             <div className="form-control">

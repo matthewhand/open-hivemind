@@ -24,6 +24,7 @@ test.describe('System Management Page Screenshots', () => {
               enableDebugMode: false,
               enableAutoBackup: true,
               backupInterval: 86400000,
+              maxRetainedBackups: 10,
               alertThresholds: {
                 cpu: 80,
                 memory: 85,
@@ -177,5 +178,17 @@ test.describe('System Management Page Screenshots', () => {
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/system-management-page.png', fullPage: true });
+
+    // Switch to System Configuration tab
+    await page.getByRole('button', { name: 'System Configuration' }).click();
+
+    // Wait for the specific new field to be visible
+    await expect(page.getByText('Max Retained Backups')).toBeVisible();
+
+    // Take screenshot
+    await page.screenshot({
+      path: 'docs/screenshots/system-management-config-tab.png',
+      fullPage: true,
+    });
   });
 });

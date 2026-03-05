@@ -39,10 +39,18 @@ jest.mock('@integrations/flowise/flowiseProvider', () => ({
 }));
 
 // Mock openWebUI
-jest.mock('@integrations/openwebui/runInference', () => ({
-  __esModule: true,
-  generateChatCompletion: jest.fn().mockResolvedValue({ text: 'test response' }),
-}));
+jest.mock('@integrations/openwebui/openWebUIProvider', () => {
+  return {
+    __esModule: true,
+    OpenWebUIProvider: class MockOpenWebUIProvider {
+      name = 'openwebui';
+      supportsChatCompletion() { return true; }
+      supportsCompletion() { return false; }
+      generateChatCompletion = jest.fn().mockResolvedValue('mocked OpenWebUI response');
+      generateCompletion = jest.fn();
+    }
+  };
+});
 
 const mockedLlmConfig = llmConfig as jest.Mocked<typeof llmConfig>;
 

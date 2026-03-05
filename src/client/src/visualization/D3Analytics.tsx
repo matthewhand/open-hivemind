@@ -254,14 +254,18 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .range([0, innerHeight])
       .padding(0.05);
 
-    let interpolator = d3.interpolateInferno;
+    // Correlation Matrix Heatmap Colors
+    // When representing a correlation matrix (values typically -1.0 to 1.0 or similar),
+    // a diverging color scale like interpolateRdBu (Red-Blue) is more appropriate
+    // to clearly distinguish between negative (e.g. red) and positive (e.g. blue) correlations.
+    let interpolator = d3.interpolateRdBu;
     switch (colorScheme) {
       case 'viridis': interpolator = d3.interpolateViridis; break;
       case 'warm': interpolator = d3.interpolateWarm; break;
       case 'cool': interpolator = d3.interpolateCool; break;
       case 'category10':
       default:
-        interpolator = d3.interpolateInferno; break;
+        interpolator = d3.interpolateRdBu; break;
     }
 
     const colorScale = d3.scaleSequential(interpolator)

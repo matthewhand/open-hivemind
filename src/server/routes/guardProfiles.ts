@@ -6,6 +6,7 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import { adminRateLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST / - Create a new profile
-router.post('/', (req: Request, res: Response) => {
+router.post('/', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body;
 
@@ -145,7 +146,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', (req: Request, res: Response) => {
+router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body;
@@ -182,7 +183,7 @@ router.put('/:id', (req: Request, res: Response) => {
                 acc[key] = newValue;
               }
               return acc;
-            }, {} as any)
+            }, {} as Record<string, unknown>)
         : profiles[profileIndex].guards;
 
     const updatedProfile = {
@@ -210,7 +211,7 @@ router.put('/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();

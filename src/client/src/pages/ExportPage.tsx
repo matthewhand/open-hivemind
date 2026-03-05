@@ -358,7 +358,7 @@ const ExportPage: React.FC = () => {
                       <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-left" data-tip="Restore">
+                        <div className="tooltip tooltip-top" data-tip="Restore">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -369,7 +369,7 @@ const ExportPage: React.FC = () => {
                             <RotateCcw className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-left" data-tip="Download">
+                        <div className="tooltip tooltip-top" data-tip="Download">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -380,7 +380,7 @@ const ExportPage: React.FC = () => {
                             <Download className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-left" data-tip="Delete">
+                        <div className="tooltip tooltip-top" data-tip="Delete">
                           <Button
                             size="xs"
                             variant="ghost"

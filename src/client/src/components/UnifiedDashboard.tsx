@@ -52,7 +52,6 @@ const providerIconMap: Record<string, string> = {
   discord: '💬',
   slack: '📢',
   mattermost: '💼',
-  telegram: '✈️',
   webhook: '🔗',
 };
 
@@ -258,21 +257,45 @@ const UnifiedDashboard: React.FC = () => {
   );
 
   const statusBots = status?.bots ?? [];
-  // ⚡ Bolt Optimization: Consolidate multiple O(N) array operations into a single O(N) loop
-  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(
-    () =>
-      statusBots.reduce(
-        (acc, bot) => {
-          if (bot.status?.toLowerCase() === 'active') { acc.activeBotCount++; }
-          if (bot.connected) { acc.activeConnections++; }
-          acc.totalMessages += bot.messageCount ?? 0;
-          acc.totalErrors += bot.errorCount ?? 0;
-          return acc;
-        },
-        { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 },
-      ),
+<<<<<<< HEAD
+  const activeBotCount = useMemo(
+    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
     [statusBots],
   );
+  const activeConnections = useMemo(
+    () => statusBots.filter(bot => bot.connected).length,
+    [statusBots],
+  );
+  const totalMessages = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
+    [statusBots],
+  );
+  const totalErrors = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
+    [statusBots],
+  );
+=======
+  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
+    let _activeCount = 0;
+    let _connections = 0;
+    let _messages = 0;
+    let _errors = 0;
+
+    for (const bot of statusBots) {
+      if (bot.status?.toLowerCase() === 'active') _activeCount++;
+      if (bot.connected) _connections++;
+      _messages += bot.messageCount ?? 0;
+      _errors += bot.errorCount ?? 0;
+    }
+
+    return {
+      activeBotCount: _activeCount,
+      activeConnections: _connections,
+      totalMessages: _messages,
+      totalErrors: _errors,
+    };
+  }, [statusBots]);
+>>>>>>> origin/main
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));
@@ -667,7 +690,7 @@ const UnifiedDashboard: React.FC = () => {
                   <div className="badge badge-primary badge-lg mb-2">Step 1</div>
                   <h2 className="card-title">Configure Intelligence</h2>
                   <p className="text-sm text-base-content/70">
-                    Set up your Language Model (LLM) providers like OpenAI, Anthropic, or local models.
+                    Set up your Language Model (LLM) providers like OpenAI, Flowise, or OpenWebUI.
                   </p>
                   <div className="card-actions justify-end mt-4">
                     <Link to="/admin/providers/llm" className="btn btn-outline btn-primary btn-sm">

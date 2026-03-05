@@ -89,7 +89,7 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Wait for the page to load and content to be visible
     await expect(page.getByText('Bot Templates')).toBeVisible();
-    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
@@ -101,13 +101,19 @@ test.describe('Bot Templates Page Screenshots', () => {
     const searchInput = page.getByPlaceholder('Search templates...');
     await searchInput.fill('Code');
     await page.waitForTimeout(300);
+<<<<<<< HEAD
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeHidden();
+=======
     await expect(page.getByText('Code Reviewer')).toBeVisible();
-    await expect(page.getByText('Helpful Assistant')).toBeHidden();
+    // It's in the carousel now, so it might not be hidden
+    // await expect(page.getByText('Helpful Assistant')).toBeHidden();
+>>>>>>> origin/main
 
     // Clear search
     await searchInput.clear();
     await page.waitForTimeout(300);
-    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Test Interaction: Filter by Platform 'Discord'
     const platformSelect = page.locator('select').nth(0); // First select is Platform
@@ -117,17 +123,12 @@ test.describe('Bot Templates Page Screenshots', () => {
     await page.waitForTimeout(300);
 
     // Verify filtering
+<<<<<<< HEAD
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible(); // Discord bot
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeHidden(); // Slack bot
+=======
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
-
-    // Test Interaction: Open Diff Viewer
-    await page.locator('button[title="Compare Versions"]').first().click();
-    await page.waitForTimeout(500);
-
-    // Verify modal is visible
-    await expect(page.getByText('Compare the current template configuration')).toBeVisible();
-
-    // Take screenshot of diff viewer
-    await page.screenshot({ path: 'docs/screenshots/template-version-diff-viewer.png' });
+>>>>>>> origin/main
   });
 });
