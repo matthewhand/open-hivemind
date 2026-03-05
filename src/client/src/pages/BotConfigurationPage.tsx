@@ -294,7 +294,7 @@ const BotConfigurationPage: React.FC = () => {
           <div className="flex gap-2">
             <Button
               onClick={() => setIsRollbackModalOpen(true)}
-              variant="outline"
+              variant="ghost"
               className="gap-2"
               disabled={loading || rollbacks.length === 0}
             >
