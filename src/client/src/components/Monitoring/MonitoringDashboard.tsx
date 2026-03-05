@@ -13,8 +13,12 @@ import {
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
+import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
+import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
+
+// Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {
   id: string;
@@ -159,6 +163,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
   ];
 
   const stats = [
@@ -283,6 +288,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
         <TabPanel value={activeTab} index={2}>
           <ActivityMonitor />
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={3}>
+          <BotActivityWaterfallMonitor />
         </TabPanel>
       </div>
     </div>

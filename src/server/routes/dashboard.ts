@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { redactPIIString } from '@common/logger';
 import { authenticateToken } from '../middleware/auth';
 import { ActivityLogger } from '../services/ActivityLogger';
 
@@ -231,14 +230,14 @@ router.post('/ai/feedback', authenticateToken, async (req, res) => {
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/adapter-slack').SlackService as any;
+      const svc = require('@hivemind/adapter-slack').SlackService as unknown as Record<string, any>;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/adapter-discord') as any;
+      const svc = require('@hivemind/adapter-discord') as unknown as Record<string, any>;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -427,6 +426,21 @@ function parseDate(value: unknown): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * Redacts a string by masking all but the last 4 characters.
+ * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
+ */
+function redactString(val: string | undefined): string | undefined {
+<<<<<<< HEAD
+  if (!val) return val;
+  if (val.length <= 3) return '***';
+  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
+=======
+  if (!val || val.length <= 4) return val;
+  return '*'.repeat(val.length - 4) + val.slice(-4);
+>>>>>>> origin/main
+}
+
 function annotateEvent(
   event: MessageFlowEvent,
   botMap: Map<string, { llmProvider: string }>
@@ -434,8 +448,8 @@ function annotateEvent(
   const bot = botMap.get(event.botName);
   return {
     ...event,
-    userId: redactPIIString(event.userId),
-    channelId: redactPIIString(event.channelId),
+    userId: redactString(event.userId),
+    channelId: redactString(event.channelId),
     llmProvider: bot?.llmProvider || 'unknown',
   };
 }

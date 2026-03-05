@@ -13,6 +13,7 @@ interface SystemConfig {
   enableDebugMode: boolean;
   enableAutoBackup: boolean;
   backupInterval: number;
+  maxRetainedBackups: number;
   alertThresholds: {
     cpu: number;
     memory: number;
@@ -41,6 +42,7 @@ const SystemManagement: React.FC = () => {
     enableDebugMode: false,
     enableAutoBackup: true,
     backupInterval: 24 * 60 * 60 * 1000,
+    maxRetainedBackups: 10,
     alertThresholds: {
       cpu: 80,
       memory: 85,
@@ -216,6 +218,24 @@ const SystemManagement: React.FC = () => {
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
       alert('Backup created successfully');
+
+      // Enforce backup retention policy
+      try {
+        const backupList = await apiService.listSystemBackups();
+        if (backupList.length > systemConfig.maxRetainedBackups) {
+          // Assuming backups are returned sorted newest to oldest, or we can sort them to be safe
+          const sortedBackups = backupList.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const backupsToDelete = sortedBackups.slice(systemConfig.maxRetainedBackups);
+
+          for (const backup of backupsToDelete) {
+            await apiService.deleteSystemBackup(backup.id);
+          }
+          console.log(`Enforced retention policy: deleted ${backupsToDelete.length} old backups.`);
+        }
+      } catch (retentionError) {
+        console.error('Failed to enforce backup retention policy:', retentionError);
+      }
+
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
@@ -441,6 +461,20 @@ const SystemManagement: React.FC = () => {
                     max="168"
                   />
                 </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Max Retained Backups</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered"
+                    value={systemConfig.maxRetainedBackups}
+                    onChange={(e) => handleConfigUpdate('maxRetainedBackups', Number(e.target.value))}
+                    min="1"
+                    max="100"
+                  />
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -579,14 +613,22 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
-                <button
-                  className="btn btn-warning btn-sm"
-                  onClick={handleClearCache}
-                >
-                  Clear System Cache
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={fetchPerformanceData}
+                    disabled={isPerformanceLoading}
+                  >
+                    {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                  </button>
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={handleClearCache}
+                  >
+                    Clear System Cache
+                  </button>
+                </div>
               </div>
 
               {apiStatus && (
@@ -613,15 +655,8 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center mt-8">
-                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={fetchPerformanceData}
-                  disabled={isPerformanceLoading}
-                >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                </button>
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold mb-4">System Information & Database Status</h3>
               </div>
 
               {systemInfo && (

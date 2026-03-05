@@ -89,25 +89,34 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, existingId?: string) => {
     if (!selectedBotId) return;
 
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      content,
-      timestamp: new Date().toISOString(),
-      sender: {
-        id: 'current-user',
-        name: 'You',
-        type: 'user',
-      },
-      metadata: {
-        status: 'sending',
-      },
-    };
+    const tempId = existingId || `temp-${Date.now()}`;
 
-    setMessages(prev => [...prev, tempMessage]);
+    if (existingId) {
+      // If retrying, reset the status to sending
+      setMessages(prev => prev.map(m =>
+        m.id === tempId
+          ? { ...m, metadata: { ...m.metadata, status: 'sending' } }
+          : m
+      ));
+    } else {
+      const tempMessage: ChatMessage = {
+        id: tempId,
+        content,
+        timestamp: new Date().toISOString(),
+        sender: {
+          id: 'current-user',
+          name: 'You',
+          type: 'user',
+        },
+        metadata: {
+          status: 'sending',
+        },
+      };
+      setMessages(prev => [...prev, tempMessage]);
+    }
 
     try {
       await apiService.post(`/api/bots/${selectedBotId}/message`, { content });
@@ -116,8 +125,19 @@ const ChatPage: React.FC = () => {
       await fetchHistory(selectedBotId);
     } catch (err) {
       console.error('Failed to send message:', err);
-      // Rollback optimistic update on error
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      // Mark optimistic update as failed
+      setMessages(prev => prev.map(m =>
+        m.id === tempId
+          ? { ...m, metadata: { ...m.metadata, status: 'failed' } }
+          : m
+      ));
+    }
+  };
+
+  const handleRetryMessage = (messageId: string) => {
+    const messageToRetry = messages.find(m => m.id === messageId);
+    if (messageToRetry) {
+      handleSendMessage(messageToRetry.content, messageId);
     }
   };
 

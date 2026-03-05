@@ -250,7 +250,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       systemInstruction: bot.systemInstruction,
       mcpServers: bot.mcpServers,
       mcpGuard: bot.mcpGuard,
-      mcpGuardProfile: (bot as any).mcpGuardProfile || '',
+      mcpGuardProfile: bot.mcpGuardProfile || '',
       isActive: bot.isActive,
       discord: bot.discord || {},
       slack: bot.slack || {},
@@ -548,7 +548,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                       <Badge variant="secondary">{bot.llmProvider}</Badge>
                     </td>
                     <td>
-                      <Badge variant={status.color as any}>{status.status}</Badge>
+                      <Badge variant={status.color as "error" | "warning" | "success" | "neutral"}>{status.status}</Badge>
                     </td>
                     <td>{bot.persona || 'default'}</td>
                     <td>

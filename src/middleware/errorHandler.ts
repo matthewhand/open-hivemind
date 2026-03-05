@@ -10,9 +10,13 @@ import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
+<<<<<<< HEAD
 import { ErrorUtils, HivemindError } from '../types/errors';
 import { ErrorLogger, errorLogger } from '../utils/errorLogger';
 import { redactPIIString } from '../common/logger';
+=======
+import { errorLogger } from '../utils/errorLogger';
+>>>>>>> origin/main
 
 const debug = Debug('app:error:middleware');
 
@@ -95,17 +99,14 @@ function generateCorrelationId(): string {
 function extractErrorContext(req: Request): ErrorContext {
   const duration = req.startTime ? Date.now() - req.startTime : undefined;
 
-  const rawUserId = (req as any).user?.id || (req as any).user?.sub;
-  const rawIp = req.ip || req.connection.remoteAddress;
-
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: redactPIIString(rawUserId) as string | undefined,
+    userId: (req as any).user?.id || (req as any).user?.sub,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: redactPIIString(rawIp) as string | undefined,
+    ip: req.ip || req.connection.remoteAddress,
     duration,
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
