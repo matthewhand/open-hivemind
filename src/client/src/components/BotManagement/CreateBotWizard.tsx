@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, Plus } from 'lucide-react';
+import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 
 interface CreateBotWizardProps {
@@ -25,9 +25,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        messageProvider: '',
+        messageProvider: 'discord',
         llmProvider: '',
-        persona: '',
+        persona: 'default',
         mcpGuardProfile: '',
         guards: {
             accessControl: false,
@@ -113,97 +113,21 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
         }
     };
 
-    /**
-     * Enhanced step validation with specific field checks
-     * Returns validation result with detailed error information
-     */
-    const validateStep = (stepNum: number): { valid: boolean; errors: string[] } => {
-        const errors: string[] = [];
-
-        if (stepNum === 1) {
-            const isNameValid = formData.name.trim().length > 0;
-            const isMessageProviderValid = !!formData.messageProvider;
-            const isLlmValid = defaultLlmConfigured || !!formData.llmProvider;
-
-            if (!isNameValid) errors.push('Bot name is required');
-            if (!isMessageProviderValid) errors.push('Message provider must be selected');
-            if (!isLlmValid) errors.push('LLM provider is required (no system default configured)');
-
-            return { valid: errors.length === 0, errors };
-        }
-
-        if (stepNum === 2) {
-            const isPersonaValid = !!formData.persona;
-            if (!isPersonaValid) errors.push('Please select a persona');
-            return { valid: isPersonaValid, errors };
-        }
-
-        // Steps 3 and 4 are always valid (guardrails are optional)
-        return { valid: true, errors: [] };
-    };
-
-    const isStepValid = () => validateStep(step).valid;
-
-    /**
-     * Get validation status for any step (for step indicators)
-     */
-    const getStepValidationStatus = (stepNum: number): 'valid' | 'invalid' | 'pending' => {
-        if (step < stepNum) return 'pending';
-        const { valid } = validateStep(stepNum);
-        return valid ? 'valid' : 'invalid';
+    const isStepValid = () => {
+        if (step === 1) return formData.name.trim().length > 0 && formData.messageProvider;
+        return true;
     };
 
     return (
         <div className="flex flex-col h-full max-h-[70vh]">
-            {/* Steps Indicator with Validation Status */}
+            {/* Steps Indicator */}
             <ul className="steps w-full mb-8">
-                {steps.map(s => {
-                    const status = getStepValidationStatus(s.id);
-                    const isActive = step === s.id;
-                    const isCompleted = step > s.id;
-
-                    return (
-                        <li
-                            key={s.id}
-                            className={`step ${step >= s.id ? 'step-primary' : ''} ${status === 'invalid' ? 'step-error' : ''}`}
-                            data-content={
-                                status === 'valid' && isCompleted
-                                    ? '✓'
-                                    : status === 'invalid'
-                                        ? '!'
-                                        : s.id
-                            }
-                        >
-                            <div className="flex flex-col items-center">
-                                <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{s.title}</span>
-                                {isActive && status === 'invalid' && (
-                                    <span className="text-xs text-error mt-1 flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" /> Needs attention
-                                    </span>
-                                )}
-                            </div>
-                        </li>
-                    );
-                })}
+                {steps.map(s => (
+                    <li key={s.id} className={`step ${step >= s.id ? 'step-primary' : ''}`}>
+                        {s.title}
+                    </li>
+                ))}
             </ul>
-
-            {/* Validation Errors Summary */}
-            {(() => {
-                const { errors } = validateStep(step);
-                return errors.length > 0 ? (
-                    <div className="alert alert-warning mb-4 shadow-lg">
-                        <AlertCircle className="w-5 h-5" />
-                        <div className="flex flex-col">
-                            <span className="font-semibold">Please fix the following before continuing:</span>
-                            <ul className="list-disc list-inside text-sm mt-1">
-                                {errors.map((err, idx) => (
-                                    <li key={idx}>{err}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                ) : null;
-            })()}
 
             {/* Error Alert */}
             {error && (
@@ -236,19 +160,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="form-control">
-                                <label className="label flex justify-between">
-                                    <span className="label-text">Message Provider <span className="text-error">*</span></span>
-                                    <button
-                                        type="button"
-                                        className="btn btn-square btn-xs btn-ghost"
-                                        onClick={() => window.open('/admin/config', '_blank')}
-                                        title="Add Message Provider"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </button>
-                                </label>
+                                <label className="label"><span className="label-text">Message Provider</span></label>
                                 <select
-                                    className={`select select-bordered w-full ${!formData.messageProvider ? 'select-error' : ''}`}
+                                    className="select select-bordered w-full"
                                     value={formData.messageProvider}
                                     onChange={e => {
                                         if (e.target.value === '___manage___') {
@@ -258,7 +172,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                         setFormData({ ...formData, messageProvider: e.target.value });
                                     }}
                                 >
-                                    <option value="" disabled>Select Provider</option>
                                     <option value="discord">Discord</option>
                                     <option value="slack">Slack</option>
                                     <option value="mattermost">Mattermost</option>
@@ -272,7 +185,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span>
                                 </label>
                                 <select
-                                    className={`select select-bordered w-full ${!defaultLlmConfigured && !formData.llmProvider ? 'select-error' : ''}`}
+                                    className="select select-bordered w-full"
                                     value={formData.llmProvider}
                                     onChange={e => {
                                         if (e.target.value === '___manage___') {
@@ -309,7 +222,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                 {step === 2 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="form-control">
-                            <label className="label"><span className="label-text">Select Persona <span className="text-error">*</span></span></label>
+                            <label className="label"><span className="label-text">Select Persona</span></label>
                             <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
                                 <label className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === 'default' ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
                                     <span className="label-text flex flex-col">
