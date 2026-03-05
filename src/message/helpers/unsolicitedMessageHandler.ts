@@ -1,5 +1,4 @@
 import messageConfig from '@config/messageConfig';
-import { getLastBotActivity } from './processing/ChannelActivity';
 
 /**
  * Determines whether to reply to an unsolicited message.

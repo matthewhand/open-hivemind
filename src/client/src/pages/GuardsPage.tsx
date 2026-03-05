@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, Tag } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Select from '../components/DaisyUI/Select';
+import Toggle from '../components/DaisyUI/Toggle';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -36,156 +41,64 @@ interface GuardrailProfile {
 
 const API_BASE = '/api/admin';
 
-/**
- * CommaSeparatedInput - Enhanced input with chip-style display, validation, and real-time feedback
- */
-interface CommaSeparatedInputProps {
+<<<<<<< HEAD
+=======
+interface CommaArrayInputProps {
   id: string;
   value: string[];
-  onChange: (value: string[]) => void;
+  onChange: (val: string[]) => void;
   disabled?: boolean;
   placeholder?: string;
-  validate?: (item: string) => { valid: boolean; message?: string };
-  maxItems?: number;
-  label?: string;
-  helperText?: string;
+  isTextArea?: boolean;
+  className?: string;
 }
 
-const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
-  id,
-  value,
-  onChange,
-  disabled = false,
-  placeholder = 'Add items...',
-  validate,
-  maxItems = 100,
-  label,
-  helperText,
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [showValidation, setShowValidation] = useState(false);
+const CommaArrayInput: React.FC<CommaArrayInputProps> = ({ value, onChange, id, placeholder, disabled, isTextArea, className }) => {
+  const [text, setText] = useState(value?.join(', ') || '');
+  const [isFocused, setIsFocused] = useState(false);
 
-  const validationResults = useMemo(() => {
-    if (!validate) return new Map<string, { valid: boolean; message?: string }>();
-    const results = new Map<string, { valid: boolean; message?: string }>();
-    value.forEach(item => {
-      if (item.trim()) {
-        results.set(item, validate(item.trim()));
-      }
-    });
-    return results;
-  }, [value, validate]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-
-    // As per testing expectations, we MUST NOT clear the input field on comma
-    // Instead we just update the input state, and we rely on commitInput on blur/enter
-    // to do the tokenization.
-    setInputValue(newValue);
-  };
-
-  const commitInput = () => {
-    if (!inputValue.trim()) return;
-
-    // Parse current input and merge with existing values
-    const currentItems = inputValue.split(',').map(s => s.trim()).filter(Boolean);
-    const newItems = [...value];
-    let hasChanges = false;
-
-    currentItems.forEach(item => {
-      if (!newItems.includes(item) && newItems.length < maxItems) {
-        newItems.push(item);
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      onChange(newItems);
+  useEffect(() => {
+    if (!isFocused) {
+      setText(value?.join(', ') || '');
     }
-    setInputValue('');
+  }, [value, isFocused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    onChange(e.target.value.split(',').map(s => s.trimStart()));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      commitInput();
-      setShowValidation(true);
-    }
-    if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      onChange(value.slice(0, -1));
-    }
-  };
-
-  const removeItem = (indexToRemove: number) => {
-    onChange(value.filter((_, index) => index !== indexToRemove));
-  };
-
-  const hasInvalidItems = Array.from(validationResults.values()).some(r => !r.valid);
+  if (isTextArea) {
+    return (
+      <textarea
+        id={id}
+        className={className}
+        placeholder={placeholder}
+        disabled={disabled}
+        value={text}
+        onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      />
+    );
+  }
 
   return (
-    <div className="form-control">
-      {label && (
-        <label className="label" htmlFor={id}>
-          <span className="label-text">{label}</span>
-          <span className="badge badge-sm badge-ghost">{value.length}{maxItems ? `/${maxItems}` : ''}</span>
-        </label>
-      )}
-      <div className={`input input-bordered flex flex-wrap gap-2 p-2 min-h-[3rem] items-center ${hasInvalidItems ? 'input-error' : ''} ${disabled ? 'input-disabled' : ''}`}>
-        {value.map((item, index) => {
-          const validation = validationResults.get(item);
-          const isInvalid = validation && !validation.valid;
-          return (
-            <span
-              key={`${item}-${index}`}
-              className={`badge badge-sm gap-1 ${isInvalid ? 'badge-error' : 'badge-primary'} ${disabled ? 'opacity-50' : ''}`}
-              title={validation?.message}
-            >
-              <Tag className="w-3 h-3" />
-              {item}
-              {!disabled && (
-                <button
-                  type="button"
-                  className="btn btn-xs btn-ghost btn-square p-0"
-                  onClick={() => removeItem(index)}
-                  disabled={disabled}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </span>
-          );
-        })}
-        <input
-          id={id}
-          type="text"
-          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onBlur={() => {
-            commitInput();
-            setShowValidation(true);
-          }}
-          placeholder={value.length === 0 ? placeholder : ''}
-          disabled={disabled}
-        />
-      </div>
-      {helperText && (
-        <label className="label">
-          <span className="label-text-alt opacity-70">{helperText}</span>
-        </label>
-      )}
-      {showValidation && hasInvalidItems && (
-        <div className="alert alert-error alert-sm mt-2">
-          <AlertCircle className="w-4 h-4" />
-          <span>Some items have validation errors. Hover over items for details.</span>
-        </div>
-      )}
-    </div>
+    <input
+      id={id}
+      type="text"
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      value={text}
+      onChange={handleChange}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    />
   );
 };
 
+>>>>>>> origin/main
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -445,10 +358,9 @@ const GuardsPage: React.FC = () => {
           ]}
         >
           <div className="form-control mb-4">
-            <label className="label"><span className="label-text">Profile Name</span></label>
-            <input
+            <Input
+              label="Profile Name"
               type="text"
-              className="input input-bordered"
               value={editingProfile.name}
               onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
               placeholder="e.g. Strict Production"
@@ -456,9 +368,9 @@ const GuardsPage: React.FC = () => {
           </div>
 
           <div className="form-control mb-6">
-            <label className="label"><span className="label-text">Description</span></label>
-            <textarea
-              className="textarea textarea-bordered h-20"
+            <Textarea
+              label="Description"
+              className="h-20"
               value={editingProfile.description}
               onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
               placeholder="Describe what this profile enforces..."
@@ -471,62 +383,107 @@ const GuardsPage: React.FC = () => {
             {/* Access Control */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" defaultChecked />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <Shield className="w-5 h-5" /> Access Control
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary ml-auto z-10"
-                  checked={editingProfile.guards.mcpGuard.enabled}
-                  onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="primary"
+                    checked={editingProfile.guards.mcpGuard.enabled}
+                    onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Type</span></label>
-                  <select
-                    className="select select-bordered"
+                  <Select
+                    label="Type"
                     value={editingProfile.guards.mcpGuard.type}
                     onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
-                  >
-                    <option value="owner">Owner Only</option>
-                    <option value="custom">Custom Allowed Users</option>
-                  </select>
+                    options={[
+                      { value: 'owner', label: 'Owner Only' },
+                      { value: 'custom', label: 'Custom Allowed Users' }
+                    ]}
+                  />
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
-                  <div className="mt-4">
+                  <div className="form-control mt-4">
+<<<<<<< HEAD
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
+                    <input
+                      id="allowed-users"
+                      type="text"
+                      className="input input-bordered"
+                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(',') || ''}
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',') })}
+=======
+<<<<<<< HEAD
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
+                    <CommaArrayInput
+                      id="allowed-users"
+                      className="input input-bordered"
+<<<<<<< HEAD
+                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                      onChange={val => updateGuard('mcpGuard', { allowedUsers: val })}
+=======
+                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
+                      // Note: Using trimStart() allows trailing commas during typing for better UX.
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
                     <CommaSeparatedInput
                       id="allowed-users"
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
-                      onChange={(value) => updateGuard('mcpGuard', { allowedUsers: value })}
+                      onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
+>>>>>>> origin/main
+>>>>>>> origin/main
+>>>>>>> origin/main
                       disabled={!editingProfile.guards.mcpGuard.enabled}
-                      placeholder="user1, user2..."
-                      label="Allowed User IDs"
-                      maxItems={50}
-                      validate={(item) => {
-                        const trimmed = item.trim();
-                        if (!trimmed) return { valid: false, message: 'Empty value' };
-                        if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
-                          return { valid: false, message: 'Only alphanumeric, underscore, and hyphen allowed' };
-                        }
-                        return { valid: true };
-                      }}
                     />
                   </div>
                 )}
 
-                <div className="mt-4">
+                <div className="form-control mt-4">
+<<<<<<< HEAD
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                  <input
+                    id="allowed-tools"
+                    type="text"
+                    className="input input-bordered"
+                    placeholder="e.g. calculator, weather"
+                    value={editingProfile.guards.mcpGuard.allowedTools?.join(',') || ''}
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',') })}
+=======
+<<<<<<< HEAD
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                  <CommaArrayInput
+                    id="allowed-tools"
+                    className="input input-bordered"
+                    placeholder="e.g. calculator, weather"
+<<<<<<< HEAD
+                    value={editingProfile.guards.mcpGuard.allowedTools || []}
+                    onChange={val => updateGuard('mcpGuard', { allowedTools: val })}
+=======
+                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
                   <CommaSeparatedInput
                     id="allowed-tools"
+                    placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
-                    onChange={(value) => updateGuard('mcpGuard', { allowedTools: value })}
+                    onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
+>>>>>>> origin/main
+>>>>>>> origin/main
+>>>>>>> origin/main
                     disabled={!editingProfile.guards.mcpGuard.enabled}
-                    placeholder="calculator, weather, search..."
-                    label="Allowed Tools"
-                    maxItems={100}
-                    helperText="Leave empty to allow all tools (if enabled)"
                   />
+                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
               </div>
             </div>
@@ -534,28 +491,29 @@ const GuardsPage: React.FC = () => {
             {/* Rate Limit */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <RefreshCw className="w-5 h-5" /> Rate Limiter
-                <input
-                  type="checkbox"
-                  className="toggle toggle-warning ml-auto z-10"
-                  checked={editingProfile.guards.rateLimit?.enabled || false}
-                  onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="warning"
+                    checked={editingProfile.guards.rateLimit?.enabled || false}
+                    onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Max Requests</span>
-                      {!editingProfile.guards.rateLimit?.enabled && (
-                        <span className="badge badge-sm border-base-300">Disabled</span>
-                      )}
-                    </label>
-                    <input
+                    <Input
+                      label={
+                        <div className="flex justify-between w-full">
+                          <span>Max Requests</span>
+                          {!editingProfile.guards.rateLimit?.enabled && (
+                            <span className="badge badge-sm border-base-300">Disabled</span>
+                          )}
+                        </div>
+                      }
                       type="number"
-                      className="input input-bordered w-full"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
@@ -563,20 +521,21 @@ const GuardsPage: React.FC = () => {
                     />
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Window (seconds)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="label-text-alt text-info" title="Time period for counting requests">
-                          Max 1 hour (3600s)
-                        </span>
-                        {!editingProfile.guards.rateLimit?.enabled && (
-                          <span className="badge badge-sm border-base-300">Disabled</span>
-                        )}
-                      </div>
-                    </label>
-                    <input
+                    <Input
+                      label={
+                        <div className="flex justify-between w-full">
+                          <span>Window (seconds)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="label-text-alt text-info" title="Time period for counting requests">
+                              Max 1 hour (3600s)
+                            </span>
+                            {!editingProfile.guards.rateLimit?.enabled && (
+                              <span className="badge badge-sm border-base-300">Disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      }
                       type="number"
-                      className="input input-bordered"
                       value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
                       onChange={e => {
                         const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
@@ -586,18 +545,16 @@ const GuardsPage: React.FC = () => {
                       min={1}
                       max={3600}
                       placeholder="60"
-                    />
-                    <label className="label">
-                      <span className="label-text-alt opacity-70">
-                        {(() => {
+                      helperText={
+                        (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
                           if (seconds < 60) return `${seconds} seconds`;
                           if (seconds === 60) return '1 minute';
                           if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
                           return '1 hour';
-                        })()}
-                      </span>
-                    </label>
+                        })()
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -606,15 +563,15 @@ const GuardsPage: React.FC = () => {
             {/* Content Filter */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <AlertTriangle className="w-5 h-5" /> Content Filter
-                <input
-                  type="checkbox"
-                  className="toggle toggle-error ml-auto z-10"
-                  checked={editingProfile.guards.contentFilter?.enabled || false}
-                  onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="error"
+                    checked={editingProfile.guards.contentFilter?.enabled || false}
+                    onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="form-control">
@@ -636,23 +593,43 @@ const GuardsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4">
+                <div className="form-control mt-4">
+<<<<<<< HEAD
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
+                  <textarea
+                    id="blocked-terms"
+                    className="textarea textarea-bordered h-20"
+                    placeholder="e.g. secret, password, confidential"
+                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(',') || ''}
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',') })}
+=======
+<<<<<<< HEAD
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
+                  <CommaArrayInput
+                    id="blocked-terms"
+                    isTextArea
+                    className="textarea textarea-bordered h-20"
+                    placeholder="e.g. secret, password, confidential"
+<<<<<<< HEAD
+                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                    onChange={val => updateGuard('contentFilter', { blockedTerms: val })}
+=======
+                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
                   <CommaSeparatedInput
                     id="blocked-terms"
+                    placeholder="e.g. secret, password, confidential"
                     value={editingProfile.guards.contentFilter?.blockedTerms || []}
-                    onChange={(value) => updateGuard('contentFilter', { blockedTerms: value })}
+                    onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
+>>>>>>> origin/main
+>>>>>>> origin/main
+>>>>>>> origin/main
                     disabled={!editingProfile.guards.contentFilter?.enabled}
-                    placeholder="secret, password, confidential..."
-                    label="Blocked Terms"
-                    maxItems={100}
-                    validate={(item) => {
-                      const trimmed = item.trim();
-                      if (!trimmed) return { valid: false, message: 'Empty term' };
-                      if (trimmed.length < 2) {
-                        return { valid: false, message: 'Term must be at least 2 characters' };
-                      }
-                      return { valid: true };
-                    }}
                   />
                 </div>
               </div>

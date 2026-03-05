@@ -9,6 +9,11 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
+<<<<<<< HEAD
+import type { BotConfig } from '../../../../types/config';
+=======
+import { BotConfig as BaseBotConfig } from '../../../../types/config';
+>>>>>>> origin/main
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -16,31 +21,36 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
-interface BotConfig {
-    name: string;
-    messageProvider: string;
-    llmProvider: string;
-    llmProfile?: string;
-    persona?: string;
+<<<<<<< HEAD
+interface BotConfigExtended extends Omit<BotConfig, 'discord' | 'slack' | 'isActive'> {
+=======
+type BotConfig = BaseBotConfig & {
+>>>>>>> origin/main
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
-    [key: string]: unknown;
+<<<<<<< HEAD
 }
+=======
+    llmProfile?: string;
+    persona?: string;
+    [key: string]: unknown;
+};
+>>>>>>> origin/main
 
 interface BotListResponse {
-    bots: BotConfig[];
+    bots: BotConfigExtended[];
     count: number;
     warnings: string[];
 }
 
 const BotListManager: React.FC = () => {
-  const [bots, setBots] = useState<BotConfig[]>([]);
+  const [bots, setBots] = useState<BotConfigExtended[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [selectedBot, setSelectedBot] = useState<BotConfig | null>(null);
+  const [selectedBot, setSelectedBot] = useState<BotConfigExtended | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -66,7 +76,7 @@ const BotListManager: React.FC = () => {
     }
   };
 
-  const handleViewBot = (bot: BotConfig) => {
+  const handleViewBot = (bot: BotConfigExtended) => {
     setSelectedBot(bot);
     setIsModalOpen(true);
   };
@@ -75,7 +85,7 @@ const BotListManager: React.FC = () => {
     switch (provider) {
     case 'discord': return 'badge-primary';
     case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-info';
+    case 'mattermost': return 'badge-accent';
     default: return 'badge-ghost';
     }
   };
@@ -87,142 +97,239 @@ const BotListManager: React.FC = () => {
       const obj = value as Record<string, unknown>;
       if (obj.isRedacted) {
         return (
-          <span className="inline-flex items-center gap-1 text-warning">
-            <EyeSlashIcon className="w-4 h-4" />
-            <code className="text-xs">{(obj as RedactedValue).redactedValue}</code>
-          </span>
+          <div className="flex items-center gap-1 text-base-content/60 italic">
+            <EyeSlashIcon className="w-3 h-3" />
+            <span>Redacted</span>
+          </div>
         );
       }
-      return <code className="text-xs bg-base-200 px-1 rounded">{JSON.stringify(value)}</code>;
+      return <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">{JSON.stringify(value, null, 2)}</pre>;
     }
 
-    return <span>{String(value)}</span>;
+    return String(value);
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;}
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Configured Bots</h2>
-          <p className="text-base-content/60">
-                        View and manage all bots configured via environment variables or JSON files.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <CpuChipIcon className="w-6 h-6 text-primary" />
+          Bot Configurations
+        </h2>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchBots} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
-                        Refresh
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={fetchBots}
+            loading={loading}
+          >
+            <ArrowPathIcon className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4">
-          <Alert status="error" message={error} onClose={() => setError(null)} />
-        </div>
+        <Alert variant="error">
+          <ExclamationCircleIcon className="w-5 h-5" />
+          <span>{error}</span>
+        </Alert>
       )}
 
       {warnings.length > 0 && (
-        <div className="mb-4 space-y-2">
+        <div className="space-y-2">
           {warnings.map((warning, idx) => (
-            <Alert key={idx} status="warning" message={warning} />
+            <Alert key={idx} variant="warning" size="sm">
+              <ExclamationCircleIcon className="w-4 h-4" />
+              <span>{warning}</span>
+            </Alert>
           ))}
         </div>
       )}
 
-      {bots.length === 0 ? (
-        <div className="text-center py-12">
-          <CpuChipIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-          <h3 className="text-lg font-semibold text-base-content/70">No Bots Found</h3>
-          <p className="text-base-content/50 mb-4">
-                        Configure bots using <code>BOTS=bot1,bot2</code> and <code>BOTS_BOT1_*</code> environment variables,
-                        or create JSON files in <code>config/bots/</code>.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
+      <div className="overflow-x-auto bg-base-100 rounded-lg border border-base-300">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Bot Name</th>
+              <th>Messaging</th>
+              <th>LLM</th>
+              <th>Source</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
               <tr>
-                <th>Name</th>
-                <th>Message Provider</th>
-                <th>LLM Provider</th>
-                <th>Persona</th>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <td colSpan={6} className="text-center py-10">
+                  <span className="loading loading-spinner loading-md"></span>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {bots.map(bot => (
-                <tr key={bot.name}>
+            ) : bots.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-10 text-base-content/50">
+                  No bot configurations found.
+                </td>
+              </tr>
+            ) : (
+              bots.map((bot) => (
+                <tr key={bot.name} className="hover:bg-base-200/50">
+                  <td>
+                    {bot.isActive ? (
+                      <div className="tooltip" data-tip="Active">
+                        <CheckCircleIcon className="w-5 h-5 text-success" />
+                      </div>
+                    ) : (
+                      <div className="tooltip" data-tip="Inactive">
+                        <ExclamationCircleIcon className="w-5 h-5 text-base-content/20" />
+                      </div>
+                    )}
+                  </td>
                   <td className="font-medium">{bot.name}</td>
                   <td>
-                    <Badge className={getProviderBadgeColor(bot.messageProvider)}>
+                    <Badge variant="ghost" className={getProviderBadgeColor(bot.messageProvider)}>
                       {bot.messageProvider}
                     </Badge>
                   </td>
-                  <td>{bot.llmProvider || '—'}</td>
-                  <td>{bot.persona || 'default'}</td>
                   <td>
-                    <Badge variant="neutral" className="text-xs">
-                      {bot.source === 'env' ? 'ENV' : 'JSON'}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm">{bot.llmProvider}</span>
+                      {bot.llmProfile && (
+                        <span className="text-[10px] opacity-60">Profile: {bot.llmProfile}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <Badge variant="outline" size="sm" className="opacity-60">
+                      {bot.source}
                     </Badge>
                   </td>
                   <td>
-                    {bot.isActive ? (
-                      <span className="inline-flex items-center gap-1 text-success">
-                        <CheckCircleIcon className="w-4 h-4" /> Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-error">
-                        <ExclamationCircleIcon className="w-4 h-4" /> Inactive
-                      </span>
-                    )}
-                  </td>
-                  <td>
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="ghost"
                       onClick={() => handleViewBot(bot)}
-                      startIcon={<PencilIcon className="w-4 h-4" />}
                     >
-                                            View
+                      View Details
                     </Button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
+      {/* Bot Details Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Bot: ${selectedBot?.name}`}
+        title={`Configuration: ${selectedBot?.name}`}
+        size="lg"
       >
         {selectedBot && (
-          <div className="space-y-4">
-            <div className="alert alert-info text-sm">
-              <EyeSlashIcon className="w-5 h-5" />
-              <span>Sensitive values (tokens, keys) are redacted for security.</span>
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider opacity-50">Core Settings</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">Provider</span>
+                    <span className="font-medium">{selectedBot.messageProvider}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">LLM Provider</span>
+                    <span className="font-medium">{selectedBot.llmProvider}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">LLM Profile</span>
+                    <span className="font-medium">{selectedBot.llmProfile || 'Default'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">Persona</span>
+                    <span className="font-medium">{selectedBot.persona || 'None'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider opacity-50">Infrastructure</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">Source</span>
+                    <span className="font-medium uppercase text-xs">{selectedBot.source}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-b border-base-200 py-1">
+                    <span className="opacity-60">Active Status</span>
+                    <Badge variant={selectedBot.isActive ? 'success' : 'ghost'} size="sm">
+                      {selectedBot.isActive ? 'Online' : 'Offline'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="table table-sm w-full">
-                <tbody>
-                  {Object.entries(selectedBot)
-                    .filter(([key]) => !key.startsWith('_'))
-                    .map(([key, value]) => (
-                      <tr key={key}>
-                        <td className="font-mono text-sm font-medium w-1/3">{key}</td>
-                        <td>{renderConfigValue(key, value)}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+            {/* Detailed Config Sections */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider opacity-50">Provider Configuration</h3>
+              
+              {selectedBot.discord && (
+                <div className="collapse collapse-arrow bg-base-200/50">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-medium flex items-center gap-2">
+                    Discord Settings
+                  </div>
+                  <div className="collapse-content">
+                    <div className="space-y-2 pt-2">
+                      {Object.entries(selectedBot.discord).map(([key, val]) => (
+                        <div key={key} className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold opacity-40">{key}</label>
+                          <div className="text-sm">{renderConfigValue(key, val)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedBot.slack && (
+                <div className="collapse collapse-arrow bg-base-200/50">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-medium flex items-center gap-2">
+                    Slack Settings
+                  </div>
+                  <div className="collapse-content">
+                    <div className="space-y-2 pt-2">
+                      {Object.entries(selectedBot.slack).map(([key, val]) => (
+                        <div key={key} className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold opacity-40">{key}</label>
+                          <div className="text-sm">{renderConfigValue(key, val)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Catch-all for other config keys */}
+              <div className="collapse collapse-arrow bg-base-200/50">
+                <input type="checkbox" />
+                <div className="collapse-title font-medium">
+                  Additional Parameters
+                </div>
+                <div className="collapse-content">
+                  <div className="space-y-2 pt-2">
+                    {Object.entries(selectedBot)
+                      .filter(([key]) => !['name', 'isActive', 'source', 'discord', 'slack', 'messageProvider', 'llmProvider', 'llmProfile', 'persona'].includes(key))
+                      .map(([key, val]) => (
+                        <div key={key} className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold opacity-40">{key}</label>
+                          <div className="text-sm">{renderConfigValue(key, val)}</div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="modal-action">

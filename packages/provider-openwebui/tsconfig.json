@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src",
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
@@ -14,10 +13,11 @@
       "@message/*": ["../../src/message/*"],
       "@types/*": ["../../src/types/*"],
       "@server/*": ["../../src/server/*"],
-      "@services/*": ["../../src/services/*"]
+      "@services/*": ["../../src/services/*"],
+      "@llm/*": ["../../src/llm/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../src/message/interfaces/IMessage.ts", "../../src/llm/interfaces/ILlmProvider.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../shared-types" }

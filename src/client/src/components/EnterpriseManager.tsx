@@ -585,7 +585,7 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-error mb-4">
           <ExclamationCircleIcon className="w-6 h-6" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost" aria-label="Dismiss error message" title="Dismiss error message">✕</button>
+          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost">✕</button>
         </div>
       )}
 
@@ -593,7 +593,7 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-success mb-4">
           <CheckCircleIcon className="w-6 h-6" />
           <span>{success}</span>
-          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost" aria-label="Dismiss success message" title="Dismiss success message">✕</button>
+          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost">✕</button>
         </div>
       )}
 
@@ -693,7 +693,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddIntegrationDialog(false)} aria-label="Close dialog" title="Close dialog">close</button>
+          <button onClick={() => setAddIntegrationDialog(false)}>close</button>
         </form>
       </dialog>
 
@@ -751,7 +751,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddCloudProviderDialog(false)} aria-label="Close dialog" title="Close dialog">close</button>
+          <button onClick={() => setAddCloudProviderDialog(false)}>close</button>
         </form>
       </dialog>
     </div>

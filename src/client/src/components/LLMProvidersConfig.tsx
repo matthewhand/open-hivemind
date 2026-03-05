@@ -4,10 +4,10 @@ import BaseProvidersConfig from './ProviderManagement/BaseProvidersConfig';
 
 const LLMProvidersConfig: React.FC = () => {
   const llmProviderTypes = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'flowise', label: 'Flowise' },
-    { value: 'openwebui', label: 'OpenWebUI' },
-    { value: 'openswarm', label: 'OpenSwarm' },
+    { value: 'openai', label: 'OpenAI', docsUrl: 'https://platform.openai.com/docs/api-reference' },
+    { value: 'flowise', label: 'Flowise', docsUrl: 'https://docs.flowiseai.com/' },
+    { value: 'openwebui', label: 'OpenWebUI', docsUrl: 'https://docs.openwebui.com/' },
+    { value: 'openswarm', label: 'OpenSwarm', docsUrl: 'https://openswarm.ai/docs' },
   ];
 
   return (

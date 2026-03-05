@@ -2,6 +2,7 @@ import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { body, matchedData, validationResult } from 'express-validator';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { CONFIG_LIMITS } from '../../types/config';
 
 const debug = Debug('app:formValidation');
 
@@ -13,6 +14,10 @@ const ALLOWED_LLM_PROVIDERS = [
   'replicate',
   'n8n',
   'openswarm',
+  'anthropic',
+  'ollama',
+  'huggingface',
+  'local',
 ];
 
 /**
@@ -24,8 +29,8 @@ export const validateBotConfigCreation = [
     .trim()
     .notEmpty()
     .withMessage('Bot name is required')
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Bot name must be between 1 and 100 characters')
+    .isLength({ min: CONFIG_LIMITS.BOT_NAME_MIN_LENGTH, max: CONFIG_LIMITS.BOT_NAME_MAX_LENGTH })
+    .withMessage(`Bot name must be between ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} and ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters`)
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Bot name can only contain letters, numbers, underscores, and hyphens'),
 
@@ -57,36 +62,38 @@ export const validateBotConfigCreation = [
   body('llmProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('LLM profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`LLM profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Persona validation
   body('persona')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Persona must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Persona must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Response profile validation
   body('responseProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Response profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Response profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // MCP guard profile validation
   body('mcpGuardProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('MCP guard profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`MCP guard profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
-    .isLength({ max: 5000 })
-    .withMessage('System instruction must be less than 5000 characters'),
+    .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
+    .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
 
   // MCP servers validation
   body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),
@@ -164,7 +171,10 @@ export const validateBotConfigCreation = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey')
+    .optional()
+    .isString()
+    .withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
@@ -215,8 +225,8 @@ export const validateBotConfigUpdate = [
     .trim()
     .notEmpty()
     .withMessage('Bot name cannot be empty')
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Bot name must be between 1 and 100 characters')
+    .isLength({ min: CONFIG_LIMITS.BOT_NAME_MIN_LENGTH, max: CONFIG_LIMITS.BOT_NAME_MAX_LENGTH })
+    .withMessage(`Bot name must be between ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} and ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters`)
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Bot name can only contain letters, numbers, underscores, and hyphens'),
 
@@ -250,36 +260,38 @@ export const validateBotConfigUpdate = [
   body('llmProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('LLM profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`LLM profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Persona validation
   body('persona')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Persona must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Persona must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // Response profile validation
   body('responseProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('Response profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`Response profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // MCP guard profile validation
   body('mcpGuardProfile')
     .optional()
     .trim()
-    .isLength({ max: 100 })
-    .withMessage('MCP guard profile must be less than 100 characters'),
+    .isLength({ max: CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH })
+    .withMessage(`MCP guard profile must be less than ${CONFIG_LIMITS.PROFILE_NAME_MAX_LENGTH} characters`),
 
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
-    .isLength({ max: 5000 })
-    .withMessage('System instruction must be less than 5000 characters'),
+    .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
+    .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
 
   // MCP servers validation
   body('mcpServers').optional().isArray().withMessage('MCP servers must be an array'),
@@ -363,7 +375,10 @@ export const validateBotConfigUpdate = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey')
+    .optional()
+    .isString()
+    .withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
