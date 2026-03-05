@@ -1,0 +1,34 @@
+name: Docs Screenshot Integrity
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'tests/e2e/screenshot-*.spec.ts'
+
+jobs:
+  check-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify referenced screenshots exist
+        run: |
+          MISSING=0
+          # Find all image references in markdown docs
+          while IFS= read -r img; do
+            if [ ! -f "$img" ]; then
+              echo "❌ Missing: $img"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ Found:   $img"
+            fi
+          done < <(grep -roh 'docs/screenshots/[^)\"'\'']*\.png' docs/ | sort -u)
+
+          if [ $MISSING -gt 0 ]; then
+            echo ""
+            echo "::error::$MISSING screenshot(s) referenced in docs but not committed."
+            echo "Run: npx playwright test tests/e2e/screenshot-*.spec.ts --update-snapshots"
+            exit 1
+          fi
+          echo "All referenced screenshots present ✅"
