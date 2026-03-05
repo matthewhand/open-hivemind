@@ -39,7 +39,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   const getColorClass = () => `text-${color}`;
 
   return (
-    <span 
+    <span
       className={`loading ${getVariantClass()} ${getSizeClass()} ${getColorClass()} ${className}`}
       aria-label="Loading"
     />
@@ -99,7 +99,7 @@ export const Progress: React.FC<ProgressProps> = ({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <progress 
+      <progress
         className={`progress ${getVariantClass()} ${getSizeClass()} flex-1`}
         value={indeterminate ? undefined : percentage}
         max="100"
@@ -119,14 +119,14 @@ interface SkeletonProps {
   animate?: boolean;
 }
 
-export const SkeletonText: React.FC<SkeletonProps & { 
-  lines?: number; 
+export const SkeletonText: React.FC<SkeletonProps & {
+  lines?: number;
   width?: 'full' | '3/4' | '1/2' | '1/4';
-}> = ({ 
-  lines = 1, 
+}> = ({
+  lines = 1,
   width = 'full',
   animate = true,
-  className = '', 
+  className = '',
 }) => {
   const getWidthClass = () => {
     switch (width) {
@@ -142,7 +142,7 @@ export const SkeletonText: React.FC<SkeletonProps & {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, index) => (
-        <div 
+        <div
           key={index}
           className={`h-4 bg-base-300 rounded ${getWidthClass()} ${animateClass} ${
             index === lines - 1 && lines > 1 ? 'w-2/3' : ''
@@ -177,14 +177,14 @@ export const LoadingSkeletonCard: React.FC<SkeletonProps> = ({
   );
 };
 
-export const SkeletonAvatar: React.FC<SkeletonProps & { 
+export const SkeletonAvatar: React.FC<SkeletonProps & {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   shape?: 'circle' | 'square';
-}> = ({ 
+}> = ({
   size = 'md',
   shape = 'circle',
   animate = true,
-  className = '', 
+  className = '',
 }) => {
   const getSizeClass = () => {
     switch (size) {
@@ -201,20 +201,20 @@ export const SkeletonAvatar: React.FC<SkeletonProps & {
   const animateClass = animate ? 'animate-pulse' : '';
 
   return (
-    <div 
+    <div
       className={`bg-base-300 ${getSizeClass()} ${shapeClass} ${animateClass} ${className}`}
     />
   );
 };
 
-export const SkeletonTable: React.FC<SkeletonProps & { 
+export const SkeletonTable: React.FC<SkeletonProps & {
   rows?: number;
   columns?: number;
-}> = ({ 
+}> = ({
   rows = 5,
   columns = 4,
   animate = true,
-  className = '', 
+  className = '',
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -246,12 +246,12 @@ export const SkeletonTable: React.FC<SkeletonProps & {
   );
 };
 
-export const SkeletonStats: React.FC<SkeletonProps & { 
+export const SkeletonStats: React.FC<SkeletonProps & {
   count?: number;
-}> = ({ 
+}> = ({
   count = 4,
   animate = true,
-  className = '', 
+  className = '',
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -340,12 +340,12 @@ export const StepProgress: React.FC<StepProgressProps> = ({
           </li>
         ))}
       </ul>
-      
+
       {/* Progress bar */}
       <div className="mt-4">
-        <Progress 
-          value={currentStep} 
-          max={totalSteps} 
+        <Progress
+          value={currentStep}
+          max={totalSteps}
           variant={variant}
           showValue
         />

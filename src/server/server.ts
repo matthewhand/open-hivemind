@@ -10,7 +10,6 @@ import {
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
 // Error handling imports
-import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
@@ -172,6 +171,7 @@ export class WebUIServer {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
 
+<<<<<<< HEAD
     /**
      * Proxies requests from /metrics to /metrics/prometheus
      * Maintains compatibility with Prometheus scraping conventions
@@ -183,6 +183,8 @@ export class WebUIServer {
       healthRouter(req, res, next);
     });
 
+=======
+>>>>>>> origin/main
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
 

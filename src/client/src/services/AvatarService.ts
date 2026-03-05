@@ -9,8 +9,6 @@ class ProviderAvatarService implements AvatarService {
         return await this.loadDiscordAvatar(config);
       case 'slack':
         return await this.loadSlackAvatar(config);
-      case 'telegram':
-        return await this.loadTelegramAvatar(config);
       default:
         return null;
       }
@@ -21,7 +19,7 @@ class ProviderAvatarService implements AvatarService {
   }
 
   getSupportedProviders(): string[] {
-    return ['discord', 'slack', 'telegram'];
+    return ['discord', 'slack'];
   }
 
   private async loadDiscordAvatar(config: Record<string, any>): Promise<string | null> {
@@ -80,34 +78,6 @@ class ProviderAvatarService implements AvatarService {
     }
   }
 
-  private async loadTelegramAvatar(config: Record<string, any>): Promise<string | null> {
-    const { botToken } = config;
-    if (!botToken) {return null;}
-
-    try {
-      // In a real implementation, this would call your backend service
-      // which would use the Telegram Bot API to get bot information
-      const response = await fetch('/api/providers/telegram/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ botToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.avatarUrl;
-      }
-
-      // For demo purposes, return a mock avatar URL
-      return this.generateMockAvatar('telegram', botToken);
-    } catch (error) {
-      console.error('Failed to load Telegram avatar:', error);
-      return this.generateMockAvatar('telegram', botToken);
-    }
-  }
-
   private generateMockAvatar(providerType: string, token: string): string {
     // Generate a deterministic avatar based on token for demo purposes
     const seed = token.substring(0, 8);
@@ -121,7 +91,6 @@ class ProviderAvatarService implements AvatarService {
     const colors = {
       discord: '5865F2',
       slack: '4A154B',
-      telegram: '0088CC',
     };
     return colors[providerType as keyof typeof colors] || '6B7280';
   }

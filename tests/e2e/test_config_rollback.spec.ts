@@ -1,0 +1,101 @@
+import { test, expect } from '@playwright/test';
+import { setupAuth } from './test-utils';
+
+test.describe('Configuration Rollback', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuth(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    // Common mocks
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
+    await page.route('/api/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
+    await page.route('/api/config/global', async (route) =>
+      route.fulfill({ status: 200, json: {
+        "server": {
+          "values": {
+            "port": 3000
+          },
+          "schema": {
+            "properties": {
+              "port": {
+                "format": "port",
+                "default": 3000
+              }
+            }
+          }
+        }
+      } })
+    );
+    await page.route('/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
+    );
+    await page.route('/api/config/llm-status', async (route) =>
+      route.fulfill({ status: 200, json: { configured: true, hasMissing: false } })
+    );
+  });
+
+  test('verifies configuration rollback UI', async ({ page }) => {
+    // 1. Mock empty rollbacks
+    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+      await route.fulfill({ status: 200, json: { rollbacks: [] } });
+    });
+
+    await page.goto('/admin/configuration');
+    await page.waitForLoadState('networkidle');
+
+    // Wait for the button to be disabled when there are no rollbacks
+    const rollbackButton = page.locator('button:has-text("Rollbacks")');
+    await expect(rollbackButton).toBeDisabled();
+
+    await page.screenshot({ path: 'docs/screenshots/config-rollback-empty.png' });
+
+    // 2. Mock rollbacks available
+    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+      await route.fulfill({ status: 200, json: { rollbacks: ['rollback_1711234567890_xxyyzz'] } });
+    });
+
+    // Refresh to get new mock
+    await page.locator('button:has-text("Reload")').click();
+    await page.waitForLoadState('networkidle');
+
+    await expect(rollbackButton).toBeEnabled();
+    await expect(rollbackButton).toContainText('1'); // Badge with count
+
+    await page.screenshot({ path: 'docs/screenshots/config-rollback-available.png' });
+
+    // 3. Open modal and mock rollback action
+    await rollbackButton.click();
+    await page.waitForTimeout(500); // Wait for modal animation
+
+    const modal = page.locator('.modal-box');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('text=rollback_1711234567890_xxyyzz')).toBeVisible();
+
+    await page.screenshot({ path: 'docs/screenshots/config-rollback-modal.png' });
+
+    // Select snapshot
+    await modal.locator('text=rollback_1711234567890_xxyyzz').click();
+
+    // Setup mock for actual rollback
+    await page.route('/api/config/hot-reload/rollback/rollback_1711234567890_xxyyzz', async (route) => {
+      // Return updated state after rollback
+      await page.route('/api/config/hot-reload/rollbacks', async (r) => {
+        await r.fulfill({ status: 200, json: { rollbacks: [] } });
+      });
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
+
+    // Click to confirm rollback
+    await modal.locator('button:has-text("Rollback Configuration")').click();
+
+    // Modal should close and success toast show
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('text=Successfully rolled back')).toBeVisible();
+
+    await page.screenshot({ path: 'docs/screenshots/config-rollback-success.png' });
+  });
+});

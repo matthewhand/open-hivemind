@@ -197,22 +197,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
       const duration = Date.now() - startTime;
       metrics.incrementMessages();
       metrics.recordResponseTime(duration);
-
-      try {
-        const ws = require('@src/server/services/WebSocketService')
-          .default as typeof import('@src/server/services/WebSocketService').default;
-        ws.getInstance().recordMessageFlow({
-          botName: senderName || Array.from(this.clients.keys())[0],
-          provider: 'mattermost',
-          channelId,
-          userId: 'system',
-          messageType: 'outgoing',
-          contentLength: text.length,
-          processingTime: duration,
-          status: 'success',
-        });
-      } catch { }
-
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
     } catch (error: any) {
@@ -232,7 +216,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
           userId: 'system',
           messageType: 'outgoing',
           contentLength: text.length,
-          processingTime: duration,
           status: 'error',
           errorMessage: error.message,
         });

@@ -6,10 +6,10 @@ interface HamburgerMenuProps {
   className?: string;
 }
 
-const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ 
-  onClick, 
-  isOpen = false, 
-  className = '', 
+const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
+  onClick,
+  isOpen = false,
+  className = '',
 }) => {
   return (
     <button

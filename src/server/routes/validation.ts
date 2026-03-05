@@ -1,10 +1,10 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { authenticate, requireAdmin } from '../../auth/middleware';
+import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
-import { ErrorUtils, HivemindError } from '../../types/errors';
+import { ErrorUtils, type AppError } from "../../types/errors";
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
 
 const router = Router();
@@ -247,7 +247,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
       new Error('Validation failed'),
       'Request validation failed',
       'VALIDATION_ERROR'
-    ) as any;
+    ) as AppError;
 
     debug('Validation error:', hivemindError);
 
@@ -402,7 +402,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
       error,
       'Failed to get validation schema',
       'VALIDATION_ERROR'
-    ) as any;
+    ) as AppError;
 
     debug('Error in', 'Validation schema endpoint');
 
@@ -436,7 +436,7 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
       error,
       'Failed to get validation rules',
       'VALIDATION_ERROR'
-    ) as any;
+    ) as AppError;
 
     debug('Error in', 'Get validation rules endpoint');
 
@@ -478,7 +478,7 @@ router.get(
         error,
         'Failed to get validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Get validation rule endpoint');
 
@@ -537,7 +537,7 @@ router.post(
         error,
         'Failed to create validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Create validation rule endpoint');
 
@@ -581,7 +581,7 @@ router.delete(
         error,
         'Failed to delete validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Delete validation rule endpoint');
 
@@ -612,7 +612,7 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
       error,
       'Failed to get validation profiles',
       'VALIDATION_ERROR'
-    ) as any;
+    ) as AppError;
 
     debug('Error in', 'Get validation profiles endpoint');
 
@@ -654,7 +654,7 @@ router.get(
         error,
         'Failed to get validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Get validation profile endpoint');
 
@@ -679,7 +679,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req as any;
+      const authReq = req as AuthMiddlewareRequest;
       const createdBy = authReq.user?.username || 'unknown';
 
       // Check if profile already exists
@@ -722,7 +722,7 @@ router.post(
         error,
         'Failed to create validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Create validation profile endpoint');
 
@@ -766,7 +766,7 @@ router.delete(
         error,
         'Failed to delete validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Delete validation profile endpoint');
 
@@ -804,7 +804,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to validate configuration',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -834,7 +834,7 @@ router.post(
         error,
         'Failed to validate configuration data',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Validate configuration data endpoint');
 
@@ -872,7 +872,7 @@ router.post(
         error,
         'Failed to subscribe to validation',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Subscribe to validation endpoint');
 
@@ -918,7 +918,7 @@ router.delete(
         error,
         'Failed to unsubscribe from validation',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Unsubscribe from validation endpoint');
 
@@ -964,7 +964,7 @@ router.get(
         error,
         'Failed to get validation history',
         'VALIDATION_ERROR'
-      ) as any;
+      ) as AppError;
 
       debug('Error in', 'Get validation history endpoint');
 
@@ -995,7 +995,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
       error,
       'Failed to get validation statistics',
       'VALIDATION_ERROR'
-    ) as any;
+    ) as AppError;
 
     debug('Error in', 'Get validation statistics endpoint');
 

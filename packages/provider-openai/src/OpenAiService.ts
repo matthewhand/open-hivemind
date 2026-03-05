@@ -256,7 +256,9 @@ export class OpenAiService {
   public async listModels(): Promise<OpenAIModelsListResponse> {
     debug('[DEBUG] listModels called');
     try {
-      const models = await listModels(this.openai);
+      const models = await this.retryWithBackoff(async () => {
+        return await listModels(this.openai);
+      });
       debug('[DEBUG] Models retrieved:', models);
       return models;
     } catch (error: unknown) {

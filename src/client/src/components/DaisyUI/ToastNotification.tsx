@@ -38,10 +38,10 @@ interface ToastProviderProps {
   maxToasts?: number;
 }
 
-export const ToastProvider: React.FC<ToastProviderProps> = ({ 
-  children, 
+export const ToastProvider: React.FC<ToastProviderProps> = ({
+  children,
   position = 'top-right',
-  maxToasts = 5, 
+  maxToasts = 5,
 }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -99,7 +99,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast, clearAll }}>
       {children}
-      
+
       {/* Toast Container */}
       <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`}>
         {toasts.map((toast) => (
@@ -198,23 +198,23 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
       aria-live={getAriaLive()}
       className={`
         alert ${getAlertClass()} shadow-lg max-w-md transform transition-all duration-300 ease-in-out
-        ${isVisible && !isRemoving 
-      ? 'translate-x-0 opacity-100 scale-100' 
-      : position.includes('right') 
-        ? 'translate-x-full opacity-0 scale-95' 
+        ${isVisible && !isRemoving
+      ? 'translate-x-0 opacity-100 scale-100'
+      : position.includes('right')
+        ? 'translate-x-full opacity-0 scale-95'
         : '-translate-x-full opacity-0 scale-95'
     }
       `}
     >
       <div className="flex items-start space-x-3 flex-1">
         <span className="text-xl flex-shrink-0">{getIcon()}</span>
-        
+
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm">{toast.title}</div>
           {toast.message && (
             <div className="text-sm opacity-80 mt-1">{toast.message}</div>
           )}
-          
+
           {toast.actions && toast.actions.length > 0 && (
             <div className="flex gap-2 mt-2">
               {toast.actions.map((action, index) => (
@@ -236,7 +236,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
             </div>
           )}
         </div>
-        
+
         <button
           className="btn btn-ghost btn-xs btn-circle"
           onClick={handleRemove}
@@ -287,9 +287,9 @@ export const NotificationCenter: React.FC = () => {
 
   return (
     <div className="dropdown dropdown-end">
-      <div 
-        tabIndex={0} 
-        role="button" 
+      <div
+        tabIndex={0}
+        role="button"
         className="btn btn-ghost btn-circle"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Toggle notifications menu"
@@ -303,14 +303,14 @@ export const NotificationCenter: React.FC = () => {
           )}
         </div>
       </div>
-      
+
       {isOpen && (
         <div className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
           <div className="card-body">
             <div className="flex items-center justify-between">
               <h3 className="card-title text-sm">Notifications</h3>
               {toasts.length > 0 && (
-                <button 
+                <button
                   className="btn btn-ghost btn-xs"
                   onClick={clearAll}
                 >
@@ -318,7 +318,7 @@ export const NotificationCenter: React.FC = () => {
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {toasts.length === 0 ? (
                 <div className="text-center py-4 text-base-content/60">
@@ -327,11 +327,11 @@ export const NotificationCenter: React.FC = () => {
                 </div>
               ) : (
                 toasts.map((toast) => (
-                  <div 
+                  <div
                     key={toast.id}
-                    className={`alert ${toast.type === 'success' ? 'alert-success' : 
+                    className={`alert ${toast.type === 'success' ? 'alert-success' :
                       toast.type === 'error' ? 'alert-error' :
-                        toast.type === 'warning' ? 'alert-warning' : 'alert-info'} 
+                        toast.type === 'warning' ? 'alert-warning' : 'alert-info'}
                                 alert-sm`}
                   >
                     <div className="text-xs">

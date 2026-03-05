@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { BotConfig } from '@src/types/config';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
@@ -12,7 +11,7 @@ import type { MCPGuardConfig } from '../mcp/MCPGuard';
 import type { MCPConfig } from '../mcp/MCPService';
 import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 import { webUIStorage } from '../storage/webUIStorage';
-import { AppError, ErrorUtils, HivemindError } from '../types/errors';
+import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 
 const debug = Debug('app:BotManager');
@@ -572,7 +571,7 @@ export class BotManager extends EventEmitter {
             try {
               await service.stop();
               debug(`Stopped service for bot: ${bot.name} (${botId})`);
-            } catch (serviceError: HivemindError) {
+            } catch (serviceError: any) {
               debug(
                 `Error stopping service for bot ${bot.name}:`,
                 ErrorUtils.getMessage(serviceError)
@@ -592,7 +591,7 @@ export class BotManager extends EventEmitter {
             try {
               await connection.close();
               debug(`Closed connection for bot: ${bot.name} (${botId})`);
-            } catch (connectionError: HivemindError) {
+            } catch (connectionError: any) {
               debug(
                 `Error closing connection for bot ${bot.name}:`,
                 ErrorUtils.getMessage(connectionError)

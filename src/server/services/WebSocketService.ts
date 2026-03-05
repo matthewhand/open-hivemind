@@ -47,47 +47,11 @@ export interface AlertEvent {
   resolvedAt?: string;
 }
 
-class CircularBuffer<T> {
-  private buffer: T[];
-  private head = 0;
-  private tail = 0;
-  public length = 0;
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 
-  constructor(private capacity: number) {
-    this.buffer = new Array<T>(capacity);
-  }
-
-  public push(item: T): void {
-    this.buffer[this.tail] = item;
-    this.tail = (this.tail + 1) % this.capacity;
-    if (this.length < this.capacity) {
-      this.length++;
-    } else {
-      this.head = (this.head + 1) % this.capacity;
-    }
-  }
-
-  public toArray(): T[] {
-    const result = new Array<T>(this.length);
-    for (let i = 0; i < this.length; i++) {
-      result[i] = this.buffer[(this.head + i) % this.capacity] as T;
-    }
-    return result;
-  }
-
-  public slice(start?: number, end?: number): T[] {
-    return this.toArray().slice(start, end);
-  }
-
-  public filter(predicate: (value: T, index: number, array: T[]) => unknown): T[] {
-    return this.toArray().filter(predicate);
-  }
-
-  public toJSON(): T[] {
-    return this.toArray();
-  }
-}
-
+@singleton()
+@injectable()
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
@@ -95,7 +59,7 @@ export class WebSocketService {
   private connectedClients = 0;
 
   // Real-time monitoring data
-  private messageFlow: CircularBuffer<MessageFlowEvent> = new CircularBuffer<MessageFlowEvent>(1000);
+  private messageFlow: MessageFlowEvent[] = [];
   private performanceMetrics: PerformanceMetric[] = [];
   private alerts: AlertEvent[] = [];
   private messageRateHistory: number[] = [];
@@ -108,7 +72,7 @@ export class WebSocketService {
   // API monitoring
   private apiMonitorService: ApiMonitorService;
 
-  private constructor() {
+  constructor() {
     this.initializeMonitoringData();
     this.apiMonitorService = ApiMonitorService.getInstance();
     this.setupApiMonitoring();
@@ -116,7 +80,7 @@ export class WebSocketService {
 
   private initializeMonitoringData(): void {
     // Initialize with empty arrays and default metrics
-    this.messageFlow = new CircularBuffer<MessageFlowEvent>(1000);
+    this.messageFlow = [];
     this.performanceMetrics = [];
     this.alerts = [];
     this.messageRateHistory = new Array(60).fill(0); // 60 data points for 5-minute history
@@ -132,6 +96,9 @@ export class WebSocketService {
     this.apiMonitorService.on('healthCheckResult', (result) => {
       this.handleApiHealthCheckResult(result);
     });
+
+    // Sync LLM endpoints on startup before starting monitoring
+    this.apiMonitorService.syncLlmEndpoints();
 
     // Start monitoring all configured endpoints
     this.apiMonitorService.startAllMonitoring();
@@ -201,6 +168,11 @@ export class WebSocketService {
     // Per-bot message count
     const key = event.botName || 'unknown';
     BotMetricsService.getInstance().incrementMessageCount(key);
+
+    // Keep only last 1000 messages
+    if (this.messageFlow.length > 1000) {
+      this.messageFlow = this.messageFlow.slice(-1000);
+    }
 
     // Update message rate
     this.updateMessageRate();

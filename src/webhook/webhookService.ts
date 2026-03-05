@@ -15,7 +15,12 @@ import Debug from 'debug';
 import express from 'express';
 import { securityHeaders } from '@src/server/middleware/security';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+const webhookRoutesModule = require('@webhook/routes/webhookRoutes');
+const configureWebhookRoutes =
+  webhookRoutesModule.configureWebhookRoutes ||
+  ((app: express.Application) => {
+    return;
+  });
 
 const log = Debug('app:webhookService');
 

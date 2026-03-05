@@ -107,8 +107,8 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <dialog 
-      ref={modalRef} 
+    <dialog
+      ref={modalRef}
       className={`modal ${getPositionClass()} ${className}`}
       onClick={handleBackdropClick}
       // If isOpen is true and showModal is not supported/called, ensure it's visible via CSS class or open attribute if needed
@@ -122,7 +122,7 @@ const Modal: React.FC<ModalProps> = ({
           <div className="flex items-center justify-between mb-4">
             {title && <h3 className="font-bold text-lg">{title}</h3>}
             {showCloseButton && closable && (
-              <button 
+              <button
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={onClose}
                 aria-label="Close modal"
@@ -235,8 +235,8 @@ export const SuccessModal: React.FC<Omit<BaseModalProps, 'children'> & { message
 };
 
 // Error Modal
-export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & { 
-  message: string; 
+export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & {
+  message: string;
   error?: string;
   onRetry?: () => void;
 }> = ({
@@ -286,7 +286,7 @@ export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & {
 };
 
 // Loading Modal
-export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & { 
+export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
   message?: string;
 }> = ({
   isOpen,
@@ -313,7 +313,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
 };
 
 // Info Modal with rich content
-export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & { 
+export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
   message: string;
   details?: React.ReactNode;
   icon?: string;

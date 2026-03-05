@@ -52,7 +52,6 @@ const providerIconMap: Record<string, string> = {
   discord: '💬',
   slack: '📢',
   mattermost: '💼',
-  telegram: '✈️',
   webhook: '🔗',
 };
 
@@ -672,7 +671,7 @@ const UnifiedDashboard: React.FC = () => {
                   <div className="badge badge-primary badge-lg mb-2">Step 1</div>
                   <h2 className="card-title">Configure Intelligence</h2>
                   <p className="text-sm text-base-content/70">
-                    Set up your Language Model (LLM) providers like OpenAI, Anthropic, or local models.
+                    Set up your Language Model (LLM) providers like OpenAI, Flowise, or OpenWebUI.
                   </p>
                   <div className="card-actions justify-end mt-4">
                     <Link to="/admin/providers/llm" className="btn btn-outline btn-primary btn-sm">

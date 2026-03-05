@@ -10,10 +10,12 @@ import Logger from '../../src/common/logger';
 // Mock console methods
 const mockConsoleInfo = jest.fn();
 const mockConsoleError = jest.fn();
+const mockConsoleWarn = jest.fn();
 
 // Save original console methods
 const originalConsoleInfo = console.info;
 const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
 
 describe('Logger', () => {
   beforeEach(() => {
@@ -23,80 +25,109 @@ describe('Logger', () => {
     // Mock console methods
     console.info = mockConsoleInfo;
     console.error = mockConsoleError;
+    console.warn = mockConsoleWarn;
   });
 
   afterEach(() => {
     // Restore original console methods
     console.info = originalConsoleInfo;
     console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
   });
 
   afterAll(() => {
     // Ensure console methods are restored
     console.info = originalConsoleInfo;
     console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
   });
 
   describe('info method', () => {
-    test.each([
-      {
-        args: ['Test info message'],
-        expected: ['Test info message'],
-        description: 'single string message',
-      },
-      {
-        args: ['First message', 'Second message'],
-        expected: ['First message', 'Second message'],
-        description: 'multiple string messages',
-      },
-      {
-        args: ['User data:', { id: 123, name: 'John Doe' }],
-        expected: ['User data:', { id: 123, name: 'John Doe' }],
-        description: 'string with object',
-      },
-      {
-        args: ['Processing request', 42, { status: 'success' }, [1, 2, 3]],
-        expected: ['Processing request', 42, { status: 'success' }, [1, 2, 3]],
-        description: 'mixed argument types',
-      },
-      { args: [], expected: [], description: 'empty arguments' },
-      {
-        args: [null, undefined],
-        expected: [null, undefined],
-        description: 'null and undefined values',
-      },
-    ])('should log $description correctly', ({ args, expected }) => {
-      Logger.info(...args);
-      expect(mockConsoleInfo).toHaveBeenCalledWith(...expected);
+    it('should log a single string message', () => {
+      const message = 'Test info message';
+      Logger.info(message);
+      expect(mockConsoleInfo).toHaveBeenCalledTimes(1);
+      expect(mockConsoleInfo).toHaveBeenCalledWith(message);
+    });
+
+    it('should log multiple string arguments', () => {
+      const message1 = 'First message';
+      const message2 = 'Second message';
+      Logger.info(message1, message2);
+      expect(mockConsoleInfo).toHaveBeenCalledTimes(1);
+      expect(mockConsoleInfo).toHaveBeenCalledWith(message1, message2);
+    });
+
+    it('should sanitize objects in log arguments', () => {
+      const sensitiveData = {
+        apiKey: 'sk-1234567890abcdef',
+        password: 'secret_password',
+        user: 'test_user',
+      };
+
+      Logger.info('Sensitive data:', sensitiveData);
+
+      expect(mockConsoleInfo).toHaveBeenCalledTimes(1);
+      const args = mockConsoleInfo.mock.calls[0];
+      expect(args[0]).toBe('Sensitive data:');
+      expect(args[1]).toEqual({
+        apiKey: '********',
+        password: '********',
+        user: 'test_user',
+      });
+    });
+
+    it('should handle complex nested objects', () => {
+      const nested = {
+        level1: {
+          level2: {
+            token: 'secret-token',
+            data: 'public-data',
+          },
+        },
+      };
+
+      Logger.info(nested);
+
+      expect(mockConsoleInfo).toHaveBeenCalledTimes(1);
+      expect(mockConsoleInfo).toHaveBeenCalledWith({
+        level1: {
+          level2: {
+            token: '********',
+            data: 'public-data',
+          },
+        },
+      });
     });
   });
 
   describe('error method', () => {
-    test.each([
+    it('should log a single error message', () => {
+      const message = 'Test error message';
+      Logger.error(message);
+      expect(mockConsoleError).toHaveBeenCalledTimes(1);
+      expect(mockConsoleError).toHaveBeenCalledWith(message);
+    });
+
+    it('should log multiple string arguments', () => {
+      const message1 = 'Error occurred';
+      const message2 = 'Details here';
+      Logger.error(message1, message2);
+      expect(mockConsoleError).toHaveBeenCalledTimes(1);
+      expect(mockConsoleError).toHaveBeenCalledWith(message1, message2);
+    });
+
+    it.each([
       {
-        args: ['Test error message'],
-        expected: ['Test error message'],
-        description: 'single string message',
+        args: ['message', { key: 'value' }],
+        expected: ['message', { key: 'value' }],
+        description: 'string and object',
       },
       {
-        args: ['Error occurred:', 'Database connection failed'],
-        expected: ['Error occurred:', 'Database connection failed'],
-        description: 'multiple string messages',
+        args: [1, true, null],
+        expected: [1, true, null],
+        description: 'primitive values',
       },
-      {
-        args: [
-          'Failed to save user:',
-          { operation: 'save', entity: 'user' },
-          { code: 500, message: 'Internal server error' },
-        ],
-        expected: [
-          'Failed to save user:',
-          { operation: 'save', entity: 'user' },
-          { code: 500, message: 'Internal server error' },
-        ],
-        description: 'complex error with objects',
-      },
-      { args: [], expected: [], description: 'empty arguments' },
       {
         args: [null, undefined],
         expected: [null, undefined],
@@ -140,8 +171,10 @@ describe('Logger', () => {
       expect(DefaultLogger).toBeDefined();
       expect(DefaultLogger.info).toBeDefined();
       expect(DefaultLogger.error).toBeDefined();
+      expect(DefaultLogger.withContext).toBeDefined();
       expect(typeof DefaultLogger.info).toBe('function');
       expect(typeof DefaultLogger.error).toBe('function');
+      expect(typeof DefaultLogger.withContext).toBe('function');
     });
 
     it('should have the same functionality through default export', () => {

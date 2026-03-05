@@ -154,7 +154,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
       {/* Footer */}
       <div className="py-3 px-4 border-t border-base-content/10 text-[12px] text-base-content/60 flex items-center justify-between">
         <span>v1.0.0</span>
-        
+
         {/* Theme Toggle */}
         <button
           onClick={() => {
@@ -171,7 +171,7 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
           <Moon size={14} />
           <span className="text-[11px]">Theme</span>
         </button>
-        
+
         <span className="flex items-center gap-1.5 text-success">
           <span className="w-1.5 h-1.5 bg-success rounded-full"></span>
           Online
