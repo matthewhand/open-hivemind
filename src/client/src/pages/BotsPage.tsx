@@ -800,6 +800,10 @@ const BotsPage: React.FC = () => {
                               .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
                               .then((json) => {
                                 setActivityLogs(json.data?.activity || []);
+                              })
+                              .catch((err) => {
+                                console.error('Failed to fetch bot activity logs:', err);
+                                setActivityLogs([]);
                               });
                           }
                         }}
