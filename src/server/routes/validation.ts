@@ -1,4 +1,3 @@
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
@@ -9,7 +8,6 @@ import { RealTimeValidationService } from '../services/RealTimeValidationService
 
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
-const debug = Debug('app:routes:validation');
 
 /**
  * Validation middleware for rule creation
@@ -36,7 +34,6 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
 
   if (!bot.name) {
     errors.push('Bot name is required');
-    errors.push('Name is required');
   }
 
   if (!bot.messageProvider) {
@@ -249,7 +246,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('Validation error:', hivemindError);
+    console.error('Validation error:', hivemindError);
 
     return res.status(400).json({
       success: false,
@@ -293,7 +290,7 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
-    debug('Error in Configuration validation endpoint:', error);
+    console.error('Error in Configuration validation endpoint:', error);
 
     // Always use the standardized error message
     const errorMessage = 'Failed to validate configuration';
@@ -404,7 +401,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('Error in', 'Validation schema endpoint');
+    console.error('Error in', 'Validation schema endpoint');
 
     return res
       .status(500)
@@ -438,7 +435,7 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('Error in', 'Get validation rules endpoint');
+    console.error('Error in', 'Get validation rules endpoint');
 
     return res.status(500).json({
       success: false,
@@ -480,7 +477,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Get validation rule endpoint');
+      console.error('Error in', 'Get validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -539,7 +536,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Create validation rule endpoint');
+      console.error('Error in', 'Create validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -583,7 +580,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Delete validation rule endpoint');
+      console.error('Error in', 'Delete validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -614,7 +611,7 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('Error in', 'Get validation profiles endpoint');
+    console.error('Error in', 'Get validation profiles endpoint');
 
     return res.status(500).json({
       success: false,
@@ -656,7 +653,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Get validation profile endpoint');
+      console.error('Error in', 'Get validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -724,7 +721,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Create validation profile endpoint');
+      console.error('Error in', 'Create validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -768,7 +765,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Delete validation profile endpoint');
+      console.error('Error in', 'Delete validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -800,7 +797,7 @@ router.post(
         data: report,
       });
     } catch (error) {
-      debug('Error validating configuration:', error);
+      console.error('Error validating configuration:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to validate configuration',
@@ -836,7 +833,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Validate configuration data endpoint');
+      console.error('Error in', 'Validate configuration data endpoint');
 
       return res.status(500).json({
         success: false,
@@ -874,7 +871,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Subscribe to validation endpoint');
+      console.error('Error in', 'Subscribe to validation endpoint');
 
       return res.status(500).json({
         success: false,
@@ -920,7 +917,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Unsubscribe from validation endpoint');
+      console.error('Error in', 'Unsubscribe from validation endpoint');
 
       return res.status(500).json({
         success: false,
@@ -966,7 +963,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('Error in', 'Get validation history endpoint');
+      console.error('Error in', 'Get validation history endpoint');
 
       return res.status(500).json({
         success: false,
@@ -997,7 +994,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('Error in', 'Get validation statistics endpoint');
+    console.error('Error in', 'Get validation statistics endpoint');
 
     return res.status(500).json({
       success: false,

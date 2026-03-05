@@ -53,6 +53,9 @@ const Pagination: React.FC<PaginationProps> = ({
       }
     } else {
       pages.push(1);
+      if (currentPage > 4) {
+        pages.push('...');
+      }
       if (currentPage <= 4) {
         for (let i = 2; i <= 5; i++) {
           pages.push(i);

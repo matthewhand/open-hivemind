@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, IconButton, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
+import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -290,7 +290,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <IconButton aria-label="Value is locked from environment" size="sm" className="join-item btn-disabled" icon={<LockClosedIcon className="w-4 h-4" />} />}
+            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
           </div>
         )}
         {type === 'select' && (

@@ -33,7 +33,7 @@ const VisualFeedback: React.FC<VisualFeedbackProps> = ({ metrics, initialRating 
   return (
     <div className="p-4 bg-base-200 rounded-box shadow-lg">
       <h2 className="text-2xl font-bold mb-4">System Health & Feedback</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {metrics.map((metric) => (
           <div key={metric.name} className="flex flex-col items-center p-4 bg-base-100 rounded-box">

@@ -75,7 +75,7 @@ const DataTable = <T extends Record<string, any>>({
       filtered.sort((a, b) => {
         const aValue = a[sortField];
         const bValue = b[sortField];
-        
+
         if (aValue < bValue) {return sortDirection === 'asc' ? -1 : 1;}
         if (aValue > bValue) {return sortDirection === 'asc' ? 1 : -1;}
         return 0;
@@ -113,28 +113,20 @@ const DataTable = <T extends Record<string, any>>({
   const handleSelectRow = (index: number, checked: boolean) => {
     const globalIndex = (currentPage - 1) * pageSize + index;
     const newSelected = new Set(selectedRows);
-    
+
     if (checked) {
       newSelected.add(globalIndex);
     } else {
       newSelected.delete(globalIndex);
     }
-    
+
     setSelectedRows(newSelected);
   };
-
-  // Use a ref to track the previously reported selection to prevent infinite loops
-  const prevSelectedRef = React.useRef<T[]>([]);
 
   React.useEffect(() => {
     if (onSelectionChange) {
       const selectedData = Array.from(selectedRows).map(index => data[index]).filter(Boolean);
-
-      // Only call onSelectionChange if the selected data has actually changed
-      if (JSON.stringify(selectedData) !== JSON.stringify(prevSelectedRef.current)) {
-        prevSelectedRef.current = selectedData;
-        onSelectionChange(selectedData);
-      }
+      onSelectionChange(selectedData);
     }
   }, [selectedRows, data, onSelectionChange]);
 
@@ -146,7 +138,7 @@ const DataTable = <T extends Record<string, any>>({
         return `"${String(value).replace(/"/g, '""')}"`;
       }).join(','),
     ).join('\n');
-    
+
     const csv = `${headers}\n${rows}`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -200,7 +192,7 @@ const DataTable = <T extends Record<string, any>>({
               />
             </div>
           )}
-          
+
           {selectedRows.size > 0 && (
             <div className="badge badge-primary">
               {selectedRows.size} selected
@@ -210,14 +202,14 @@ const DataTable = <T extends Record<string, any>>({
 
         <div className="flex items-center gap-2">
           {exportable && (
-            <button 
+            <button
               className="btn btn-outline btn-sm"
               onClick={exportToCSV}
             >
               📥 Export CSV
             </button>
           )}
-          
+
           <div className="form-control">
             <select
               className="select select-bordered select-sm"
@@ -271,7 +263,7 @@ const DataTable = <T extends Record<string, any>>({
                 </th>
               )}
               {columns.map((col) => (
-                <th 
+                <th
                   key={String(col.key)}
                   className={col.sortable ? 'cursor-pointer hover:bg-base-200' : ''}
                   style={{ width: col.width }}
@@ -293,7 +285,7 @@ const DataTable = <T extends Record<string, any>>({
           </thead>
           <tbody>
             {paginatedData.map((row, index) => (
-              <tr 
+              <tr
                 key={index}
                 className={`hover ${onRowClick ? 'cursor-pointer' : ''} ${
                   selectedRows.has((currentPage - 1) * pageSize + index) ? 'bg-primary/10' : ''
@@ -322,7 +314,7 @@ const DataTable = <T extends Record<string, any>>({
                 ))}
               </tr>
             ))}
-            
+
             {paginatedData.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0)} className="text-center py-8">
@@ -330,7 +322,7 @@ const DataTable = <T extends Record<string, any>>({
                     <span className="text-4xl">📭</span>
                     <span className="text-base-content/60">No data found</span>
                     {searchTerm && (
-                      <button 
+                      <button
                         className="btn btn-ghost btn-sm"
                         onClick={() => setSearchTerm('')}
                       >
