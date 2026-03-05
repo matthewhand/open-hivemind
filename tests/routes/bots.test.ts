@@ -177,6 +177,9 @@ describe('Bots Router', () => {
   });
 
   it('GET /api/bots/:id/activity should return activity logs', async () => {
+    // mockManager.getBot is used but apparently undefined in this block.
+    // Let's add it to the mock
+    mockManager.getBot = jest.fn().mockResolvedValue({ id: 'bot1', name: 'Bot 1' });
     const res = await request(app).get('/api/bots/bot1/activity');
     expect(res.status).toBe(200);
     expect(res.body.data.activity).toEqual([]);

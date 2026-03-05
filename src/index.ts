@@ -56,12 +56,10 @@ const express = require('express');
 
 const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
-const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./server/routes/health');
-const webhookServiceModule = require('@webhook/webhookService');
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -306,6 +304,7 @@ async function startBot(messengerService: any) {
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
   try {
+    const messageHandlerModule = require('@message/handlers/messageHandler');
     debugEnvVarsModule.debugEnvVars();
     indexLog('[DEBUG] Starting bot initialization...');
     if (typeof messengerService.setApp === 'function') {
@@ -422,8 +421,10 @@ async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 
-  // Initialize providers (must be done before config routes are fully utilized)
-  await initProviders();
+  // Initialize providers (skip in demo/skip mode)
+  if (process.env.SKIP_MESSENGERS !== 'true') {
+    await initProviders();
+  }
   // Reload global configs to include provider schemas
   reloadGlobalConfigs();
 
@@ -449,16 +450,23 @@ async function main() {
   AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
-  const llmProviders = await getLlmProvider();
-  appLogger.info('🤖 Resolved LLM providers', {
-    providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
-  });
+  
 
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
+
+  let llmProviders: any[] = [];
+  if (!shouldSkipMessengers) {
+    llmProviders = await getLlmProvider();
+    appLogger.info('🤖 Resolved LLM providers', {
+      providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+    });
+  } else {
+    appLogger.info('🤖 LLM provider resolution skipped (demo/skip mode)');
+  }
 
   if (shouldSkipMessengers) {
     if (demoService.isInDemoMode()) {
@@ -560,9 +568,11 @@ async function main() {
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)
-    if (process.env.NODE_ENV === 'development') {
+    const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
+    if (process.env.NODE_ENV === 'development' && enableViteDev) {
       // @ts-ignore - Vite is a dev dependency using dynamic import
-      const { createServer: createViteServer } = await import('vite');
+      const viteModule = await (new Function('return import("vite")')());
+      const createViteServer = viteModule.createServer;
       appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
       viteServer = await createViteServer({
         server: {
@@ -578,6 +588,17 @@ async function main() {
       shutdownCoordinator.registerViteServer(viteServer);
 
       appLogger.info('⚡ Vite Middleware Active');
+    }
+
+    if (process.env.NODE_ENV === 'development' && !enableViteDev) {
+      app.get('/', (req: Request, res: Response) => {
+        res
+          .status(200)
+          .set({ 'Content-Type': 'text/html' })
+          .send(
+            '<!doctype html><html><head><title>Open Hivemind</title></head><body><h1>Open Hivemind</h1><p>Development mode without Vite. Build the frontend to view the full WebUI.</p></body></html>'
+          );
+      });
     }
 
     // Initialize WebSocket service
@@ -607,6 +628,7 @@ async function main() {
 
   const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
+    const webhookServiceModule = require('@webhook/webhookService');
     appLogger.info('🪝 Webhook service enabled - registering routes');
     for (const messengerService of messengerServices) {
       const channelId = messengerService.getDefaultChannel

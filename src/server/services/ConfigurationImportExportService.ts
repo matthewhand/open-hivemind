@@ -5,6 +5,8 @@ import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
+import { UserConfigStore } from '../../config/UserConfigStore';
+import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
@@ -590,7 +592,17 @@ export class ConfigurationImportExportService {
   }
 
   /**
-   * Create a backup of all configurations
+   * Create a backup of all configurations.
+   *
+   * Side-effects:
+   * - Enforces a configurable backup retention policy (deletes or cold-stores old backups if count > max).
+   * - Emits an audit log event when an old backup is pruned.
+   *
+   * @param name The name of the backup
+   * @param description Optional description for the backup
+   * @param createdBy User who triggered the backup
+   * @param options Additional export options (format, encryption, etc.)
+   * @returns An ExportResult containing the filePath, size, and checksum on success.
    */
   async createBackup(
     name: string,
@@ -622,7 +634,8 @@ export class ConfigurationImportExportService {
 
       if (result.success && result.filePath) {
         // Move to backups directory
-        const backupFileName = `backup-${name}-${Date.now()}.json.gz`;
+        const backupTimestamp = Date.now();
+        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
         const backupPath = join(this.backupsDir, backupFileName);
         await fs.rename(result.filePath, backupPath);
 
@@ -631,7 +644,7 @@ export class ConfigurationImportExportService {
           id: this.generateBackupId(),
           name,
           description,
-          createdAt: new Date(),
+          createdAt: new Date(backupTimestamp),
           createdBy: createdBy || 'unknown',
           configCount: configIds.length,
           versionCount: 0, // Will be calculated
@@ -644,6 +657,51 @@ export class ConfigurationImportExportService {
 
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+
+        // Enforce backup retention policy with configurable limits and cold storage
+        try {
+          const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
+          const maxBackups = typeof generalSettings.backupRetentionLimit === 'number' ? generalSettings.backupRetentionLimit : 10;
+          const enableColdStorage = generalSettings.enableColdStorage === true;
+
+          const allBackups = await this.listBackups();
+          if (allBackups.length > maxBackups) {
+            debug(`Enforcing backup retention policy: keeping latest ${maxBackups} backups`);
+
+            const auditLogger = AuditLogger.getInstance();
+
+            // listBackups sorts from newest to oldest
+            const backupsToDelete = allBackups.slice(maxBackups);
+            for (const oldBackup of backupsToDelete) {
+
+              if (enableColdStorage) {
+                debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
+                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
+                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
+                const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
+                await fs.mkdir(coldDir, { recursive: true });
+
+                try {
+                    await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
+                    // delete metadata to drop from active list
+                    await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
+
+                    auditLogger.logAdminAction(createdBy || 'system', 'ARCHIVE', `backup/${oldBackup.id}`, 'success', `Archived backup ${oldBackup.name} to cold storage due to retention limit`);
+                } catch(e) {
+                   debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
+                   await this.deleteBackup(oldBackup.id);
+                   auditLogger.logAdminAction(createdBy || 'system', 'DELETE', `backup/${oldBackup.id}`, 'success', `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`);
+                }
+              } else {
+                debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
+                await this.deleteBackup(oldBackup.id);
+                auditLogger.logAdminAction(createdBy || 'system', 'DELETE', `backup/${oldBackup.id}`, 'success', `Deleted backup ${oldBackup.name} due to retention limit`);
+              }
+            }
+          }
+        } catch (retentionError) {
+          debug('Error enforcing backup retention:', retentionError);
+        }
 
         return {
           ...result,
