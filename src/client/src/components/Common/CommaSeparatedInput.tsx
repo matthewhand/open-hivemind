@@ -10,6 +10,8 @@ export interface CommaSeparatedInputProps {
   className?: string;
   suggestions?: string[];
   tagColor?: (tag: string) => string;
+  error?: string;
+  validate?: (item: string) => string | null;
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
@@ -22,9 +24,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   className = '',
   suggestions = [],
   tagColor,
+  error,
+  validate,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [internalError, setInternalError] = useState<string | null>(null);
+
+  // Blur state for validation
+  const [isTouched, setIsTouched] = useState(false);
 
   // Ref for history stack to not cause unnecessary re-renders
   const historyRef = useRef<string[][]>([]);
@@ -61,26 +69,46 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-    if (!textToCommit.trim()) return;
+    if (!textToCommit.trim()) {
+      setIsTouched(true);
+      return;
+    }
 
     const current = textToCommit
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
+
     const next = [...value];
     let changed = false;
+    let localError: string | null = null;
+
     for (const item of current) {
+      if (validate) {
+        const validationError = validate(item);
+        if (validationError) {
+          localError = validationError;
+          break; // Stop parsing if there's an invalid item
+        }
+      }
+
       if (!next.includes(item) && next.length < maxItems) {
         next.push(item);
         changed = true;
       }
     }
-    if (changed) {
-      pushToHistory(next);
-      onChange(next);
+
+    setInternalError(localError);
+    setIsTouched(true);
+
+    if (!localError) {
+      if (changed) {
+        pushToHistory(next);
+        onChange(next);
+      }
+      setInputValue('');
+      setShowSuggestions(false);
     }
-    setInputValue('');
-    setShowSuggestions(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -140,6 +168,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -152,9 +183,17 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     s.toLowerCase().includes(inputValue.toLowerCase())
   );
 
+  const displayError = (isTouched && internalError) || error;
+  const errorId = id ? `${id}-error` : 'csi-error';
+
   return (
-    <div className={`relative flex flex-wrap items-center gap-2 p-1 bg-base-100 border rounded-lg focus-within:ring-2 focus-within:ring-primary ${className}`}>
-      {value.map(v => {
+    <div className={`relative flex flex-col w-full ${className}`}>
+      <div
+        className={`flex flex-wrap items-center gap-2 p-1 bg-base-100 border rounded-lg focus-within:ring-2 ${
+          displayError ? 'border-error focus-within:ring-error' : 'focus-within:ring-primary'
+        }`}
+      >
+        {value.map(v => {
         const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
         return (
         <span
@@ -173,24 +212,26 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
               &times;
             </button>
           )}
-        </span>
-        );
-      })}
-      <input
-        id={id}
-        data-testid="csi-input"
-        className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onBlur={() => {
-          // Add a small delay so suggestion clicks can fire before blur
-          setTimeout(() => commitInput(), 150);
-        }}
-        onPaste={handlePaste}
-        placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
-        disabled={disabled || value.length >= maxItems}
-      />
+          </span>
+          );
+        })}
+        <input
+          id={id}
+          data-testid="csi-input"
+          className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            // Add a small delay so suggestion clicks can fire before blur
+            setTimeout(() => commitInput(), 150);
+          }}
+          onPaste={handlePaste}
+          placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
+          disabled={disabled || value.length >= maxItems}
+          aria-invalid={!!displayError}
+          aria-describedby={displayError ? errorId : undefined}
+        />
       <div className="flex items-center gap-1">
         {!disabled && canUndo && (
           <button
@@ -218,8 +259,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </button>
-        )}
+          )}
+        </div>
       </div>
+
+      {displayError && (
+        <label className="label" id={errorId}>
+          <span className="label-text-alt text-error">{displayError}</span>
+        </label>
+      )}
 
       {/* Autocomplete Dropdown */}
       {!disabled && showSuggestions && filteredSuggestions.length > 0 && inputValue.trim().length > 0 && (

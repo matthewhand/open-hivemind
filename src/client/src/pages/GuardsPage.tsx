@@ -8,6 +8,10 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Select from '../components/DaisyUI/Select';
+import Toggle from '../components/DaisyUI/Toggle';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -296,10 +300,9 @@ const GuardsPage: React.FC = () => {
           ]}
         >
           <div className="form-control mb-4">
-            <label className="label"><span className="label-text">Profile Name</span></label>
-            <input
+            <Input
+              label="Profile Name"
               type="text"
-              className="input input-bordered"
               value={editingProfile.name}
               onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
               placeholder="e.g. Strict Production"
@@ -307,9 +310,9 @@ const GuardsPage: React.FC = () => {
           </div>
 
           <div className="form-control mb-6">
-            <label className="label"><span className="label-text">Description</span></label>
-            <textarea
-              className="textarea textarea-bordered h-20"
+            <Textarea
+              label="Description"
+              className="h-20"
               value={editingProfile.description}
               onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
               placeholder="Describe what this profile enforces..."
@@ -322,28 +325,28 @@ const GuardsPage: React.FC = () => {
             {/* Access Control */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" defaultChecked />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <Shield className="w-5 h-5" /> Access Control
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary ml-auto z-10"
-                  checked={editingProfile.guards.mcpGuard.enabled}
-                  onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="primary"
+                    checked={editingProfile.guards.mcpGuard.enabled}
+                    onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Type</span></label>
-                  <select
-                    className="select select-bordered"
+                  <Select
+                    label="Type"
                     value={editingProfile.guards.mcpGuard.type}
                     onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
-                  >
-                    <option value="owner">Owner Only</option>
-                    <option value="custom">Custom Allowed Users</option>
-                  </select>
+                    options={[
+                      { value: 'owner', label: 'Owner Only' },
+                      { value: 'custom', label: 'Custom Allowed Users' }
+                    ]}
+                  />
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
@@ -374,28 +377,29 @@ const GuardsPage: React.FC = () => {
             {/* Rate Limit */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <RefreshCw className="w-5 h-5" /> Rate Limiter
-                <input
-                  type="checkbox"
-                  className="toggle toggle-warning ml-auto z-10"
-                  checked={editingProfile.guards.rateLimit?.enabled || false}
-                  onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="warning"
+                    checked={editingProfile.guards.rateLimit?.enabled || false}
+                    onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Max Requests</span>
-                      {!editingProfile.guards.rateLimit?.enabled && (
-                        <span className="badge badge-sm border-base-300">Disabled</span>
-                      )}
-                    </label>
-                    <input
+                    <Input
+                      label={
+                        <div className="flex justify-between w-full">
+                          <span>Max Requests</span>
+                          {!editingProfile.guards.rateLimit?.enabled && (
+                            <span className="badge badge-sm border-base-300">Disabled</span>
+                          )}
+                        </div>
+                      }
                       type="number"
-                      className="input input-bordered w-full"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
@@ -403,20 +407,21 @@ const GuardsPage: React.FC = () => {
                     />
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <label className="label">
-                      <span className="label-text">Window (seconds)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="label-text-alt text-info" title="Time period for counting requests">
-                          Max 1 hour (3600s)
-                        </span>
-                        {!editingProfile.guards.rateLimit?.enabled && (
-                          <span className="badge badge-sm border-base-300">Disabled</span>
-                        )}
-                      </div>
-                    </label>
-                    <input
+                    <Input
+                      label={
+                        <div className="flex justify-between w-full">
+                          <span>Window (seconds)</span>
+                          <div className="flex items-center gap-2">
+                            <span className="label-text-alt text-info" title="Time period for counting requests">
+                              Max 1 hour (3600s)
+                            </span>
+                            {!editingProfile.guards.rateLimit?.enabled && (
+                              <span className="badge badge-sm border-base-300">Disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      }
                       type="number"
-                      className="input input-bordered"
                       value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
                       onChange={e => {
                         const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
@@ -426,18 +431,16 @@ const GuardsPage: React.FC = () => {
                       min={1}
                       max={3600}
                       placeholder="60"
-                    />
-                    <label className="label">
-                      <span className="label-text-alt opacity-70">
-                        {(() => {
+                      helperText={
+                        (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
                           if (seconds < 60) return `${seconds} seconds`;
                           if (seconds === 60) return '1 minute';
                           if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
                           return '1 hour';
-                        })()}
-                      </span>
-                    </label>
+                        })()
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -446,15 +449,15 @@ const GuardsPage: React.FC = () => {
             {/* Content Filter */}
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2">
+              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                 <AlertTriangle className="w-5 h-5" /> Content Filter
-                <input
-                  type="checkbox"
-                  className="toggle toggle-error ml-auto z-10"
-                  checked={editingProfile.guards.contentFilter?.enabled || false}
-                  onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                  onClick={e => e.stopPropagation()}
-                />
+                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
+                  <Toggle
+                    variant="error"
+                    checked={editingProfile.guards.contentFilter?.enabled || false}
+                    onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
+                  />
+                </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="form-control">

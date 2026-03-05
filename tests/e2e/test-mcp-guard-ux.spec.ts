@@ -25,7 +25,7 @@ test('verify MCP Guard UX', async ({ page }) => {
   await expect(modal).toBeVisible();
 
   // Enable Access Control toggle first since the select is disabled initially
-  const toggle = modal.locator('input[type="checkbox"].toggle-primary');
+  const toggle = modal.locator('input[type="checkbox"].toggle').first();
   await toggle.click();
 
   // Wait for the form to render
