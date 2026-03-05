@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import messageConfig from './messageConfig';
 import type { ResponseProfileOverrideKey} from './responseProfiles';
-import { RESPONSE_PROFILE_OVERRIDE_KEYS, RESPONSE_PROFILE_KEY_TYPES } from './responseProfiles';
 
 const debug = Debug('app:responseProfileManager');
 

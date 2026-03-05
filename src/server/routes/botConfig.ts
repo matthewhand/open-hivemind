@@ -6,7 +6,6 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { BotConfig } from '../../types/config';
 import { ConfigurationError } from '../../types/errorClasses';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import {

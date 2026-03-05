@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import type { ChildProcess } from 'child_process';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils } from '@src/types/errors';
 import type {
   MCPProviderConfig,
   MCPProviderStatus,
@@ -13,9 +13,8 @@ import type {
   MCPProviderManager as IMCPProviderManager,
   MCPProviderStats,
 } from '../types/mcp';
-import {
-  MCPProviderEvent,
-} from '../types/mcp';
+
+
 
 const debug = Debug('app:MCPProviderManager');
 

@@ -5,7 +5,6 @@ import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
-import { container } from 'tsyringe';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
@@ -44,7 +43,6 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
-import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
 
 require('dotenv/config');

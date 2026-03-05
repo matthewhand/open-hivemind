@@ -2,9 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { ErrorUtils, HivemindError } from '@src/types/errors';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:webui:agents');
 const router = Router();

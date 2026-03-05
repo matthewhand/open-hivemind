@@ -28,7 +28,7 @@ import {
 import { detectMentions } from '../helpers/processing/MentionDetector';
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 import { getMessageSetting } from '../helpers/processing/ResponseProfile';
-import { isNonsense, isOnTopic } from '../helpers/processing/SemanticRelevanceChecker';
+import { isNonsense } from '../helpers/processing/SemanticRelevanceChecker';
 import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage';
 import { splitMessageContent } from '../helpers/processing/splitMessageContent';
 import { stripBotId } from '../helpers/processing/stripBotId';
