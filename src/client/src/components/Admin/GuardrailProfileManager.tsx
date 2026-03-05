@@ -7,6 +7,7 @@ import {
   ArrowPathIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
+import { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
 
 interface GuardrailProfile {
   key: string;
@@ -34,7 +35,7 @@ const GuardrailProfileManager: React.FC = () => {
     description: '',
     enabled: true,
     type: 'owner' as 'owner' | 'custom',
-    allowedUserIds: '',
+    allowedUserIds: [] as string[],
   });
 
   const fetchProfiles = async () => {
@@ -58,7 +59,7 @@ const GuardrailProfileManager: React.FC = () => {
 
   const openCreateDialog = () => {
     setEditingProfile(null);
-    setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: '' });
+    setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: [] });
     setEditDialogOpen(true);
   };
 
@@ -70,7 +71,7 @@ const GuardrailProfileManager: React.FC = () => {
       description: profile.description || '',
       enabled: profile.mcpGuard.enabled,
       type: profile.mcpGuard.type,
-      allowedUserIds: profile.mcpGuard.allowedUserIds?.join(', ') || '',
+      allowedUserIds: profile.mcpGuard.allowedUserIds || [],
     });
     setEditDialogOpen(true);
   };
@@ -85,7 +86,7 @@ const GuardrailProfileManager: React.FC = () => {
           enabled: formData.enabled,
           type: formData.type,
           allowedUserIds: formData.type === 'custom'
-            ? formData.allowedUserIds.split(',').map(s => s.trim()).filter(Boolean)
+            ? formData.allowedUserIds
             : undefined,
         },
       };
@@ -248,11 +249,10 @@ const GuardrailProfileManager: React.FC = () => {
           {formData.type === 'custom' && (
             <div className="form-control">
               <label className="label"><span className="label-text">Allowed User IDs</span></label>
-              <input
-                type="text"
-                className="input input-bordered"
+              <CommaSeparatedInput
+                id="allowed-users"
                 value={formData.allowedUserIds}
-                onChange={e => setFormData({ ...formData, allowedUserIds: e.target.value })}
+                onChange={v => setFormData({ ...formData, allowedUserIds: v })}
                 placeholder="user1, user2"
               />
               <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>
