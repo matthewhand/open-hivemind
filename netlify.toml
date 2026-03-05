@@ -1,44 +1,8 @@
-# ─── Netlify Build Configuration ─────────────────────────────────────────────
-#
-# DEPLOY STRATEGY: Tag-driven via `release` branch
-#   - Production branch in Netlify dashboard: `release`
-#   - The `release` branch is managed by .github/workflows/netlify-tag-deploy.yml
-#   - On every `v*` tag push, that workflow hard-resets `release` to the tag
-#   - Netlify auto-deploys when `release` updates — no direct `main` deploys
-#
-# WHY NOT main?
-#   Deploying from `main` caused frequent CI failures due to in-progress work
-#   (duplicate keys, missing exports, build errors). The tag → release strategy
-#   ensures only reviewed, release-ready commits hit Netlify.
-#
-# WHY NOT `npm run build` directly?
-#   `npm run build` compiles the full backend + frontend and assumes a persistent
-#   Node server environment. Netlify only needs the frontend SPA bundle and the
-#   Express adapter wrapped as a serverless function. `build:netlify` does that.
-#
 [build]
-  command   = "npm run build:netlify"
-  functions = "dist/netlify/functions"   # compiled serverless function adapter
-  publish   = "dist/client"              # React SPA served from CDN
+  command = "npm run build:netlify"
+  functions = "dist/netlify/functions"
+  publish = "dist/client"
 
-# ─── API Proxy ───────────────────────────────────────────────────────────────
-# /api/* → Express server running as a Netlify Function.
-# force=true ensures this takes priority over any static file with the same path.
-[[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/server"
-  status = 200
-  force  = true
-
-# ─── SPA Client-Side Routing ─────────────────────────────────────────────────
-# All other routes → index.html so React Router handles them.
-# MUST come after the /api/* rule (Netlify processes redirects top-to-bottom).
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
-
-# ─── Local Dev ───────────────────────────────────────────────────────────────
 [dev]
   command = "npm run dev"
 

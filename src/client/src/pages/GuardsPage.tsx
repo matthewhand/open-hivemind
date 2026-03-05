@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, Tag } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -78,18 +78,10 @@ const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-
-    // As per testing expectations, we MUST NOT clear the input field on comma
-    // Instead we just update the input state, and we rely on commitInput on blur/enter
-    // to do the tokenization.
     setInputValue(newValue);
-  };
-
-  const commitInput = () => {
-    if (!inputValue.trim()) return;
 
     // Parse current input and merge with existing values
-    const currentItems = inputValue.split(',').map(s => s.trim()).filter(Boolean);
+    const currentItems = newValue.split(',').map(s => s.trim()).filter(Boolean);
     const newItems = [...value];
     let hasChanges = false;
 
@@ -100,17 +92,23 @@ const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       }
     });
 
-    if (hasChanges) {
-      onChange(newItems);
+    // If comma was typed, clear input and update values
+    if (newValue.includes(',')) {
+      setInputValue('');
+      if (hasChanges) {
+        onChange(newItems);
+      }
     }
-    setInputValue('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && inputValue.trim()) {
       e.preventDefault();
-      commitInput();
-      setShowValidation(true);
+      if (!value.includes(inputValue.trim()) && value.length < maxItems) {
+        onChange([...value, inputValue.trim()]);
+        setInputValue('');
+        setShowValidation(true);
+      }
     }
     if (e.key === 'Backspace' && !inputValue && value.length > 0) {
       onChange(value.slice(0, -1));
@@ -163,10 +161,7 @@ const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onBlur={() => {
-            commitInput();
-            setShowValidation(true);
-          }}
+          onBlur={() => setShowValidation(true)}
           placeholder={value.length === 0 ? placeholder : ''}
           disabled={disabled}
         />
@@ -495,35 +490,38 @@ const GuardsPage: React.FC = () => {
                   </select>
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
-                  <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <input
+                  <div className="mt-4">
+                    <CommaSeparatedInput
                       id="allowed-users"
-                      type="text"
-                      className="input input-bordered"
-                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                      // Note: Using trimStart() allows trailing commas during typing for better UX.
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
+                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                      onChange={(value) => updateGuard('mcpGuard', { allowedUsers: value })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
+                      placeholder="user1, user2..."
+                      label="Allowed User IDs"
+                      maxItems={50}
+                      validate={(item) => {
+                        const trimmed = item.trim();
+                        if (!trimmed) return { valid: false, message: 'Empty value' };
+                        if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+                          return { valid: false, message: 'Only alphanumeric, underscore, and hyphen allowed' };
+                        }
+                        return { valid: true };
+                      }}
                     />
                   </div>
                 )}
 
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <input
+                <div className="mt-4">
+                  <CommaSeparatedInput
                     id="allowed-tools"
-                    type="text"
-                    className="input input-bordered"
-                    placeholder="e.g. calculator, weather"
-                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
+                    value={editingProfile.guards.mcpGuard.allowedTools || []}
+                    onChange={(value) => updateGuard('mcpGuard', { allowedTools: value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
+                    placeholder="calculator, weather, search..."
+                    label="Allowed Tools"
+                    maxItems={100}
+                    helperText="Leave empty to allow all tools (if enabled)"
                   />
-                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
               </div>
             </div>
@@ -633,17 +631,23 @@ const GuardsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                  <textarea
+                <div className="mt-4">
+                  <CommaSeparatedInput
                     id="blocked-terms"
-                    className="textarea textarea-bordered h-20"
-                    placeholder="e.g. secret, password, confidential"
-                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
+                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                    onChange={(value) => updateGuard('contentFilter', { blockedTerms: value })}
                     disabled={!editingProfile.guards.contentFilter?.enabled}
+                    placeholder="secret, password, confidential..."
+                    label="Blocked Terms"
+                    maxItems={100}
+                    validate={(item) => {
+                      const trimmed = item.trim();
+                      if (!trimmed) return { valid: false, message: 'Empty term' };
+                      if (trimmed.length < 2) {
+                        return { valid: false, message: 'Term must be at least 2 characters' };
+                      }
+                      return { valid: true };
+                    }}
                   />
                 </div>
               </div>

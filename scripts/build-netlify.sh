@@ -23,8 +23,6 @@ else
 fi
 
 
-
-
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
