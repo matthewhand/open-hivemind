@@ -47,7 +47,7 @@ module.exports = [
       'no-debugger': 'error',
 
       // Warnings - gradual cleanup
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
@@ -91,7 +91,7 @@ module.exports = [
       'comma-dangle': ['error', 'es5'],
 
       // Other rules
-      'no-unused-vars': 'warn',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': 'warn',
       'no-debugger': 'error',
       'eqeqeq': 'warn',
