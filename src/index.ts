@@ -522,7 +522,10 @@ async function main() {
     if (rtvs && typeof rtvs.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'RealTimeValidationService',
-        shutdown: () => rtvs.shutdown(),
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down RealTimeValidationService...');
+          rtvs.shutdown();
+        },
       });
     }
 
@@ -530,7 +533,22 @@ async function main() {
     if (ads && typeof ads.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'AnomalyDetectionService',
-        shutdown: () => ads.shutdown(),
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down AnomalyDetectionService...');
+          ads.shutdown();
+        },
+      });
+    }
+
+    const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
+    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    if (ams && typeof ams.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'ApiMonitorService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
+          ams.shutdown();
+        },
       });
     }
 
