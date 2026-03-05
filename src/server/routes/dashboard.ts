@@ -305,45 +305,21 @@ router.get('/activity', authenticateToken, async (req, res) => {
     });
 
     const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-
-    const botFilterSet = new Set(botFilter);
-    const providerFilterSet = new Set(providerFilter);
-    const llmFilterSet = new Set(llmFilter);
-
-    const hasBotFilter = botFilterSet.size > 0;
-    const hasProviderFilter = providerFilterSet.size > 0;
-    const hasLlmFilter = llmFilterSet.size > 0;
-
-    const fromTime = from?.getTime();
-    const toTime = to?.getTime();
-
-    const agents = new Set<string>();
-    const messageProviders = new Set<string>();
-    const llmProviders = new Set<string>();
-
-    const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
-
     const filteredEvents = allEvents.filter((event) => {
-      agents.add(event.botName);
-      messageProviders.add(event.provider);
-      llmProviders.add(event.llmProvider);
-
-      if (!hasAnyFilter) return true;
-
-      if (hasBotFilter && !botFilterSet.has(event.botName)) {
+      if (botFilter.length && !botFilter.includes(event.botName)) {
         return false;
       }
-      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+      if (providerFilter.length && !providerFilter.includes(event.provider)) {
         return false;
       }
-      if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) {
+      if (llmFilter.length && !llmFilter.includes(event.llmProvider)) {
         return false;
       }
       const ts = new Date(event.timestamp).getTime();
-      if (fromTime && ts < fromTime) {
+      if (from && ts < from.getTime()) {
         return false;
       }
-      if (toTime && ts > toTime) {
+      if (to && ts > to.getTime()) {
         return false;
       }
       return true;
@@ -355,9 +331,9 @@ router.get('/activity', authenticateToken, async (req, res) => {
     res.json({
       events: filteredEvents.slice(-200),
       filters: {
-        agents: Array.from(agents).sort(),
-        messageProviders: Array.from(messageProviders).sort(),
-        llmProviders: Array.from(llmProviders).sort(),
+        agents: Array.from(new Set(allEvents.map((event) => event.botName))).sort(),
+        messageProviders: Array.from(new Set(allEvents.map((event) => event.provider))).sort(),
+        llmProviders: Array.from(new Set(allEvents.map((event) => event.llmProvider))).sort(),
       },
       timeline,
       agentMetrics,

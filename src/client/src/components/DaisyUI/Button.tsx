@@ -43,7 +43,7 @@ export const Button = memo(({
   loadingText,
   onClick,
   ...props
-}: ButtonProps) => {
+}) => {
   const getVariantClass = () => {
     if (buttonStyle === 'outline') {
       return `btn-outline btn-${variant}`;
@@ -53,19 +53,19 @@ export const Button = memo(({
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs': return 'btn-xs';
-      case 'sm': return 'btn-sm';
-      case 'lg': return 'btn-lg';
-      default: return '';
+    case 'xs': return 'btn-xs';
+    case 'sm': return 'btn-sm';
+    case 'lg': return 'btn-lg';
+    default: return '';
     }
   };
 
   const getSpinnerSizeClass = () => {
     switch (size) {
-      case 'xs': return 'loading-xs';
-      case 'sm': return 'loading-sm';
-      case 'lg': return 'loading-lg';
-      default: return 'loading-md';
+    case 'xs': return 'loading-xs';
+    case 'sm': return 'loading-sm';
+    case 'lg': return 'loading-lg';
+    default: return 'loading-md';
     }
   };
 

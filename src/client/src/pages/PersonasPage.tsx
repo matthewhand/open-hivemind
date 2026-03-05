@@ -430,7 +430,7 @@ const PersonasPage: React.FC = () => {
                       </Badge>
                     ))}
                     {persona.assignedBotNames.length > 3 && (
-                      <Badge variant="ghost" size="small">
+                      <Badge variant="ghost" size="small" style="outline">
                         +{persona.assignedBotNames.length - 3} more
                       </Badge>
                     )}

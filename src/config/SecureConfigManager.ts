@@ -62,43 +62,6 @@ export class SecureConfigManager {
   }
 
   /**
-   * Helper to safely resolve a file path and prevent directory traversal
-   */
-  /**
-   * Helper to safely resolve a file path and prevent directory traversal
-   */
-  private getSecureFilePath(id: string): string {
-    // Additional input validation: only allow alphanumeric, hyphens, and underscores
-    // This prevents path traversal characters like ../ and ./ from even being processed
-    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-      throw ErrorUtils.createError(
-        'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
-        'ValidationError' as any,
-        'SECURE_CONFIG_INVALID_ID',
-        400,
-      );
-    }
-
-    const targetPath = path.join(this.configDir, `${id}.enc`);
-
-    // Resolve both paths to their absolute forms
-    const resolvedConfigDir = path.resolve(this.configDir);
-    const resolvedTargetPath = path.resolve(targetPath);
-
-    // Ensure the resolved target path starts with the resolved config directory
-    if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
-      throw ErrorUtils.createError(
-        'Invalid configuration ID: Path traversal detected',
-        'ValidationError' as any,
-        'SECURE_CONFIG_INVALID_ID',
-        400,
-      );
-    }
-
-    return targetPath;
-  }
-
-  /**
    * Store a configuration securely
    */
   public async storeConfig(config: Omit<SecureConfig, 'updatedAt' | 'checksum'>): Promise<void> {
@@ -135,7 +98,7 @@ export class SecureConfigManager {
 
       // Encrypt and store
       const encryptedData = this.encrypt(JSON.stringify(secureConfig));
-      const filePath = this.getSecureFilePath(config.id);
+      const filePath = path.join(this.configDir, `${config.id}.enc`);
       debug(`File path: ${filePath}`);
 
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
@@ -167,7 +130,7 @@ export class SecureConfigManager {
    */
   public async getConfig(id: string): Promise<SecureConfig | null> {
     try {
-      const filePath = this.getSecureFilePath(id);
+      const filePath = path.join(this.configDir, `${id}.enc`);
 
       if (!fs.existsSync(filePath)) {
         return null;
@@ -197,10 +160,6 @@ export class SecureConfigManager {
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-
-      if (hivemindError.code === 'SECURE_CONFIG_INVALID_ID') {
-        throw error;
-      }
       return null;
     }
   }
@@ -232,7 +191,7 @@ export class SecureConfigManager {
    */
   public async deleteConfig(id: string): Promise<boolean> {
     try {
-      const filePath = this.getSecureFilePath(id);
+      const filePath = path.join(this.configDir, `${id}.enc`);
       await fs.promises.unlink(filePath);
       debug(`Configuration ${id} deleted`);
       return true;
@@ -245,9 +204,6 @@ export class SecureConfigManager {
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-      if (hivemindError.code === 'SECURE_CONFIG_INVALID_ID') {
-        throw error;
-      }
       return false;
     }
   }

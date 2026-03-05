@@ -29,10 +29,10 @@ export class MCPGuard {
   public static isUserAllowed(
     userId: string,
     forumOwnerId: string,
-    guardConfig?: MCPGuardConfig | null
+    guardConfig: MCPGuardConfig
   ): boolean {
-    // If configuration is missing or guards are disabled, allow all users
-    if (!guardConfig || !guardConfig.enabled) {
+    // If guards are disabled, allow all users
+    if (!guardConfig.enabled) {
       return true;
     }
 
@@ -58,11 +58,7 @@ export class MCPGuard {
    * @param guardConfig - The MCP guard configuration to validate
    * @returns Whether the configuration is valid
    */
-  public static validateConfig(guardConfig?: MCPGuardConfig | null): boolean {
-    if (!guardConfig) {
-      return false;
-    }
-
+  public static validateConfig(guardConfig: MCPGuardConfig): boolean {
     // Guard must have a valid type
     if (!guardConfig.type || !['owner', 'custom'].includes(guardConfig.type)) {
       return false;

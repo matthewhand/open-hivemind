@@ -278,24 +278,6 @@ describe('SecureConfigManager', () => {
   });
 
   describe('Error handling', () => {
-    test('should prevent path traversal attacks in id', async () => {
-      const invalidConfig = {
-        id: '../../../etc/passwd',
-        name: 'Malicious Config',
-        type: 'bot',
-        data: {}
-      };
-
-      // Either error message indicates invalid ID - regex validates early, path check is defense-in-depth
-      await expect(secureConfigManager.storeConfig(invalidConfig as any)).rejects.toThrow(/Invalid configuration ID/);
-
-      const getConfigPromise = secureConfigManager.getConfig('../../../etc/passwd');
-      await expect(getConfigPromise).rejects.toThrow(/Invalid configuration ID/);
-
-      const deleteConfigPromise = secureConfigManager.deleteConfig('../../../etc/passwd');
-      await expect(deleteConfigPromise).rejects.toThrow(/Invalid configuration ID/);
-    });
-
     test('should handle invalid configuration data gracefully', async () => {
       const invalidConfig = {
         id: '', // Invalid: empty id

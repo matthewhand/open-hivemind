@@ -66,14 +66,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     try {
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
-        apiService.getStatus().catch((err) => {
-          console.error('[Monitoring] getStatus failed:', err);
-          return { bots: [] } as any;
-        }),
-        apiService.getConfig().catch((err) => {
-          console.error('[Monitoring] getConfig failed:', err);
-          return { bots: [] };
-        }),
+        apiService.getStatus(),
+        apiService.getConfig(),
       ]);
 
       setSystemMetrics(systemData);
@@ -84,7 +78,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // But actually, apiService.getStatus() returns bots with status. Let's try to use that if available.
 
       const botsWithStatus = configData.bots.map((bot: Bot) => {
-        const statusBot = systemData?.bots?.find((b: any) => b.name === bot.name);
+        const statusBot = systemData.bots.find(b => b.name === bot.name);
         return {
           ...bot,
           id: bot.name,

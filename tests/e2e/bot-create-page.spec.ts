@@ -43,19 +43,6 @@ test.describe('Bot Create Page (Standalone)', () => {
         }),
       });
     });
-
-    await page.route('/api/admin/mcp-servers', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: [
-            { id: 'server-1', name: 'File System Server', description: 'Reads local files' },
-            { id: 'server-2', name: 'GitHub Server', description: 'Interacts with GitHub API' },
-          ],
-        }),
-      });
-    });
   });
 
   test('should verify platform selection grid and persona preview', async ({ page }) => {
@@ -75,15 +62,15 @@ test.describe('Bot Create Page (Standalone)', () => {
     // Check if Discord card has selected styling (border-primary)
     // We can check class
     const discordParent = discordCard.locator('..');
-    await expect(discordParent).toHaveClass(/bg-primary\/5/);
+    await expect(discordParent).toHaveClass(/border-primary/);
 
     // Click Slack
     await slackCard.click();
 
     // Verify Slack is selected
     const slackParent = slackCard.locator('..');
-    await expect(slackParent).toHaveClass(/bg-primary\/5/);
-    await expect(discordParent).not.toHaveClass(/bg-primary\/5/);
+    await expect(slackParent).toHaveClass(/border-primary/);
+    await expect(discordParent).not.toHaveClass(/border-primary/);
 
     // 2. Verify Persona Preview
     const personaSelect = page.getByRole('combobox').nth(0); // First select is Persona?
@@ -100,8 +87,8 @@ test.describe('Bot Create Page (Standalone)', () => {
 
     // 3. Verify LLM Default Info
     // Default is "Use System Default"
-    // Should see "Using system default configuration"
-    await expect(page.getByText('Using system default configuration')).toBeVisible();
+    // Should see "Using system default: System Default GPT"
+    await expect(page.getByText('Using system default: System Default GPT')).toBeVisible();
 
     // 4. Verify Form Submission enablement
     // Name is empty, button should be disabled

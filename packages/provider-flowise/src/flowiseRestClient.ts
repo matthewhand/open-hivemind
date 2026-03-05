@@ -12,10 +12,6 @@ const debug = Debug('app:flowiseClient');
  * @param {string} channelId - The channel or conversation ID.
  * @param {string} question - The latest question/message from the user.
  * @returns {Promise<string>} The Flowise response text.
- * @throws {Error} When the question is empty.
- * @throws {Error} When the Flowise configuration is incomplete (missing API key, endpoint, or chatflow ID).
- * @throws {Error} When the Flowise response is empty or invalid.
- * @throws {Error} When the API request fails.
  */
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {
   if (!question.trim()) {
