@@ -140,8 +140,31 @@ const SettingsGeneral: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-5 w-5 bg-base-300 rounded animate-pulse"></div>
+          <div>
+            <div className="h-5 w-48 bg-base-300 rounded mb-1 animate-pulse"></div>
+            <div className="h-4 w-64 bg-base-300 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="card bg-base-100 border border-base-300 shadow-sm p-4 h-full">
+              <div className="h-6 bg-base-300 rounded w-1/3 mb-4 animate-pulse"></div>
+              <div className="space-y-4">
+                <div>
+                  <div className="h-4 bg-base-300 rounded w-1/4 mb-2 animate-pulse"></div>
+                  <div className="h-10 bg-base-300 rounded w-full animate-pulse"></div>
+                </div>
+                <div>
+                  <div className="h-4 bg-base-300 rounded w-1/4 mb-2 animate-pulse"></div>
+                  <div className="h-24 bg-base-300 rounded w-full animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
