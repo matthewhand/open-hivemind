@@ -321,10 +321,12 @@ export class WebUIStorage {
           config.guards = defaultGuards;
         } else {
           // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
+          const existingIds = new Set(config.guards.map((g: any) => g.id));
           for (const defaultGuard of defaultGuards) {
-            const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
-            if (!exists) {
+            if (!existingIds.has(defaultGuard.id)) {
               config.guards.push(defaultGuard);
+              existingIds.add(defaultGuard.id);
             }
           }
         }
