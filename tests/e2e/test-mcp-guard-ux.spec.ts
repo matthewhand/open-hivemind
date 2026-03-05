@@ -38,14 +38,33 @@ test('verify MCP Guard UX', async ({ page }) => {
   const usersInput = modal.locator('input[id="allowed-users"]');
   await usersInput.fill('user1');
 
-  // Screenshot before typing comma
+  // Press enter to commit the first chip
+  await usersInput.press('Enter');
+
+  // Screenshot before typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
-  await usersInput.pressSequentially(',user2');
+  // Type second value and press enter
+  await usersInput.pressSequentially('user2');
+  await usersInput.press('Enter');
 
-  // Screenshot after typing comma
+  // Screenshot after typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
+<<<<<<< HEAD
+  // Wait for the badges to appear
+  const badges = modal.locator('.badge', { hasText: /user1|user2/ });
+  await expect(badges).toHaveCount(2);
+
+  // Validate badge texts exactly
+  const firstBadge = badges.nth(0);
+  const secondBadge = badges.nth(1);
+  await expect(firstBadge).toHaveText(/user1/);
+  await expect(secondBadge).toHaveText(/user2/);
+
+  // The input value itself is cleared after pressing Enter
+  expect(await usersInput.inputValue()).toBe('');
+=======
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
   expect(value).toBe('user1,user2');
@@ -82,4 +101,5 @@ test('verify MCP Guard UX', async ({ page }) => {
   await undoButton.click();
   await expect(chips).toHaveCount(2);
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
+>>>>>>> origin/main
 });
