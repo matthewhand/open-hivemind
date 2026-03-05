@@ -36,6 +36,156 @@ interface GuardrailProfile {
 
 const API_BASE = '/api/admin';
 
+/**
+ * CommaSeparatedInput - Enhanced input with chip-style display, validation, and real-time feedback
+ */
+interface CommaSeparatedInputProps {
+  id: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  validate?: (item: string) => { valid: boolean; message?: string };
+  maxItems?: number;
+  label?: string;
+  helperText?: string;
+}
+
+const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
+  id,
+  value,
+  onChange,
+  disabled = false,
+  placeholder = 'Add items...',
+  validate,
+  maxItems = 100,
+  label,
+  helperText,
+}) => {
+  const [inputValue, setInputValue] = useState('');
+  const [showValidation, setShowValidation] = useState(false);
+
+  const validationResults = useMemo(() => {
+    if (!validate) return new Map<string, { valid: boolean; message?: string }>();
+    const results = new Map<string, { valid: boolean; message?: string }>();
+    value.forEach(item => {
+      if (item.trim()) {
+        results.set(item, validate(item.trim()));
+      }
+    });
+    return results;
+  }, [value, validate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+
+    // As per testing expectations, we MUST NOT clear the input field on comma
+    // Instead we just update the input state, and we rely on commitInput on blur/enter
+    // to do the tokenization.
+    setInputValue(newValue);
+  };
+
+  const commitInput = () => {
+    if (!inputValue.trim()) return;
+
+    // Parse current input and merge with existing values
+    const currentItems = inputValue.split(',').map(s => s.trim()).filter(Boolean);
+    const newItems = [...value];
+    let hasChanges = false;
+
+    currentItems.forEach(item => {
+      if (!newItems.includes(item) && newItems.length < maxItems) {
+        newItems.push(item);
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      onChange(newItems);
+    }
+    setInputValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitInput();
+      setShowValidation(true);
+    }
+    if (e.key === 'Backspace' && !inputValue && value.length > 0) {
+      onChange(value.slice(0, -1));
+    }
+  };
+
+  const removeItem = (indexToRemove: number) => {
+    onChange(value.filter((_, index) => index !== indexToRemove));
+  };
+
+  const hasInvalidItems = Array.from(validationResults.values()).some(r => !r.valid);
+
+  return (
+    <div className="form-control">
+      {label && (
+        <label className="label" htmlFor={id}>
+          <span className="label-text">{label}</span>
+          <span className="badge badge-sm badge-ghost">{value.length}{maxItems ? `/${maxItems}` : ''}</span>
+        </label>
+      )}
+      <div className={`input input-bordered flex flex-wrap gap-2 p-2 min-h-[3rem] items-center ${hasInvalidItems ? 'input-error' : ''} ${disabled ? 'input-disabled' : ''}`}>
+        {value.map((item, index) => {
+          const validation = validationResults.get(item);
+          const isInvalid = validation && !validation.valid;
+          return (
+            <span
+              key={`${item}-${index}`}
+              className={`badge badge-sm gap-1 ${isInvalid ? 'badge-error' : 'badge-primary'} ${disabled ? 'opacity-50' : ''}`}
+              title={validation?.message}
+            >
+              <Tag className="w-3 h-3" />
+              {item}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost btn-square p-0"
+                  onClick={() => removeItem(index)}
+                  disabled={disabled}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </span>
+          );
+        })}
+        <input
+          id={id}
+          type="text"
+          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            commitInput();
+            setShowValidation(true);
+          }}
+          placeholder={value.length === 0 ? placeholder : ''}
+          disabled={disabled}
+        />
+      </div>
+      {helperText && (
+        <label className="label">
+          <span className="label-text-alt opacity-70">{helperText}</span>
+        </label>
+      )}
+      {showValidation && hasInvalidItems && (
+        <div className="alert alert-error alert-sm mt-2">
+          <AlertCircle className="w-4 h-4" />
+          <span>Some items have validation errors. Hover over items for details.</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
