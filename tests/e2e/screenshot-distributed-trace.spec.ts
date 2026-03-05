@@ -96,6 +96,12 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     // We should now see the sub-span 'authenticateRequest'
     await expect(page.getByText('authenticateRequest')).toBeVisible();
 
+    // Click on 'authenticateRequest' to open the Span Metadata Inspector
+    await page.getByText('authenticateRequest').click();
+
+    // Wait for the inspector panel to become visible
+    await expect(page.getByText('Span ID:')).toBeVisible();
+
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/distributed-trace-waterfall.png', fullPage: true });
   });
