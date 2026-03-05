@@ -157,7 +157,7 @@ router.get('/:id/history', async (req, res) => {
 function redactString(val: string | undefined): string | undefined {
   if (!val) return val;
   if (val.length <= 3) return '***';
-  return val.substring(0, 1) + '***' + val.substring(val.length - 1);
+  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
 }
 
 // GET /api/bots/:id/activity - Get activity logs

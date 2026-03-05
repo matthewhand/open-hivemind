@@ -201,6 +201,20 @@ const DEFAULT_CONFIG: ProviderMonitoringConfig = {
 /**
  * ProviderMetricsCollector - Comprehensive metrics collection for all providers
  */
+export enum MetricNames {
+  MESSAGE_PROVIDER_STATUS = 'hivemind_message_provider_status',
+  MESSAGES_RECEIVED = 'hivemind_messages_received',
+  MESSAGES_SENT = 'hivemind_messages_sent',
+  MESSAGES_FAILED = 'hivemind_messages_failed',
+  MESSAGE_RESPONSE_TIME = 'hivemind_message_response_time',
+  LLM_PROVIDER_STATUS = 'hivemind_llm_provider_status',
+  LLM_REQUESTS_TOTAL = 'hivemind_llm_requests_total',
+  LLM_TOKENS_USED = 'hivemind_llm_tokens_used',
+  LLM_LATENCY = 'hivemind_llm_latency',
+  LLM_LATENCY_P95 = 'hivemind_llm_latency_p95',
+  LLM_COST_TOTAL = 'hivemind_llm_cost_total',
+}
+
 export class ProviderMetricsCollector extends EventEmitter {
   private static instance: ProviderMetricsCollector;
   private messageProviders: Map<ProviderType, MessageProviderMetrics> = new Map();
@@ -784,8 +798,8 @@ export class ProviderMetricsCollector extends EventEmitter {
 
     // Message provider metrics
     for (const [provider, metrics] of this.messageProviders) {
-      output += `# HELP hivemind_message_provider_status Status of message provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
-      output += `# TYPE hivemind_message_provider_status gauge\n`;
+      output += `# HELP ${MetricNames.MESSAGE_PROVIDER_STATUS} Status of message provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
+      output += `# TYPE ${MetricNames.MESSAGE_PROVIDER_STATUS} gauge\n`;
       const statusValue =
         metrics.status === 'healthy'
           ? 1
@@ -794,29 +808,29 @@ export class ProviderMetricsCollector extends EventEmitter {
             : metrics.status === 'unhealthy'
               ? 3
               : 0;
-      output += `hivemind_message_provider_status{provider="${provider}"} ${statusValue} ${timestamp}\n`;
+      output += `${MetricNames.MESSAGE_PROVIDER_STATUS}{provider="${provider}"} ${statusValue} ${timestamp}\n`;
 
-      output += `# HELP hivemind_messages_received Total messages received\n`;
-      output += `# TYPE hivemind_messages_received counter\n`;
-      output += `hivemind_messages_received{provider="${provider}"} ${metrics.messagesReceived} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.MESSAGES_RECEIVED} Total messages received\n`;
+      output += `# TYPE ${MetricNames.MESSAGES_RECEIVED} counter\n`;
+      output += `${MetricNames.MESSAGES_RECEIVED}{provider="${provider}"} ${metrics.messagesReceived} ${timestamp}\n`;
 
-      output += `# HELP hivemind_messages_sent Total messages sent\n`;
-      output += `# TYPE hivemind_messages_sent counter\n`;
-      output += `hivemind_messages_sent{provider="${provider}"} ${metrics.messagesSent} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.MESSAGES_SENT} Total messages sent\n`;
+      output += `# TYPE ${MetricNames.MESSAGES_SENT} counter\n`;
+      output += `${MetricNames.MESSAGES_SENT}{provider="${provider}"} ${metrics.messagesSent} ${timestamp}\n`;
 
-      output += `# HELP hivemind_messages_failed Total messages failed\n`;
-      output += `# TYPE hivemind_messages_failed counter\n`;
-      output += `hivemind_messages_failed{provider="${provider}"} ${metrics.messagesFailed} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.MESSAGES_FAILED} Total messages failed\n`;
+      output += `# TYPE ${MetricNames.MESSAGES_FAILED} counter\n`;
+      output += `${MetricNames.MESSAGES_FAILED}{provider="${provider}"} ${metrics.messagesFailed} ${timestamp}\n`;
 
-      output += `# HELP hivemind_message_response_time Average response time in ms\n`;
-      output += `# TYPE hivemind_message_response_time gauge\n`;
-      output += `hivemind_message_response_time{provider="${provider}"} ${metrics.averageResponseTime} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.MESSAGE_RESPONSE_TIME} Average response time in ms\n`;
+      output += `# TYPE ${MetricNames.MESSAGE_RESPONSE_TIME} gauge\n`;
+      output += `${MetricNames.MESSAGE_RESPONSE_TIME}{provider="${provider}"} ${metrics.averageResponseTime} ${timestamp}\n`;
     }
 
     // LLM provider metrics
     for (const [provider, metrics] of this.llmProviders) {
-      output += `# HELP hivemind_llm_provider_status Status of LLM provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
-      output += `# TYPE hivemind_llm_provider_status gauge\n`;
+      output += `# HELP ${MetricNames.LLM_PROVIDER_STATUS} Status of LLM provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)\n`;
+      output += `# TYPE ${MetricNames.LLM_PROVIDER_STATUS} gauge\n`;
       const statusValue =
         metrics.status === 'healthy'
           ? 1
@@ -825,27 +839,27 @@ export class ProviderMetricsCollector extends EventEmitter {
             : metrics.status === 'unhealthy'
               ? 3
               : 0;
-      output += `hivemind_llm_provider_status{provider="${provider}"} ${statusValue} ${timestamp}\n`;
+      output += `${MetricNames.LLM_PROVIDER_STATUS}{provider="${provider}"} ${statusValue} ${timestamp}\n`;
 
-      output += `# HELP hivemind_llm_requests_total Total LLM requests\n`;
-      output += `# TYPE hivemind_llm_requests_total counter\n`;
-      output += `hivemind_llm_requests_total{provider="${provider}"} ${metrics.requestsTotal} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.LLM_REQUESTS_TOTAL} Total LLM requests\n`;
+      output += `# TYPE ${MetricNames.LLM_REQUESTS_TOTAL} counter\n`;
+      output += `${MetricNames.LLM_REQUESTS_TOTAL}{provider="${provider}"} ${metrics.requestsTotal} ${timestamp}\n`;
 
-      output += `# HELP hivemind_llm_tokens_used Total tokens used\n`;
-      output += `# TYPE hivemind_llm_tokens_used counter\n`;
-      output += `hemind_llm_tokens_used{provider="${provider}"} ${metrics.tokensUsed} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.LLM_TOKENS_USED} Total tokens used\n`;
+      output += `# TYPE ${MetricNames.LLM_TOKENS_USED} counter\n`;
+      output += `${MetricNames.LLM_TOKENS_USED}{provider="${provider}"} ${metrics.tokensUsed} ${timestamp}\n`;
 
-      output += `# HELP hivemind_llm_latency Average latency in ms\n`;
-      output += `# TYPE hivemind_llm_latency gauge\n`;
-      output += `hivemind_llm_latency{provider="${provider}"} ${metrics.averageLatency} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.LLM_LATENCY} Average latency in ms\n`;
+      output += `# TYPE ${MetricNames.LLM_LATENCY} gauge\n`;
+      output += `${MetricNames.LLM_LATENCY}{provider="${provider}"} ${metrics.averageLatency} ${timestamp}\n`;
 
-      output += `# HELP hivemind_llm_latency_p95 P95 latency in ms\n`;
-      output += `# TYPE hivemind_llm_latency_p95 gauge\n`;
-      output += `hivemind_llm_latency_p95{provider="${provider}"} ${metrics.p95Latency} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.LLM_LATENCY_P95} P95 latency in ms\n`;
+      output += `# TYPE ${MetricNames.LLM_LATENCY_P95} gauge\n`;
+      output += `${MetricNames.LLM_LATENCY_P95}{provider="${provider}"} ${metrics.p95Latency} ${timestamp}\n`;
 
-      output += `# HELP hivemind_llm_cost_total Total cost in USD\n`;
-      output += `# TYPE hivemind_llm_cost_total gauge\n`;
-      output += `hivemind_llm_cost_total{provider="${provider}"} ${metrics.totalCost} ${timestamp}\n`;
+      output += `# HELP ${MetricNames.LLM_COST_TOTAL} Total cost in USD\n`;
+      output += `# TYPE ${MetricNames.LLM_COST_TOTAL} gauge\n`;
+      output += `${MetricNames.LLM_COST_TOTAL}{provider="${provider}"} ${metrics.totalCost} ${timestamp}\n`;
     }
 
     return output;

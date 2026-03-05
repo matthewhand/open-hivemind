@@ -162,14 +162,15 @@ describe('SlackInteractiveHandler', () => {
 
       payload = {
         actions: [{ action_id: 'unknown_action' }],
+        user: { id: 'U123' },
       };
 
       await (handler as any).handleBlockAction(payload, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.send).toHaveBeenCalled();
-      // Unknown actions should not call any handlers
-      expect(mockHandlers.sendCourseInfo).not.toHaveBeenCalled();
+      // Unknown actions should be passed to handleButtonClick
+      expect(mockHandlers.handleButtonClick).toHaveBeenCalledWith('C123', 'U123', 'unknown_action');
     });
   });
 });

@@ -258,7 +258,7 @@ const BotCreatePage: React.FC = () => {
                   </div>
 
                   {/* System Instruction */}
-                  <div className="form-control w-full md:row-span-2 flex flex-col h-full">
+                  <div className="form-control w-full md:col-span-2">
                     <label className="label">
                       <span className="label-text font-medium">System Instruction</span>
                       <AIAssistButton
@@ -274,7 +274,7 @@ const BotCreatePage: React.FC = () => {
                       placeholder="e.g., You are a helpful and concise assistant."
                       value={formData.systemInstruction}
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
-                      className="flex-1 textarea-bordered h-full min-h-[8rem]"
+                      className="h-24 textarea-bordered"
                     />
                     <div className="flex justify-between items-center mt-1">
                       <div className="flex-1">
@@ -296,7 +296,7 @@ const BotCreatePage: React.FC = () => {
                   </div>
 
                   {/* LLM Provider */}
-                  <div className="form-control w-full self-end">
+                  <div className="form-control w-full">
                     <label className="label">
                       <span className="label-text font-medium">
                         LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
@@ -319,13 +319,13 @@ const BotCreatePage: React.FC = () => {
                     </Select>
                     <label className="label">
                       {!defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-error">
+                        <span className="label-text-alt text-error whitespace-normal break-words">
                           System default is not configured. Please select a provider.
                         </span>
                       )}
                       {defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-success flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Using system default configuration
+                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
+                          <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
                         </span>
                       )}
                     </label>

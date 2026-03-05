@@ -19,7 +19,6 @@
     "rootDir": "./",
     "baseUrl": "./",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": [],
     "incremental": true,
     "skipLibCheck": true,
     "noEmitOnError": false,

@@ -37,6 +37,61 @@ interface GuardrailProfile {
 
 const API_BASE = '/api/admin';
 
+interface CommaArrayInputProps {
+  id: string;
+  value: string[];
+  onChange: (val: string[]) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  isTextArea?: boolean;
+  className?: string;
+}
+
+const CommaArrayInput: React.FC<CommaArrayInputProps> = ({ value, onChange, id, placeholder, disabled, isTextArea, className }) => {
+  const [text, setText] = useState(value?.join(', ') || '');
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setText(value?.join(', ') || '');
+    }
+  }, [value, isFocused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    onChange(e.target.value.split(',').map(s => s.trimStart()));
+  };
+
+  if (isTextArea) {
+    return (
+      <textarea
+        id={id}
+        className={className}
+        placeholder={placeholder}
+        disabled={disabled}
+        value={text}
+        onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      />
+    );
+  }
+
+  return (
+    <input
+      id={id}
+      type="text"
+      className={className}
+      placeholder={placeholder}
+      disabled={disabled}
+      value={text}
+      onChange={handleChange}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    />
+  );
+};
+
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -348,14 +403,11 @@ const GuardsPage: React.FC = () => {
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <input
+                    <CommaArrayInput
                       id="allowed-users"
-                      type="text"
                       className="input input-bordered"
-                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                      // Note: Using trimStart() allows trailing commas during typing for better UX.
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
+                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
+                      onChange={val => updateGuard('mcpGuard', { allowedUsers: val })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                   </div>
@@ -363,15 +415,12 @@ const GuardsPage: React.FC = () => {
 
                 <div className="form-control mt-4">
                   <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <input
+                  <CommaArrayInput
                     id="allowed-tools"
-                    type="text"
                     className="input input-bordered"
                     placeholder="e.g. calculator, weather"
-                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
+                    value={editingProfile.guards.mcpGuard.allowedTools || []}
+                    onChange={val => updateGuard('mcpGuard', { allowedTools: val })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -486,14 +535,13 @@ const GuardsPage: React.FC = () => {
 
                 <div className="form-control mt-4">
                   <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                  <textarea
+                  <CommaArrayInput
                     id="blocked-terms"
+                    isTextArea
                     className="textarea textarea-bordered h-20"
                     placeholder="e.g. secret, password, confidential"
-                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
+                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
+                    onChange={val => updateGuard('contentFilter', { blockedTerms: val })}
                     disabled={!editingProfile.guards.contentFilter?.enabled}
                   />
                 </div>
