@@ -77,4 +77,9 @@ test('verify MCP Guard UX', async ({ page }) => {
   // Verify it cleared
   await expect(clearButton).not.toBeVisible();
   await expect(chips).toHaveCount(0);
+
+  const undoButton = modal.locator('button[aria-label="Undo"]').first();
+  await undoButton.click();
+  await expect(chips).toHaveCount(2);
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
 });

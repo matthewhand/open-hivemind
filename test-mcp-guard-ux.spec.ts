@@ -3,6 +3,15 @@ import { setupAuth } from './tests/e2e/test-utils';
 
 test('verify MCP Guard UX', async ({ page }) => {
   await setupAuth(page);
+  // Mock Guard Profiles
+  await page.route('/api/admin/guard-profiles', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+
   await page.goto('/admin/guards');
 
   await page.getByRole('button', { name: 'New Profile' }).click();
@@ -24,35 +33,23 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   // Test typing normally (buffered text)
   await usersInput.fill('user1');
-  await usersInput.type(', user2');
-  expect(await usersInput.inputValue()).toBe('user1, user2');
-
-  // Commit it
   await usersInput.press('Enter');
-
-  // Give it a moment to render
-  await page.waitForTimeout(500);
-
-  // The input should be empty, and chips should be visible
-  expect(await usersInput.inputValue()).toBe('');
+  await usersInput.fill('user2');
+  await usersInput.press('Enter');
 
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(2);
 
-  // Wait for the clear button to be visible
+  // Clear all
   const clearButton = modal.locator('button[aria-label="Clear all items"]').first();
-  await expect(clearButton).toBeVisible();
-
-  // Take screenshot with chips
-  await page.screenshot({ path: 'after-fix-feedback.png' });
-
-  // Clear it
   await clearButton.click();
-
-  // Give it a moment to render
-  await page.waitForTimeout(500);
-
-  // Verify it cleared
-  await expect(clearButton).not.toBeVisible();
   await expect(chips).toHaveCount(0);
+
+  // Test Undo functionality
+  const undoButton = modal.locator('button[aria-label="Undo"]').first();
+  await undoButton.click();
+  await expect(chips).toHaveCount(2);
+
+  // Take screenshot with chips restored via undo
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
 });
