@@ -130,6 +130,24 @@ const BotsPage: React.FC = () => {
       (bot.llmProvider || '').toLowerCase().includes(q)
     );
   }), [bots, searchQuery]);
+
+  const botStats = useMemo(() => {
+    return bots.reduce(
+      (acc, bot) => {
+        if (bot.status === 'active') {
+          if (bot.connected) {
+            acc.active++;
+          } else {
+            acc.disconnected++;
+          }
+        }
+        acc.errors += bot.errorCount || 0;
+        return acc;
+      },
+      { active: 0, disconnected: 0, errors: 0 }
+    );
+  }, [bots]);
+
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -355,25 +373,20 @@ const BotsPage: React.FC = () => {
         <div className="stat">
           <div className="stat-title">Active</div>
           <div className="stat-value text-green-500">
-            {bots.filter((b) => b.status === 'active' && b.connected).length}
+            {botStats.active}
           </div>
         </div>
         <div className="stat">
           <div className="stat-title">Disconnected</div>
           <div className="stat-value text-yellow-500">
-            {bots.filter((b) => b.status === 'active' && !b.connected).length}
+            {botStats.disconnected}
           </div>
         </div>
         <div className="stat" tabIndex={0} aria-label="Total error count across all bots">
           <div className="stat-title">Errors</div>
-          {(() => {
-            const totalErrors = bots.reduce((sum, b) => sum + (b.errorCount || 0), 0);
-            return (
-              <div className={`stat-value ${totalErrors > 0 ? 'text-error' : 'text-base-content/60'}`}>
-                {totalErrors}
-              </div>
-            );
-          })()}
+          <div className={`stat-value ${botStats.errors > 0 ? 'text-error' : 'text-base-content/60'}`}>
+            {botStats.errors}
+          </div>
         </div>
       </div>
 
