@@ -253,6 +253,15 @@ export class ApiMonitorService extends EventEmitter {
     debug('Stopped monitoring all endpoints');
   }
 
+  /**
+   * Clean up resources, particularly stopping all intervals.
+   */
+  public shutdown(): void {
+    this.stopAllMonitoring();
+    this.removeAllListeners();
+    debug('ApiMonitorService shutdown completed');
+  }
+
   private initializeEndpointStatus(config: EndpointConfig): void {
     const status: EndpointStatus = {
       id: config.id,

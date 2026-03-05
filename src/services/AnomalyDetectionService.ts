@@ -26,12 +26,13 @@ export class AnomalyDetectionService extends EventEmitter {
   private dataWindows = new Map<string, number[]>(); // metric -> rolling data points
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
+  private detectionInterval: NodeJS.Timeout | null = null;
 
   private constructor() {
     super();
     this.setMaxListeners(15);
     // Start periodic detection
-    setInterval(() => this.runDetection(), 30000); // Every 30 seconds
+    this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
   }
 
   static getInstance(): AnomalyDetectionService {
@@ -176,6 +177,18 @@ export class AnomalyDetectionService extends EventEmitter {
 
   getAnomalies(): Anomaly[] {
     return [...this.anomalies];
+  }
+
+  /**
+   * Clean up resources, particularly stopping the detection interval.
+   */
+  public shutdown(): void {
+    if (this.detectionInterval) {
+      clearInterval(this.detectionInterval);
+      this.detectionInterval = null;
+    }
+    this.removeAllListeners();
+    debug('AnomalyDetectionService shutdown completed');
   }
 
   async resolveAnomaly(id: string): Promise<boolean> {

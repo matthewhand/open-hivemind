@@ -33,6 +33,7 @@ import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
+import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
@@ -519,6 +520,43 @@ async function main() {
   if (httpEnabled) {
     const port = parseInt(process.env.PORT || '3028', 10);
     const server = createServer(app);
+
+    // Register background services for graceful shutdown
+    const rtvs = (RealTimeValidationService as any).getInstance
+      ? (RealTimeValidationService as any).getInstance()
+      : null;
+    if (rtvs && typeof rtvs.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'RealTimeValidationService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down RealTimeValidationService...');
+          rtvs.shutdown();
+        },
+      });
+    }
+
+    const ads = AnomalyDetectionService.getInstance();
+    if (ads && typeof ads.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'AnomalyDetectionService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down AnomalyDetectionService...');
+          ads.shutdown();
+        },
+      });
+    }
+
+    const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
+    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    if (ams && typeof ams.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'ApiMonitorService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
+          ams.shutdown();
+        },
+      });
+    }
 
     // Register HTTP server with ShutdownCoordinator
     shutdownCoordinator.registerHttpServer(server);
