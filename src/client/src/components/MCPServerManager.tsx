@@ -13,6 +13,8 @@ interface MCPServer {
   apiKey?: string;
   connected: boolean;
   tools?: unknown[];
+  description?: string;
+  lastConnected?: string;
 }
 
 interface MCPTool {
@@ -57,15 +59,29 @@ const MCPServerManager: React.FC = () => {
       const serverList: MCPServer[] = [];
       if (data.servers) {
         Object.entries(data.servers).forEach(([name, server]: [string, unknown]) => {
-          const serverObj = server as { serverUrl?: string; apiKey?: string };
-          serverList.push({ name, serverUrl: serverObj.serverUrl || '', apiKey: serverObj.apiKey || '', connected: true });
+          const serverObj = server as { serverUrl?: string; apiKey?: string; description?: string; lastConnected?: string; tools?: unknown[] };
+          serverList.push({
+            name,
+            serverUrl: serverObj.serverUrl || '',
+            apiKey: serverObj.apiKey || '',
+            connected: true,
+            description: serverObj.description,
+            lastConnected: serverObj.lastConnected,
+            tools: serverObj.tools,
+          });
         });
       }
       if (data.configurations) {
         data.configurations.forEach((config: unknown) => {
-          const configObj = config as { name?: string; serverUrl?: string; apiKey?: string };
+          const configObj = config as { name?: string; serverUrl?: string; apiKey?: string; description?: string };
           if (!serverList.find(s => s.name === configObj.name) && configObj.name) {
-            serverList.push({ name: configObj.name, serverUrl: configObj.serverUrl || '', apiKey: configObj.apiKey || '', connected: false });
+            serverList.push({
+              name: configObj.name,
+              serverUrl: configObj.serverUrl || '',
+              apiKey: configObj.apiKey || '',
+              connected: false,
+              description: configObj.description,
+            });
           }
         });
       }
@@ -143,36 +159,50 @@ const MCPServerManager: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={fetchServers} startIcon={<ArrowPathIcon className="w-5 h-5" />}>Refresh</Button>
-          <Button variant="primary" onClick={() => { setFormData({ name: '', serverUrl: '', apiKey: '' }); setConnectDialogOpen(true); }} startIcon={<PlusIcon className="w-5 h-5" />}>Connect Server</Button>
+          <Button variant="primary" onClick={() => { setFormData({ name: '', serverUrl: '', apiKey: '' }); setConnectDialogOpen(true); }} startIcon={<PlusIcon className="w-5 h-5" />}>Add Server</Button>
         </div>
       </div>
 
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
-      <div className="overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr><th>Name</th><th>Server URL</th><th>Status</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            {servers.map(server => (
-              <tr key={server.name} className="hover">
-                <td><div className="flex items-center gap-2"><WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" /><span className="font-medium">{server.name}</span></div></td>
-                <td><span className="font-mono text-sm">{server.serverUrl}</span></td>
-                <td><Badge variant={server.connected ? 'success' : 'secondary'}>{server.connected ? 'Connected' : 'Disconnected'}</Badge></td>
-                <td>
-                  <div className="flex gap-2">
-                    {server.connected && <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}><WrenchScrewdriverIcon className="w-4 h-4" /></Button>}
-                    <Button size="sm" variant="ghost" className="text-error" onClick={() => handleDisconnectServer(server.name)}><LinkIcon className="w-4 h-4" /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {servers.map(server => (
+          <Card
+            key={server.name}
+            className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow"
+            title={
+              <div className="flex items-center justify-between w-full">
+                <span>{server.name}</span>
+                <Badge variant={server.connected ? 'success' : 'secondary'} className="shrink-0 font-normal text-xs">{server.connected ? 'running' : 'stopped'}</Badge>
+              </div>
+            }
+            actions={
+              <div className="flex flex-wrap justify-end gap-2 w-full pt-2">
+                {server.connected && <Button size="sm" variant="ghost" aria-label="View Tools" title="View Tools" onClick={() => handleViewTools(server)}><WrenchScrewdriverIcon className="w-4 h-4 mr-1" />View Tools</Button>}
+                <Button size="sm" variant="ghost" className="text-error" aria-label="Disconnect Server" title="Disconnect Server" onClick={() => handleDisconnectServer(server.name)}><LinkIcon className="w-4 h-4 mr-1" />Disconnect</Button>
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-3 h-full">
+              {server.description && (
+                <p className="text-sm opacity-80 flex-grow">{server.description}</p>
+              )}
+
+              <div className="flex flex-col gap-2 mt-auto bg-base-300 p-3 rounded-lg text-xs opacity-80">
+                <span className="font-mono truncate" title={server.serverUrl}>URL: {server.serverUrl}</span>
+                <div className="flex justify-between items-center">
+                  <span>Tools: {server.tools ? server.tools.length : 0}</span>
+                  {server.lastConnected && (
+                    <span>Last connected: {new Date(server.lastConnected).toLocaleDateString()}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
 
-      <Modal isOpen={connectDialogOpen} onClose={() => setConnectDialogOpen(false)} title="Connect to MCP Server">
+      <Modal isOpen={connectDialogOpen} onClose={() => setConnectDialogOpen(false)} title="Add MCP Server">
         <div className="space-y-4">
           <div className="form-control">
             <label className="label"><span className="label-text">Server Name</span></label>
@@ -194,7 +224,7 @@ const MCPServerManager: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={toolsDialogOpen} onClose={() => setToolsDialogOpen(false)} title={`Tools - ${selectedServer?.name}`}>
+      <Modal isOpen={toolsDialogOpen} onClose={() => setToolsDialogOpen(false)} title={`Tools provided by ${selectedServer?.name}`}>
         <div className="py-4">
           {serverTools.length > 0 ? (
             <ul className="menu bg-base-200 w-full rounded-box">
