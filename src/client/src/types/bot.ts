@@ -42,10 +42,10 @@ export interface LLMProvider {
 }
 
 export enum MessageProviderType {
-  SLACK = 'slack',
   DISCORD = 'discord',
+  SLACK = 'slack',
+  MATTERMOST = 'mattermost',
   WEBHOOK = 'webhook',
-  MATTERMOST = 'mattermost'
 }
 
 export enum LLMProviderType {
@@ -55,7 +55,7 @@ export enum LLMProviderType {
   PERPLEXITY = 'perplexity',
   REPLICATE = 'replicate',
   N8N = 'n8n',
-  OPENSWARM = 'openswarm'
+  OPENSWARM = 'openswarm',
 }
 
 export interface Persona {
@@ -328,19 +328,6 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
       { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
       { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
-    ],
-  },
-  ollama: {
-    type: LLMProviderType.OLLAMA,
-    displayName: 'Ollama',
-    description: 'Local models via Ollama',
-    icon: '🦙',
-    fields: [
-      { name: 'endpoint', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:11434' },
-      { name: 'model', label: 'Model', type: 'text', required: true, placeholder: 'llama2, codellama, mistral, etc.' },
-      { name: 'maxTokens', label: 'Max Tokens', type: 'number', required: false, placeholder: '2048', validation: { min: 1, max: 8192 } },
-      { name: 'temperature', label: 'Temperature', type: 'number', required: false, placeholder: '0.7', validation: { min: 0, max: 2 } },
-      { name: 'keepAlive', label: 'Keep Alive', type: 'text', required: false, placeholder: '5m' },
     ],
   },
   perplexity: {
