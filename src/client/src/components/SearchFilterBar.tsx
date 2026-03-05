@@ -51,7 +51,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
             searchValue ? (
               <button
                 onClick={handleClearSearch}
-                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10"
+                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200"
                 aria-label="Clear search"
               >
                 <X className="w-3 h-3" />
