@@ -27,5 +27,6 @@ test('verify MCP Guard UX', async ({ page }) => {
   await usersInput.type(', user2');
 
   console.log('Input value:', await usersInput.inputValue());
+  page.screenshot({ path: 'after-fix.png' });
   expect(await usersInput.inputValue()).toBe('user1, user2');
 });
