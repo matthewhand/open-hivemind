@@ -87,11 +87,31 @@ const DataTable = <T extends Record<string, any>>({
 
   // Paginate data
   const paginatedData = useMemo(() => {
+    if (isInfiniteScroll) {
+      return filteredData.slice(0, currentPage * pageSize);
+    }
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, currentPage, pageSize]);
+  }, [filteredData, currentPage, pageSize, isInfiniteScroll]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Infinite Scroll Observer
+  React.useEffect(() => {
+    if (!isInfiniteScroll || !loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && currentPage < totalPages) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [isInfiniteScroll, currentPage, totalPages]);
 
   const handleSort = (field: keyof T) => {
     if (sortField === field) {
