@@ -48,6 +48,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private connectionErrors: Map<string, number> = new Map();
   private lastActivity: Map<string, Date> = new Map();
 
+  // ⚡ Bolt Optimization: Short-lived memory cache for user profiles
+  private userCache: Map<string, { user: any; timestamp: number }> = new Map();
+  private readonly USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
   public supportsChannelPrioritization: boolean = true;
 
@@ -335,7 +339,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           // ⚡ Bolt Optimization: Fetch all users concurrently using Promise.all instead of sequential await in for loop
           const messagePromises = posts.slice(0, limit).map(async (post) => {
-            const user = await client.getUser(post.user_id);
+            let user = null;
+            const now = Date.now();
+            const cached = this.userCache.get(post.user_id);
+            if (cached && (now - cached.timestamp < this.USER_CACHE_TTL)) {
+              user = cached.user;
+            } else {
+              user = await client.getUser(post.user_id);
+              this.userCache.set(post.user_id, { user, timestamp: now });
+            }
+
             const username = user
               ? `${user.first_name} ${user.last_name}`.trim() || user.username
               : 'Unknown';
@@ -556,6 +569,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     this.healthStatus.clear();
     this.connectionErrors.clear();
     this.lastActivity.clear();
+    this.userCache.clear();
 
     MattermostService.instance = undefined;
   }
