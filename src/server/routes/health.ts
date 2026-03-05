@@ -247,7 +247,7 @@ nodejs_version_info{version="${process.version}"} 1
 ${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
 
-  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Content-Type', 'text/plain');
   return res.send(metrics);
 });
 

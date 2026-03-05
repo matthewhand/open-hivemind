@@ -350,23 +350,48 @@ const GuardsPage: React.FC = () => {
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
+<<<<<<< HEAD
+                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
+                    <input
+                      id="allowed-users"
+                      type="text"
+                      className="input input-bordered"
+                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
+                      // Note: Using trimStart() allows trailing commas during typing for better UX.
+                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
                     <CommaSeparatedInput
                       id="allowed-users"
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
+>>>>>>> origin/main
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                   </div>
                 )}
 
                 <div className="form-control mt-4">
+<<<<<<< HEAD
+                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
+                  <input
+                    id="allowed-tools"
+                    type="text"
+                    className="input input-bordered"
+                    placeholder="e.g. calculator, weather"
+                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
                   <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
                   <CommaSeparatedInput
                     id="allowed-tools"
                     placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
+>>>>>>> origin/main
                     disabled={!editingProfile.guards.mcpGuard.enabled}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -480,12 +505,24 @@ const GuardsPage: React.FC = () => {
                 </div>
 
                 <div className="form-control mt-4">
+<<<<<<< HEAD
+                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
+                  <textarea
+                    id="blocked-terms"
+                    className="textarea textarea-bordered h-20"
+                    placeholder="e.g. secret, password, confidential"
+                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
+                    // Note: Using trimStart() allows trailing commas during typing for better UX.
+                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
+                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
+=======
                   <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
                   <CommaSeparatedInput
                     id="blocked-terms"
                     placeholder="e.g. secret, password, confidential"
                     value={editingProfile.guards.contentFilter?.blockedTerms || []}
                     onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
+>>>>>>> origin/main
                     disabled={!editingProfile.guards.contentFilter?.enabled}
                   />
                 </div>

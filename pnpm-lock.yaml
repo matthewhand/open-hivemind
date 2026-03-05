@@ -191,9 +191,6 @@ importers:
       pino-pretty:
         specifier: ^11.2.2
         version: 11.3.0
-      playwright:
-        specifier: ^1.58.2
-        version: 1.58.2
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1

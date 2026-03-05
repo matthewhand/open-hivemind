@@ -167,9 +167,12 @@ const BotTemplatesPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
+<<<<<<< HEAD
+=======
 
 
 
+>>>>>>> origin/main
       <div className="mt-4 mb-8">
       <div className="flex justify-between items-center mb-4">
           <div>

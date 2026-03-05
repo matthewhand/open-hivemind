@@ -304,25 +304,15 @@ export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack
     }
     return true;
   } catch (error) {
-    throw new Error(`Test data validation failed for ${type}: ${error}`);
+    console.error(`Schema drift detected for ${type}:`, error);
+    throw error;
   }
 }
 
 /**
  * Factory function to create test data for different scenarios
- *
- * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'mattermost', 'webhook', 'command')
- * @returns The requested test data. For messaging providers, this includes defaults, envVars, and expectedResults.
- *
- * Required fields by provider:
- * - discord: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID
- * - message: MESSAGE_PROVIDER, BOT_ID, NAME, PLATFORM
- * - slack: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET
- * - telegram: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_URL, TELEGRAM_PARSE_MODE
- * - mattermost: MATTERMOST_SERVER_URL, MATTERMOST_TOKEN, MATTERMOST_CHANNEL
- * - webhook: WEBHOOK_URL
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'command'): any {
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
   switch (type) {
     case 'discord':
