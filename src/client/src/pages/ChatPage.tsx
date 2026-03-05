@@ -25,6 +25,20 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     fetchBots();
@@ -191,6 +205,11 @@ const ChatPage: React.FC = () => {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col bg-base-100 relative">
+                {isOffline && (
+                    <div className="bg-warning text-warning-content px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2">
+                        <span>⚠️</span> You are currently offline. Messaging is disabled.
+                    </div>
+                )}
                 {selectedBot ? (
                     <div className="flex-1 flex flex-col h-full relative">
                         {historyLoading && (
@@ -202,10 +221,10 @@ const ChatPage: React.FC = () => {
                             messages={messages}
                             onSendMessage={handleSendMessage}
                             onRetryMessage={handleRetryMessage}
-                            placeholder="Type a message..."
+                            placeholder={isOffline ? "You are offline" : "Type a message..."}
                             className="h-full"
                             maxHeight="100%"
-                            isLoading={false}
+                            isLoading={isOffline}
                         />
                         {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
                     </div>
