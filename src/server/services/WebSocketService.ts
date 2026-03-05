@@ -5,24 +5,12 @@ import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
-import { ActivityLogger } from './ActivityLogger';
+import { ActivityLogger, type MessageFlowEvent } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 
 const debug = Debug('app:WebSocketService');
 
-export interface MessageFlowEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
-}
+export { type MessageFlowEvent };
 
 export interface PerformanceMetric {
   timestamp: string;

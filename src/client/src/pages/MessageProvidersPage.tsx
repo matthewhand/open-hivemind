@@ -2,16 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useModal } from '../hooks/useModal';
 import { useBotProviders } from '../hooks/useBotProviders';
-import { Card, Button, Badge } from '../components/DaisyUI';
-import {
-  MessageCircle as MessageIcon,
-  Plus as AddIcon,
-  Settings as ConfigIcon,
-  CheckCircle as CheckIcon,
-  XCircle as XIcon,
-  AlertCircle as WarningIcon,
-} from 'lucide-react';
-import { Breadcrumbs } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import { MessageCircle as MessageIcon, Plus as AddIcon, Settings as ConfigIcon, CheckCircle as CheckIcon, XCircle as XIcon, AlertCircle as WarningIcon } from 'lucide-react';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import type { MessageProviderType} from '../types/bot';
 import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
@@ -234,12 +229,12 @@ const MessageProvidersPage: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3 text-primary">🔗 Webhook Setup</h3>
+              <h3 className="font-semibold mb-3 text-primary">✈️ Telegram Setup</h3>
               <ul className="space-y-2 text-sm text-base-content/70">
-                <li>• Provide the target Webhook URL</li>
-                <li>• Set up a secret token (optional)</li>
-                <li>• Configure payload schema</li>
-                <li>• Handle event triggers</li>
+                <li>• Create a Bot with @BotFather</li>
+                <li>• Get your Bot Token</li>
+                <li>• Configure Webhook (optional)</li>
+                <li>• Set up commands and permissions</li>
               </ul>
             </div>
 

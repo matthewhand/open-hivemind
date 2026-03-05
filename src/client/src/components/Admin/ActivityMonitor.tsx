@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ArrowPathIcon,
-  ArrowDownTrayIcon,
-  FunnelIcon,
-  ChartBarIcon,
-  PresentationChartLineIcon,
-} from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowDownTrayIcon, FunnelIcon, ChartBarIcon, PresentationChartLineIcon } from '@heroicons/react/24/outline';
 import {
   LineChart,
   Line,

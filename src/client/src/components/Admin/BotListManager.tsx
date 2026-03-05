@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Button, Modal } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
 import {
   CpuChipIcon,
   ArrowPathIcon,
@@ -9,7 +12,6 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
-import { BotConfig as BaseBotConfig } from '../../../../types/config';
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -17,12 +19,18 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
-type BotConfig = BaseBotConfig & {
+interface BotConfig {
+    name: string;
+    messageProvider: string;
+    llmProvider: string;
+    llmProfile?: string;
+    persona?: string;
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
-};
+    [key: string]: unknown;
+}
 
 interface BotListResponse {
     bots: BotConfig[];
@@ -70,7 +78,7 @@ const BotListManager: React.FC = () => {
     switch (provider) {
     case 'discord': return 'badge-primary';
     case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-info';
+    case 'mattermost': return 'badge-accent';
     default: return 'badge-ghost';
     }
   };

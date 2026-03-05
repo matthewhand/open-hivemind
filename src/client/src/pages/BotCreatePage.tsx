@@ -2,15 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
-import {
-  Breadcrumbs,
-  Alert,
-  PageHeader,
-  Button,
-  Input,
-  Textarea,
-  Select,
-} from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import Button from '../components/DaisyUI/Button';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
@@ -100,7 +98,7 @@ const BotCreatePage: React.FC = () => {
     { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
     { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
     { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
-    { id: 'webhook', name: 'Webhook', icon: Send, color: 'text-emerald-500' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);

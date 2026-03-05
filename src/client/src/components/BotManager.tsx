@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Card, Badge, Button, Modal, Input, Select, Alert, Loading, Checkbox, Tooltip } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Modal from './DaisyUI/Modal';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
+import Checkbox from './DaisyUI/Checkbox';
+import Tooltip from './DaisyUI/Tooltip';
 import {
   PlusIcon,
   DocumentDuplicateIcon,

@@ -5,7 +5,7 @@ import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
 
 // Mock components to avoid deep rendering issues and dependency on child implementations
-vi.mock('../../components/DaisyUI', () => ({
+vi.mock('../../components/DaisyUI';, () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
   Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
   Button: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,

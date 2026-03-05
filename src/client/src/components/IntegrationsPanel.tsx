@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Toggle from './DaisyUI/Toggle';
+import { Loading } from './DaisyUI/Loading';
+import Textarea from './DaisyUI/Textarea';
+import Modal from './DaisyUI/Modal';
+import Badge from './DaisyUI/Badge';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -42,14 +51,15 @@ const PROVIDER_ICONS: Record<string, any> = {
   openai: Brain,
   flowise: Brain,
   openwebui: Brain,
-  perplexity: Brain,
-  replicate: Brain,
-  n8n: Brain,
-  openswarm: Brain,
+  ollama: Brain,
+  anthropic: Brain,
+  gemini: Brain,
+  groq: Brain,
   discord: MessageSquare,
   slack: MessageSquare,
   mattermost: MessageSquare,
-  webhook: Globe,
+  telegram: MessageSquare,
+  whatsapp: MessageSquare,
 };
 
 

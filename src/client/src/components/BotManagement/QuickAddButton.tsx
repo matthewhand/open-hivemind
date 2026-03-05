@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Button } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
 import { Plus as PlusIcon } from 'lucide-react';
 
 interface QuickAddButtonProps {
@@ -25,8 +25,8 @@ const QuickAddButton: React.FC<QuickAddButtonProps> = ({
       return 'Cannot add providers while bot is running';
     }
     return type === 'message'
-      ? 'Add Discord, Mattermost, Slack, or Webhook provider'
-      : 'Add OpenAI, Flowise, OpenWebUI, or other LLM provider';
+      ? 'Add Discord, Telegram, Slack, or Webhook provider'
+      : 'Add OpenAI, Anthropic, Ollama, or Custom LLM provider';
   };
 
   return (

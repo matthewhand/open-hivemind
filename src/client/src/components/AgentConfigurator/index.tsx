@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  useApplyHotReloadChangeMutation,
-  useGetConfigQuery,
-  useGetStatusQuery,
-} from '../../store/slices/apiSlice';
+import { useApplyHotReloadChangeMutation, useGetConfigQuery, useGetStatusQuery } from '../../store/slices/apiSlice';
 import type { Bot, StatusResponse } from '../../services/api';
 import { useProviders } from '../../hooks/useProviders';
 import { usePersonas } from '../../hooks/usePersonas';

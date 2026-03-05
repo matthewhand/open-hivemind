@@ -282,7 +282,7 @@ export const defaultMobileNavItems: NavItem[] = [
       },
       {
         id: 'mcp-tools',
-        label: 'Tools',
+        label: 'MCP Tools',
         icon: '🛠️',
         path: '/admin/mcp/tools',
       },

@@ -2,9 +2,23 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import Debug from 'debug';
-import { type MessageFlowEvent } from './WebSocketService';
 
 const debug = Debug('app:ActivityLogger');
+
+// Define locally to avoid circular dependency
+export interface MessageFlowEvent {
+  id: string;
+  timestamp: string;
+  botName: string;
+  provider: string;
+  channelId: string;
+  userId: string;
+  messageType: 'incoming' | 'outgoing';
+  contentLength: number;
+  processingTime?: number;
+  status: 'success' | 'error' | 'timeout';
+  errorMessage?: string;
+}
 
 export interface ActivityFilter {
   startTime?: Date;

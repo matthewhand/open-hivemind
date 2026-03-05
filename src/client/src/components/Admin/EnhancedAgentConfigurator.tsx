@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Button } from '../DaisyUI';
-import {
-  PlusIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  ShieldCheckIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import { Modal, Pagination } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import { PlusIcon, TrashIcon, ArrowPathIcon, Cog6ToothIcon, ShieldCheckIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Modal, Pagination } from '../DaisyUI/Alert';
 import AgentForm from './AgentForm';
 
 interface Agent {

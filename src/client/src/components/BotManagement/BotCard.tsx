@@ -7,10 +7,7 @@ import type {
   Persona,
   ProviderModalState,
 } from '../../types/bot';
-import {
-  BotStatus,
-  DEFAULT_PERSONA,
-} from '../../types/bot';
+import { BotStatus, DEFAULT_PERSONA } from '../../types/bot';
 import { Button, Badge } from '../DaisyUI';
 import {
   Play as PlayIcon,

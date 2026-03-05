@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  WrenchScrewdriverIcon as ToolIcon,
-  PlayIcon as RunIcon,
-  MagnifyingGlassIcon as SearchIcon,
-  CodeBracketIcon,
-  ListBulletIcon,
-} from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { WrenchScrewdriverIcon as ToolIcon, PlayIcon as RunIcon, MagnifyingGlassIcon as SearchIcon, CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import Modal from '../components/DaisyUI/Modal';
 
 interface MCPTool {
   id: string;

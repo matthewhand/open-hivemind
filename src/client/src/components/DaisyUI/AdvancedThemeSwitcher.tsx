@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Input } from './index';
+// need manual fix for  Input
 
 interface ThemeOption {
   value: string;
@@ -300,7 +300,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   if (position === 'modal') {
     return (
       <>
-        <button className="btn btn-ghost btn-circle" onClick={() => (document.getElementById('theme-modal') as HTMLDialogElement)?.showModal()} aria-label="Open theme switcher">
+        <button className="btn btn-ghost btn-circle" onClick={() => (document.getElementById('theme-modal') as HTMLDialogElement)?.showModal()}>
           🎨
         </button>
 
@@ -328,7 +328,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   // Default dropdown position
   return (
     <div className={`dropdown dropdown-end ${className}`}>
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Theme switcher dropdown">
+      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
         <div className="indicator">
           🎨
           {previewTheme && <span className="indicator-item badge badge-xs badge-primary"></span>}
@@ -480,7 +480,6 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
               e.stopPropagation();
               toggleFavorite(theme.value);
             }}
-            aria-label={isFav ? `Remove ${theme.label} from favorites` : `Add ${theme.label} to favorites`}
           >
             ⭐
           </button>

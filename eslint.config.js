@@ -32,10 +32,20 @@ module.exports = [
     plugins: {
       '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
       prettier: eslintPluginPrettier,
+      import: require('eslint-plugin-import'),
     },
     rules: {
       // Prettier integration
       'prettier/prettier': 'error',
+
+      // Import ordering
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          alphabetize: { order: 'asc', caseInsensitive: true },
+        },
+      ],
 
       // Code style - now enforced
       'indent': ['error', 2, { SwitchCase: 1 }],

@@ -3,19 +3,18 @@ import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
-import { Persona as ApiPersona } from '../services/api';
-import { BotConfig as BaseBotConfig } from '../../../types/config';
+import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 
 // Extended Bot type with UI-specific fields
-type BotConfig = BaseBotConfig & {
+interface BotConfig extends ApiBot {
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field
     status?: string;
-};
+}
 
-// Define LLMProfile since it's used as a parameter type and not currently shared in types/config.ts
-export interface LLMProfile {
+// Define LLMProfile locally as it's not exported from API
+interface LLMProfile {
     key: string;
     name: string;
     provider: string;
@@ -56,7 +55,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">

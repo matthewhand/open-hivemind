@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Input, Button, Alert, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Input from './DaisyUI/Input';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';

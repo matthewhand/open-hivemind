@@ -5,7 +5,7 @@ import StandaloneActivity from '../StandaloneActivity';
 import { apiService } from '../../services/api';
 
 // Mock components
-vi.mock('../../components/DaisyUI', () => ({
+vi.mock('../../components/DaisyUI';, () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
   Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
   Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,

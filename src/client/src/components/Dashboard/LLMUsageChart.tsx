@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card } from '../DaisyUI';
+import Tooltip from 'recharts';
+import Card from '../DaisyUI/Tooltip';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
+import { Card } from '../DaisyUI/Card';
 import { useMetrics } from '../../../hooks/useMetrics';
 
 const LLMUsageChart: React.FC = () => {

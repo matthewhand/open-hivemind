@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Button, Select, Input } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Select from '../DaisyUI/Select';
+import Input from '../DaisyUI/Input';
 import { Bot, Link as LinkIcon, GitMerge } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';

@@ -1,19 +1,20 @@
 
 export const PROVIDER_CATEGORIES: Record<string, string[]> = {
-  llm: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
-  message: ['discord', 'slack', 'mattermost', 'webhook'],
+  llm: ['openai', 'flowise', 'openwebui', 'ollama', 'anthropic', 'gemini', 'groq'],
+  message: ['discord', 'slack', 'mattermost', 'telegram', 'whatsapp'],
 };
 
 export const PROVIDER_LABELS: Record<string, string> = {
   openai: 'OpenAI',
   flowise: 'Flowise',
   openwebui: 'OpenWebUI',
-  perplexity: 'Perplexity',
-  replicate: 'Replicate',
-  n8n: 'n8n',
-  openswarm: 'OpenSwarm',
+  ollama: 'Ollama',
+  anthropic: 'Anthropic',
+  gemini: 'Google Gemini',
+  groq: 'Groq',
   discord: 'Discord',
   slack: 'Slack',
   mattermost: 'Mattermost',
-  webhook: 'Webhook',
+  telegram: 'Telegram',
+  whatsapp: 'WhatsApp',
 };

@@ -7,9 +7,7 @@ import type {
   UpdatePersonaRequest,
   PersonaModalState,
 } from '../../types/bot';
-import {
-  Persona,
-} from '../../types/bot';
+import { Persona } from '../../types/bot';
 import { Modal, Button, Input, Textarea, Select, Badge, Card } from '../DaisyUI';
 import {
   User as UserIcon,

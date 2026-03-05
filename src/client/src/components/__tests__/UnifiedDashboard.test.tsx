@@ -19,7 +19,7 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Mock DaisyUI components - provide minimal implementations for testing
-vi.mock('../DaisyUI', () => ({
+vi.mock('../DaisyUI';, () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div className="alert">{children}</div>,
   Badge: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
   Button: ({ children, onClick, disabled, className }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) => (
