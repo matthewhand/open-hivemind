@@ -326,7 +326,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
           }
 
           const posts = await client.getChannelPosts(channelId, 0, limit);
-          const messages: IMessage[] = [];
 
           const botConfig = this.botConfigs.get(targetBot) || {};
           const botUsername = botConfig.username;
@@ -334,20 +333,22 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
 
-          for (const post of posts.slice(0, limit)) {
+          // ⚡ Bolt Optimization: Fetch all users concurrently using Promise.all instead of sequential await in for loop
+          const messagePromises = posts.slice(0, limit).map(async (post) => {
             const user = await client.getUser(post.user_id);
             const username = user
               ? `${user.first_name} ${user.last_name}`.trim() || user.username
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const mattermostMsg = new MattermostMessage(post, username, {
+            return new MattermostMessage(post, username, {
               isBot,
               botUsername,
               botUserId,
             });
-            messages.push(mattermostMsg);
-          }
+          });
+
+          const messages: IMessage[] = await Promise.all(messagePromises);
 
           return messages.reverse(); // Most recent first
         } catch (error: any) {
