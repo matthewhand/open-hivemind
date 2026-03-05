@@ -5,13 +5,7 @@ import type { Application } from 'express';
 import { MattermostClient } from '@hivemind/adapter-mattermost';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import {
-  ApiError,
-  BaseHivemindError,
-  ConfigurationError,
-  NetworkError,
-  ValidationError,
-} from '@src/types/errorClasses';
+import { ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';

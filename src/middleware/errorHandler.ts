@@ -11,8 +11,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { redactPIIString } from '../common/logger';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
-import { ErrorUtils, HivemindError } from '../types/errors';
-import { ErrorLogger, errorLogger } from '../utils/errorLogger';
+import { errorLogger } from '../utils/errorLogger';
 
 const debug = Debug('app:error:middleware');
 

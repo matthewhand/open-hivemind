@@ -10,7 +10,6 @@ import {
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
 // Error handling imports
-import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';

@@ -1,12 +1,10 @@
-import fs from 'fs';
-import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import { webUIStorage } from '../../storage/webUIStorage';
-import { checkBotEnvOverrides, getRelevantEnvVars } from '../../utils/envUtils';
+import { getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import activityRouter from './activity';
 import ApiMonitorService from '../../services/ApiMonitorService';
