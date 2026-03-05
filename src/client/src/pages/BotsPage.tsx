@@ -12,6 +12,30 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
+<<<<<<< HEAD
+import { PROVIDER_CATEGORIES } from '../config/providers';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+import { apiService } from '../services/api';
+
+/**
+ * Represents the configuration and runtime state of a generic bot instance.
+ */
+interface BotData {
+  id: string;
+  name: string;
+  provider: string; // Message Provider Name
+  messageProvider?: string; // Alternative field from API
+  llmProvider: string; // LLM Provider Name
+  persona?: string; // Bot Persona
+  status: string;
+  connected: boolean;
+  messageCount: number;
+  errorCount: number;
+  config?: any; // Bot specific config overrides
+  envOverrides?: any;
+}
+=======
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { withRetry, ErrorService } from '../services/apiService';
@@ -22,6 +46,7 @@ import BotCard from '../components/BotManagement/BotCard';
 import CreateBotWizard from '../components/BotManagement/CreateBotWizard';
 import BotSettingsModal from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+>>>>>>> origin/main
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -173,6 +198,85 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
+<<<<<<< HEAD
+    try {
+      setActionLoading(deleteModal.bot.id);
+      await apiService.deleteBot(deleteModal.bot.id);
+
+      setDeleteModal({ isOpen: false, bot: null });
+      setDeleteConfirmation('');
+      await refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete bot');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCloneClick = (bot: BotData) => {
+    setCloneModal({ isOpen: true, bot });
+    setCloneName(`${bot.name} (Copy)`);
+  };
+
+  const handleCloneSubmit = async () => {
+    if (!cloneModal.bot) {
+      return;
+    }
+    try {
+      setActionLoading('clone');
+      await apiService.cloneBot(cloneModal.bot.id, cloneName);
+      await refetch();
+      setCloneModal({ isOpen: false, bot: null });
+      setCloneName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clone bot');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleClone = async (bot: BotData) => {
+    handleCloneClick(bot);
+  };
+
+  const handleUpdatePersona = async (bot: BotData, persona: string) => {
+    try {
+      setActionLoading(bot.id);
+      await apiService.updateBot(bot.id, { persona });
+      await refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update persona');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const getStatusBadge = (status: string, connected: boolean) => {
+    if (status === 'active' && connected) {
+      return (
+        <span className="badge badge-success gap-1 text-xs font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-900 animate-pulse" /> Running
+        </span>
+      );
+    } else if (status === 'active' && !connected) {
+      return <span className="badge badge-warning gap-1 text-xs font-semibold">Disconnected</span>;
+    } else {
+      return <span className="badge badge-ghost text-xs font-semibold opacity-50">Disabled</span>;
+    }
+  };
+
+  const redact = (str: string) => {
+    if (!str) {
+      return '';
+    }
+    if (str.length <= 4) {
+      return '****';
+    }
+    return (
+      str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
+    );
+  };
+=======
   if (loading && bots.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -181,6 +285,7 @@ const BotsPage: React.FC = () => {
       </div>
     );
   }
+>>>>>>> origin/main
 
   return (
     <div className="space-y-6">
@@ -703,6 +808,35 @@ const BotsPage: React.FC = () => {
             {previewTab === 'activity' && (
               <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
                 <div className="flex items-center justify-end mb-3">
+<<<<<<< HEAD
+                  <div className="form-control w-full flex flex-col items-end">
+                    <div className="join">
+                      <input
+                        type="text"
+                        placeholder="Filter logs..."
+                        className="input input-xs input-bordered w-32 join-item"
+                        value={logFilter}
+                        onChange={(e) => setLogFilter(e.target.value)}
+                      />
+                      <select
+                        className="select select-xs select-bordered join-item"
+                        onChange={(e) => {
+                          const limit = e.target.value;
+                          if (previewBot) {
+                            apiService
+                              .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
+                              .then((json) => {
+                                setActivityLogs(json.data?.activity || []);
+                              });
+                          }
+                        }}
+                      >
+                        <option value="20">Last 20</option>
+                        <option value="50">Last 50</option>
+                        <option value="100">Last 100</option>
+                      </select>
+                    </div>
+=======
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -728,6 +862,7 @@ const BotsPage: React.FC = () => {
                       <option value="50">Last 50</option>
                       <option value="100">Last 100</option>
                     </select>
+>>>>>>> origin/main
                   </div>
                 </div>
                 <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">

@@ -14,6 +14,10 @@ const ALLOWED_LLM_PROVIDERS = [
   'replicate',
   'n8n',
   'openswarm',
+  'anthropic',
+  'ollama',
+  'huggingface',
+  'local',
 ];
 
 /**
@@ -85,6 +89,8 @@ export const validateBotConfigCreation = [
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
     .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
     .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
@@ -165,10 +171,7 @@ export const validateBotConfigCreation = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()
@@ -281,6 +284,8 @@ export const validateBotConfigUpdate = [
   // System instruction validation
   body('systemInstruction')
     .optional()
+    .isString()
+    .withMessage('System instruction must be a string')
     .trim()
     .isLength({ max: CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH })
     .withMessage(`System instruction must be less than ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_MAX_LENGTH} characters`),
@@ -367,10 +372,7 @@ export const validateBotConfigUpdate = [
 
   // Flowise configuration validation
   body('flowise').optional().isObject().withMessage('Flowise configuration must be an object'),
-  body('flowise.apiKey')
-    .optional()
-    .isString()
-    .withMessage('Flowise API key must be a string'),
+  body('flowise.apiKey').optional().isString().withMessage('Flowise API key must be a string'),
   body('flowise.apiBaseUrl')
     .optional()
     .isURL()

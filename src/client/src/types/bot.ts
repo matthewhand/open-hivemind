@@ -54,12 +54,16 @@ export enum LLMProviderType {
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
   LOCAL = 'local',
+<<<<<<< HEAD
+  FLOWISE = 'flowise'
+=======
   FLOWISE = 'flowise',
   OPENWEBUI = 'openwebui',
   PERPLEXITY = 'perplexity',
   REPLICATE = 'replicate',
   N8N = 'n8n',
   OPENSWARM = 'openswarm',
+>>>>>>> origin/main
 }
 
 export interface Persona {
@@ -355,6 +359,17 @@ export const LLM_PROVIDER_CONFIGS = {
     icon: '🏠',
     fields: [],
   },
+<<<<<<< HEAD
+  flowise: {
+    type: LLMProviderType.FLOWISE,
+    displayName: 'Flowise',
+    description: 'Connect to Flowise AI chatflows',
+    icon: '⚡',
+    fields: [
+      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
+      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
+=======
   perplexity: {
     type: LLMProviderType.PERPLEXITY,
     displayName: 'Perplexity',
@@ -395,6 +410,7 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
       { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
       { name: 'team', label: 'Team', type: 'text', required: false },
+>>>>>>> origin/main
     ],
   },
 };

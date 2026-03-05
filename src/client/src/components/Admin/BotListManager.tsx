@@ -9,7 +9,11 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
+<<<<<<< HEAD
+import type { BotConfig } from '../../../../types/config';
+=======
 import { BotConfig as BaseBotConfig } from '../../../../types/config';
+>>>>>>> origin/main
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -17,28 +21,36 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
+<<<<<<< HEAD
+interface BotConfigExtended extends Omit<BotConfig, 'discord' | 'slack' | 'isActive'> {
+=======
 type BotConfig = BaseBotConfig & {
+>>>>>>> origin/main
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
+<<<<<<< HEAD
+}
+=======
     llmProfile?: string;
     persona?: string;
     [key: string]: unknown;
 };
+>>>>>>> origin/main
 
 interface BotListResponse {
-    bots: BotConfig[];
+    bots: BotConfigExtended[];
     count: number;
     warnings: string[];
 }
 
 const BotListManager: React.FC = () => {
-  const [bots, setBots] = useState<BotConfig[]>([]);
+  const [bots, setBots] = useState<BotConfigExtended[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [selectedBot, setSelectedBot] = useState<BotConfig | null>(null);
+  const [selectedBot, setSelectedBot] = useState<BotConfigExtended | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -64,7 +76,7 @@ const BotListManager: React.FC = () => {
     }
   };
 
-  const handleViewBot = (bot: BotConfig) => {
+  const handleViewBot = (bot: BotConfigExtended) => {
     setSelectedBot(bot);
     setIsModalOpen(true);
   };
@@ -73,7 +85,7 @@ const BotListManager: React.FC = () => {
     switch (provider) {
     case 'discord': return 'badge-primary';
     case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-accent';
+    case 'mattermost': return 'badge-info';
     default: return 'badge-ghost';
     }
   };

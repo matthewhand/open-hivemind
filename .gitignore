@@ -147,7 +147,6 @@ dist/config/environments/.env.backup
 .vscode-test
 
 # yarn v2
-*.bak
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
@@ -193,6 +192,9 @@ test-results/
 # User bot state config
 config/user-config.json
 config/message-profiles.json
+
+# Configuration Migration Backups
+*.bak
 
 .qwen
 .serena
