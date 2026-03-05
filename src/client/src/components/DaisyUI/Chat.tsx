@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const AVATAR_INITIALS_MAX_LENGTH = 2;
-
 export interface ChatMessage {
   id: string;
   content: string;
