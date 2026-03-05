@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 
 interface CreateBotWizardProps {
@@ -113,21 +113,97 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
         }
     };
 
-    const isStepValid = () => {
-        if (step === 1) return formData.name.trim().length > 0 && formData.messageProvider;
-        return true;
+    /**
+     * Enhanced step validation with specific field checks
+     * Returns validation result with detailed error information
+     */
+    const validateStep = (stepNum: number): { valid: boolean; errors: string[] } => {
+        const errors: string[] = [];
+
+        if (stepNum === 1) {
+            const isNameValid = formData.name.trim().length > 0;
+            const isMessageProviderValid = !!formData.messageProvider;
+            const isLlmValid = defaultLlmConfigured || !!formData.llmProvider;
+
+            if (!isNameValid) errors.push('Bot name is required');
+            if (!isMessageProviderValid) errors.push('Message provider must be selected');
+            if (!isLlmValid) errors.push('LLM provider is required (no system default configured)');
+
+            return { valid: errors.length === 0, errors };
+        }
+
+        if (stepNum === 2) {
+            const isPersonaValid = !!formData.persona;
+            if (!isPersonaValid) errors.push('Please select a persona');
+            return { valid: isPersonaValid, errors };
+        }
+
+        // Steps 3 and 4 are always valid (guardrails are optional)
+        return { valid: true, errors: [] };
+    };
+
+    const isStepValid = () => validateStep(step).valid;
+
+    /**
+     * Get validation status for any step (for step indicators)
+     */
+    const getStepValidationStatus = (stepNum: number): 'valid' | 'invalid' | 'pending' => {
+        if (step < stepNum) return 'pending';
+        const { valid } = validateStep(stepNum);
+        return valid ? 'valid' : 'invalid';
     };
 
     return (
         <div className="flex flex-col h-full max-h-[70vh]">
-            {/* Steps Indicator */}
+            {/* Steps Indicator with Validation Status */}
             <ul className="steps w-full mb-8">
-                {steps.map(s => (
-                    <li key={s.id} className={`step ${step >= s.id ? 'step-primary' : ''}`}>
-                        {s.title}
-                    </li>
-                ))}
+                {steps.map(s => {
+                    const status = getStepValidationStatus(s.id);
+                    const isActive = step === s.id;
+                    const isCompleted = step > s.id;
+
+                    return (
+                        <li
+                            key={s.id}
+                            className={`step ${step >= s.id ? 'step-primary' : ''} ${status === 'invalid' ? 'step-error' : ''}`}
+                            data-content={
+                                status === 'valid' && isCompleted
+                                    ? '✓'
+                                    : status === 'invalid'
+                                        ? '!'
+                                        : s.id
+                            }
+                        >
+                            <div className="flex flex-col items-center">
+                                <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{s.title}</span>
+                                {isActive && status === 'invalid' && (
+                                    <span className="text-xs text-error mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-3 h-3" /> Needs attention
+                                    </span>
+                                )}
+                            </div>
+                        </li>
+                    );
+                })}
             </ul>
+
+            {/* Validation Errors Summary */}
+            {(() => {
+                const { errors } = validateStep(step);
+                return errors.length > 0 ? (
+                    <div className="alert alert-warning mb-4 shadow-lg">
+                        <AlertCircle className="w-5 h-5" />
+                        <div className="flex flex-col">
+                            <span className="font-semibold">Please fix the following before continuing:</span>
+                            <ul className="list-disc list-inside text-sm mt-1">
+                                {errors.map((err, idx) => (
+                                    <li key={idx}>{err}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                ) : null;
+            })()}
 
             {/* Error Alert */}
             {error && (
@@ -214,13 +290,13 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 </select>
                                 <label className="label" aria-live="polite" aria-atomic="true">
                                     {!defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-error">
+                                        <span className="label-text-alt text-error whitespace-normal break-words">
                                             System default is not configured. Please select a provider.
                                         </span>
                                     )}
                                     {defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-success flex items-center gap-1">
-                                            <Check className="w-3 h-3" /> Using system default configuration
+                                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
+                                            <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
                                         </span>
                                     )}
                                 </label>

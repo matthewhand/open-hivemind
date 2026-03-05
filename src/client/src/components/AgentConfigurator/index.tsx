@@ -417,24 +417,25 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   };
 
   const handleGuardUsersChange = (bot: Bot, value: string) => {
-    const list = value
-      .split(',')
-      .map(entry => entry.trim())
-      .filter(Boolean);
-
-    const current = selectionState[bot.name];
-    if (!current) {return;}
-    if (current.mcpGuardProfile) {return;}
-    const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
+    // Only update local input state to avoid immediate tokenization
     setGuardInputState(prev => ({ ...prev, [bot.name]: value }));
-    handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
   };
 
   const handleGuardUsersBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
+    const inputValue = guardInputState[bot.name] || '';
     if (!current) {return;}
     if (current.mcpGuardProfile) {return;}
-    commitChanges(bot.name, { mcpGuard: current.mcpGuard });
+
+    const list = inputValue
+      .split(',')
+      .map(entry => entry.trim())
+      .filter(Boolean);
+
+    const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
+
+    handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
+    commitChanges(bot.name, { mcpGuard: updatedGuard });
   };
 
   const handleGuardrailProfileChange = (bot: Bot, profileKey: string) => {

@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:MentionDetector');
 

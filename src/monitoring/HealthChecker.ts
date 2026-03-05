@@ -1,7 +1,5 @@
 import { promises as fs } from 'fs';
-import path from 'path';
 import { performance } from 'perf_hooks';
-import { Request, Response } from 'express';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
