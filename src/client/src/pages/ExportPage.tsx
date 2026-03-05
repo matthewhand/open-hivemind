@@ -14,6 +14,7 @@ import {
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
 import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import Tooltip from '../components/DaisyUI/Tooltip';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -87,12 +88,31 @@ const ExportPage: React.FC = () => {
     }
   };
 
+  const [dryRunModalOpen, setDryRunModalOpen] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<any>(null);
+  const [dryRunBackupId, setDryRunBackupId] = useState<string | null>(null);
+
+  const handleDryRunBackup = async (id: string) => {
+    try {
+      setActionLoading(id);
+      const result = await apiService.restoreSystemBackup(id, { validateOnly: true });
+      setDryRunResult(result);
+      setDryRunBackupId(id);
+      setDryRunModalOpen(true);
+    } catch (err) {
+      setToast({ title: 'Error', message: 'Dry run failed', type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleRestoreBackup = async (id: string) => {
     if (!window.confirm('Are you sure you want to restore this backup? Current configuration will be overwritten.')) return;
     try {
       setActionLoading(id);
       await apiService.restoreSystemBackup(id, { overwrite: true });
       setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
+      setDryRunModalOpen(false);
       setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
       setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
@@ -358,35 +378,46 @@ const ExportPage: React.FC = () => {
                       <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-top" data-tip="Restore">
+                        <div className="tooltip tooltip-top" data-tip="Dry Run" tabIndex={0}>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => handleDryRunBackup(backup.id)}
+                            disabled={actionLoading === backup.id}
+                            className="text-info hover:bg-info/10 focus:outline-none focus:ring-2 focus:ring-info/50"
+                          >
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div className="tooltip tooltip-top" data-tip="Restore" tabIndex={0}>
                           <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleRestoreBackup(backup.id)}
                             disabled={actionLoading === backup.id}
-                            className="text-warning hover:bg-warning/10"
+                            className="text-warning hover:bg-warning/10 focus:outline-none focus:ring-2 focus:ring-warning/50"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-top" data-tip="Download">
+                        <div className="tooltip tooltip-top" data-tip="Download" tabIndex={0}>
                           <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleDownloadBackup(backup.id, backup.name)}
                             disabled={actionLoading === backup.id}
-                            className="text-primary hover:bg-primary/10"
+                            className="text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50"
                           >
                             <Download className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-top" data-tip="Delete">
+                        <div className="tooltip tooltip-top" data-tip="Delete" tabIndex={0}>
                           <Button
                             size="xs"
                             variant="ghost"
                             onClick={() => handleDeleteBackup(backup.id)}
                             disabled={actionLoading === backup.id}
-                            className="text-error hover:bg-error/10"
+                            className="text-error hover:bg-error/10 focus:outline-none focus:ring-2 focus:ring-error/50"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -453,6 +484,33 @@ const ExportPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Dry Run Modal */}
+      <Modal
+        isOpen={dryRunModalOpen}
+        onClose={() => setDryRunModalOpen(false)}
+        title="Backup Dry Run Results"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-base-content/70">
+            This shows exactly what configurations will be affected if you restore this backup. No changes have been made yet.
+          </p>
+          <div className="bg-base-200 p-4 rounded-lg font-mono text-xs overflow-auto max-h-60">
+            <pre>{JSON.stringify(dryRunResult?.data || dryRunResult || {}, null, 2)}</pre>
+          </div>
+          <div className="modal-action">
+            <Button variant="ghost" onClick={() => setDryRunModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="warning"
+              onClick={() => dryRunBackupId && handleRestoreBackup(dryRunBackupId)}
+              loading={actionLoading === dryRunBackupId}
+            >
+              Confirm Restore
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Create Backup Modal */}
       <Modal
