@@ -82,12 +82,12 @@ For developers who want to modify the code or run locally without Docker.
 
 2.  **Install dependencies:**
     ```bash
-    npm install
+    pnpm install
     ```
 
 3.  **Start the development server:**
     ```bash
-    npm run dev
+    pnpm dev
     ```
 
 Access the WebUI at `http://localhost:3028`.
@@ -100,7 +100,7 @@ Once the application is running, open your browser to `http://localhost:3028`.
 2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
 3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
 
-For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](USERGUIDE.md).
+For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](docs/USER_GUIDE.md).
 
 ## Documentation
 
