@@ -206,7 +206,8 @@ router.get('/live', (req, res) => {
   });
 });
 
-export const prometheusMetricsHandler = (req: Request, res: Response) => {
+// Prometheus metrics endpoint
+router.get('/metrics/prometheus', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -248,10 +249,7 @@ ${MetricsCollector.getInstance().getPrometheusFormat()}
 
   res.set('Content-Type', 'text/plain; charset=utf-8');
   return res.send(metrics);
-};
-
-// Prometheus metrics endpoint
-router.get('/metrics/prometheus', prometheusMetricsHandler);
+});
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
@@ -543,12 +541,12 @@ router.get('/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number) as any)
+        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           return {
             type,
             count: count as number,
-            percentage: (totalCount as number) > 0 ? ((count as number) / (totalCount as number)) * 100 : 0,
+            percentage: ((totalCount as number) > 0) ? ((count as number) / (totalCount as number)) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),
