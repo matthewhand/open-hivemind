@@ -23,9 +23,14 @@ export const CommaSeparatedInput: React.FC<Props> = ({ id, value, onChange, disa
     if (inputValue.trim() === '') {
       onChange([]);
     } else {
-      const tokens = inputValue.split(',').map(s => s.trim()).filter(Boolean);
+      // Split by comma, trim, filter out empty strings, and remove duplicates
+      const tokens = Array.from(new Set(
+        inputValue.split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+      ));
       onChange(tokens);
-      setInputValue(tokens.join(','));
+      setInputValue(tokens.join(', ')); // Add a space for better readability
     }
   };
 
