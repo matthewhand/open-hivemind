@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -15,6 +15,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const validateFile = (file: File): string | null => {
     if (!fileTypes.includes(file.type)) {
@@ -39,10 +48,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     // Simulate upload progress
     setProgress(0);
-    const timer = setInterval(() => {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+    }
+    timerRef.current = window.setInterval(() => {
       setProgress(oldProgress => {
-        if (oldProgress === 100) {
-          clearInterval(timer);
+        if (oldProgress >= 100) {
+          if (timerRef.current !== null) {
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           return 100;
         }
         const newProgress = Math.min(oldProgress + 10, 100);
