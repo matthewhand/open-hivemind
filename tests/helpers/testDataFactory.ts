@@ -447,7 +447,22 @@ export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack
 /**
  * Generates strongly-typed test data for different platform and command scenarios
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'openai' | 'ollama' | 'openwebui' | 'flowise' | 'command'): any {
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'telegram'): ConfigTestData;
+export function createTestData(type: 'mattermost'): ConfigTestData;
+export function createTestData(type: 'webhook'): ConfigTestData;
+export function createTestData(type: 'openai'): ConfigTestData;
+export function createTestData(type: 'ollama'): ConfigTestData;
+export function createTestData(type: 'openwebui'): ConfigTestData;
+export function createTestData(type: 'flowise'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(
+  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'openai' | 'ollama' | 'openwebui' | 'flowise' | 'command'
+): ConfigTestData | CommandParserTestData {
   let data;
   switch (type) {
     case 'discord':
