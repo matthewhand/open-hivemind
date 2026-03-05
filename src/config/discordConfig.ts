@@ -1,5 +1,8 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:discordConfig');
 
 /**
  * Discord Configuration Module
@@ -61,7 +64,16 @@ convict.addFormat({
     }
   },
   coerce: (val) => {
-    if (typeof val === 'object') {return val;}
+    if (typeof val === 'object' && val !== null) {
+      // Validate numeric range for object values
+      for (const [channelId, bonus] of Object.entries(val)) {
+        const numericBonus = Number(bonus);
+        if (isNaN(numericBonus) || numericBonus < 0.0 || numericBonus > 2.0) {
+          throw new Error(`Invalid bonus value for channel ${channelId}: ${bonus}. Must be a number between 0.0 and 2.0.`);
+        }
+      }
+      return val;
+    }
     if (!val) {return {};}
     
     // Auto-detect JSON format
@@ -206,9 +218,6 @@ const discordConfig = convict<DiscordConfig>({
   },
 });
 
-import Debug from 'debug';
-const debug = Debug('app:discordConfig');
-
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
 const configPath = path.join(configDir, 'providers/discord.json');
 
@@ -216,9 +225,10 @@ try {
   discordConfig.loadFile(configPath);
   discordConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded Discord config from ${configPath}`);
-} catch {
+} catch (error) {
   // Fallback to defaults if config file is missing or invalid
   debug(`Warning: Could not load discord config from ${configPath}, using defaults`);
+  debug('Using default discord configuration due to error:', error);
 }
 
 export default discordConfig;
