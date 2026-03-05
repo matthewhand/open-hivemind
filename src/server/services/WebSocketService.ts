@@ -48,6 +48,11 @@ export interface AlertEvent {
   resolvedAt?: string;
 }
 
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
+
+@singleton()
+@injectable()
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
@@ -68,7 +73,7 @@ export class WebSocketService {
   // API monitoring
   private apiMonitorService: ApiMonitorService;
 
-  private constructor() {
+  constructor() {
     this.initializeMonitoringData();
     this.apiMonitorService = ApiMonitorService.getInstance();
     this.setupApiMonitoring();
