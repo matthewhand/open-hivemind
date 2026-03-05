@@ -2,12 +2,11 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ErrorUtils, HivemindError } from '@src/types/errors';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { ErrorUtils } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
-import { requireRole } from '../middleware/auth';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -76,11 +75,15 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
     // For stdio transport (local MCP servers)
     if (server.url.startsWith('stdio://')) {
       const command = server.url.replace('stdio://', '');
+      const { StdioClientTransport } = await import(
+        '@modelcontextprotocol/sdk/client/stdio.js'
+      );
       const transport = new StdioClientTransport({
         command: command,
         args: [],
       });
 
+      const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
       const client = new Client(
         {
           name: `hivemind-${server.name}`,

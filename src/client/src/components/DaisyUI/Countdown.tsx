@@ -41,12 +41,12 @@ const Countdown: React.FC<CountdownProps> = ({
   useEffect(() => {
     // Recalculate immediately in case target date changed
     setTimeLeft(calculateTimeLeft());
-    
+
     // Set up interval to update the time left
     const timer = setInterval(() => {
       const newTimeLeft = calculateTimeLeft();
       setTimeLeft(newTimeLeft);
-      
+
       // If the countdown has reached zero, clear the interval
       if (newTimeLeft.totalSeconds <= 0) {
         clearInterval(timer);
@@ -67,7 +67,7 @@ const Countdown: React.FC<CountdownProps> = ({
   const sizeClass = `countdown-${size}`;
 
   return (
-    <div 
+    <div
       className={`countdown ${sizeClass} ${className}`}
       aria-label="Countdown timer"
       role="timer"

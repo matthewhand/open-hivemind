@@ -251,7 +251,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     const statusColor = getStatusColor(provider.status?.status || 'stopped');
 
     return (
-      <Card key={provider.id} className="bg-base-100 shadow-lg mb-4">
+      <Card
+        key={provider.id}
+        className={`bg-base-100 shadow-lg mb-4 ${provider.status?.status === 'error' || provider.status?.status === 'disconnected' ? 'border border-error/50 bg-error/5' : ''}`}
+      >
         <Card.Body className="p-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
@@ -292,6 +295,29 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                     <FaClock className="w-3 h-3" />
                     <span>Uptime: {Math.floor(provider.status.uptime / 60)}m</span>
                   </div>
+                )}
+
+                {provider.status?.lastCheck && (
+                  <div className="flex items-center gap-1 text-xs text-base-content/60">
+                    <FaClock className="w-3 h-3" />
+                    <span>Last Connected: {
+                      (() => {
+                        const seconds = Math.floor((new Date().getTime() - new Date(provider.status.lastCheck).getTime()) / 1000);
+                        if (seconds < 60) return "just now";
+                        const minutes = Math.floor(seconds / 60);
+                        if (minutes < 60) return `${minutes} mins ago`;
+                        const hours = Math.floor(minutes / 60);
+                        if (hours < 24) return `${hours} hours ago`;
+                        return `${Math.floor(hours / 24)} days ago`;
+                      })()
+                    }</span>
+                  </div>
+                )}
+
+                {testResult?.toolsAvailable && (
+                  <Badge variant="info" size="sm" className="ml-1 opacity-80" title="Tools Available">
+                    {testResult.toolsAvailable.length} Tools
+                  </Badge>
                 )}
               </div>
 
@@ -336,11 +362,26 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                   color="error"
                   onClick={() => handleStopProvider(provider.id)}
                   disabled={provider.isStopping}
+                  title="Stop Provider"
                 >
                   {provider.isStopping ? (
                     <FaCog className="w-3 h-3 animate-spin" />
                   ) : (
                     <FaStop className="w-3 h-3" />
+                  )}
+                </Button>
+              ) : provider.status?.status === 'error' || provider.status?.status === 'disconnected' ? (
+                <Button
+                  size="sm"
+                  color="warning"
+                  onClick={() => handleStartProvider(provider.id)}
+                  disabled={provider.isStarting}
+                  title="Reconnect Provider"
+                >
+                  {provider.isStarting ? (
+                    <FaCog className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <FaRedo className="w-3 h-3" />
                   )}
                 </Button>
               ) : (
@@ -349,6 +390,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                   color="success"
                   onClick={() => handleStartProvider(provider.id)}
                   disabled={provider.isStarting}
+                  title="Start Provider"
                 >
                   {provider.isStarting ? (
                     <FaCog className="w-3 h-3 animate-spin" />

@@ -73,17 +73,17 @@ const ModalForm: React.FC<ModalFormProps> = ({
     if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
       return `${field.label} is required`;
     }
-    
+
     if (field.validation) {
       return field.validation(value);
     }
-    
+
     return null;
   };
 
   const validateStep = (stepIndex: number): boolean => {
     if (!steps) {return true;}
-    
+
     const stepFields = steps[stepIndex].fields;
     const stepErrors: Record<string, string> = {};
     let isValid = true;
@@ -105,7 +105,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleInputChange = (fieldName: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[fieldName]) {
       setErrors(prev => ({ ...prev, [fieldName]: '' }));
@@ -124,7 +124,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all fields
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
@@ -152,7 +152,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
   const renderField = (field: FormField) => {
     const hasError = !!errors[field.name];
-    
+
     switch (field.type) {
     case 'textarea':
       return (
@@ -165,7 +165,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           rows={4}
         />
       );
-        
+
     case 'select':
       return (
         <select
@@ -183,7 +183,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           ))}
         </select>
       );
-        
+
     case 'checkbox':
       return (
         <div className="form-control">
@@ -199,7 +199,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </label>
         </div>
       );
-        
+
     case 'radio':
       return (
         <div className="form-control">
@@ -219,7 +219,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           ))}
         </div>
       );
-        
+
     case 'file':
       return (
         <input
@@ -230,7 +230,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           multiple={field.multiple}
         />
       );
-        
+
     default:
       return (
         <Input
@@ -258,7 +258,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg">{title}</h3>
-          <button 
+          <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
             disabled={isSubmitting}
@@ -273,7 +273,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
           <div className="mb-6">
             <ul className="steps steps-horizontal w-full">
               {steps.map((step, index) => (
-                <li 
+                <li
                   key={index}
                   className={`step ${index <= currentStep ? 'step-primary' : ''}`}
                 >
@@ -281,7 +281,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 </li>
               ))}
             </ul>
-            
+
             {steps[currentStep].description && (
               <div className="mt-2 text-sm text-base-content/60 text-center">
                 {steps[currentStep].description}
@@ -303,15 +303,15 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     </span>
                   </label>
                 )}
-                
+
                 {renderField(field)}
-                
+
                 {errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-error">{errors[field.name]}</span>
                   </label>
                 )}
-                
+
                 {field.helperText && !errors[field.name] && (
                   <label className="label">
                     <span className="label-text-alt text-base-content/60">{field.helperText}</span>
@@ -333,7 +333,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 >
                   Previous
                 </button>
-                
+
                 {currentStep < steps.length - 1 ? (
                   <button
                     type="button"

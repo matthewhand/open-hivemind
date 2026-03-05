@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
+import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -270,6 +270,60 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
+<<<<<<< HEAD
+=======
+
+          <div className="form-control mb-3">
+            <label className="label cursor-pointer py-2">
+              <div>
+                <span className="label-text font-medium">Semantic Search Relevance</span>
+                <p className="text-xs text-base-content/60 mt-1">
+                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
+                </p>
+              </div>
+              <Toggle
+                checked={settings.semanticRelevanceEnabled}
+                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
+                color="info"
+              />
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Semantic Relevance Threshold Tuning
+                <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="50"
+              step="1"
+              value={settings.semanticRelevanceBonus}
+              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
+              className="range range-sm"
+              style={{
+                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
+                WebkitAppearance: 'none',
+                borderRadius: 'var(--rounded-box, 1rem)'
+              }}
+              disabled={!settings.semanticRelevanceEnabled}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>1x</span>
+              <span>25x</span>
+              <span>50x</span>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Multiplier to apply when a message is semantically relevant and the bot has posted recently
+            </p>
+          </div>
+>>>>>>> origin/main
         </div>
 
         {/* Probability */}
@@ -280,9 +334,14 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Base Chance</span>
-              <span className="badge badge-accent font-mono">{settings.baseChance.toFixed(0)}%</span>
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Base Chance
+                <div className="tooltip tooltip-right" data-tip="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
             </label>
             <input
               type="range"
@@ -291,7 +350,13 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.baseChance}
               onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
-              className="range range-accent"
+              className="range"
+              style={{
+                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
+                WebkitAppearance: 'none',
+                height: '1.5rem',
+                borderRadius: 'var(--rounded-box, 1rem)'
+              }}
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -304,6 +369,26 @@ const SettingsMessaging: React.FC = () => {
             <p className="text-xs text-base-content/60 mt-2">
               Chance to reply to unsolicited messages that look like opportunities
             </p>
+          </div>
+
+          <div className="mt-6 border-t border-base-200/50 pt-4">
+            <h6 className="text-sm font-semibold mb-2">Live Test Mechanism</h6>
+            <div className="bg-base-300/50 p-3 rounded-box space-y-3 text-sm">
+              <p className="text-base-content/70">
+                Test Current Tuning: Assuming a message matches the semantic topic, the combined chance to reply is shown below.
+              </p>
+              <textarea
+                className="textarea textarea-bordered w-full text-xs"
+                placeholder="Type a sample message..."
+                rows={2}
+              ></textarea>
+              <div className="flex justify-between items-center font-mono bg-base-100 p-2 rounded">
+                <span>{settings.baseChance}% × {settings.semanticRelevanceBonus}x</span>
+                <span className="font-bold text-lg text-primary">
+                  {Math.min(100, settings.baseChance * settings.semanticRelevanceBonus)}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

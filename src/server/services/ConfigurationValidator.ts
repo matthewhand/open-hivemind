@@ -1,6 +1,7 @@
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { CONFIG_LIMITS } from '../../types/config';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -238,10 +239,10 @@ export class ConfigurationValidator {
     // Basic validation
     if (!config.name || config.name.trim().length === 0) {
       errors.push('Bot name is required');
-    } else if (config.name.length < 2) {
-      errors.push('Bot name must be at least 2 characters long');
-    } else if (config.name.length > 50) {
-      errors.push('Bot name must be less than 50 characters long');
+    } else if (config.name.length < CONFIG_LIMITS.BOT_NAME_MIN_LENGTH) {
+      errors.push(`Bot name must be at least ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} characters long`);
+    } else if (config.name.length > CONFIG_LIMITS.BOT_NAME_MAX_LENGTH) {
+      errors.push(`Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`);
     }
 
     if (!config.messageProvider) {
@@ -425,10 +426,10 @@ export class ConfigurationValidator {
   ): void {
     // System instruction validation
     if (config.systemInstruction) {
-      if (config.systemInstruction.length > 2000) {
+      if (config.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH) {
         warnings.push('System instruction is very long and may affect response times');
       }
-      if (config.systemInstruction.length < 10) {
+      if (config.systemInstruction.length < CONFIG_LIMITS.SYSTEM_INSTRUCTION_MIN_LENGTH) {
         suggestions.push(
           'System instruction is very short. Consider adding more detailed instructions'
         );
