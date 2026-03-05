@@ -206,8 +206,7 @@ router.get('/live', (req, res) => {
   });
 });
 
-// Prometheus metrics endpoint
-router.get('/metrics/prometheus', (req, res) => {
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -249,7 +248,10 @@ ${MetricsCollector.getInstance().getPrometheusFormat()}
 
   res.set('Content-Type', 'text/plain; charset=utf-8');
   return res.send(metrics);
-});
+};
+
+// Prometheus metrics endpoint
+router.get('/metrics/prometheus', prometheusMetricsHandler);
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
