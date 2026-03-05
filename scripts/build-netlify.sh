@@ -33,8 +33,8 @@ EOF
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
-# Use explicit typescript compiler path to compile the specific file
-node ./node_modules/typescript/bin/tsc src/netlify/functions/server.ts \
+# Use npx tsc to compile the specific file
+npx tsc src/netlify/functions/server.ts \
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \

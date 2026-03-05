@@ -229,7 +229,7 @@ const ConfigSources: React.FC = () => {
         </p>
 
         {/* DaisyUI Tabs */}
-        <div className="tabs tabs-boxed mb-4 flex-wrap gap-1">
+        <div className="tabs tabs-boxed mb-4">
           <button
             className={`tab ${tabValue === 0 ? 'tab-active' : ''}`}
             onClick={() => setTabValue(0)}
