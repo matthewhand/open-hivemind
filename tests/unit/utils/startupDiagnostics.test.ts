@@ -114,5 +114,16 @@ describe('StartupDiagnostics', () => {
         })
       );
     });
+    it('logs debug messages for present configuration variables', async () => {
+      process.env = {
+        NODE_ENV: 'test',
+      };
+
+      await expect((diagnostics as any).logEnvironmentSummary()).resolves.toBeUndefined();
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('✓ NODE_ENV:')
+      );
+    });
   });
 });
