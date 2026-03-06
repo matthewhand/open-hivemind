@@ -35,9 +35,9 @@ test.describe('Bot Creation Form Validation', () => {
 =======
   test.beforeEach(async ({ page }) => {
     await page.route('/api/config', route => route.fulfill({ status: 200, json: {} }));
-    await page.route('/api/admin/llm-profiles', route => route.fulfill({
+    await page.route('/api/config/llm-profiles', route => route.fulfill({
       status: 200,
-      json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] }
+      json: { profiles: { llm: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } }
     }));
     await page.route('/api/admin/guard-profiles', route => route.fulfill({
       status: 200,

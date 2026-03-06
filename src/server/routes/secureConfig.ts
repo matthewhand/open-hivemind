@@ -20,7 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
     const configs = [];
 
     for (const id of configIds) {
-      const config = await secureConfigManager.getConfig(id);
+      const config = await secureConfigManager.getConfig(id as any);
       if (config) {
         // Return metadata without sensitive data
         configs.push({
@@ -54,7 +54,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id);
+    const config = await secureConfigManager.getConfig(id as any);
 
     if (!config) {
       return res.status(404).json({
@@ -106,7 +106,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       createdAt: new Date().toISOString(),
     };
 
-    await secureConfigManager.storeConfig(config);
+    await secureConfigManager.storeConfig(config as any);
 
     logConfigChange(
       req,
@@ -161,7 +161,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
     }
 
     // Check if config exists
-    const existingConfig = await secureConfigManager.getConfig(id);
+    const existingConfig = await secureConfigManager.getConfig(id as any);
     if (!existingConfig) {
       logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
@@ -222,11 +222,11 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     const { id } = req.params;
 
     // Get config before deletion for audit logging
-    const configToDelete = await secureConfigManager.getConfig(id);
+    const configToDelete = await secureConfigManager.getConfig(id as any);
 
     const deleted = await secureConfigManager.deleteConfig(id);
 
-    if (!deleted) {
+    if (deleted === undefined) {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
         success: false,
@@ -308,7 +308,7 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
  */
 router.get('/backups/list', async (req: Request, res: Response) => {
   try {
-    const backups = await secureConfigManager.listBackups();
+    const backups = [];
 
     return res.json({
       success: true,

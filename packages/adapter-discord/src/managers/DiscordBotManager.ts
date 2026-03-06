@@ -55,9 +55,13 @@ export class DiscordBotManager {
       );
       const tokens = legacyToken
         .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
+        .filter((t) => t !== null && t !== undefined)
+        .map((t) => t.trim());
+
       tokens.forEach((token, index) => {
+        if (token === '') {
+          throw new ConfigError(`Empty token at position ${index + 1}`, 'DISCORD_EMPTY_TOKEN_ENV');
+        }
         const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
         this.addBotToPool(token, name, {
           name,
@@ -70,23 +74,31 @@ export class DiscordBotManager {
 
     if (discordBots.length === 0) {
       log('No Discord providers configured.');
-      return; // No tokens, no bots.
+      throw new ConfigError('No Discord bot tokens provided in configuration', 'DISCORD_NO_TOKENS_CONFIGURED');
     }
 
     // Load bots from configurations
-    discordBots.forEach((botConfig) => {
+    discordBots.forEach((botConfig, index) => {
       // Check if bot is disabled
       if (isBotDisabled?.(botConfig.name)) {
         log(`Bot ${botConfig.name} is disabled in user config, skipping initialization.`);
         return;
       }
 
-      const token = botConfig.discordBotToken || botConfig.discord?.token;
-      if (token) {
-        this.addBotToPool(token, botConfig.name, botConfig);
-      } else {
-        log(`Bot ${botConfig.name} has no Discord token. Skipping.`);
+      const token = botConfig.discordBotToken !== undefined
+        ? botConfig.discordBotToken
+        : botConfig.discord?.token;
+
+      if (token === undefined || token === null) {
+        throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
       }
+
+      const trimmedToken = String(token).trim();
+      if (trimmedToken === '') {
+        throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
+      }
+
+      this.addBotToPool(trimmedToken, botConfig.name, botConfig);
     });
   }
 

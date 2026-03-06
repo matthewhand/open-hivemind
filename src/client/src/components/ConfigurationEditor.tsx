@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Button,
-  Alert,
-  Input,
-  Select,
-  Textarea,
-  Modal,
-  Loading,
-  Tooltip,
-  Badge,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Textarea from './DaisyUI/Textarea';
+import Modal from './DaisyUI/Modal';
+import { Loading } from './DaisyUI/Loading';
+import Tooltip from './DaisyUI/Tooltip';
+import Badge from './DaisyUI/Badge';
+
 import {
   Save as SaveIcon,
   RotateCcw as RefreshIcon,

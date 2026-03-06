@@ -2,7 +2,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { Card, Badge, Button, LoadingSpinner, Toggle } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Toggle from '../components/DaisyUI/Toggle';
+
 import {
   DevicePhoneMobileIcon,
   SignalIcon,

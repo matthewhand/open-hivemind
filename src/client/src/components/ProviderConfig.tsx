@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Alert, Input, Select, Textarea, Tooltip } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import { Alert } from './DaisyUI/Alert';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Textarea from './DaisyUI/Textarea';
+import Tooltip from './DaisyUI/Tooltip';
+
 import { 
   Eye, 
   EyeOff, 

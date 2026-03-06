@@ -26,12 +26,11 @@ import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
 import guardsRouter from './routes/guards';
-import healthRouter from './routes/health';
+import healthRouter, { PROMETHEUS_METRICS_PATH } from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
-import { PROMETHEUS_METRICS_PATH } from './routes/health';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 
@@ -171,7 +170,6 @@ export class WebUIServer {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
 
-<<<<<<< HEAD
     /**
      * Proxies requests from /metrics to /metrics/prometheus
      * Maintains compatibility with Prometheus scraping conventions
@@ -182,9 +180,6 @@ export class WebUIServer {
       req.url = PROMETHEUS_METRICS_PATH;
       healthRouter(req, res, next);
     });
-
-=======
->>>>>>> origin/main
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
 

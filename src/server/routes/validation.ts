@@ -4,7 +4,7 @@ import { body, param, query, validationResult } from 'express-validator';
 import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
-import { ErrorUtils, type AppError } from "../../types/errors";
+import { ErrorUtils, type AppError } from '../../types/errors';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
 
 const router = Router();
