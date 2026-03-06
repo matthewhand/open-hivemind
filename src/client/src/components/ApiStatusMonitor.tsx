@@ -58,6 +58,24 @@ interface ApiStatusMonitorProps {
   refreshInterval?: number;
 }
 
+const formatResponseTime = (ms: number) => {
+  if (ms < 1000) { return `${ms.toFixed(0)}ms`; }
+  return `${(ms / 1000).toFixed(1)}s`;
+};
+
+const formatUptime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) { return `${hours}h ${minutes % 60}m ago`; }
+  if (minutes > 0) { return `${minutes}m ago`; }
+  return `${seconds}s ago`;
+};
+
 const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   refreshInterval = 30000,
 }) => {
@@ -143,49 +161,32 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';
     switch (status) {
-    case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
-    case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
-    case 'offline':
-    case 'error':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
-    default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      case 'online':
+        return <CheckCircleIcon className={`${className} text-success`} />;
+      case 'slow':
+        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      case 'offline':
+      case 'error':
+        return <ExclamationCircleIcon className={`${className} text-error`} />;
+      default:
+        return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'online':
-      return 'success';
-    case 'slow':
-      return 'warning';
-    case 'offline':
-    case 'error':
-      return 'error';
-    default:
-      return 'ghost';
+      case 'online':
+        return 'success';
+      case 'slow':
+        return 'warning';
+      case 'offline':
+      case 'error':
+        return 'error';
+      default:
+        return 'ghost';
     }
   };
 
-  const formatResponseTime = (ms: number) => {
-    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
-    return `${(ms / 1000).toFixed(1)}s`;
-  };
-
-  const formatUptime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {return `${hours}h ${minutes % 60}m ago`;}
-    if (minutes > 0) {return `${minutes}m ago`;}
-    return `${seconds}s ago`;
-  };
 
   const handleStartMonitoring = async () => {
     try {
