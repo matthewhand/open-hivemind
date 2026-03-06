@@ -75,7 +75,6 @@ export class StartupDiagnostics {
 
     startupLog.info('🔐 Critical Configuration', {
       present: `${criticalPresent}/${criticalTotal}`,
-      missing: envSummary.critical.filter((v) => v.status === 'missing').map((v) => v.key),
     });
 
     // Log present critical variables (redacted)
@@ -215,20 +214,14 @@ export class StartupDiagnostics {
     }
 
     const existingConfigs = configStatus.filter((c) => c.exists);
-    const missingConfigs = configStatus.filter((c) => !c.exists);
 
     startupLog.info('📁 Configuration Files', {
       loaded: existingConfigs.length,
-      missing: missingConfigs.length,
       totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0),
     });
 
     existingConfigs.forEach((config) => {
       startupLog.debug(`   ✓ ${config.path} (${config.size} bytes)`);
-    });
-
-    missingConfigs.forEach((config) => {
-      startupLog.debug(`   ⚠ ${config.path} (not found)`);
     });
   }
 
@@ -257,19 +250,13 @@ export class StartupDiagnostics {
     ];
 
     const configuredProviders = providers.filter((p) => p.configured);
-    const unconfiguredProviders = providers.filter((p) => !p.configured);
 
     startupLog.info('🔗 Provider Configuration', {
       configured: configuredProviders.length,
-      unconfigured: unconfiguredProviders.length,
     });
 
     configuredProviders.forEach((provider) => {
       startupLog.debug(`   ✓ ${provider.type}: configured`);
-    });
-
-    unconfiguredProviders.forEach((provider) => {
-      startupLog.debug(`   ⚠ ${provider.type}: not configured`);
     });
 
     // Note: Actual connectivity testing will happen during provider initialization
