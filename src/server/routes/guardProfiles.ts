@@ -220,10 +220,11 @@ router.delete('/:id', adminRateLimiter, (req: Request, res: Response) => {
     const profiles = loadGuardrailProfiles();
     const profileExists = profiles.some((p) => p.id === id);
 
+    // Make DELETE idempotent: if it doesn't exist, just return success
     if (!profileExists) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
+      return res.json({
+        success: true,
+        message: 'Guard profile deleted successfully',
       });
     }
 
