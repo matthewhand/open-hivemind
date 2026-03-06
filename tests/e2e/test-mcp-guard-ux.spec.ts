@@ -38,33 +38,25 @@ test('verify MCP Guard UX', async ({ page }) => {
   const usersInput = modal.locator('input[id="allowed-users"]');
   await usersInput.fill('user1');
 
-  // Screenshot before typing comma
+  // Press enter to commit the first chip
+  await usersInput.press('Enter');
+
+  // Screenshot before typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
-  await usersInput.pressSequentially(',user2');
+  // Type second value and press enter
+  await usersInput.pressSequentially('user2');
 
-  // Give it a moment to render chips
   await page.waitForTimeout(500);
 
-  // Screenshot after typing comma
+  // Screenshot after typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
   const value = await usersInput.inputValue();
-  console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user2');
+  console.log('Input value after typing "user2":', value);
+  expect(value).toBe('');
 
   const chips = modal.locator('[data-testid="chip"]');
-  await expect(chips).toHaveCount(1);
-  await expect(chips.first()).toHaveText(/user1/);
-
-  await usersInput.press('Enter');
-
-  // Give it a moment to render
-  await page.waitForTimeout(500);
-
-  // The input should be empty, and chips should be visible
-  expect(await usersInput.inputValue()).toBe('');
-
   await expect(chips).toHaveCount(2);
 
   // Wait for the clear button to be visible

@@ -29,7 +29,7 @@ test.describe('Guards Page Rate Limit Screenshots', () => {
                 rateLimit: { enabled: true, maxRequests: 50, windowMs: 60000 },
                 contentFilter: { enabled: true, strictness: 'medium' },
               },
-            }
+            },
           ],
         }),
       });
@@ -48,6 +48,13 @@ test.describe('Guards Page Rate Limit Screenshots', () => {
 
     // Open Rate Limiter accordion
     await modal.getByText('Rate Limiter').click({ force: true });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      const element = document.querySelector('.modal-box');
+      if (element) {
+        element.scrollTop = 100;
+      }
+    });
     await page.waitForTimeout(500);
 
     // Take screenshot

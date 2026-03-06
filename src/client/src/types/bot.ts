@@ -50,12 +50,11 @@ export enum MessageProviderType {
 
 export enum LLMProviderType {
   OPENAI = 'openai',
-  FLOWISE = 'flowise',
-  OPENWEBUI = 'openwebui',
-  PERPLEXITY = 'perplexity',
-  REPLICATE = 'replicate',
-  N8N = 'n8n',
-  OPENSWARM = 'openswarm',
+  ANTHROPIC = 'anthropic',
+  OLLAMA = 'ollama',
+  HUGGINGFACE = 'huggingface',
+  LOCAL = 'local',
+  FLOWISE = 'flowise'
 }
 
 export interface Persona {
@@ -121,7 +120,7 @@ export interface ProviderTypeConfig {
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea';
+  type: 'text' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea' | 'url' | 'json';
   required: boolean;
   placeholder?: string;
   options?: Array<{ value: string; label: string }>;
@@ -330,47 +329,26 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
-  perplexity: {
-    type: LLMProviderType.PERPLEXITY,
-    displayName: 'Perplexity',
-    description: 'Search-augmented AI models',
-    icon: '🔍',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
+  ollama: {
+    type: LLMProviderType.OLLAMA,
+    displayName: 'Ollama',
+    description: 'Local models via Ollama',
+    icon: '🦙',
+    fields: [],
   },
-  replicate: {
-    type: LLMProviderType.REPLICATE,
-    displayName: 'Replicate',
-    description: 'Run open-source models',
-    icon: '🚀',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
+  huggingface: {
+    type: LLMProviderType.HUGGINGFACE,
+    displayName: 'Hugging Face',
+    description: 'Models from Hugging Face',
+    icon: '🤗',
+    fields: [],
   },
-  n8n: {
-    type: LLMProviderType.N8N,
-    displayName: 'n8n',
-    description: 'Workflow automation platform',
-    icon: '⚡',
-    fields: [
-      { name: 'webhookUrl', label: 'Webhook URL', type: 'text', required: true },
-      { name: 'authHeader', label: 'Auth Header', type: 'password', required: false },
-    ],
-  },
-  openswarm: {
-    type: LLMProviderType.OPENSWARM,
-    displayName: 'OpenSwarm',
-    description: 'Multi-agent orchestration',
-    icon: '🐝',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
-      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
-      { name: 'team', label: 'Team', type: 'text', required: false },
-    ],
+  local: {
+    type: LLMProviderType.LOCAL,
+    displayName: 'Local',
+    description: 'Custom local models',
+    icon: '🏠',
+    fields: [],
   },
 };
 
