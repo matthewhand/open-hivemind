@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import GlobalConfigSection from '../GlobalConfigSection';
-import { Alert } from '../DaisyUI/Alert';
-
+import { Alert } from '../DaisyUI';
 
 const GlobalConfigurationManager: React.FC = () => {
   const [sections, setSections] = useState<string[]>([]);

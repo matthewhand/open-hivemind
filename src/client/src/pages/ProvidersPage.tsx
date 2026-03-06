@@ -1,17 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
-
+import { Card, Button, Badge } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Brain as LLMIcon,
   Settings as ConfigIcon,
   ArrowRight as ArrowIcon,
 } from 'lucide-react';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-
+import { Breadcrumbs } from '../components/DaisyUI';
 
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();

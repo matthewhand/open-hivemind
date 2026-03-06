@@ -10,14 +10,7 @@ import type {
 import {
   Persona,
 } from '../../types/bot';
-import Modal from '../DaisyUI/Modal';
-import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
-import Textarea from '../DaisyUI/Textarea';
-import Select from '../DaisyUI/Select';
-import Badge from '../DaisyUI/Badge';
-import Card from '../DaisyUI/Card';
-
+import { Modal, Button, Input, Textarea, Select, Badge, Card } from '../DaisyUI';
 import {
   User as UserIcon,
   Plus as AddIcon,

@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-
+import { Badge, Alert, Button, Modal } from '../DaisyUI';
 import {
   CpuChipIcon,
   ArrowPathIcon,

@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
-import Toggle from '../DaisyUI/Toggle';
-
+import { Alert, Button, Input, Toggle } from '../DaisyUI';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 
 const SettingsSecurity: React.FC = () => {

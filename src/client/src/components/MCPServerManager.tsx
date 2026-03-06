@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
-import Card from './DaisyUI/Card';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-
+import { Button, IconButton, Modal, Card, Alert, Badge } from './DaisyUI';
 import {
   PlusIcon,
   LinkIcon,
@@ -167,8 +162,8 @@ const MCPServerManager: React.FC = () => {
                 <td><Badge variant={server.connected ? 'success' : 'secondary'}>{server.connected ? 'Connected' : 'Disconnected'}</Badge></td>
                 <td>
                   <div className="flex gap-2">
-                    {server.connected && <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}><WrenchScrewdriverIcon className="w-4 h-4" /></Button>}
-                    <Button size="sm" variant="ghost" className="text-error" onClick={() => handleDisconnectServer(server.name)}><LinkIcon className="w-4 h-4" /></Button>
+                    {server.connected && <IconButton size="sm" variant="ghost" aria-label="View server tools" onClick={() => handleViewTools(server)} icon={<WrenchScrewdriverIcon className="w-4 h-4" />} />}
+                    <IconButton size="sm" variant="ghost" className="text-error" aria-label="Disconnect server" onClick={() => handleDisconnectServer(server.name)} icon={<LinkIcon className="w-4 h-4" />} />
                   </div>
                 </td>
               </tr>

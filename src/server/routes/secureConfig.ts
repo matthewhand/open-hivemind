@@ -16,11 +16,11 @@ router.use(auditMiddleware);
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const configList = await secureConfigManager.listConfigs();
+    const configIds = await secureConfigManager.listConfigs();
     const configs = [];
 
-    for (const item of configList) {
-      const config = await secureConfigManager.getConfig(item.id);
+    for (const id of configIds) {
+      const config = await secureConfigManager.getConfig(id);
       if (config) {
         // Return metadata without sensitive data
         configs.push({
@@ -224,15 +224,15 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     // Get config before deletion for audit logging
     const configToDelete = await secureConfigManager.getConfig(id);
 
-    if (!configToDelete) {
+    const deleted = await secureConfigManager.deleteConfig(id);
+
+    if (!deleted) {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
         success: false,
         error: 'Configuration not found',
       });
     }
-
-    await secureConfigManager.deleteConfig(id);
 
     logConfigChange(
       req,
