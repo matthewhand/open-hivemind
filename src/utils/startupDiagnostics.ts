@@ -106,9 +106,11 @@ export class StartupDiagnostics {
    * Analyze environment variables and categorize them
    */
   private analyzeEnvironmentVariables(): EnvironmentSummary {
-    const criticalVars = ['NODE_ENV', 'PORT', 'MESSAGE_PROVIDER'];
+    const criticalVars = ['NODE_ENV'];
 
     const optionalVars = [
+      'PORT',
+      'MESSAGE_PROVIDER',
       'DISCORD_BOT_TOKEN',
       'SLACK_BOT_TOKEN',
       'SLACK_APP_TOKEN',
