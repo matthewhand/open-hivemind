@@ -14,7 +14,6 @@ import {
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-import { CONFIG_LIMITS } from '../../../types/config';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,21 +41,11 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasData, profilesData] = await Promise.all([
+        const [personasData, profilesData, mcpResponse] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
+          fetch('/api/admin/mcp-servers').then(res => res.ok ? res.json() : { data: [] }).catch(() => ({ data: [] })),
         ]);
-
-        let mcpResponse: any = { data: [] };
-        try {
-          const res = await fetch('/api/admin/mcp-servers');
-          if (res.ok) {
-            mcpResponse = await res.json();
-          }
-        } catch {
-          // Silent fallback for MCP servers
-        }
-
         setPersonas(personasData || []);
         setLlmProfiles(profilesData?.profiles?.llm || []);
         const servers = mcpResponse?.data || mcpResponse || [];
@@ -111,7 +100,7 @@ const BotCreatePage: React.FC = () => {
     { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
     { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
     { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
-    { id: 'webhook', name: 'Webhook', icon: Send, color: 'text-emerald-500' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);
@@ -289,19 +278,19 @@ const BotCreatePage: React.FC = () => {
                     />
                     <div className="flex justify-between items-center mt-1">
                       <div className="flex-1">
-                        {formData.systemInstruction && formData.systemInstruction.length < CONFIG_LIMITS.SYSTEM_INSTRUCTION_MIN_LENGTH && (
+                        {formData.systemInstruction && formData.systemInstruction.length < 10 && (
                           <div className="text-warning text-xs">
                             System instruction is very short. Consider providing more detail.
                           </div>
                         )}
-                        {formData.systemInstruction && formData.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH && (
+                        {formData.systemInstruction && formData.systemInstruction.length > 2000 && (
                           <div className="text-error text-xs">
-                            System instruction is very long (max {CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH} chars recommended).
+                            System instruction is very long (max 2000 chars recommended).
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH ? 'text-error font-bold' : ''}`}>
-                        {formData.systemInstruction.length}/{CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH}
+                      <div className={`text-xs opacity-50 ${formData.systemInstruction.length > 2000 ? 'text-error font-bold' : ''}`}>
+                        {formData.systemInstruction.length}/2000
                       </div>
                     </div>
                   </div>
@@ -330,13 +319,13 @@ const BotCreatePage: React.FC = () => {
                     </Select>
                     <label className="label">
                       {!defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-error whitespace-normal break-words">
+                        <span className="label-text-alt text-error whitespace-normal">
                           System default is not configured. Please select a provider.
                         </span>
                       )}
                       {defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
-                          <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
+                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal">
+                          <Check className="w-3 h-3" /> Using system default configuration
                         </span>
                       )}
                     </label>
